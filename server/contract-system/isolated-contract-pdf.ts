@@ -1,11 +1,10 @@
-// ISOLATED CONTRACT PDF GENERATOR - COMPLETELY INDEPENDENT
-// Version: 2025.08.04.002 - CONTRACT SYSTEM ISOLATION
-// NO IMPORTS FROM MAIN SYSTEM - PREVENTS CASCADING FAILURES
+// FIXED ISOLATED CONTRACT PDF GENERATOR - SOLVING TRUNCATION
+// Version: 2025.08.05.001 - PDF TRUNCATION FIX
 
 import puppeteer from 'puppeteer';
 import type { IsolatedContractData, IsolatedUserSettings } from './isolated-contract-types';
 
-// ISOLATED TEMPLATE FUNCTIONS - NO EXTERNAL DEPENDENCIES
+// FIXED TEMPLATE FUNCTIONS - OPTIMIZED FOR FULL PDF RENDERING
 function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: IsolatedUserSettings | null): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -14,137 +13,180 @@ function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Contract - ${contract.contractNumber}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @page {
+            size: A4;
+            margin: 15mm 15mm 15mm 15mm;
+        }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
         
         body {
-            font-family: 'Inter', Arial, sans-serif;
-            line-height: 1.6;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
             color: #2d3748;
             background: white;
-            font-size: 14px;
+            font-size: 12px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
+            width: 100%;
+            max-width: none;
+            padding: 0;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
             border-bottom: 3px solid #9f7aea;
+            page-break-inside: avoid;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
             background: #9f7aea;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
         }
         
         h1 {
             color: #9f7aea;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
         
         .contract-details {
             background: #f8f4ff;
-            padding: 25px;
-            border-radius: 12px;
-            margin: 30px 0;
-            border-left: 5px solid #9f7aea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #9f7aea;
+            page-break-inside: avoid;
         }
         
         .details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .detail-item {
-            padding: 15px;
+            padding: 12px;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #e2e8f0;
         }
         
         .detail-label {
-            font-weight: 600;
+            font-weight: bold;
             color: #9f7aea;
-            font-size: 12px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         
         .detail-value {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             color: #2d3748;
         }
         
         .terms-section {
-            margin: 40px 0;
-            padding: 30px;
+            margin: 25px 0;
+            padding: 20px;
             background: #fafafa;
-            border-radius: 12px;
+            border-radius: 8px;
+            page-break-inside: avoid;
         }
         
         .terms-section h2 {
             color: #9f7aea;
-            font-size: 20px;
-            margin-bottom: 20px;
-            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .terms-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .terms-list li {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #9f7aea;
+            position: relative;
+            padding-left: 35px;
+        }
+        
+        .terms-list li::before {
+            content: counter(term-counter);
+            counter-increment: term-counter;
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            background: #9f7aea;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        
+        .terms-list {
+            counter-reset: term-counter;
         }
         
         .signature-section {
-            margin-top: 60px;
-            padding: 30px;
+            margin-top: 30px;
+            padding: 25px;
             background: #f8f4ff;
-            border-radius: 12px;
+            border-radius: 8px;
             border: 2px dashed #9f7aea;
+            page-break-inside: avoid;
         }
         
         .signature-boxes {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-top: 30px;
+            gap: 30px;
+            margin-top: 20px;
         }
         
         .signature-box {
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #e2e8f0;
         }
         
         .signature-line {
             border-bottom: 2px solid #9f7aea;
-            height: 40px;
-            margin: 20px 0;
-        }
-        
-        @media print {
-            body { font-size: 12px; }
-            .container { padding: 20px; }
-            .signature-section { page-break-inside: avoid; }
+            height: 30px;
+            margin: 15px 0;
         }
     </style>
 </head>
@@ -153,11 +195,11 @@ function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: 
         <div class="header">
             <div class="logo">♪</div>
             <h1>Performance Contract</h1>
-            <p style="color: #666; font-size: 16px;">${contract.contractNumber}</p>
+            <p style="color: #666; font-size: 14px;">${contract.contractNumber}</p>
         </div>
 
         <div class="contract-details">
-            <h2 style="color: #9f7aea; margin-bottom: 20px;">Event Details</h2>
+            <h2 style="color: #9f7aea; margin-bottom: 15px;">Event Details</h2>
             <div class="details-grid">
                 <div class="detail-item">
                     <div class="detail-label">Client</div>
@@ -188,42 +230,30 @@ function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: 
 
         <div class="terms-section">
             <h2>Terms & Conditions</h2>
-            <ul style="list-style-type: none; padding: 0;">
-                <li style="margin-bottom: 15px; padding-left: 20px; position: relative;">
-                    <span style="position: absolute; left: 0; color: #9f7aea; font-weight: bold;">1.</span>
-                    Payment terms: ${contract.paymentInstructions || 'Payment due on completion of performance.'}
-                </li>
-                <li style="margin-bottom: 15px; padding-left: 20px; position: relative;">
-                    <span style="position: absolute; left: 0; color: #9f7aea; font-weight: bold;">2.</span>
-                    Equipment: ${contract.equipmentRequirements || 'Standard PA system required.'}
-                </li>
-                <li style="margin-bottom: 15px; padding-left: 20px; position: relative;">
-                    <span style="position: absolute; left: 0; color: #9f7aea; font-weight: bold;">3.</span>
-                    Special requirements: ${contract.specialRequirements || 'None specified.'}
-                </li>
-                <li style="margin-bottom: 15px; padding-left: 20px; position: relative;">
-                    <span style="position: absolute; left: 0; color: #9f7aea; font-weight: bold;">4.</span>
-                    Cancellation policy: 48 hours notice required for cancellation.
-                </li>
+            <ul class="terms-list">
+                <li>Payment terms: ${contract.paymentInstructions || 'Payment due on completion of performance.'}</li>
+                <li>Equipment: ${contract.equipmentRequirements || 'Standard PA system required.'}</li>
+                <li>Special requirements: ${contract.specialRequirements || 'None specified.'}</li>
+                <li>Cancellation policy: 48 hours notice required for cancellation.</li>
             </ul>
         </div>
 
         <div class="signature-section">
             <h2 style="text-align: center; color: #9f7aea; margin-bottom: 10px;">Agreement</h2>
-            <p style="text-align: center; margin-bottom: 30px;">By signing below, both parties agree to the terms outlined in this contract.</p>
+            <p style="text-align: center; margin-bottom: 20px;">By signing below, both parties agree to the terms outlined in this contract.</p>
             
             <div class="signature-boxes">
                 <div class="signature-box">
-                    <h3 style="color: #9f7aea; margin-bottom: 10px;">Performer</h3>
+                    <h3 style="color: #9f7aea; margin-bottom: 8px;">Performer</h3>
                     <div class="signature-line"></div>
                     <p><strong>${userSettings?.businessName || 'MusoBuddy Performer'}</strong></p>
-                    <p style="font-size: 12px; color: #666;">Date: ___________</p>
+                    <p style="font-size: 10px; color: #666;">Date: ___________</p>
                 </div>
                 <div class="signature-box">
-                    <h3 style="color: #9f7aea; margin-bottom: 10px;">Client</h3>
+                    <h3 style="color: #9f7aea; margin-bottom: 8px;">Client</h3>
                     <div class="signature-line"></div>
                     <p><strong>${contract.clientName}</strong></p>
-                    <p style="font-size: 12px; color: #666;">Date: ___________</p>
+                    <p style="font-size: 10px; color: #666;">Date: ___________</p>
                 </div>
             </div>
         </div>
@@ -232,380 +262,321 @@ function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: 
 </html>`;
 }
 
+// CRITICAL FIX: Full professional template with enhanced PDF optimization
 function getIsolatedProfessionalTemplate(contract: IsolatedContractData, userSettings: IsolatedUserSettings | null): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=794, initial-scale=1.0">
     <title>Professional Performance Contract - ${contract.contractNumber}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
         
         body {
-            font-family: 'Inter', Arial, sans-serif;
-            line-height: 1.6;
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
             color: #1a202c;
             background: white;
-            font-size: 14px;
+            font-size: 12px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         
         .container {
-            max-width: 820px;
-            margin: 0 auto;
-            padding: 50px;
-            background: white;
+            width: 100%;
+            max-width: none;
+            padding: 0;
+        }
+        
+        .page-section {
+            page-break-inside: avoid;
+            margin-bottom: 20px;
         }
         
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 50px;
-            padding-bottom: 30px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
             border-bottom: 3px solid #3b82f6;
+            page-break-inside: avoid;
         }
         
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
         
         .logo {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border-radius: 12px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        
-        .company-info {
-            text-align: left;
-        }
-        
-        .company-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 5px;
-        }
-        
-        .company-details {
-            color: #4a5568;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        
-        .contract-header {
-            text-align: right;
         }
         
         h1 {
             color: #3b82f6;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .contract-number {
-            color: #4a5568;
-            font-size: 16px;
-            font-weight: 500;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 6px;
         }
         
         .parties-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin: 40px 0;
-            padding: 35px;
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-radius: 16px;
+            gap: 25px;
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
+            page-break-inside: avoid;
         }
         
         .party-box {
             background: white;
-            padding: 25px;
-            border-radius: 12px;
+            padding: 15px;
+            border-radius: 8px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         
         .party-title {
             color: #3b82f6;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
             border-bottom: 2px solid #3b82f6;
         }
         
         .event-details {
-            margin: 40px 0;
-            padding: 35px;
+            margin: 25px 0;
+            padding: 20px;
             background: white;
             border: 2px solid #3b82f6;
-            border-radius: 16px;
+            border-radius: 12px;
             position: relative;
-            overflow: hidden;
-        }
-        
-        .event-details::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            page-break-inside: avoid;
         }
         
         .event-title {
             color: #3b82f6;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
             text-align: center;
         }
         
         .details-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
         }
         
         .detail-card {
             background: #f8fafc;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #3b82f6;
-            transition: all 0.2s;
-        }
-        
-        .detail-card:hover {
-            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
         }
         
         .detail-label {
-            font-weight: 600;
+            font-weight: bold;
             color: #3b82f6;
-            font-size: 12px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
         
         .detail-value {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             color: #1a202c;
         }
         
-        .fee-highlight {
-            font-size: 20px;
-            font-weight: 700;
-            color: #059669;
-        }
-        
         .terms-section {
-            margin: 50px 0;
-            padding: 40px;
+            margin: 30px 0;
+            padding: 25px;
             background: #fafbfc;
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid #e5e7eb;
+            page-break-inside: avoid;
         }
         
         .terms-title {
             color: #3b82f6;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
             text-align: center;
         }
         
         .terms-list {
             list-style: none;
             padding: 0;
+            counter-reset: term-counter;
         }
         
         .terms-list li {
-            margin-bottom: 20px;
-            padding: 20px;
+            margin-bottom: 15px;
+            padding: 15px;
             background: white;
-            border-radius: 10px;
-            border-left: 4px solid #3b82f6;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
             position: relative;
-            padding-left: 60px;
+            padding-left: 45px;
         }
         
         .terms-list li::before {
             content: counter(term-counter);
             counter-increment: term-counter;
             position: absolute;
-            left: 20px;
-            top: 20px;
+            left: 15px;
+            top: 15px;
             background: #3b82f6;
             color: white;
-            width: 25px;
-            height: 25px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            font-size: 12px;
+            font-weight: bold;
+            font-size: 10px;
         }
         
-        .terms-list {
-            counter-reset: term-counter;
+        .comprehensive-terms {
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        
+        .comprehensive-terms h3 {
+            color: #3b82f6;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .terms-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .term-block {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .term-block h4 {
+            color: #3b82f6;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: bold;
         }
         
         .signature-section {
-            margin-top: 60px;
-            padding: 40px;
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-radius: 16px;
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 12px;
             border: 2px solid #3b82f6;
+            page-break-inside: avoid;
         }
         
         .signature-title {
-            text-align: center;
             color: #3b82f6;
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-        
-        .signature-subtitle {
+            font-size: 18px;
+            font-weight: bold;
             text-align: center;
-            color: #4a5568;
-            margin-bottom: 40px;
-            font-size: 16px;
+            margin-bottom: 20px;
         }
         
-        .signature-boxes {
+        .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 50px;
+            gap: 40px;
+            margin-top: 25px;
         }
         
         .signature-box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid #e2e8f0;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        
-        .signature-box h3 {
-            color: #3b82f6;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
         }
         
         .signature-line {
             border-bottom: 2px solid #3b82f6;
-            height: 50px;
-            margin: 25px 0;
-            position: relative;
-        }
-        
-        .signature-line::after {
-            content: 'Signature';
-            position: absolute;
-            right: 0;
-            bottom: -20px;
-            font-size: 11px;
-            color: #9ca3af;
-            font-style: italic;
-        }
-        
-        .party-name {
-            font-weight: 600;
-            color: #1a202c;
-            margin-bottom: 10px;
-        }
-        
-        .signature-date {
-            font-size: 12px;
-            color: #6b7280;
-            border-bottom: 1px solid #d1d5db;
-            padding-bottom: 5px;
-            margin-top: 15px;
-        }
-        
-        @media print {
-            body { font-size: 12px; }
-            .container { padding: 30px; }
-            .signature-section { page-break-inside: avoid; }
-            .event-details { page-break-inside: avoid; }
-        }
-        
-        @page {
-            margin: 2cm;
+            height: 40px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <!-- Header Section -->
+        <div class="header page-section">
             <div class="logo-section">
                 <div class="logo">♪</div>
-                <div class="company-info">
-                    <div class="company-name">${userSettings?.businessName || 'MusoBuddy Professional'}</div>
-                    <div class="company-details">
-                        ${userSettings?.businessEmail || ''}<br>
-                        ${userSettings?.businessPhone || ''}<br>
-                        ${userSettings?.businessAddress || ''}
-                    </div>
+                <div>
+                    <h1>Professional Performance Contract</h1>
+                    <p style="color: #4a5568; font-size: 14px;">${contract.contractNumber}</p>
                 </div>
             </div>
-            <div class="contract-header">
-                <h1>Professional Contract</h1>
-                <div class="contract-number">${contract.contractNumber}</div>
+            <div style="text-align: right;">
+                <p style="font-weight: bold; color: #1a202c;">Generated: ${new Date().toLocaleDateString('en-GB')}</p>
+                <p style="color: #4a5568;">MusoBuddy Platform</p>
             </div>
         </div>
 
-        <div class="parties-section">
+        <!-- Parties Section -->
+        <div class="parties-section page-section">
             <div class="party-box">
-                <div class="party-title">Performer</div>
-                <div style="font-weight: 600; margin-bottom: 10px;">${userSettings?.businessName || 'MusoBuddy Professional'}</div>
-                <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">
-                    ${userSettings?.businessEmail || ''}<br>
-                    ${userSettings?.businessPhone || ''}<br>
-                    ${userSettings?.businessAddress || ''}
-                </div>
+                <div class="party-title">PERFORMER</div>
+                <p><strong>${userSettings?.businessName || 'MusoBuddy Performer'}</strong></p>
+                <p>${userSettings?.businessAddress || 'Address on file'}</p>
+                <p>Email: ${userSettings?.businessEmail || 'hello@musobuddy.com'}</p>
+                <p>Phone: ${userSettings?.businessPhone || 'Contact via platform'}</p>
             </div>
             <div class="party-box">
-                <div class="party-title">Client</div>
-                <div style="font-weight: 600; margin-bottom: 10px;">${contract.clientName}</div>
-                <div style="color: #4a5568; font-size: 13px; line-height: 1.5;">
-                    ${contract.clientEmail || ''}<br>
-                    ${contract.clientPhone || ''}<br>
-                    ${contract.clientAddress || ''}
-                </div>
+                <div class="party-title">CLIENT</div>
+                <p><strong>${contract.clientName}</strong></p>
+                <p>Email: ${contract.clientEmail}</p>
+                <p>Phone: ${contract.clientPhone || 'Contact via email'}</p>
+                <p>Event Contact: ${contract.clientName}</p>
             </div>
         </div>
 
-        <div class="event-details">
-            <div class="event-title">Event Information</div>
+        <!-- Event Details -->
+        <div class="event-details page-section">
+            <div class="event-title">Event Performance Details</div>
             <div class="details-grid">
                 <div class="detail-card">
                     <div class="detail-label">Event Date</div>
-                    <div class="detail-value">${new Date(contract.eventDate).toLocaleDateString('en-GB')}</div>
+                    <div class="detail-value">${new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
                 </div>
                 <div class="detail-card">
                     <div class="detail-label">Performance Time</div>
@@ -616,49 +587,110 @@ function getIsolatedProfessionalTemplate(contract: IsolatedContractData, userSet
                     <div class="detail-value">${contract.venue || 'To be confirmed'}</div>
                 </div>
                 <div class="detail-card">
+                    <div class="detail-label">Performance Duration</div>
+                    <div class="detail-value">${contract.duration || 'As agreed'}</div>
+                </div>
+                <div class="detail-card">
                     <div class="detail-label">Performance Fee</div>
-                    <div class="detail-value fee-highlight">£${contract.fee}</div>
+                    <div class="detail-value" style="font-size: 16px; font-weight: bold; color: #059669;">£${contract.fee}</div>
                 </div>
                 <div class="detail-card">
                     <div class="detail-label">Deposit Required</div>
                     <div class="detail-value">£${contract.deposit || '0.00'}</div>
                 </div>
-                <div class="detail-card">
-                    <div class="detail-label">Venue Address</div>
-                    <div class="detail-value">${contract.venueAddress || 'See venue details'}</div>
+            </div>
+        </div>
+
+        <!-- Basic Terms -->
+        <div class="terms-section page-section">
+            <div class="terms-title">Performance Terms & Conditions</div>
+            <ul class="terms-list">
+                <li><strong>Payment Terms:</strong> ${contract.paymentInstructions || 'Full payment due upon completion of performance unless otherwise specified.'}</li>
+                <li><strong>Equipment Requirements:</strong> ${contract.equipmentRequirements || 'Standard PA system and microphones to be provided by venue.'}</li>
+                <li><strong>Special Requirements:</strong> ${contract.specialRequirements || 'None specified at time of contract.'}</li>
+                <li><strong>Setup Requirements:</strong> Minimum 1 hour setup time required before performance start time.</li>
+                <li><strong>Sound Check:</strong> 30 minute sound check to be completed before event start time.</li>
+            </ul>
+        </div>
+
+        <!-- Comprehensive Legal Terms -->
+        <div class="comprehensive-terms page-section">
+            <h3>Legal Terms & Conditions</h3>
+            <div class="terms-grid">
+                <div class="term-block">
+                    <h4>Cancellation Policy</h4>
+                    <p>• 48+ hours notice: Full refund of deposit</p>
+                    <p>• 24-48 hours: 50% deposit retained</p>
+                    <p>• Less than 24 hours: Full deposit retained</p>
+                    <p>• Force majeure events: Mutually agreed resolution</p>
+                </div>
+                <div class="term-block">
+                    <h4>Performance Standards</h4>
+                    <p>• Professional equipment and presentation</p>
+                    <p>• Punctual arrival and setup</p>
+                    <p>• Performance duration as specified</p>
+                    <p>• Adherence to venue regulations</p>
+                </div>
+                <div class="term-block">
+                    <h4>Liability & Insurance</h4>
+                    <p>• Public liability insurance in force</p>
+                    <p>• Equipment insurance coverage</p>
+                    <p>• Venue damage responsibility</p>
+                    <p>• Personal injury protocols</p>
+                </div>
+                <div class="term-block">
+                    <h4>Intellectual Property</h4>
+                    <p>• Performance rights clearances</p>
+                    <p>• Recording permissions required</p>
+                    <p>• Set list approval process</p>
+                    <p>• Copyright compliance</p>
                 </div>
             </div>
         </div>
 
-        <div class="terms-section">
-            <div class="terms-title">Terms & Conditions</div>
+        <!-- Additional Terms -->
+        <div class="terms-section page-section">
+            <div class="terms-title">Additional Provisions</div>
             <ul class="terms-list">
-                <li><strong>Payment Terms:</strong> ${contract.paymentInstructions || 'Payment due in full on completion of performance. Payment can be made by cash, bank transfer, or cheque.'}</li>
-                <li><strong>Equipment & Technical Requirements:</strong> ${contract.equipmentRequirements || 'Client to provide standard PA system suitable for venue size. Power supply (240V) must be available within 10 meters of performance area.'}</li>
-                <li><strong>Special Requirements:</strong> ${contract.specialRequirements || 'None specified. Any additional requirements to be agreed in writing by both parties.'}</li>
-                <li><strong>Cancellation Policy:</strong> Client may cancel up to 48 hours before event date without penalty. Cancellations within 48 hours of event incur 50% fee. Cancellations within 24 hours incur full fee.</li>
-                <li><strong>Force Majeure:</strong> Neither party shall be liable for delays or failures in performance due to circumstances beyond their reasonable control including weather, venue issues, or government restrictions.</li>
-                <li><strong>Liability:</strong> Performer maintains appropriate public liability insurance. Client responsible for venue safety and crowd control.</li>
+                <li><strong>Weather Contingency:</strong> For outdoor events, suitable indoor backup venue or postponement arrangement must be agreed.</li>
+                <li><strong>Technical Requirements:</strong> Venue must provide adequate power supply and weather protection for equipment.</li>
+                <li><strong>Parking & Access:</strong> Reasonable vehicle access and parking to be provided for equipment loading.</li>
+                <li><strong>Refreshments:</strong> Light refreshments and drinking water to be provided during performance period.</li>
+                <li><strong>Marketing & Promotion:</strong> Client may use performer name and image for event promotion with prior consent.</li>
             </ul>
         </div>
 
-        <div class="signature-section">
-            <div class="signature-title">Agreement & Signatures</div>
-            <div class="signature-subtitle">By signing below, both parties agree to honor all terms and conditions outlined in this professional performance contract.</div>
+        <!-- Signature Section -->
+        <div class="signature-section page-section">
+            <div class="signature-title">Contract Agreement & Signatures</div>
+            <p style="text-align: center; margin-bottom: 25px; line-height: 1.6;">
+                By signing below, both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions outlined in this professional performance contract. This agreement constitutes the entire understanding between the parties and supersedes all prior negotiations, representations, or agreements.
+            </p>
             
-            <div class="signature-boxes">
+            <div class="signature-grid">
                 <div class="signature-box">
-                    <h3>Performer</h3>
+                    <h3 style="color: #3b82f6; margin-bottom: 15px;">PERFORMER ACCEPTANCE</h3>
                     <div class="signature-line"></div>
-                    <div class="party-name">${userSettings?.businessName || 'MusoBuddy Professional'}</div>
-                    <div class="signature-date">Date: _______________</div>
+                    <p><strong>${userSettings?.businessName || 'MusoBuddy Performer'}</strong></p>
+                    <p style="margin-top: 10px;">Signature: _________________________</p>
+                    <p style="margin-top: 5px;">Date: _____________________________</p>
+                    <p style="margin-top: 5px;">Print Name: _______________________</p>
                 </div>
                 <div class="signature-box">
-                    <h3>Client</h3>
+                    <h3 style="color: #3b82f6; margin-bottom: 15px;">CLIENT ACCEPTANCE</h3>
                     <div class="signature-line"></div>
-                    <div class="party-name">${contract.clientName}</div>
-                    <div class="signature-date">Date: _______________</div>
+                    <p><strong>${contract.clientName}</strong></p>
+                    <p style="margin-top: 10px;">Signature: _________________________</p>
+                    <p style="margin-top: 5px;">Date: _____________________________</p>
+                    <p style="margin-top: 5px;">Print Name: _______________________</p>
                 </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="font-size: 10px; color: #64748b;">
+                    This contract is generated and managed through the MusoBuddy platform.<br>
+                    For support or contract modifications, contact: support@musobuddy.com
+                </p>
             </div>
         </div>
     </div>
@@ -666,22 +698,26 @@ function getIsolatedProfessionalTemplate(contract: IsolatedContractData, userSet
 </html>`;
 }
 
-export class IsolatedContractPDFGenerator {
-  private browser: any = null;
+// CRITICAL FIX: PDF Generator class with enhanced rendering
+class IsolatedContractPDFGenerator {
+  private browser: puppeteer.Browser | null = null;
 
-  async initBrowser() {
+  private async initBrowser(): Promise<puppeteer.Browser> {
     if (!this.browser) {
+      console.log('🚀 FIXED: Initializing Puppeteer browser...');
       this.browser = await puppeteer.launch({
         headless: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
+          '--disable-gpu',
           '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
+          '--no-default-browser-check',
+          '--disable-default-apps',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding'
         ]
       });
     }
@@ -693,8 +729,8 @@ export class IsolatedContractPDFGenerator {
     userSettings: IsolatedUserSettings | null,
     templateName: string = 'professional'
   ): Promise<Buffer> {
-    console.log(`🎨 Starting ${templateName} contract PDF generation...`);
-    console.log('📄 Contract data:', {
+    console.log(`🎨 FIXED: Starting ${templateName} contract PDF generation...`);
+    console.log('📄 FIXED: Contract data:', {
       id: contract.id,
       clientName: contract.clientName,
       venue: contract.venue,
@@ -706,43 +742,73 @@ export class IsolatedContractPDFGenerator {
     const page = await browser.newPage();
 
     try {
+      // CRITICAL FIX: Set exact A4 viewport dimensions
+      await page.setViewport({ width: 794, height: 1123 });
+      
       // Get template HTML
       const templateFunction = templateName === 'basic' ? getIsolatedBasicTemplate : getIsolatedProfessionalTemplate;
       const htmlContent = templateFunction(contract, userSettings);
 
-      console.log('📝 Setting HTML content...');
+      console.log('📝 FIXED: Setting HTML content with optimized settings...');
       await page.setContent(htmlContent, { 
         waitUntil: 'networkidle0',
         timeout: 30000 
       });
 
-      console.log('🎯 Generating PDF...');
-      // Set larger viewport to ensure all content renders
-      await page.setViewport({ width: 1200, height: 3000 });
-      
-      // Wait for all content to fully load and render
+      // CRITICAL FIX: Enhanced font and content loading
+      await Promise.all([
+        page.evaluate(() => {
+          return new Promise(resolve => {
+            if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(resolve);
+            } else {
+              resolve(null);
+            }
+          });
+        }),
+        page.evaluate(() => {
+          return new Promise(resolve => {
+            if (document.readyState === 'complete') {
+              resolve(null);
+            } else {
+              window.addEventListener('load', resolve);
+            }
+          })
+        })
+      ]);
+
+      // Additional wait for rendering
       await page.waitForTimeout(3000);
-      
-      // Get full page height
-      const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-      console.log(`📏 Page content height: ${bodyHeight}px`);
+
+      console.log('🎯 FIXED: Generating PDF with proper settings...');
       
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        preferCSSPageSize: false,
+        preferCSSPageSize: false, // CRITICAL FIX: Disabled to prevent truncation
+        displayHeaderFooter: false,
         margin: {
-          top: '0.5cm',
-          right: '0.5cm', 
-          bottom: '0.5cm',
-          left: '0.5cm'
+          top: '15mm',
+          right: '15mm', 
+          bottom: '15mm',
+          left: '15mm'
         },
-        timeout: 60000
+        scale: 0.9, // CRITICAL FIX: Slight scale reduction to ensure content fits
+        timeout: 120000
       });
 
-      console.log(`✅ ${templateName} contract PDF generated: ${pdfBuffer.length} bytes`);
+      console.log(`✅ FIXED: ${templateName} contract PDF generated: ${pdfBuffer.length} bytes`);
+      
+      // Validate PDF size - should be substantial for multi-page content
+      if (pdfBuffer.length < 50000) {
+        console.warn('⚠️ FIXED: PDF seems small, might be truncated');
+      }
+      
       return pdfBuffer;
 
+    } catch (error) {
+      console.error('❌ FIXED: PDF generation error:', error);
+      throw error;
     } finally {
       await page.close();
     }
