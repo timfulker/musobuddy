@@ -238,44 +238,90 @@ export class EmailService {
     }
   }
 
-  // Send contract confirmation emails
+  // Send contract confirmation emails with SIGNED contract links
   async sendContractConfirmationEmails(contract: any, userSettings: any): Promise<boolean> {
     try {
       console.log('📧 Starting contract confirmation email process...');
+      console.log('📧 Contract status:', contract.status);
+      console.log('📧 Contract cloud URL:', contract.cloudStorageUrl ? 'Present' : 'Missing');
+      
+      // CRITICAL FIX: Ensure we have the signed contract URL
+      let signedContractUrl = contract.cloudStorageUrl;
+      
+      // If no cloud URL, try to generate one (this should have been done during signing)
+      if (!signedContractUrl) {
+        console.log('⚠️ No cloud URL found, attempting to generate signed contract URL...');
+        
+        try {
+          // Get the updated contract from database (in case it was updated after signing)
+          const { storage } = await import('./storage');
+          const updatedContract = await storage.getContract(contract.id);
+          
+          if (updatedContract?.cloudStorageUrl) {
+            signedContractUrl = updatedContract.cloudStorageUrl;
+            console.log('✅ Found updated cloud URL:', signedContractUrl);
+          } else {
+            // Last resort: use public contract view endpoint
+            signedContractUrl = `https://musobuddy.replit.app/view/contracts/${contract.id}`;
+            console.log('⚠️ Using fallback public view URL:', signedContractUrl);
+          }
+        } catch (error) {
+          console.error('❌ Error getting updated contract URL:', error);
+          signedContractUrl = `https://musobuddy.replit.app/view/contracts/${contract.id}`;
+        }
+      }
+      
+      console.log('📧 Using signed contract URL for emails:', signedContractUrl);
       
       // Email to client
       const clientEmailData = {
         to: contract.clientEmail,
         subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
-        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'client')
+        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'client', signedContractUrl)
       };
       
       console.log('📧 Sending confirmation email to client:', contract.clientEmail);
       const clientResult = await this.sendEmail(clientEmailData);
-      console.log('✅ Client confirmation email sent');
+      
+      if (!clientResult.success) {
+        console.error('❌ Failed to send client confirmation email:', clientResult.error);
+      } else {
+        console.log('✅ Client confirmation email sent successfully');
+      }
       
       // Email to musician
       const musicianEmailData = {
         to: userSettings?.businessEmail || 'support@musobuddy.com',
         subject: `Contract Signed: ${contract.contractNumber} ✓`,
-        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'musician')
+        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'musician', signedContractUrl)
       };
       
       console.log('📧 Sending confirmation email to musician:', userSettings?.businessEmail);
       const musicianResult = await this.sendEmail(musicianEmailData);
-      console.log('✅ Musician confirmation email sent');
       
-      return clientResult.success && musicianResult.success;
+      if (!musicianResult.success) {
+        console.error('❌ Failed to send musician confirmation email:', musicianResult.error);
+      } else {
+        console.log('✅ Musician confirmation email sent successfully');
+      }
+      
+      const overallSuccess = clientResult.success && musicianResult.success;
+      console.log(`📧 Email confirmation process completed. Success: ${overallSuccess}`);
+      
+      return overallSuccess;
     } catch (error: any) {
       console.error('❌ Failed to send contract confirmation emails:', error);
       return false;
     }
   }
 
-  // Generate contract confirmation email HTML
-  generateContractConfirmationEmailHTML(contract: any, userSettings: any, recipient: 'client' | 'musician'): string {
+  // FIXED: Generate contract confirmation email HTML with signed contract URL
+  generateContractConfirmationEmailHTML(contract: any, userSettings: any, recipient: 'client' | 'musician', signedContractUrl: string): string {
     const businessName = userSettings?.businessName || 'MusoBuddy';
     const isClient = recipient === 'client';
+    
+    console.log('📧 Generating confirmation email HTML for:', recipient);
+    console.log('📧 Using signed contract URL:', signedContractUrl);
     
     return `
       <!DOCTYPE html>
@@ -304,9 +350,9 @@ export class EmailService {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${contract.cloudStorageUrl || `https://musobuddy.replit.app/api/contracts/public/${contract.id}/pdf`}" 
-               style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              📋 Download Signed Contract
+            <a href="${signedContractUrl}" 
+               style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;" target="_blank">
+              📋 Download Signed Contract (PDF)
             </a>
           </div>
           

@@ -49,7 +49,9 @@ export default function SignContract() {
   const [agreed, setAgreed] = useState(false);
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [venueAddress, setVenueAddress] = useState("");
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Load contract details
   useEffect(() => {
@@ -132,6 +134,7 @@ export default function SignContract() {
     const requiredMissingFields = missingFields.filter(field => {
       if (field === 'clientPhone' && !clientPhone.trim()) return true;
       if (field === 'clientAddress' && !clientAddress.trim()) return true;
+      if (field === 'venueAddress' && !venueAddress.trim()) return true;
       return false;
     });
 
@@ -146,10 +149,13 @@ export default function SignContract() {
 
     setSigning(true);
     try {
+      console.log('🔥 FRONTEND: Starting contract signing process...');
+      
       const response = await fetch(`/api/contracts/sign/${contractId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json', // CRITICAL: Ensure we expect JSON
         },
         body: JSON.stringify({
           signatureName: signatureName.trim(),
@@ -162,6 +168,9 @@ export default function SignContract() {
         }),
       });
 
+      console.log('🔥 FRONTEND: Response status:', response.status);
+      console.log('🔥 FRONTEND: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to sign contract' }));
         throw new Error(errorData.error || 'Failed to sign contract');
@@ -170,16 +179,24 @@ export default function SignContract() {
       const result = await response.json();
       console.log('🔥 FRONTEND: Success response received:', result);
       
-      // Update local contract state
+      // CRITICAL FIX: Update local contract state
       setContract(prev => prev ? {
         ...prev,
         status: 'signed',
         signedAt: result.signedAt || new Date().toISOString()
       } : null);
 
-      // Show success state instead of just toast - THIS IS THE CRITICAL FIX
+      // CRITICAL FIX: Show success state
       setSigned(true);
       console.log('🔥 FRONTEND: setSigned(true) called - should show green success box');
+
+      // OPTIONAL: Add a small delay to ensure state updates are processed
+      setTimeout(() => {
+        toast({
+          title: "Success",
+          description: "Contract signed successfully! Confirmation emails have been sent.",
+        });
+      }, 100);
 
     } catch (error) {
       console.error("Error signing contract:", error);
@@ -456,6 +473,22 @@ export default function SignContract() {
                           value={clientAddress}
                           onChange={(e) => setClientAddress(e.target.value)}
                           placeholder="123 Main Street, London, SW1A 1AA"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    {missingFields.includes('venueAddress') && (
+                      <div>
+                        <Label htmlFor="venueAddress" className="text-blue-700 font-medium">
+                          Venue Address
+                        </Label>
+                        <Input
+                          id="venueAddress"
+                          type="text"
+                          value={venueAddress}
+                          onChange={(e) => setVenueAddress(e.target.value)}
+                          placeholder="Event venue address"
                           className="mt-1"
                         />
                       </div>
