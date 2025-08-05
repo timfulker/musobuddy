@@ -498,17 +498,24 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             submitBtn.style.background = '#6b7280';
             
             try {
-                console.log('🔥 FIXED: Starting contract signing with fetch()...');
+                // CRITICAL FIX: Use absolute URL for cross-origin request from R2 to Replit
+                const apiUrl = window.location.protocol === 'https:' && window.location.hostname.includes('r2.dev') 
+                    ? \`https://\${window.location.hostname.split('.')[0].replace('pub-', '')}.replit.app/api/contracts/sign/${contract.id}\`
+                    : \`/api/contracts/sign/${contract.id}\`;
                 
-                // CRITICAL FIX: Use fetch() with proper headers for JSON API
-                const response = await fetch(\`/api/contracts/sign/${contract.id}\`, {
+                console.log('🔥 FIXED: Starting contract signing with fetch()...');
+                console.log('🔥 FIXED: API URL:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'Cache-Control': 'no-cache'
+                        'Cache-Control': 'no-cache',
+                        'X-Requested-With': 'XMLHttpRequest' // Mark as AJAX request
                     },
-                    credentials: 'same-origin',
+                    mode: 'cors', // CRITICAL: Enable CORS for cross-origin requests
+                    credentials: 'omit', // CRITICAL: Don't send credentials for cross-origin signing
                     body: JSON.stringify({
                         clientSignature: name,
                         clientIP: '0.0.0.0', // Placeholder - server will get real IP
