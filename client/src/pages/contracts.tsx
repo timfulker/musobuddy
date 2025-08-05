@@ -265,15 +265,22 @@ export default function Contracts() {
       };
 
       // Step 1: Create contract in database
-      const response = await apiRequest("/api/contracts", {
+      const response = await fetch("/api/contracts", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify(contractData),
       });
       
-      // The response IS the contract directly (not wrapped in data property)
-      const createdContract = response;
+      if (!response.ok) {
+        throw new Error(`Contract creation failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const createdContract = await response.json();
       console.log('✅ Contract created with ID:', createdContract?.id);
-      console.log('📋 Full contract response:', response);
+      console.log('📋 Full contract response:', createdContract);
 
       // Validate we have a contract ID before proceeding
       if (!createdContract?.id) {
