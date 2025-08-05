@@ -118,17 +118,10 @@ export async function uploadContractToCloud(
   try {
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
-    // Generate PDF using the working contract PDF generator with signature data
-    console.log('📥 Importing contract PDF generator...');
-    const pdfModule = await import('../working-contract-pdf');
-    console.log('📥 Available exports:', Object.keys(pdfModule));
-    
-    const { generateContractPDF } = pdfModule;
-    if (!generateContractPDF) {
-      throw new Error('generateContractPDF function not found in module exports');
-    }
-    
-    console.log('📄 Generating contract PDF with signature details...');
+    // Generate PDF using the UNIFIED contract PDF generator with signature data
+    console.log('📥 Importing UNIFIED contract PDF generator...');
+    const { generateContractPDF } = await import('../unified-contract-pdf');
+    console.log('📄 Generating contract PDF with UNIFIED generator...');
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
@@ -420,7 +413,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             
             <a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
-        <form id="signingForm" action="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}" method="POST">
+        <!-- CRITICAL FIX: Form uses onsubmit handler to prevent traditional submission -->
+        <form id="signingForm" onsubmit="return handleSign(event);">
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h4>Client Information</h4>
                 <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Fields marked with a blue border must be completed before signing</p>
@@ -451,37 +445,44 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     
     <script>
         let signatureCaptured = false;
-        let isSubmitting = false;
+        let contractSigned = false;
         
-        // Signature pad click handler
-        document.getElementById('signaturePad').onclick = function() {
-            const name = document.getElementById('clientName').value;
-            if (!name.trim()) {
+        // CRITICAL FIX: JavaScript signature capture
+        function captureSignature() {
+            const name = document.getElementById('clientName').value.trim();
+            if (!name) {
                 alert('Please enter your full name first');
+                document.getElementById('clientName').focus();
                 return;
             }
             
-            // Simple signature capture - mark as signed
             signatureCaptured = true;
-            this.innerHTML = '<p style="text-align: center; color: #28a745; margin-top: 50px;">✓ Signed by: ' + name + '</p>';
-            this.style.borderColor = '#28a745';
-            this.style.background = '#f8fff9';
+            const signaturePad = document.getElementById('signaturePad');
+            signaturePad.innerHTML = '<p style="text-align: center; color: #10b981; margin: 0; font-weight: bold;">✓ Signed by: ' + name + '</p>';
+            signaturePad.style.borderColor = '#10b981';
+            signaturePad.style.background = '#ecfdf5';
             
             // Set signature data
             document.getElementById('clientSignature').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
-        };
+        }
         
-        // Form submission handler
-        document.getElementById('signingForm').onsubmit = function(e) {
-            e.preventDefault();
+        // CRITICAL FIX: Handle form submission with fetch() instead of traditional form submission
+        async function handleSign(event) {
+            event.preventDefault(); // Prevent traditional form submission
             
-            if (isSubmitting) {
-                return false;
+            if (contractSigned) {
+                return false; // Prevent double submission
             }
             
-            const name = document.getElementById('clientName').value;
-            if (!name.trim()) {
+            // Validation
+            const name = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const address = document.getElementById('clientAddress').value.trim();
+            const venueAddress = document.getElementById('venueAddress').value.trim();
+            
+            if (!name) {
                 alert('Please enter your full name');
+                document.getElementById('clientName').focus();
                 return false;
             }
             
@@ -490,16 +491,68 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 return false;
             }
             
-            // Disable submit button and show loading
-            isSubmitting = true;
+            // Show loading state
             const submitBtn = document.querySelector('.btn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Signing Contract...';
-            submitBtn.style.background = '#6c757d';
+            submitBtn.style.background = '#6b7280';
             
-            // Submit the form
-            this.submit();
-        };
+            try {
+                console.log('🔥 FIXED: Starting contract signing with fetch()...');
+                
+                // CRITICAL FIX: Use fetch() with proper headers for JSON API
+                const response = await fetch('/api/contracts/sign/${contract.id}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        clientSignature: name,
+                        clientIP: '0.0.0.0', // Placeholder - server will get real IP
+                        clientPhone: phone || undefined,
+                        clientAddress: address || undefined,
+                        venueAddress: venueAddress || undefined
+                    })
+                });
+                
+                console.log('🔥 FIXED: Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Failed to sign contract' }));
+                    throw new Error(errorData.error || 'Failed to sign contract');
+                }
+                
+                const result = await response.json();
+                console.log('🔥 FIXED: Success response:', result);
+                
+                // CRITICAL FIX: Show success message instead of displaying JSON
+                contractSigned = true;
+                submitBtn.textContent = 'Contract Signed ✓';
+                submitBtn.style.background = '#10b981';
+                
+                // Show success message
+                alert('✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.');
+                
+            } catch (error) {
+                console.error('🔥 FIXED: Signing error:', error);
+                alert('Failed to sign contract: ' + error.message + '. Please try again.');
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign Contract';
+                submitBtn.style.background = '#1e3a8a';
+            }
+            
+            return false; // Always prevent traditional form submission
+        }
+        
+        // Update signature pad click handler to use the function
+        document.getElementById('signaturePad').onclick = captureSignature;
+        
+        console.log('🔥 FIXED: Contract signing page loaded with proper JavaScript handling');
     </script>
 </body>
 </html>

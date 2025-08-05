@@ -207,6 +207,21 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // SIMPLE TEST: Check if the form submission fix is working
+  app.get('/api/debug/test-json-response', (req: any, res) => {
+    console.log('🧪 TEST: JSON response test endpoint called');
+    console.log('🧪 TEST: Request headers:', req.headers);
+    
+    // This should always return JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      success: true,
+      message: 'This is a JSON response',
+      timestamp: new Date().toISOString(),
+      note: 'If you see this as raw JSON in browser instead of being handled by JavaScript, the form fix is needed'
+    });
+  });
+
   // SIMPLE TEST: Check if the JSON response handling is working
   app.get('/api/debug/test-json-response', (req: any, res) => {
     console.log('🧪 TEST: JSON response test endpoint called');
