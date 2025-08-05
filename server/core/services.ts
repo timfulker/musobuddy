@@ -317,4 +317,38 @@ export class EmailService {
       </html>
     `;
   }
+
+  // Generate email signature for templates
+  generateEmailSignature(userSettings: any): string {
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const businessEmail = userSettings?.businessEmail || '';
+    const businessPhone = userSettings?.businessPhone || '';
+    const businessAddress = userSettings?.businessAddress || '';
+    
+    return `
+      <br><br>
+      <div style="border-top: 1px solid #ddd; margin-top: 20px; padding-top: 20px; color: #666; font-size: 14px;">
+        <strong>${businessName}</strong><br>
+        ${businessEmail ? `Email: ${businessEmail}<br>` : ''}
+        ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
+        ${businessAddress ? `${businessAddress}<br>` : ''}
+        <br>
+        <em>Powered by MusoBuddy - Music Business Management</em>
+      </div>
+    `;
+  }
+
+  // Convert HTML to plain text for email
+  htmlToPlainText(html: string): string {
+    return html
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 }

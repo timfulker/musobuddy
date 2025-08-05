@@ -41,6 +41,8 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 
 ## Recent Changes
 
+- **Contract Client Fillable Fields Restored**: Implemented missing functionality from backup files - signing page now includes client fillable fields (phone, address, venue address) with blue highlighting for required fields, proper form validation, and field updates during signing process. Complete contract signing workflow restored (August 5, 2025)
+- **Contract Confirmation Emails Fixed**: Added missing email confirmation system for both client and musician after contract signing, with professional HTML templates and proper service method signatures. Field name mappings corrected for `clientSignature` and `clientIpAddress` (August 5, 2025)
 - **Contract Signing Workflow Fixed**: Resolved critical issues in contract signing pages - PDF links now use direct R2 URLs (no authentication), signature box is clickable with visual feedback, form submits to correct endpoint with proper field names, and send button properly manages state to prevent double-submission. Contract signing workflow is now fully functional (August 5, 2025)
 - **Invoice Email Payment Terms Fixed**: Email template now uses dynamic logic based on `userSettings.defaultInvoiceDueDays` - if 1 day shows "on receipt", otherwise shows "within X days of invoice date". Perfect consistency with invoice system logic (August 5, 2025)
 - **Contract Email Signing Page Fixed**: Contract emails were linking to PDF view pages instead of signing pages. Email template now uses `contract.signingPageUrl` when available, with button text changing to "Sign Contract" vs "View Contract". Clients properly directed to signing functionality (August 5, 2025)

@@ -2401,7 +2401,7 @@ export async function registerRoutes(app: Express) {
         }
         
         // Send confirmation emails to both parties
-        await emailService.sendContractConfirmationEmails(signedContract, userSettings, cloudResult.url);
+        await emailService.sendContractConfirmationEmails(signedContract, userSettings);
         console.log('✅ Contract confirmation emails sent successfully');
         
       } catch (emailError) {

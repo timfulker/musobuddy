@@ -584,10 +584,11 @@ export class Storage {
       const updateData = {
         status: 'signed' as const,
         signedAt: signatureData.signedAt || new Date(),
-        clientSignature: signatureData.signatureName,
+        clientSignature: signatureData.clientSignature || signatureData.signatureName,
         clientPhone: signatureData.clientPhone || existingContract.clientPhone,
         clientAddress: signatureData.clientAddress || existingContract.clientAddress,
         venueAddress: signatureData.venueAddress || existingContract.venueAddress,
+        clientIpAddress: signatureData.clientIP || signatureData.clientIpAddress,
         updatedAt: new Date()
       };
       
