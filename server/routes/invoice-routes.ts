@@ -1,33 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-
-// Enhanced authentication middleware
-const isAuthenticated = async (req: any, res: any, next: any) => {
-  const sessionUserId = req.session?.userId;
-  if (!sessionUserId || (typeof sessionUserId === 'string' && sessionUserId.trim() === '')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  try {
-    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      req.session.destroy((err: any) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      return res.status(401).json({ error: 'User account no longer exists' });
-    }
-
-    req.user = user;
-    next();
-    
-  } catch (error: any) {
-    console.error('❌ Authentication validation error:', error);
-    return res.status(500).json({ error: 'Authentication validation failed' });
-  }
-};
+import { requireAuth } from '../middleware/auth';
 
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
@@ -82,9 +56,9 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get all invoices for authenticated user
-  app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
+  app.get('/api/invoices', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -99,9 +73,9 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Create new invoice
-  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
+  app.post('/api/invoices', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -172,9 +146,9 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Update invoice
-  app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/invoices/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -204,10 +178,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Delete invoice
-  app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/invoices/:id', requireAuth, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -240,11 +214,11 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Send invoice via email
-  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+  app.post('/api/invoices/send-email', requireAuth, async (req: any, res) => {
     try {
       const { invoiceId, customMessage } = req.body;
       const parsedInvoiceId = parseInt(invoiceId);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -321,10 +295,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get individual invoice for viewing
-  app.get('/api/invoices/:id/view', isAuthenticated, async (req: any, res) => {
+  app.get('/api/invoices/:id/view', requireAuth, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -355,10 +329,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get invoice PDF
-  app.get('/api/invoices/:id/pdf', isAuthenticated, async (req: any, res) => {
+  app.get('/api/invoices/:id/pdf', requireAuth, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -384,10 +358,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Download invoice PDF
-  app.get('/api/invoices/:id/download', isAuthenticated, async (req: any, res) => {
+  app.get('/api/invoices/:id/download', requireAuth, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -413,10 +387,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Regenerate invoice
-  app.post('/api/invoices/:id/regenerate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/invoices/:id/regenerate', requireAuth, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });

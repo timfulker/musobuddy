@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth } from '../auth/clean-auth-system';
+import { requireAuth } from '../middleware/auth';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
@@ -29,7 +29,7 @@ export function registerBookingRoutes(app: Express) {
     validateBody(schemas.createBooking),
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       const bookingData = {
         userId,

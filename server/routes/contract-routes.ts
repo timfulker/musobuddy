@@ -4,41 +4,15 @@ import { EmailService } from "../core/services";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-
-// Enhanced authentication middleware
-const isAuthenticated = async (req: any, res: any, next: any) => {
-  const sessionUserId = req.session?.userId;
-  if (!sessionUserId || (typeof sessionUserId === 'string' && sessionUserId.trim() === '')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  try {
-    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      req.session.destroy((err: any) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      return res.status(401).json({ error: 'User account no longer exists' });
-    }
-
-    req.user = user;
-    next();
-    
-  } catch (error: any) {
-    console.error('❌ Authentication validation error:', error);
-    return res.status(500).json({ error: 'Authentication validation failed' });
-  }
-};
+import { requireAuth } from '../middleware/auth';
 
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
 
   // Get all contracts for authenticated user
-  app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/contracts', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       const contracts = await storage.getContracts(userId);
       console.log(`✅ Retrieved ${contracts.length} contracts for user ${userId}`);
       res.json(contracts);
@@ -50,7 +24,7 @@ export function registerContractRoutes(app: Express) {
 
   // Create new contract
   app.post('/api/contracts', 
-    isAuthenticated, 
+    requireAuth, 
     validateBody(schemas.createContract), 
     asyncHandler(async (req: any, res) => {
     try {
@@ -68,7 +42,7 @@ export function registerContractRoutes(app: Express) {
       }
 
       const contractData = {
-        userId: req.session.userId,
+        userId: req.user.userId,
         contractNumber,
         clientName: req.body.clientName,
         clientEmail: req.body.clientEmail || null,
@@ -88,7 +62,7 @@ export function registerContractRoutes(app: Express) {
       };
       
       const newContract = await storage.createContract(contractData);
-      console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
+      console.log(`✅ Created contract #${newContract.id} for user ${req.user.userId}`);
       
       // Generate signing page
       try {
@@ -127,7 +101,7 @@ export function registerContractRoutes(app: Express) {
   }));
 
   // Send contract via email
-  app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contracts/send-email', requireAuth, async (req: any, res) => {
     try {
       const { contractId, customMessage } = req.body;
       const parsedContractId = parseInt(contractId);
@@ -137,7 +111,7 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      const userSettings = await storage.getUserSettings(req.session.userId);
+      const userSettings = await storage.getUserSettings(req.user.userId);
       if (!userSettings) {
         return res.status(404).json({ error: 'User settings not found' });
       }
@@ -181,14 +155,14 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Get individual contract
-  app.get('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
       
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       const contract = await storage.getContract(contractId);
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
@@ -212,14 +186,14 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Update contract
-  app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const updatedContract = await storage.updateContract(contractId, req.body);
       if (!updatedContract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
-      console.log(`✅ Updated contract #${contractId} for user ${req.session.userId}`);
+      console.log(`✅ Updated contract #${contractId} for user ${req.user.userId}`);
       res.json(updatedContract);
     } catch (error) {
       console.error('❌ Failed to update contract:', error);
@@ -228,11 +202,11 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Delete contract
-  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       await storage.deleteContract(contractId);
-      console.log(`✅ Deleted contract #${contractId} for user ${req.session.userId}`);
+      console.log(`✅ Deleted contract #${contractId} for user ${req.user.userId}`);
       res.json({ success: true });
     } catch (error) {
       console.error('❌ Failed to delete contract:', error);
@@ -241,10 +215,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Bulk delete contracts
-  app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contracts/bulk-delete', requireAuth, async (req: any, res) => {
     try {
       const { contractIds } = req.body;
-      const userId = req.session.userId;
+      const userId = req.user.userId;
       
       if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
         return res.status(400).json({ error: 'Contract IDs array is required' });

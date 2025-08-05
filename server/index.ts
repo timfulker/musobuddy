@@ -8,7 +8,7 @@ import { serveStaticFixed } from "./static-serve";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
 import { ENV } from "./core/environment";
-import { createSessionMiddleware } from "./core/session-rebuilt";
+// Clean JWT-based authentication - no sessions needed
 
 const app = express();
 
@@ -400,87 +400,78 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CRITICAL FIX: Session middleware setup with proper order
-console.log('🔧 Setting up FIXED session middleware...');
-const sessionMiddleware = createSessionMiddleware();
-app.use(sessionMiddleware);
-
-// Clean up invalid sessions globally to prevent frontend 404s
-app.use((req: any, res, next) => {
-  if (req.session && (req.session.userId === undefined || !req.session.userId)) {
-    console.log('🧹 Cleaning up invalid session:', { 
-      sessionId: req.sessionID, 
-      userId: req.session.userId,
-      email: req.session.email 
-    });
-    req.session.destroy((err: any) => {
-      if (err) console.error('Session destroy error:', err);
-    });
-  }
-  next();
-});
-console.log('✅ FIXED session middleware configured');
+// JWT-based authentication - no session middleware needed
+console.log('🔧 Setting up JWT-based authentication...');
 
 // Authentication routes will be configured by registerRoutes() to avoid duplicates
 console.log('🔐 Authentication routes will be configured by registerRoutes()');
 
-// Session debug endpoint for troubleshooting
-app.get('/api/debug/session', (req: any, res) => {
+// Authentication debug endpoint
+app.get('/api/debug/auth', (req: any, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  
   const debugInfo = {
     timestamp: new Date().toISOString(),
-    sessionId: req.sessionID,
-    sessionExists: !!req.session,
-    userId: req.session?.userId,
-    email: req.session?.email,
-    isAdmin: req.session?.isAdmin,
-    cookies: req.headers.cookie ? 'present' : 'missing',
+    hasAuthHeader: !!authHeader,
+    hasToken: !!token,
+    tokenPreview: token ? `${token.substring(0, 10)}...` : null,
     userAgent: req.headers['user-agent']?.substring(0, 50),
     secure: req.secure,
     protocol: req.protocol,
     hostname: req.hostname
   };
 
-  console.log('🔍 Session debug:', debugInfo);
+  console.log('🔍 Auth debug:', debugInfo);
   res.json(debugInfo);
 });
 
 // Test authentication endpoint
 app.get('/api/test-auth', (req: any, res) => {
   console.log('🧪 Test auth endpoint called');
-  console.log('🧪 Session state:', {
-    sessionId: req.sessionID,
-    userId: req.session?.userId,
-    email: req.session?.email
-  });
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
   
-  if (req.session?.userId) {
+  if (token) {
     res.json({ 
       authenticated: true,
-      userId: req.session.userId,
-      email: req.session.email,
-      message: 'Authentication working correctly'
+      hasToken: true,
+      tokenPreview: `${token.substring(0, 10)}...`,
+      message: 'JWT Authentication working correctly'
     });
   } else {
     res.status(401).json({ 
       authenticated: false,
-      message: 'Not authenticated - use /api/auth/admin-login first'
+      hasToken: false,
+      message: 'Not authenticated - use /api/auth/login first'
     });
   }
 });
 
-// Serve the session authentication test page
-app.get('/session-test', (req: any, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  
-  try {
-    const testPagePath = path.join(process.cwd(), 'session-auth-test.html');
-    const testPageContent = fs.readFileSync(testPagePath, 'utf8');
-    res.setHeader('Content-Type', 'text/html');
-    res.send(testPageContent);
-  } catch (error) {
-    res.status(404).send('Session test page not found');
-  }
+// JWT authentication test page
+app.get('/auth-test', (req: any, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`
+    <html>
+      <head><title>JWT Authentication Test</title></head>
+      <body style="font-family: Arial, sans-serif; padding: 20px;">
+        <h1>JWT Authentication Test</h1>
+        <p>This tool helps test JWT authentication between frontend and backend.</p>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+        <script>
+          async function testAuth() {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/test-auth', {
+              headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+            });
+            const result = await response.json();
+            document.getElementById('result').innerHTML = JSON.stringify(result, null, 2);
+          }
+        </script>
+      </body>
+    </html>
+  `);
 });
 
 // SMS Service test endpoint  
@@ -994,21 +985,14 @@ async function startServer() {
           return res.redirect('/?error=user_not_found');
         }
 
-        // Restore session on server
-        req.session.userId = user.id;
+        // Generate JWT token for user
+        const { generateAuthToken } = await import('./middleware/auth');
+        const authToken = generateAuthToken(user.userId, user.email, true);
         
-        console.log('✅ Server-side session restored for:', user.email);
+        console.log('✅ JWT token generated for:', user.email);
         
-        // Force session save before redirect
-        req.session.save((err: any) => {
-          if (err) {
-            console.error('❌ Session save error:', err);
-            return res.redirect('/?error=session_save_failed');
-          }
-          
-          // NOW redirect to the frontend trial-success page - this lets React Router handle the UX
-          res.redirect('/trial-success');
-        });
+        // Redirect to trial-success page with token in URL for client-side storage
+        res.redirect(`/trial-success?token=${authToken}`);
         
       } catch (error: any) {
         console.error('❌ Server-side session restoration error:', error);

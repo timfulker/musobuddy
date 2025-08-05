@@ -3,41 +3,15 @@ import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-
-// Admin authentication middleware
-const isAdmin = async (req: any, res: any, next: any) => {
-  const sessionUserId = req.session?.userId;
-  if (!sessionUserId || !req.session.isAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-
-  try {
-    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      req.session.destroy((err: any) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      return res.status(401).json({ error: 'User account no longer exists' });
-    }
-
-    req.user = user;
-    next();
-    
-  } catch (error: any) {
-    console.error('❌ Admin authentication error:', error);
-    return res.status(500).json({ error: 'Authentication validation failed' });
-  }
-};
+import { requireAuth } from '../middleware/auth';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
 
   // Dashboard statistics
-  app.get('/api/dashboard/stats', isAdmin, async (req: any, res) => {
+  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       // Get all data for the user
       const [contracts, invoices, bookings] = await Promise.all([
@@ -128,9 +102,9 @@ export function registerAdminRoutes(app: Express) {
     try {
       const authStatus = {
         hasSession: !!req.session,
-        isAuthenticated: !!req.session?.userId,
-        isAdmin: !!req.session?.isAdmin,
-        userId: req.session?.userId || null,
+        requireAuth: !!req.user.userId,
+        requireAuth: !!req.session?.requireAuth,
+        userId: req.user.userId || null,
         email: req.session?.email || null,
         timestamp: new Date().toISOString()
       };
@@ -147,7 +121,7 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Notifications (placeholder)
-  app.get('/api/notifications', isAdmin, async (req: any, res) => {
+  app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
       // This could be expanded to include real notifications
       // For now, return empty array

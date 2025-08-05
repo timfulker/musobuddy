@@ -3,41 +3,15 @@ import { storage } from "../core/storage";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-
-// Enhanced authentication middleware
-const isAuthenticated = async (req: any, res: any, next: any) => {
-  const sessionUserId = req.session?.userId;
-  if (!sessionUserId || (typeof sessionUserId === 'string' && sessionUserId.trim() === '')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  try {
-    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      req.session.destroy((err: any) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      return res.status(401).json({ error: 'User account no longer exists' });
-    }
-
-    req.user = user;
-    next();
-    
-  } catch (error: any) {
-    console.error('❌ Authentication validation error:', error);
-    return res.status(500).json({ error: 'Authentication validation failed' });
-  }
-};
+import { requireAuth } from '../middleware/auth';
 
 export function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
 
   // Get user settings
-  app.get('/api/settings', isAuthenticated, async (req: any, res) => {
+  app.get('/api/settings', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       const settings = await storage.getSettings(userId);
       
       if (!settings) {
@@ -67,12 +41,12 @@ export function registerSettingsRoutes(app: Express) {
 
   // Update user settings
   app.patch('/api/settings', 
-    isAuthenticated,
+    requireAuth,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       console.log(`⚙️ Updating settings for user ${userId}:`, req.body);
       
@@ -92,12 +66,12 @@ export function registerSettingsRoutes(app: Express) {
 
   // Add instrument to settings
   app.post('/api/settings/instrument', 
-    isAuthenticated,
+    requireAuth,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       const { instrument } = req.body;
       
       if (!instrument || typeof instrument !== 'string') {
@@ -155,9 +129,9 @@ export function registerSettingsRoutes(app: Express) {
   });
 
   // User-specific gig types aggregated from bookings
-  app.get('/api/user-gig-types', isAuthenticated, async (req: any, res) => {
+  app.get('/api/user-gig-types', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       // Get all unique gig types from user's bookings
       const bookings = await storage.getBookings(userId);
