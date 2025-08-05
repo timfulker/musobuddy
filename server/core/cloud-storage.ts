@@ -404,9 +404,9 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <h3>Electronic Signature</h3>
             <p>Please review the contract details and agree to the terms by signing below.</p>
             
-            <a href="/api/contracts/${contract.id}/pdf" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
+            <a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
-        <form id="signingForm" action="/api/contracts/sign/${contract.id}" method="POST">
+        <form id="signingForm" action="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}" method="POST">
             <label for="clientName">Full Name:</label>
             <input type="text" id="clientName" name="clientName" required style="width: 100%; padding: 8px; margin: 10px 0;">
             
@@ -414,25 +414,63 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <div class="signature-pad" id="signaturePad">
                 <p style="text-align: center; color: #666; margin-top: 60px;">Click here to sign</p>
             </div>
-            <input type="hidden" id="signatureData" name="signatureData">
+            <input type="hidden" id="clientSignature" name="clientSignature">
+            <input type="hidden" name="clientIP" value="0.0.0.0">
             
             <button type="submit" class="btn">Sign Contract</button>
         </form>
     </div>
     
     <script>
-        // Simple signature capture (you could enhance with a proper signature library)
-        document.getElementById('signingForm').onsubmit = function(e) {
+        let signatureCaptured = false;
+        let isSubmitting = false;
+        
+        // Signature pad click handler
+        document.getElementById('signaturePad').onclick = function() {
             const name = document.getElementById('clientName').value;
             if (!name.trim()) {
-                alert('Please enter your full name');
-                e.preventDefault();
+                alert('Please enter your full name first');
+                return;
+            }
+            
+            // Simple signature capture - mark as signed
+            signatureCaptured = true;
+            this.innerHTML = '<p style="text-align: center; color: #28a745; margin-top: 50px;">✓ Signed by: ' + name + '</p>';
+            this.style.borderColor = '#28a745';
+            this.style.background = '#f8fff9';
+            
+            // Set signature data
+            document.getElementById('clientSignature').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
+        };
+        
+        // Form submission handler
+        document.getElementById('signingForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            if (isSubmitting) {
                 return false;
             }
             
-            // Set signature data (simplified - in production you'd capture actual signature)
-            document.getElementById('signatureData').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
-            return true;
+            const name = document.getElementById('clientName').value;
+            if (!name.trim()) {
+                alert('Please enter your full name');
+                return false;
+            }
+            
+            if (!signatureCaptured) {
+                alert('Please click in the signature box to sign the contract');
+                return false;
+            }
+            
+            // Disable submit button and show loading
+            isSubmitting = true;
+            const submitBtn = document.querySelector('.btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing Contract...';
+            submitBtn.style.background = '#6c757d';
+            
+            // Submit the form
+            this.submit();
         };
     </script>
 </body>

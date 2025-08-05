@@ -39,6 +39,12 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
     - **API Design**: RESTful API endpoints, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components like invoice and contract generation are designed as entirely separate, isolated systems with their own types, PDF generation, cloud storage, and API endpoints to prevent cross-contamination and cascading failures.
 
+## Recent Changes
+
+- **Contract Signing Workflow Fixed**: Resolved critical issues in contract signing pages - PDF links now use direct R2 URLs (no authentication), signature box is clickable with visual feedback, form submits to correct endpoint with proper field names, and send button properly manages state to prevent double-submission. Contract signing workflow is now fully functional (August 5, 2025)
+- **Invoice Email Payment Terms Fixed**: Email template now uses dynamic logic based on `userSettings.defaultInvoiceDueDays` - if 1 day shows "on receipt", otherwise shows "within X days of invoice date". Perfect consistency with invoice system logic (August 5, 2025)
+- **Contract Email Signing Page Fixed**: Contract emails were linking to PDF view pages instead of signing pages. Email template now uses `contract.signingPageUrl` when available, with button text changing to "Sign Contract" vs "View Contract". Clients properly directed to signing functionality (August 5, 2025)
+
 ## External Dependencies
 
 - **Cloud Services**:
