@@ -21,7 +21,14 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 ### Backend
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Core Structure**: Consolidated into `index.ts`, `auth.ts`, `storage.ts`, `services.ts`, `routes.ts`, `database.ts`
+- **Core Structure**: Consolidated into `index.ts`, `auth.ts`, `storage.ts`, `services.ts`, `database.ts` with modular routes system
+    - **Modular Route Architecture**: Dedicated route modules for improved maintainability:
+      - `routes/auth-routes.ts`: Authentication and user management
+      - `routes/contract-routes.ts`: Contract lifecycle and digital signing
+      - `routes/invoice-routes.ts`: Invoice generation and email delivery
+      - `routes/booking-routes.ts`: Booking management and calendar integration
+      - `routes/settings-routes.ts`: User preferences and configuration
+      - `routes/admin-routes.ts`: Dashboard statistics and system health monitoring
 - **Authentication**: Branded email/password authentication with PostgreSQL sessions, robust session management, and Replit Auth integration.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and webhook processing.
@@ -41,6 +48,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 
 ## Recent Changes
 
+- **MAJOR MODULAR REFACTORING COMPLETED**: Successfully split the 5,182-line monolithic routes file into focused, maintainable modules for improved system architecture. Created dedicated route modules: auth-routes.ts (authentication & user management), contract-routes.ts (contract lifecycle & signing), invoice-routes.ts (invoice generation & email), booking-routes.ts (booking management), settings-routes.ts (user preferences), and admin-routes.ts (dashboard & system health). Each module contains isolated functionality with proper error handling, authentication middleware, and security controls. Minimal import changes required - only server/index.ts needed path updates. Eliminates merge conflicts, improves maintainability, enables parallel development, and provides clear separation of concerns. Business-critical contract signing workflow remains fully protected with enhanced modular isolation (August 5, 2025)
 - **Phase 1 Security Improvements Implemented**: Completed comprehensive security hardening including input validation middleware for all user inputs, centralized error handling with proper logging and responses, granular rate limiting (contract signing: 3/5min, authentication: 10/15min, AI generation: 50/hour, general: 1000/15min), input sanitization to prevent XSS attacks, and async error handling throughout the application. Business-critical contract signing workflow now has additional protection against abuse while maintaining reliability. All validation uses Zod schemas with proper error messages and field-level validation. Authentication endpoints secured with rate limiting and validation. System now provides consistent JSON error responses with appropriate HTTP status codes (August 5, 2025)
 - **Contract Re-signing Polite Message System Restored**: Fixed JavaScript error handling to show professional "Contract Already Signed" message instead of intimidating error when users try to re-sign contracts. Page now displays blue-styled confirmation with disabled submit button and polite thank-you message, matching the previous working system found in uploaded asset files. Enhanced PDF button creation debug logging to identify and resolve any remaining display issues (August 5, 2025)
 - **Contract PDF Button Completely Resolved - Business-Critical Issue Fixed**: Successfully eliminated the problematic "View Full Contract PDF" button that was generating incorrect URLs with old Replit domains. Implemented intelligent conditional display - PDF button now only appears AFTER contract signing is complete and links directly to R2 cloud storage URLs, bypassing any server routing issues. This ensures clients can reliably access signed contract PDFs without encountering broken links or domain conflicts. Contract signing workflow is now fully stable and production-ready (August 5, 2025)

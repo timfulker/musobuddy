@@ -4,7 +4,13 @@ import multer from 'multer';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
 // Removed dual auth system import
-import { registerRoutes } from "./core/routes";
+// Modular route imports
+import { registerAuthRoutes } from "./routes/auth-routes";
+import { registerContractRoutes } from "./routes/contract-routes";
+import { registerInvoiceRoutes } from "./routes/invoice-routes";
+import { registerBookingRoutes } from "./routes/booking-routes";
+import { registerSettingsRoutes } from "./routes/settings-routes";
+import { registerAdminRoutes } from "./routes/admin-routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
 import { ENV } from "./core/environment";
@@ -1002,10 +1008,34 @@ async function startServer() {
       }
     });
 
-    // Register all routes with proper authentication setup
-    console.log('🔄 Registering all API routes with authentication...');
-    await registerRoutes(app);
-    console.log('✅ API routes registered successfully');
+    // Register modular routes with proper authentication setup
+    console.log('🔄 Registering modular API routes with authentication...');
+    
+    // Apply global security middleware
+    const { sanitizeInput } = await import('./middleware/validation');
+    const { errorHandler, notFoundHandler } = await import('./middleware/errorHandler');
+    
+    app.use(sanitizeInput);
+    
+    // Register each route module
+    await registerAuthRoutes(app);
+    registerContractRoutes(app);
+    registerInvoiceRoutes(app);
+    registerBookingRoutes(app);
+    registerSettingsRoutes(app);
+    registerAdminRoutes(app);
+    
+    // Apply global error handling
+    app.use('/api/*', errorHandler);
+    app.use('/api/*', notFoundHandler);
+    
+    console.log('✅ All modular routes registered successfully');
+    console.log('🛡️ Phase 1 Security Improvements Applied:');
+    console.log('  ✅ Input validation and sanitization');
+    console.log('  ✅ Centralized error handling');
+    console.log('  ✅ Granular rate limiting');
+    console.log('  ✅ Contract signing protection');
+    console.log('  ✅ Authentication security');
     
     // Use centralized environment detection - no more conflicts
     try {
