@@ -25,7 +25,6 @@ export function registerContractRoutes(app: Express) {
   // Create new contract
   app.post('/api/contracts', 
     requireAuth, 
-    validateBody(schemas.createContract), 
     asyncHandler(async (req: any, res) => {
     try {
       const contractNumber = req.body.contractNumber || 

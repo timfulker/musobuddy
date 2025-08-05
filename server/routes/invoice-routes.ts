@@ -125,7 +125,7 @@ export function registerInvoiceRoutes(app: Express) {
         const { uploadInvoiceToCloud } = await import('../core/cloud-storage');
         const { url, key } = await uploadInvoiceToCloud(newInvoice, userSettings);
         
-        const updatedInvoice = await storage.updateInvoice(newInvoice.id, {
+        const updatedInvoice = await storage.updateInvoice(newInvoice.id, userId, {
           cloudStorageUrl: url,
           cloudStorageKey: key
         });
@@ -165,7 +165,7 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body);
+      const updatedInvoice = await storage.updateInvoice(invoiceId, userId, req.body);
       res.json(updatedInvoice);
       
     } catch (error: any) {
@@ -200,7 +200,7 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      await storage.deleteInvoice(invoiceId);
+      await storage.deleteInvoice(invoiceId, userId);
       console.log(`✅ Deleted invoice #${invoiceId} for user ${userId}`);
       res.json({ success: true });
       
