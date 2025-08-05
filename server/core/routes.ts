@@ -1234,12 +1234,18 @@ export async function registerRoutes(app: Express) {
         const pdfBuffer = await generateIsolatedContractPDF(contractData, userSettings, 'professional');
         
         // Set appropriate headers for PDF download
+        // CRITICAL FIX: Force binary response without JSON middleware interference
+        res.removeHeader('Content-Type');
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
         res.setHeader('Content-Length', pdfBuffer.length.toString());
         
         console.log(`✅ Professional PDF generated and served: ${pdfBuffer.length} bytes`);
-        res.send(pdfBuffer);
+        console.log(`🔍 Buffer is Buffer? ${Buffer.isBuffer(pdfBuffer)}`);
+        
+        // Write raw binary data
+        res.write(pdfBuffer);
+        res.end();
         
       } catch (pdfError: any) {
         console.error('❌ Professional PDF generation failed:', pdfError);

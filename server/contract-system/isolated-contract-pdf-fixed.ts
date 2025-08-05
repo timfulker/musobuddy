@@ -527,6 +527,16 @@ class IsolatedContractPDFGenerator {
 
       console.log(`✅ Professional contract PDF generated: ${pdfBuffer.length} bytes`);
       
+      // CRITICAL DEBUG: Check if PDF buffer is valid
+      const isValidPDF = pdfBuffer.length > 100 && pdfBuffer[0] === 0x25 && pdfBuffer[1] === 0x50 && pdfBuffer[2] === 0x44 && pdfBuffer[3] === 0x46;
+      console.log(`🔍 PDF VALIDATION: Is valid PDF? ${isValidPDF}`);
+      console.log(`🔍 PDF FIRST 20 BYTES: ${pdfBuffer.slice(0, 20)}`);
+      
+      if (!isValidPDF) {
+        console.error(`❌ INVALID PDF DETECTED - returning HTML instead of PDF!`);
+        throw new Error('PDF generation failed - HTML returned instead of PDF buffer');
+      }
+      
       return pdfBuffer;
 
     } catch (error) {
