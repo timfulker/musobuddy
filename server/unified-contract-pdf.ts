@@ -127,20 +127,57 @@ function generateUnifiedContractHTML(
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 20px;
         }
         
+        .metronome-container {
+            width: 70px;
+            height: 70px;
+            background: #5b21b6;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(91, 33, 182, 0.4);
+            flex-shrink: 0;
+        }
+        
+        .metronome-body {
+            width: 20px;
+            height: 32px;
+            background: white;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            position: relative;
+        }
+        
+        .metronome-arm {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(10deg);
+            width: 2px;
+            height: 20px;
+            background: #5b21b6;
+            border-radius: 1px;
+            transform-origin: bottom center;
+        }
+        
         .company-name {
-            font-size: 28px;
+            font-size: 36px;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: -1px;
+            color: white;
+            line-height: 1;
+            margin-bottom: 4px;
         }
         
         .tagline {
-            font-size: 14px;
+            font-size: 16px;
+            color: white;
             opacity: 0.9;
             font-style: italic;
+            font-weight: 500;
         }
         
         .contract-title {
@@ -449,7 +486,11 @@ function generateUnifiedContractHTML(
                 ${contract.status.toUpperCase()}
             </div>
             <div class="logo-section">
-                ${logoHtml}
+                <div class="metronome-container">
+                    <div class="metronome-body">
+                        <div class="metronome-arm"></div>
+                    </div>
+                </div>
                 <div>
                     <div class="company-name">MusoBuddy</div>
                     <div class="tagline">Professional Music Contracts</div>
