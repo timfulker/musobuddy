@@ -1077,8 +1077,9 @@ async function startServer() {
         }
         
         if (contract.r2Key) {
-          const r2Url = `https://musobuddy-storage.r2.cloudflarestorage.com/${contract.r2Key}`;
-          res.json({ r2Url });
+          // Use the correct public R2 URL format that matches the new structure
+          const r2Url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${contract.r2Key}`;
+          res.json({ url: r2Url });
         } else {
           res.status(404).json({ error: 'Contract PDF not available' });
         }
