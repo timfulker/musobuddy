@@ -1,6 +1,7 @@
 import { type Express } from "express";
 import path from "path";
 import { storage } from "./storage";
+import { EmailService } from "./services";
 // Session middleware imported inline
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
@@ -2443,15 +2444,9 @@ export async function registerRoutes(app: Express) {
       // Fallback: Generate and serve PDF directly if no cloud URL
       console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
       const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateIsolatedContractPDF } = await import('../contract-system/isolated-contract-pdf-fixed');
-      // Convert null to undefined for isolated types
-      const contractData = {
-        ...contract,
-        clientEmail: contract.clientEmail || undefined,
-        clientPhone: contract.clientPhone || undefined,
-        clientAddress: contract.clientAddress || undefined
-      };
-      const pdfBuffer = await generateIsolatedContractPDF(contractData, userSettings, 'professional');
+      const { generateWorkingContractPDF } = await import('../working-contract-pdf');
+      
+      const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
@@ -2992,24 +2987,28 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'User settings not found' });
       }
       
-      // Use isolated invoice email service
-      const { sendIsolatedInvoiceEmail } = await import('../invoice-system/invoice-email-service.js');
-      
       // Generate R2 URL if not already done
       let pdfUrl = invoice.cloudStorageUrl;
       if (!pdfUrl) {
-        // Get R2 URL using isolated system
-        const response = await fetch(`http://localhost:5000/api/isolated/invoices/${parsedInvoiceId}/r2-url`, {
-          headers: {
-            'Cookie': req.headers.cookie || ''
-          }
-        });
+        // Generate PDF and upload to R2 using main system
+        const { generateInvoicePDF } = await import('./invoice-pdf-generator');
+        const { uploadToCloudflareR2 } = await import('./cloud-storage');
         
-        if (response.ok) {
-          const data = await response.json();
-          pdfUrl = data.url;
+        const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+        const date = new Date();
+        const dateFolder = date.toISOString().split('T')[0];
+        const cloudStorageKey = `invoices/${dateFolder}/${invoice.invoiceNumber}.pdf`;
+        
+        const uploadResult = await uploadToCloudflareR2(pdfBuffer, cloudStorageKey, 'application/pdf');
+        
+        if (uploadResult.success && uploadResult.url) {
+          await storage.updateInvoice(parsedInvoiceId, {
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key || cloudStorageKey
+          });
+          pdfUrl = uploadResult.url;
         } else {
-          throw new Error('Failed to generate invoice PDF URL');
+          throw new Error('Failed to upload invoice to cloud storage');
         }
       }
       
@@ -3019,9 +3018,46 @@ export async function registerRoutes(app: Express) {
         updatedAt: new Date()
       });
       
-      // Send email with invoice using isolated service
+      // Send email with invoice using email service
+      const emailService = new EmailService();
+      
+      // Prepare email content
       const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
-      const emailResult = await sendIsolatedInvoiceEmail(invoice, userSettings, pdfUrl, subject, req.body.customMessage);
+      const attachmentUrl = pdfUrl;
+      const userCustomMessage = req.body.customMessage || '';
+      
+      const emailContent = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2>Invoice from ${userSettings.businessName || 'MusoBuddy'}</h2>
+          
+          ${userCustomMessage ? `<p>${userCustomMessage}</p>` : ''}
+          
+          <p>Please find your invoice attached. The invoice amount is <strong>£${invoice.amount}</strong>.</p>
+          
+          <p>Payment is due within 30 days of the invoice date.</p>
+          
+          <p>If you have any questions about this invoice, please don't hesitate to contact us.</p>
+          
+          <p>Best regards,<br>${userSettings.businessName || 'MusoBuddy'}</p>
+          
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+          
+          <p><strong>Invoice Details:</strong></p>
+          <ul>
+            <li>Invoice Number: ${invoice.invoiceNumber}</li>
+            <li>Amount: £${invoice.amount}</li>
+            <li>Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}</li>
+          </ul>
+          
+          <p><a href="${attachmentUrl}" style="color: #007cba; text-decoration: none;">Download Invoice PDF</a></p>
+        </div>
+      `;
+      
+      const emailResult = await emailService.sendEmail({
+        to: invoice.clientEmail,
+        subject,
+        html: emailContent
+      });
       
       if (!emailResult.success) {
         throw new Error(emailResult.error || 'Failed to send email');
@@ -4544,9 +4580,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Register completely isolated invoice system BEFORE catch-all
-  const { registerIsolatedInvoiceRoutes } = await import('../invoice-system/invoice-routes-fixed.js');
-  registerIsolatedInvoiceRoutes(app, storage, isAuthenticated);
+  // Main invoice system handles all invoice functionality
 
   // Add main invoice R2 URL endpoint for compatibility
   app.get('/api/invoices/:id/r2-url', isAuthenticated, async (req: any, res) => {
@@ -4597,10 +4631,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== ISOLATED CONTRACT SYSTEM =====
-  // TEMPORARILY DISABLED to test simple system
-  // const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes-fixed');
-  // registerIsolatedContractRoutes(app, storage, isAuthenticated);
+  // Main contract system handles all contract functionality
 
   // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
   app.use('/api/*', (req: any, res: any) => {
