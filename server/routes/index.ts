@@ -5,6 +5,7 @@ import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
 import { registerSettingsRoutes } from "./settings-routes";
 import { registerAdminRoutes } from "./admin-routes";
+import { registerIsolatedRoutes } from "./isolated-routes";
 import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
@@ -19,6 +20,9 @@ export async function registerRoutes(app: Express) {
   await registerBookingRoutes(app);
   await registerSettingsRoutes(app);
   await registerAdminRoutes(app);
+  
+  // Register isolated routes for cloud compatibility  
+  registerIsolatedRoutes(app);
   
   // Add missing endpoints to prevent 404s
   app.get('/api/conflicts', requireAuth, (req, res) => {

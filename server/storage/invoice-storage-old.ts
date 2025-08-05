@@ -25,56 +25,27 @@ export class InvoiceStorage {
   }
 
   async createInvoice(invoiceData: any) {
-    // FIXED: Align with actual schema fields from shared/schema.ts
     const result = await db.insert(invoices).values({
-      userId: invoiceData.userId,
-      contractId: invoiceData.contractId || null,
-      bookingId: invoiceData.bookingId || null,
-      invoiceNumber: invoiceData.invoiceNumber,
-      clientName: invoiceData.clientName,
-      clientEmail: invoiceData.clientEmail || null,
-      ccEmail: invoiceData.ccEmail || null,
-      clientAddress: invoiceData.clientAddress || null,
-      venueAddress: invoiceData.venueAddress || null,
-      eventDate: invoiceData.eventDate ? new Date(invoiceData.eventDate) : null,
-      fee: invoiceData.fee || null,
-      depositPaid: invoiceData.depositPaid || "0",
-      amount: invoiceData.amount,
-      dueDate: new Date(invoiceData.dueDate),
-      status: invoiceData.status || "draft",
-      paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
-      cloudStorageUrl: invoiceData.cloudStorageUrl || null,
-      cloudStorageKey: invoiceData.cloudStorageKey || null,
+      ...invoiceData,
+      issueDate: invoiceData.issueDate ? new Date(invoiceData.issueDate) : new Date(),
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate) : new Date(),
+      eventDate: invoiceData.eventDate ? new Date(invoiceData.eventDate) : new Date(),
+      paidDate: invoiceData.paidDate ? new Date(invoiceData.paidDate) : null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
     return result[0];
   }
 
-  async updateInvoice(id: number, userId: string, updates: any) {
-    // FIXED: Only include fields that exist in schema
-    const setData: any = {
+  async updateInvoice(id: number, updates: any, userId: string) {
+    const setData = {
+      ...updates,
+      issueDate: updates.issueDate ? new Date(updates.issueDate) : undefined,
+      dueDate: updates.dueDate ? new Date(updates.dueDate) : undefined,
+      eventDate: updates.eventDate ? new Date(updates.eventDate) : undefined,
+      paidDate: updates.paidDate ? new Date(updates.paidDate) : undefined,
       updatedAt: new Date(),
     };
-
-    // Only set fields that are provided and exist in schema
-    if (updates.contractId !== undefined) setData.contractId = updates.contractId;
-    if (updates.bookingId !== undefined) setData.bookingId = updates.bookingId;
-    if (updates.invoiceNumber !== undefined) setData.invoiceNumber = updates.invoiceNumber;
-    if (updates.clientName !== undefined) setData.clientName = updates.clientName;
-    if (updates.clientEmail !== undefined) setData.clientEmail = updates.clientEmail;
-    if (updates.ccEmail !== undefined) setData.ccEmail = updates.ccEmail;
-    if (updates.clientAddress !== undefined) setData.clientAddress = updates.clientAddress;
-    if (updates.venueAddress !== undefined) setData.venueAddress = updates.venueAddress;
-    if (updates.eventDate !== undefined) setData.eventDate = updates.eventDate ? new Date(updates.eventDate) : null;
-    if (updates.fee !== undefined) setData.fee = updates.fee;
-    if (updates.depositPaid !== undefined) setData.depositPaid = updates.depositPaid;
-    if (updates.amount !== undefined) setData.amount = updates.amount;
-    if (updates.dueDate !== undefined) setData.dueDate = new Date(updates.dueDate);
-    if (updates.status !== undefined) setData.status = updates.status;
-    if (updates.paidAt !== undefined) setData.paidAt = updates.paidAt ? new Date(updates.paidAt) : null;
-    if (updates.cloudStorageUrl !== undefined) setData.cloudStorageUrl = updates.cloudStorageUrl;
-    if (updates.cloudStorageKey !== undefined) setData.cloudStorageKey = updates.cloudStorageKey;
 
     const result = await db.update(invoices)
       .set(setData)
@@ -97,7 +68,7 @@ export class InvoiceStorage {
     const result = await db.select({
       total: sql<number>`count(*)`,
       paid: sql<number>`count(case when status = 'paid' then 1 end)`,
-      sent: sql<number>`count(case when status = 'sent' then 1 end)`, // FIXED: Use 'sent' instead of 'pending'
+      pending: sql<number>`count(case when status = 'pending' then 1 end)`,
       overdue: sql<number>`count(case when status = 'overdue' then 1 end)`,
       totalRevenue: sql<number>`sum(amount)`,
       paidRevenue: sql<number>`sum(case when status = 'paid' then amount else 0 end)`,
@@ -108,7 +79,7 @@ export class InvoiceStorage {
     return result[0] || { 
       total: 0, 
       paid: 0, 
-      sent: 0, 
+      pending: 0, 
       overdue: 0,
       totalRevenue: 0,
       paidRevenue: 0
@@ -135,10 +106,10 @@ export class InvoiceStorage {
     return await db.select().from(invoices)
       .where(and(
         eq(invoices.userId, userId),
-        gte(invoices.createdAt, startDate), // FIXED: Use createdAt since issueDate doesn't exist
-        lte(invoices.createdAt, endDate)
+        gte(invoices.issueDate, startDate),
+        lte(invoices.issueDate, endDate)
       ))
-      .orderBy(desc(invoices.createdAt));
+      .orderBy(desc(invoices.issueDate));
   }
 
   async getOverdueInvoices(userId: string) {
@@ -146,7 +117,7 @@ export class InvoiceStorage {
     return await db.select().from(invoices)
       .where(and(
         eq(invoices.userId, userId),
-        eq(invoices.status, 'sent'), // FIXED: Use 'sent' instead of 'pending'
+        eq(invoices.status, 'pending'),
         lte(invoices.dueDate, today)
       ))
       .orderBy(desc(invoices.dueDate));
@@ -156,7 +127,7 @@ export class InvoiceStorage {
     const result = await db.update(invoices)
       .set({ 
         status: 'paid', 
-        paidAt: new Date(), // FIXED: Use paidAt not paidDate
+        paidDate: new Date(),
         updatedAt: new Date()
       })
       .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
@@ -170,16 +141,9 @@ export class InvoiceStorage {
       .where(and(
         eq(invoices.userId, userId),
         eq(invoices.contractId, contractId),
-        eq(invoices.status, 'sent') // FIXED: Use 'sent' instead of 'pending'
+        eq(invoices.status, 'pending')
       ))
       .orderBy(desc(invoices.dueDate));
-  }
-
-  // ===== ALIAS METHODS FOR COMPATIBILITY =====
-  
-  // Alias for getInvoicesByUser to match route expectations
-  async getInvoices(userId: string) {
-    return this.getInvoicesByUser(userId);
   }
 
   // ===== ADMIN METHODS =====

@@ -22,74 +22,6 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
-  // FIXED: Add missing R2 URL endpoint that was causing 404 errors
-  app.get('/api/contracts/:id/r2-url', requireAuth, async (req: any, res) => {
-    try {
-      const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
-      
-      if (isNaN(contractId)) {
-        return res.status(400).json({ error: 'Invalid contract ID' });
-      }
-
-      const contract = await storage.getContract(contractId);
-      if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
-      }
-
-      if (contract.userId !== userId) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      // Generate R2 URL for contract
-      try {
-        const userSettings = await storage.getSettings(userId);
-        const { uploadContractToCloud } = await import('../core/cloud-storage');
-        
-        // Check if contract already has a cloud URL
-        if (contract.cloudStorageUrl) {
-          return res.json({ 
-            success: true, 
-            url: contract.cloudStorageUrl,
-            key: contract.cloudStorageKey 
-          });
-        }
-
-        // Generate new cloud URL
-        const uploadResult = await uploadContractToCloud(contract, userSettings);
-        
-        if (!uploadResult.success) {
-          console.error('❌ Failed to upload contract to R2:', uploadResult.error);
-          return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
-        }
-
-        // Update contract with new cloud URL
-        await storage.updateContract(contractId, {
-          cloudStorageUrl: uploadResult.url,
-          cloudStorageKey: uploadResult.key
-        }, userId);
-
-        console.log(`✅ Generated R2 URL for contract ${contractId}: ${uploadResult.url}`);
-        res.json({ 
-          success: true, 
-          url: uploadResult.url,
-          key: uploadResult.key 
-        });
-
-      } catch (cloudError) {
-        console.error('❌ Cloud storage error:', cloudError);
-        res.status(500).json({ error: 'Failed to generate cloud storage URL' });
-      }
-
-    } catch (error: any) {
-      console.error('❌ R2 URL generation failed:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate R2 URL',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
-
   // Create new contract
   app.post('/api/contracts', 
     requireAuth, 
@@ -131,11 +63,11 @@ export function registerContractRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.user.userId}`);
       
-      // Generate signing page URL
+      // Generate signing page - simplified for now
       try {
-        const signingPageUrl = `/sign/${newContract.id}`;
+        const signingUrl = `/sign/${newContract.id}`;
         const updatedContract = await storage.updateContract(newContract.id, {
-          signingPageUrl: signingPageUrl
+          signingPageUrl: signingUrl
         }, req.user.userId);
         res.json(updatedContract);
       } catch (signingError) {
@@ -171,10 +103,6 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      if (contract.userId !== req.user.userId) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-      
       const userSettings = await storage.getSettings(req.user.userId);
       if (!userSettings) {
         return res.status(404).json({ error: 'User settings not found' });
@@ -193,7 +121,10 @@ export function registerContractRoutes(app: Express) {
         status: 'sent',
         cloudStorageUrl: uploadResult.url,
         cloudStorageKey: uploadResult.key,
-        updatedAt: new Date()
+        sentAt: new Date(),
+        performerSignature: `Digital signature: ${userSettings?.businessName || 'Performer'} - ${new Date().toISOString()}`,
+        performerSignedAt: new Date(),
+        performerIpAddress: req.ip || 'Server'
       });
       
       if (!contract.clientEmail) {
@@ -321,6 +252,197 @@ export function registerContractRoutes(app: Express) {
         error: 'Failed to delete contracts', 
         details: error.message 
       });
+    }
+  });
+
+  // Contract signing route with CORS handling
+  app.use('/api/contracts/sign', (req, res, next) => {
+    const origin = req.headers.origin;
+    
+    if (origin && (origin.includes('.r2.dev') || origin.includes('musobuddy.replit.app'))) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'false');
+    res.header('Access-Control-Max-Age', '3600');
+    
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    
+    next();
+  });
+
+  app.post('/api/contracts/sign/:id', 
+    contractSigningRateLimit,
+    sanitizeInput,
+    validateBody(schemas.signContract),
+    asyncHandler(async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      const origin = req.headers.origin;
+      if (origin && (origin.includes('.r2.dev') || origin.includes('musobuddy.replit.app'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ success: false, error: 'Invalid contract ID' });
+      }
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ success: false, error: 'Contract not found' });
+      }
+      
+      if (contract.status === 'signed') {
+        return res.status(200).json({
+          success: true,
+          alreadySigned: true,
+          message: 'Contract has already been signed. Thank you!',
+          signedAt: contract.signedAt,
+          clientSignature: contract.clientSignature
+        });
+      }
+      
+      if (!clientSignature || clientSignature.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'Client signature is required' });
+      }
+      
+      const clientIpAddress = clientIP || req.ip || req.connection?.remoteAddress || 'Unknown';
+      
+      const updateData = {
+        status: 'signed' as const,
+        clientSignature: clientSignature.trim(),
+        clientIpAddress,
+        signedAt: new Date()
+      };
+      
+      if (clientPhone && clientPhone.trim()) {
+        updateData.clientPhone = clientPhone.trim();
+      }
+      if (clientAddress && clientAddress.trim()) {
+        updateData.clientAddress = clientAddress.trim();
+      }
+      if (venueAddress && venueAddress.trim()) {
+        updateData.venueAddress = venueAddress.trim();
+      }
+      
+      const signedContract = await storage.updateContract(contractId, updateData);
+      
+      // Upload signed contract to cloud
+      const userSettings = await storage.getSettings(contract.userId);
+      const { uploadContractToCloud } = await import('../core/cloud-storage');
+      
+      const signatureDetails = {
+        signedAt: new Date(signedContract.signedAt || signedContract.updatedAt),
+        signatureName: signedContract.clientSignature || 'Digital Signature',
+        clientIpAddress: signedContract.clientIpAddress
+      };
+      
+      const uploadResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
+      
+      if (uploadResult.success && uploadResult.url) {
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key
+        });
+      }
+      
+      // Send confirmation emails
+      try {
+        // Contract confirmation emails - functionality to be implemented
+        console.log('✅ Contract confirmation emails - functionality to be implemented');
+      } catch (emailError) {
+        console.warn('⚠️ Email confirmation failed (contract still signed):', emailError);
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: 'Contract signed successfully!',
+        contractId,
+        signedAt: signedContract.signedAt,
+        clientSignature: signedContract.clientSignature
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing failed:', error);
+      
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to sign contract. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }));
+
+  // Public contract view
+  app.get('/view/contracts/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).send('Contract not found');
+      }
+      
+      if (contract.cloudStorageUrl) {
+        return res.redirect(contract.cloudStorageUrl);
+      }
+      
+      const userSettings = await storage.getSettings(contract.userId);
+      const { generateContractPDF } = await import('../unified-contract-pdf');
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to view contract:', error);
+      res.status(500).send('Failed to load contract');
+    }
+  });
+
+  // Public contract PDF route
+  app.get('/api/contracts/public/:id/pdf', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const userSettings = await storage.getSettings(contract.userId);
+      const { generateContractPDF } = await import('../unified-contract-pdf');
+      
+      const signatureDetails = contract.status === 'signed' ? {
+        signedAt: new Date(contract.signedAt || contract.updatedAt),
+        signatureName: contract.clientSignature || 'Digital Signature',
+        clientIpAddress: contract.clientIpAddress
+      } : undefined;
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}${contract.status === 'signed' ? '-Signed' : ''}.pdf"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to serve public contract PDF:', error);
+      res.status(500).json({ error: 'Failed to generate contract PDF' });
     }
   });
 

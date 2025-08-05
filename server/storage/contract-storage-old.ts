@@ -140,6 +140,7 @@ export class ContractStorage {
   }
 
   // ===== CONTRACT SIGNATURE METHODS =====
+  // Signature data is stored directly in the contracts table
   
   async createContractSignature(data: {
     contractId: number;
@@ -221,13 +222,6 @@ export class ContractStorage {
         eq(contracts.status, status)
       ))
       .orderBy(desc(contracts.createdAt));
-  }
-
-  // ===== ALIAS METHODS FOR COMPATIBILITY =====
-  
-  // Alias for getContractsByUser to match route expectations
-  async getContracts(userId: string) {
-    return this.getContractsByUser(userId);
   }
 
   // ===== ADMIN METHODS =====
