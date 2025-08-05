@@ -12,6 +12,7 @@ interface SignupData {
   email: string;
   phoneNumber: string;
   password: string;
+  confirmPassword?: string;
 }
 
 interface VerificationData {
