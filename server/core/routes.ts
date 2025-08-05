@@ -1210,42 +1210,23 @@ export async function registerRoutes(app: Express) {
         console.log('🔄 FORCED REGENERATION: Bypassing R2 redirect to generate new PDF');
       }
       
-      // Generate PDF on-demand with professional template
-      console.log('🔄 Generating professional PDF on-demand...');
+      // Generate simple, working PDF
+      console.log('🔄 SIMPLE SYSTEM: Generating simple contract PDF...');
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateIsolatedContractPDF } = await import('../contract-system/isolated-contract-pdf-fixed');
+        const { generateSimpleContractPDF } = await import('../simple-contract-pdf');
         
-        // Include signature details if contract is signed
-        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-          signedAt: new Date(contract.signedAt),
-          signatureName: contract.clientSignature || undefined,
-          clientIpAddress: contract.clientIpAddress || undefined
-        } : undefined;
+        const pdfBuffer = await generateSimpleContractPDF(contract, userSettings);
         
-        // Convert null to undefined for isolated types
-        const contractData = {
-          ...contract,
-          clientEmail: contract.clientEmail || undefined,
-          clientPhone: contract.clientPhone || undefined,
-          clientAddress: contract.clientAddress || undefined
-        };
-        const pdfBuffer = await generateIsolatedContractPDF(contractData, userSettings, 'professional');
-        
-        // Set appropriate headers for PDF download
-        // CRITICAL FIX: Force binary response without JSON middleware interference
-        res.removeHeader('Content-Type');
+        // Set headers and send PDF
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+        res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
         res.setHeader('Content-Length', pdfBuffer.length.toString());
         
-        console.log(`✅ Professional PDF generated and served: ${pdfBuffer.length} bytes`);
-        console.log(`🔍 Buffer is Buffer? ${Buffer.isBuffer(pdfBuffer)}`);
+        console.log(`✅ Simple contract PDF generated: ${pdfBuffer.length} bytes`);
         
-        // Write raw binary data
-        res.write(pdfBuffer);
-        res.end();
+        res.end(pdfBuffer);
         
       } catch (pdfError: any) {
         console.error('❌ Professional PDF generation failed:', pdfError);
@@ -4617,8 +4598,9 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== ISOLATED CONTRACT SYSTEM =====
-  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes-fixed');
-  registerIsolatedContractRoutes(app, storage, isAuthenticated);
+  // TEMPORARILY DISABLED to test simple system
+  // const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes-fixed');
+  // registerIsolatedContractRoutes(app, storage, isAuthenticated);
 
   // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
   app.use('/api/*', (req: any, res: any) => {
