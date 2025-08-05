@@ -59,10 +59,10 @@ export function registerIsolatedContractRoutes(app: Express, storage: any, isAut
       
       console.log(`📄 ISOLATED: Contract found: ${contract.clientName}, userId: ${contract.userId}`);
       
-      // Check if contract already has R2 URL
+      // TEMPORARY: Force diagnostic mode - skip existing URL check
+      console.log(`🔄 ISOLATED: DIAGNOSTIC MODE - Forcing PDF regeneration for contract #${contractId}`);
       if (contract.cloudStorageUrl) {
-        console.log(`✅ ISOLATED: Returning existing R2 URL for contract #${contractId}`);
-        return res.json({ url: contract.cloudStorageUrl });
+        console.log(`🔄 ISOLATED: Existing URL found but ignoring for diagnostic: ${contract.cloudStorageUrl}`);
       }
       
       // Generate and upload to R2 using isolated system
