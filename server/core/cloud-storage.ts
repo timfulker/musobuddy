@@ -411,7 +411,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <h3>Electronic Signature</h3>
             <p>Please review the contract details and agree to the terms by signing below.</p>
             
-            <a href="${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev'}/api/contracts/public/${contract.id}/pdf" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
+            <a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
         <form id="signingForm">
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
