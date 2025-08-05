@@ -2490,21 +2490,66 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // COMPLETE FIXED CONTRACT SIGNING ROUTE - RESTORED FROM WORKING BACKUP
+  // CRITICAL FIX: Enhanced CORS middleware for contract signing from R2
+  // Place this BEFORE the contract signing route registration
+  app.use('/api/contracts/sign', (req, res, next) => {
+    // Allow requests from R2 domain and main domain
+    const allowedOrigins = [
+      'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev',
+      'https://musobuddy.replit.app',
+      'http://localhost:5000',
+      'http://localhost:3000'
+    ];
+    
+    const origin = req.headers.origin;
+    
+    // Allow any R2 domain (they use different subdomains)
+    if (origin && (allowedOrigins.includes(origin) || origin.includes('.r2.dev'))) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      res.header('Access-Control-Allow-Origin', '*'); // Fallback for public signing
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'false'); // Explicitly disable credentials
+    res.header('Access-Control-Max-Age', '3600'); // Cache preflight for 1 hour
+    
+    console.log(`🌐 CORS: Contract signing request from origin: ${origin}`);
+    
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      console.log('🌐 CORS: Handling preflight OPTIONS request');
+      return res.status(200).end();
+    }
+    
+    next();
+  });
+
+  // ENHANCED CONTRACT SIGNING ROUTE - Public endpoint (no authentication required)
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
       
-      console.log(`📝 Contract signing request for ID: ${contractId}`);
-      console.log(`📝 Client signature received: ${clientSignature ? 'Yes' : 'No'}`);
-      console.log(`📝 Client IP: ${clientIP}`);
+      console.log(`📝 CORS-FIXED: Contract signing request for ID: ${contractId}`);
+      console.log(`📝 CORS-FIXED: Origin: ${req.headers.origin}`);
+      console.log(`📝 CORS-FIXED: Client signature received: ${clientSignature ? 'Yes' : 'No'}`);
       
-      // CRITICAL: Set response headers to ensure JSON response
+      // CRITICAL: Set response headers to ensure JSON response and CORS
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Cache-Control', 'no-cache');
       
+      // Re-apply CORS headers for the actual response (not just preflight)
+      const origin = req.headers.origin;
+      if (origin && (origin.includes('.r2.dev') || origin.includes('musobuddy.replit.app'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      
       if (!clientSignature) {
+        console.log('❌ CORS-FIXED: No signature provided');
         return res.status(400).json({ 
           success: false, 
           error: 'Signature is required' 
@@ -2514,6 +2559,7 @@ export async function registerRoutes(app: Express) {
       // Get contract without authentication (public signing)
       const contract = await storage.getContract(contractId);
       if (!contract) {
+        console.log(`❌ CORS-FIXED: Contract #${contractId} not found`);
         return res.status(404).json({ 
           success: false, 
           error: 'Contract not found' 
@@ -2522,6 +2568,7 @@ export async function registerRoutes(app: Express) {
       
       // Check if already signed
       if (contract.status === 'signed') {
+        console.log(`⚠️ CORS-FIXED: Contract #${contractId} already signed`);
         return res.json({ 
           success: false, 
           alreadySigned: true,
@@ -2529,7 +2576,7 @@ export async function registerRoutes(app: Express) {
         });
       }
       
-      console.log(`📝 Proceeding with contract signing for: ${contract.clientName}`);
+      console.log(`📝 CORS-FIXED: Proceeding with contract signing for: ${contract.clientName}`);
       
       // Update contract with additional information from form
       const updateData: any = {};
@@ -2539,11 +2586,11 @@ export async function registerRoutes(app: Express) {
       
       if (Object.keys(updateData).length > 0) {
         await storage.updateContract(contractId, updateData);
-        console.log(`📝 Updated contract with additional client info`);
+        console.log(`📝 CORS-FIXED: Updated contract with additional client info`);
       }
       
       // STEP 1: Sign the contract in database
-      console.log(`📝 STEP 1: Signing contract in database...`);
+      console.log(`📝 CORS-FIXED: STEP 1: Signing contract in database...`);
       const signedContract = await storage.signContract(contractId, {
         signatureName: clientSignature,
         clientIP: clientIP || 'Unknown',
@@ -2554,20 +2601,20 @@ export async function registerRoutes(app: Express) {
         throw new Error('Failed to sign contract in database');
       }
       
-      console.log(`✅ Contract signed in database. Status: ${signedContract.status}`);
+      console.log(`✅ CORS-FIXED: Contract signed in database. Status: ${signedContract.status}`);
       
       // Update booking status if linked
       if (contract.enquiryId) {
         try {
           await storage.updateBooking(contract.enquiryId, { status: 'confirmed' });
-          console.log(`✅ Updated booking #${contract.enquiryId} status to confirmed`);
+          console.log(`✅ CORS-FIXED: Updated booking #${contract.enquiryId} status to confirmed`);
         } catch (bookingError) {
-          console.warn('⚠️ Could not update booking status:', bookingError);
+          console.warn('⚠️ CORS-FIXED: Could not update booking status:', bookingError);
         }
       }
       
       // STEP 2: Upload contract to cloud storage BEFORE sending emails
-      console.log(`📝 STEP 2: Uploading signed contract to cloud storage...`);
+      console.log(`📝 CORS-FIXED: STEP 2: Uploading signed contract to cloud storage...`);
       let finalCloudUrl = null;
       
       try {
@@ -2583,7 +2630,7 @@ export async function registerRoutes(app: Express) {
         const uploadResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
         if (uploadResult.success && uploadResult.url) {
-          console.log(`✅ Contract uploaded to cloud: ${uploadResult.key}`);
+          console.log(`✅ CORS-FIXED: Contract uploaded to cloud: ${uploadResult.key}`);
           
           // Update contract with cloud URL
           await storage.updateContract(contractId, {
@@ -2593,15 +2640,15 @@ export async function registerRoutes(app: Express) {
           
           finalCloudUrl = uploadResult.url;
         } else {
-          console.error(`❌ Cloud upload failed: ${uploadResult.error}`);
+          console.error(`❌ CORS-FIXED: Cloud upload failed: ${uploadResult.error}`);
         }
         
       } catch (uploadError: any) {
-        console.error('⚠️ Upload failed (contract still signed):', uploadError);
+        console.error('⚠️ CORS-FIXED: Upload failed (contract still signed):', uploadError);
       }
       
       // STEP 3: Send confirmation emails
-      console.log(`📝 STEP 3: Sending confirmation emails...`);
+      console.log(`📝 CORS-FIXED: STEP 3: Sending confirmation emails...`);
       
       try {
         // Brief delay to ensure all database updates are committed
@@ -2617,17 +2664,17 @@ export async function registerRoutes(app: Express) {
         const emailResult = await emailService.sendContractConfirmationEmails(freshContract || signedContract, userSettings);
         
         if (emailResult) {
-          console.log('✅ Contract confirmation emails sent successfully');
+          console.log('✅ CORS-FIXED: Contract confirmation emails sent successfully');
         } else {
-          console.warn('⚠️ Email sending may have failed');
+          console.warn('⚠️ CORS-FIXED: Email sending may have failed');
         }
         
       } catch (emailError: any) {
-        console.warn('⚠️ Email sending failed (contract still signed):', emailError);
+        console.warn('⚠️ CORS-FIXED: Email sending failed (contract still signed):', emailError);
       }
       
-      // CRITICAL: Ensure JSON response with proper headers
-      console.log(`📝 STEP 4: Returning success response...`);
+      // CRITICAL: Ensure JSON response with proper headers and CORS
+      console.log(`📝 CORS-FIXED: STEP 4: Returning success response...`);
       
       res.setHeader('Content-Type', 'application/json');
       res.status(200).json({ 
@@ -2640,10 +2687,17 @@ export async function registerRoutes(app: Express) {
       });
       
     } catch (error: any) {
-      console.error('❌ Contract signing failed:', error);
+      console.error('❌ CORS-FIXED: Contract signing failed:', error);
       
-      // Ensure JSON error response
+      // Ensure JSON error response with CORS headers
+      const origin = req.headers.origin;
+      if (origin && (origin.includes('.r2.dev') || origin.includes('musobuddy.replit.app'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
       res.setHeader('Content-Type', 'application/json');
+      
       res.status(500).json({ 
         success: false,
         error: 'Failed to sign contract. Please try again.',

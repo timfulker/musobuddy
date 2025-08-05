@@ -447,11 +447,38 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         let signatureCaptured = false;
         let contractSigned = false;
         
-        // CRITICAL FIX: JavaScript signature capture
+        // CRITICAL FIX: Detect API URL based on current domain
+        function getApiUrl() {
+            const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
+            
+            console.log('🔍 CORS-FIXED: Current hostname:', currentHost);
+            console.log('🔍 CORS-FIXED: Current protocol:', currentProtocol);
+            
+            // If we're on R2 domain, use the Replit API server
+            if (currentHost.includes('r2.dev')) {
+                const apiUrl = 'https://musobuddy.replit.app/api/contracts/sign/${contract.id}';
+                console.log('🔍 CORS-FIXED: Using cross-origin API URL:', apiUrl);
+                return apiUrl;
+            }
+            
+            // If we're on the main domain, use relative URL
+            const apiUrl = '/api/contracts/sign/${contract.id}';
+            console.log('🔍 CORS-FIXED: Using same-origin API URL:', apiUrl);
+            return apiUrl;
+        }
+        
+        // Enhanced signature capture with better validation
         function captureSignature() {
             const name = document.getElementById('clientName').value.trim();
             if (!name) {
                 alert('Please enter your full name first');
+                document.getElementById('clientName').focus();
+                return;
+            }
+            
+            if (name.length < 2) {
+                alert('Please enter your full name (at least 2 characters)');
                 document.getElementById('clientName').focus();
                 return;
             }
@@ -462,16 +489,19 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             signaturePad.style.borderColor = '#10b981';
             signaturePad.style.background = '#ecfdf5';
             
-            // Set signature data
+            // Set signature data with timestamp
             document.getElementById('clientSignature').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
+            
+            console.log('✅ CORS-FIXED: Signature captured for:', name);
         }
         
-        // CRITICAL FIX: Handle form submission with fetch() instead of traditional form submission
+        // CRITICAL FIX: Enhanced form submission with proper CORS handling
         async function handleSign(event) {
             event.preventDefault(); // Prevent traditional form submission
             
             if (contractSigned) {
-                return false; // Prevent double submission
+                console.log('⚠️ CORS-FIXED: Contract already signed, preventing double submission');
+                return false;
             }
             
             // Validation
@@ -497,69 +527,215 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             submitBtn.textContent = 'Signing Contract...';
             submitBtn.style.background = '#6b7280';
             
+            console.log('🚀 CORS-FIXED: Starting contract signing process...');
+            
+            // Comprehensive validation
+            const name = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const address = document.getElementById('clientAddress').value.trim();
+            const venueAddress = document.getElementById('venueAddress').value.trim();
+            
+            if (!name) {
+                alert('Please enter your full name');
+                document.getElementById('clientName').focus();
+                return false;
+            }
+            
+            if (!signatureCaptured) {
+                alert('Please click in the signature box to sign the contract');
+                return false;
+            }
+            
+            // Check required fields (those marked with blue borders)
+            const requiredFields = [];
+            if (!phone && document.getElementById('clientPhone').hasAttribute('required')) requiredFields.push('Phone Number');
+            if (!address && document.getElementById('clientAddress').hasAttribute('required')) requiredFields.push('Address');
+            if (!venueAddress && document.getElementById('venueAddress').hasAttribute('required')) requiredFields.push('Venue Address');
+            
+            if (requiredFields.length > 0) {
+                alert('Please complete the following required fields: ' + requiredFields.join(', '));
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('.btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing Contract...';
+            submitBtn.style.background = '#6b7280';
+            
             try {
-                // CRITICAL FIX: Use correct Replit app URL for cross-origin request from R2
-                const apiUrl = window.location.hostname.includes('r2.dev')
-                    ? \`https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}\`
-                    : \`/api/contracts/sign/${contract.id}\`;
+                const apiUrl = getApiUrl();
                 
-                console.log('🔥 FIXED: Starting contract signing with fetch()...');
-                console.log('🔥 FIXED: API URL:', apiUrl);
+                // Prepare request data
+                const requestData = {
+                    clientSignature: name,
+                    clientIP: '0.0.0.0', // Placeholder - server will get real IP
+                    clientPhone: phone || undefined,
+                    clientAddress: address || undefined,
+                    venueAddress: venueAddress || undefined
+                };
                 
+                console.log('📡 CORS-FIXED: Sending signing request to:', apiUrl);
+                console.log('📡 CORS-FIXED: Request data:', requestData);
+                
+                // CRITICAL FIX: Enhanced fetch with proper CORS configuration
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Cache-Control': 'no-cache',
-                        'X-Requested-With': 'XMLHttpRequest' // Mark as AJAX request
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    mode: 'cors', // CRITICAL: Enable CORS for cross-origin requests
-                    credentials: 'omit', // CRITICAL: Don't send credentials for cross-origin signing
-                    body: JSON.stringify({
-                        clientSignature: name,
-                        clientIP: '0.0.0.0', // Placeholder - server will get real IP
-                        clientPhone: phone || undefined,
-                        clientAddress: address || undefined,
-                        venueAddress: venueAddress || undefined
-                    })
+                    mode: 'cors', // Enable CORS
+                    credentials: 'omit', // Don't send credentials for cross-origin signing
+                    body: JSON.stringify(requestData)
                 });
                 
-                console.log('🔥 FIXED: Response status:', response.status);
+                console.log('📡 CORS-FIXED: Response status:', response.status);
+                console.log('📡 CORS-FIXED: Response headers:', Object.fromEntries(response.headers.entries()));
                 
+                // Enhanced error handling
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Failed to sign contract' }));
-                    throw new Error(errorData.error || 'Failed to sign contract');
+                    console.error('❌ CORS-FIXED: Response not OK:', response.status, response.statusText);
+                    
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (jsonError) {
+                        console.error('❌ CORS-FIXED: Failed to parse error response as JSON:', jsonError);
+                        errorData = { error: \`Server error: \${response.status} \${response.statusText}\` };
+                    }
+                    
+                    throw new Error(errorData.error || \`Server error: \${response.status}\`);
                 }
                 
+                // Parse successful response
                 const result = await response.json();
-                console.log('🔥 FIXED: Success response:', result);
+                console.log('✅ CORS-FIXED: Success response:', result);
                 
-                // CRITICAL FIX: Show success message instead of displaying JSON
-                contractSigned = true;
-                submitBtn.textContent = 'Contract Signed ✓';
-                submitBtn.style.background = '#10b981';
-                
-                // Show success message
-                alert('✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.');
+                if (result.success) {
+                    // SUCCESS: Contract signed successfully
+                    contractSigned = true;
+                    submitBtn.textContent = 'Contract Signed ✓';
+                    submitBtn.style.background = '#10b981';
+                    
+                    // Show detailed success message
+                    const message = result.alreadySigned ? 
+                        '✅ This contract has already been signed.\\n\\nThank you for your confirmation!' :
+                        '✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.\\n\\nThank you for your business!';
+                    
+                    alert(message);
+                    
+                    // Optional: Redirect or update UI further
+                    if (result.cloudUrl) {
+                        console.log('📄 CORS-FIXED: Signed contract available at:', result.cloudUrl);
+                    }
+                    
+                } else {
+                    // Handle API-level errors
+                    throw new Error(result.error || 'Contract signing failed');
+                }
                 
             } catch (error) {
-                console.error('🔥 FIXED: Signing error:', error);
-                alert('Failed to sign contract: ' + error.message + '. Please try again.');
+                console.error('❌ CORS-FIXED: Contract signing error:', error);
                 
-                // Reset button
+                // Show user-friendly error message
+                let errorMessage = 'Failed to sign contract. Please try again.';
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Network connection error. Please check your internet connection and try again.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'Connection error. Please try refreshing the page and signing again.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                alert('❌ ' + errorMessage);
+                
+                // Reset button state
+                contractSigned = false;
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign Contract';
+                submitBtn.textContent = originalText;
                 submitBtn.style.background = '#1e3a8a';
             }
             
             return false; // Always prevent traditional form submission
         }
         
-        // Update signature pad click handler to use the function
-        document.getElementById('signaturePad').onclick = captureSignature;
+        // Enhanced signature pad setup
+        function setupSignaturePad() {
+            const signaturePad = document.getElementById('signaturePad');
+            if (signaturePad) {
+                signaturePad.onclick = captureSignature;
+                signaturePad.style.cursor = 'pointer';
+                
+                // Add hover effect
+                signaturePad.addEventListener('mouseenter', function() {
+                    if (!signatureCaptured) {
+                        this.style.background = '#f0f9ff';
+                    }
+                });
+                
+                signaturePad.addEventListener('mouseleave', function() {
+                    if (!signatureCaptured) {
+                        this.style.background = 'white';
+                    }
+                });
+            }
+        }
         
-        console.log('🔥 FIXED: Contract signing page loaded with proper JavaScript handling');
+        // Enhanced form validation with real-time feedback
+        function setupFormValidation() {
+            const requiredFields = document.querySelectorAll('input[required], textarea[required]');
+            
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (this.value.trim()) {
+                        this.style.borderColor = '#10b981'; // Green for completed
+                        this.style.backgroundColor = '#ecfdf5';
+                    } else {
+                        this.style.borderColor = '#ef4444'; // Red for missing
+                        this.style.backgroundColor = '#fef2f2';
+                    }
+                });
+                
+                field.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.style.borderColor = '#10b981';
+                        this.style.backgroundColor = '#ecfdf5';
+                    } else {
+                        this.style.borderColor = '#2563eb'; // Back to blue for required
+                        this.style.backgroundColor = '#eff6ff';
+                    }
+                });
+            });
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔥 CORS-FIXED: Contract signing page loaded with enhanced JavaScript');
+            console.log('🔥 CORS-FIXED: Current URL:', window.location.href);
+            console.log('🔥 CORS-FIXED: Expected API URL:', getApiUrl());
+            
+            setupSignaturePad();
+            setupFormValidation();
+            
+            // Pre-populate client IP (optional)
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const ipInput = document.querySelector('input[name="clientIP"]');
+                    if (ipInput && data.ip) {
+                        ipInput.value = data.ip;
+                        console.log('🔍 CORS-FIXED: Client IP detected:', data.ip);
+                    }
+                })
+                .catch(error => {
+                    console.log('⚠️ CORS-FIXED: Could not detect client IP:', error);
+                });
+        });
     </script>
 </body>
 </html>
