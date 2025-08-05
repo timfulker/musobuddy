@@ -813,60 +813,37 @@ class IsolatedContractPDFGenerator {
     const page = await browser.newPage();
 
     try {
-      // CRITICAL FIX: Set exact A4 viewport dimensions
-      await page.setViewport({ width: 794, height: 1123 });
+      // COPY EXACT WORKING INVOICE CONFIGURATION
+      await page.setViewport({ width: 1200, height: 1600 });
       
-      // Get template HTML - Fixed to use correct template selection
-      console.log(`🎨 ISOLATED: Using template: ${templateName} for contract #${contract.id}`);
-      const templateFunction = templateName === 'basic' ? getIsolatedBasicTemplate : getIsolatedProfessionalTemplate;
-      const htmlContent = templateFunction(contract, userSettings);
+      // Get template HTML - always use professional
+      console.log(`🎨 ISOLATED: Using professional template for contract #${contract.id}`);
+      const htmlContent = getIsolatedProfessionalTemplate(contract, userSettings);
 
-      console.log('📝 FIXED: Setting HTML content with optimized settings...');
+      console.log('📝 FIXED: Setting HTML content...');
       await page.setContent(htmlContent, { 
-        waitUntil: 'networkidle0',
-        timeout: 30000 
+        waitUntil: 'domcontentloaded',
+        timeout: 10000 
       });
 
-      // CRITICAL FIX: Enhanced font and content loading
-      await Promise.all([
-        page.evaluate(() => {
-          return new Promise(resolve => {
-            if (document.fonts && document.fonts.ready) {
-              document.fonts.ready.then(resolve);
-            } else {
-              resolve(null);
-            }
-          });
-        }),
-        page.evaluate(() => {
-          return new Promise(resolve => {
-            if (document.readyState === 'complete') {
-              resolve(null);
-            } else {
-              window.addEventListener('load', resolve);
-            }
-          })
-        })
-      ]);
+      // Wait for fonts and content - same as working invoice system
+      await page.waitForTimeout(2000);
 
-      // Additional wait for rendering
-      await page.waitForTimeout(3000);
-
-      console.log('🎯 FIXED: Generating PDF with proper settings...');
+      console.log('🎯 FIXED: Generating PDF with EXACT invoice system settings...');
       
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        preferCSSPageSize: false, // CRITICAL FIX: Disabled to prevent truncation
+        preferCSSPageSize: false,
         displayHeaderFooter: false,
         margin: {
-          top: '15mm',
-          right: '15mm', 
-          bottom: '15mm',
-          left: '15mm'
+          top: '10mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm'
         },
-        scale: 0.9, // CRITICAL FIX: Slight scale reduction to ensure content fits
-        timeout: 120000
+        scale: 0.8,
+        timeout: 30000
       });
 
       console.log(`✅ FIXED: ${templateName} contract PDF generated: ${pdfBuffer.length} bytes`);
