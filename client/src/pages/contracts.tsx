@@ -48,7 +48,7 @@ const contractFormSchema = z.object({
   clientFillableFields: z.array(z.string()).optional(),
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
-  template: z.string().optional().default("basic"),
+  template: z.string().optional().default("professional"),
   // PHASE 2: Automated reminders (removed for manual-only phase 1)
   // reminderEnabled: z.boolean().default(false),
   // reminderDays: z.number().min(1).max(30).default(3),
@@ -111,6 +111,7 @@ export default function Contracts() {
       equipmentRequirements: "",
       specialRequirements: "",
       status: "draft",
+      template: "professional",
       // PHASE 2: Automated reminders (removed for manual-only phase 1)
       // reminderEnabled: false,
       // reminderDays: 3,

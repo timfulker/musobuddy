@@ -816,8 +816,9 @@ class IsolatedContractPDFGenerator {
       // CRITICAL FIX: Set exact A4 viewport dimensions
       await page.setViewport({ width: 794, height: 1123 });
       
-      // Get template HTML - USE DEBUG VERSION TEMPORARILY
-      const templateFunction = getDebugContractTemplate; // Use debug template
+      // Get template HTML - Fixed to use correct template selection
+      console.log(`🎨 ISOLATED: Using template: ${templateName} for contract #${contract.id}`);
+      const templateFunction = templateName === 'basic' ? getIsolatedBasicTemplate : getIsolatedProfessionalTemplate;
       const htmlContent = templateFunction(contract, userSettings);
 
       console.log('📝 FIXED: Setting HTML content with optimized settings...');
