@@ -457,54 +457,78 @@ function generateContractHTML(
                 </div>
             </div>
 
-            <!-- Performance Requirements -->
+            <!-- Professional Performance Standards -->
             <div class="section">
-                <h2 class="section-title">Performance Requirements</h2>
-                <div class="terms-section">
-                    <ul class="terms-list">
-                        <li>Professional ${userSettings?.primaryInstrument || 'musical'} performance</li>
-                        <li>Appropriate attire and presentation for the venue</li>
-                        <li>Punctual arrival and setup at agreed time</li>
-                        <li>Performance duration as mutually agreed</li>
-                        <li>Professional conduct throughout the event</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Cancellation Policy -->
-            <div class="section">
-                <h2 class="section-title">Cancellation Policy</h2>
-                <div class="terms-section">
-                    <div class="terms-subtitle">Client Cancellation</div>
-                    <ul class="terms-list">
-                        <li>48+ hours notice: Full refund of any deposit paid</li>
-                        <li>Less than 48 hours notice: 50% of total fee retained</li>
-                        <li>Day of event cancellation: Full fee retained</li>
-                    </ul>
-                </div>
+                <h2 class="section-title">Terms & Conditions</h2>
                 
                 <div class="terms-section">
-                    <div class="terms-subtitle">Performer Cancellation</div>
+                    <div class="terms-subtitle">Professional Performance Standards</div>
                     <ul class="terms-list">
-                        <li>Alternative qualified performer provided where possible</li>
-                        <li>If no alternative available: Full refund guaranteed</li>
-                        <li>Force majeure events handled on case-by-case basis</li>
+                        <li>Professional musical performance delivered to industry standards with appropriate attire</li>
+                        <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
+                        <li>The performer maintains professional liability insurance as required for musical performances</li>
+                        <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
+                        <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
+                        <li>All musical instruments and equipment remain the exclusive property of the performer</li>
+                        <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
+                        <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
                     </ul>
                 </div>
-            </div>
 
-            <!-- General Terms -->
-            <div class="section">
-                <h2 class="section-title">General Terms & Conditions</h2>
+                <!-- Enhanced Payment Terms -->
                 <div class="terms-section">
+                    <div class="terms-subtitle">Payment Terms & Conditions</div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                        <strong>Payment Due Date:</strong> Full payment of £${contract.fee || contract.amount || 'Amount TBC'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                        
+                        <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
+                        
+                        <strong>Deposit:</strong> ${contract.deposit && parseFloat(contract.deposit) > 0 ? `£${contract.deposit}` : 'Deposit amount TBC'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
+                        
+                        <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
+                    </div>
+                </div>
+
+                <!-- Comprehensive Cancellation Policy -->
+                <div class="terms-section">
+                    <div class="terms-subtitle">Cancellation & Refund Policy</div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                        <strong>Client Cancellation:</strong><br>
+                        • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
+                        • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
+                        • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
+                        
+                        <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
+                        
+                        <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
+                    </div>
+                </div>
+
+                <!-- Performance Contingencies -->
+                <div class="terms-section">
+                    <div class="terms-subtitle">Performance Contingencies</div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                        The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.
+                    </div>
+                </div>
+
+                <!-- Force Majeure -->
+                <div class="terms-section">
+                    <div class="terms-subtitle">Force Majeure</div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                        Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.
+                    </div>
+                </div>
+
+                <!-- Legal Framework -->
+                <div class="terms-section">
+                    <div class="terms-subtitle">Legal Framework</div>
                     <ul class="terms-list">
-                        <li>This contract constitutes the entire agreement between parties</li>
-                        <li>Any modifications must be agreed in writing by both parties</li>
+                        <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
+                        <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
                         <li>Contract governed by the laws of England and Wales</li>
+                        <li>This contract constitutes the entire agreement between parties</li>
                         <li>Both parties confirm they have authority to enter this agreement</li>
-                        <li>Venue to provide safe working environment and agreed facilities</li>
-                        <li>Performer reserves right to refuse inappropriate requests</li>
-                        <li>Client responsible for obtaining necessary licenses (PRS, etc.)</li>
                     </ul>
                 </div>
             </div>
