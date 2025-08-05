@@ -12,6 +12,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Storage Architecture Perfected**: Eliminated all direct database calls from storage.ts, ensuring maintainable modular architecture with pure delegation pattern.
 - **Business-Critical Protection Maintained**: Contract signing workflow security preserved throughout complete storage refactoring.
 - **Contract R2 URL Structure Updated**: Fixed R2 file paths after storage restructuring. Updated from old storage URLs to new `pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev` structure. Contract viewing now works reliably with proper authentication.
+- **Route Registration Fix (Jan 5, 2025)**: Fixed file restructure casualty where auth routes weren't being registered due to missing export in auth-rebuilt.ts. Added missing server/routes/index.ts file and exported setupAuthRoutes function. Server startup and signup functionality restored.
 
 ## System Architecture
 
