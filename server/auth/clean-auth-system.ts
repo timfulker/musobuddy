@@ -231,63 +231,115 @@ export function setupCleanAuth(app: Express) {
     try {
       const { email, verificationCode } = req.body;
       
+      console.log('🔐 VERIFICATION ATTEMPT:', {
+        timestamp: new Date().toISOString(),
+        email,
+        providedCode: verificationCode,
+        pendingVerifications: Array.from(pendingVerifications.keys()),
+        verificationCount: pendingVerifications.size
+      });
+      
       if (!email || !verificationCode) {
+        console.log('❌ Missing required fields:', { email: !!email, code: !!verificationCode });
         return res.status(400).json({ error: 'Email and verification code required' });
       }
       
       // Get verification data
       const verificationData = pendingVerifications.get(email);
       if (!verificationData) {
-        return res.status(400).json({ error: 'No pending verification found' });
+        console.log('❌ No pending verification found for:', email);
+        console.log('Available pending verifications:', Array.from(pendingVerifications.keys()));
+        return res.status(400).json({ error: 'No pending verification found. Please restart signup process.' });
       }
+      
+      console.log('📋 VERIFICATION DATA:', {
+        email,
+        expectedCode: verificationData.verificationCode,
+        providedCode: verificationCode,
+        expiresAt: verificationData.expiresAt,
+        currentTime: new Date(),
+        isExpired: new Date() > verificationData.expiresAt,
+        codesMatch: verificationData.verificationCode === verificationCode
+      });
       
       // Check expiry
       if (new Date() > verificationData.expiresAt) {
+        console.log('❌ Verification code expired for:', email);
         pendingVerifications.delete(email);
-        return res.status(400).json({ error: 'Verification code expired' });
+        return res.status(400).json({ error: 'Verification code expired. Please request a new code.' });
       }
       
-      // Check code
-      if (verificationData.verificationCode !== verificationCode) {
-        return res.status(400).json({ error: 'Invalid verification code' });
+      // Check code (convert both to strings for comparison)
+      const expectedCode = String(verificationData.verificationCode).trim();
+      const providedCode = String(verificationCode).trim();
+      
+      if (expectedCode !== providedCode) {
+        console.log('❌ CODE MISMATCH:', {
+          expected: expectedCode,
+          provided: providedCode,
+          expectedLength: expectedCode.length,
+          providedLength: providedCode.length,
+          expectedType: typeof expectedCode,
+          providedType: typeof providedCode
+        });
+        return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
       }
-      
-      // Update user as verified
-      await storage.updateUser(verificationData.userId, {
-        isVerified: true,
-        phoneVerified: true,
-        updatedAt: new Date().toISOString()
-      });
-      
-      // Generate auth token
-      const authToken = generateAuthToken(verificationData.userId, email, true);
-      
-      // Set HTTP-only cookie
-      res.cookie('authToken', authToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-      
-      // Clean up verification data
-      pendingVerifications.delete(email);
       
       console.log('✅ Phone verification successful for:', email);
       
+      // Create user in database
+      const hashedPassword = await bcrypt.hash(verificationData.password, 12);
+      const userId = nanoid();
+      
+      const newUser = {
+        id: userId,
+        firstName: verificationData.firstName,
+        lastName: verificationData.lastName,
+        email: verificationData.email,
+        phoneNumber: verificationData.phoneNumber,
+        hashedPassword,
+        isVerified: true,
+        phoneVerified: true,
+        subscriptionTier: 'trial',
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await storage.createUser(newUser);
+      
+      console.log('✅ User created successfully:', { userId, email: verificationData.email });
+      
+      // Generate auth token
+      const authToken = generateAuthToken(userId, verificationData.email);
+      
+      // Set cookie
+      res.cookie('authToken', authToken, {
+        httpOnly: true,
+        secure: ENV.isProduction,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      
+      // Clean up
+      pendingVerifications.delete(email);
+      
       res.json({
         success: true,
-        message: 'Phone verified successfully',
+        message: 'Phone verification successful',
         authToken,
         user: {
-          userId: verificationData.userId,
-          email: email
+          userId,
+          email: verificationData.email,
+          firstName: verificationData.firstName,
+          lastName: verificationData.lastName,
+          phoneVerified: true
         }
       });
       
     } catch (error: any) {
       console.error('❌ Phone verification error:', error);
-      res.status(500).json({ error: 'Verification failed', details: error.message });
+      res.status(500).json({ error: 'Verification failed' });
     }
   });
 
@@ -490,6 +542,22 @@ export function setupCleanAuth(app: Express) {
       console.error('❌ Admin login error:', error);
       res.status(500).json({ error: 'Admin login failed' });
     }
+  });
+
+  // Debug endpoint to check pending verifications  
+  app.get('/api/auth/debug/pending', (req, res) => {
+    const pending = Array.from(pendingVerifications.entries()).map(([email, data]) => ({
+      email,
+      code: data.verificationCode,
+      expiresAt: data.expiresAt,
+      timeRemaining: Math.max(0, data.expiresAt.getTime() - Date.now())
+    }));
+    
+    res.json({
+      count: pendingVerifications.size,
+      pending,
+      currentTime: new Date()
+    });
   });
 
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
