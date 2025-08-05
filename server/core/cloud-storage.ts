@@ -518,28 +518,6 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 return false;
             }
             
-            // Show loading state
-            const submitBtn = document.querySelector('.btn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing Contract...';
-            submitBtn.style.background = '#6b7280';
-            
-            console.log('🚀 CORS-FIXED: Starting contract signing process...');
-            
-            // Prepare request data
-            var requestData = {
-                clientSignature: clientNameValue,
-                clientIP: '0.0.0.0', // Placeholder - server will get real IP
-                clientPhone: phoneValue || undefined,
-                clientAddress: addressValue || undefined,
-                venueAddress: venueAddressValue || undefined
-            };
-            
-            if (!signatureCaptured) {
-                alert('Please click in the signature box to sign the contract');
-                return false;
-            }
-            
             // Check required fields (those marked with blue borders)
             var requiredFields = [];
             if (!phoneValue && document.getElementById('clientPhone').hasAttribute('required')) requiredFields.push('Phone Number');
@@ -558,14 +536,20 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             submitBtn.textContent = 'Signing Contract...';
             submitBtn.style.background = '#6b7280';
             
-            try {
-                var apiUrl = getApiUrl();
-                
-                console.log('📡 CORS-FIXED: Sending signing request to:', apiUrl);
-                console.log('📡 CORS-FIXED: Request data:', requestData);
-                
-                // CRITICAL FIX: Enhanced fetch with proper CORS configuration using promises
-                fetch(apiUrl, {
+            // Prepare request data
+            var requestData = {
+                clientSignature: clientNameValue,
+                clientIP: '0.0.0.0',
+                clientPhone: phoneValue || undefined,
+                clientAddress: addressValue || undefined,
+                venueAddress: venueAddressValue || undefined
+            };
+            
+            var apiUrl = getApiUrl();
+            console.log('📡 CORS-FIXED: Sending signing request to:', apiUrl);
+            
+            // CRITICAL FIX: Enhanced fetch with proper CORS configuration using promises
+            fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -607,32 +591,18 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                     }
                     
                 } else {
-                    // Handle API-level errors
                     throw new Error(result.error || 'Contract signing failed');
                 }
-                
-            } catch (error) {
-                console.error('❌ CORS-FIXED: Contract signing error:', error);
-                
-                // Show user-friendly error message
-                let errorMessage = 'Failed to sign contract. Please try again.';
-                
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMessage = 'Network connection error. Please check your internet connection and try again.';
-                } else if (error.message.includes('CORS')) {
-                    errorMessage = 'Connection error. Please try refreshing the page and signing again.';
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                
-                alert('❌ ' + errorMessage);
+            }).catch(function(error) {
+                console.error('Error during contract signing:', error);
                 
                 // Reset button state
-                contractSigned = false;
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
-                submitBtn.style.background = '#1e3a8a';
-            }
+                submitBtn.style.background = '';
+                
+                alert('Error: ' + error.message + ' Please try again.');
+            });
             
             return false; // Always prevent traditional form submission
         }
