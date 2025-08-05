@@ -574,6 +574,19 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 
                 if (result.success) {
                     // SUCCESS: Contract signed successfully
+                    console.log('✅ Contract signed successfully');
+                    
+                    // Update signature box with success
+                    var signatureBox = document.getElementById('signature-box');
+                    if (signatureBox) {
+                        signatureBox.innerHTML = '✓ Signed by: ' + clientNameValue;
+                        signatureBox.style.color = '#10b981';
+                        signatureBox.style.textAlign = 'center';
+                        signatureBox.style.fontWeight = 'bold';
+                        signatureBox.style.border = '2px dashed #10b981';
+                        signatureBox.style.background = '#f0fdf4';
+                    }
+                    
                     contractSigned = true;
                     submitBtn.textContent = 'Contract Signed ✓';
                     submitBtn.style.background = '#10b981';
@@ -605,19 +618,39 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                         console.error('❌ Could not find signing section for PDF button');
                     }
                     
-                    // Show detailed success message
-                    var message = result.alreadySigned ? 
-                        '✅ This contract has already been signed.\\n\\nThank you for your confirmation!' :
-                        '✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.\\n\\nThank you for your business!';
-                    
-                    alert(message);
+                    // Show success message
+                    alert('✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.\\n\\nThank you for your business!');
                     
                     // Optional: Redirect or update UI further
                     if (result.cloudUrl) {
                         console.log('📄 CORS-FIXED: Signed contract available at:', result.cloudUrl);
                     }
                     
+                } else if (result.alreadySigned) {
+                    // ALREADY SIGNED: Show polite message instead of error
+                    console.log('ℹ️ Contract already signed - showing polite message');
+                    
+                    // Update signature box with already signed message
+                    var signatureBox = document.getElementById('signature-box');
+                    if (signatureBox) {
+                        signatureBox.innerHTML = '✓ Contract Already Signed';
+                        signatureBox.style.color = '#0891b2';
+                        signatureBox.style.textAlign = 'center';
+                        signatureBox.style.fontWeight = 'bold';
+                        signatureBox.style.border = '2px dashed #0891b2';
+                        signatureBox.style.background = '#f0f9ff';
+                    }
+                    
+                    // Update submit button with already signed message
+                    submitBtn.textContent = 'Already Signed ✓';
+                    submitBtn.style.background = '#0891b2';
+                    submitBtn.disabled = true;
+                    
+                    // Show polite message
+                    alert(result.message || 'This contract has already been signed.\\n\\nThank you for your confirmation!');
+                    
                 } else {
+                    // ERROR: Show error message
                     throw new Error(result.error || 'Contract signing failed');
                 }
             }).catch(function(error) {
