@@ -717,21 +717,25 @@ export class IsolatedContractPDFGenerator {
       });
 
       console.log('🎯 Generating PDF...');
-      // Set viewport to ensure proper rendering
-      await page.setViewport({ width: 1200, height: 1600 });
+      // Set larger viewport to ensure all content renders
+      await page.setViewport({ width: 1200, height: 3000 });
       
-      // Wait for content to fully render
-      await page.waitForTimeout(2000);
+      // Wait for all content to fully load and render
+      await page.waitForTimeout(3000);
+      
+      // Get full page height
+      const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+      console.log(`📏 Page content height: ${bodyHeight}px`);
       
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        preferCSSPageSize: true,
+        preferCSSPageSize: false,
         margin: {
-          top: '1cm',
-          right: '1cm', 
-          bottom: '1cm',
-          left: '1cm'
+          top: '0.5cm',
+          right: '0.5cm', 
+          bottom: '0.5cm',
+          left: '0.5cm'
         },
         timeout: 60000
       });

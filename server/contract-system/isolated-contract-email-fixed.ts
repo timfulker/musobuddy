@@ -16,10 +16,20 @@ export async function sendIsolatedContractEmail(
   customMessage?: string
 ) {
   console.log('🔒 ISOLATED CONTRACT EMAIL: Starting email send process...');
+  console.log('📧 Contract email data:', {
+    clientEmail: contract.clientEmail,
+    contractNumber: contract.contractNumber,
+    contractUrl: contractUrl,
+    hasUserSettings: !!userSettings
+  });
   
   try {
     if (!process.env.MAILGUN_API_KEY) {
       throw new Error('MAILGUN_API_KEY not configured');
+    }
+
+    if (!contract.clientEmail) {
+      throw new Error('Client email address is required');
     }
 
     // Initialize Mailgun with EXACT same config as working invoice system

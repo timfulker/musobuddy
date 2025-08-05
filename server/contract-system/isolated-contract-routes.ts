@@ -118,8 +118,10 @@ export function registerIsolatedContractRoutes(app: Express, storage: any, isAut
         customMessage
       );
       
+      console.log(`📧 ISOLATED: Email result:`, result);
+      
       if (result.success) {
-        console.log(`✅ ISOLATED: Contract #${parsedContractId} sent successfully`);
+        console.log(`✅ ISOLATED: Contract #${parsedContractId} sent successfully - Message ID: ${result.messageId}`);
         res.json({ 
           success: true, 
           message: 'Contract sent successfully',
