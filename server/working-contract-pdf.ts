@@ -34,7 +34,12 @@ function getLogoBase64(): string {
 
 export async function generateWorkingContractPDF(
   contract: ContractData,
-  userSettings: UserSettings | null
+  userSettings: UserSettings | null,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName: string;
+    clientIpAddress: string;
+  }
 ): Promise<Buffer> {
   console.log('🚀 Starting WORKING contract PDF generation for:', contract.contractNumber);
   
@@ -49,7 +54,7 @@ export async function generateWorkingContractPDF(
     const page = await browser.newPage();
     
     console.log('📄 Using professional contract template from user...');
-    const html = generateProfessionalContractHTML(contract, userSettings);
+    const html = generateProfessionalContractHTML(contract, userSettings, signatureDetails);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
