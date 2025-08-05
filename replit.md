@@ -14,6 +14,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Contract R2 URL Structure Updated**: Fixed R2 file paths after storage restructuring. Updated from old storage URLs to new `pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev` structure. Contract viewing now works reliably with proper authentication.
 - **Route Registration Fix (Jan 5, 2025)**: Fixed file restructure casualty where auth routes weren't being registered due to missing export in auth-rebuilt.ts. Added missing server/routes/index.ts file and exported setupAuthRoutes function. Server startup and signup functionality restored.
 - **Deployment Syntax Fix (Jan 5, 2025)**: Fixed missing closing parenthesis in auth-rebuilt.ts signup route that was preventing deployment. Added proper middleware chaining and error handling. Build process now completes successfully.
+- **Session Middleware Issue Identified (Jan 5, 2025)**: Confirmed signup creates users in database but fails on session creation. Session middleware works for existing auth (admin login functional). Issue is middleware application order in auth route registration. User preference noted: avoid extended debugging cycles due to 5-minute deployment times.
 
 ## System Architecture
 
