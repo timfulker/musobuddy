@@ -2361,9 +2361,9 @@ export async function registerRoutes(app: Express) {
       
       // Sign the contract
       const signedContract = await storage.signContract(contractId, {
-        clientSignature,
+        signatureName: clientSignature,
         clientIP: clientIP || 'Unknown',
-        signedAt: new Date().toISOString()
+        signedAt: new Date()
       });
       
       // Update associated booking status if exists
@@ -2411,7 +2411,8 @@ export async function registerRoutes(app: Express) {
       res.json({ 
         success: true, 
         message: 'Contract signed successfully! Both parties will receive confirmation emails.',
-        contractId: contractId
+        contractId: contractId,
+        signedAt: new Date().toISOString()
       });
       
     } catch (error: any) {

@@ -151,26 +151,31 @@ export default function SignContract() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          signatureName: signatureName.trim(),
+          clientSignature: signatureName.trim(),
+          clientIP: '0.0.0.0',
+          venueAddress: venueAddress.trim() || undefined,
           clientPhone: clientPhone.trim() || undefined,
           clientAddress: clientAddress.trim() || undefined,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sign contract');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to sign contract' }));
+        throw new Error(errorData.error || 'Failed to sign contract');
       }
 
+      const result = await response.json();
+      
       // Update local contract state
       setContract(prev => prev ? {
         ...prev,
         status: 'signed',
-        signedAt: new Date().toISOString()
+        signedAt: result.signedAt || new Date().toISOString()
       } : null);
 
       toast({
         title: "Success",
-        description: "Contract signed successfully! You will receive a confirmation email shortly.",
+        description: "Contract signed successfully! Confirmation emails have been sent to both parties.",
       });
 
     } catch (error) {

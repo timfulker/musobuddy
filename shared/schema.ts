@@ -679,14 +679,7 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   updatedAt: true,
 });
 
-// UPDATED TYPE DEFINITIONS with consistent field mapping
-export type Booking = typeof bookings.$inferSelect;
-export type Contract = typeof contracts.$inferSelect;
-export type Invoice = typeof invoices.$inferSelect;
-export type Client = typeof clients.$inferSelect;
-export type ComplianceDocument = typeof complianceDocuments.$inferSelect;
-export type UserSettings = typeof userSettings.$inferSelect;
-export type EmailTemplate = typeof emailTemplates.$inferSelect;
+// UPDATED TYPE DEFINITIONS with consistent field mapping - moved to avoid duplicates
 
 // Enhanced Booking type with guaranteed field presence for frontend
 export interface FormattedBooking extends Booking {

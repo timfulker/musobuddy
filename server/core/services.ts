@@ -304,9 +304,9 @@ export class EmailService {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://musobuddy.replit.app/api/contracts/${contract.id}/download" 
+            <a href="${contract.cloudStorageUrl || `https://musobuddy.replit.app/api/contracts/public/${contract.id}/pdf`}" 
                style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              Download Signed Contract
+              📋 Download Signed Contract
             </a>
           </div>
           
