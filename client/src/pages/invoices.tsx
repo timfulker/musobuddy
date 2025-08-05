@@ -242,14 +242,10 @@ export default function Invoices() {
       
       
       
-      // Use fetch directly to ensure we hit the priority route
-      const response = await fetch('/api/invoices', {
+      // Use apiRequest to include JWT authentication
+      const response = await apiRequest('/api/invoices', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important for session handling
-        body: JSON.stringify(data),
+        body: data,
       });
       
       

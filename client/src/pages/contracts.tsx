@@ -260,9 +260,12 @@ export default function Contracts() {
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
       const contractData = {
         ...data,
-        eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
-        enquiryId: data.enquiryId || null,
-        // Fields now aligned - no mapping needed
+        // Fix date format: backend expects YYYY-MM-DD, not ISO string
+        eventDate: data.eventDate || null,
+        // Fix fee: convert string to number
+        fee: data.fee ? parseFloat(data.fee) : 0,
+        // Fix enquiryId: use 0 instead of null for optional field
+        enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : 0,
       };
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
