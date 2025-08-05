@@ -535,29 +535,34 @@ export default function SignContract() {
 
                 <Separator />
 
-                <Button
-                  type="button"
-                  onClick={(e) => {
+                <form 
+                  onSubmit={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('🔥 FORM: Form submit handler called');
                     handleSign();
+                    return false;
                   }}
-                  disabled={signing || !signatureName.trim() || !agreed}
-                  className="w-full"
-                  size="lg"
                 >
-                  {signing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Signing Contract...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Sign Contract
-                    </>
-                  )}
-                </Button>
+                  <Button
+                    type="submit"
+                    disabled={signing || !signatureName.trim() || !agreed}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {signing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Signing Contract...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Sign Contract
+                      </>
+                    )}
+                  </Button>
+                </form>
 
                 <p className="text-xs text-gray-500 text-center">
                   By signing, you agree to the terms and create a legally binding agreement.
