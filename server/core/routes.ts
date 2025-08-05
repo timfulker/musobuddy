@@ -2311,66 +2311,60 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // RESTORED WORKING CONTRACT SIGNING API (PUBLIC ACCESS - no authentication required)
+  // CRITICAL MISSING ENDPOINT: Contract signing API (PUBLIC ACCESS - no authentication required)
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    
     try {
-      console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
       const contractId = parseInt(req.params.id);
-      const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
+      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
       
-      const finalSignatureName = signatureName || clientName;
+      console.log(`📝 Contract signing request for ID: ${contractId}`);
+      console.log(`📝 Client signature: ${clientSignature}`);
+      console.log(`📝 Client IP: ${clientIP}`);
+      console.log(`📝 All form data:`, req.body);
       
-      if (!finalSignatureName || !finalSignatureName.trim()) {
-        return res.status(400).json({ message: "Signature name is required" });
-      }
-      
-      // Get contract and verify it can be signed
-      const contract = await storage.getContract(contractId);
-      if (!contract) {
-        return res.status(404).json({ message: "Contract not found" });
-      }
-      
-      // CRITICAL FIX: Check if already signed
-      if (contract.status === 'signed') {
-        console.log('🔥 CONTRACT SIGNING: ERROR - Contract already signed');
+      if (!clientSignature) {
         return res.status(400).json({ 
-          message: "Contract has already been signed",
-          alreadySigned: true,
-          signedAt: contract.signedAt,
-          signedBy: contract.clientName
+          success: false, 
+          error: 'Signature is required' 
         });
       }
       
-      if (contract.status !== 'sent') {
-        return res.status(400).json({ message: "Contract is not available for signing" });
+      // Get contract without authentication (public signing)
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Contract not found' 
+        });
       }
       
-      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      // Check if already signed
+      if (contract.status === 'signed') {
+        return res.json({ 
+          success: false, 
+          alreadySigned: true,
+          message: 'This contract has already been signed.' 
+        });
+      }
       
-      // Prepare signature details
-      const signatureDetails = {
-        signedAt: new Date(),
-        signatureName: finalSignatureName.trim(),
-        clientIpAddress: clientIP
-      };
+      // Update contract with additional information from form and sign it
+      const updateData: any = {};
+      if (clientPhone) updateData.clientPhone = clientPhone;
+      if (clientAddress) updateData.clientAddress = clientAddress;
+      if (venueAddress) updateData.venueAddress = venueAddress;
       
-      // Sign contract
+      // Update contract with additional info if provided
+      if (Object.keys(updateData).length > 0) {
+        await storage.updateContract(contractId, updateData);
+        console.log(`📝 Updated contract with additional info:`, updateData);
+      }
+      
+      // Sign the contract
       const signedContract = await storage.signContract(contractId, {
-        signatureName: finalSignatureName.trim(),
-        clientIP,
-        signedAt: signatureDetails.signedAt,
-        clientPhone: clientPhone?.trim(),
-        clientAddress: clientAddress?.trim(),
-        venueAddress: venueAddress?.trim()
+        signatureName: clientSignature,
+        clientIP: clientIP || 'Unknown',
+        signedAt: new Date()
       });
-      
-      if (!signedContract) {
-        return res.status(500).json({ message: "Failed to sign contract" });
-      }
       
       // Update associated booking status if exists
       if (contract.enquiryId) {
@@ -2382,41 +2376,50 @@ export async function registerRoutes(app: Express) {
         }
       }
       
-      // Upload to cloud storage and send confirmation emails
+      console.log(`✅ Contract #${contractId} signed successfully`);
+      
+      // Send confirmation emails
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
+        const { EmailService } = await import('./services');
+        const emailService = new EmailService();
         
+        // Upload signed contract to cloud storage with signature details
         const { uploadContractToCloud } = await import('./cloud-storage');
+        const signatureDetails = {
+          signedAt: signedContract.signedAt ? new Date(signedContract.signedAt) : new Date(),
+          signatureName: signedContract.clientSignature || clientSignature,
+          clientIpAddress: signedContract.clientIpAddress || clientIP || 'Unknown'
+        };
         const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
-        if (cloudResult.success && cloudResult.url) {
+        if (cloudResult.success) {
           await storage.updateContract(contractId, {
             cloudStorageUrl: cloudResult.url,
-            cloudStorageKey: cloudResult.key,
-            signingUrlCreatedAt: new Date()
+            cloudStorageKey: cloudResult.key
           });
         }
         
-        // Send confirmation emails
-        const { EmailService } = await import('./services');
-        const emailService = new EmailService();
+        // Send confirmation emails to both parties
         await emailService.sendContractConfirmationEmails(signedContract, userSettings);
+        console.log('✅ Contract confirmation emails sent successfully');
         
-      } catch (emailError: any) {
-        console.error('❌ Email/cloud error (contract still signed):', emailError);
+      } catch (emailError) {
+        console.error('⚠️ Contract signed but email sending failed:', emailError);
       }
       
-      return res.json({
-        success: true,
-        message: "Contract signed successfully! Both parties have been notified.",
-        signedAt: signatureDetails.signedAt,
-        signedBy: finalSignatureName.trim()
+      res.json({ 
+        success: true, 
+        message: 'Contract signed successfully! Both parties will receive confirmation emails.',
+        contractId: contractId,
+        signedAt: new Date().toISOString()
       });
       
     } catch (error: any) {
       console.error('❌ Contract signing error:', error);
-      return res.status(500).json({ 
-        message: "An error occurred while signing the contract. Please try again." 
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to sign contract. Please try again.' 
       });
     }
   });
