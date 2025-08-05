@@ -3,41 +3,15 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-
-// Enhanced authentication middleware
-const isAuthenticated = async (req: any, res: any, next: any) => {
-  const sessionUserId = req.session?.userId;
-  if (!sessionUserId || (typeof sessionUserId === 'string' && sessionUserId.trim() === '')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  try {
-    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
-    const user = await storage.getUserById(userId);
-    
-    if (!user) {
-      req.session.destroy((err: any) => {
-        if (err) console.error('Session destroy error:', err);
-      });
-      return res.status(401).json({ error: 'User account no longer exists' });
-    }
-
-    req.user = user;
-    next();
-    
-  } catch (error: any) {
-    console.error('❌ Authentication validation error:', error);
-    return res.status(500).json({ error: 'Authentication validation failed' });
-  }
-};
+import { requireAuth } from '../auth/clean-auth-system';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
   // Get all bookings for authenticated user
-  app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
+  app.get('/api/bookings', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       const bookings = await storage.getBookings(userId);
       console.log(`✅ Retrieved ${bookings.length} bookings for user ${userId}`);
       res.json(bookings);
@@ -49,7 +23,7 @@ export function registerBookingRoutes(app: Express) {
 
   // Create new booking
   app.post('/api/bookings', 
-    isAuthenticated,
+    requireAuth,
     generalApiRateLimit,
     sanitizeInput,
     validateBody(schemas.createBooking),
@@ -90,10 +64,10 @@ export function registerBookingRoutes(app: Express) {
   }));
 
   // Update booking
-  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
@@ -112,10 +86,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Delete booking
-  app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
@@ -134,10 +108,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Get individual booking
-  app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      const userId = req.user.userId;
       
       const booking = await storage.getBooking(bookingId);
       if (!booking || booking.userId !== userId) {
@@ -153,10 +127,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Bulk delete bookings
-  app.post('/api/bookings/bulk-delete', isAuthenticated, async (req: any, res) => {
+  app.post('/api/bookings/bulk-delete', requireAuth, async (req: any, res) => {
     try {
       const { bookingIds } = req.body;
-      const userId = req.session.userId;
+      const userId = req.user.userId;
       
       if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
         return res.status(400).json({ error: 'Booking IDs array is required' });
