@@ -297,11 +297,12 @@ export function setupCleanAuth(app: Express) {
         lastName: verificationData.lastName,
         email: verificationData.email,
         phoneNumber: verificationData.phoneNumber,
-        hashedPassword,
-        isVerified: true,
+        password: hashedPassword, // Fix: use 'password' not 'hashedPassword'
+        isAdmin: false,
+        tier: 'trial', // Fix: use 'tier' not 'subscriptionTier'
+        trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Fix: use correct field name
+        stripeCustomerId: null,
         phoneVerified: true,
-        subscriptionTier: 'trial',
-        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()
       };
