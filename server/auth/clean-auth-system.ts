@@ -307,32 +307,39 @@ export function setupCleanAuth(app: Express) {
       
       console.log('✅ Phone verification successful for:', email);
       
-      // Create user in database
-      const hashedPassword = await bcrypt.hash(verificationData.password, 12);
+      // Create user using storage API (which handles password hashing)
       const userId = nanoid();
       
       const newUser = {
         id: userId,
+        email: verificationData.email,
         firstName: verificationData.firstName,
         lastName: verificationData.lastName,
-        email: verificationData.email,
         phoneNumber: verificationData.phoneNumber,
-        password: hashedPassword, // Fix: use 'password' not 'hashedPassword'
+        password: verificationData.password, // Pass plain password, storage will hash it
         isAdmin: false,
-        tier: 'trial', // Fix: use 'tier' not 'subscriptionTier'
-        trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Fix: use correct field name
-        stripeCustomerId: null,
+        tier: 'trial',
         phoneVerified: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        stripeCustomerId: null
       };
       
-      await storage.createUser(newUser);
+      console.log('🔧 Creating user with data:', {
+        userId,
+        email: verificationData.email,
+        firstName: verificationData.firstName,
+        lastName: verificationData.lastName
+      });
+      
+      console.log('🔧 About to call storage.createUser...');
+      const createdUser = await storage.createUser(newUser);
+      console.log('✅ User creation completed:', createdUser?.id || 'no id returned');
       
       console.log('✅ User created successfully:', { userId, email: verificationData.email });
       
       // Generate auth token
+      console.log('🔧 Generating auth token...');
       const authToken = generateAuthToken(userId, verificationData.email);
+      console.log('✅ Auth token generated successfully');
       
       // Set cookie
       res.cookie('authToken', authToken, {
@@ -345,6 +352,7 @@ export function setupCleanAuth(app: Express) {
       // Clean up
       pendingVerifications.delete(email);
       
+      console.log('🎉 Verification complete, sending success response');
       res.json({
         success: true,
         message: 'Phone verification successful',
@@ -363,9 +371,15 @@ export function setupCleanAuth(app: Express) {
       console.error('❌ Error details:', {
         message: error.message,
         stack: error.stack,
-        name: error.name
+        name: error.name,
+        code: error.code
       });
-      res.status(500).json({ error: 'Verification failed', details: error.message });
+      res.status(500).json({ 
+        error: 'Verification failed', 
+        details: error.message,
+        errorCode: error.code,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
@@ -595,24 +609,51 @@ export function setupCleanAuth(app: Express) {
     res.json({ success: true, message: 'Pending verifications cleared' });
   });
 
-  // Fix verification data for testing
-  app.post('/api/auth/debug/fix-verification', (req, res) => {
-    const { email } = req.body;
-    const existing = pendingVerifications.get(email);
-    if (existing) {
-      // Fix the old structure to include required fields
-      pendingVerifications.set(email, {
-        firstName: 'Tim',
-        lastName: 'Fulker',
-        email: email,
-        phoneNumber: existing.phoneNumber || '07999888777',
-        password: 'temppassword123',
-        verificationCode: existing.verificationCode,
-        expiresAt: existing.expiresAt
+  // Test verification endpoint for debugging
+  app.post('/api/auth/debug/test-verify', async (req, res) => {
+    try {
+      const { email } = req.body;
+      const verificationData = pendingVerifications.get(email);
+      
+      if (!verificationData) {
+        return res.json({ error: 'No verification data found', email });
+      }
+      
+      // Test user creation with minimal data
+      const userId = nanoid();
+      const newUser = {
+        id: userId,
+        email: verificationData.email,
+        firstName: verificationData.firstName,
+        lastName: verificationData.lastName,
+        phoneNumber: verificationData.phoneNumber,
+        password: verificationData.password,
+        isAdmin: false,
+        tier: 'trial',
+        phoneVerified: true,
+        stripeCustomerId: null
+      };
+      
+      console.log('🧪 Test user creation with:', newUser);
+      const createdUser = await storage.createUser(newUser);
+      
+      res.json({ 
+        success: true, 
+        userId: createdUser.id,
+        verificationData: {
+          email: verificationData.email,
+          hasFirstName: !!verificationData.firstName,
+          hasLastName: !!verificationData.lastName,
+          hasPassword: !!verificationData.password
+        }
       });
-      res.json({ success: true, message: 'Verification data fixed' });
-    } else {
-      res.json({ error: 'No verification found for that email' });
+    } catch (error: any) {
+      console.error('🧪 Test verification error:', error);
+      res.json({ 
+        error: 'Test failed',
+        details: error.message,
+        code: error.code 
+      });
     }
   });
 
