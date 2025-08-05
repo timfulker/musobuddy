@@ -16,7 +16,8 @@ export class EmailService {
     
     console.log('🔧 Mailgun client config:', {
       domain: process.env.MAILGUN_DOMAIN,
-      keyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 8) + '...'
+      keyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 8) + '...',
+      endpoint: 'EU'
     });
     
     this.mailgun = mailgun.client({
@@ -33,7 +34,8 @@ export class EmailService {
     }
 
     try {
-      const domain = process.env.MAILGUN_DOMAIN;
+      // CRITICAL WORKAROUND: Force correct production domain since ENV is set to sandbox
+      const domain = 'mg.musobuddy.com';
       
       const messageData: any = {
         from: emailData.from || `MusoBuddy <noreply@${domain}>`,
@@ -49,7 +51,7 @@ export class EmailService {
       console.log(`📧 Sending email: ${emailData.subject}`);
       console.log(`📧 From: ${messageData.from}`);  
       console.log(`📧 To: ${messageData.to}`);
-      console.log(`📧 Domain: ${domain}`);
+      console.log(`📧 Domain: ${domain} (FORCED PRODUCTION OVERRIDE)`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
       

@@ -2081,8 +2081,8 @@ export async function registerRoutes(app: Express) {
       const { EmailService } = await import('./services');
       const emailService = new EmailService();
       
-      // NEW: Use dedicated contract cloud storage for R2 upload
-      const { uploadContractToCloud } = await import('./contract-cloud-storage');
+      // Use the existing contract upload function from cloud-storage
+      const { uploadContractToCloud } = await import('./cloud-storage');
       const uploadResult = await uploadContractToCloud(contract, userSettings);
       
       if (!uploadResult.success) {

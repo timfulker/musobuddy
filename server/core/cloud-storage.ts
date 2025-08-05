@@ -113,9 +113,9 @@ export async function uploadContractToCloud(
   try {
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
-    // Generate PDF using the dedicated contract PDF generator
-    const { generateContractPDF } = await import('./contract-pdf-generator');
-    const pdfBuffer = await generateContractPDF(contract, userSettings);
+    // Generate PDF using the working contract PDF generator
+    const { generateWorkingContractPDF } = await import('../working-contract-pdf');
+    const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
     
