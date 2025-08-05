@@ -442,7 +442,7 @@ export function setupAuthRoutes(app: Express) {
         details: error.message // Add error details for debugging
       });
     }
-  });
+  }));
 
   // VERIFY - SINGLE DEFINITION
   app.post('/api/auth/verify', async (req: any, res) => {
