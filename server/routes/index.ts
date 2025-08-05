@@ -5,6 +5,7 @@ import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
 import { registerSettingsRoutes } from "./settings-routes";
 import { registerAdminRoutes } from "./admin-routes";
+import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');
@@ -18,6 +19,19 @@ export async function registerRoutes(app: Express) {
   await registerBookingRoutes(app);
   await registerSettingsRoutes(app);
   await registerAdminRoutes(app);
+  
+  // Add missing endpoints to prevent 404s
+  app.get('/api/conflicts', requireAuth, (req, res) => {
+    res.json([]); // Empty conflicts for now
+  });
+  
+  app.get('/api/conflicts/resolutions', requireAuth, (req, res) => {
+    res.json([]); // Empty resolutions for now  
+  });
+  
+  app.get('/api/compliance', requireAuth, (req, res) => {
+    res.json([]); // Empty compliance for now
+  });
   
   console.log('✅ All modular routes registered successfully');
 }

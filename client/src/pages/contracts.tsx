@@ -264,8 +264,8 @@ export default function Contracts() {
         eventDate: data.eventDate || null,
         // Fix fee: convert string to number
         fee: data.fee ? parseFloat(data.fee) : 0,
-        // Fix enquiryId: use 0 instead of null for optional field
-        enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : 0,
+        // Fix enquiryId: make truly optional with null
+        enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : null,
       };
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)

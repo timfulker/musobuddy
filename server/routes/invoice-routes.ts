@@ -33,7 +33,7 @@ export function registerInvoiceRoutes(app: Express) {
       
       // Fallback: Generate PDF on demand
       console.log('⚠️ No R2 URL, generating PDF on demand...');
-      const userSettings = await storage.getUserSettings(invoice.userId);
+      const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('../core/invoice-pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
       
@@ -90,7 +90,7 @@ export function registerInvoiceRoutes(app: Express) {
       let invoiceNumber = req.body.invoiceNumber;
       
       if (!invoiceNumber) {
-        const userSettings = await storage.getUserSettings(userId);
+        const userSettings = await storage.getSettings(userId);
         const nextNumber = userSettings?.nextInvoiceNumber || 1;
         
         invoiceNumber = `INV-${String(nextNumber).padStart(3, '0')}`;
@@ -121,7 +121,7 @@ export function registerInvoiceRoutes(app: Express) {
       
       // Generate PDF immediately
       try {
-        const userSettings = await storage.getUserSettings(userId);
+        const userSettings = await storage.getSettings(userId);
         const { uploadInvoiceToCloud } = await import('../core/cloud-storage');
         const { url, key } = await uploadInvoiceToCloud(newInvoice, userSettings);
         
