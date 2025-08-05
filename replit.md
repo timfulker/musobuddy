@@ -11,6 +11,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Phase 2 Storage Refactoring Complete**: Successfully refactored server/core/storage.ts from 1,551 lines of mixed implementation to 464 lines of clean delegation pattern. All storage operations now properly delegate to modular storage classes (user, booking, contract, invoice, settings, misc).
 - **Storage Architecture Perfected**: Eliminated all direct database calls from storage.ts, ensuring maintainable modular architecture with pure delegation pattern.
 - **Business-Critical Protection Maintained**: Contract signing workflow security preserved throughout complete storage refactoring.
+- **Route Architecture Consolidated**: Consolidated back to single routes file (server/routes.ts) for reliability. Modular route approach caused authentication issues with business-critical contract viewing functionality. Single file approach ensures contract R2 URL endpoints work consistently.
 
 ## System Architecture
 
@@ -26,7 +27,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 ### Backend
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Core Structure**: Modular route architecture with dedicated modules for authentication, contracts, invoices, bookings, settings, and administration.
+- **Core Structure**: Consolidated route architecture in server/routes.ts with unified authentication middleware ensuring business-critical contract functionality works reliably.
 - **Authentication**: Branded email/password authentication with PostgreSQL sessions and Replit Auth integration.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and webhook processing.
