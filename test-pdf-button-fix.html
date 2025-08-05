@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - PDF Button Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { background: #f0f8ff; border: 2px solid #2563eb; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .pdf-link { display: inline-block; margin: 10px 0; padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; width: 100%; text-align: center; box-sizing: border-box; }
+        .pdf-link:hover { background: #5a6268; }
+        .success { background: #d1fae5; border-color: #10b981; color: #065f46; }
+        .fixed-url { font-family: monospace; background: #f8f9fa; padding: 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 PDF Button Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Before Fix (Broken URL Structure)</h2>
+        <p>The old URL would combine R2 domain with Replit path:</p>
+        <code class="fixed-url">https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contract-signing/2025-08-05/[replit-domain]/api/contracts/public/664/pdf</code>
+        <p><strong>❌ This creates a malformed URL that returns 404</strong></p>
+    </div>
+    
+    <div class="test-section success">
+        <h2>After Fix (Correct Absolute URL)</h2>
+        <p>The new URL uses absolute path to Replit domain:</p>
+        <code class="fixed-url">https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/public/664/pdf</code>
+        <p><strong>✅ This should work from any signing page location</strong></p>
+        
+        <a href="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/public/664/pdf" target="_blank" class="pdf-link">📄 Test: View Full Contract PDF</a>
+        
+        <p><em>Click the button above to test if the PDF loads correctly</em></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Technical Details</h2>
+        <ul>
+            <li>Fixed in: <code>server/core/cloud-storage.ts</code> line 417</li>
+            <li>Changed from relative path to absolute URL</li>
+            <li>Uses public PDF endpoint: <code>/api/contracts/public/:id/pdf</code></li>
+            <li>Works from any R2-hosted signing page</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Test the URL programmatically
+        async function testPdfUrl() {
+            try {
+                const response = await fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/public/664/pdf', {
+                    method: 'HEAD'
+                });
+                
+                const status = response.ok ? '✅ Working' : '❌ Failed';
+                console.log(`PDF URL Status: ${status} (${response.status})`);
+                
+                if (response.ok) {
+                    document.querySelector('.success').innerHTML += '<p><strong>🎉 PDF URL Test: SUCCESS</strong></p>';
+                } else {
+                    document.querySelector('.success').innerHTML += '<p><strong>⚠️ PDF URL Test: Check console for details</strong></p>';
+                }
+            } catch (error) {
+                console.error('PDF URL test failed:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', testPdfUrl);
+    </script>
+</body>
+</html>
