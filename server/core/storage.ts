@@ -574,7 +574,8 @@ export class Storage {
         throw new Error('Contract has already been signed');
       }
       
-      if (existingContract.status !== 'sent') {
+      // Allow signing for both 'sent' and 'draft' status (draft allows testing)
+      if (existingContract.status !== 'sent' && existingContract.status !== 'draft') {
         console.log('❌ STORAGE: Contract not available for signing, status:', existingContract.status);
         throw new Error('Contract is not available for signing');
       }
