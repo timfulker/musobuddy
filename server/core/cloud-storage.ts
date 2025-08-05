@@ -448,8 +448,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         
         // CRITICAL FIX: Detect API URL based on current domain
         function getApiUrl() {
-            const currentHost = window.location.hostname;
-            const currentProtocol = window.location.protocol;
+            var currentHost = window.location.hostname;
+            var currentProtocol = window.location.protocol;
             
             console.log('🔍 CORS-FIXED: Current hostname:', currentHost);
             console.log('🔍 CORS-FIXED: Current protocol:', currentProtocol);
