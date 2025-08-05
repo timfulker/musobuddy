@@ -151,9 +151,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      console.log('🔍 Login attempt:', { email, hasStoredPassword: !!user.password });
       const isValidPassword = await bcrypt.compare(password, user.password || '');
-      console.log('🔍 Password validation:', { isValidPassword });
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }

@@ -148,11 +148,11 @@ export class UserStorage {
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
   }) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    // Password should already be hashed by caller
     const result = await db.insert(users).values({
       id: data.id,
       email: data.email,
-      password: hashedPassword,
+      password: data.password,
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber,
