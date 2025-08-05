@@ -553,9 +553,14 @@ export async function generateIsolatedContractPDF(
   userSettings: IsolatedUserSettings | null,
   templateName: string = 'professional'
 ): Promise<Buffer> {
+  // CRITICAL FIX: Always ignore templateName parameter and force professional
+  console.log(`🔒 FORCED PROFESSIONAL: Contract PDF generation requested (ignoring template: ${templateName})`);
+  console.log(`🔒 FORCED PROFESSIONAL: Will ONLY generate professional template regardless of database setting`);
+  
   if (!pdfGeneratorInstance) {
     pdfGeneratorInstance = new IsolatedContractPDFGenerator();
   }
   
-  return await pdfGeneratorInstance.generateContractPDF(contract, userSettings, templateName);
+  // Always pass 'professional' - ignore the templateName parameter completely
+  return await pdfGeneratorInstance.generateContractPDF(contract, userSettings, 'professional');
 }

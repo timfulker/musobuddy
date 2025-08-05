@@ -496,7 +496,8 @@ export default function Contracts() {
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
     form.setValue('specialRequirements', contract.specialRequirements || '');
-    form.setValue('template', (contract as any).template || 'basic');
+    // CRITICAL FIX: Always force professional template
+    form.setValue('template', 'professional'); // FORCE PROFESSIONAL - ignore database value
     // PHASE 2: Reminder system fields (commented out for manual-only phase 1)
     // form.setValue('reminderEnabled', contract.reminderEnabled || false);
     // form.setValue('reminderDays', contract.reminderDays || 3);

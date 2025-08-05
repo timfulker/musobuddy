@@ -4593,7 +4593,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== ISOLATED CONTRACT SYSTEM =====
-  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes');
+  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes-fixed');
   registerIsolatedContractRoutes(app, storage, isAuthenticated);
 
   // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
