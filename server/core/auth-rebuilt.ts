@@ -367,14 +367,6 @@ export function setupAuthRoutes(app: Express) {
   // SIGNUP - SINGLE DEFINITION
   app.post('/api/auth/signup', 
     authRateLimit,
-    sanitizeInput,
-    validateBody(z.object({
-      firstName: z.string().min(1, 'First name is required'),
-      lastName: z.string().min(1, 'Last name is required'),
-      email: z.string().email('Invalid email format'),
-      phoneNumber: z.string().min(1, 'Phone number is required'),
-      password: z.string().min(6, 'Password must be at least 6 characters')
-    })),
     asyncHandler(async (req: any, res) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = req.body;
@@ -410,6 +402,12 @@ export function setupAuthRoutes(app: Express) {
       
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
+      // Ensure session exists
+      if (!req.session) {
+        console.error('❌ Session not available');
+        return res.status(500).json({ error: 'Session initialization failed' });
+      }
+
       req.session.userId = userId;
       req.session.email = email;
       req.session.verificationCode = verificationCode;
