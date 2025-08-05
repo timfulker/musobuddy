@@ -237,4 +237,84 @@ export class EmailService {
       return { success: false, error: error.message };
     }
   }
+
+  // Send contract confirmation emails
+  async sendContractConfirmationEmails(contract: any, userSettings: any): Promise<boolean> {
+    try {
+      console.log('📧 Starting contract confirmation email process...');
+      
+      // Email to client
+      const clientEmailData = {
+        to: contract.clientEmail,
+        subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
+        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'client')
+      };
+      
+      console.log('📧 Sending confirmation email to client:', contract.clientEmail);
+      const clientResult = await this.sendEmail(clientEmailData);
+      console.log('✅ Client confirmation email sent');
+      
+      // Email to musician
+      const musicianEmailData = {
+        to: userSettings?.businessEmail || 'support@musobuddy.com',
+        subject: `Contract Signed: ${contract.contractNumber} ✓`,
+        html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'musician')
+      };
+      
+      console.log('📧 Sending confirmation email to musician:', userSettings?.businessEmail);
+      const musicianResult = await this.sendEmail(musicianEmailData);
+      console.log('✅ Musician confirmation email sent');
+      
+      return clientResult.success && musicianResult.success;
+    } catch (error: any) {
+      console.error('❌ Failed to send contract confirmation emails:', error);
+      return false;
+    }
+  }
+
+  // Generate contract confirmation email HTML
+  generateContractConfirmationEmailHTML(contract: any, userSettings: any, recipient: 'client' | 'musician'): string {
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const isClient = recipient === 'client';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Contract Successfully Signed</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #4CAF50; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">✅ Contract Successfully Signed</h2>
+          </div>
+          
+          <p>Dear ${isClient ? contract.clientName : businessName},</p>
+          
+          <p>Great news! The performance contract <strong>${contract.contractNumber}</strong> has been successfully signed and is now legally binding.</p>
+          
+          <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #4CAF50;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Event Details:</h3>
+            <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+            <p><strong>Time:</strong> ${contract.eventTime}</p>
+            <p><strong>Venue:</strong> ${contract.venue}</p>
+            <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+            ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<p><strong>Deposit:</strong> £${contract.deposit}</p>` : ''}
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://musobuddy.replit.app/api/contracts/${contract.id}/download" 
+               style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Download Signed Contract
+            </a>
+          </div>
+          
+          <p>Best regards,<br>
+          ${isClient ? businessName : 'MusoBuddy Team'}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
 }

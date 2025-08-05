@@ -407,8 +407,22 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
         <form id="signingForm" action="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}" method="POST">
-            <label for="clientName">Full Name:</label>
-            <input type="text" id="clientName" name="clientName" required style="width: 100%; padding: 8px; margin: 10px 0;">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4>Client Information</h4>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Fields marked with a blue border must be completed before signing</p>
+                
+                <label for="clientName">Full Name:</label>
+                <input type="text" id="clientName" name="clientName" value="${contract.clientName || ''}" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 6px;">
+                
+                <label for="clientPhone" style="color: #2563eb;">Phone Number ${!contract.clientPhone ? '(Required)' : ''}:</label>
+                <input type="tel" id="clientPhone" name="clientPhone" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" ${!contract.clientPhone ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff;">
+                
+                <label for="clientAddress" style="color: #2563eb;">Address ${!contract.clientAddress ? '(Required)' : ''}:</label>
+                <textarea id="clientAddress" name="clientAddress" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" ${!contract.clientAddress ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.clientAddress || ''}</textarea>
+                
+                <label for="venueAddress" style="color: #2563eb;">Venue Address ${!contract.venueAddress ? '(Required)' : ''}:</label>
+                <textarea id="venueAddress" name="venueAddress" rows="3" placeholder="e.g., The Grand Hotel, 456 Event Street, London, EC1A 1BB" ${!contract.venueAddress ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.venueAddress || ''}</textarea>
+            </div>
             
             <label for="signature">Digital Signature:</label>
             <div class="signature-pad" id="signaturePad">
