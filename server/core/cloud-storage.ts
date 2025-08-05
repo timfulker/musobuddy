@@ -578,6 +578,24 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                     submitBtn.textContent = 'Contract Signed ✓';
                     submitBtn.style.background = '#10b981';
                     
+                    // CRITICAL: Add PDF download button after successful signing
+                    var signingSection = document.querySelector('.signing-section');
+                    if (signingSection && result.cloudUrl) {
+                        var pdfButton = document.createElement('a');
+                        pdfButton.href = result.cloudUrl;
+                        pdfButton.target = '_blank';
+                        pdfButton.className = 'pdf-link';
+                        pdfButton.innerHTML = '📄 View Signed Contract PDF';
+                        pdfButton.style.marginTop = '20px';
+                        pdfButton.style.display = 'block';
+                        
+                        // Insert PDF button before the form
+                        var form = document.getElementById('signingForm');
+                        signingSection.insertBefore(pdfButton, form);
+                        
+                        console.log('✅ PDF download button added:', result.cloudUrl);
+                    }
+                    
                     // Show detailed success message
                     var message = result.alreadySigned ? 
                         '✅ This contract has already been signed.\\n\\nThank you for your confirmation!' :
