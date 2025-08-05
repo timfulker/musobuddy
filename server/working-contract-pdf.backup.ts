@@ -1,32 +1,49 @@
+// WORKING CONTRACT PDF GENERATOR - Uses EXACT same approach as invoice system
+// Based on server/core/invoice-pdf-generator.ts (the working system)
+
 import puppeteer from 'puppeteer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { Contract, UserSettings, Invoice } from '@shared/schema';
+
+interface ContractData {
+  id: number;
+  contractNumber: string;
+  clientName: string;
+  clientEmail?: string;
+  venue: string;
+  eventDate: Date;
+  fee: string;
+  deposit?: string;
+}
+
+interface UserSettings {
+  businessName: string;
+  primaryInstrument: string;
+}
 
 function getLogoBase64(): string {
   try {
-    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-midnight-blue.png');
     const logoBuffer = readFileSync(logoPath);
     return logoBuffer.toString('base64');
   } catch (error) {
     console.error('Error loading logo:', error);
-    // Fallback to empty string if logo not found
     return '';
   }
 }
 
-export async function generateContractPDF(
-  contract: Contract,
+export async function generateWorkingContractPDF(
+  contract: ContractData,
   userSettings: UserSettings | null,
   signatureDetails?: {
     signedAt: Date;
-    signatureName?: string;
-    clientIpAddress?: string;
+    signatureName: string;
+    clientIpAddress: string;
   }
 ): Promise<Buffer> {
-  console.log('🚀 Starting ORIGINAL contract PDF generation for:', contract.contractNumber);
+  console.log('🚀 Starting WORKING contract PDF generation for:', contract.contractNumber);
   
-  // Simple, reliable Puppeteer configuration
+  // EXACT same Puppeteer configuration as working invoice system
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -35,94 +52,150 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateContractHTML(contract, userSettings, signatureDetails);
+    
+    console.log('📄 Using professional contract template from user...');
+    const html = generateProfessionalContractHTML(contract, userSettings, signatureDetails);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
       format: 'A4', 
       printBackground: true,
       margin: {
-        top: '0.75in',
-        right: '0.75in',
-        bottom: '0.75in',
-        left: '0.75in'
+        top: '20mm',
+        right: '15mm', 
+        bottom: '20mm',
+        left: '15mm'
       }
     });
     
-    console.log('✅ ORIGINAL contract PDF generated successfully:', pdf.length, 'bytes');
+    console.log('✅ WORKING contract PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
   }
 }
 
-function generateContractHTML(
-  contract: Contract,
+function generateProfessionalContractHTML(
+  contract: ContractData, 
   userSettings: UserSettings | null,
   signatureDetails?: {
     signedAt: Date;
-    signatureName?: string;
-    clientIpAddress?: string;
+    signatureName: string;
+    clientIpAddress: string;
   }
 ): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy Business';
-  const eventDate = contract.eventDate ? new Date(contract.eventDate) : null;
-  const eventDateStr = eventDate ? eventDate.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    year: 'numeric', 
-    month: 'long',
-    day: 'numeric'
-  }) : 'Date TBC';
-
-  // Use the custom MusoBuddy logo
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto;" alt="MusoBuddy Logo" />` : '';
-
-  return `
-<!DOCTYPE html>
+  const businessName = userSettings?.businessName || 'Your Business';
+  const eventDateStr = contract.eventDate.toLocaleDateString('en-GB');
+  
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Contract - ${contract.contractNumber}</title>
+    <title>MusoBuddy - Performance Contract</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
+        /* Print and PDF optimizations */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            body {
+                background: white !important;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .page-break-before {
+                page-break-before: always;
+            }
+            
+            .page-break-after {
+                page-break-after: always;
+            }
+            
+            .no-page-break {
+                page-break-inside: avoid;
+            }
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: #2c3e50;
-            background: #ffffff;
+            color: #1a1a1a;
+            background: #f8fafc;
+            margin: 0;
+            padding: 20px;
         }
         
         .contract-container {
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
         
-        /* Header */
+        /* Header with logo */
         .contract-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
             color: white;
             padding: 30px;
             text-align: center;
-            position: relative;
+            page-break-inside: avoid;
         }
         
         .logo-section {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 20px;
+        }
+        
+        .metronome-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .metronome-body {
+            width: 20px;
+            height: 32px;
+            background: white;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            position: relative;
+        }
+        
+        .metronome-arm {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 20px;
+            background: #191970;
+            transform-origin: bottom;
+            border-radius: 1px;
         }
         
         .company-name {
@@ -135,13 +208,14 @@ function generateContractHTML(
             font-size: 14px;
             opacity: 0.9;
             font-style: italic;
+            margin-top: 5px;
         }
         
         .contract-title {
             font-size: 32px;
             font-weight: 800;
-            margin: 20px 0 10px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin: 10px 0 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .contract-number {
@@ -150,115 +224,86 @@ function generateContractHTML(
             font-weight: 500;
         }
         
-        /* Content */
+        /* Main content */
         .contract-content {
             padding: 40px;
         }
         
         .section {
-            margin-bottom: 35px;
+            margin-bottom: 40px;
+            page-break-inside: avoid;
         }
         
         .section-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #1e3a8a;
             margin-bottom: 20px;
-            padding-bottom: 8px;
-            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3b82f6;
+            position: relative;
         }
         
-        /* Event Details Grid */
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: #191970;
+        }
+        
+        /* Event details grid */
         .event-details {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
         
         .detail-card {
-            background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-            transition: transform 0.2s;
+            border-left: 5px solid #3b82f6;
+            transition: all 0.3s ease;
         }
         
         .detail-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
         
         .detail-label {
             font-size: 12px;
             font-weight: 600;
-            color: #7c3aed;
+            color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             margin-bottom: 8px;
         }
         
         .detail-value {
             font-size: 18px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #1e293b;
+            line-height: 1.3;
         }
         
-        /* Payment Section */
-        .payment-section {
-            background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
-            border: 2px solid #ef4444;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-        
-        .payment-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #dc2626;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .payment-details {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .payment-item {
-            text-align: center;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #fecaca;
-        }
-        
-        .payment-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #7f1d1d;
-            margin-bottom: 8px;
-        }
-        
-        .payment-amount {
-            font-size: 24px;
-            font-weight: 800;
-            color: #dc2626;
-        }
-        
-        /* Terms */
+        /* Terms sections */
         .terms-section {
-            margin-top: 20px;
+            margin-bottom: 30px;
         }
         
         .terms-subtitle {
             font-size: 16px;
             font-weight: 600;
-            color: #374151;
-            margin-bottom: 10px;
+            color: #1e3a8a;
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 4px solid #3b82f6;
         }
         
         .terms-list {
@@ -267,64 +312,110 @@ function generateContractHTML(
         }
         
         .terms-list li {
-            background: #f9fafb;
-            margin-bottom: 8px;
-            padding: 12px 16px;
-            border-radius: 6px;
-            border-left: 3px solid #6366f1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
             position: relative;
+            padding-left: 45px;
         }
         
-        .terms-list li:before {
-            content: "✓";
+        .terms-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 15px;
+            top: 15px;
             color: #10b981;
-            font-weight: bold;
-            margin-right: 8px;
+            font-weight: 700;
+            font-size: 16px;
         }
         
-        /* Signature section - IMPROVED LAYOUT */
+        /* Payment section highlighting */
+        .payment-section {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .payment-title {
+            color: #1e40af;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .payment-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .payment-item {
+            background: white;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .payment-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .payment-amount {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e40af;
+        }
+        
+        /* Signature section */
         .signature-section {
-            margin-top: 40px;
+            margin-top: 50px;
             padding-top: 30px;
             border-top: 2px dashed #cbd5e1;
-            page-break-inside: avoid;
         }
         
         .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 25px;
+            gap: 40px;
+            margin-top: 30px;
         }
         
         .signature-box {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             border: 2px dashed #94a3b8;
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 15px;
+            padding: 30px;
             text-align: center;
-            min-height: 140px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            min-height: 120px;
+            position: relative;
         }
         
         .signed-box {
-            border: 2px solid #10b981;
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #4CAF50;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
         }
         
         .signature-role {
             font-size: 14px;
             font-weight: 600;
             color: #64748b;
-            margin-bottom: 15px;
+            margin-bottom: 40px;
         }
         
         .signature-line {
-            border-top: 2px solid #334155;
-            margin: 15px auto;
-            width: 180px;
+            border-top: 2px solid #1e3a8a;
+            margin: 20px auto;
+            width: 200px;
+            position: relative;
         }
         
         .signature-name {
@@ -335,14 +426,9 @@ function generateContractHTML(
         }
         
         .signature-date {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
-            margin-top: 10px;
-        }
-        
-        .signature-status {
-            font-size: 11px;
-            margin-top: 8px;
+            margin-top: 15px;
         }
         
         /* Footer */
@@ -351,7 +437,7 @@ function generateContractHTML(
             padding: 25px;
             text-align: center;
             border-top: 1px solid #e2e8f0;
-            margin-top: 30px;
+            margin-top: 40px;
         }
         
         .footer-text {
@@ -362,23 +448,27 @@ function generateContractHTML(
         
         .footer-logo {
             font-weight: 700;
-            color: #667eea;
+            color: #1e3a8a;
         }
         
-        /* Print optimizations */
+        /* Responsive adjustments for print */
         @media print {
             .contract-container {
                 box-shadow: none;
                 border-radius: 0;
             }
             
-            .signature-section {
-                page-break-inside: avoid;
-                break-inside: avoid;
+            .detail-card:hover {
+                transform: none;
+                box-shadow: none;
             }
             
-            .signature-grid {
-                page-break-inside: avoid;
+            .event-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .payment-details {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
     </style>
@@ -388,7 +478,11 @@ function generateContractHTML(
         <!-- Header -->
         <div class="contract-header">
             <div class="logo-section">
-                ${logoHtml}
+                <div class="metronome-icon">
+                    <div class="metronome-body">
+                        <div class="metronome-arm"></div>
+                    </div>
+                </div>
                 <div>
                     <div class="company-name">MusoBuddy</div>
                     <div class="tagline">Less admin, more music</div>
@@ -522,7 +616,7 @@ function generateContractHTML(
                         <div class="signature-line"></div>
                         <div class="signature-name">${businessName}</div>
                         <div class="signature-date">Agreed by sending contract</div>
-                        <div class="signature-status" style="color: #10b981;">✓ Contract sent on ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</div>
+                        <div style="font-size: 11px; color: #4CAF50; margin-top: 8px;">✓ Contract sent on ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</div>
                     </div>
                     
                     <div class="signature-box ${contract.status === 'signed' ? 'signed-box' : ''}">
@@ -531,12 +625,12 @@ function generateContractHTML(
                             <div class="signature-line"></div>
                             <div class="signature-name">${signatureDetails.signatureName || 'Digital Signature'}</div>
                             <div class="signature-date">Digitally signed on ${signatureDetails.signedAt.toLocaleDateString('en-GB')}</div>
-                            <div class="signature-status" style="color: #10b981;">✓ Signed at ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</div>
+                            <div style="font-size: 11px; color: #4CAF50; margin-top: 8px;">✓ Signed at ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</div>
                         ` : `
                             <div class="signature-line"></div>
                             <div class="signature-name">${contract.clientName}</div>
                             <div class="signature-date">Date: _______________</div>
-                            <div class="signature-status" style="color: #94a3b8;">Awaiting digital signature</div>
+                            <div style="font-size: 11px; color: #666; margin-top: 8px;">Awaiting digital signature</div>
                         `}
                     </div>
                 </div>
@@ -546,13 +640,12 @@ function generateContractHTML(
         <!-- Footer -->
         <div class="contract-footer">
             <div class="footer-text">
-                Contract generated on ${new Date(contract.createdAt).toLocaleDateString('en-GB')}<br>
+                Contract generated on ${new Date().toLocaleDateString('en-GB')}<br>
                 Professional performance contract by <span class="footer-logo">MusoBuddy</span><br>
                 Empowering musicians with professional business tools
             </div>
         </div>
     </div>
 </body>
-</html>
-  `;
+</html>`;
 }

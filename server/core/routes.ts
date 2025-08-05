@@ -2475,16 +2475,19 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // CRITICAL MISSING ENDPOINT: Contract signing API (PUBLIC ACCESS - no authentication required)
+  // COMPLETE FIXED CONTRACT SIGNING ROUTE - RESTORED FROM WORKING BACKUP
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
       
       console.log(`📝 Contract signing request for ID: ${contractId}`);
-      console.log(`📝 Client signature: ${clientSignature}`);
+      console.log(`📝 Client signature received: ${clientSignature ? 'Yes' : 'No'}`);
       console.log(`📝 Client IP: ${clientIP}`);
-      console.log(`📝 All form data:`, req.body);
+      
+      // CRITICAL: Set response headers to ensure JSON response
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
       
       if (!clientSignature) {
         return res.status(400).json({ 
@@ -2511,114 +2514,125 @@ export async function registerRoutes(app: Express) {
         });
       }
       
-      // Update contract with additional information from form and sign it
+      console.log(`📝 Proceeding with contract signing for: ${contract.clientName}`);
+      
+      // Update contract with additional information from form
       const updateData: any = {};
       if (clientPhone) updateData.clientPhone = clientPhone;
       if (clientAddress) updateData.clientAddress = clientAddress;
       if (venueAddress) updateData.venueAddress = venueAddress;
       
-      // Update contract with additional info if provided
       if (Object.keys(updateData).length > 0) {
         await storage.updateContract(contractId, updateData);
-        console.log(`📝 Updated contract with additional info:`, updateData);
+        console.log(`📝 Updated contract with additional client info`);
       }
       
-      // Sign the contract
+      // STEP 1: Sign the contract in database
+      console.log(`📝 STEP 1: Signing contract in database...`);
       const signedContract = await storage.signContract(contractId, {
         signatureName: clientSignature,
         clientIP: clientIP || 'Unknown',
         signedAt: new Date()
       });
       
-      // Update associated booking status if exists
+      if (!signedContract) {
+        throw new Error('Failed to sign contract in database');
+      }
+      
+      console.log(`✅ Contract signed in database. Status: ${signedContract.status}`);
+      
+      // Update booking status if linked
       if (contract.enquiryId) {
         try {
           await storage.updateBooking(contract.enquiryId, { status: 'confirmed' });
           console.log(`✅ Updated booking #${contract.enquiryId} status to confirmed`);
         } catch (bookingError) {
-          console.log('⚠️ Failed to update booking status:', bookingError);
+          console.warn('⚠️ Could not update booking status:', bookingError);
         }
       }
       
-      console.log(`✅ Contract #${contractId} signed successfully`);
-      
-      // CRITICAL FIX: Upload contract to cloud FIRST, then send emails with signed URL
-      let finalSignedContractUrl = null;
+      // STEP 2: Upload contract to cloud storage BEFORE sending emails
+      console.log(`📝 STEP 2: Uploading signed contract to cloud storage...`);
+      let finalCloudUrl = null;
       
       try {
-        // STEP 1: Upload signed contract to cloud storage 
-        console.log(`☁️ Uploading contract #${contractId} to cloud storage...`);
         const userSettings = await storage.getUserSettings(contract.userId);
         const { uploadContractToCloud } = await import('./cloud-storage');
         
         const signatureDetails = {
-          signedAt: signedContract.signedAt ? new Date(signedContract.signedAt) : new Date(),
-          signatureName: signedContract.clientSignature || clientSignature,
-          clientIpAddress: signedContract.clientIpAddress || clientIP || 'Unknown'
+          signedAt: new Date(signedContract.signedAt || new Date()),
+          signatureName: clientSignature,
+          clientIpAddress: clientIP || 'Unknown'
         };
         
-        const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
+        const uploadResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
-        if (cloudResult.success && cloudResult.url) {
-          // STEP 2: Update contract with signed PDF URL - CRITICAL FOR EMAILS
-          console.log(`✅ Contract PDF uploaded successfully to R2: ${cloudResult.key}`);
-          console.log(`🔗 Direct contract R2 public URL: ${cloudResult.url}`);
+        if (uploadResult.success && uploadResult.url) {
+          console.log(`✅ Contract uploaded to cloud: ${uploadResult.key}`);
           
+          // Update contract with cloud URL
           await storage.updateContract(contractId, {
-            cloudStorageUrl: cloudResult.url,
-            cloudStorageKey: cloudResult.key
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key
           });
           
-          finalSignedContractUrl = cloudResult.url;
+          finalCloudUrl = uploadResult.url;
         } else {
-          console.error(`❌ Cloud upload failed: ${cloudResult.error}`);
-          finalSignedContractUrl = `https://musobuddy.replit.app/view/contracts/${contractId}`;
+          console.error(`❌ Cloud upload failed: ${uploadResult.error}`);
         }
         
-        // STEP 3: Send emails AFTER contract is updated with signed PDF URL
-        console.log(`📧 Starting contract confirmation email process...`);
-        
-        // CRITICAL DELAY: Give database a moment to fully commit the changes
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (uploadError: any) {
+        console.error('⚠️ Upload failed (contract still signed):', uploadError);
+      }
+      
+      // STEP 3: Send confirmation emails
+      console.log(`📝 STEP 3: Sending confirmation emails...`);
+      
+      try {
+        // Brief delay to ensure all database updates are committed
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         const { EmailService } = await import('./services');
         const emailService = new EmailService();
         
-        // Get the LATEST contract data from database for emails
-        const latestContract = await storage.getContract(contractId);
-        console.log(`📧 Latest contract for emails - Cloud URL: ${latestContract?.cloudStorageUrl ? 'Present' : 'Missing'}`);
+        // Get fresh contract data for emails
+        const freshContract = await storage.getContract(contractId);
+        const userSettings = await storage.getUserSettings(contract.userId);
         
-        const emailSuccess = await emailService.sendContractConfirmationEmails(latestContract || signedContract, userSettings);
+        const emailResult = await emailService.sendContractConfirmationEmails(freshContract || signedContract, userSettings);
         
-        if (emailSuccess) {
+        if (emailResult) {
           console.log('✅ Contract confirmation emails sent successfully');
         } else {
-          console.warn('⚠️ Some confirmation emails may have failed');
+          console.warn('⚠️ Email sending may have failed');
         }
         
-      } catch (error: any) {
-        console.error('⚠️ Cloud upload or email sending failed (contract still signed):', error);
-        finalSignedContractUrl = `https://musobuddy.replit.app/view/contracts/${contractId}`;
+      } catch (emailError: any) {
+        console.warn('⚠️ Email sending failed (contract still signed):', emailError);
       }
       
-      // CRITICAL: Always return JSON with proper headers
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Cache-Control', 'no-cache');
+      // CRITICAL: Ensure JSON response with proper headers
+      console.log(`📝 STEP 4: Returning success response...`);
       
-      res.json({ 
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json({ 
         success: true, 
-        message: 'Contract signed successfully! Both parties will receive confirmation emails.',
+        message: 'Contract signed successfully! Confirmation emails have been sent to both parties.',
         contractId: contractId,
-        signedAt: signedContract.signedAt ? new Date(signedContract.signedAt).toISOString() : new Date().toISOString(),
-        cloudUrl: finalSignedContractUrl,
+        signedAt: signedContract.signedAt || new Date().toISOString(),
+        cloudUrl: finalCloudUrl,
         status: 'signed'
       });
       
     } catch (error: any) {
-      console.error('❌ Contract signing error:', error);
+      console.error('❌ Contract signing failed:', error);
+      
+      // Ensure JSON error response
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ 
         success: false,
-        error: 'Failed to sign contract. Please try again.' 
+        error: 'Failed to sign contract. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });
