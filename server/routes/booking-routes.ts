@@ -53,7 +53,7 @@ export function registerBookingRoutes(app: Express) {
     generalApiRateLimit,
     sanitizeInput,
     validateBody(schemas.createBooking),
-    asyncHandler(async (req: any, res) => {
+    asyncHandler(async (req: any, res: any) => {
     try {
       const userId = req.session?.userId;
       

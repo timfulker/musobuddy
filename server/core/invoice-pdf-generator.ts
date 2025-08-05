@@ -85,7 +85,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
   const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.email || '';
+  const businessEmail = userSettings?.businessEmail || '';
 
   return `
     <!DOCTYPE html>
@@ -318,7 +318,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         </div>
         <div class="invoice-details">
           <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
-          <div class="invoice-date">Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
+          <div class="invoice-date">Date: ${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</div>
         </div>
       </div>
       
