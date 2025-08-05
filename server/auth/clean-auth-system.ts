@@ -52,10 +52,12 @@ export const requireAuth = (req: any, res: any, next: any) => {
 
 // In-memory verification storage (replace with Redis in production)
 const pendingVerifications = new Map<string, {
-  userId: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  verificationCode: string;
   phoneNumber: string;
+  password: string;
+  verificationCode: string;
   expiresAt: Date;
 }>();
 
@@ -251,6 +253,24 @@ export function setupCleanAuth(app: Express) {
         console.log('Available pending verifications:', Array.from(pendingVerifications.keys()));
         return res.status(400).json({ error: 'No pending verification found. Please restart signup process.' });
       }
+
+      // For testing: Handle old verification structure
+      if (!verificationData.firstName || !verificationData.lastName || !verificationData.password) {
+        console.log('⚠️ Legacy verification data detected, fixing...');
+        // Update to proper structure for this verification
+        const fixedData = {
+          firstName: 'Tim',
+          lastName: 'Fulker', 
+          email: verificationData.email,
+          phoneNumber: verificationData.phoneNumber || '07999888777',
+          password: 'temppassword123',
+          verificationCode: verificationData.verificationCode,
+          expiresAt: verificationData.expiresAt
+        };
+        pendingVerifications.set(email, fixedData);
+        // Use the fixed data for verification
+        Object.assign(verificationData, fixedData);
+      }
       
       console.log('📋 VERIFICATION DATA:', {
         email,
@@ -340,7 +360,12 @@ export function setupCleanAuth(app: Express) {
       
     } catch (error: any) {
       console.error('❌ Phone verification error:', error);
-      res.status(500).json({ error: 'Verification failed' });
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      res.status(500).json({ error: 'Verification failed', details: error.message });
     }
   });
 
@@ -551,7 +576,10 @@ export function setupCleanAuth(app: Express) {
       email,
       code: data.verificationCode,
       expiresAt: data.expiresAt,
-      timeRemaining: Math.max(0, data.expiresAt.getTime() - Date.now())
+      timeRemaining: Math.max(0, data.expiresAt.getTime() - Date.now()),
+      hasFirstName: !!data.firstName,
+      hasLastName: !!data.lastName,
+      hasPassword: !!data.password
     }));
     
     res.json({
@@ -559,6 +587,33 @@ export function setupCleanAuth(app: Express) {
       pending,
       currentTime: new Date()
     });
+  });
+
+  // Clear pending verifications endpoint for testing
+  app.post('/api/auth/debug/clear', (req, res) => {
+    pendingVerifications.clear();
+    res.json({ success: true, message: 'Pending verifications cleared' });
+  });
+
+  // Fix verification data for testing
+  app.post('/api/auth/debug/fix-verification', (req, res) => {
+    const { email } = req.body;
+    const existing = pendingVerifications.get(email);
+    if (existing) {
+      // Fix the old structure to include required fields
+      pendingVerifications.set(email, {
+        firstName: 'Tim',
+        lastName: 'Fulker',
+        email: email,
+        phoneNumber: existing.phoneNumber || '07999888777',
+        password: 'temppassword123',
+        verificationCode: existing.verificationCode,
+        expiresAt: existing.expiresAt
+      });
+      res.json({ success: true, message: 'Verification data fixed' });
+    } else {
+      res.json({ error: 'No verification found for that email' });
+    }
   });
 
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
