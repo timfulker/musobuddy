@@ -75,7 +75,15 @@ export async function generateWorkingContractPDF(
   }
 }
 
-function generateProfessionalContractHTML(contract: ContractData, userSettings: UserSettings | null): string {
+function generateProfessionalContractHTML(
+  contract: ContractData, 
+  userSettings: UserSettings | null,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName: string;
+    clientIpAddress: string;
+  }
+): string {
   const businessName = userSettings?.businessName || 'Your Business';
   const eventDateStr = contract.eventDate.toLocaleDateString('en-GB');
   
@@ -607,9 +615,9 @@ function generateProfessionalContractHTML(contract: ContractData, userSettings: 
                     
                     <div class="signature-box">
                         <div class="signature-role">Client</div>
-                        <div class="signature-line"></div>
+                        <div class="signature-line">${signatureDetails ? `Digital signature: ${signatureDetails.signatureName} - ${signatureDetails.signedAt.toISOString()}` : ''}</div>
                         <div class="signature-name">${contract.clientName}</div>
-                        <div class="signature-date">Date: _______________</div>
+                        <div class="signature-date">Date: ${signatureDetails ? signatureDetails.signedAt.toLocaleDateString('en-GB') : '_______________'}</div>
                     </div>
                 </div>
             </div>

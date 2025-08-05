@@ -108,14 +108,19 @@ export async function generateDirectInvoiceUrl(invoice: Invoice): Promise<string
 // CONTRACT CLOUD STORAGE FUNCTIONS
 export async function uploadContractToCloud(
   contract: Contract,
-  userSettings: UserSettings | null
+  userSettings: UserSettings | null,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName: string;
+    clientIpAddress: string;
+  }
 ): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
   try {
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
-    // Generate PDF using the working contract PDF generator
+    // Generate PDF using the working contract PDF generator with signature data
     const { generateWorkingContractPDF } = await import('../working-contract-pdf');
-    const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
+    const pdfBuffer = await generateWorkingContractPDF(contract, userSettings, signatureDetails);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
     

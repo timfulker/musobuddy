@@ -2388,8 +2388,8 @@ export async function registerRoutes(app: Express) {
         const { uploadContractToCloud } = await import('./cloud-storage');
         const signatureDetails = {
           signedAt: signedContract.signedAt ? new Date(signedContract.signedAt) : new Date(),
-          signatureName: signedContract.clientSignature || undefined,
-          clientIpAddress: signedContract.clientIpAddress || undefined
+          signatureName: signedContract.clientSignature || clientSignature,
+          clientIpAddress: signedContract.clientIpAddress || clientIP || 'Unknown'
         };
         const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
