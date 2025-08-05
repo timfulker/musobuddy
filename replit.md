@@ -17,6 +17,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Session Middleware Issue Identified (Jan 5, 2025)**: Confirmed signup creates users in database but fails on session creation. Session middleware works for existing auth (admin login functional). Issue is middleware application order in auth route registration. User preference noted: avoid extended debugging cycles due to 5-minute deployment times.
 - **Complete Authentication System Rebuild (Jan 5, 2025)**: Successfully replaced session-based authentication with clean JWT-based system. New system includes full SMS verification (Twilio), Stripe subscription integration, phone number verification flow, and bypasses all session middleware conflicts. Authentication endpoints now use JWT tokens instead of sessions, resolving all file restructure casualties.
 - **Complete Authentication System Cleanup (Jan 5, 2025)**: Eliminated all remaining session-based code. Deleted all old login/signup frontend pages, removed session middleware from server startup, updated all route files to use JWT requireAuth middleware. System now uses pure JWT authentication with Authorization headers. All authentication conflicts resolved - server running successfully.
+- **Phone Number Constraint Removed (Jan 5, 2025)**: Removed unique constraint on phone_number field for testing purposes to allow multiple users to use the same phone number during development and testing phases.
 
 ## System Architecture
 
