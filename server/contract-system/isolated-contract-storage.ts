@@ -4,7 +4,7 @@
 
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import type { IsolatedContractData, IsolatedUserSettings, IsolatedUploadResult } from './isolated-contract-types';
-import { generateIsolatedContractPDF } from './isolated-contract-pdf';
+import { generateIsolatedContractPDF } from './isolated-contract-pdf-fixed';
 
 const R2_ENDPOINT = 'https://446248abf8164fb99bee2fc3dc3c513c.r2.cloudflarestorage.com';
 const PUBLIC_URL_BASE = 'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev';
