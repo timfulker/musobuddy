@@ -99,9 +99,9 @@ function generateUnifiedContractHTML(
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             line-height: 1.6;
-            color: #2c3e50;
+            color: #333;
             background: #ffffff;
         }
         
@@ -116,9 +116,9 @@ function generateUnifiedContractHTML(
         
         /* Header */
         .contract-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
             color: white;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
             position: relative;
         }
@@ -127,25 +127,26 @@ function generateUnifiedContractHTML(
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 25px;
+            margin-bottom: 30px;
         }
         
         .metronome-container {
-            width: 70px;
-            height: 70px;
-            background: #5b21b6;
-            border-radius: 12px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 25px rgba(91, 33, 182, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             flex-shrink: 0;
+            backdrop-filter: blur(10px);
         }
         
         .metronome-body {
-            width: 20px;
-            height: 32px;
+            width: 24px;
+            height: 38px;
             background: white;
             clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
             position: relative;
@@ -153,29 +154,28 @@ function generateUnifiedContractHTML(
         
         .metronome-arm {
             position: absolute;
-            top: 6px;
+            top: 8px;
             left: 50%;
             transform: translateX(-50%) rotate(10deg);
-            width: 2px;
-            height: 20px;
-            background: #5b21b6;
+            width: 2.5px;
+            height: 24px;
+            background: #191970;
             border-radius: 1px;
             transform-origin: bottom center;
         }
         
         .company-name {
-            font-size: 36px;
+            font-size: 42px;
             font-weight: 700;
             letter-spacing: -1px;
             color: white;
             line-height: 1;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
         
         .tagline {
-            font-size: 16px;
-            color: white;
-            opacity: 0.9;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
             font-style: italic;
             font-weight: 500;
         }
@@ -183,7 +183,7 @@ function generateUnifiedContractHTML(
         .contract-title {
             font-size: 32px;
             font-weight: 800;
-            margin: 20px 0 10px 0;
+            margin: 25px 0 15px 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
@@ -198,25 +198,26 @@ function generateUnifiedContractHTML(
             position: absolute;
             top: 20px;
             right: 20px;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 10px 18px;
+            border-radius: 25px;
             font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
+            backdrop-filter: blur(10px);
         }
         
         .status-signed {
-            background: #10b981;
+            background: rgba(16, 185, 129, 0.9);
             color: white;
         }
         
         .status-sent {
-            background: #3b82f6;
+            background: rgba(59, 130, 246, 0.9);
             color: white;
         }
         
         .status-draft {
-            background: #6b7280;
+            background: rgba(107, 114, 128, 0.9);
             color: white;
         }
         
@@ -232,10 +233,10 @@ function generateUnifiedContractHTML(
         .section-title {
             font-size: 22px;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 8px;
-            border-bottom: 3px solid #667eea;
+            color: #191970;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1e3a8a;
         }
         
         /* Parties Section */
@@ -250,13 +251,14 @@ function generateUnifiedContractHTML(
             background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
             padding: 25px;
             border-radius: 12px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #1e3a8a;
+            border: 1px solid #e2e8f0;
         }
         
         .party-title {
             font-size: 16px;
             font-weight: 700;
-            color: #7c3aed;
+            color: #191970;
             margin-bottom: 15px;
         }
         
@@ -265,8 +267,12 @@ function generateUnifiedContractHTML(
             line-height: 1.6;
         }
         
+        .party-details {
+            color: #4a5568;
+        }
+        
         .party-details strong {
-            color: #2c3e50;
+            color: #2d3748;
         }
         
         /* Event Details Grid */
@@ -281,13 +287,14 @@ function generateUnifiedContractHTML(
             background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
             padding: 20px;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #1e3a8a;
+            border: 1px solid #e2e8f0;
         }
         
         .detail-label {
             font-size: 12px;
             font-weight: 600;
-            color: #7c3aed;
+            color: #191970;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
@@ -296,52 +303,68 @@ function generateUnifiedContractHTML(
         .detail-value {
             font-size: 18px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #2d3748;
         }
         
-        /* Payment Section */
+        /* Payment Section - Updated to remove red and match invoice style */
         .payment-section {
-            background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
-            border: 2px solid #ef4444;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #1e3a8a;
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
             margin-bottom: 20px;
         }
         
         .payment-title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
-            color: #dc2626;
+            color: #191970;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         .payment-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
         }
         
         .payment-item {
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             background: white;
-            border-radius: 8px;
-            border: 1px solid #fecaca;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
         .payment-label {
             font-size: 12px;
             font-weight: 600;
-            color: #7f1d1d;
-            margin-bottom: 8px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
         }
         
         .payment-amount {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 800;
-            color: #dc2626;
+            color: #191970;
+        }
+        
+        .payment-instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            margin-top: 20px;
+        }
+        
+        .payment-instructions strong {
+            color: #191970;
+            font-size: 16px;
         }
         
         /* Terms */
@@ -363,24 +386,37 @@ function generateUnifiedContractHTML(
         
         .terms-list li {
             background: #f9fafb;
-            margin-bottom: 8px;
-            padding: 12px 16px;
-            border-radius: 6px;
-            border-left: 3px solid #6366f1;
+            margin-bottom: 10px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1e3a8a;
             position: relative;
+            color: #4a5568;
         }
         
         .terms-list li:before {
             content: "✓";
             color: #10b981;
             font-weight: bold;
-            margin-right: 8px;
+            margin-right: 10px;
         }
+        
+        .requirements-box {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #1e3a8a;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        
+
         
         /* Signature section */
         .signature-section {
-            margin-top: 40px;
-            padding-top: 30px;
+            margin-top: 50px;
+            padding-top: 40px;
             border-top: 2px dashed #cbd5e1;
             page-break-inside: avoid;
         }
@@ -389,16 +425,16 @@ function generateUnifiedContractHTML(
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            margin-top: 25px;
+            margin-top: 30px;
         }
         
         .signature-box {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             border: 2px dashed #94a3b8;
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
             text-align: center;
-            min-height: 140px;
+            min-height: 150px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -413,20 +449,20 @@ function generateUnifiedContractHTML(
             font-size: 14px;
             font-weight: 600;
             color: #64748b;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .signature-line {
             border-top: 2px solid #334155;
-            margin: 15px auto;
-            width: 180px;
+            margin: 20px auto;
+            width: 200px;
         }
         
         .signature-name {
             font-size: 16px;
             font-weight: 700;
             color: #1e293b;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         
         .signature-date {
@@ -437,13 +473,13 @@ function generateUnifiedContractHTML(
         
         .signature-status {
             font-size: 11px;
-            margin-top: 8px;
+            margin-top: 10px;
         }
         
         /* Footer */
         .contract-footer {
-            background: #f1f5f9;
-            padding: 25px;
+            background: #f8f9fa;
+            padding: 30px;
             text-align: center;
             border-top: 1px solid #e2e8f0;
             margin-top: 30px;
@@ -452,12 +488,12 @@ function generateUnifiedContractHTML(
         .footer-text {
             font-size: 12px;
             color: #64748b;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         
         .footer-logo {
             font-weight: 700;
-            color: #667eea;
+            color: #191970;
         }
         
         /* Print optimizations */
@@ -493,7 +529,7 @@ function generateUnifiedContractHTML(
                 </div>
                 <div>
                     <div class="company-name">MusoBuddy</div>
-                    <div class="tagline">Professional Music Contracts</div>
+                    <div class="tagline">Less admin, more music</div>
                 </div>
             </div>
             <div class="contract-title">Performance Contract</div>
@@ -673,7 +709,7 @@ function generateUnifiedContractHTML(
         <div class="contract-footer">
             <div class="footer-text">
                 Contract generated on ${new Date(contract.createdAt || new Date()).toLocaleDateString('en-GB')}<br>
-                Professional performance contract by <span class="footer-logo">MusoBuddy</span><br>
+                <span class="footer-logo">MusoBuddy</span> - Less admin, more music<br>
                 Empowering musicians with professional business tools
             </div>
         </div>
