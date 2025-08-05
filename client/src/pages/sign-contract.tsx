@@ -179,24 +179,32 @@ export default function SignContract() {
       const result = await response.json();
       console.log('🔥 FRONTEND: Success response received:', result);
       
-      // CRITICAL FIX: Update local contract state
-      setContract(prev => prev ? {
-        ...prev,
-        status: 'signed',
-        signedAt: result.signedAt || new Date().toISOString()
-      } : null);
+      // CRITICAL FIX: Update local contract state first
+      const updatedContract = {
+        ...contract,
+        status: 'signed' as const,
+        signedAt: result.signedAt || new Date().toISOString(),
+        cloudStorageUrl: result.cloudUrl
+      };
+      
+      setContract(updatedContract);
+      console.log('🔥 FRONTEND: Contract state updated to signed');
 
-      // CRITICAL FIX: Show success state
+      // CRITICAL FIX: Show success state - force re-render after state update
+      await new Promise(resolve => setTimeout(resolve, 50)); // Micro delay for state to settle
       setSigned(true);
       console.log('🔥 FRONTEND: setSigned(true) called - should show green success box');
 
-      // OPTIONAL: Add a small delay to ensure state updates are processed
+      // Success notification
       setTimeout(() => {
         toast({
-          title: "Success",
+          title: "Success", 
           description: "Contract signed successfully! Confirmation emails have been sent.",
         });
       }, 100);
+
+      // CRITICAL: Prevent any form submission or page navigation
+      return false;
 
     } catch (error) {
       console.error("Error signing contract:", error);
