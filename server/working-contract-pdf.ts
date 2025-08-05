@@ -399,6 +399,11 @@ function generateProfessionalContractHTML(
             position: relative;
         }
         
+        .signed-box {
+            border: 2px solid #4CAF50;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        }
+        
         .signature-role {
             font-size: 14px;
             font-weight: 600;
@@ -606,18 +611,27 @@ function generateProfessionalContractHTML(
                 </p>
                 
                 <div class="signature-grid">
-                    <div class="signature-box">
+                    <div class="signature-box signed-box">
                         <div class="signature-role">Performer</div>
                         <div class="signature-line"></div>
                         <div class="signature-name">${businessName}</div>
-                        <div class="signature-date">Date: _______________</div>
+                        <div class="signature-date">Agreed by sending contract</div>
+                        <div style="font-size: 11px; color: #4CAF50; margin-top: 8px;">✓ Contract sent on ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</div>
                     </div>
                     
-                    <div class="signature-box">
+                    <div class="signature-box ${contract.status === 'signed' ? 'signed-box' : ''}">
                         <div class="signature-role">Client</div>
-                        <div class="signature-line">${signatureDetails ? `Digital signature: ${signatureDetails.signatureName} - ${signatureDetails.signedAt.toISOString()}` : ''}</div>
-                        <div class="signature-name">${contract.clientName}</div>
-                        <div class="signature-date">Date: ${signatureDetails ? signatureDetails.signedAt.toLocaleDateString('en-GB') : '_______________'}</div>
+                        ${contract.status === 'signed' && signatureDetails ? `
+                            <div class="signature-line"></div>
+                            <div class="signature-name">${signatureDetails.signatureName || 'Digital Signature'}</div>
+                            <div class="signature-date">Digitally signed on ${signatureDetails.signedAt.toLocaleDateString('en-GB')}</div>
+                            <div style="font-size: 11px; color: #4CAF50; margin-top: 8px;">✓ Signed at ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</div>
+                        ` : `
+                            <div class="signature-line"></div>
+                            <div class="signature-name">${contract.clientName}</div>
+                            <div class="signature-date">Date: _______________</div>
+                            <div style="font-size: 11px; color: #666; margin-top: 8px;">Awaiting digital signature</div>
+                        `}
                     </div>
                 </div>
             </div>

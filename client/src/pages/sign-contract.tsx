@@ -155,16 +155,17 @@ export default function SignContract() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json', // CRITICAL: Ensure we expect JSON
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest', // Mark as AJAX request
         },
+        credentials: 'same-origin', // Include cookies but stay on same origin
         body: JSON.stringify({
-          signatureName: signatureName.trim(),
-          clientName: signatureName.trim(),
-          clientSignature: `Digital signature: ${signatureName.trim()} - ${new Date().toISOString()}`,
+          clientSignature: signatureName.trim(),
           clientIP: '0.0.0.0',
-          venueAddress: venueAddress.trim() || undefined,
           clientPhone: clientPhone.trim() || undefined,
           clientAddress: clientAddress.trim() || undefined,
+          venueAddress: venueAddress.trim() || undefined,
         }),
       });
 
@@ -179,6 +180,8 @@ export default function SignContract() {
       const result = await response.json();
       console.log('🔥 FRONTEND: Success response received:', result);
       
+      console.log('🔥 FRONTEND: Processing successful response...');
+      
       // CRITICAL FIX: Update local contract state first
       const updatedContract = {
         ...contract,
@@ -188,23 +191,16 @@ export default function SignContract() {
       };
       
       setContract(updatedContract);
-      console.log('🔥 FRONTEND: Contract state updated to signed');
-
-      // CRITICAL FIX: Show success state - force re-render after state update
-      await new Promise(resolve => setTimeout(resolve, 50)); // Micro delay for state to settle
       setSigned(true);
-      console.log('🔥 FRONTEND: setSigned(true) called - should show green success box');
+      console.log('🔥 FRONTEND: Contract state updated to signed, setSigned(true) called');
 
       // Success notification
-      setTimeout(() => {
-        toast({
-          title: "Success", 
-          description: "Contract signed successfully! Confirmation emails have been sent.",
-        });
-      }, 100);
+      toast({
+        title: "Contract Signed Successfully!", 
+        description: "Confirmation emails have been sent to both parties.",
+      });
 
-      // CRITICAL: Prevent any form submission or page navigation
-      return false;
+      console.log('🔥 FRONTEND: Contract signing completed successfully - staying on page');
 
     } catch (error) {
       console.error("Error signing contract:", error);
@@ -536,11 +532,15 @@ export default function SignContract() {
                 <Separator />
 
                 <form 
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔥 FORM: Form submit handler called');
-                    handleSign();
+                    console.log('🔥 FORM: Form submit handler called - preventing default');
+                    await handleSign();
+                    return false;
+                  }}
+                  onReset={(e) => {
+                    e.preventDefault();
                     return false;
                   }}
                 >
