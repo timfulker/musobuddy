@@ -265,10 +265,19 @@ export default function Contracts() {
       };
 
       // Step 1: Create contract in database
-      const createdContract = await apiRequest("/api/contracts", {
+      const response = await apiRequest("/api/contracts", {
         method: "POST",
         body: JSON.stringify(contractData),
       });
+      
+      // Extract contract data properly
+      const createdContract = response?.data || response;
+      console.log('✅ Contract created with ID:', createdContract?.id);
+
+      // Validate we have a contract ID before proceeding
+      if (!createdContract?.id) {
+        throw new Error('Contract creation failed - no ID returned');
+      }
 
       // Step 2: Immediately upload to R2 cloud storage
       console.log('☁️ Uploading new contract to R2 storage...');
