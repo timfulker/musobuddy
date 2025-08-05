@@ -1023,8 +1023,8 @@ async function startServer() {
       }
     });
 
-    // Register modular routes with proper authentication setup
-    console.log('🔄 Registering modular API routes with authentication...');
+    // Register consolidated routes with proper authentication setup
+    console.log('🔄 Registering consolidated API routes...');
     
     // Apply global security middleware
     const { sanitizeInput } = await import('./middleware/validation');
@@ -1032,105 +1032,9 @@ async function startServer() {
     
     app.use(sanitizeInput);
     
-    // Register each route module
-    await registerAuthRoutes(app);
-    registerContractRoutes(app);
-    registerInvoiceRoutes(app);
-    registerBookingRoutes(app);
-    registerSettingsRoutes(app);
-    registerAdminRoutes(app);
-
-    // Add missing API endpoints that are causing 404 errors
-    // Use simple session-based authentication for these endpoints
-    const simpleAuth = (req: any, res: any, next: any) => {
-      console.log('🔍 SimpleAuth check:', {
-        sessionId: req.sessionID,
-        hasSession: !!req.session,
-        userId: req.session?.userId,
-        path: req.path
-      });
-      
-      if (!req.session?.userId) {
-        console.log('❌ SimpleAuth failed: no userId in session');
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      
-      console.log('✅ SimpleAuth passed for user:', req.session.userId);
-      next();
-    };
-
-    // Missing conflicts routes
-    app.get('/api/conflicts', simpleAuth, async (req: any, res) => {
-      try {
-        const userId = req.session?.userId;
-        const conflicts = await storage.getBookingConflicts(userId, 0);
-        res.json(conflicts || []);
-      } catch (error) {
-        console.error('❌ Failed to fetch conflicts:', error);
-        res.status(500).json({ error: 'Failed to fetch conflicts' });
-      }
-    });
-
-    app.get('/api/conflicts/resolutions', simpleAuth, async (req: any, res) => {
-      try {
-        res.json([]);
-      } catch (error) {
-        console.error('❌ Failed to fetch conflict resolutions:', error);
-        res.status(500).json({ error: 'Failed to fetch conflict resolutions' });
-      }
-    });
-
-    // Missing compliance route
-    app.get('/api/compliance', simpleAuth, async (req: any, res) => {
-      try {
-        res.json([]);
-      } catch (error) {
-        console.error('❌ Failed to fetch compliance data:', error);
-        res.status(500).json({ error: 'Failed to fetch compliance data' });
-      }
-    });
-
-    // Missing isolated contract R2 URL endpoint
-    app.get('/api/isolated/contracts/:id/r2-url', simpleAuth, async (req: any, res) => {
-      try {
-        const userId = req.session?.userId;
-        const contractId = parseInt(req.params.id);
-        
-        console.log(`🔍 R2 URL request for contract ${contractId} by user ${userId}`);
-        
-        const contract = await storage.getContract(contractId, userId);
-        if (!contract) {
-          console.log(`❌ Contract ${contractId} not found for user ${userId}`);
-          return res.status(404).json({ error: 'Contract not found' });
-        }
-        
-        console.log(`📄 Contract found:`, { 
-          id: contract.id, 
-          contractNumber: contract.contractNumber,
-          r2Key: contract.r2Key,
-          cloudStorageUrl: contract.cloudStorageUrl 
-        });
-        
-        if (contract.r2Key || contract.cloudStorageUrl) {
-          // Try r2Key first, then cloudStorageUrl as fallback
-          let r2Url;
-          if (contract.r2Key) {
-            r2Url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${contract.r2Key}`;
-          } else if (contract.cloudStorageUrl) {
-            r2Url = contract.cloudStorageUrl;
-          }
-          
-          console.log(`✅ Returning R2 URL: ${r2Url}`);
-          res.json({ url: r2Url });
-        } else {
-          console.log(`❌ No R2 key or cloud storage URL for contract ${contractId}`);
-          res.status(404).json({ error: 'Contract PDF not available' });
-        }
-      } catch (error) {
-        console.error('❌ Failed to get contract R2 URL:', error);
-        res.status(500).json({ error: 'Failed to get contract R2 URL' });
-      }
-    });
+    // Register consolidated routes
+    const { registerRoutes } = await import('./routes');
+    await registerRoutes(app);
     
     // Apply global error handling ONLY to API routes
     app.use('/api/*', errorHandler);
