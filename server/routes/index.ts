@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { registerAuthRoutes } from "./auth-routes";
+import { setupCleanAuth } from "../auth/clean-auth-system";
 import { registerContractRoutes } from "./contract-routes";
 import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
@@ -9,8 +9,10 @@ import { registerAdminRoutes } from "./admin-routes";
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');
   
+  // Setup clean JWT-based authentication (replaces session-based auth)
+  setupCleanAuth(app);
+  
   // Register all route modules
-  await registerAuthRoutes(app);
   await registerContractRoutes(app);
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
