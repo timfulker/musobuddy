@@ -271,7 +271,7 @@ export function registerInvoiceRoutes(app: Express) {
       }
       
       // Update invoice status to sent
-      await storage.updateInvoice(parsedInvoiceId, {
+      await storage.updateInvoice(parsedInvoiceId, userId, {
         status: 'sent',
         updatedAt: new Date()
       });

@@ -181,7 +181,7 @@ export function registerContractRoutes(app: Express) {
   app.patch('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const updatedContract = await storage.updateContract(contractId, req.body);
+      const updatedContract = await storage.updateContract(contractId, req.body, req.user.userId);
       if (!updatedContract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
@@ -197,7 +197,7 @@ export function registerContractRoutes(app: Express) {
   app.delete('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      await storage.deleteContract(contractId);
+      await storage.deleteContract(contractId, req.user.userId);
       console.log(`✅ Deleted contract #${contractId} for user ${req.user.userId}`);
       res.json({ success: true });
     } catch (error) {
@@ -235,7 +235,7 @@ export function registerContractRoutes(app: Express) {
       }
       
       const deletePromises = contractIds.map((contractId: number) => 
-        storage.deleteContract(contractId)
+        storage.deleteContract(contractId, userId)
       );
       
       await Promise.all(deletePromises);
