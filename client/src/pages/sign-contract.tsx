@@ -531,23 +531,11 @@ export default function SignContract() {
 
                 <Separator />
 
-                <form 
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🔥 FORM: Form submit handler called - preventing default');
-                    await handleSign();
-                    return false;
-                  }}
-                  onReset={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div>
                   <Button
-                    type="submit"
+                    onClick={handleSign}
                     disabled={signing || !signatureName.trim() || !agreed}
-                    className="w-full"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                     size="lg"
                   >
                     {signing ? (
@@ -562,7 +550,7 @@ export default function SignContract() {
                       </>
                     )}
                   </Button>
-                </form>
+                </div>
 
                 <p className="text-xs text-gray-500 text-center">
                   By signing, you agree to the terms and create a legally binding agreement.
