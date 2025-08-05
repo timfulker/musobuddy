@@ -152,7 +152,9 @@ export default function SignContract() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          clientSignature: signatureName.trim(),
+          signatureName: signatureName.trim(),
+          clientName: signatureName.trim(),
+          clientSignature: `Digital signature: ${signatureName.trim()} - ${new Date().toISOString()}`,
           clientIP: '0.0.0.0',
           venueAddress: venueAddress.trim() || undefined,
           clientPhone: clientPhone.trim() || undefined,
