@@ -395,12 +395,15 @@ export default function Contracts() {
     },
   });
 
-  // Email sending mutation
+  // CRITICAL FIX: Email sending mutation with correct isolated endpoint
   const sendEmailMutation = useMutation({
     mutationFn: async ({ contractId, customMessage }: { contractId: number, customMessage?: string }) => {
+      console.log('📧 FIXED: Using isolated contract email endpoint...');
+      console.log('📧 FIXED: Sending to:', `/api/isolated/contracts/send-email`);
+      console.log('📧 FIXED: Contract ID:', contractId);
       
-
-      return apiRequest("/api/contracts/send-email", {
+      // CRITICAL FIX: Use isolated contract email endpoint
+      return apiRequest("/api/isolated/contracts/send-email", {
         method: "POST",
         body: JSON.stringify({ contractId, customMessage }),
       });
@@ -416,7 +419,7 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
-      console.error('🔥 FRONTEND: Contract email mutation error:', error);
+      console.error('🔥 FIXED: Contract email mutation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to send contract email",
@@ -511,8 +514,9 @@ export default function Contracts() {
     sendEmailMutation.mutate({ contractId: contract.id });
   };
 
+  // CRITICAL FIX: View contract function with correct isolated endpoint
   const handleViewSignedContract = async (contract: Contract) => {
-    console.log('👁️ View contract clicked:', {
+    console.log('👁️ FIXED: View contract clicked:', {
       id: contract.id,
       status: contract.status,
       hasCloudUrl: !!contract.cloudStorageUrl,
@@ -520,9 +524,9 @@ export default function Contracts() {
     });
     
     try {
-      // NEW: Always get R2 URL - create if doesn't exist, return if exists
-      console.log('🔗 Getting R2 URL for contract...');
-      const response = await fetch(`/api/contracts/${contract.id}/r2-url`, {
+      // CRITICAL FIX: Use isolated R2 URL endpoint
+      console.log('🔗 FIXED: Getting R2 URL from isolated endpoint...');
+      const response = await fetch(`/api/isolated/contracts/${contract.id}/r2-url`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -533,7 +537,7 @@ export default function Contracts() {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Got R2 URL:', data.url);
+        console.log('✅ FIXED: Got R2 URL from isolated system:', data.url);
         
         // Open R2 URL directly in new tab - no intermediate pages
         window.open(data.url, '_blank');
@@ -544,21 +548,21 @@ export default function Contracts() {
         });
         
       } else {
-        console.error('❌ Failed to get R2 URL:', response.status);
-        // Fallback to download endpoint
+        console.error('❌ FIXED: Failed to get R2 URL from isolated system:', response.status);
+        // Fallback to main system download endpoint
         const downloadUrl = `/api/contracts/${contract.id}/download`;
         window.open(downloadUrl, '_blank');
       }
       
     } catch (error) {
-      console.error('❌ Error getting R2 URL:', error);
+      console.error('❌ FIXED: Error getting R2 URL from isolated system:', error);
       toast({
         title: "Error",
         description: "Failed to open contract. Using fallback method.",
         variant: "destructive",
       });
       
-      // Fallback to download endpoint
+      // Fallback to main system download endpoint
       const downloadUrl = `/api/contracts/${contract.id}/download`;
       window.open(downloadUrl, '_blank');
     }
