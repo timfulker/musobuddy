@@ -492,18 +492,7 @@ app.get('/api/test-sms', async (req, res) => {
 
 // Token authentication middleware removed (using session auth)
 
-// CORS middleware for contract signing from R2
-app.use('/api/contracts/sign', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// CORS middleware for contract signing removed - handled in routes.ts for better control
 
 // Add CORS for session restoration endpoints and auth routes
 app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/admin-login', '/api/auth/login'], (req, res, next) => {
@@ -520,7 +509,7 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   
   res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With');
   
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
