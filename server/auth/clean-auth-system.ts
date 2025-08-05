@@ -3,6 +3,8 @@ import { storage } from "../core/storage.js";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import jwt from 'jsonwebtoken';
+import { ENV } from '../core/environment.js';
+import { stripeService } from '../core/stripe-service.js';
 
 // JWT-based authentication to bypass session middleware issues
 const JWT_SECRET = process.env.SESSION_SECRET || 'fallback-secret-key';
@@ -72,32 +74,73 @@ function formatPhoneNumber(phone: string): string {
   return '+44' + digits;
 }
 
-// Send verification SMS (development mode shows code)
+// Send verification SMS (production Twilio integration)
 async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
-  const isProduction = process.env.NODE_ENV === 'production' && process.env.REPLIT_DEPLOYMENT;
+  const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
-  console.log('📱 SMS SEND:', {
-    to: formatPhoneNumber(phoneNumber),
-    code: verificationCode,
-    environment: isProduction ? 'production' : 'development'
+  console.log('📱 SMS ATTEMPT:', {
+    timestamp: new Date().toISOString(),
+    phoneNumber: phoneNumber,
+    formattedPhone: formatPhoneNumber(phoneNumber),
+    environment: { isProduction },
+    twilioConfig: {
+      hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+      hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+      fromNumber: process.env.TWILIO_PHONE_NUMBER
+    }
   });
   
-  if (isProduction && process.env.TWILIO_ACCOUNT_SID) {
-    // TODO: Implement actual Twilio SMS in production
+  if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
     try {
-      const twilio = require('twilio');
-      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      console.log('📱 ATTEMPTING TWILIO SMS...');
       
-      await client.messages.create({
-        body: `Your MusoBuddy verification code is: ${verificationCode}`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: formatPhoneNumber(phoneNumber)
+      // Use dynamic import for Twilio
+      const { default: twilio } = await import('twilio');
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      
+      console.log('📱 Twilio API call:', {
+        to: formattedPhone,
+        from: process.env.TWILIO_PHONE_NUMBER
       });
       
-      return { success: true, message: 'SMS sent successfully' };
-    } catch (error) {
-      console.error('❌ SMS send failed:', error);
-      return { success: false, error: 'SMS sending failed' };
+      const message = await twilioClient.messages.create({
+        body: `Your MusoBuddy verification code is: ${verificationCode}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: formattedPhone
+      });
+      
+      console.log('✅ SMS SENT SUCCESSFULLY:', {
+        sid: message.sid,
+        status: message.status,
+        to: message.to,
+        from: message.from
+      });
+      
+      return {
+        success: true,
+        message: 'Verification code sent to your phone',
+        showCode: false
+      };
+      
+    } catch (smsError: any) {
+      console.log('❌ TWILIO ERROR:', {
+        code: smsError.code,
+        message: smsError.message,
+        moreInfo: smsError.moreInfo,
+        status: smsError.status
+      });
+      
+      // Fallback to development mode on SMS failure
+      return {
+        success: true,
+        message: 'SMS temporarily unavailable - use code below',
+        showCode: true,
+        verificationCode: verificationCode,
+        tempMessage: `SMS failed - use code: ${verificationCode}`
+      };
     }
   } else {
     // Development mode - return code for display
@@ -331,7 +374,89 @@ export function setupCleanAuth(app: Express) {
     res.json({ success: true, message: 'Logged out successfully' });
   });
 
-  // 6. Admin login (for testing)
+  // 6. Resend verification code
+  app.post('/api/auth/resend-code', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email required' });
+      }
+      
+      // Get verification data
+      const verificationData = pendingVerifications.get(email);
+      if (!verificationData) {
+        return res.status(400).json({ error: 'No pending verification found' });
+      }
+      
+      // Generate new code
+      const newVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Update verification data
+      verificationData.verificationCode = newVerificationCode;
+      verificationData.expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      pendingVerifications.set(email, verificationData);
+      
+      // Send SMS
+      const smsResult = await sendVerificationSMS(verificationData.phoneNumber, newVerificationCode);
+      
+      res.json({
+        success: true,
+        message: 'New verification code sent',
+        showVerificationCode: smsResult.showCode,
+        verificationCode: smsResult.showCode ? smsResult.verificationCode : undefined
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Resend code error:', error);
+      res.status(500).json({ error: 'Failed to resend code' });
+    }
+  });
+
+  // 7. Create trial checkout session (Stripe integration)
+  app.post('/api/create-checkout-session', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { priceId } = req.body;
+      
+      const result = await stripeService.createTrialCheckoutSession(userId, priceId);
+      
+      res.json({
+        success: true,
+        sessionId: result.sessionId,
+        checkoutUrl: result.checkoutUrl
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Checkout session error:', error);
+      res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+
+  // 8. Handle payment success
+  app.get('/payment-success', async (req, res) => {
+    try {
+      const { session_id } = req.query;
+      
+      if (!session_id) {
+        return res.redirect('/pricing?error=missing_session');
+      }
+      
+      const result = await stripeService.handlePaymentSuccess(session_id as string);
+      
+      if (result.success) {
+        res.redirect('/trial-success');
+      } else {
+        res.redirect('/pricing?error=payment_failed');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Payment success error:', error);
+      res.redirect('/pricing?error=processing_failed');
+    }
+  });
+
+  // 9. Admin login (for testing)
   app.post('/api/auth/admin-login', async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -367,5 +492,5 @@ export function setupCleanAuth(app: Express) {
     }
   });
 
-  console.log('✅ Clean authentication system configured');
+  console.log('✅ Clean authentication system configured with SMS and Stripe integration');
 }

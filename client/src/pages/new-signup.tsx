@@ -98,10 +98,12 @@ export default function NewSignup() {
         localStorage.setItem('authToken', result.authToken);
         
         toast({
-          title: "Welcome to MusoBuddy!",
+          title: "Phone Verified!",
           description: "Your account has been verified successfully.",
         });
-        setLocation('/dashboard');
+        
+        // Redirect to trial setup
+        setLocation('/signup?step=trial');
       } else {
         toast({
           title: "Verification Failed",
@@ -117,6 +119,41 @@ export default function NewSignup() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const response = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: verificationData.email })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        if (result.showVerificationCode) {
+          setShowVerificationCode(result.verificationCode);
+        }
+        toast({
+          title: "Code Resent",
+          description: "A new verification code has been sent.",
+        });
+      } else {
+        toast({
+          title: "Failed to Resend",
+          description: result.error || "Unable to resend code.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Network error. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -157,14 +194,24 @@ export default function NewSignup() {
               <Button type="submit" className="w-full" disabled={loading || verificationData.verificationCode.length !== 6}>
                 {loading ? "Verifying..." : "Verify Phone Number"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setStep('signup')}
-              >
-                Back to Signup
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep('signup')}
+                >
+                  Back to Signup
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={handleResendCode}
+                >
+                  Resend Code
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

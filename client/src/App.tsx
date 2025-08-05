@@ -33,6 +33,8 @@ import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
 import SignupPage from "@/pages/signup";
+import NewSignup from "@/pages/new-signup";
+import NewLogin from "@/pages/new-login";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
@@ -81,7 +83,9 @@ function Router() {
       {/* Public routes - always accessible */}
       <Route path="/" component={LandingPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/new-signup" component={NewSignup} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/new-login" component={NewLogin} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
       {/* Admin login removed per user request */}
       <Route path="/verify-phone" component={VerifyPhonePage} />
