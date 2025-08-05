@@ -226,33 +226,137 @@ export async function uploadContractSigningPage(
 // Generate HTML signing page for contracts
 function generateContractSigningPage(contract: Contract, userSettings: UserSettings | null): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
+  const templateName = contract.template || 'professional';
   
-  // Simple contract sections for signing page
+  console.log(`🎨 SIGNING PAGE: Using template "${templateName}" for contract #${contract.id}`);
+  
+  // Template-aware contract sections for signing page
   function generateContractSections(contract: any, userSettings: any) {
     const businessName = userSettings?.businessName || 'MusoBuddy';
     
-    return `
-      <div class="info-grid">
-        <div class="info-section">
-          <h4>Event Details</h4>
-          <p><strong>Client:</strong> ${contract.clientName}</p>
-          <p><strong>Date:</strong> ${contract.eventDate}</p>
-          <p><strong>Time:</strong> ${contract.eventTime}</p>
-          <p><strong>Venue:</strong> ${contract.venue}</p>
+    const isBasic = templateName === 'basic';
+    
+    if (isBasic) {
+      // Basic template content
+      return `
+        <div class="info-grid">
+          <div class="info-section">
+            <h4>Event Details</h4>
+            <p><strong>Client:</strong> ${contract.clientName}</p>
+            <p><strong>Date:</strong> ${contract.eventDate}</p>
+            <p><strong>Time:</strong> ${contract.eventTime}</p>
+            <p><strong>Venue:</strong> ${contract.venue}</p>
+          </div>
+          <div class="info-section">
+            <h4>Performer</h4>
+            <p><strong>Name:</strong> ${businessName}</p>
+            <p><strong>Fee:</strong> £${contract.fee}</p>
+          </div>
         </div>
-        <div class="info-section">
-          <h4>Performer</h4>
-          <p><strong>Name:</strong> ${businessName}</p>
-          <p><strong>Fee:</strong> £${contract.fee}</p>
+        <div class="terms-section">
+          <h4>Terms & Conditions</h4>
+          <p>This is a legally binding performance contract. By signing, you agree to the performance date, time, venue, and fee as specified above.</p>
         </div>
-      </div>
-      <div class="terms-section">
-        <h4>Terms & Conditions</h4>
-        <p>This is a legally binding performance contract. By signing, you agree to the performance date, time, venue, and fee as specified above.</p>
-      </div>
-    `;
+      `;
+    } else {
+      // Professional template content with detailed sections
+      return `
+        <div class="professional-header">
+          <div class="parties-section">
+            <div class="party-box performer-box">
+              <h4>🎵 PERFORMER</h4>
+              <div class="party-details">
+                <strong>${businessName}</strong><br>
+                ${userSettings?.businessEmail || ''}<br>
+                ${userSettings?.businessPhone || ''}<br>
+                ${userSettings?.businessAddress || ''}
+              </div>
+            </div>
+            <div class="party-box client-box">
+              <h4>👤 CLIENT</h4>
+              <div class="party-details">
+                <strong>${contract.clientName}</strong><br>
+                ${contract.clientEmail || ''}<br>
+                ${contract.clientPhone || ''}<br>
+                ${contract.clientAddress || ''}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="performance-details">
+          <h4>🎪 PERFORMANCE DETAILS</h4>
+          <div class="detail-grid">
+            <div><strong>Event Date:</strong> ${contract.eventDate}</div>
+            <div><strong>Start Time:</strong> ${contract.eventTime || 'TBD'}</div>
+            <div><strong>End Time:</strong> ${contract.eventEndTime || 'TBD'}</div>
+            <div><strong>Venue:</strong> ${contract.venue}</div>
+            <div><strong>Venue Address:</strong> ${contract.venueAddress || 'See above'}</div>
+            <div><strong>Performance Fee:</strong> £${contract.fee}</div>
+          </div>
+        </div>
+        
+        <div class="terms-section professional-terms">
+          <h4>📋 TERMS & CONDITIONS</h4>
+          <div class="terms-grid">
+            <div class="term-item">
+              <strong>1. Payment Terms:</strong>
+              <p>${contract.paymentInstructions || 'Payment due as per agreement. Late payments may incur additional charges.'}</p>
+            </div>
+            <div class="term-item">
+              <strong>2. Cancellation Policy:</strong>
+              <p>Cancellations must be made at least 48 hours in advance. Late cancellations may be subject to charges.</p>
+            </div>
+            <div class="term-item">
+              <strong>3. Equipment Requirements:</strong>
+              <p>${contract.equipmentRequirements || 'Standard performance equipment will be provided by performer unless otherwise specified.'}</p>
+            </div>
+            <div class="term-item">
+              <strong>4. Special Requirements:</strong>
+              <p>${contract.specialRequirements || 'No special requirements specified.'}</p>
+            </div>
+            <div class="term-item">
+              <strong>5. Performance Standards:</strong>
+              <p>The performer agrees to deliver a professional performance to industry standards.</p>
+            </div>
+            <div class="term-item">
+              <strong>6. Liability & Insurance:</strong>
+              <p>Both parties maintain appropriate insurance coverage. Performer not liable for venue-related incidents.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
   }
   
+  const templateStyles = templateName === 'basic' ? `
+    /* Basic Template Styles */
+    .header { background: #8b5cf6; }
+    .signing-section { background: #f3f4f6; border-color: #8b5cf6; }
+    .btn { background: #8b5cf6; }
+    .btn:hover { background: #7c3aed; }
+    .contract-section h4 { color: #8b5cf6; }
+    .signature-pad { border-color: #8b5cf6; }
+    input[type="text"]:focus { border-color: #8b5cf6; }
+  ` : `
+    /* Professional Template Styles */
+    .professional-header { margin-bottom: 30px; }
+    .parties-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+    .party-box { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; }
+    .party-box h4 { margin: 0 0 15px 0; font-size: 16px; color: #3b82f6; font-weight: bold; }
+    .party-details { font-size: 14px; line-height: 1.6; }
+    .performance-details { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; }
+    .performance-details h4 { color: #3b82f6; margin-top: 0; font-size: 18px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .detail-grid > div { padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+    .professional-terms { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .professional-terms h4 { color: #3b82f6; margin-top: 0; font-size: 18px; }
+    .terms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .term-item { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .term-item strong { color: #1e40af; font-size: 14px; }
+    .term-item p { margin: 8px 0 0 0; font-size: 13px; line-height: 1.5; }
+  `;
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -261,7 +365,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Contract - ${contract.contractNumber}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; background: #f5f5f5; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; background: #f5f5f5; height: 100vh; display: flex; flex-direction: column; }
         .header { text-align: center; padding: 15px; background: #1e3a8a; color: white; flex-shrink: 0; }
         .main-container { display: flex; flex: 1; gap: 20px; padding: 20px; max-height: calc(100vh - 120px); }
         .contract-section { flex: 2; background: white; border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -276,6 +380,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         .pdf-link:hover { background: #5a6268; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .info-section { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        ${templateStyles}
         .terms-section { background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-top: 20px; }
         @media (max-width: 768px) {
             .main-container { flex-direction: column; }
