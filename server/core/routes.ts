@@ -2726,45 +2726,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // PUBLIC CONTRACT PDF ROUTE - Fix for "View Full Contract PDF" button 404
-  app.get('/api/contracts/public/:id/pdf', async (req: any, res) => {
-    try {
-      const contractId = parseInt(req.params.id);
-      console.log(`📄 Public PDF request for contract ID: ${contractId}`);
-      
-      // Get contract (no authentication required for public PDF access)
-      const contract = await storage.getContract(contractId);
-      if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
-      }
-      
-      // Generate PDF using the unified contract generator
-      const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateContractPDF } = await import('../unified-contract-pdf');
-      
-      // Include signature details if contract is signed
-      const signatureDetails = contract.status === 'signed' ? {
-        signedAt: new Date(contract.signedAt || contract.updatedAt),
-        signatureName: contract.clientSignature || 'Digital Signature',
-        clientIpAddress: contract.clientIpAddress
-      } : undefined;
-      
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-      
-      // Set headers for PDF response
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}${contract.status === 'signed' ? '-Signed' : ''}.pdf"`);
-      res.setHeader('Cache-Control', 'private, max-age=3600');
-      
-      console.log(`✅ Public PDF served: ${pdfBuffer.length} bytes`);
-      res.send(pdfBuffer);
-      
-    } catch (error) {
-      console.error('❌ Failed to serve public contract PDF:', error);
-      res.status(500).json({ error: 'Failed to generate contract PDF' });
-    }
-  });
-
   // CRITICAL FIX: View contract route for cloud PDF redirect (PUBLIC ACCESS)
   app.get('/view/contracts/:id', async (req: any, res) => {
     try {
@@ -5132,6 +5093,50 @@ export async function registerRoutes(app: Express) {
         error: 'Failed to get contract R2 URL',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // DEBUG: Simple test route to check if this section is reachable
+  app.get('/api/contracts/public/test', (req, res) => {
+    res.json({ message: 'Test route works', timestamp: new Date().toISOString() });
+  });
+
+  // PUBLIC CONTRACT PDF ROUTE - Fix for "View Full Contract PDF" button 404
+  app.get('/api/contracts/public/:id/pdf', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      console.log(`📄 Public PDF request for contract ID: ${contractId}`);
+      
+      // Get contract (no authentication required for public PDF access)
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      // Generate PDF using the unified contract generator
+      const userSettings = await storage.getUserSettings(contract.userId);
+      const { generateContractPDF } = await import('../unified-contract-pdf');
+      
+      // Include signature details if contract is signed
+      const signatureDetails = contract.status === 'signed' ? {
+        signedAt: new Date(contract.signedAt || contract.updatedAt),
+        signatureName: contract.clientSignature || 'Digital Signature',
+        clientIpAddress: contract.clientIpAddress
+      } : undefined;
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      // Set headers for PDF response
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}${contract.status === 'signed' ? '-Signed' : ''}.pdf"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      
+      console.log(`✅ Public PDF served: ${pdfBuffer.length} bytes`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to serve public contract PDF:', error);
+      res.status(500).json({ error: 'Failed to generate contract PDF' });
     }
   });
 
