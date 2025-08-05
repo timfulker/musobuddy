@@ -1410,7 +1410,7 @@ export async function registerRoutes(app: Express) {
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateContractPDF } = await import('../working-contract-pdf');
+        const { generateContractPDF } = await import('../unified-contract-pdf');
         
         const pdfBuffer = await generateContractPDF(contract, userSettings);
         
@@ -2747,7 +2747,7 @@ export async function registerRoutes(app: Express) {
       // Fallback: Generate and serve PDF directly if no cloud URL
       console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
       const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateContractPDF } = await import('../working-contract-pdf');
+      const { generateContractPDF } = await import('../unified-contract-pdf');
       
       const pdfBuffer = await generateContractPDF(contract, userSettings);
       
