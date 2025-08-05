@@ -307,7 +307,46 @@ export function setupCleanAuth(app: Express) {
       
       console.log('✅ Phone verification successful for:', email);
       
-      // Create user using storage API (which handles password hashing)
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(verificationData.email);
+      if (existingUser) {
+        console.log('⚠️ User already exists:', verificationData.email);
+        
+        // Update existing user to mark as phone verified
+        await storage.updateUser(existingUser.id, {
+          phoneVerified: true,
+          phoneNumber: verificationData.phoneNumber
+        });
+        
+        // Generate auth token for existing user
+        const authToken = generateAuthToken(existingUser.id, existingUser.email);
+        
+        // Set cookie
+        res.cookie('authToken', authToken, {
+          httpOnly: true,
+          secure: ENV.isProduction,
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+        
+        // Clean up
+        pendingVerifications.delete(email);
+        
+        return res.json({
+          success: true,
+          message: 'Phone verification successful (existing user)',
+          authToken,
+          user: {
+            userId: existingUser.id,
+            email: existingUser.email,
+            firstName: existingUser.firstName,
+            lastName: existingUser.lastName,
+            phoneVerified: true
+          }
+        });
+      }
+      
+      // Create new user using storage API (which handles password hashing)
       const userId = nanoid();
       
       const newUser = {
