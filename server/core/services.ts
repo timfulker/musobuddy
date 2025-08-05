@@ -81,11 +81,11 @@ export class EmailService {
     try {
       console.log('🚀 Calling professional contract PDF generator...');
       
-      const { generateContractPDF: professionalGenerateContractPDF } = await import('../unified-contract-pdf');
+      const { generateContractPDF } = await import('../unified-contract-pdf');
       console.log('✅ Professional contract PDF generator imported successfully');
       
       console.log('🎯 Generating professional contract PDF...');
-      const result = await professionalGenerateContractPDF(contract, userSettings);
+      const result = await generateContractPDF(contract, userSettings);
       console.log('✅ Professional contract PDF generation completed, buffer size:', result.length);
       
       return result;
