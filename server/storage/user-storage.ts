@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { users, sessions } from "../../shared/schema";
-import { eq, lt } from "drizzle-orm";
+import { eq, lt, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { randomBytes } from 'crypto';
 

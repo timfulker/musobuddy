@@ -4,18 +4,11 @@ import multer from 'multer';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
 // Removed dual auth system import
-// Modular route imports
-import { registerAuthRoutes } from "./routes/auth-routes";
-import { registerContractRoutes } from "./routes/contract-routes";
-import { registerInvoiceRoutes } from "./routes/invoice-routes";
-import { registerBookingRoutes } from "./routes/booking-routes";
-import { registerSettingsRoutes } from "./routes/settings-routes";
-import { registerAdminRoutes } from "./routes/admin-routes";
+// Modular route imports are now handled through consolidated routes/index.ts
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
 import { ENV } from "./core/environment";
 import { createSessionMiddleware } from "./core/session-rebuilt";
-import { setupAuthRoutes } from "./core/auth-rebuilt";
 
 const app = express();
 

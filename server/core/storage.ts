@@ -70,11 +70,13 @@ export class Storage {
   }
 
   async updateUserPassword(id: string, password: string) {
-    return userStorage.updateUserPassword(id, password);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return userStorage.updateUser(id, { password: hashedPassword });
   }
 
   async deleteUser(id: string) {
-    return userStorage.deleteUser(id);
+    // TODO: Implement deleteUser in UserStorage if needed
+    throw new Error('Delete user not implemented');
   }
 
   async getAllUsers() {

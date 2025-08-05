@@ -8,6 +8,11 @@ import { z } from 'zod';
 export async function registerAuthRoutes(app: Express) {
   console.log('🔐 Setting up authentication routes...');
 
+  // Add a simple test endpoint to verify routing works
+  app.get('/api/auth/test', (req, res) => {
+    res.json({ message: 'Auth routes are working', timestamp: new Date().toISOString() });
+  });
+
   // Import authentication logic from auth-rebuilt.ts
   const authModule = await import('../core/auth-rebuilt');
   await authModule.setupAuthRoutes(app);

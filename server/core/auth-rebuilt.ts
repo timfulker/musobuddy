@@ -380,17 +380,24 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'All fields are required' });
       }
       
+      // Generate a unique user ID
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log('📝 Creating user with ID:', userId);
+      
       const newUser = await storage.createUser({
+        id: userId, // ✅ FIX: Add required ID field
         firstName,
         lastName,
         email,
         phoneNumber: phoneNumber.replace(/\s+/g, ''),
         password,
         phoneVerified: false,
-        isSubscribed: false
+        tier: 'free' // Add default tier
       });
       
-      const userId = newUser.id; // Extract just the ID string
+      console.log('✅ User created successfully:', newUser.email);
+      
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
       req.session.userId = userId;
@@ -402,18 +409,28 @@ export function setupAuthRoutes(app: Express) {
         req.session.save((err: any) => err ? reject(err) : resolve(true));
       });
       
+      console.log('📱 Sending verification SMS...');
       const smsResult = await sendVerificationSMS(phoneNumber, verificationCode);
+      console.log('📱 SMS result:', smsResult);
       
       res.json({
         success: true,
-        userId: newUser,
+        userId: newUser.id,
         message: smsResult.message,
         ...(smsResult.showCode && { verificationCode, tempMessage: smsResult.tempMessage })
       });
       
     } catch (error: any) {
-      console.error('❌ Signup error:', error);
-      res.status(500).json({ error: 'Signup failed' });
+      console.error('❌ Signup error details:', {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack?.split('\n').slice(0, 5)
+      });
+      res.status(500).json({ 
+        error: 'Signup failed',
+        details: error.message // Add error details for debugging
+      });
     }
   });
 
