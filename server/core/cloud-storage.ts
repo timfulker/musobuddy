@@ -119,8 +119,17 @@ export async function uploadContractToCloud(
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
     // Generate PDF using the working contract PDF generator with signature data
-    const { generateWorkingContractPDF } = await import('../working-contract-pdf');
-    const pdfBuffer = await generateWorkingContractPDF(contract, userSettings, signatureDetails);
+    console.log('📥 Importing contract PDF generator...');
+    const pdfModule = await import('../working-contract-pdf');
+    console.log('📥 Available exports:', Object.keys(pdfModule));
+    
+    const { generateContractPDF } = pdfModule;
+    if (!generateContractPDF) {
+      throw new Error('generateContractPDF function not found in module exports');
+    }
+    
+    console.log('📄 Generating contract PDF with signature details...');
+    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
     

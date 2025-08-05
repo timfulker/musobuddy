@@ -1375,9 +1375,9 @@ export async function registerRoutes(app: Express) {
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateWorkingContractPDF } = await import('../working-contract-pdf');
+        const { generateContractPDF } = await import('../working-contract-pdf');
         
-        const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
+        const pdfBuffer = await generateContractPDF(contract, userSettings);
         
         // Set headers and send PDF
         res.setHeader('Content-Type', 'application/pdf');
@@ -2658,9 +2658,9 @@ export async function registerRoutes(app: Express) {
       // Fallback: Generate and serve PDF directly if no cloud URL
       console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
       const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateWorkingContractPDF } = await import('../working-contract-pdf');
+      const { generateContractPDF } = await import('../working-contract-pdf');
       
-      const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
+      const pdfBuffer = await generateContractPDF(contract, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
