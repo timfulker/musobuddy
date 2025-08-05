@@ -44,6 +44,7 @@ export default function SignContract() {
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [signing, setSigning] = useState(false);
+  const [signed, setSigned] = useState(false);
   const [signatureName, setSignatureName] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [clientPhone, setClientPhone] = useState("");
@@ -173,10 +174,8 @@ export default function SignContract() {
         signedAt: result.signedAt || new Date().toISOString()
       } : null);
 
-      toast({
-        title: "Success",
-        description: "Contract signed successfully! Confirmation emails have been sent to both parties.",
-      });
+      // Show success state instead of just toast
+      setSigned(true);
 
     } catch (error) {
       console.error("Error signing contract:", error);
@@ -292,6 +291,35 @@ export default function SignContract() {
           </Badge>
         </div>
 
+        {/* Success Message - shown on same page after signing */}
+        {signed && (
+          <div className="mb-8">
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-8 w-8 text-green-600 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-green-900 mb-2">
+                      Contract Successfully Signed!
+                    </h3>
+                    <p className="text-green-800 mb-3">
+                      Your contract has been digitally signed and is now legally binding.
+                    </p>
+                    <div className="bg-green-100 border border-green-200 rounded-lg p-3">
+                      <p className="text-green-800 text-sm font-medium">
+                        📧 Confirmation emails with the signed contract have been sent to both parties.
+                      </p>
+                    </div>
+                    <p className="text-green-700 text-sm mt-3">
+                      Contract #{contract.contractNumber} • Signed on {new Date().toLocaleDateString('en-GB')} at {new Date().toLocaleTimeString('en-GB')}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Contract Details */}
           <div className="lg:col-span-2 space-y-6">
@@ -384,11 +412,12 @@ export default function SignContract() {
 
           {/* Signature Section */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Digital Signature</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {!signed && (
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle>Digital Signature</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                 {/* Client-fillable fields section */}
                 {missingFields.length > 0 && (
                   <div className="space-y-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
@@ -485,6 +514,38 @@ export default function SignContract() {
                 </p>
               </CardContent>
             </Card>
+            )}
+            
+            {signed && (
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-5 w-5" />
+                    Contract Signed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center space-y-3">
+                    <p className="text-green-800">
+                      This contract has been successfully signed and is now legally binding.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        // Create download link for signed contract
+                        const link = document.createElement('a');
+                        link.href = `/api/contracts/public/${contractId}/pdf`;
+                        link.download = `Contract-${contract.contractNumber}-Signed.pdf`;
+                        link.click();
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Signed Contract
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
