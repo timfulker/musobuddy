@@ -498,9 +498,9 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             submitBtn.style.background = '#6b7280';
             
             try {
-                // CRITICAL FIX: Use absolute URL for cross-origin request from R2 to Replit
-                const apiUrl = window.location.protocol === 'https:' && window.location.hostname.includes('r2.dev') 
-                    ? \`https://\${window.location.hostname.split('.')[0].replace('pub-', '')}.replit.app/api/contracts/sign/${contract.id}\`
+                // CRITICAL FIX: Use correct Replit app URL for cross-origin request from R2
+                const apiUrl = window.location.hostname.includes('r2.dev')
+                    ? \`https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}\`
                     : \`/api/contracts/sign/${contract.id}\`;
                 
                 console.log('🔥 FIXED: Starting contract signing with fetch()...');
