@@ -4702,9 +4702,9 @@ export async function registerRoutes(app: Express) {
               <li>Fee: £${contract.fee || 'TBD'}</li>
             </ul>
             <p>
-              <a href="${uploadResult.url}" 
+              <a href="${contract.signingPageUrl || uploadResult.url}" 
                  style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                View Contract
+                ${contract.signingPageUrl ? 'Sign Contract' : 'View Contract'}
               </a>
             </p>
             <p>Please review the contract and contact us if you have any questions.</p>
