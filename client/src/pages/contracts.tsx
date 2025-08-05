@@ -552,7 +552,7 @@ export default function Contracts() {
       } else {
         console.error('❌ FIXED: Failed to get R2 URL from isolated system:', response.status);
         // Fallback to main system download endpoint
-        const downloadUrl = `/api/contracts/${contract.id}/download`;
+        const downloadUrl = `/api/contracts/${contract.id}/download?force=true`;
         window.open(downloadUrl, '_blank');
       }
       
@@ -565,7 +565,7 @@ export default function Contracts() {
       });
       
       // Fallback to main system download endpoint
-      const downloadUrl = `/api/contracts/${contract.id}/download`;
+      const downloadUrl = `/api/contracts/${contract.id}/download?force=true`;
       window.open(downloadUrl, '_blank');
     }
   };

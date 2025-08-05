@@ -1200,10 +1200,14 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied - you do not own this contract' });
       }
       
-      // If contract has R2 URL, redirect to it
-      if (contract.cloudStorageUrl) {
+      // If contract has R2 URL and not forcing regeneration, redirect to it
+      if (contract.cloudStorageUrl && !req.query.force) {
         console.log(`🔗 Redirecting to R2 URL: ${contract.cloudStorageUrl}`);
         return res.redirect(contract.cloudStorageUrl);
+      }
+      
+      if (req.query.force) {
+        console.log('🔄 FORCED REGENERATION: Bypassing R2 redirect to generate new PDF');
       }
       
       // Generate PDF on-demand with professional template
@@ -1211,7 +1215,7 @@ export async function registerRoutes(app: Express) {
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateContractPDF } = await import('./contract-pdf-generator');
+        const { generateIsolatedContractPDF } = await import('../contract-system/isolated-contract-pdf-fixed');
         
         // Include signature details if contract is signed
         const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
@@ -1220,7 +1224,14 @@ export async function registerRoutes(app: Express) {
           clientIpAddress: contract.clientIpAddress || undefined
         } : undefined;
         
-        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+        // Convert null to undefined for isolated types
+        const contractData = {
+          ...contract,
+          clientEmail: contract.clientEmail || undefined,
+          clientPhone: contract.clientPhone || undefined,
+          clientAddress: contract.clientAddress || undefined
+        };
+        const pdfBuffer = await generateIsolatedContractPDF(contractData, userSettings, 'professional');
         
         // Set appropriate headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
@@ -2445,8 +2456,15 @@ export async function registerRoutes(app: Express) {
       // Fallback: Generate and serve PDF directly if no cloud URL
       console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
       const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateContractPDF } = await import('./contract-pdf-generator');
-      const pdfBuffer = await generateContractPDF(contract, userSettings);
+      const { generateIsolatedContractPDF } = await import('../contract-system/isolated-contract-pdf-fixed');
+      // Convert null to undefined for isolated types
+      const contractData = {
+        ...contract,
+        clientEmail: contract.clientEmail || undefined,
+        clientPhone: contract.clientPhone || undefined,
+        clientAddress: contract.clientAddress || undefined
+      };
+      const pdfBuffer = await generateIsolatedContractPDF(contractData, userSettings, 'professional');
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
