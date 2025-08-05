@@ -413,8 +413,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             
             <a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
-        <!-- CRITICAL FIX: Form uses onsubmit handler to prevent traditional submission -->
-        <form id="signingForm" onsubmit="return handleSign(event);">
+        <form id="signingForm">
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h4>Client Information</h4>
                 <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Fields marked with a blue border must be completed before signing</p>
@@ -444,8 +443,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     </div>
     
     <script>
-        let signatureCaptured = false;
-        let contractSigned = false;
+        var signatureCaptured = false;
+        var contractSigned = false;
         
         // CRITICAL FIX: Detect API URL based on current domain
         function getApiUrl() {
@@ -470,14 +469,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         
         // Enhanced signature capture with better validation
         function captureSignature() {
-            const name = document.getElementById('clientName').value.trim();
-            if (!name) {
+            var clientNameValue = document.getElementById('clientName').value.trim();
+            if (!clientNameValue) {
                 alert('Please enter your full name first');
                 document.getElementById('clientName').focus();
                 return;
             }
             
-            if (name.length < 2) {
+            if (clientNameValue.length < 2) {
                 alert('Please enter your full name (at least 2 characters)');
                 document.getElementById('clientName').focus();
                 return;
@@ -485,14 +484,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             
             signatureCaptured = true;
             const signaturePad = document.getElementById('signaturePad');
-            signaturePad.innerHTML = '<p style="text-align: center; color: #10b981; margin: 0; font-weight: bold;">✓ Signed by: ' + name + '</p>';
+            signaturePad.innerHTML = '<p style="text-align: center; color: #10b981; margin: 0; font-weight: bold;">✓ Signed by: ' + clientNameValue + '</p>';
             signaturePad.style.borderColor = '#10b981';
             signaturePad.style.background = '#ecfdf5';
             
             // Set signature data with timestamp
-            document.getElementById('clientSignature').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
+            document.getElementById('clientSignature').value = 'Digital signature: ' + clientNameValue + ' - ' + new Date().toISOString();
             
-            console.log('✅ CORS-FIXED: Signature captured for:', name);
+            console.log('✅ CORS-FIXED: Signature captured for:', clientNameValue);
         }
         
         // CRITICAL FIX: Enhanced form submission with proper CORS handling
@@ -505,12 +504,12 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             }
             
             // Validation
-            const name = document.getElementById('clientName').value.trim();
-            const phone = document.getElementById('clientPhone').value.trim();
-            const address = document.getElementById('clientAddress').value.trim();
-            const venueAddress = document.getElementById('venueAddress').value.trim();
+            var clientNameValue = document.getElementById('clientName').value.trim();
+            var phoneValue = document.getElementById('clientPhone').value.trim();
+            var addressValue = document.getElementById('clientAddress').value.trim();
+            var venueAddressValue = document.getElementById('venueAddress').value.trim();
             
-            if (!name) {
+            if (!clientNameValue) {
                 alert('Please enter your full name');
                 document.getElementById('clientName').focus();
                 return false;
@@ -529,17 +528,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             
             console.log('🚀 CORS-FIXED: Starting contract signing process...');
             
-            // Comprehensive validation
-            const name = document.getElementById('clientName').value.trim();
-            const phone = document.getElementById('clientPhone').value.trim();
-            const address = document.getElementById('clientAddress').value.trim();
-            const venueAddress = document.getElementById('venueAddress').value.trim();
-            
-            if (!name) {
-                alert('Please enter your full name');
-                document.getElementById('clientName').focus();
-                return false;
-            }
+            // Prepare request data
+            var requestData = {
+                clientSignature: clientNameValue,
+                clientIP: '0.0.0.0', // Placeholder - server will get real IP
+                clientPhone: phoneValue || undefined,
+                clientAddress: addressValue || undefined,
+                venueAddress: venueAddressValue || undefined
+            };
             
             if (!signatureCaptured) {
                 alert('Please click in the signature box to sign the contract');
@@ -547,10 +543,10 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             }
             
             // Check required fields (those marked with blue borders)
-            const requiredFields = [];
-            if (!phone && document.getElementById('clientPhone').hasAttribute('required')) requiredFields.push('Phone Number');
-            if (!address && document.getElementById('clientAddress').hasAttribute('required')) requiredFields.push('Address');
-            if (!venueAddress && document.getElementById('venueAddress').hasAttribute('required')) requiredFields.push('Venue Address');
+            var requiredFields = [];
+            if (!phoneValue && document.getElementById('clientPhone').hasAttribute('required')) requiredFields.push('Phone Number');
+            if (!addressValue && document.getElementById('clientAddress').hasAttribute('required')) requiredFields.push('Address');
+            if (!venueAddressValue && document.getElementById('venueAddress').hasAttribute('required')) requiredFields.push('Venue Address');
             
             if (requiredFields.length > 0) {
                 alert('Please complete the following required fields: ' + requiredFields.join(', '));
@@ -558,23 +554,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             }
             
             // Show loading state
-            const submitBtn = document.querySelector('.btn');
-            const originalText = submitBtn.textContent;
+            var submitBtn = document.querySelector('.btn');
+            var originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Signing Contract...';
             submitBtn.style.background = '#6b7280';
             
             try {
-                const apiUrl = getApiUrl();
-                
-                // Prepare request data
-                const requestData = {
-                    clientSignature: name,
-                    clientIP: '0.0.0.0', // Placeholder - server will get real IP
-                    clientPhone: phone || undefined,
-                    clientAddress: address || undefined,
-                    venueAddress: venueAddress || undefined
-                };
+                var apiUrl = getApiUrl();
                 
                 console.log('📡 CORS-FIXED: Sending signing request to:', apiUrl);
                 console.log('📡 CORS-FIXED: Request data:', requestData);
@@ -605,14 +592,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                         errorData = await response.json();
                     } catch (jsonError) {
                         console.error('❌ CORS-FIXED: Failed to parse error response as JSON:', jsonError);
-                        errorData = { error: \`Server error: \${response.status} \${response.statusText}\` };
+                        errorData = { error: 'Server error: ' + response.status + ' ' + response.statusText };
                     }
                     
-                    throw new Error(errorData.error || \`Server error: \${response.status}\`);
+                    throw new Error(errorData.error || 'Server error: ' + response.status);
                 }
                 
                 // Parse successful response
-                const result = await response.json();
+                var result = await response.json();
                 console.log('✅ CORS-FIXED: Success response:', result);
                 
                 if (result.success) {
@@ -622,7 +609,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                     submitBtn.style.background = '#10b981';
                     
                     // Show detailed success message
-                    const message = result.alreadySigned ? 
+                    var message = result.alreadySigned ? 
                         '✅ This contract has already been signed.\\n\\nThank you for your confirmation!' :
                         '✅ Contract Successfully Signed!\\n\\nYour contract has been digitally signed and confirmation emails have been sent to both parties.\\n\\nThank you for your business!';
                     
@@ -666,7 +653,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         
         // Enhanced signature pad setup
         function setupSignaturePad() {
-            const signaturePad = document.getElementById('signaturePad');
+            var signaturePad = document.getElementById('signaturePad');
             if (signaturePad) {
                 signaturePad.onclick = captureSignature;
                 signaturePad.style.cursor = 'pointer';
@@ -688,7 +675,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         
         // Enhanced form validation with real-time feedback
         function setupFormValidation() {
-            const requiredFields = document.querySelectorAll('input[required], textarea[required]');
+            var requiredFields = document.querySelectorAll('input[required], textarea[required]');
             
             requiredFields.forEach(field => {
                 field.addEventListener('blur', function() {
@@ -722,17 +709,23 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             setupSignaturePad();
             setupFormValidation();
             
+            // Set up form submission handler
+            var form = document.getElementById('signingForm');
+            if (form) {
+                form.addEventListener('submit', handleSign);
+            }
+            
             // Pre-populate client IP (optional)
             fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    const ipInput = document.querySelector('input[name="clientIP"]');
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    var ipInput = document.querySelector('input[name="clientIP"]');
                     if (ipInput && data.ip) {
                         ipInput.value = data.ip;
                         console.log('🔍 CORS-FIXED: Client IP detected:', data.ip);
                     }
                 })
-                .catch(error => {
+                .catch(function(error) {
                     console.log('⚠️ CORS-FIXED: Could not detect client IP:', error);
                 });
         });
