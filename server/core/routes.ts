@@ -64,7 +64,27 @@ export async function registerRoutes(app: Express) {
     });
   });
 
-  // 2. DEBUG ENDPOINT to verify contract signing fixes
+  // 2. CORS TEST ENDPOINT
+  app.get('/api/test-cors', (req, res) => {
+    console.log('🔍 CORS test request from origin:', req.headers.origin);
+    res.json({ 
+      message: 'CORS is working!', 
+      origin: req.headers.origin,
+      timestamp: new Date().toISOString() 
+    });
+  });
+
+  app.post('/api/test-cors', (req, res) => {
+    console.log('🔍 CORS POST test request from origin:', req.headers.origin);
+    res.json({ 
+      message: 'CORS POST is working!', 
+      origin: req.headers.origin,
+      data: req.body,
+      timestamp: new Date().toISOString() 
+    });
+  });
+
+  // 3. DEBUG ENDPOINT to verify contract signing fixes
   app.get('/api/debug/fix-verification/:contractId', async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.contractId);
