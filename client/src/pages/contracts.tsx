@@ -152,8 +152,8 @@ export default function Contracts() {
 
       // Auto-fill with booking data if bookingId is provided
       if (bookingId) {
-        // Fetch booking data and auto-fill form
-        fetch(`/api/bookings/${bookingId}`, { credentials: 'include' })
+        // Fetch booking data and auto-fill form  
+        apiRequest(`/api/bookings/${bookingId}`, { method: 'GET' })
           .then(response => response.json())
           .then(booking => {
             if (booking) {
@@ -265,19 +265,11 @@ export default function Contracts() {
         // Fields now aligned - no mapping needed
       };
 
-      // Step 1: Create contract in database
-      const response = await fetch("/api/contracts", {
+      // Step 1: Create contract in database using apiRequest (includes JWT token)
+      const response = await apiRequest("/api/contracts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(contractData),
+        body: contractData,
       });
-      
-      if (!response.ok) {
-        throw new Error(`Contract creation failed: ${response.status} ${response.statusText}`);
-      }
       
       const createdContract = await response.json();
       console.log('✅ Contract created with ID:', createdContract?.id);
@@ -290,20 +282,15 @@ export default function Contracts() {
 
       // Step 2: Immediately upload to R2 cloud storage
       console.log('☁️ Uploading new contract to R2 storage...');
-      const r2Response = await fetch(`/api/contracts/${createdContract.id}/r2-url`, {
+      const r2Response = await apiRequest(`/api/contracts/${createdContract.id}/r2-url`, {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
       });
 
-      if (r2Response.ok) {
+      try {
         const r2Data = await r2Response.json();
         console.log('✅ Contract created and uploaded to R2:', r2Data.url);
         createdContract.cloudStorageUrl = r2Data.url;
-      } else {
+      } catch (error) {
         console.warn('⚠️ Contract created but R2 upload failed - will upload on first view');
       }
 
@@ -348,20 +335,14 @@ export default function Contracts() {
 
       // Step 2: Update in R2 cloud storage (overwrite existing)
       console.log('☁️ Updating contract in R2 storage...');
-      const r2Response = await fetch(`/api/contracts/${id}/r2-url`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (r2Response.ok) {
+      try {
+        const r2Response = await apiRequest(`/api/contracts/${id}/r2-url`, {
+          method: 'GET',
+        });
         const r2Data = await r2Response.json();
         console.log('✅ Contract updated in R2:', r2Data.url);
         updatedContract.cloudStorageUrl = r2Data.url;
-      } else {
+      } catch (error) {
         console.warn('⚠️ Contract updated but R2 update failed');
       }
 
