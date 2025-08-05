@@ -2,6 +2,10 @@
 import { type Express } from "express";
 import { storage } from "./storage.js";
 import { ENV } from './environment.js';
+import { validateBody, sanitizeInput } from '../middleware/validation';
+import { asyncHandler } from '../middleware/errorHandler';
+import { authRateLimit, smsRateLimit } from '../middleware/rateLimiting';
+import { z } from 'zod';
 
 /**
  * REBUILT AUTHENTICATION MIDDLEWARE
@@ -110,7 +114,14 @@ export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up authentication routes...');
 
   // ADMIN LOGIN ENDPOINT - Direct authentication for testing
-  app.post('/api/auth/admin-login', async (req: any, res) => {
+  app.post('/api/auth/admin-login', 
+    authRateLimit,
+    sanitizeInput,
+    validateBody(z.object({
+      email: z.string().email('Invalid email format'),
+      password: z.string().min(1, 'Password is required')
+    })),
+    asyncHandler(async (req: any, res) => {
     try {
       const { email, password } = req.body;
       
@@ -148,7 +159,7 @@ export function setupAuthRoutes(app: Express) {
       console.error('❌ Admin login error:', error);
       res.status(500).json({ error: 'Login failed' });
     }
-  });
+  }));
 
   // USER INFO ENDPOINT - Required by frontend useAuth hook
   app.get('/api/auth/user', (req: any, res) => {
@@ -238,7 +249,14 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // LOGIN
-  app.post('/api/auth/login', async (req: any, res) => {
+  app.post('/api/auth/login', 
+    authRateLimit,
+    sanitizeInput,
+    validateBody(z.object({
+      email: z.string().email('Invalid email format'),
+      password: z.string().min(1, 'Password is required')
+    })),
+    asyncHandler(async (req: any, res) => {
     try {
       const { email, password } = req.body;
       
@@ -304,7 +322,7 @@ export function setupAuthRoutes(app: Express) {
       console.error('❌ Login error:', error);
       res.status(500).json({ error: 'Login failed' });
     }
-  });
+  }));
 
   // GET USER - WITH DATABASE VALIDATION
   app.get('/api/auth/user', async (req: any, res) => {

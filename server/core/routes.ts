@@ -8,6 +8,19 @@ import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 import { aiResponseGenerator } from './ai-response-generator.js';
 import QRCode from 'qrcode';
 
+// Phase 1 Security Improvements
+import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
+import { errorHandler, asyncHandler, notFoundHandler, AppError } from '../middleware/errorHandler';
+import { 
+  authRateLimit, 
+  contractSigningRateLimit,
+  smsRateLimit, 
+  emailRateLimit, 
+  aiRateLimit,
+  strictRateLimit 
+} from '../middleware/rateLimiting';
+import { VALIDATION_LIMITS, HTTP_STATUS } from '../constants/app';
+
 // Removed AI gig generation function - feature moved to documentation
 
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
@@ -54,6 +67,9 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
 
 export async function registerRoutes(app: Express) {
   console.log('🚀 Registering all application routes...');
+  
+  // Apply global security middleware FIRST
+  app.use(sanitizeInput);
 
   // IMMEDIATE TEST ROUTES - Add these FIRST
   // 1. SIMPLE TEST ROUTE - Add this FIRST to test if routing works at all
@@ -299,7 +315,7 @@ export async function registerRoutes(app: Express) {
 
   // HARDENING: Apply general rate limiting and slow down protection
   console.log('🛡️ Setting up rate limiting protection...');
-  app.use(generalApiRateLimit);
+  // Note: generalApiRateLimit already applied globally for Phase 1
   app.use(slowDownMiddleware);
   
   // CRITICAL: Set up session middleware AFTER rate limiting
@@ -1809,7 +1825,10 @@ export async function registerRoutes(app: Express) {
   });
 
   // Create new booking
-  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
+  app.post('/api/bookings', 
+    isAuthenticated, 
+    validateBody(schemas.createBooking), 
+    asyncHandler(async (req: any, res) => {
     try {
       const bookingData = {
         ...req.body,
@@ -1822,7 +1841,7 @@ export async function registerRoutes(app: Express) {
       console.error('❌ Failed to create booking:', error);
       res.status(500).json({ error: 'Failed to create booking' });
     }
-  });
+  }));
 
   // Update booking
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
@@ -2134,7 +2153,10 @@ export async function registerRoutes(app: Express) {
   });
 
   // Create new contract
-  app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
+  app.post('/api/contracts', 
+    isAuthenticated, 
+    validateBody(schemas.createContract), 
+    asyncHandler(async (req: any, res) => {
     try {
       console.log('📝 Contract creation request:', {
         body: req.body,
@@ -2250,7 +2272,7 @@ export async function registerRoutes(app: Express) {
         });
       }
     }
-  });
+  }));
 
   // Send contract via email - Frontend-compatible endpoint
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
@@ -2547,7 +2569,11 @@ export async function registerRoutes(app: Express) {
   });
 
   // ENHANCED CONTRACT SIGNING ROUTE - Public endpoint (no authentication required)
-  app.post('/api/contracts/sign/:id', async (req: any, res) => {
+  app.post('/api/contracts/sign/:id', 
+    contractSigningRateLimit,
+    sanitizeInput,
+    validateBody(schemas.signContract),
+    asyncHandler(async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
@@ -2724,7 +2750,7 @@ export async function registerRoutes(app: Express) {
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
-  });
+  }));
 
   // CRITICAL FIX: View contract route for cloud PDF redirect (PUBLIC ACCESS)
   app.get('/view/contracts/:id', async (req: any, res) => {
@@ -5140,17 +5166,18 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Apply global error handling middleware (BEFORE catch-all)
+  app.use('/api/*', errorHandler);
+  
   // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
-  app.use('/api/*', (req: any, res: any) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.status(404).json({
-      error: 'API endpoint not found',
-      path: req.path,
-      method: req.method,
-      timestamp: new Date().toISOString()
-    });
-  });
+  app.use('/api/*', notFoundHandler);
 
   console.log('✅ Clean routes registered successfully');
   console.log('🔧 Widget token endpoints registered: /api/generate-widget-token, /api/get-widget-token');
+  console.log('🛡️ Phase 1 Security Improvements Applied:');
+  console.log('  ✅ Input validation and sanitization');
+  console.log('  ✅ Centralized error handling');
+  console.log('  ✅ Granular rate limiting');
+  console.log('  ✅ Contract signing protection');
+  console.log('  ✅ Authentication security');
 }

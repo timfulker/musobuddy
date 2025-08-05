@@ -44,10 +44,6 @@ export const contractSigningRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Rate limit by IP and contract ID combination
-    return `${req.ip}-${req.params.id}`;
-  },
   skip: (req) => process.env.NODE_ENV === 'development'
 });
 
