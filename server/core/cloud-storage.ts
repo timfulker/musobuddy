@@ -449,20 +449,18 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         // CRITICAL FIX: Detect API URL based on current domain
         function getApiUrl() {
             var currentHost = window.location.hostname;
-            var currentProtocol = window.location.protocol;
             
             console.log('🔍 CORS-FIXED: Current hostname:', currentHost);
-            console.log('🔍 CORS-FIXED: Current protocol:', currentProtocol);
             
             // If we're on R2 domain, use the Replit API server
             if (currentHost.includes('r2.dev')) {
-                const apiUrl = 'https://musobuddy.replit.app/api/contracts/sign/${contract.id}';
+                var apiUrl = 'https://musobuddy.replit.app/api/contracts/sign/${contract.id}';
                 console.log('🔍 CORS-FIXED: Using cross-origin API URL:', apiUrl);
                 return apiUrl;
             }
             
             // If we're on the main domain, use relative URL
-            const apiUrl = '/api/contracts/sign/${contract.id}';
+            var apiUrl = '/api/contracts/sign/${contract.id}';
             console.log('🔍 CORS-FIXED: Using same-origin API URL:', apiUrl);
             return apiUrl;
         }
@@ -483,7 +481,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             }
             
             signatureCaptured = true;
-            const signaturePad = document.getElementById('signaturePad');
+            var signaturePad = document.getElementById('signaturePad');
             signaturePad.innerHTML = '<p style="text-align: center; color: #10b981; margin: 0; font-weight: bold;">✓ Signed by: ' + clientNameValue + '</p>';
             signaturePad.style.borderColor = '#10b981';
             signaturePad.style.background = '#ecfdf5';
@@ -495,7 +493,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         }
         
         // CRITICAL FIX: Enhanced form submission with proper CORS handling
-        async function handleSign(event) {
+        function handleSign(event) {
             event.preventDefault(); // Prevent traditional form submission
             
             if (contractSigned) {
@@ -566,8 +564,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 console.log('📡 CORS-FIXED: Sending signing request to:', apiUrl);
                 console.log('📡 CORS-FIXED: Request data:', requestData);
                 
-                // CRITICAL FIX: Enhanced fetch with proper CORS configuration
-                const response = await fetch(apiUrl, {
+                // CRITICAL FIX: Enhanced fetch with proper CORS configuration using promises
+                fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -578,28 +576,16 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                     mode: 'cors', // Enable CORS
                     credentials: 'omit', // Don't send credentials for cross-origin signing
                     body: JSON.stringify(requestData)
-                });
-                
-                console.log('📡 CORS-FIXED: Response status:', response.status);
-                console.log('📡 CORS-FIXED: Response headers:', Object.fromEntries(response.headers.entries()));
-                
-                // Enhanced error handling
-                if (!response.ok) {
-                    console.error('❌ CORS-FIXED: Response not OK:', response.status, response.statusText);
+                }).then(function(response) {
+                    console.log('📡 CORS-FIXED: Response status:', response.status);
                     
-                    let errorData;
-                    try {
-                        errorData = await response.json();
-                    } catch (jsonError) {
-                        console.error('❌ CORS-FIXED: Failed to parse error response as JSON:', jsonError);
-                        errorData = { error: 'Server error: ' + response.status + ' ' + response.statusText };
+                    if (!response.ok) {
+                        console.error('❌ CORS-FIXED: Response not OK:', response.status, response.statusText);
+                        throw new Error('Server error: ' + response.status + ' ' + response.statusText);
                     }
                     
-                    throw new Error(errorData.error || 'Server error: ' + response.status);
-                }
-                
-                // Parse successful response
-                var result = await response.json();
+                    return response.json();
+                }).then(function(result) {
                 console.log('✅ CORS-FIXED: Success response:', result);
                 
                 if (result.success) {
