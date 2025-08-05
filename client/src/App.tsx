@@ -30,7 +30,8 @@ import Pricing from "@/pages/pricing";
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
-// Authentication pages removed - clean JWT system
+import LoginPage from "@/pages/auth/login";
+import SignupPage from "@/pages/auth/signup";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
@@ -78,8 +79,9 @@ function Router() {
     <Switch>
       {/* Public routes - always accessible */}
       <Route path="/" component={LandingPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
-      {/* All authentication routes removed - using clean JWT system */}
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />

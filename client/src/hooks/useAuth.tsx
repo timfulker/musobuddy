@@ -1,18 +1,43 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 
 export function useAuth() {
   const queryClient = useQueryClient();
   
+  // Custom fetch function that includes JWT token
+  const fetchUser = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      throw new Error('No auth token');
+    }
+
+    const response = await fetch('/api/auth/user', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error: any = new Error('Authentication failed');
+      error.status = response.status;
+      throw error;
+    }
+
+    return response.json();
+  };
+  
   const { data: user, isLoading, error, isFetching } = useQuery({
     queryKey: ['/api/auth/user'],
+    queryFn: fetchUser,
     retry: (failureCount, error: any) => {
       // Only retry for network errors, not auth failures
       return failureCount < 2 && !(error as any)?.status;
     },
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
-    refetchInterval: false
+    refetchInterval: false,
+    enabled: !!localStorage.getItem('authToken') // Only run query if token exists
   });
 
   // Enhanced error handling for authentication failures
@@ -33,15 +58,17 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await apiRequest('/api/auth/logout', {
-        method: 'POST'
-      });
+      // Remove JWT token
+      localStorage.removeItem('authToken');
+      
       // Clear all queries and redirect
       queryClient.clear();
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect even if logout fails
+      localStorage.removeItem('authToken');
+      queryClient.clear();
       window.location.href = '/';
     }
   };

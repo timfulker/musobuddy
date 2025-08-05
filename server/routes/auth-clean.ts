@@ -101,13 +101,15 @@ export function setupAuthRoutes(app: Express) {
       const userId = nanoid();
 
       const newUser = await storage.createUser({
-        userId,
+        id: userId,
         email: pending.email,
         password: hashedPassword,
         firstName: pending.firstName,
         lastName: pending.lastName,
         phoneNumber: pending.phoneNumber,
-        isVerified: true,
+        phoneVerified: true,
+        isAdmin: false,
+        tier: 'free',
         createdAt: new Date()
       });
 
@@ -149,20 +151,20 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.password || '');
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       // Generate JWT token
-      const authToken = generateAuthToken(user.userId, user.email, user.isVerified);
+      const authToken = generateAuthToken(user.id, user.email || '', true);
 
       res.json({
         success: true,
         message: 'Login successful',
         authToken,
         user: {
-          userId: user.userId,
+          userId: user.id,
           email: user.email
         }
       });
@@ -198,6 +200,51 @@ export function setupAuthRoutes(app: Express) {
       console.error('Admin login error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
+  });
+
+  // Get current user (JWT validation)
+  app.get('/api/auth/user', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      
+      if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const { verifyAuthToken } = await import('../middleware/auth');
+      const decoded = verifyAuthToken(token);
+      
+      if (!decoded) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+
+      // Get user from database
+      const user = await storage.getUserById(decoded.userId);
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      res.json({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        isVerified: true, // All verified users in new system
+        phoneVerified: true, // Alias for compatibility
+        isAdmin: user.email === 'timfulker@gmail.com' // Simple admin check
+      });
+
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Logout endpoint
+  app.post('/api/auth/logout', (req, res) => {
+    res.json({ success: true, message: 'Logged out successfully' });
   });
 
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
