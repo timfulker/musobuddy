@@ -7,6 +7,33 @@ import { isolatedContractStorage } from './isolated-contract-storage';
 import { sendIsolatedContractEmail } from './isolated-contract-email-fixed';
 import type { IsolatedContractData, IsolatedUserSettings } from './isolated-contract-types';
 
+// DEBUG FUNCTION - Find missing data
+function debugContractData(contract: any, userSettings: any, location: string) {
+  console.log(`🔍 DEBUG ${location}: Raw contract data from database:`);
+  console.log('📋 Contract fields:', Object.keys(contract || {}));
+  console.log('📋 Contract data:', JSON.stringify(contract, null, 2));
+  
+  console.log(`🔍 DEBUG ${location}: User settings data:`);
+  console.log('⚙️ Settings fields:', Object.keys(userSettings || {}));
+  console.log('⚙️ Settings data:', JSON.stringify(userSettings, null, 2));
+  
+  // Check for missing critical fields
+  const criticalFields = [
+    'id', 'contractNumber', 'clientName', 'clientEmail', 
+    'eventDate', 'eventTime', 'eventEndTime', 'venue', 
+    'fee', 'deposit', 'paymentInstructions', 'equipmentRequirements', 
+    'specialRequirements', 'clientPhone', 'clientAddress', 'venueAddress'
+  ];
+  
+  const missingFields = criticalFields.filter(field => !contract || contract[field] === undefined || contract[field] === null);
+  const emptyFields = criticalFields.filter(field => contract && contract[field] === '');
+  
+  console.log(`🔍 DEBUG ${location}: Field analysis:`);
+  console.log('❌ Missing fields:', missingFields);
+  console.log('⚠️ Empty fields:', emptyFields);
+  console.log('✅ Present fields:', criticalFields.filter(field => contract && contract[field] && contract[field] !== ''));
+}
+
 export function registerIsolatedContractRoutes(app: Express, storage: any, isAuthenticated: any) {
   console.log('🔒 ISOLATED CONTRACT SYSTEM v2025.08.04.002 - Setting up isolated contract routes...');
 
@@ -41,6 +68,9 @@ export function registerIsolatedContractRoutes(app: Express, storage: any, isAut
       // Generate and upload to R2 using isolated system
       console.log(`🔄 ISOLATED: Generating and uploading contract #${contractId} to R2...`);
       const userSettings = await storage.getUserSettings(userId);
+      
+      // DEBUG: Check what data we're passing to PDF generator
+      debugContractData(contract, userSettings, "BEFORE PDF GENERATION");
       
       const uploadResult = await isolatedContractStorage.uploadContractPDF(
         contract, 

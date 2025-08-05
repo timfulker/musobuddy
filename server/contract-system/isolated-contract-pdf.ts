@@ -4,6 +4,77 @@
 import puppeteer from 'puppeteer';
 import type { IsolatedContractData, IsolatedUserSettings } from './isolated-contract-types';
 
+// DEBUG TEMPLATE - Shows what data is present vs missing
+function getDebugContractTemplate(contract: IsolatedContractData, userSettings: IsolatedUserSettings | null): string {
+  const renderField = (label: string, value: any, required: boolean = true) => {
+    const hasValue = value !== null && value !== undefined && value !== '';
+    const color = hasValue ? '#059669' : '#dc2626';
+    const status = hasValue ? '✅' : '❌';
+    const displayValue = hasValue ? String(value) : 'MISSING';
+    
+    return `
+      <div style="margin: 8px 0; padding: 8px; border-left: 3px solid ${color}; background: ${hasValue ? '#f0fdf4' : '#fef2f2'};">
+        <strong>${status} ${label}${required ? ' (Required)' : ' (Optional)'}:</strong>
+        <span style="color: ${color}; font-weight: bold;">${displayValue}</span>
+      </div>
+    `;
+  };
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CONTRACT DATA DIAGNOSTIC - ${contract?.contractNumber || 'UNKNOWN'}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .good { border-color: #059669; background: #f0fdf4; }
+        .bad { border-color: #dc2626; background: #fef2f2; }
+        .raw-data { background: #f8f9fa; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔍 CONTRACT DATA DIAGNOSTIC</h1>
+    
+    <div class="section">
+        <h2>📋 Contract Fields Analysis</h2>
+        ${renderField('ID', contract?.id)}
+        ${renderField('Contract Number', contract?.contractNumber)}
+        ${renderField('Client Name', contract?.clientName)}
+        ${renderField('Client Email', contract?.clientEmail)}
+        ${renderField('Client Phone', contract?.clientPhone, false)}
+        ${renderField('Event Date', contract?.eventDate)}
+        ${renderField('Event Time', contract?.eventTime)}
+        ${renderField('Event End Time', contract?.eventEndTime)}
+        ${renderField('Venue', contract?.venue)}
+        ${renderField('Fee', contract?.fee)}
+        ${renderField('Deposit', contract?.deposit, false)}
+        ${renderField('Payment Instructions', contract?.paymentInstructions, false)}
+        ${renderField('Equipment Requirements', contract?.equipmentRequirements, false)}
+        ${renderField('Special Requirements', contract?.specialRequirements, false)}
+    </div>
+    
+    <div class="section">
+        <h2>⚙️ User Settings Analysis</h2>
+        ${renderField('Business Name', userSettings?.businessName, false)}
+        ${renderField('Business Email', userSettings?.businessEmail, false)}
+        ${renderField('Business Phone', userSettings?.businessPhone, false)}
+        ${renderField('Business Address', userSettings?.businessAddress, false)}
+    </div>
+    
+    <div class="section">
+        <h2>📊 Raw Contract Data</h2>
+        <div class="raw-data">${JSON.stringify(contract, null, 2)}</div>
+    </div>
+    
+    <div class="section">
+        <h2>📊 Raw User Settings Data</h2>
+        <div class="raw-data">${JSON.stringify(userSettings, null, 2)}</div>
+    </div>
+</body>
+</html>`;
+}
+
 // FIXED TEMPLATE FUNCTIONS - OPTIMIZED FOR FULL PDF RENDERING
 function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: IsolatedUserSettings | null): string {
   return `<!DOCTYPE html>
@@ -745,8 +816,8 @@ class IsolatedContractPDFGenerator {
       // CRITICAL FIX: Set exact A4 viewport dimensions
       await page.setViewport({ width: 794, height: 1123 });
       
-      // Get template HTML
-      const templateFunction = templateName === 'basic' ? getIsolatedBasicTemplate : getIsolatedProfessionalTemplate;
+      // Get template HTML - USE DEBUG VERSION TEMPORARILY
+      const templateFunction = getDebugContractTemplate; // Use debug template
       const htmlContent = templateFunction(contract, userSettings);
 
       console.log('📝 FIXED: Setting HTML content with optimized settings...');
