@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { users, sessions } from "../../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { randomBytes } from 'crypto';
 
@@ -135,25 +135,33 @@ export class UserStorage {
   }
 
   async createUser(data: {
+    id: string;
     email: string;
     password: string;
-    name: string;
+    firstName?: string;
+    lastName?: string;
     phoneNumber?: string;
-    emailVerified?: boolean;
     phoneVerified?: boolean;
-    tier?: 'free' | 'plus' | 'pro';
-    businessName?: string;
-    businessAddress?: string;
-    isSuperAdmin?: boolean;
+    tier?: string;
+    isAdmin?: boolean;
     quickAddToken?: string;
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
   }) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const result = await db.insert(users).values({
-      ...data,
+      id: data.id,
+      email: data.email,
       password: hashedPassword,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: data.phoneNumber,
+      phoneVerified: data.phoneVerified || false,
       tier: data.tier || 'free',
+      isAdmin: data.isAdmin || false,
+      quickAddToken: data.quickAddToken,
+      emailPrefix: data.emailPrefix,
+      stripeCustomerId: data.stripeCustomerId,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
@@ -163,15 +171,14 @@ export class UserStorage {
   async updateUser(id: string, data: Partial<{
     email: string;
     password: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     phoneNumber: string;
-    businessName: string;
-    businessAddress: string;
-    emailVerified: boolean;
     phoneVerified: boolean;
-    tier: 'free' | 'plus' | 'pro';
+    tier: string;
     emailPrefix: string;
     stripeCustomerId: string;
+    isAdmin: boolean;
   }>) {
     const updateData: any = { ...data, updatedAt: new Date() };
     
@@ -196,47 +203,51 @@ export class UserStorage {
 
   async setEmailVerified(email: string) {
     const result = await db.update(users)
-      .set({ emailVerified: true, updatedAt: new Date() })
+      .set({ updatedAt: new Date() })
       .where(eq(users.email, email))
       .returning();
     return result[0];
   }
 
   async getAllUsers() {
-    return await db.select().from(users);
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllUsersCount() {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return result[0]?.count || 0;
   }
 
   // ===== SESSION METHODS =====
   
-  async createSession(userId: string, sessionData: string) {
+  async createSession(sid: string, sessionData: any) {
     const result = await db.insert(sessions).values({
-      id: `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId,
-      data: sessionData,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      sid,
+      sess: sessionData,
+      expire: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     }).returning();
     return result[0];
   }
 
-  async getSession(id: string) {
-    const result = await db.select().from(sessions).where(eq(sessions.id, id));
+  async getSession(sid: string) {
+    const result = await db.select().from(sessions).where(eq(sessions.sid, sid));
     return result[0] || null;
   }
 
-  async updateSession(id: string, data: string) {
+  async updateSession(sid: string, sessionData: any) {
     const result = await db.update(sessions)
-      .set({ data })
-      .where(eq(sessions.id, id))
+      .set({ sess: sessionData })
+      .where(eq(sessions.sid, sid))
       .returning();
     return result[0];
   }
 
-  async deleteSession(id: string) {
-    await db.delete(sessions).where(eq(sessions.id, id));
+  async deleteSession(sid: string) {
+    await db.delete(sessions).where(eq(sessions.sid, sid));
   }
 
-  async deleteUserSessions(userId: string) {
-    await db.delete(sessions).where(eq(sessions.userId, userId));
+  async deleteExpiredSessions() {
+    await db.delete(sessions).where(lt(sessions.expire, new Date()));
   }
 }
 
