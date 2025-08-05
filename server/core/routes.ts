@@ -1146,7 +1146,7 @@ export async function registerRoutes(app: Express) {
       // Generate and upload to R2 immediately
       console.log(`🔄 Generating and uploading contract #${contractId} to R2...`);
       const userSettings = await storage.getUserSettings(userId);
-      const { uploadContractToCloud } = await import('./contract-cloud-storage');
+      const { uploadContractToCloud } = await import('./cloud-storage');
       
       const uploadResult = await uploadContractToCloud(contract, userSettings);
       
@@ -4632,6 +4632,166 @@ export async function registerRoutes(app: Express) {
   });
 
   // Main contract system handles all contract functionality
+
+  // ===== ISOLATED CONTRACT ENDPOINTS =====
+  // These are completely isolated versions of contract endpoints for maximum reliability
+  
+  // Send contract email via isolated endpoint
+  app.post('/api/isolated/contracts/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractId, customMessage } = req.body;
+      const userId = req.session?.userId;
+
+      console.log(`📧 Sending contract #${contractId} via send-email endpoint...`);
+
+      if (!contractId) {
+        return res.status(400).json({ error: 'Contract ID is required' });
+      }
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      if (contract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+
+      // Get user settings for email configuration
+      const userSettings = await storage.getUserSettings(userId);
+      if (!userSettings) {
+        return res.status(500).json({ error: 'User settings not found' });
+      }
+
+      // Upload contract to cloud storage
+      console.log(`☁️ Uploading contract #${contractId} to cloud storage...`);
+      const { uploadContractToCloud } = await import('./cloud-storage');
+      const uploadResult = await uploadContractToCloud(contract, userSettings);
+
+      if (!uploadResult.success) {
+        console.error(`❌ Failed to upload contract #${contractId}:`, uploadResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
+      }
+
+      // Update contract with cloud URL
+      await storage.updateContract(contractId, {
+        cloudStorageUrl: uploadResult.url,
+        cloudStorageKey: uploadResult.key
+      });
+
+      console.log(`✅ Contract uploaded to R2: ${uploadResult.url}`);
+
+      // Send contract email
+      const recipientEmail = contract.clientEmail || userSettings.businessEmail || userSettings.email;
+      console.log(`📧 Sending contract email to: ${recipientEmail}`);
+
+      const emailService = new EmailService();
+      const contractEmailData = {
+        to: recipientEmail,
+        subject: `Contract ready for signing - ${contract.contractNumber}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Contract Ready for Review</h2>
+            <p>Hello,</p>
+            <p>Your contract <strong>${contract.contractNumber}</strong> is ready for review and signing.</p>
+            ${customMessage ? `<p><em>${customMessage}</em></p>` : ''}
+            <p><strong>Event Details:</strong></p>
+            <ul>
+              <li>Client: ${contract.clientName}</li>
+              <li>Date: ${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString() : 'TBD'}</li>
+              <li>Fee: £${contract.fee || 'TBD'}</li>
+            </ul>
+            <p>
+              <a href="${uploadResult.url}" 
+                 style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                View Contract
+              </a>
+            </p>
+            <p>Please review the contract and contact us if you have any questions.</p>
+            <p>Best regards,<br>${userSettings.businessName || 'MusoBuddy'}</p>
+          </div>
+        `
+      };
+
+      const emailResult = await emailService.sendEmail(contractEmailData);
+
+      if (emailResult.success) {
+        // Update booking status to contract_sent
+        if (contract.bookingId) {
+          await storage.updateBooking(contract.bookingId, { status: 'contract_sent' });
+          console.log(`✅ Updated booking #${contract.bookingId} status to 'contract_sent'`);
+        }
+        
+        console.log(`✅ Contract #${contractId} sent successfully via send-email endpoint`);
+        res.json({ success: true, message: 'Contract sent successfully' });
+      } else {
+        console.error(`❌ Failed to send contract #${contractId}:`, emailResult.error);
+        res.status(500).json({ error: emailResult.error || 'Failed to send contract' });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Contract send-email error:', error);
+      res.status(500).json({ error: error.message || 'Failed to send contract' });
+    }
+  });
+
+  // Get contract R2 URL via isolated endpoint
+  app.get('/api/isolated/contracts/:id/r2-url', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+
+      console.log(`🔗 Isolated R2 URL request for contract #${contractId} by user ${userId}`);
+
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      if (contract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+
+      // Check if contract already has R2 URL
+      if (contract.cloudStorageUrl) {
+        console.log(`✅ Returning existing R2 URL for contract #${contractId}`);
+        return res.json({ url: contract.cloudStorageUrl });
+      }
+
+      // Generate and upload to R2 immediately
+      console.log(`🔄 Generating and uploading contract #${contractId} to R2 via isolated endpoint...`);
+      const userSettings = await storage.getUserSettings(userId);
+      const { uploadContractToCloud } = await import('./cloud-storage');
+
+      const uploadResult = await uploadContractToCloud(contract, userSettings);
+
+      if (uploadResult.success && uploadResult.url) {
+        // Update contract with R2 URL
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key
+        });
+
+        console.log(`✅ Contract #${contractId} uploaded to R2 via isolated endpoint: ${uploadResult.url}`);
+        return res.json({ url: uploadResult.url });
+      } else {
+        console.error(`❌ Failed to upload contract #${contractId} to R2 via isolated endpoint:`, uploadResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Isolated contract R2 URL error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get contract R2 URL',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
 
   // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
   app.use('/api/*', (req: any, res: any) => {
