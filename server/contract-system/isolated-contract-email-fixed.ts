@@ -38,7 +38,7 @@ export async function sendIsolatedContractEmail(
       to: contract.clientEmail,
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
       html: emailHtml,
-      'h:Reply-To': userSettings?.email || `noreply@${MAILGUN_DOMAIN}`,
+      'h:Reply-To': userSettings?.businessEmail || `noreply@${MAILGUN_DOMAIN}`,
       'h:X-Mailgun-Variables': JSON.stringify({
         email_type: 'contract',
         contract_id: contract.id,
@@ -74,7 +74,7 @@ function generateContractEmailHTML(
   customMessage?: string
 ) {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  const userEmail = userSettings?.email || 'hello@musobuddy.com';
+  const userEmail = userSettings?.businessEmail || 'hello@musobuddy.com';
   
   return `
 <!DOCTYPE html>

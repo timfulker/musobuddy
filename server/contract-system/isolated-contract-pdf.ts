@@ -29,7 +29,7 @@ function getIsolatedBasicTemplate(contract: IsolatedContractData, userSettings: 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 40px;
+            padding: 20px;
             background: white;
         }
         
@@ -720,19 +720,20 @@ export class IsolatedContractPDFGenerator {
       // Set viewport to ensure proper rendering
       await page.setViewport({ width: 1200, height: 1600 });
       
+      // Wait for content to fully render
+      await page.waitForTimeout(2000);
+      
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        preferCSSPageSize: false,
-        height: '29.7cm',
-        width: '21cm',
+        preferCSSPageSize: true,
         margin: {
-          top: '0.5cm',
-          right: '0.5cm', 
-          bottom: '0.5cm',
-          left: '0.5cm'
+          top: '1cm',
+          right: '1cm', 
+          bottom: '1cm',
+          left: '1cm'
         },
-        timeout: 30000
+        timeout: 60000
       });
 
       console.log(`✅ ${templateName} contract PDF generated: ${pdfBuffer.length} bytes`);
