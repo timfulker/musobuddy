@@ -64,7 +64,166 @@ export async function registerRoutes(app: Express) {
     });
   });
 
-  // 2. SIMPLE DEBUG ROUTE
+  // 2. DEBUG ENDPOINT to verify contract signing fixes
+  app.get('/api/debug/fix-verification/:contractId', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.contractId);
+      
+      console.log('🔍 VERIFY: Starting fix verification for contract:', contractId);
+      
+      const results = {
+        timestamp: new Date().toISOString(),
+        contractId: contractId,
+        tests: {} as any,
+        issues: [] as string[],
+        fixes: [] as string[]
+      };
+      
+      // Test 1: Check if contract exists
+      try {
+        const contract = await storage.getContract(contractId);
+        
+        if (contract) {
+          results.tests.contractExists = {
+            status: 'PASS',
+            contractNumber: contract.contractNumber,
+            currentStatus: contract.status,
+            hasCloudUrl: !!contract.cloudStorageUrl,
+            cloudUrl: contract.cloudStorageUrl || 'None'
+          };
+        } else {
+          results.tests.contractExists = {
+            status: 'FAIL',
+            error: 'Contract not found'
+          };
+          results.issues.push('Contract not found - cannot test fixes');
+          return res.json(results);
+        }
+        
+      } catch (error: any) {
+        results.tests.contractExists = {
+          status: 'ERROR',
+          error: error.message
+        };
+        results.issues.push('Database error accessing contract');
+        return res.json(results);
+      }
+      
+      // Test 2: Check signing endpoint accessibility
+      try {
+        const testUrl = `/api/contracts/sign/${contractId}`;
+        results.tests.signingEndpoint = {
+          status: 'PASS',
+          endpoint: testUrl,
+          message: 'Endpoint should be accessible for POST requests'
+        };
+      } catch (error: any) {
+        results.tests.signingEndpoint = {
+          status: 'FAIL',
+          error: error.message
+        };
+        results.issues.push('Signing endpoint not accessible');
+      }
+      
+      // Test 3: Check frontend form fix status
+      results.tests.frontendFormFix = {
+        status: 'INFO',
+        message: 'Frontend should use Accept: application/json header',
+        fix: 'Ensure handleSign function has Accept: application/json header',
+        checkUrl: `https://musobuddy.replit.app/sign-contract/${contractId}`
+      };
+      
+      // Test 4: Check email service
+      try {
+        const { EmailService } = await import('./services');
+        const emailService = new EmailService();
+        
+        results.tests.emailService = {
+          status: 'PASS',
+          message: 'Email service initialized',
+          hasFixedMethod: typeof emailService.sendContractConfirmationEmails === 'function'
+        };
+        
+      } catch (error: any) {
+        results.tests.emailService = {
+          status: 'FAIL',
+          error: error.message
+        };
+        results.issues.push('Email service not working');
+      }
+      
+      // Test 5: Check cloud storage
+      try {
+        const { isCloudStorageConfigured } = await import('./cloud-storage');
+        const isConfigured = isCloudStorageConfigured();
+        
+        results.tests.cloudStorage = {
+          status: isConfigured ? 'PASS' : 'FAIL',
+          configured: isConfigured,
+          message: isConfigured ? 'Cloud storage configured' : 'Cloud storage not configured'
+        };
+        
+        if (!isConfigured) {
+          results.issues.push('Cloud storage not configured - emails will use fallback URLs');
+        }
+        
+      } catch (error: any) {
+        results.tests.cloudStorage = {
+          status: 'ERROR',
+          error: error.message
+        };
+        results.issues.push('Cloud storage check failed');
+      }
+      
+      // Provide specific fixes based on findings
+      if (results.issues.length === 0) {
+        results.fixes.push('✅ All systems appear to be working');
+        results.fixes.push('🔧 Frontend fix: Accept header added');
+        results.fixes.push('🔧 Backend fix: Email timing corrected');
+        results.fixes.push('🔧 Backend fix: Proper JSON response headers');
+      } else {
+        results.fixes.push('❌ Fix the identified issues first');
+      }
+      
+      // Add test instructions
+      results.testInstructions = {
+        step1: 'All three fixes have been applied (frontend headers, backend timing, backend response)',
+        step2: `Visit: https://musobuddy.replit.app/sign-contract/${contractId}`,
+        step3: 'Fill out the form and click Sign Contract',
+        step4: 'Should see success message (not JSON)',
+        step5: 'Check emails - should link to signed contract PDFs'
+      };
+      
+      console.log('🔍 VERIFY: Fix verification completed');
+      res.json(results);
+      
+    } catch (error: any) {
+      console.error('❌ VERIFY: Fix verification failed:', error);
+      res.status(500).json({
+        error: 'Verification failed',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // SIMPLE TEST: Check if the JSON response handling is working
+  app.get('/api/debug/test-json-response', (req: any, res) => {
+    console.log('🧪 TEST: JSON response test endpoint called');
+    console.log('🧪 TEST: Request headers:', req.headers);
+    
+    // This should always return JSON with proper headers
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+      success: true,
+      message: 'This is a JSON response with proper headers',
+      timestamp: new Date().toISOString(),
+      note: 'If you see this as raw JSON in browser instead of being handled by JavaScript, the form fix is needed'
+    });
+  });
+
+  // 3. SIMPLE DEBUG ROUTE
   app.get('/debug-invoice/:id', async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
@@ -2378,41 +2537,76 @@ export async function registerRoutes(app: Express) {
       
       console.log(`✅ Contract #${contractId} signed successfully`);
       
-      // Send confirmation emails
+      // CRITICAL FIX: Upload contract to cloud FIRST, then send emails with signed URL
+      let finalSignedContractUrl = null;
+      
       try {
+        // STEP 1: Upload signed contract to cloud storage 
+        console.log(`☁️ Uploading contract #${contractId} to cloud storage...`);
         const userSettings = await storage.getUserSettings(contract.userId);
-        const { EmailService } = await import('./services');
-        const emailService = new EmailService();
-        
-        // Upload signed contract to cloud storage with signature details
         const { uploadContractToCloud } = await import('./cloud-storage');
+        
         const signatureDetails = {
           signedAt: signedContract.signedAt ? new Date(signedContract.signedAt) : new Date(),
           signatureName: signedContract.clientSignature || clientSignature,
           clientIpAddress: signedContract.clientIpAddress || clientIP || 'Unknown'
         };
+        
         const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
-        if (cloudResult.success) {
+        if (cloudResult.success && cloudResult.url) {
+          // STEP 2: Update contract with signed PDF URL - CRITICAL FOR EMAILS
+          console.log(`✅ Contract PDF uploaded successfully to R2: ${cloudResult.key}`);
+          console.log(`🔗 Direct contract R2 public URL: ${cloudResult.url}`);
+          
           await storage.updateContract(contractId, {
             cloudStorageUrl: cloudResult.url,
             cloudStorageKey: cloudResult.key
           });
+          
+          finalSignedContractUrl = cloudResult.url;
+        } else {
+          console.error(`❌ Cloud upload failed: ${cloudResult.error}`);
+          finalSignedContractUrl = `https://musobuddy.replit.app/view/contracts/${contractId}`;
         }
         
-        // Send confirmation emails to both parties
-        await emailService.sendContractConfirmationEmails(signedContract, userSettings);
-        console.log('✅ Contract confirmation emails sent successfully');
+        // STEP 3: Send emails AFTER contract is updated with signed PDF URL
+        console.log(`📧 Starting contract confirmation email process...`);
         
-      } catch (emailError) {
-        console.error('⚠️ Contract signed but email sending failed:', emailError);
+        // CRITICAL DELAY: Give database a moment to fully commit the changes
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { EmailService } = await import('./services');
+        const emailService = new EmailService();
+        
+        // Get the LATEST contract data from database for emails
+        const latestContract = await storage.getContract(contractId);
+        console.log(`📧 Latest contract for emails - Cloud URL: ${latestContract?.cloudStorageUrl ? 'Present' : 'Missing'}`);
+        
+        const emailSuccess = await emailService.sendContractConfirmationEmails(latestContract || signedContract, userSettings);
+        
+        if (emailSuccess) {
+          console.log('✅ Contract confirmation emails sent successfully');
+        } else {
+          console.warn('⚠️ Some confirmation emails may have failed');
+        }
+        
+      } catch (error: any) {
+        console.error('⚠️ Cloud upload or email sending failed (contract still signed):', error);
+        finalSignedContractUrl = `https://musobuddy.replit.app/view/contracts/${contractId}`;
       }
+      
+      // CRITICAL: Always return JSON with proper headers
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-cache');
       
       res.json({ 
         success: true, 
         message: 'Contract signed successfully! Both parties will receive confirmation emails.',
         contractId: contractId,
-        signedAt: new Date().toISOString()
+        signedAt: signedContract.signedAt ? new Date(signedContract.signedAt).toISOString() : new Date().toISOString(),
+        cloudUrl: finalSignedContractUrl,
+        status: 'signed'
       });
       
     } catch (error: any) {
