@@ -102,8 +102,14 @@ export default function NewSignup() {
           description: "Your account has been verified successfully.",
         });
         
-        // Redirect to trial setup
-        setLocation('/signup?step=trial');
+        // Check if this is an existing user or new user
+        if (result.message && result.message.includes('existing user')) {
+          // Existing user - go to dashboard
+          setLocation('/dashboard');
+        } else {
+          // New user - continue to trial setup/subscription
+          setLocation('/subscription');
+        }
       } else {
         toast({
           title: "Verification Failed",
