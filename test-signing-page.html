@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Signing Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .btn { background: #1e3a8a; color: white; padding: 15px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; }
+        input { padding: 10px; margin: 10px 0; width: 300px; }
+        .signature-pad { border: 2px dashed #1e3a8a; height: 120px; margin: 10px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Contract Signing Test - Contract #634</h1>
+    
+    <form id="signingForm" onsubmit="return handleSign(event);">
+        <label>Client Name:</label><br>
+        <input type="text" id="clientName" value="Test Client" required><br>
+        
+        <label>Phone:</label><br>
+        <input type="tel" id="clientPhone" value="07123456789"><br>
+        
+        <label>Address:</label><br>
+        <input type="text" id="clientAddress" value="123 Test Street"><br>
+        
+        <div class="signature-pad" id="signaturePad" onclick="captureSignature()">
+            Click here to sign
+        </div>
+        <input type="hidden" id="clientSignature" name="clientSignature">
+        
+        <button type="submit" class="btn">Sign Contract</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        let signatureCaptured = false;
+        const contractId = 634;
+        
+        function captureSignature() {
+            const name = document.getElementById('clientName').value.trim();
+            if (!name) {
+                alert('Please enter your name first');
+                return;
+            }
+            
+            signatureCaptured = true;
+            const signaturePad = document.getElementById('signaturePad');
+            signaturePad.innerHTML = '<p style="color: #10b981; margin: 0;">✓ Signed by: ' + name + '</p>';
+            signaturePad.style.background = '#ecfdf5';
+            signaturePad.style.borderColor = '#10b981';
+            
+            document.getElementById('clientSignature').value = 'Digital signature: ' + name + ' - ' + new Date().toISOString();
+        }
+        
+        async function handleSign(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const address = document.getElementById('clientAddress').value.trim();
+            
+            if (!name) {
+                alert('Please enter your name');
+                return false;
+            }
+            
+            if (!signatureCaptured) {
+                alert('Please click to sign');
+                return false;
+            }
+            
+            const submitBtn = document.querySelector('.btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing...';
+            
+            try {
+                console.log('🔥 FINAL TEST: Starting contract signing...');
+                console.log('🔥 FINAL TEST: Contract ID:', contractId);
+                console.log('🔥 FINAL TEST: URL will be:', `/api/contracts/sign/${contractId}`);
+                
+                const response = await fetch(`/api/contracts/sign/${contractId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        clientSignature: name,
+                        clientIP: '127.0.0.1',
+                        clientPhone: phone || undefined,
+                        clientAddress: address || undefined
+                    })
+                });
+                
+                console.log('🔥 FINAL TEST: Response status:', response.status);
+                console.log('🔥 FINAL TEST: Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log('🔥 FINAL TEST: Error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('🔥 FINAL TEST: Success response:', result);
+                
+                submitBtn.textContent = 'Contract Signed ✓';
+                submitBtn.style.background = '#10b981';
+                
+                document.getElementById('result').innerHTML = `
+                    <div style="background: #ecfdf5; border: 2px solid #10b981; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                        <h3 style="color: #10b981; margin-top: 0;">✅ Contract Successfully Signed!</h3>
+                        <p><strong>Contract ID:</strong> ${result.contractId}</p>
+                        <p><strong>Signed At:</strong> ${new Date(result.signedAt).toLocaleString()}</p>
+                        <p><strong>Status:</strong> ${result.status}</p>
+                        <p><strong>PDF URL:</strong> <a href="${result.cloudUrl}" target="_blank">View Signed Contract</a></p>
+                        <p style="color: #059669;">Confirmation emails have been sent to both parties.</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('🔥 FINAL TEST: Signing error:', error);
+                
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign Contract';
+                
+                document.getElementById('result').innerHTML = `
+                    <div style="background: #fef2f2; border: 2px solid #ef4444; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                        <h3 style="color: #ef4444; margin-top: 0;">❌ Signing Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Please try again or contact support.</p>
+                    </div>
+                `;
+            }
+            
+            return false;
+        }
+        
+        console.log('🔥 FINAL TEST: Page loaded, contract ID:', contractId);
+    </script>
+</body>
+</html>
