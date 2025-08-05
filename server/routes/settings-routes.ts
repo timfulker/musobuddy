@@ -38,7 +38,7 @@ export function registerSettingsRoutes(app: Express) {
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const settings = await storage.getUserSettings(userId);
+      const settings = await storage.getSettings(userId);
       
       if (!settings) {
         // Create default settings if none exist
@@ -53,7 +53,7 @@ export function registerSettingsRoutes(app: Express) {
           // Add other default settings as needed
         };
         
-        const newSettings = await storage.createUserSettings(defaultSettings);
+        const newSettings = await storage.createSettings(defaultSettings);
         return res.json(newSettings);
       }
       
@@ -104,7 +104,7 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(400).json({ error: 'Instrument name is required' });
       }
       
-      const settings = await storage.getUserSettings(userId);
+      const settings = await storage.getSettings(userId);
       const currentInstruments = settings?.instruments || [];
       
       if (!currentInstruments.includes(instrument)) {
