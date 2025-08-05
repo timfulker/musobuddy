@@ -411,6 +411,21 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 console.log('🔧 Setting up FIXED session middleware...');
 const sessionMiddleware = createSessionMiddleware();
 app.use(sessionMiddleware);
+
+// Clean up invalid sessions globally to prevent frontend 404s
+app.use((req: any, res, next) => {
+  if (req.session && (req.session.userId === undefined || !req.session.userId)) {
+    console.log('🧹 Cleaning up invalid session:', { 
+      sessionId: req.sessionID, 
+      userId: req.session.userId,
+      email: req.session.email 
+    });
+    req.session.destroy((err: any) => {
+      if (err) console.error('Session destroy error:', err);
+    });
+  }
+  next();
+});
 console.log('✅ FIXED session middleware configured');
 
 // Authentication routes will be configured by registerRoutes() to avoid duplicates

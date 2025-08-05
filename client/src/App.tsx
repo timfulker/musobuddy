@@ -39,7 +39,7 @@ import SupportChat from "@/components/support-chat";
 import { useEffect } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, error } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -53,12 +53,25 @@ function Router() {
     );
   }
 
+  // DEBUG: Log authentication state for root path
+  const currentPath = window.location.pathname;
+  if (currentPath === '/') {
+    console.log('🔍 Root path auth state:', {
+      isAuthenticated,
+      hasUser: !!user,
+      hasError: !!error,
+      errorStatus: (error as any)?.status,
+      userPhoneVerified: (user as any)?.phoneVerified,
+      currentPath
+    });
+  }
+
   // Simple redirect without useEffect to prevent loops
   // Exception: Don't redirect if user is on trial-success page or coming from Stripe
-  const currentPath = window.location.pathname;
   const hasStripeSession = window.location.search.includes('stripe_session');
   
   if (isAuthenticated && currentPath === '/' && !hasStripeSession) {
+    console.log('🔄 Redirecting authenticated user to dashboard');
     window.location.href = '/dashboard';
     return null;
   }
