@@ -270,9 +270,10 @@ export default function Contracts() {
         body: JSON.stringify(contractData),
       });
       
-      // Extract contract data properly
-      const createdContract = response?.data || response;
+      // The response IS the contract directly (not wrapped in data property)
+      const createdContract = response;
       console.log('✅ Contract created with ID:', createdContract?.id);
+      console.log('📋 Full contract response:', response);
 
       // Validate we have a contract ID before proceeding
       if (!createdContract?.id) {
