@@ -1043,9 +1043,19 @@ async function startServer() {
     // Add missing API endpoints that are causing 404 errors
     // Use simple session-based authentication for these endpoints
     const simpleAuth = (req: any, res: any, next: any) => {
+      console.log('🔍 SimpleAuth check:', {
+        sessionId: req.sessionID,
+        hasSession: !!req.session,
+        userId: req.session?.userId,
+        path: req.path
+      });
+      
       if (!req.session?.userId) {
+        console.log('❌ SimpleAuth failed: no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
       }
+      
+      console.log('✅ SimpleAuth passed for user:', req.session.userId);
       next();
     };
 
@@ -1086,16 +1096,34 @@ async function startServer() {
         const userId = req.session?.userId;
         const contractId = parseInt(req.params.id);
         
+        console.log(`🔍 R2 URL request for contract ${contractId} by user ${userId}`);
+        
         const contract = await storage.getContract(contractId, userId);
         if (!contract) {
+          console.log(`❌ Contract ${contractId} not found for user ${userId}`);
           return res.status(404).json({ error: 'Contract not found' });
         }
         
-        if (contract.r2Key) {
-          // Use the correct public R2 URL format that matches the new structure
-          const r2Url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${contract.r2Key}`;
+        console.log(`📄 Contract found:`, { 
+          id: contract.id, 
+          contractNumber: contract.contractNumber,
+          r2Key: contract.r2Key,
+          cloudStorageUrl: contract.cloudStorageUrl 
+        });
+        
+        if (contract.r2Key || contract.cloudStorageUrl) {
+          // Try r2Key first, then cloudStorageUrl as fallback
+          let r2Url;
+          if (contract.r2Key) {
+            r2Url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${contract.r2Key}`;
+          } else if (contract.cloudStorageUrl) {
+            r2Url = contract.cloudStorageUrl;
+          }
+          
+          console.log(`✅ Returning R2 URL: ${r2Url}`);
           res.json({ url: r2Url });
         } else {
+          console.log(`❌ No R2 key or cloud storage URL for contract ${contractId}`);
           res.status(404).json({ error: 'Contract PDF not available' });
         }
       } catch (error) {
