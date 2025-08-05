@@ -1210,21 +1210,21 @@ export async function registerRoutes(app: Express) {
         console.log('🔄 FORCED REGENERATION: Bypassing R2 redirect to generate new PDF');
       }
       
-      // Generate simple, working PDF
-      console.log('🔄 SIMPLE SYSTEM: Generating simple contract PDF...');
+      // Generate professional contract PDF using working system
+      console.log('🔄 WORKING SYSTEM: Generating professional contract PDF...');
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateSimpleContractPDF } = await import('../simple-contract-pdf');
+        const { generateWorkingContractPDF } = await import('../working-contract-pdf');
         
-        const pdfBuffer = await generateSimpleContractPDF(contract, userSettings);
+        const pdfBuffer = await generateWorkingContractPDF(contract, userSettings);
         
         // Set headers and send PDF
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
         res.setHeader('Content-Length', pdfBuffer.length.toString());
         
-        console.log(`✅ Simple contract PDF generated: ${pdfBuffer.length} bytes`);
+        console.log(`✅ Professional contract PDF generated: ${pdfBuffer.length} bytes`);
         
         res.end(pdfBuffer);
         
