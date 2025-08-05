@@ -579,10 +579,13 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                     submitBtn.style.background = '#10b981';
                     
                     // CRITICAL: Add PDF download button after successful signing
+                    console.log('🔍 DEBUG: Checking for PDF button creation. cloudUrl:', result.cloudUrl);
                     var signingSection = document.querySelector('.signing-section');
-                    if (signingSection && result.cloudUrl) {
+                    console.log('🔍 DEBUG: Signing section found:', !!signingSection);
+                    
+                    if (signingSection) {
                         var pdfButton = document.createElement('a');
-                        pdfButton.href = result.cloudUrl;
+                        pdfButton.href = result.cloudUrl || '#';
                         pdfButton.target = '_blank';
                         pdfButton.className = 'pdf-link';
                         pdfButton.innerHTML = '📄 View Signed Contract PDF';
@@ -591,9 +594,15 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                         
                         // Insert PDF button before the form
                         var form = document.getElementById('signingForm');
-                        signingSection.insertBefore(pdfButton, form);
-                        
-                        console.log('✅ PDF download button added:', result.cloudUrl);
+                        if (form) {
+                            signingSection.insertBefore(pdfButton, form);
+                            console.log('✅ PDF download button added successfully');
+                        } else {
+                            signingSection.appendChild(pdfButton);
+                            console.log('✅ PDF download button appended to signing section');
+                        }
+                    } else {
+                        console.error('❌ Could not find signing section for PDF button');
                     }
                     
                     // Show detailed success message
