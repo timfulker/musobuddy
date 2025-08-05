@@ -501,7 +501,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 console.log('🔥 FIXED: Starting contract signing with fetch()...');
                 
                 // CRITICAL FIX: Use fetch() with proper headers for JSON API
-                const response = await fetch('/api/contracts/sign/${contract.id}', {
+                const response = await fetch(\`/api/contracts/sign/${contract.id}\`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
