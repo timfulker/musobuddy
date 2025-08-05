@@ -111,7 +111,7 @@ export default function Contracts() {
       equipmentRequirements: "",
       specialRequirements: "",
       status: "draft",
-      template: "professional",
+      template: "professional", // Only professional template supported
       // PHASE 2: Automated reminders (removed for manual-only phase 1)
       // reminderEnabled: false,
       // reminderDays: 3,

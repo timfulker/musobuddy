@@ -219,6 +219,7 @@ export const contracts = pgTable("contracts", {
   
   // Contract management
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
+  template: varchar("template").notNull().default("professional"), // basic, professional
   signedAt: timestamp("signed_at"),
   
   // PHASE 2: Automatic reminder system (commented out for manual-only phase 1)
