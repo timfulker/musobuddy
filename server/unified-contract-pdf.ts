@@ -642,9 +642,6 @@ function generateUnifiedContractHTML(
   `;
 }
 
-// COMPATIBILITY EXPORTS: Ensure backward compatibility with existing imports
-export { generateContractPDF as generateContractPDF };
-
 // Additional export for services.ts compatibility
 export default {
   generateContractPDF
