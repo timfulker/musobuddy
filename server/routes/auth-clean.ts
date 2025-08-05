@@ -151,7 +151,9 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
+      console.log('🔍 Login attempt:', { email, hasStoredPassword: !!user.password });
       const isValidPassword = await bcrypt.compare(password, user.password || '');
+      console.log('🔍 Password validation:', { isValidPassword });
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -219,7 +221,21 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid or expired token' });
       }
 
-      // Get user from database
+      // Handle admin user specially
+      if (decoded.userId === 'admin-user') {
+        return res.json({
+          userId: 'admin-user',
+          email: decoded.email,
+          firstName: 'Admin',
+          lastName: 'User',
+          phoneNumber: null,
+          isVerified: true,
+          phoneVerified: true,
+          isAdmin: true
+        });
+      }
+
+      // Get regular user from database
       const user = await storage.getUserById(decoded.userId);
       if (!user) {
         return res.status(401).json({ error: 'User not found' });

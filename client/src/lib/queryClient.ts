@@ -25,6 +25,12 @@ export async function apiRequest(
   let body = options?.body;
   const headers = options?.headers || {};
   
+  // Add JWT token to all API requests
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   if (body) {
     if (body instanceof FormData) {
       // Don't set Content-Type for FormData - let browser set it with boundary
