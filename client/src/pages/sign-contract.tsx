@@ -168,6 +168,7 @@ export default function SignContract() {
       }
 
       const result = await response.json();
+      console.log('🔥 FRONTEND: Success response received:', result);
       
       // Update local contract state
       setContract(prev => prev ? {
@@ -176,8 +177,9 @@ export default function SignContract() {
         signedAt: result.signedAt || new Date().toISOString()
       } : null);
 
-      // Show success state instead of just toast
+      // Show success state instead of just toast - THIS IS THE CRITICAL FIX
       setSigned(true);
+      console.log('🔥 FRONTEND: setSigned(true) called - should show green success box');
 
     } catch (error) {
       console.error("Error signing contract:", error);
@@ -493,7 +495,12 @@ export default function SignContract() {
                 <Separator />
 
                 <Button
-                  onClick={handleSign}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSign();
+                  }}
                   disabled={signing || !signatureName.trim() || !agreed}
                   className="w-full"
                   size="lg"
