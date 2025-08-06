@@ -12,9 +12,20 @@ import { useToast } from "@/hooks/use-toast";
 
 // Environment-specific auth token key to prevent dev/production conflicts
 const getAuthTokenKey = () => {
-  const isDev = import.meta.env.DEV;
   const hostname = window.location.hostname;
-  return isDev ? 'authToken_dev' : `authToken_${hostname.split('.')[0]}`;
+  
+  // Development URLs contain .replit.dev domain
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return 'authToken_dev';
+  }
+  
+  // Production deployment
+  if (hostname === 'musobuddy.replit.app') {
+    return 'authToken_prod';
+  }
+  
+  // Fallback for other environments
+  return `authToken_${hostname.split('.')[0]}`;
 };
 
 const signupSchema = z.object({
