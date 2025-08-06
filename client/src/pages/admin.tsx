@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,13 +106,17 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/users"],
     retry: 3,
     staleTime: 30000,
-    onError: (error) => {
-      console.error('Users API Error:', error);
-    },
-    onSuccess: (data) => {
-      console.log('Users API Success:', data?.length, 'users loaded');
-    }
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    if (users) {
+      console.log('Users loaded successfully:', users.length, 'users');
+    }
+    if (usersError) {
+      console.error('Users API Error:', usersError);
+    }
+  }, [users, usersError]);
 
   const createUserMutation = useMutation({
     mutationFn: (userData: any) => apiRequest('/api/admin/users', {
@@ -318,7 +322,7 @@ export default function AdminPanel() {
     }
   };
 
-  const filteredUsers = users?.filter(user => {
+  const filteredUsers = (users || []).filter((user: AdminUser) => {
     const matchesSearch = userSearch === '' || 
       user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
       `${user.firstName} ${user.lastName}`.toLowerCase().includes(userSearch.toLowerCase());
@@ -330,7 +334,7 @@ export default function AdminPanel() {
       userFilter === user.tier;
     
     return matchesSearch && matchesFilter;
-  }) || [];
+  });
 
   const handleSelectAll = () => {
     if (selectedUsers.length === filteredUsers.length) {

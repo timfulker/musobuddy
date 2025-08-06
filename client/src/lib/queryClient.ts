@@ -1,29 +1,22 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Environment-specific auth token key to prevent dev/production conflicts
+// MUST MATCH useAuth.tsx token key logic exactly
 const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
-  // Development: Check for admin token first, then regular dev token
+  // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return localStorage.getItem('authToken_dev_admin') ? 'authToken_dev_admin' : 'authToken_dev';
+    return 'authToken_dev_admin';
   }
   
-  // Production: Use domain-specific token
-  return `authToken_${hostname}`;
+  // Production: Environment-specific to prevent conflicts (match useAuth.tsx)
+  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
 };
 
 // Helper function to get the actual auth token value
 const getAuthToken = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Check for admin token first, then regular dev token
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
-  }
-  
-  // Production: Use domain-specific token
-  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+  return localStorage.getItem(getAuthTokenKey());
 };
 
 async function throwIfResNotOk(res: Response) {
@@ -52,7 +45,7 @@ export async function apiRequest(
   const headers = options?.headers || {};
   
   // Add JWT token to all API requests
-  const token = localStorage.getItem(getAuthTokenKey());
+  const token = getAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
