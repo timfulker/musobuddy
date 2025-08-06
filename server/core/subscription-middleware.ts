@@ -8,6 +8,7 @@ declare module 'express-serve-static-core' {
   }
 }
 
+// Simplified middleware - all authenticated users have access
 export const requireSubscription = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check if user is authenticated
@@ -18,30 +19,8 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // Get user's subscription status (JWT token uses userId field)
-    const userId = req.user.id || req.user.userId; // Support both field names
-    const user = await storage.getUserById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Allow access if subscribed or lifetime user
-    if (user.isSubscribed || user.isLifetime) {
-      return next();
-    }
-
-    // For API requests, return JSON error
-    if (req.path.startsWith('/api/')) {
-      return res.status(403).json({ 
-        error: 'Subscription required',
-        message: 'This feature requires an active MusoBuddy subscription',
-        plan: user.plan || 'free',
-        upgradeUrl: '/pricing'
-      });
-    }
-
-    // For page requests, redirect to pricing
-    return res.redirect('/pricing?required=true');
+    // All authenticated users have access (no free tier)
+    return next();
 
   } catch (error) {
     console.error('Subscription middleware error:', error);
@@ -49,6 +28,7 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
   }
 };
 
+// Simplified middleware - all authenticated users have access (no free tier blocking)
 export const requireSubscriptionOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check if user is authenticated
@@ -59,45 +39,10 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       });
     }
 
-    // Get user's subscription status (JWT token uses userId field)
-    const userId = req.user.id || req.user.userId; // Support both field names
-    console.log(`🔍 Checking subscription for user ID: ${userId}`);
-    const user = await storage.getUserById(userId);
-    if (!user) {
-      console.warn(`⚠️ User not found in database: ${userId}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Premium tier users should have access regardless of Stripe subscription status
-    if (user.tier === 'premium') {
-      console.log(`✅ Premium tier user ${userId} - access granted`);
-      return next();
-    }
-    
-    // Admin users should have access to all features
-    if (user.isAdmin) {
-      console.log(`✅ Admin user ${userId} - access granted`);
-      return next();
-    }
-
-    // Allow access if subscribed or lifetime user
-    if (user.isSubscribed || user.isLifetime) {
-      console.log(`✅ Subscribed user ${userId} - access granted`);
-      return next();
-    }
-
-    // For API requests, return JSON error
-    if (req.path.startsWith('/api/')) {
-      return res.status(403).json({ 
-        error: 'Subscription or admin access required',
-        message: 'This feature requires an active MusoBuddy subscription or admin access',
-        plan: user.plan || 'free',
-        upgradeUrl: '/pricing'
-      });
-    }
-
-    // For page requests, redirect to pricing
-    return res.redirect('/pricing?required=true');
+    // All authenticated users have access (admin-created accounts and subscribers)
+    const userId = req.user.id || req.user.userId;
+    console.log(`✅ Authenticated user ${userId} - access granted`);
+    return next();
 
   } catch (error) {
     console.error('Subscription middleware error:', error);
@@ -105,11 +50,11 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
   }
 };
 
-// Helper function to check if user has access
+// Helper function to check if user has access (simplified - all authenticated users have access)
 export const hasSubscriptionAccess = async (userId: string): Promise<boolean> => {
   try {
     const user = await storage.getUserById(userId);
-    return user ? (!!user.isSubscribed || !!user.isLifetime || !!user.isAdmin) : false;
+    return !!user; // Any valid user has access
   } catch (error) {
     console.error('Access check error:', error);
     return false;

@@ -27,11 +27,9 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **PDF Generation**: Isolated Puppeteer engines for invoices and contracts.
 - **AI Integration**: AI for contract parsing, email parsing, price enquiry detection, and message categorization.
 - **System Design Choices**:
-    - **User Management**: Four account creation methods:
+    - **User Management**: Simplified two-tier system:
         1. **Admin Accounts**: Full administrative privileges (isAdmin: true)
-        2. **Admin-Created User Accounts**: Regular user accounts created through admin panel without front-end registration
-        3. **Beta Users**: Special access accounts also manageable through admin console
-        4. **Subscription Users**: Regular users who gain accounts through subscription payment
+        2. **User Accounts**: All authenticated users have full access to features (created via admin panel or subscription payment)
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget. Booking workflow statuses: New, In progress, Client confirms, Confirmed, Completed, Rejected.
     - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, automated reminders, and guided questionnaire-style creation.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring.
