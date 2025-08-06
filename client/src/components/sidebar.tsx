@@ -158,7 +158,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-32" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1" style={{ paddingBottom: '160px', maxHeight: 'calc(100vh - 180px)' }}>
           <Link 
             href="/dashboard" 
             onClick={() => window.innerWidth < 768 && onClose()} 
