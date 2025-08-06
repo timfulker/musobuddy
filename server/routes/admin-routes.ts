@@ -1,5 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
+import bcrypt from 'bcrypt';
 import { EmailService } from "../core/services";
 import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -242,29 +243,43 @@ export function registerAdminRoutes(app: Express) {
       // Generate a temporary password if not provided
       const finalPassword = password || `temp${Math.random().toString(36).slice(2, 10)}`;
 
+      // Hash password before creating user
+      const hashedPassword = await bcrypt.hash(finalPassword, 10);
+      
+      // Generate user ID - proper format matching existing users
+      const userId = Date.now().toString();
+      
       // Create new user with admin privileges (bypass verification if specified)
       const newUser = await storage.createUser({
+        id: userId,
         email,
+        password: hashedPassword,
         firstName: firstName,
         lastName: lastName || '',
-        password: finalPassword,
         tier: tier || 'free',
         isAdmin: isAdmin || false,
-        isBetaTester: isBetaTester || false,
-        phoneVerified: phoneVerified || false,
-        phoneVerifiedAt: phoneVerified ? new Date() : null,
-        isActive: true
+        phoneVerified: phoneVerified || false
       });
 
       console.log(`✅ Admin ${adminId} created new user: ${email}`);
       res.json({ success: true, user: newUser });
       
     } catch (error: any) {
-      console.error('❌ Failed to create user:', error);
+      console.error('❌ DETAILED USER CREATION ERROR:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code,
+        detail: error.detail,
+        constraint: error.constraint,
+        requestBody: req.body
+      });
       if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
         return res.status(400).json({ error: 'User with this email already exists' });
       }
-      res.status(500).json({ error: 'Failed to create user' });
+      res.status(500).json({ 
+        error: 'Failed to create user',
+        detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }));
 
