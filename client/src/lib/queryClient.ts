@@ -69,10 +69,12 @@ export async function apiRequest(
     }
   }
 
-  // Add JWT auth token to headers
-  const authToken = getAuthToken();
-  if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
+  // Add JWT auth token to headers (remove duplicate)
+  if (!headers['Authorization']) {
+    const authToken = getAuthToken();
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
   }
 
   const res = await fetch(url, {

@@ -102,8 +102,16 @@ export default function AdminPanel() {
     refetchInterval: 30000,
   });
 
-  const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
+  const { data: users, isLoading: usersLoading, error: usersError } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+    retry: 3,
+    staleTime: 30000,
+    onError: (error) => {
+      console.error('Users API Error:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Users API Success:', data?.length, 'users loaded');
+    }
   });
 
   const createUserMutation = useMutation({
@@ -491,6 +499,9 @@ export default function AdminPanel() {
                       <CardTitle>User Management</CardTitle>
                       <CardDescription>
                         Showing {filteredUsers.length} of {users?.length || 0} users
+                        {usersError && <span className="text-red-500 block">Error loading users: {(usersError as any)?.message}</span>}
+                        {usersLoading && <span className="text-blue-500 block">Loading users...</span>}
+                        {!usersLoading && !usersError && users && <span className="text-green-500 block">API returned {users.length} users</span>}
                       </CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
