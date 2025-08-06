@@ -309,16 +309,42 @@ export function setupAuthRoutes(app: Express) {
     try {
       const userId = req.user.userId;
       
-      // Handle hardcoded admin user
-      if (userId === 'admin-user') {
-        return res.json({
-          userId: 'admin-user',
-          email: 'timfulker@gmail.com',
-          firstName: 'Tim',
-          lastName: 'Fulker',
-          isAdmin: true,
-          phoneVerified: true
-        });
+      // Handle admin user from database
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin || false,
+        phoneVerified: user.phoneVerified || false
+      });
+
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Duplicate route - remove this one
+  app.get('/api/auth/user-duplicate-to-remove', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      
+      if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const { verifyAuthToken } = await import('../middleware/auth');
+      const decoded = verifyAuthToken(token);
+      
+      if (!decoded) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
       }
 
       // Handle regular users
@@ -344,73 +370,7 @@ export function setupAuthRoutes(app: Express) {
 
 
 
-  // Get current user (JWT validation)
-  app.get('/api/auth/user', async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      
-      if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-      }
 
-      const { verifyAuthToken } = await import('../middleware/auth');
-      const decoded = verifyAuthToken(token);
-      
-      if (!decoded) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
-      }
-
-      // Handle admin user specially
-      if (decoded.userId === 'admin-user') {
-        return res.json({
-          userId: 'admin-user',
-          email: decoded.email,
-          firstName: 'Admin',
-          lastName: 'User',
-          phoneNumber: null,
-          isVerified: true,
-          phoneVerified: true,
-          isAdmin: true
-        });
-      }
-
-      // Handle music business user specially
-      if (decoded.userId === 'music-user-001') {
-        return res.json({
-          userId: 'music-user-001',
-          email: decoded.email,
-          firstName: 'Tim',
-          lastName: 'Fulker Music',
-          phoneNumber: null,
-          isVerified: true,
-          phoneVerified: true,
-          isAdmin: false
-        });
-      }
-
-      // Get regular user from database
-      const user = await storage.getUserById(decoded.userId);
-      if (!user) {
-        return res.status(401).json({ error: 'User not found' });
-      }
-
-      res.json({
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
-        isVerified: true, // All verified users in new system
-        phoneVerified: true, // Alias for compatibility
-        isAdmin: user.email === 'timfulker@gmail.com' // Simple admin check
-      });
-
-    } catch (error) {
-      console.error('Get user error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
 
   // Logout endpoint
   app.post('/api/auth/logout', (req, res) => {
