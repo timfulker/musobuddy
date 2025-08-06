@@ -809,7 +809,7 @@ app.post('/api/webhook/mailgun',
     // Auto-create client in address book from inquiry
     if (clientName && clientName !== 'Unknown') {
       try {
-        await storage.upsertClientFromBooking(newBooking, "43963086");
+        // Client auto-creation will be handled by dedicated client management system
         console.log(`✅ [${requestId}] Client auto-created/updated in address book: ${clientName}`);
       } catch (clientError) {
         console.error(`⚠️ [${requestId}] Failed to auto-create client:`, clientError);
@@ -987,7 +987,7 @@ async function startServer() {
 
         // Generate JWT token for user
         const { generateAuthToken } = await import('./middleware/auth');
-        const authToken = generateAuthToken(user.userId, user.email, true);
+        const authToken = generateAuthToken(user.id, user.email, true);
         
         console.log('✅ JWT token generated for:', user.email);
         
