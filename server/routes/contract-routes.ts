@@ -94,7 +94,7 @@ export function registerContractRoutes(app: Express) {
   // Create new contract
   app.post('/api/contracts', 
     requireAuth, 
-    asyncHandler(async (req: any, res) => {
+    asyncHandler(async (req: any, res: any) => {
     try {
       const contractNumber = req.body.contractNumber || 
         `(${new Date(req.body.eventDate).toLocaleDateString('en-GB', { 
@@ -206,13 +206,121 @@ export function registerContractRoutes(app: Express) {
       }
       
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage);
+      await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url || '', customMessage);
       
       res.json({ success: true, message: 'Contract sent successfully' });
       
     } catch (error) {
       console.error('❌ Failed to send contract:', error);
       res.status(500).json({ error: 'Failed to send contract' });
+    }
+  });
+
+  // CRITICAL: Contract signing endpoint for R2-hosted signing pages
+  app.post('/api/contracts/sign/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+
+      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
+
+      if (!clientSignature || !clientIP) {
+        return res.status(400).json({ error: 'Missing required signing information' });
+      }
+
+      console.log(`🖊️ Processing contract signing for contract #${contractId}`);
+
+      // Get the contract
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      // Check if already signed
+      if (contract.status === 'signed') {
+        return res.json({ 
+          success: false, 
+          alreadySigned: true, 
+          message: 'This contract has already been signed.' 
+        });
+      }
+
+      // Update contract with signing information
+      const signingData: any = {
+        status: 'signed' as const,
+        clientSignature,
+        clientIpAddress: clientIP,
+        signedAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Add optional fields if provided
+      if (clientPhone) signingData.clientPhone = clientPhone;
+      if (clientAddress) signingData.clientAddress = clientAddress;
+      if (venueAddress) signingData.venueAddress = venueAddress;
+
+      const signedContract = await storage.updateContract(contractId, signingData, contract.userId);
+      
+      if (!signedContract) {
+        throw new Error('Failed to update contract status');
+      }
+
+      console.log(`✅ Contract #${contractId} signed successfully by ${clientSignature}`);
+
+      // Get user settings for email notification
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Generate signed PDF and upload to cloud storage
+      const { uploadContractToCloud } = await import('../core/cloud-storage');
+      const uploadResult = await uploadContractToCloud(signedContract, userSettings);
+      
+      if (uploadResult.success) {
+        // Update contract with signed PDF URL
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key
+        }, contract.userId);
+        
+        console.log(`📄 Signed contract PDF uploaded: ${uploadResult.url}`);
+      }
+
+      // Send confirmation emails
+      if (userSettings && signedContract.clientEmail) {
+        try {
+          const EmailService = (await import('../core/services')).EmailService;
+          const emailService = new EmailService();
+          
+          const subject = `Contract Signed - ${signedContract.contractNumber}`;
+          const message = `The contract has been successfully signed and is now legally binding.`;
+          
+          await emailService.sendContractConfirmationEmails(
+            signedContract, 
+            userSettings, 
+            subject, 
+            uploadResult.url || '',
+            message
+          );
+          
+          console.log(`📧 Contract signing confirmation emails sent`);
+        } catch (emailError) {
+          console.warn('⚠️ Failed to send confirmation emails:', emailError);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Contract signed successfully',
+        cloudUrl: uploadResult.url
+      });
+
+    } catch (error: any) {
+      console.error('❌ Contract signing failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to sign contract',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

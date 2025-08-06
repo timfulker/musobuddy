@@ -3,10 +3,10 @@ import { generateWidgetHTML } from './widget-generator';
 
 const s3Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || ''
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || ''
   }
 });
 
@@ -23,7 +23,7 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
     const key = `widgets/widget-${userId}-${token}.html`;
     
     const command = new PutObjectCommand({
-      Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+      Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       Body: widgetHTML,
       ContentType: 'text/html',
@@ -32,7 +32,7 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
 
     await s3Client.send(command);
     
-    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+    const publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
     
     console.log(`✅ Widget uploaded to R2: ${publicUrl}`);
     
