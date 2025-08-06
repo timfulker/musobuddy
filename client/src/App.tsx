@@ -14,7 +14,7 @@ import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
 import Compliance from "@/pages/compliance";
-import Settings from "@/pages/settings";
+import Settings from "@/pages/Settings";
 import Templates from "@/pages/templates";
 import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
