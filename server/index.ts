@@ -201,30 +201,8 @@ app.get('/auth-test', (req, res) => {
             }
 
             async function adminLogin() {
-                showResult('Attempting admin login...', '');
-                try {
-                    const response = await fetch('/api/auth/admin-login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            email: 'timfulker@gmail.com',
-                            password: 'admin123'
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showResult('✅ Admin Login: SUCCESS\\nUser authenticated successfully!\\n' + JSON.stringify(data, null, 2), 'success');
-                    } else {
-                        showResult('❌ Admin Login: FAILED\\n' + JSON.stringify(data, null, 2), 'error');
-                    }
-                } catch (error) {
-                    showResult('❌ Error during admin login: ' + error.message, 'error');
-                }
+                showResult('Using unified login system - redirecting to main login...', '');
+                window.location.href = '/login';
             }
 
             async function testSettings() {
@@ -500,7 +478,7 @@ app.get('/api/test-sms', async (req, res) => {
 // CORS middleware for contract signing removed - handled in routes.ts for better control
 
 // Add CORS for session restoration endpoints and auth routes
-app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/admin-login', '/api/auth/login'], (req, res, next) => {
+app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/login'], (req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   
   // Determine the correct origin to allow
@@ -987,7 +965,7 @@ async function startServer() {
 
         // Generate JWT token for user
         const { generateAuthToken } = await import('./middleware/auth');
-        const authToken = generateAuthToken(user.id, user.email, true);
+        const authToken = generateAuthToken(user.id, user.email || '', true);
         
         console.log('✅ JWT token generated for:', user.email);
         

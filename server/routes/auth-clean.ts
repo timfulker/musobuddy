@@ -327,32 +327,7 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Admin login endpoint (for development)
-  app.post('/api/auth/admin-login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
 
-      if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        const authToken = generateAuthToken('admin-user', email, true);
-        
-        res.json({
-          success: true,
-          message: 'Admin login successful',
-          authToken,
-          user: {
-            userId: 'admin-user',
-            email
-          }
-        });
-      } else {
-        res.status(401).json({ error: 'Invalid admin credentials' });
-      }
-
-    } catch (error) {
-      console.error('Admin login error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
 
   // Get current user (JWT validation)
   app.get('/api/auth/user', async (req, res) => {
