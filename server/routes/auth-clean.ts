@@ -146,6 +146,24 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
+      // Check for hardcoded admin credentials first
+      if (email === 'timfulker@gmail.com' && password === 'admin123') {
+        const authToken = generateAuthToken('admin-user', email, true);
+        
+        return res.json({
+          success: true,
+          message: 'Admin login successful',
+          authToken,
+          user: {
+            userId: 'admin-user',
+            email: email,
+            firstName: 'Tim',
+            lastName: 'Fulker',
+            isAdmin: true
+          }
+        });
+      }
+
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
