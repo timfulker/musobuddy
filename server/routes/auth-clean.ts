@@ -163,7 +163,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Development mode: Use correct database user IDs for testing
+      // Development mode: Quick access for testing accounts
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
         // Admin account: user ID 43963086
         const realUser = await storage.getUserById('43963086');
@@ -184,27 +184,25 @@ export function setupAuthRoutes(app: Express) {
             }
           });
         }
-      } else if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
-        // Music business account: user ID music-user-001 (has 1,017 bookings)
-        const realUser = await storage.getUserById('music-user-001');
+      } else if (email === 'timfulkermusic@gmail.com' && password === 'admin123') {
+        // Music business account created through admin panel
+        const realUser = await storage.getUserById('1754488522516');
         
         if (realUser) {
           const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
           
           return res.json({
             success: true,
-            message: 'Music business login successful - using real user data with bookings',
+            message: 'Music business login successful',
             authToken,
             user: {
               userId: realUser.id,
               email: realUser.email,
               firstName: realUser.firstName,
               lastName: realUser.lastName,
-              isAdmin: false // Music business user, not admin
+              isAdmin: false // Music business user
             }
           });
-        } else {
-          return res.status(401).json({ error: 'Music business account not found' });
         }
       }
 
