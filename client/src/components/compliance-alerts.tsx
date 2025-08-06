@@ -55,7 +55,7 @@ export default function ComplianceAlerts() {
     { type: "music_license", status: "valid" },
   ];
 
-  const complianceToShow = documents.length > 0 ? documents : defaultCompliance;
+  const complianceToShow = documents && documents.length > 0 ? documents : defaultCompliance;
 
   if (isLoading) {
     return (
