@@ -33,6 +33,19 @@ import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import type { Booking } from "@shared/schema";
 
+// Helper function to get the correct auth token
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   eventDate: z.string().min(1, "Event date is required"),
@@ -224,12 +237,13 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         throw new Error('Booking ID is required');
       }
       
+      const token = getAuthToken();
       const response = await fetch(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify(sanitizedData),
       });
       

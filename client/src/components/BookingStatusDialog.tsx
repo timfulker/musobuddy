@@ -20,6 +20,19 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, MapPin, User, Banknote } from "lucide-react";
 
+// Helper function to get the correct auth token
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 interface Booking {
   id: number;
   title: string;
@@ -47,9 +60,13 @@ export default function BookingStatusDialog({
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
+      const token = getAuthToken();
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ status }),
       });
 

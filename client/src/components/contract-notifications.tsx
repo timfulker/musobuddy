@@ -26,6 +26,7 @@ export function ContractNotifications() {
   const { data: contracts = [] } = useQuery<Contract[]>({
     queryKey: ['/api/contracts'],
     refetchInterval: 30000, // Check every 30 seconds for updates
+    retry: false, // Don't retry on 401 errors
   });
 
   // Check for newly signed contracts
