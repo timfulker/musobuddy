@@ -46,7 +46,7 @@ export function registerComplianceRoutes(app: Express) {
   app.post('/api/compliance/upload', 
     requireAuth,
     generalApiRateLimit,
-    upload.single('file'),
+    upload.single('documentFile'),
     asyncHandler(async (req: any, res: Response) => {
       try {
         const userId = req.user?.userId;

@@ -111,16 +111,10 @@ export default function Compliance() {
 
   const uploadDocumentMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch('/api/compliance/upload', {
+      const response = await apiRequest('/api/compliance/upload', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
-      }
       
       return response.json();
     },
@@ -297,6 +291,7 @@ export default function Compliance() {
       formData.append('documentFile', selectedFile);
       formData.append('type', data.type);
       formData.append('name', data.name);
+      formData.append('status', data.status || 'valid');
       if (data.expiryDate) {
         formData.append('expiryDate', data.expiryDate);
       }
