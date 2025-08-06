@@ -1,7 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Environment-specific auth token key to prevent dev/production conflicts
-// MUST MATCH useAuth.tsx token key logic exactly
+// Environment-specific auth token key - MUST MATCH login.tsx exactly
 const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
@@ -46,7 +45,7 @@ export async function apiRequest(
   
   // Add JWT token to all API requests
   const token = getAuthToken();
-  console.log('🔍 API Request to:', url, '- Token key:', getAuthTokenKey(), '- Token found:', !!token);
+  // Remove debug logging for production
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }

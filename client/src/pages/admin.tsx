@@ -108,15 +108,7 @@ export default function AdminPanel() {
     staleTime: 30000,
   });
 
-  // Debug logging
-  React.useEffect(() => {
-    if (users) {
-      console.log('Users loaded successfully:', users.length, 'users');
-    }
-    if (usersError) {
-      console.error('Users API Error:', usersError);
-    }
-  }, [users, usersError]);
+  // Users loaded - no debug logging needed
 
   const createUserMutation = useMutation({
     mutationFn: (userData: any) => apiRequest('/api/admin/users', {
@@ -503,9 +495,6 @@ export default function AdminPanel() {
                       <CardTitle>User Management</CardTitle>
                       <CardDescription>
                         Showing {filteredUsers.length} of {users?.length || 0} users
-                        {usersError && <span className="text-red-500 block">Error loading users: {(usersError as any)?.message}</span>}
-                        {usersLoading && <span className="text-blue-500 block">Loading users...</span>}
-                        {!usersLoading && !usersError && users && <span className="text-green-500 block">API returned {users.length} users</span>}
                       </CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
