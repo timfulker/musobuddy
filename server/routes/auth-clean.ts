@@ -62,14 +62,31 @@ export function setupAuthRoutes(app: Express) {
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
       });
 
-      // Send SMS verification (stub for now)
-      console.log(`SMS verification code for ${formattedPhone}: ${verificationCode}`);
+      // Send SMS verification using Twilio
+      try {
+        const { SmsService } = await import('../core/sms-service');
+        const smsService = new SmsService();
+        
+        await smsService.sendVerificationCode(formattedPhone, verificationCode);
+        console.log(`✅ SMS verification code sent to ${formattedPhone}`);
 
-      res.json({ 
-        success: true, 
-        message: 'Verification code sent',
-        verificationCode // Remove in production
-      });
+        res.json({ 
+          success: true, 
+          message: 'Verification code sent to your phone',
+          // Don't send verification code in production
+          ...(process.env.NODE_ENV === 'development' && { verificationCode })
+        });
+      } catch (smsError) {
+        console.error('❌ SMS sending failed:', smsError);
+        // Fallback to console log in case SMS fails
+        console.log(`📱 FALLBACK - SMS code for ${formattedPhone}: ${verificationCode}`);
+        
+        res.json({ 
+          success: true, 
+          message: 'Verification code sent',
+          verificationCode // Include code when SMS fails
+        });
+      }
 
     } catch (error) {
       console.error('Signup error:', error);

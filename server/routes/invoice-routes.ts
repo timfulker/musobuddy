@@ -56,8 +56,8 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Get all invoices for authenticated user
-  app.get('/api/invoices', requireAuth, async (req: any, res) => {
+  // Get all invoices for authenticated user (requires subscription)
+  app.get('/api/invoices', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
       const userId = req.user.userId;
       if (!userId) {
@@ -73,8 +73,8 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Create new invoice
-  app.post('/api/invoices', requireAuth, async (req: any, res) => {
+  // Create new invoice (requires subscription)
+  app.post('/api/invoices', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
       const userId = req.user.userId;
       if (!userId) {
