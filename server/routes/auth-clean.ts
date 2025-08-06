@@ -148,14 +148,15 @@ export function setupAuthRoutes(app: Express) {
 
       // Check for hardcoded admin credentials first
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        const authToken = generateAuthToken('admin-user', email, true);
+        // Use the real user ID from the database so you can access your actual data
+        const authToken = generateAuthToken('43963086', email, true);
         
         return res.json({
           success: true,
           message: 'Admin login successful',
           authToken,
           user: {
-            userId: 'admin-user',
+            userId: '43963086',
             email: email,
             firstName: 'Tim',
             lastName: 'Fulker',
