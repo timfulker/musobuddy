@@ -224,10 +224,22 @@ export function registerContractRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
 
+      console.log(`🖊️ Contract signing request for #${contractId}:`, {
+        body: req.body,
+        hasSignature: !!req.body.clientSignature,
+        hasIP: !!req.body.clientIP
+      });
+
       const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
 
-      if (!clientSignature || !clientIP) {
-        return res.status(400).json({ error: 'Missing required signing information' });
+      if (!clientSignature) {
+        console.log('❌ Missing clientSignature');
+        return res.status(400).json({ error: 'Missing client signature' });
+      }
+
+      if (!clientIP) {
+        console.log('❌ Missing clientIP');
+        return res.status(400).json({ error: 'Missing client IP address' });
       }
 
       console.log(`🖊️ Processing contract signing for contract #${contractId}`);
@@ -295,12 +307,11 @@ export function registerContractRoutes(app: Express) {
           const subject = `Contract Signed - ${signedContract.contractNumber}`;
           const message = `The contract has been successfully signed and is now legally binding.`;
           
-          await emailService.sendContractConfirmationEmails(
+          await emailService.sendContractEmail(
             signedContract, 
             userSettings, 
             subject, 
-            uploadResult.url || '',
-            message
+            uploadResult.url || ''
           );
           
           console.log(`📧 Contract signing confirmation emails sent`);

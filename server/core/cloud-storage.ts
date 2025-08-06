@@ -436,7 +436,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
                 <p style="text-align: center; color: #666; margin-top: 60px;">Click here to sign</p>
             </div>
             <input type="hidden" id="clientSignature" name="clientSignature">
-            <input type="hidden" name="clientIP" value="0.0.0.0">
+            <input type="hidden" name="clientIP" id="clientIP" value="0.0.0.0">
             
             <button type="submit" class="btn">Sign Contract</button>
         </form>
@@ -486,8 +486,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             signaturePad.style.borderColor = '#10b981';
             signaturePad.style.background = '#ecfdf5';
             
-            // Set signature data with timestamp
-            document.getElementById('clientSignature').value = 'Digital signature: ' + clientNameValue + ' - ' + new Date().toISOString();
+            // Set signature data (simplified for better processing)
+            document.getElementById('clientSignature').value = clientNameValue;
             
             console.log('✅ CORS-FIXED: Signature captured for:', clientNameValue);
         }
@@ -536,10 +536,14 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             submitBtn.textContent = 'Signing Contract...';
             submitBtn.style.background = '#6b7280';
             
+            // Get real IP address or use fallback
+            var ipInput = document.querySelector('input[name="clientIP"]');
+            var clientIP = ipInput ? ipInput.value : '127.0.0.1';
+            
             // Prepare request data
             var requestData = {
                 clientSignature: clientNameValue,
-                clientIP: '0.0.0.0',
+                clientIP: clientIP,
                 clientPhone: phoneValue || undefined,
                 clientAddress: addressValue || undefined,
                 venueAddress: venueAddressValue || undefined
