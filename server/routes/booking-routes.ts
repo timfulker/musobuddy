@@ -86,7 +86,7 @@ export function registerBookingRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
       
-      const updatedBooking = await storage.updateBooking(bookingId, req.body);
+      const updatedBooking = await storage.updateBooking(bookingId, req.body, userId);
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
       res.json(updatedBooking);
       
@@ -111,7 +111,7 @@ export function registerBookingRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
       
-      await storage.deleteBooking(bookingId);
+      await storage.deleteBooking(bookingId, userId);
       console.log(`✅ Deleted booking #${bookingId} for user ${userId}`);
       res.json({ success: true });
       
@@ -147,7 +147,7 @@ export function registerBookingRoutes(app: Express) {
   app.post('/api/bookings/bulk-delete', requireAuth, async (req: any, res) => {
     try {
       const { bookingIds } = req.body;
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -175,7 +175,7 @@ export function registerBookingRoutes(app: Express) {
       }
       
       const deletePromises = bookingIds.map((bookingId: number) => 
-        storage.deleteBooking(bookingId)
+        storage.deleteBooking(bookingId, userId)
       );
       
       await Promise.all(deletePromises);

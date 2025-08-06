@@ -103,12 +103,12 @@ export class Storage {
     return bookingStorage.createBooking(bookingData);
   }
 
-  async updateBooking(id: number, updates: any) {
-    return bookingStorage.updateBooking(id, updates);
+  async updateBooking(id: number, updates: any, userId: string) {
+    return bookingStorage.updateBooking(id, updates, userId);
   }
 
-  async deleteBooking(id: number) {
-    return bookingStorage.deleteBooking(id);
+  async deleteBooking(id: number, userId: string) {
+    return bookingStorage.deleteBooking(id, userId);
   }
 
   async getBookingsByDateRange(userId: string, startDate: Date, endDate: Date) {

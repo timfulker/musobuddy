@@ -33,23 +33,7 @@ import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import type { Booking } from "@shared/schema";
 
-// Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match standard format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-const getAuthToken = () => {
-  const tokenKey = getAuthTokenKey();
-  return localStorage.getItem(tokenKey);
-};
+// Note: Custom auth functions removed - now using standard apiRequest for JWT authentication
 
 const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
@@ -242,19 +226,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         throw new Error('Booking ID is required');
       }
       
-      const token = getAuthToken();
-      const response = await fetch(`/api/bookings/${booking.id}`, {
+      // Use apiRequest for proper JWT authentication
+      const response = await apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify(sanitizedData),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update booking');
-      }
       
       return response.json();
     },
@@ -420,8 +396,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     const contractIsSigned = contractToUse.signedAt || contractToUse.signature;
     
     if (booking && contractIsSigned && booking.status !== 'confirmed' && booking.status !== 'completed') {
-      // Update booking status asynchronously
-      fetch(`/api/bookings/${booking.id}`, {
+      // Update booking status asynchronously using authenticated apiRequest
+      apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
