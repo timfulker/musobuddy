@@ -33,17 +33,22 @@ import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import type { Booking } from "@shared/schema";
 
-// Helper function to get the correct auth token
-const getAuthToken = () => {
+// Helper function to get the correct auth token - using standard format
+const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
-  // Development: Check for admin token first, then regular dev token
+  // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+    return 'authToken_dev_admin';
   }
   
-  // Production: Use domain-specific token
-  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+  // Production: Environment-specific to prevent conflicts (match standard format)
+  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+};
+
+const getAuthToken = () => {
+  const tokenKey = getAuthTokenKey();
+  return localStorage.getItem(tokenKey);
 };
 
 const bookingDetailsSchema = z.object({

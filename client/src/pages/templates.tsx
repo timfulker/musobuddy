@@ -76,15 +76,22 @@ export default function Templates() {
     fetchUserSettings();
   }, [bookingId, action]);
   
-  // Helper function to get auth token
-  const getAuthToken = () => {
+  // Helper function to get auth token - using standard format
+  const getAuthTokenKey = () => {
     const hostname = window.location.hostname;
     
+    // Development: Admin-only access for simplified testing
     if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-      return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+      return 'authToken_dev_admin';
     }
     
-    return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+    // Production: Environment-specific to prevent conflicts (match standard format)
+    return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  };
+
+  const getAuthToken = () => {
+    const tokenKey = getAuthTokenKey();
+    return localStorage.getItem(tokenKey);
   };
 
   const fetchBookingData = async () => {
