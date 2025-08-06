@@ -182,31 +182,34 @@ export function registerContractRoutes(app: Express) {
       }
       
       const emailService = new EmailService();
-      const { uploadContractToCloud } = await import('../core/cloud-storage');
-      const uploadResult = await uploadContractToCloud(contract, userSettings);
+      const { uploadContractSigningPage } = await import('../core/cloud-storage');
       
-      if (!uploadResult.success) {
-        console.error('❌ Failed to upload contract to R2:', uploadResult.error);
-        return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
+      // Upload the HTML signing page with the latest template
+      const signingPageResult = await uploadContractSigningPage(contract, userSettings);
+      
+      if (!signingPageResult.success) {
+        console.error('❌ Failed to upload signing page to R2:', signingPageResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract signing page' });
       }
       
       await storage.updateContract(parsedContractId, {
         status: 'sent',
-        cloudStorageUrl: uploadResult.url,
-        cloudStorageKey: uploadResult.key,
+        signingPageUrl: signingPageResult.url,
+        cloudStorageKey: signingPageResult.key,
         updatedAt: new Date()
       });
       
       if (!contract.clientEmail) {
         return res.json({ 
           success: true, 
-          message: 'Contract uploaded successfully (email skipped - no client email provided)',
-          contractUrl: uploadResult.url 
+          message: 'Contract signing page created successfully (email skipped - no client email provided)',
+          signingPageUrl: signingPageResult.url 
         });
       }
       
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url || '', customMessage);
+      // Send email with the signing page URL, not the PDF URL
+      await emailService.sendContractEmail(contract, userSettings, subject, signingPageResult.url || '', customMessage);
       
       res.json({ success: true, message: 'Contract sent successfully' });
       
@@ -285,14 +288,20 @@ export function registerContractRoutes(app: Express) {
       const userSettings = await storage.getSettings(contract.userId);
       
       // Generate signed PDF and upload to cloud storage
-      const { uploadContractToCloud } = await import('../core/cloud-storage');
+      const { uploadContractToCloud, uploadContractSigningPage } = await import('../core/cloud-storage');
+      
+      // First regenerate the signing page with the updated status
+      const signingPageResult = await uploadContractSigningPage(signedContract, userSettings);
+      
+      // Then generate the signed PDF
       const uploadResult = await uploadContractToCloud(signedContract, userSettings);
       
       if (uploadResult.success) {
-        // Update contract with signed PDF URL
+        // Update contract with both URLs
         await storage.updateContract(contractId, {
           cloudStorageUrl: uploadResult.url,
-          cloudStorageKey: uploadResult.key
+          cloudStorageKey: uploadResult.key,
+          signingPageUrl: signingPageResult.url || signedContract.signingPageUrl
         }, contract.userId);
         
         console.log(`📄 Signed contract PDF uploaded: ${uploadResult.url}`);
