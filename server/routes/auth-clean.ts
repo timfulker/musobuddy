@@ -176,7 +176,7 @@ export function setupAuthRoutes(app: Express) {
         
         if (isPasswordValid) {
           // Music business user - access to actual bookings and contracts
-          const authToken = generateAuthToken('music-user-001', email, false);
+          const authToken = generateAuthToken('music-user-001', email, true);
           
           return res.json({
             success: true,
@@ -357,6 +357,20 @@ export function setupAuthRoutes(app: Express) {
           isVerified: true,
           phoneVerified: true,
           isAdmin: true
+        });
+      }
+
+      // Handle music business user specially
+      if (decoded.userId === 'music-user-001') {
+        return res.json({
+          userId: 'music-user-001',
+          email: decoded.email,
+          firstName: 'Tim',
+          lastName: 'Fulker Music',
+          phoneNumber: null,
+          isVerified: true,
+          phoneVerified: true,
+          isAdmin: false
         });
       }
 
