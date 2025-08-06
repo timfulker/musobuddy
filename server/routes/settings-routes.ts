@@ -112,6 +112,29 @@ export function registerSettingsRoutes(app: Express) {
   }));
 
   // Global gig types endpoint
+  // Legacy endpoint for backward compatibility
+  app.get('/api/gig-types', async (req: any, res) => {
+    try {
+      const globalGigTypes = [
+        'Wedding',
+        'Corporate Event', 
+        'Private Party',
+        'Concert',
+        'Festival',
+        'Bar/Restaurant',
+        'Club Performance',
+        'Session Work',
+        'Teaching',
+        'Recording',
+        'Other'
+      ];
+      res.json(globalGigTypes);
+    } catch (error) {
+      console.error('❌ Failed to fetch gig types:', error);
+      res.status(500).json({ error: 'Failed to fetch gig types' });
+    }
+  });
+
   app.get('/api/global-gig-types', async (req: any, res) => {
     try {
       // Return predefined gig types
@@ -221,6 +244,17 @@ export function registerSettingsRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Failed to generate QR code:', error);
       res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
+
+  // Templates endpoint - return empty array for now (templates are database-driven)
+  app.get('/api/templates', requireAuth, async (req: any, res) => {
+    try {
+      // TODO: Add template management functionality
+      res.json([]);
+    } catch (error) {
+      console.error('❌ Failed to fetch templates:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
     }
   });
 

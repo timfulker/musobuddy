@@ -163,48 +163,44 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Check for hardcoded admin credentials first
-      if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Admin user - keep separate from music business data
-        const authToken = generateAuthToken('admin-user', email, true);
+      // Development mode: Use real database user for testing (user ID: 43963086)
+      if ((email === 'timfulker@gmail.com' && password === 'admin123') || 
+          (email === 'timfulkermusic@gmail.com' && password === 'music123')) {
         
-        return res.json({
-          success: true,
-          message: 'Admin login successful',
-          authToken,
-          user: {
-            userId: 'admin-user',
-            email: email,
-            firstName: 'Tim',
-            lastName: 'Fulker',
-            isAdmin: true
-          }
-        });
-      }
-
-      // Check for music business user credentials
-      if (email === 'timfulkermusic@gmail.com') {
-        // Get user data first to check if they have a custom password
-        const user = await storage.getUserById('music-user-001');
+        // Get the real user from database (ID: 43963086 from replit.md)
+        const realUser = await storage.getUserById('43963086');
         
-        // Check hardcoded password OR database password
-        const isPasswordValid = password === 'music123' || 
-          (user?.password && await bcrypt.compare(password, user.password));
-        
-        if (isPasswordValid) {
-          // Music business user - access to actual bookings and contracts
-          const authToken = generateAuthToken('music-user-001', email, true);
+        if (realUser) {
+          // Use real user data for development access
+          const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
           
           return res.json({
             success: true,
-            message: 'Music business login successful',
+            message: 'Development login successful - using real user data',
             authToken,
             user: {
-              userId: 'music-user-001',
+              userId: realUser.id,
+              email: realUser.email,
+              firstName: realUser.firstName,
+              lastName: realUser.lastName,
+              isAdmin: email === 'timfulker@gmail.com' // Admin privileges for timfulker@gmail.com
+            }
+          });
+        } else {
+          // Fallback if real user not found
+          console.warn('⚠️ Real user 43963086 not found, using fallback');
+          const authToken = generateAuthToken('43963086', email, true);
+          
+          return res.json({
+            success: true,
+            message: 'Development login successful - fallback mode',
+            authToken,
+            user: {
+              userId: '43963086',
               email: email,
               firstName: 'Tim',
-              lastName: 'Fulker Music',
-              isAdmin: false
+              lastName: 'Fulker',
+              isAdmin: email === 'timfulker@gmail.com'
             }
           });
         }

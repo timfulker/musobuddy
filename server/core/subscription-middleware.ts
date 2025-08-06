@@ -58,9 +58,12 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       });
     }
 
-    // Get user's subscription status
-    const user = await storage.getUserById(req.user.id);
+    // Get user's subscription status (JWT token uses userId field)
+    const userId = req.user.id || req.user.userId; // Support both field names
+    console.log(`🔍 Checking subscription for user ID: ${userId}`);
+    const user = await storage.getUserById(userId);
     if (!user) {
+      console.warn(`⚠️ User not found in database: ${userId}`);
       return res.status(404).json({ error: 'User not found' });
     }
 

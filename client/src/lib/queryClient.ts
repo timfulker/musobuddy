@@ -13,6 +13,19 @@ const getAuthTokenKey = () => {
   return `authToken_${hostname}`;
 };
 
+// Helper function to get the actual auth token value
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -56,11 +69,16 @@ export async function apiRequest(
     }
   }
 
+  // Add JWT auth token to headers
+  const authToken = getAuthToken();
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
   const res = await fetch(url, {
     method,
     headers,
     body,
-    credentials: "include",
   });
 
   // Check for authentication errors and provide user-friendly messages
@@ -80,18 +98,17 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Query request to: ${queryKey[0]}
     
-    // Get auth token from localStorage
-    const token = localStorage.getItem(getAuthTokenKey());
+    // Get auth token using our helper function
+    const authToken = getAuthToken();
     const headers: HeadersInit = {};
     
     // Add Bearer token if available
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
       // Using token authentication
     }
     
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
       headers,
     });
     

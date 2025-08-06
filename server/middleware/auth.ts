@@ -51,8 +51,8 @@ export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
   
-  // Check if user is admin (admin-user or music-user-001)
-  const isAdmin = decoded.userId === 'admin-user' || decoded.userId === 'music-user-001';
+  // Check if user is admin (real user ID 43963086)
+  const isAdmin = decoded.userId === '43963086';
   if (!isAdmin) {
     return res.status(403).json({ error: 'Admin access required' });
   }
