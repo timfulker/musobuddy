@@ -162,7 +162,7 @@ export default function TrialSuccessPage() {
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <CardTitle className="text-2xl text-gray-900 dark:text-white">
-              Trial Activated!
+              Account Verified!
             </CardTitle>
           </CardHeader>
           
@@ -172,25 +172,25 @@ export default function TrialSuccessPage() {
                 Welcome to MusoBuddy, <span className="font-semibold">{user.firstName}</span>!
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your 14-day free trial is now active. Let's set up your professional email address to start receiving client inquiries:
+                You're one step away from accessing all MusoBuddy features. Start your 14-day free trial now:
               </p>
             </div>
 
-            {/* Single Action: Set up Email */}
+            {/* Single Action: Start Trial */}
             <Button
-              onClick={handleSetupEmail}
+              onClick={() => setLocation('/pricing')}
               className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
               size="lg"
             >
-              <Mail className="h-5 w-5 mr-2" />
-              Select Email Prefix
+              <Crown className="h-5 w-5 mr-2" />
+              Start Your Free Trial
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
 
             {/* Info text */}
             <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                This will be your permanent professional email address for client inquiries.
+                Start your 14-day free trial to access all MusoBuddy features. Credit card required.
               </p>
             </div>
           </CardContent>

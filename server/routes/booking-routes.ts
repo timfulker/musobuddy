@@ -4,12 +4,13 @@ import { validateBody, validateQuery, schemas, sanitizeInput } from '../middlewa
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
+import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
-  // Get all bookings for authenticated user
-  app.get('/api/bookings', requireAuth, async (req: any, res) => {
+  // Get all bookings for authenticated user (requires subscription)
+  app.get('/api/bookings', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
       const userId = getSafeUserId(req);
       if (!userId) {
@@ -24,9 +25,10 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
-  // Create new booking
+  // Create new booking (requires subscription)
   app.post('/api/bookings', 
     requireAuth,
+    requireSubscriptionOrAdmin,
     generalApiRateLimit,
     sanitizeInput,
     validateBody(schemas.createBooking),
