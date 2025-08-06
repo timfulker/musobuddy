@@ -43,37 +43,10 @@ export function registerAdminRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // Return basic user info for admin panel
-      const users = [
-        {
-          id: 'admin-user',
-          email: 'timfulker@gmail.com',
-          firstName: 'Tim',
-          lastName: 'Fulker',
-          tier: 'admin',
-          isAdmin: true,
-          isBetaTester: false,
-          betaStartDate: null,
-          betaEndDate: null,
-          betaFeedbackCount: 0,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'music-user-001',
-          email: 'timfulkermusic@gmail.com',
-          firstName: 'Tim',
-          lastName: 'Fulker Music',
-          tier: 'premium',
-          isAdmin: false,
-          isBetaTester: false,
-          betaStartDate: null,
-          betaEndDate: null,
-          betaFeedbackCount: 0,
-          createdAt: new Date().toISOString()
-        }
-      ];
+      // Get all users from database
+      const users = await storage.getAllUsers();
 
-      console.log(`✅ Retrieved ${users.length} users for admin ${userId}`);
+      console.log(`✅ Retrieved ${users.length} users from database`);
       res.json(users);
       
     } catch (error) {
@@ -244,6 +217,94 @@ export function registerAdminRoutes(app: Express) {
       });
     });
   }
+
+  // Admin create user
+  app.post('/api/admin/users', requireAdmin, sanitizeInput, asyncHandler(async (req: any, res: any) => {
+    try {
+      const adminId = getSafeUserId(req);
+      if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { email, firstName, lastName, password, tier, isAdmin, isBetaTester, phoneVerified } = req.body;
+
+      if (!email || !firstName || !password) {
+        return res.status(400).json({ error: 'Email, first name, and password are required' });
+      }
+
+      // Create new user with admin privileges (bypass verification if specified)
+      const newUser = await storage.createUser({
+        email,
+        firstName: firstName,
+        lastName: lastName || '',
+        password: password,
+        tier: tier || 'free',
+        isAdmin: isAdmin || false,
+        isBetaTester: isBetaTester || false,
+        phoneVerified: phoneVerified || false,
+        phoneVerifiedAt: phoneVerified ? new Date() : null,
+        isActive: true
+      });
+
+      console.log(`✅ Admin ${adminId} created new user: ${email}`);
+      res.json({ success: true, user: newUser });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create user:', error);
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  }));
+
+  // Admin update user
+  app.patch('/api/admin/users/:id', requireAdmin, sanitizeInput, asyncHandler(async (req: any, res: any) => {
+    try {
+      const adminId = getSafeUserId(req);
+      if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { id } = req.params;
+      const updates = req.body;
+
+      const updatedUser = await storage.updateUser(id, updates);
+      
+      console.log(`✅ Admin ${adminId} updated user: ${id}`);
+      res.json({ success: true, user: updatedUser });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to update user:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  }));
+
+  // Admin delete user
+  app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req: any, res: any) => {
+    try {
+      const adminId = getSafeUserId(req);
+      if (!adminId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { id } = req.params;
+
+      // Prevent admin from deleting themselves
+      if (id === adminId) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+
+      await storage.deleteUserAccount(id);
+      
+      console.log(`✅ Admin ${adminId} deleted user: ${id}`);
+      res.json({ success: true });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to delete user:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  }));
 
   console.log('✅ Admin routes configured');
 }

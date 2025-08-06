@@ -72,7 +72,8 @@ export default function AdminPanel() {
     password: '',
     tier: 'free',
     isAdmin: false,
-    isBetaTester: false
+    isBetaTester: false,
+    phoneVerified: false
   });
   const [editUserForm, setEditUserForm] = useState({
     email: '',
@@ -122,7 +123,8 @@ export default function AdminPanel() {
         password: '',
         tier: 'free',
         isAdmin: false,
-        isBetaTester: false
+        isBetaTester: false,
+        phoneVerified: false
       });
       toast({
         title: "User created successfully", 
@@ -699,6 +701,16 @@ export default function AdminPanel() {
                                     className="rounded"
                                   />
                                   <Label htmlFor="isBetaTester">Beta Tester (4-week trial with 1 year free subscription)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="phoneVerified"
+                                    checked={newUserForm.phoneVerified}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, phoneVerified: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="phoneVerified">Skip phone verification (bypass SMS requirement)</Label>
                                 </div>
                               </div>
                             </div>

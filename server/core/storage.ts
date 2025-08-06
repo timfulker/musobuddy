@@ -75,8 +75,11 @@ export class Storage {
   }
 
   async deleteUser(id: string) {
-    // TODO: Implement deleteUser in UserStorage if needed
-    throw new Error('Delete user not implemented');
+    return userStorage.deleteUser(id);
+  }
+
+  async deleteUserAccount(id: string) {
+    return userStorage.deleteUser(id);
   }
 
   async getAllUsers() {
