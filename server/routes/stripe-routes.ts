@@ -8,11 +8,23 @@ const stripeService = new StripeService();
 export function registerStripeRoutes(app: Express) {
   console.log('💳 Setting up Stripe routes...');
 
+  // Debug: Log all registered routes to confirm registration
+  console.log('🔍 STRIPE ROUTES: Registering /api/subscription/test');
+  console.log('🔍 STRIPE ROUTES: Registering /api/subscription/status');
+  console.log('🔍 STRIPE ROUTES: Registering /api/create-checkout-session');
+
+  // Test route to verify auth middleware works
+  app.get('/api/subscription/test', requireAuth, async (req, res) => {
+    const userId = req.user?.userId;
+    console.log('🔍 Test route - userId:', userId);
+    res.json({ message: 'Auth test successful', userId });
+  });
+
   // Create checkout session for subscription
   app.post('/api/create-checkout-session', requireAuth, async (req, res) => {
     try {
       const { priceId = 'price_1RouBwD9Bo26CG1DAF1rkSZI' } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -39,16 +51,43 @@ export function registerStripeRoutes(app: Express) {
     }
   });
 
-  // Get subscription status
-  app.get('/api/subscription/status', requireAuth, async (req, res) => {
+  // Alternative subscription status endpoint to avoid route conflicts
+  app.get('/api/stripe/subscription-status', requireAuth, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
+      console.log('🔍 Stripe subscription status - userId:', userId);
       
       if (!userId) {
+        console.log('❌ Stripe subscription status - no userId found');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log('🔍 Stripe subscription status - calling stripeService.getSubscriptionStatus...');
       const subscriptionStatus = await stripeService.getSubscriptionStatus(userId);
+      console.log('✅ Stripe subscription status - result:', subscriptionStatus);
+      res.json(subscriptionStatus);
+
+    } catch (error) {
+      console.error('❌ Error getting stripe subscription status:', error);
+      res.status(500).json({ error: 'Failed to get subscription status' });
+    }
+  });
+
+  // Keep original endpoint but add debugging
+  app.get('/api/subscription/status', requireAuth, async (req, res) => {
+    console.log('🔍 Original subscription status endpoint called - this should work now');
+    try {
+      const userId = req.user?.userId;
+      console.log('🔍 Subscription status - userId:', userId);
+      
+      if (!userId) {
+        console.log('❌ Subscription status - no userId found');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      console.log('🔍 Subscription status - calling stripeService.getSubscriptionStatus...');
+      const subscriptionStatus = await stripeService.getSubscriptionStatus(userId);
+      console.log('✅ Subscription status - result:', subscriptionStatus);
       res.json(subscriptionStatus);
 
     } catch (error) {

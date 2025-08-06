@@ -7,6 +7,9 @@ import { registerSettingsRoutes } from "./settings-routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { registerIsolatedRoutes } from "./isolated-routes";
 import { registerStripeRoutes } from "./stripe-routes";
+import { registerClientRoutes } from "./client-routes";
+import { registerFeedbackRoutes } from "./feedback-routes";
+import { registerUnparseableRoutes } from "./unparseable-routes";
 import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
@@ -22,6 +25,11 @@ export async function registerRoutes(app: Express) {
   await registerSettingsRoutes(app);
   await registerAdminRoutes(app);
   registerStripeRoutes(app);
+  
+  // Register missing API routes to fix 404 errors
+  registerClientRoutes(app);
+  registerFeedbackRoutes(app);
+  registerUnparseableRoutes(app);
   
   // Register isolated routes for cloud compatibility  
   registerIsolatedRoutes(app);
