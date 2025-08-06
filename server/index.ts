@@ -478,21 +478,33 @@ app.get('/api/test-sms', async (req, res) => {
 // CORS middleware for contract signing removed - handled in routes.ts for better control
 
 // Add CORS for session restoration endpoints and auth routes
-app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/login'], (req, res, next) => {
+// CORS for authentication and contract signing endpoints
+app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/login', '/api/contracts/sign'], (req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Determine the correct origin to allow
-  const origin = req.headers.origin || 
-                 req.headers.referer?.replace(/\/[^\/]*$/, '') || // Extract origin from referer
-                 (req.headers.host?.includes('musobuddy.replit.app') ? 'https://musobuddy.replit.app' : 
-                  req.headers.host?.includes('janeway.replit.dev') ? `https://${req.headers.host}` : 
-                  'http://localhost:5000');
+  // Always allow R2 origin for contract signing pages
+  const allowedOrigins = [
+    'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev',
+    'https://musobuddy.replit.app'
+  ];
   
-  // CORS logging disabled for performance
+  // Determine the correct origin to allow
+  const requestOrigin = req.headers.origin || 
+                       req.headers.referer?.replace(/\/[^\/]*$/, ''); // Extract origin from referer
+  
+  let origin = 'https://musobuddy.replit.app'; // Default
+  
+  if (requestOrigin) {
+    if (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('janeway.replit.dev')) {
+      origin = requestOrigin;
+    } else if (requestOrigin.includes('localhost')) {
+      origin = 'http://localhost:5000';
+    }
+  }
   
   res.header('Access-Control-Allow-Origin', origin);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With, Authorization');
   
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
