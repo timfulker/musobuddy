@@ -166,22 +166,31 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Check for music business user credentials
-      if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
-        // Music business user - access to actual bookings and contracts
-        const authToken = generateAuthToken('music-user-001', email, false);
+      if (email === 'timfulkermusic@gmail.com') {
+        // Get user data first to check if they have a custom password
+        const user = await storage.getUserById('music-user-001');
         
-        return res.json({
-          success: true,
-          message: 'Music business login successful',
-          authToken,
-          user: {
-            userId: 'music-user-001',
-            email: email,
-            firstName: 'Tim',
-            lastName: 'Fulker Music',
-            isAdmin: false
-          }
-        });
+        // Check hardcoded password OR database password
+        const isPasswordValid = password === 'music123' || 
+          (user?.password && await bcrypt.compare(password, user.password));
+        
+        if (isPasswordValid) {
+          // Music business user - access to actual bookings and contracts
+          const authToken = generateAuthToken('music-user-001', email, false);
+          
+          return res.json({
+            success: true,
+            message: 'Music business login successful',
+            authToken,
+            user: {
+              userId: 'music-user-001',
+              email: email,
+              firstName: 'Tim',
+              lastName: 'Fulker Music',
+              isAdmin: false
+            }
+          });
+        }
       }
 
       const user = await storage.getUserByEmail(email);
@@ -209,6 +218,73 @@ export function setupAuthRoutes(app: Express) {
 
     } catch (error) {
       console.error('Login error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Change password endpoint
+  app.post('/api/auth/change-password', requireAuth, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.userId;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
+
+      // Handle music business user password change
+      if (userId === 'music-user-001') {
+        // Get current user data
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if current password is correct (check both hardcoded and database password)
+        const isCurrentPasswordValid = currentPassword === 'music123' || 
+          (user.password && await bcrypt.compare(currentPassword, user.password));
+
+        if (!isCurrentPasswordValid) {
+          return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password in database
+        await storage.updateUser(userId, { password: hashedPassword });
+
+        return res.json({
+          success: true,
+          message: 'Password updated successfully'
+        });
+      }
+
+      // Handle regular users
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password || '');
+      if (!isCurrentPasswordValid) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUser(userId, { password: hashedPassword });
+
+      res.json({
+        success: true,
+        message: 'Password updated successfully'
+      });
+
+    } catch (error) {
+      console.error('Password change error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
