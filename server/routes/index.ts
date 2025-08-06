@@ -38,6 +38,27 @@ export async function registerRoutes(app: Express) {
   app.get('/api/compliance', requireAuth, (req, res) => {
     res.json([]); // Empty compliance for now
   });
+
+  // Dashboard stats endpoint
+  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Return basic stats - implement as needed
+      res.json({
+        totalBookings: 0,
+        totalContracts: 0,
+        totalInvoices: 0,
+        revenue: 0
+      });
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+  });
   
   console.log('✅ All modular routes registered successfully');
 }

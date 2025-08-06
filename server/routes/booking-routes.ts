@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
+import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerBookingRoutes(app: Express) {
@@ -12,7 +12,7 @@ export function registerBookingRoutes(app: Express) {
   // Get all bookings for authenticated user (requires subscription)
   app.get('/api/bookings', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -34,7 +34,7 @@ export function registerBookingRoutes(app: Express) {
     validateBody(schemas.createBooking),
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -75,7 +75,7 @@ export function registerBookingRoutes(app: Express) {
   app.patch('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -100,7 +100,7 @@ export function registerBookingRoutes(app: Express) {
   app.delete('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -125,7 +125,7 @@ export function registerBookingRoutes(app: Express) {
   app.get('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
