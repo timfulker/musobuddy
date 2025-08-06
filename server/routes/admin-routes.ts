@@ -105,7 +105,7 @@ export function registerAdminRoutes(app: Express) {
   app.get('/api/health/system', async (req: any, res) => {
     try {
       // Test database connection
-      const testUser = await storage.getUserById(1).catch(() => null);
+      const testUser = await storage.getUserById("1").catch(() => null);
       
       // Test email service (without sending)
       const emailService = new EmailService();
@@ -142,7 +142,7 @@ export function registerAdminRoutes(app: Express) {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
         error: 'Health check failed',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
       });
     }
   });
@@ -173,7 +173,7 @@ export function registerAdminRoutes(app: Express) {
     try {
       // This could be expanded to include real notifications
       // For now, return empty array
-      const notifications = [];
+      const notifications: any[] = [];
       
       res.json(notifications);
       
