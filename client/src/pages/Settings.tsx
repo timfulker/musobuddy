@@ -110,9 +110,22 @@ type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
 // Removed AI gig suggestion function - feature moved to documentation for future implementation
 
+// Helper function to get the correct auth token
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
-  const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+  const token = getAuthToken();
   
   const response = await fetch('/api/settings', {
     headers: {
@@ -290,7 +303,7 @@ export default function Settings() {
   const generateWidgetUrl = async () => {
     setIsGeneratingToken(true);
     try {
-      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+      const token = getAuthToken();
       const response = await fetch('/api/generate-widget-token', {
         method: 'POST',
         headers: {
@@ -392,7 +405,7 @@ export default function Settings() {
           data.customGigTypes : []
       };
       
-      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+      const token = getAuthToken();
       
       const response = await fetch('/api/settings', {
         method: 'POST',
@@ -461,7 +474,7 @@ export default function Settings() {
   // API function to update instrument and gig types
   const updateInstrumentAndGigTypes = async (instrument: string, gigTypes: string[]) => {
     try {
-      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+      const token = getAuthToken();
       const response = await fetch('/api/settings/instrument', {
         method: 'POST',
         headers: {
@@ -496,7 +509,7 @@ export default function Settings() {
   useEffect(() => {
     const loadWidgetToken = async () => {
       try {
-        const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+        const token = getAuthToken();
         const response = await fetch('/api/get-widget-token', {
           headers: {
             'Authorization': `Bearer ${token}`,

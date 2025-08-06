@@ -161,5 +161,68 @@ export function registerSettingsRoutes(app: Express) {
     }
   });
 
+  // Generate widget token
+  app.post('/api/generate-widget-token', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Generate a unique token for the booking widget
+      const token = require('crypto').randomBytes(32).toString('hex');
+      const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${token}`;
+      
+      // Store the token in user settings
+      await storage.updateSettings(userId, { widgetToken: token });
+      
+      res.json({ url: widgetUrl, token });
+    } catch (error) {
+      console.error('❌ Failed to generate widget token:', error);
+      res.status(500).json({ error: 'Failed to generate widget token' });
+    }
+  });
+
+  // Get existing widget token
+  app.get('/api/get-widget-token', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const settings = await storage.getSettings(userId);
+      const widgetToken = (settings as any)?.widgetToken;
+      
+      if (widgetToken) {
+        const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${widgetToken}`;
+        res.json({ url: widgetUrl, token: widgetToken });
+      } else {
+        res.json({ url: null, token: null });
+      }
+    } catch (error) {
+      console.error('❌ Failed to get widget token:', error);
+      res.status(500).json({ error: 'Failed to get widget token' });
+    }
+  });
+
+  // Generate QR code
+  app.post('/api/generate-qr-code', requireAuth, async (req: any, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+
+      const QRCode = require('qrcode');
+      const qrCodeDataUrl = await QRCode.toDataURL(url);
+      
+      res.json({ qrCodeDataUrl });
+    } catch (error) {
+      console.error('❌ Failed to generate QR code:', error);
+      res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
+
   console.log('✅ Settings routes configured');
 }

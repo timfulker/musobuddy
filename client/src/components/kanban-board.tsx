@@ -9,12 +9,29 @@ import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
+// Helper function to get the correct auth token
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     queryFn: async () => {
+      const token = getAuthToken();
       const response = await fetch('/api/bookings', {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) {

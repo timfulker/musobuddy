@@ -2,9 +2,15 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Environment-specific auth token key to prevent dev/production conflicts
 const getAuthTokenKey = () => {
-  const isDev = import.meta.env.DEV;
   const hostname = window.location.hostname;
-  return isDev ? 'authToken_dev' : `authToken_${hostname.split('.')[0]}`;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') ? 'authToken_dev_admin' : 'authToken_dev';
+  }
+  
+  // Production: Use domain-specific token
+  return `authToken_${hostname}`;
 };
 
 async function throwIfResNotOk(res: Response) {
