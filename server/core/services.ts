@@ -178,9 +178,6 @@ export class EmailService {
     }
 
     try {
-      // Generate signing URL instead of R2 URL - clients need to access the signing page
-      const signingUrl = `https://musobuddy.replit.app/sign-contract/${contract.id}`;
-      
       const emailHtml = `
         <!DOCTYPE html>
         <html>
@@ -207,7 +204,7 @@ export class EmailService {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${signingUrl}" 
+              <a href="${contractUrl}" 
                  style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 View & Sign Contract
               </a>
