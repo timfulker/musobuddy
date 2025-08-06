@@ -113,8 +113,8 @@ export default function Invoices() {
       
       // Pre-fill with booking data if bookingId is provided
       if (bookingId) {
-        // Fetch booking data and auto-fill form
-        fetch(`/api/bookings/${bookingId}`, { credentials: 'include' })
+        // Fetch booking data and auto-fill form using authenticated apiRequest
+        apiRequest(`/api/bookings/${bookingId}`)
           .then(response => response.json())
           .then(booking => {
             if (booking) {
