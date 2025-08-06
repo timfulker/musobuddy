@@ -148,19 +148,38 @@ export function setupAuthRoutes(app: Express) {
 
       // Check for hardcoded admin credentials first
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Use the real user ID from the database so you can access your actual data
-        const authToken = generateAuthToken('43963086', email, true);
+        // Admin user - keep separate from music business data
+        const authToken = generateAuthToken('admin-user', email, true);
         
         return res.json({
           success: true,
           message: 'Admin login successful',
           authToken,
           user: {
-            userId: '43963086',
+            userId: 'admin-user',
             email: email,
             firstName: 'Tim',
             lastName: 'Fulker',
             isAdmin: true
+          }
+        });
+      }
+
+      // Check for music business user credentials
+      if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
+        // Music business user - access to actual bookings and contracts
+        const authToken = generateAuthToken('music-user-001', email, false);
+        
+        return res.json({
+          success: true,
+          message: 'Music business login successful',
+          authToken,
+          user: {
+            userId: 'music-user-001',
+            email: email,
+            firstName: 'Tim',
+            lastName: 'Fulker Music',
+            isAdmin: false
           }
         });
       }
