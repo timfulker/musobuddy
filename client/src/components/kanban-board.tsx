@@ -9,17 +9,22 @@ import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
-// Helper function to get the correct auth token
-const getAuthToken = () => {
+// Helper function to get the correct auth token - using standard format
+const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
-  // Development: Check for admin token first, then regular dev token
+  // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+    return 'authToken_dev_admin';
   }
   
-  // Production: Use domain-specific token
-  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+  // Production: Environment-specific to prevent conflicts (match standard format)
+  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+};
+
+const getAuthToken = () => {
+  const tokenKey = getAuthTokenKey();
+  return localStorage.getItem(tokenKey);
 };
 
 export default function ActionableEnquiries() {
@@ -27,6 +32,15 @@ export default function ActionableEnquiries() {
     queryKey: ["/api/bookings"],
     queryFn: async () => {
       const token = getAuthToken();
+      
+      if (!token) {
+        console.error('❌ No auth token found for kanban board');
+        throw new Error('No authentication token');
+      }
+      
+      console.log('🔍 Kanban board - Token key:', getAuthTokenKey());
+      console.log('🔍 Kanban board - Token found:', !!token);
+      
       const response = await fetch('/api/bookings', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -40,6 +54,7 @@ export default function ActionableEnquiries() {
       }
       
       const data = await response.json();
+      console.log('✅ Kanban board bookings loaded:', data.length);
       return data;
     }
   });
