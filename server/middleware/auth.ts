@@ -37,3 +37,26 @@ export const requireAuth = (req: any, res: Response, next: NextFunction) => {
   req.user = decoded;
   next();
 };
+
+export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  const decoded = verifyAuthToken(token);
+  if (!decoded) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+  
+  // Check if user is admin (admin-user or music-user-001)
+  const isAdmin = decoded.userId === 'admin-user' || decoded.userId === 'music-user-001';
+  if (!isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  req.user = decoded;
+  next();
+};

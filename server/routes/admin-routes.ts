@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import { requireAuth, requireAdmin, getSafeUserId, isSafeAdmin } from '../middleware/auth-validation';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
@@ -11,7 +11,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin overview statistics
   app.get('/api/admin/overview', requireAdmin, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -38,7 +38,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin users list
   app.get('/api/admin/users', requireAdmin, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -58,7 +58,7 @@ export function registerAdminRoutes(app: Express) {
   // Dashboard statistics
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -150,7 +150,7 @@ export function registerAdminRoutes(app: Express) {
   // Authentication health check
   app.get('/api/health/auth', (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       const authStatus = {
         isAuthenticated: !!userId,
         userId: userId || null,
@@ -221,7 +221,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin create user
   app.post('/api/admin/users', requireAdmin, sanitizeInput, asyncHandler(async (req: any, res: any) => {
     try {
-      const adminId = getSafeUserId(req);
+      const adminId = req.user?.userId;
       if (!adminId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -261,7 +261,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin update user
   app.patch('/api/admin/users/:id', requireAdmin, sanitizeInput, asyncHandler(async (req: any, res: any) => {
     try {
-      const adminId = getSafeUserId(req);
+      const adminId = req.user?.userId;
       if (!adminId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -283,7 +283,7 @@ export function registerAdminRoutes(app: Express) {
   // Admin delete user
   app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req: any, res: any) => {
     try {
-      const adminId = getSafeUserId(req);
+      const adminId = req.user?.userId;
       if (!adminId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
