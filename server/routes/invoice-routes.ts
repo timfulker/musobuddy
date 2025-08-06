@@ -2,6 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { requireAuth } from '../middleware/auth';
+import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');

@@ -5,12 +5,13 @@ import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/auth';
+import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
 
-  // Get all contracts for authenticated user
-  app.get('/api/contracts', requireAuth, async (req: any, res) => {
+  // Get all contracts for authenticated user (requires subscription)
+  app.get('/api/contracts', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
       const userId = req.user.userId;
       const contracts = await storage.getContracts(userId);
