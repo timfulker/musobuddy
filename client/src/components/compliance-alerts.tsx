@@ -6,7 +6,7 @@ import { Shield, Zap, Music, ArrowRight } from "lucide-react";
 import type { ComplianceDocument } from "@shared/schema";
 
 export default function ComplianceAlerts() {
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ["/api/compliance"],
   });
 
@@ -55,7 +55,7 @@ export default function ComplianceAlerts() {
     { type: "music_license", status: "valid" },
   ];
 
-  const complianceToShow = documents && documents.length > 0 ? documents : defaultCompliance;
+  const complianceToShow = (documents && documents.length > 0) ? documents : defaultCompliance;
 
   if (isLoading) {
     return (
