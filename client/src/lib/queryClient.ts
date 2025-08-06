@@ -10,7 +10,7 @@ const getAuthTokenKey = () => {
     return 'authToken_dev_admin';
   }
   
-  // Production: Environment-specific to prevent conflicts (match useAuth.tsx)
+  // Production: Environment-specific to prevent conflicts (match login.tsx format)
   return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
 };
 
@@ -46,6 +46,7 @@ export async function apiRequest(
   
   // Add JWT token to all API requests
   const token = getAuthToken();
+  console.log('🔍 API Request to:', url, '- Token key:', getAuthTokenKey(), '- Token found:', !!token);
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }

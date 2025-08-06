@@ -9,7 +9,7 @@ const getAuthTokenKey = () => {
     return 'authToken_dev_admin';
   }
   
-  // Production: Environment-specific to prevent conflicts
+  // Production: Environment-specific to prevent conflicts (match login.tsx format)
   return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
 };
 
