@@ -202,7 +202,11 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to generate widget token' });
       }
       
-      const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${token}`;
+      // Use the correct URL based on environment
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://musobuddy.replit.app'
+        : (process.env.APP_SERVER_URL || 'http://localhost:5000');
+      const widgetUrl = `${baseUrl}/widget/${token}`;
       
       console.log(`✅ Widget token generated for user ${userId}: ${widgetUrl}`);
       res.json({ url: widgetUrl, token });
@@ -225,7 +229,11 @@ export function registerSettingsRoutes(app: Express) {
       const widgetToken = user?.quickAddToken;
       
       if (widgetToken) {
-        const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${widgetToken}`;
+        // Use the correct URL based on environment
+        const baseUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://musobuddy.replit.app'
+          : (process.env.APP_SERVER_URL || 'http://localhost:5000');
+        const widgetUrl = `${baseUrl}/widget/${widgetToken}`;
         res.json({ url: widgetUrl, token: widgetToken });
       } else {
         res.json({ url: null, token: null });
