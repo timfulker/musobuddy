@@ -192,14 +192,21 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // Generate a unique token for the booking widget
-      const token = require('crypto').randomBytes(32).toString('hex');
+      console.log(`🎲 Generating widget token for user ${userId}`);
+      
+      // Generate and store token in user record using the existing quickAddToken field
+      const token = await storage.generateQuickAddToken(userId);
+      
+      if (!token) {
+        console.error('❌ Failed to generate token for user', userId);
+        return res.status(500).json({ error: 'Failed to generate widget token' });
+      }
+      
       const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${token}`;
       
-      // Store the token in user settings
-      await storage.updateSettings(userId, { widgetToken: token });
-      
+      console.log(`✅ Widget token generated for user ${userId}: ${widgetUrl}`);
       res.json({ url: widgetUrl, token });
+      
     } catch (error) {
       console.error('❌ Failed to generate widget token:', error);
       res.status(500).json({ error: 'Failed to generate widget token' });
@@ -214,8 +221,8 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const settings = await storage.getSettings(userId);
-      const widgetToken = (settings as any)?.widgetToken;
+      const user = await storage.getUserById(userId);
+      const widgetToken = user?.quickAddToken;
       
       if (widgetToken) {
         const widgetUrl = `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/widget/${widgetToken}`;
