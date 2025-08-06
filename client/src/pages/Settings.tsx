@@ -112,11 +112,14 @@ type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
+  const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+  
   const response = await fetch('/api/settings', {
-    credentials: 'include', // Important for session-based auth
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
   });
-  
-  
   
   if (!response.ok) {
     console.error('🔥 Settings API error:', response.status, response.statusText);
@@ -287,9 +290,13 @@ export default function Settings() {
   const generateWidgetUrl = async () => {
     setIsGeneratingToken(true);
     try {
+      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
       const response = await fetch('/api/generate-widget-token', {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
       
       if (!response.ok) {
@@ -304,9 +311,11 @@ export default function Settings() {
         try {
           const qrResponse = await fetch('/api/generate-qr-code', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({ url: data.url }),
-            credentials: 'include',
           });
           
           if (qrResponse.ok) {
@@ -383,13 +392,15 @@ export default function Settings() {
           data.customGigTypes : []
       };
       
+      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
+      
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(processedData),
-        credentials: 'include', // This is crucial for session cookies
       });
       
       if (!response.ok) {
@@ -450,12 +461,13 @@ export default function Settings() {
   // API function to update instrument and gig types
   const updateInstrumentAndGigTypes = async (instrument: string, gigTypes: string[]) => {
     try {
+      const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
       const response = await fetch('/api/settings/instrument', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({
           primaryInstrument: instrument,
           availableGigTypes: gigTypes,
@@ -484,8 +496,12 @@ export default function Settings() {
   useEffect(() => {
     const loadWidgetToken = async () => {
       try {
+        const token = localStorage.getItem('authToken_dev') || localStorage.getItem(`authToken_${window.location.hostname}`);
         const response = await fetch('/api/get-widget-token', {
-          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
         });
         
         if (response.ok) {
