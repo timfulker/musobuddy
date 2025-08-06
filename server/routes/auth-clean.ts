@@ -185,7 +185,7 @@ export function setupAuthRoutes(app: Express) {
           });
         }
       } else if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
-        // Music business account created through admin panel
+        // Regular user account created through admin panel
         const realUser = await storage.getUserById('1754488522516');
         
         if (realUser) {
@@ -193,14 +193,14 @@ export function setupAuthRoutes(app: Express) {
           
           return res.json({
             success: true,
-            message: 'Music business login successful',
+            message: 'User login successful',
             authToken,
             user: {
               userId: realUser.id,
               email: realUser.email,
               firstName: realUser.firstName,
               lastName: realUser.lastName,
-              isAdmin: false // Music business user
+              isAdmin: false // Regular user account
             }
           });
         }
