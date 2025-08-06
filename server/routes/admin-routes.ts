@@ -16,12 +16,19 @@ export function registerAdminRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // Get system-wide statistics
+      // Get actual system-wide statistics from database
+      const [allUsers, allBookings, allContracts, allInvoices] = await Promise.all([
+        storage.getAllUsers(),
+        storage.getAllBookings(),
+        storage.getAllContracts(),
+        storage.getAllInvoices()
+      ]);
+
       const overview = {
-        totalUsers: 3,
-        totalBookings: 1026,
-        totalContracts: 0,
-        totalInvoices: 0,
+        totalUsers: allUsers.length,
+        totalBookings: allBookings.length,
+        totalContracts: allContracts.length,
+        totalInvoices: allInvoices.length,
         systemHealth: 'healthy',
         databaseStatus: 'connected'
       };

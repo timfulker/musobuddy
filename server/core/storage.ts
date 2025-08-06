@@ -147,6 +147,14 @@ export class Storage {
     return bookingStorage.getAllBookings();
   }
 
+  async getAllContracts() {
+    return contractStorage.getAllContracts();
+  }
+
+  async getAllInvoices() {
+    return invoiceStorage.getAllInvoices();
+  }
+
   // ===== CONTRACT METHODS =====
   async getContract(id: number) {
     return contractStorage.getContract(id);

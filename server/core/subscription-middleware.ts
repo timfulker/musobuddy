@@ -18,8 +18,9 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // Get user's subscription status
-    const user = await storage.getUserById(req.user.id);
+    // Get user's subscription status (JWT token uses userId field)
+    const userId = req.user.id || req.user.userId; // Support both field names
+    const user = await storage.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -67,8 +68,21 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Allow access if admin, subscribed, lifetime user, or premium tier
-    if (user.isAdmin || user.isSubscribed || user.isLifetime || user.tier === 'premium') {
+    // Premium tier users should have access regardless of Stripe subscription status
+    if (user.tier === 'premium') {
+      console.log(`✅ Premium tier user ${userId} - access granted`);
+      return next();
+    }
+    
+    // Admin users should have access to all features
+    if (user.isAdmin) {
+      console.log(`✅ Admin user ${userId} - access granted`);
+      return next();
+    }
+
+    // Allow access if subscribed or lifetime user
+    if (user.isSubscribed || user.isLifetime) {
+      console.log(`✅ Subscribed user ${userId} - access granted`);
       return next();
     }
 
