@@ -67,8 +67,8 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Allow access if admin, subscribed, or lifetime user
-    if (user.isAdmin || user.isSubscribed || user.isLifetime) {
+    // Allow access if admin, subscribed, lifetime user, or premium tier
+    if (user.isAdmin || user.isSubscribed || user.isLifetime || user.tier === 'premium') {
       return next();
     }
 
