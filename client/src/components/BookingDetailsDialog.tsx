@@ -322,7 +322,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     // Define protected fields that should never be overwritten by contract imports
     const protectedFields = ['clientName', 'eventDate'];
     const isFieldProtected = (fieldName: string) => {
-      return protectedFields.includes(fieldName) && (currentFormData as any)[fieldName]?.trim?.() !== '';
+      const fieldValue = currentFormData[fieldName as keyof typeof currentFormData];
+      return protectedFields.includes(fieldName) && 
+             typeof fieldValue === 'string' && 
+             fieldValue.trim() !== '';
     };
 
     const updatedFormData = {
@@ -358,10 +361,14 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     // Count how many fields were actually updated and track protected fields
     let protectedFieldsSkipped = 0;
     Object.keys(updatedFormData).forEach(key => {
-      if ((updatedFormData as any)[key] !== (currentFormData as any)[key]) {
+      const updatedValue = updatedFormData[key as keyof typeof updatedFormData];
+      const currentValue = currentFormData[key as keyof typeof currentFormData];
+      if (updatedValue !== currentValue) {
         fieldsUpdated++;
       }
-      if (isFieldProtected(key) && (contractToUse as any)[key] && (contractToUse as any)[key] !== (currentFormData as any)[key]) {
+      const contractValue = contractToUse?.[key as keyof typeof contractToUse];
+      const currentFieldValue = currentFormData?.[key as keyof typeof currentFormData];
+      if (isFieldProtected(key) && contractValue && contractValue !== currentFieldValue) {
         protectedFieldsSkipped++;
       }
     });
@@ -927,7 +934,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               if (value !== 'custom') {
                                 field.onChange(value);
                               }
-                            }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
+                            }} value={gigTypes.includes(field.value as string) ? field.value : 'custom'}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select or type custom gig type" />
@@ -943,11 +950,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               </SelectContent>
                             </Select>
                             
-                            {(!gigTypes.includes(field.value as any) || field.value === '') && (
+                            {(!gigTypes.includes(field.value as string) || field.value === '') && (
                               <FormControl>
                                 <Input 
                                   placeholder="Type custom gig type"
-                                  value={gigTypes.includes(field.value as any) ? '' : field.value}
+                                  value={gigTypes.includes(field.value as string) ? '' : field.value}
                                   onChange={(e) => field.onChange(e.target.value)}
                                 />
                               </FormControl>

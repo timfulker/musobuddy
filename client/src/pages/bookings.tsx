@@ -26,6 +26,7 @@ import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import type { Enquiry } from "@shared/schema";
+import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
 
 type ViewMode = 'list' | 'calendar';
 type CalendarView = 'day' | 'week' | 'month' | 'year';
@@ -152,7 +153,8 @@ export default function UnifiedBookings() {
     
     if (bookingId && bookings.length > 0) {
       // Find the booking by ID
-      const targetBooking = (bookings as any[]).find((b: any) => b.id.toString() === bookingId);
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const targetBooking = validBookings.find((b) => b.id.toString() === bookingId);
       
       if (targetBooking && targetBooking.eventDate) {
         // Navigate calendar to booking's month
@@ -185,7 +187,8 @@ export default function UnifiedBookings() {
     const groups: any[] = [];
     
     // Group bookings by date for efficient lookup
-    (bookings as any[]).forEach((booking: any) => {
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    validBookings.forEach((booking) => {
       if (!booking.eventDate || booking.status === 'cancelled' || booking.status === 'rejected') return;
       
       const dateKey = new Date(booking.eventDate).toDateString();
@@ -355,7 +358,8 @@ export default function UnifiedBookings() {
   const filteredAndSortedBookings = React.useMemo(() => {
     if (!bookings || !Array.isArray(bookings)) return [];
 
-    let filtered = (bookings as any[]).filter((booking: any) => {
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    let filtered = validBookings.filter((booking) => {
       // Enhanced search - includes more fields
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
@@ -585,7 +589,8 @@ export default function UnifiedBookings() {
       String(date.getDate()).padStart(2, '0');
     const events: CalendarEvent[] = [];
 
-    (bookings as any[] || []).forEach((booking: any) => {
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    validBookings.forEach((booking) => {
       if (booking.eventDate) {
         const bookingDate = new Date(booking.eventDate);
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
@@ -729,7 +734,8 @@ export default function UnifiedBookings() {
     
     for (let month = 0; month < 12; month++) {
       const monthDate = new Date(year, month, 1);
-      const monthBookings = (bookings as any[]).filter((booking: any) => {
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const monthBookings = validBookings.filter((booking) => {
         if (!booking.eventDate) return false;
         const bookingDate = new Date(booking.eventDate);
         return bookingDate.getFullYear() === year && bookingDate.getMonth() === month;
@@ -752,7 +758,8 @@ export default function UnifiedBookings() {
     const events = getEventsForDate(date);
     if (events.length > 0) {
       const firstEvent = events[0];
-      const booking = (bookings as any[]).find((b: any) => b.id === firstEvent.id);
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const booking = validBookings.find((b) => b.id === firstEvent.id);
       if (booking) {
         setSelectedBookingForDetails(booking);
         setBookingDetailsDialogOpen(true);
@@ -1515,7 +1522,8 @@ export default function UnifiedBookings() {
                             <div className="space-y-3 overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
                               {dayData.events.length > 0 ? (
                                 dayData.events.map((event, index) => {
-                                  const booking = (bookings as any[]).find((b: any) => b.id === event.id);
+                                  const validBookings = validateBookingArray(bookings) ? bookings : [];
+                                  const booking = validBookings.find((b) => b.id === event.id);
                                   return (
                                     <div
                                       key={index}

@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
 
 export function registerIsolatedRoutes(app: Express) {
   console.log('🔗 Setting up isolated routes for cloud compatibility...');
@@ -21,7 +21,12 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      if (contract.userId !== req.user.userId) {
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (contract.userId !== userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -29,7 +34,7 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(400).json({ error: 'No client email address on file' });
       }
       
-      const userSettings = await storage.getSettings(req.user.userId);
+      const userSettings = await storage.getSettings(userId);
       if (!userSettings) {
         return res.status(404).json({ error: 'User settings not found' });
       }
@@ -56,7 +61,7 @@ export function registerIsolatedRoutes(app: Express) {
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       
       try {
-        await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage);
+        await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage || '');
         console.log(`✅ Contract email sent successfully for contract ${contractId}`);
         
         res.json({ 
@@ -93,7 +98,12 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      if (contract.userId !== req.user.userId) {
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (contract.userId !== userId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -107,7 +117,7 @@ export function registerIsolatedRoutes(app: Express) {
       }
 
       // Generate new R2 URL
-      const userSettings = await storage.getSettings(req.user.userId);
+      const userSettings = await storage.getSettings(userId);
       const { uploadContractToCloud } = await import('../core/cloud-storage');
       
       const uploadResult = await uploadContractToCloud(contract, userSettings);
@@ -186,9 +196,9 @@ export function registerIsolatedRoutes(app: Express) {
       const { generateContractPDF } = await import('../unified-contract-pdf');
       
       const signatureDetails = contract.status === 'signed' ? {
-        signedAt: new Date(contract.signedAt || contract.updatedAt),
+        signedAt: new Date(contract.signedAt || contract.updatedAt || new Date()),
         signatureName: contract.clientSignature || 'Digital Signature',
-        clientIpAddress: contract.clientIpAddress
+        clientIpAddress: contract.clientIpAddress || undefined
       } : undefined;
       
       const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);

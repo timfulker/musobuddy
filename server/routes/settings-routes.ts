@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
 
 export function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
@@ -11,7 +11,10 @@ export function registerSettingsRoutes(app: Express) {
   // Get user settings
   app.get('/api/settings', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       const settings = await storage.getSettings(userId);
       
       if (!settings) {
@@ -44,9 +47,12 @@ export function registerSettingsRoutes(app: Express) {
     requireAuth,
     generalApiRateLimit,
     sanitizeInput,
-    asyncHandler(async (req: any, res) => {
+    asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       console.log(`⚙️ Updating settings for user ${userId}:`, req.body);
       
@@ -69,9 +75,12 @@ export function registerSettingsRoutes(app: Express) {
     requireAuth,
     generalApiRateLimit,
     sanitizeInput,
-    asyncHandler(async (req: any, res) => {
+    asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       const { instrument } = req.body;
       
       if (!instrument || typeof instrument !== 'string') {
@@ -131,15 +140,18 @@ export function registerSettingsRoutes(app: Express) {
   // User-specific gig types aggregated from bookings
   app.get('/api/user-gig-types', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       // Get all unique gig types from user's bookings
       const bookings = await storage.getBookings(userId);
-      const userGigTypes = [...new Set(
+      const userGigTypes = Array.from(new Set(
         bookings
           .map(booking => booking.gigType)
-          .filter(type => type && type.trim() !== '')
-      )].sort();
+          .filter((type): type is string => typeof type === 'string' && type.trim() !== '')
+      )).sort();
       
       res.json(userGigTypes);
       

@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
@@ -11,7 +11,10 @@ export function registerBookingRoutes(app: Express) {
   // Get all bookings for authenticated user
   app.get('/api/bookings', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       const bookings = await storage.getBookings(userId);
       console.log(`✅ Retrieved ${bookings.length} bookings for user ${userId}`);
       res.json(bookings);
@@ -29,7 +32,10 @@ export function registerBookingRoutes(app: Express) {
     validateBody(schemas.createBooking),
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       const bookingData = {
         userId,
@@ -67,7 +73,10 @@ export function registerBookingRoutes(app: Express) {
   app.patch('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
@@ -89,7 +98,10 @@ export function registerBookingRoutes(app: Express) {
   app.delete('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
@@ -111,7 +123,10 @@ export function registerBookingRoutes(app: Express) {
   app.get('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       const booking = await storage.getBooking(bookingId);
       if (!booking || booking.userId !== userId) {
@@ -130,7 +145,10 @@ export function registerBookingRoutes(app: Express) {
   app.post('/api/bookings/bulk-delete', requireAuth, async (req: any, res) => {
     try {
       const { bookingIds } = req.body;
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
         return res.status(400).json({ error: 'Booking IDs array is required' });

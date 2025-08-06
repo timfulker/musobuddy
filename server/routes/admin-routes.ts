@@ -3,22 +3,17 @@ import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin, getSafeUserId, isSafeAdmin } from '../middleware/auth-validation';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
 
   // Admin overview statistics
-  app.get('/api/admin/overview', requireAuth, async (req: any, res) => {
+  app.get('/api/admin/overview', requireAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
-      
-      // Only allow admin users
-      if (userId !== 'admin-user') {
-        const user = await storage.getUserById(userId);
-        if (!user?.isAdmin) {
-          return res.status(403).json({ error: 'Admin access required' });
-        }
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
       // Get system-wide statistics
@@ -41,16 +36,11 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Admin users list
-  app.get('/api/admin/users', requireAuth, async (req: any, res) => {
+  app.get('/api/admin/users', requireAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
-      
-      // Only allow admin users
-      if (userId !== 'admin-user') {
-        const user = await storage.getUserById(userId);
-        if (!user?.isAdmin) {
-          return res.status(403).json({ error: 'Admin access required' });
-        }
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
       // Return basic user info for admin panel
@@ -95,7 +85,10 @@ export function registerAdminRoutes(app: Express) {
   // Dashboard statistics
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = getSafeUserId(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       // Get all data for the user
       const [contracts, invoices, bookings] = await Promise.all([
@@ -184,12 +177,10 @@ export function registerAdminRoutes(app: Express) {
   // Authentication health check
   app.get('/api/health/auth', (req: any, res) => {
     try {
+      const userId = getSafeUserId(req);
       const authStatus = {
-        hasSession: !!req.session,
-        requireAuth: !!req.user.userId,
-        requireAuth: !!req.session?.requireAuth,
-        userId: req.user.userId || null,
-        email: req.session?.email || null,
+        isAuthenticated: !!userId,
+        userId: userId || null,
         timestamp: new Date().toISOString()
       };
       
