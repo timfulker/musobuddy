@@ -235,16 +235,19 @@ export function registerAdminRoutes(app: Express) {
 
       const { email, firstName, lastName, password, tier, isAdmin, isBetaTester, phoneVerified } = req.body;
 
-      if (!email || !firstName || !password) {
-        return res.status(400).json({ error: 'Email, first name, and password are required' });
+      if (!email || !firstName) {
+        return res.status(400).json({ error: 'Email and first name are required' });
       }
+
+      // Generate a temporary password if not provided
+      const finalPassword = password || `temp${Math.random().toString(36).slice(2, 10)}`;
 
       // Create new user with admin privileges (bypass verification if specified)
       const newUser = await storage.createUser({
         email,
         firstName: firstName,
         lastName: lastName || '',
-        password: password,
+        password: finalPassword,
         tier: tier || 'free',
         isAdmin: isAdmin || false,
         isBetaTester: isBetaTester || false,
