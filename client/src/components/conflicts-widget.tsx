@@ -60,12 +60,16 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
 
   // Get unique conflicts for display and filter out resolved ones
   const uniqueMap = new Map();
-  backendConflicts.forEach((conflict: BackendConflict) => {
-    const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
-    if (!uniqueMap.has(key)) {
-      uniqueMap.set(key, conflict);
-    }
-  });
+  
+  // Check if backendConflicts exists before iterating
+  if (backendConflicts && Array.isArray(backendConflicts)) {
+    backendConflicts.forEach((conflict: BackendConflict) => {
+      const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, conflict);
+      }
+    });
+  }
   
   // Filter out resolved conflicts
   const unresolvedConflicts = Array.from(uniqueMap.values()).filter((conflict: BackendConflict) => {
