@@ -76,11 +76,23 @@ export default function Templates() {
     fetchUserSettings();
   }, [bookingId, action]);
   
+  // Helper function to get auth token
+  const getAuthToken = () => {
+    const hostname = window.location.hostname;
+    
+    if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+      return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+    }
+    
+    return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+  };
+
   const fetchBookingData = async () => {
     try {
+      const token = getAuthToken();
       const response = await fetch(`/api/bookings/${bookingId}`, {
-        credentials: 'include',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -101,9 +113,10 @@ export default function Templates() {
 
   const fetchUserSettings = async () => {
     try {
+      const token = getAuthToken();
       const response = await fetch('/api/settings', {
-        credentials: 'include',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -136,10 +149,13 @@ export default function Templates() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
+      const token = getAuthToken();
       const response = await fetch('/api/templates', {
         method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        }
       });
 
       if (!response.ok) {

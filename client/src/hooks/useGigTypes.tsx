@@ -2,12 +2,29 @@ import { useQuery } from "@tanstack/react-query";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
 
 // Custom hook to fetch and combine static gig types with user's custom gig types
+// Helper function to get the correct auth token
+const getAuthToken = () => {
+  const hostname = window.location.hostname;
+  
+  // Development: Check for admin token first, then regular dev token
+  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+    return localStorage.getItem('authToken_dev_admin') || localStorage.getItem('authToken_dev');
+  }
+  
+  // Production: Use domain-specific token
+  return localStorage.getItem(`authToken_${hostname}`) || localStorage.getItem('authToken_prod');
+};
+
 export const useGigTypes = () => {
   const { data: settings, isLoading, error } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
+      const token = getAuthToken();
       const response = await fetch('/api/settings', {
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       if (!response.ok) throw new Error('Failed to fetch settings');
       return response.json();
