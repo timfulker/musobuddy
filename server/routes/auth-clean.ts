@@ -184,7 +184,7 @@ export function setupAuthRoutes(app: Express) {
             }
           });
         }
-      } else if (email === 'timfulkermusic@gmail.com' && password === 'admin123') {
+      } else if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
         // Music business account created through admin panel
         const realUser = await storage.getUserById('1754488522516');
         
