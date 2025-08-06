@@ -25,7 +25,7 @@ export class MiscStorage {
     name: string;
     expiryDate?: Date;
     status?: string;
-    fileUrl?: string;
+    documentUrl?: string;
     cloudStorageKey?: string;
     notes?: string;
   }) {

@@ -10,6 +10,7 @@ import { registerStripeRoutes } from "./stripe-routes";
 import { registerClientRoutes } from "./client-routes";
 import { registerFeedbackRoutes } from "./feedback-routes";
 import { registerUnparseableRoutes } from "./unparseable-routes";
+import { registerComplianceRoutes } from "./compliance-routes";
 import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
@@ -27,6 +28,7 @@ export async function registerRoutes(app: Express) {
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
   await registerSettingsRoutes(app);
+  registerComplianceRoutes(app);
   await registerAdminRoutes(app);
   
   // Register missing API routes to fix 404 errors
@@ -46,9 +48,7 @@ export async function registerRoutes(app: Express) {
     res.json([]); // Empty resolutions for now  
   });
   
-  app.get('/api/compliance', requireAuth, (req, res) => {
-    res.json([]); // Empty compliance for now
-  });
+  // Compliance routes now handled by registerComplianceRoutes
 
   // Dashboard stats endpoint
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {

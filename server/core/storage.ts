@@ -366,6 +366,10 @@ export class Storage {
   }
 
   // ===== COMPLIANCE METHODS =====
+  async getComplianceDocuments(userId: string) {
+    return miscStorage.getComplianceDocumentsByUser(userId);
+  }
+
   async getComplianceDocumentsByUser(userId: string) {
     return miscStorage.getComplianceDocumentsByUser(userId);
   }
@@ -378,12 +382,12 @@ export class Storage {
     return miscStorage.createComplianceDocument(data);
   }
 
-  async updateComplianceDocument(id: number, userId: string, updates: any) {
-    return miscStorage.updateComplianceDocument(id, userId, updates);
+  async updateComplianceDocument(id: number, updates: any, userId?: string) {
+    return miscStorage.updateComplianceDocument(id, userId!, updates);
   }
 
-  async deleteComplianceDocument(id: number, userId: string) {
-    return miscStorage.deleteComplianceDocument(id, userId);
+  async deleteComplianceDocument(id: number, userId?: string) {
+    return miscStorage.deleteComplianceDocument(id, userId!);
   }
 
   // ===== CLIENT METHODS =====
