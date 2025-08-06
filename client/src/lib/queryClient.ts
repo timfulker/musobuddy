@@ -1,5 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Environment-specific auth token key to prevent dev/production conflicts
+const getAuthTokenKey = () => {
+  const isDev = import.meta.env.DEV;
+  const hostname = window.location.hostname;
+  return isDev ? 'authToken_dev' : `authToken_${hostname.split('.')[0]}`;
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -26,7 +33,7 @@ export async function apiRequest(
   const headers = options?.headers || {};
   
   // Add JWT token to all API requests
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem(getAuthTokenKey());
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -68,7 +75,7 @@ export const getQueryFn: <T>(options: {
     // Query request to: ${queryKey[0]}
     
     // Get auth token from localStorage
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem(getAuthTokenKey());
     const headers: HeadersInit = {};
     
     // Add Bearer token if available

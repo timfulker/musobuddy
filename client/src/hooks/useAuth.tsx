@@ -1,11 +1,19 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+// Environment-specific auth token key to prevent dev/production conflicts
+const getAuthTokenKey = () => {
+  const isDev = import.meta.env.DEV;
+  const hostname = window.location.hostname;
+  return isDev ? 'authToken_dev' : `authToken_${hostname.split('.')[0]}`;
+};
+
 export function useAuth() {
   const queryClient = useQueryClient();
+  const authTokenKey = getAuthTokenKey();
   
   // Custom fetch function that includes JWT token
   const fetchUser = async () => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem(authTokenKey);
     
     if (!token) {
       throw new Error('No auth token');
@@ -37,7 +45,7 @@ export function useAuth() {
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchInterval: false,
-    enabled: !!localStorage.getItem('authToken') // Only run query if token exists
+    enabled: !!localStorage.getItem(authTokenKey) // Only run query if token exists
   });
 
   // Enhanced error handling for authentication failures
@@ -59,7 +67,7 @@ export function useAuth() {
   const logout = async () => {
     try {
       // Remove JWT token
-      localStorage.removeItem('authToken');
+      localStorage.removeItem(authTokenKey);
       
       // Clear all queries and redirect
       queryClient.clear();
@@ -67,7 +75,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect even if logout fails
-      localStorage.removeItem('authToken');
+      localStorage.removeItem(authTokenKey);
       queryClient.clear();
       window.location.href = '/';
     }

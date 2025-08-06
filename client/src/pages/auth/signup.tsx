@@ -10,6 +10,13 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
+// Environment-specific auth token key to prevent dev/production conflicts
+const getAuthTokenKey = () => {
+  const isDev = import.meta.env.DEV;
+  const hostname = window.location.hostname;
+  return isDev ? 'authToken_dev' : `authToken_${hostname.split('.')[0]}`;
+};
+
 const signupSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
@@ -119,7 +126,7 @@ export default function SignupPage() {
       }
 
       // Store JWT token
-      localStorage.setItem('authToken', result.authToken);
+      localStorage.setItem(getAuthTokenKey(), result.authToken);
       
       toast({
         title: "Account created successfully",
