@@ -6,12 +6,13 @@ import { storage } from "../core/storage";
 const stripeService = new StripeService();
 
 export function registerStripeRoutes(app: Express) {
-  console.log('💳 Setting up Stripe routes...');
+  console.log('💳 Setting up Stripe routes with PRIORITY registration...');
 
   // Debug: Log all registered routes to confirm registration
   console.log('🔍 STRIPE ROUTES: Registering /api/subscription/test');
   console.log('🔍 STRIPE ROUTES: Registering /api/subscription/status');
   console.log('🔍 STRIPE ROUTES: Registering /api/create-checkout-session');
+  console.log('🔥 PRIORITY STRIPE ROUTE REGISTRATION - These routes will take precedence');
 
   // Test route to verify auth middleware works
   app.get('/api/subscription/test', requireAuth, async (req, res) => {

@@ -18,13 +18,16 @@ export async function registerRoutes(app: Express) {
   // Setup clean JWT-based authentication (replaces session-based auth)
   setupAuthRoutes(app);
   
-  // Register all route modules
+  // CRITICAL FIX: Register Stripe routes FIRST to prevent conflicts
+  console.log('🔥 PRIORITY: Registering Stripe routes first to avoid conflicts...');
+  registerStripeRoutes(app);
+  
+  // Register all other route modules
   await registerContractRoutes(app);
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
   await registerSettingsRoutes(app);
   await registerAdminRoutes(app);
-  registerStripeRoutes(app);
   
   // Register missing API routes to fix 404 errors
   registerClientRoutes(app);
