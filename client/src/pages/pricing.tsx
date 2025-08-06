@@ -17,8 +17,8 @@ export default function PricingPage() {
 
   // Get subscription status
   const { data: subscriptionStatus } = useQuery({
-    queryKey: ['/api/stripe/subscription-status'],
-    queryFn: () => apiRequest('/api/stripe/subscription-status'),
+    queryKey: ['/api/subscription/status'],
+    queryFn: () => apiRequest('/api/subscription/status'),
   });
 
   // Create checkout session mutation

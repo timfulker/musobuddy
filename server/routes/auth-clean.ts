@@ -372,6 +372,30 @@ export function setupAuthRoutes(app: Express) {
 
 
 
+  // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
+  app.get('/api/subscription/status', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      console.log('📊 Auth route handling subscription status for userId:', userId);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Import StripeService dynamically to avoid circular dependencies
+      const { StripeService } = await import('../core/stripe-service');
+      const stripeService = new StripeService();
+      
+      const subscriptionStatus = await stripeService.getSubscriptionStatus(userId);
+      console.log('✅ Subscription status retrieved:', subscriptionStatus);
+      
+      res.json(subscriptionStatus);
+    } catch (error) {
+      console.error('❌ Error getting subscription status:', error);
+      res.status(500).json({ error: 'Failed to get subscription status' });
+    }
+  });
+
   // Logout endpoint
   app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });

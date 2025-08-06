@@ -74,28 +74,7 @@ export function registerStripeRoutes(app: Express) {
     }
   });
 
-  // Keep original endpoint but add debugging
-  app.get('/api/subscription/status', requireAuth, async (req, res) => {
-    console.log('🔍 Original subscription status endpoint called - this should work now');
-    try {
-      const userId = req.user?.userId;
-      console.log('🔍 Subscription status - userId:', userId);
-      
-      if (!userId) {
-        console.log('❌ Subscription status - no userId found');
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      console.log('🔍 Subscription status - calling stripeService.getSubscriptionStatus...');
-      const subscriptionStatus = await stripeService.getSubscriptionStatus(userId);
-      console.log('✅ Subscription status - result:', subscriptionStatus);
-      res.json(subscriptionStatus);
-
-    } catch (error) {
-      console.error('❌ Error getting subscription status:', error);
-      res.status(500).json({ error: 'Failed to get subscription status' });
-    }
-  });
+  // REMOVED: Duplicate endpoint - now handled in auth-clean.ts to avoid conflicts
 
   // Handle Stripe webhooks
   app.post('/api/stripe/webhook', async (req, res) => {
