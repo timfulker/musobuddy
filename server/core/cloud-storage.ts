@@ -260,9 +260,32 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <p><strong>Fee:</strong> £${contract.fee}</p>
           </div>
         </div>
-        <div class="terms-section">
+        ${contract.setlist ? `
+        <div class="info-section" style="margin-top: 20px;">
+          <h4>Setlist</h4>
+          <div style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+${contract.setlist}
+          </div>
+        </div>
+        ` : ''}
+        
+        ${contract.riderNotes ? `
+        <div class="info-section" style="margin-top: 20px;">
+          <h4>Rider & Requirements</h4>
+          <div style="white-space: pre-wrap; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+${contract.riderNotes}
+          </div>
+        </div>
+        ` : ''}
+        
+        <div class="terms-section" style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
           <h4>Terms & Conditions</h4>
-          <p>This is a legally binding performance contract. By signing, you agree to the performance date, time, venue, and fee as specified above.</p>
+          <p><strong>1. Agreement:</strong> This is a legally binding performance contract. By signing, you agree to the performance date, time, venue, and fee as specified above.</p>
+          <p><strong>2. Payment:</strong> ${contract.paymentInstructions || 'Payment due as agreed. Late payments may incur charges.'}</p>
+          <p><strong>3. Cancellation:</strong> ${contract.cancellationPolicy || 'Cancellations must be made at least 48 hours in advance.'}</p>
+          <p><strong>4. Equipment:</strong> ${contract.equipmentRequirements || 'Standard equipment provided by performer unless specified.'}</p>
+          <p><strong>5. Liability:</strong> Both parties maintain appropriate insurance. Performer not liable for venue-related incidents.</p>
+          ${contract.additionalTerms ? `<p><strong>6. Additional Terms:</strong> ${contract.additionalTerms}</p>` : ''}
         </div>
       `;
     } else {
@@ -300,10 +323,30 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             <div><strong>Venue:</strong> ${contract.venue}</div>
             <div><strong>Venue Address:</strong> ${contract.venueAddress || 'See above'}</div>
             <div><strong>Performance Fee:</strong> £${contract.fee}</div>
+            ${contract.deposit && contract.deposit !== '0.00' ? `<div><strong>Deposit:</strong> £${contract.deposit}</div>` : ''}
+            ${contract.travelExpenses && contract.travelExpenses !== '0.00' ? `<div><strong>Travel Expenses:</strong> £${contract.travelExpenses}</div>` : ''}
           </div>
         </div>
         
-        <div class="terms-section professional-terms">
+        ${contract.setlist ? `
+        <div class="performance-details" style="margin-top: 20px;">
+          <h4>🎵 SETLIST</h4>
+          <div style="white-space: pre-wrap; font-family: monospace; background: white; padding: 15px; border-radius: 8px;">
+${contract.setlist}
+          </div>
+        </div>
+        ` : ''}
+        
+        ${contract.riderNotes ? `
+        <div class="performance-details" style="margin-top: 20px;">
+          <h4>📝 RIDER & TECHNICAL REQUIREMENTS</h4>
+          <div style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 8px;">
+${contract.riderNotes}
+          </div>
+        </div>
+        ` : ''}
+        
+        <div class="terms-section professional-terms" style="max-height: 400px; overflow-y: auto;">
           <h4>📋 TERMS & CONDITIONS</h4>
           <div class="terms-grid">
             <div class="term-item">
@@ -312,7 +355,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
             </div>
             <div class="term-item">
               <strong>2. Cancellation Policy:</strong>
-              <p>Cancellations must be made at least 48 hours in advance. Late cancellations may be subject to charges.</p>
+              <p>${contract.cancellationPolicy || 'Cancellations must be made at least 48 hours in advance. Late cancellations may be subject to charges.'}</p>
             </div>
             <div class="term-item">
               <strong>3. Equipment Requirements:</strong>
@@ -330,6 +373,20 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
               <strong>6. Liability & Insurance:</strong>
               <p>Both parties maintain appropriate insurance coverage. Performer not liable for venue-related incidents.</p>
             </div>
+            <div class="term-item">
+              <strong>7. Force Majeure:</strong>
+              <p>Neither party shall be liable for failure to perform due to circumstances beyond reasonable control including but not limited to acts of God, natural disasters, war, or government regulations.</p>
+            </div>
+            <div class="term-item">
+              <strong>8. Governing Law:</strong>
+              <p>This contract shall be governed by and construed in accordance with the laws of England and Wales.</p>
+            </div>
+            ${contract.additionalTerms ? `
+            <div class="term-item" style="grid-column: 1 / -1;">
+              <strong>9. Additional Terms:</strong>
+              <p>${contract.additionalTerms}</p>
+            </div>
+            ` : ''}
           </div>
         </div>
       `;
@@ -375,9 +432,10 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
         body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; background: #f5f5f5; height: 100vh; display: flex; flex-direction: column; }
         .header { text-align: center; padding: 15px; background: #1e3a8a; color: white; flex-shrink: 0; }
         .main-container { display: flex; flex: 1; gap: 20px; padding: 20px; max-height: calc(100vh - 120px); }
-        .contract-section { flex: 2; background: white; border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .signing-section { flex: 1; background: #e8f4fd; padding: 25px; border-radius: 8px; border: 2px solid #1e3a8a; height: fit-content; min-width: 350px; }
-        .contract-section h4 { color: #1e3a8a; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+        .contract-section { flex: 2; background: white; border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: calc(100vh - 160px); }
+        .signing-section { flex: 1; background: #e8f4fd; padding: 25px; border-radius: 8px; border: 2px solid #1e3a8a; height: fit-content; min-width: 350px; max-height: calc(100vh - 160px); overflow-y: auto; }
+        .contract-section h4 { color: #1e3a8a; margin-top: 20px; margin-bottom: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+        .contract-section h4:first-child { margin-top: 0; }
         .btn { background: #1e3a8a; color: white; padding: 15px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; }
         .btn:hover { background: #1e40af; transform: translateY(-1px); }
         .signature-pad { border: 2px dashed #1e3a8a; height: 120px; margin: 10px 0; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
@@ -403,9 +461,8 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     
     <div class="main-container">
         <div class="contract-section">
-            <h3>Contract Details</h3>
+            <h3 style="margin-top: 0; color: #1e3a8a; border-bottom: 3px solid #1e3a8a; padding-bottom: 10px;">Full Contract Details</h3>
             ${generateContractSections(contract, userSettings)}
-        </div>
         
         <div class="signing-section">
             <h3>Electronic Signature</h3>
