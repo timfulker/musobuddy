@@ -61,7 +61,7 @@ export function registerIsolatedRoutes(app: Express) {
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       
       try {
-        await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage || '');
+        await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage || undefined);
         console.log(`✅ Contract email sent successfully for contract ${contractId}`);
         
         res.json({ 

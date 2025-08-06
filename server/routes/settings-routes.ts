@@ -202,8 +202,16 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to generate widget token' });
       }
       
-      // Always use production URL for widget - clients need to access it from anywhere
-      const widgetUrl = `https://musobuddy.replit.app/widget/${token}`;
+      // Generate R2-hosted widget (always accessible)
+      const { uploadWidgetToR2 } = await import('../widget-system/widget-storage');
+      const uploadResult = await uploadWidgetToR2(userId.toString(), token);
+      
+      if (!uploadResult.success) {
+        console.error('❌ Failed to upload widget to R2:', uploadResult.error);
+        return res.status(500).json({ error: 'Failed to generate widget' });
+      }
+      
+      const widgetUrl = uploadResult.url!;
       
       console.log(`✅ Widget token generated for user ${userId}: ${widgetUrl}`);
       res.json({ url: widgetUrl, token });
@@ -226,9 +234,15 @@ export function registerSettingsRoutes(app: Express) {
       const widgetToken = user?.quickAddToken;
       
       if (widgetToken) {
-        // Always use production URL for widget - clients need to access it from anywhere
-        const widgetUrl = `https://musobuddy.replit.app/widget/${widgetToken}`;
-        res.json({ url: widgetUrl, token: widgetToken });
+        // Generate R2-hosted widget (always accessible)
+        const { uploadWidgetToR2 } = await import('../widget-system/widget-storage');
+        const uploadResult = await uploadWidgetToR2(userId.toString(), widgetToken);
+        
+        if (uploadResult.success) {
+          res.json({ url: uploadResult.url, token: widgetToken });
+        } else {
+          res.json({ url: null, token: null });
+        }
       } else {
         res.json({ url: null, token: null });
       }
