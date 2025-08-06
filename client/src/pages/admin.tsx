@@ -315,6 +315,11 @@ export default function AdminPanel() {
       user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
       `${user.firstName} ${user.lastName}`.toLowerCase().includes(userSearch.toLowerCase());
     
+    // Debug logging for admin filter
+    if (userFilter === 'admin') {
+      console.log('Admin filter - user:', user.email, 'isAdmin:', user.isAdmin);
+    }
+    
     const matchesFilter = userFilter === 'all' ||
       (userFilter === 'admin' && user.isAdmin) ||
       (userFilter === 'beta' && user.isBetaTester) ||
