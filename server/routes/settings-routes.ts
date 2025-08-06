@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth, getSafeUserId } from '../middleware/auth-validation';
+import { requireAuth } from '../middleware/auth';
 
 export function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
@@ -11,7 +11,7 @@ export function registerSettingsRoutes(app: Express) {
   // Get user settings
   app.get('/api/settings', requireAuth, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -49,7 +49,7 @@ export function registerSettingsRoutes(app: Express) {
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -77,7 +77,7 @@ export function registerSettingsRoutes(app: Express) {
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -88,7 +88,7 @@ export function registerSettingsRoutes(app: Express) {
       }
       
       const settings = await storage.getSettings(userId);
-      const currentInstruments = settings?.instruments || [];
+      const currentInstruments = (settings as any)?.instruments || [];
       
       if (!currentInstruments.includes(instrument)) {
         const updatedInstruments = [...currentInstruments, instrument];
@@ -140,7 +140,7 @@ export function registerSettingsRoutes(app: Express) {
   // User-specific gig types aggregated from bookings
   app.get('/api/user-gig-types', requireAuth, async (req: any, res) => {
     try {
-      const userId = getSafeUserId(req);
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
