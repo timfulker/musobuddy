@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
-import { generateAuthToken } from '../middleware/auth';
+import { generateAuthToken, requireAuth } from '../middleware/auth';
 
 // Phone number formatting
 function formatPhoneNumber(phone: string): string {
@@ -285,6 +285,44 @@ export function setupAuthRoutes(app: Express) {
 
     } catch (error) {
       console.error('Password change error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Get current user endpoint
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      // Handle hardcoded admin user
+      if (userId === 'admin-user') {
+        return res.json({
+          userId: 'admin-user',
+          email: 'timfulker@gmail.com',
+          firstName: 'Tim',
+          lastName: 'Fulker',
+          isAdmin: true,
+          phoneVerified: true
+        });
+      }
+
+      // Handle regular users
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin || false,
+        phoneVerified: user.phoneVerified || false
+      });
+
+    } catch (error) {
+      console.error('Get user error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
