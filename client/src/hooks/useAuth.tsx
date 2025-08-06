@@ -1,21 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Environment-specific auth token key to prevent dev/production conflicts
+// Simple auth token key - development uses admin-only access
 const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
-  // Development URLs contain .replit.dev domain
+  // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev';
+    return 'authToken_dev_admin';
   }
   
-  // Production deployment
-  if (hostname === 'musobuddy.replit.app') {
-    return 'authToken_prod';
-  }
-  
-  // Fallback for other environments
-  return `authToken_${hostname.split('.')[0]}`;
+  // Production: All accounts
+  return 'authToken_prod';
 };
 
 export function useAuth() {
