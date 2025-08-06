@@ -668,7 +668,7 @@ function generateUnifiedContractHTML(
                 <div class="terms-section">
                     <div class="terms-subtitle">Payment Terms & Conditions</div>
                     <div class="requirements-box">
-                        <strong>Payment Due Date:</strong> Full payment of £${contract.fee || contract.amount || 'Amount TBC'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                        <strong>Payment Due Date:</strong> Full payment of £${contract.fee || 'Amount TBC'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
                         
                         <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
                         
