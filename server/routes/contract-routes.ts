@@ -123,9 +123,15 @@ export function registerContractRoutes(app: Express) {
         eventEndTime: req.body.eventEndTime || "",
         fee: req.body.fee,
         deposit: req.body.deposit || "0.00",
+        travelExpenses: req.body.travelExpenses || "0.00",
         paymentInstructions: req.body.paymentInstructions || null,
         equipmentRequirements: req.body.equipmentRequirements || null,
         specialRequirements: req.body.specialRequirements || null,
+        setlist: req.body.setlist || null,
+        riderNotes: req.body.riderNotes || null,
+        template: req.body.template || 'professional',
+        cancellationPolicy: req.body.cancellationPolicy || null,
+        additionalTerms: req.body.additionalTerms || null,
         enquiryId: req.body.enquiryId || null
       };
       
@@ -181,6 +187,18 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'User settings not found' });
       }
       
+      // Log the contract fields to debug what's being sent
+      console.log(`📋 Contract fields being sent to signing page:`, {
+        hasClientPhone: !!contract.clientPhone,
+        hasClientAddress: !!contract.clientAddress,
+        hasVenueAddress: !!contract.venueAddress,
+        hasSetlist: !!contract.setlist,
+        hasRiderNotes: !!contract.riderNotes,
+        hasTemplate: !!contract.template,
+        template: contract.template,
+        fields: Object.keys(contract)
+      });
+      
       const emailService = new EmailService();
       const { uploadContractSigningPage } = await import('../core/cloud-storage');
       
@@ -220,7 +238,21 @@ export function registerContractRoutes(app: Express) {
   });
 
   // CRITICAL: Contract signing endpoint for R2-hosted signing pages
+  // Add OPTIONS handler for CORS preflight
+  app.options('/api/contracts/sign/:id', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.sendStatus(204);
+  });
+  
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
+    // Set CORS headers for all responses
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
@@ -379,11 +411,23 @@ export function registerContractRoutes(app: Express) {
   app.patch('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const updatedContract = await storage.updateContract(contractId, req.body, req.user.userId);
+      
+      // Ensure all fields are properly included in the update
+      const updateData = {
+        ...req.body,
+        template: req.body.template || 'professional',
+        setlist: req.body.setlist || null,
+        riderNotes: req.body.riderNotes || null,
+        travelExpenses: req.body.travelExpenses || '0.00',
+        cancellationPolicy: req.body.cancellationPolicy || null,
+        additionalTerms: req.body.additionalTerms || null
+      };
+      
+      const updatedContract = await storage.updateContract(contractId, updateData, req.user.userId);
       if (!updatedContract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
-      console.log(`✅ Updated contract #${contractId} for user ${req.user.userId}`);
+      console.log(`✅ Updated contract #${contractId} with enhanced fields for user ${req.user.userId}`);
       res.json(updatedContract);
     } catch (error) {
       console.error('❌ Failed to update contract:', error);

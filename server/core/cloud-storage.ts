@@ -182,6 +182,15 @@ export async function uploadContractSigningPage(
 ): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
   try {
     console.log(`☁️ Creating signing page for contract #${contract.id}...`);
+    console.log(`📋 Contract data for signing page:`, {
+      id: contract.id,
+      clientPhone: contract.clientPhone,
+      clientAddress: contract.clientAddress,
+      venueAddress: contract.venueAddress,
+      template: contract.template,
+      setlist: contract.setlist?.substring(0, 50),
+      riderNotes: contract.riderNotes?.substring(0, 50)
+    });
     
     // Generate HTML signing page
     const signingPageHtml = generateContractSigningPage(contract, userSettings);
@@ -478,14 +487,14 @@ ${contract.riderNotes}
                 <label for="clientName">Full Name:</label>
                 <input type="text" id="clientName" name="clientName" value="${contract.clientName || ''}" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 6px;">
                 
-                <label for="clientPhone" style="color: #2563eb;">Phone Number ${!contract.clientPhone ? '(Required)' : ''}:</label>
-                <input type="tel" id="clientPhone" name="clientPhone" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" ${!contract.clientPhone ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff;">
+                <label for="clientPhone" style="color: #2563eb;">Phone Number (Required):</label>
+                <input type="tel" id="clientPhone" name="clientPhone" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff;">
                 
-                <label for="clientAddress" style="color: #2563eb;">Address ${!contract.clientAddress ? '(Required)' : ''}:</label>
-                <textarea id="clientAddress" name="clientAddress" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" ${!contract.clientAddress ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.clientAddress || ''}</textarea>
+                <label for="clientAddress" style="color: #2563eb;">Address (Required):</label>
+                <textarea id="clientAddress" name="clientAddress" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.clientAddress || ''}</textarea>
                 
-                <label for="venueAddress" style="color: #2563eb;">Venue Address ${!contract.venueAddress ? '(Required)' : ''}:</label>
-                <textarea id="venueAddress" name="venueAddress" rows="3" placeholder="e.g., The Grand Hotel, 456 Event Street, London, EC1A 1BB" ${!contract.venueAddress ? 'required' : ''} style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.venueAddress || ''}</textarea>
+                <label for="venueAddress" style="color: #2563eb;">Venue Address (Required):</label>
+                <textarea id="venueAddress" name="venueAddress" rows="3" placeholder="e.g., The Grand Hotel, 456 Event Street, London, EC1A 1BB" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.venueAddress || ''}</textarea>
             </div>
             
             <label for="signature">Digital Signature:</label>
@@ -509,16 +518,10 @@ ${contract.riderNotes}
             
             console.log('🔍 CORS-FIXED: Current hostname:', currentHost);
             
-            // If we're on R2 domain, use the Replit API server
-            if (currentHost.includes('r2.dev')) {
-                var apiUrl = 'https://musobuddy.replit.app/api/contracts/sign/${contract.id}';
-                console.log('🔍 CORS-FIXED: Using cross-origin API URL:', apiUrl);
-                return apiUrl;
-            }
-            
-            // If we're on the main domain, use relative URL
-            var apiUrl = '/api/contracts/sign/${contract.id}';
-            console.log('🔍 CORS-FIXED: Using same-origin API URL:', apiUrl);
+            // Always use the full URL with the correct Replit domain
+            var replitDomain = 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev';
+            var apiUrl = replitDomain + '/api/contracts/sign/${contract.id}';
+            console.log('🔍 CORS-FIXED: Using API URL:', apiUrl);
             return apiUrl;
         }
         
@@ -783,14 +786,26 @@ ${contract.riderNotes}
             console.log('🔥 CORS-FIXED: Current URL:', window.location.href);
             console.log('🔥 CORS-FIXED: Expected API URL:', getApiUrl());
             
+            // Check if required fields are present
+            console.log('📋 Field check:', {
+                hasPhoneField: !!document.getElementById('clientPhone'),
+                hasAddressField: !!document.getElementById('clientAddress'),
+                hasVenueAddressField: !!document.getElementById('venueAddress'),
+                phoneRequired: document.getElementById('clientPhone')?.hasAttribute('required'),
+                addressRequired: document.getElementById('clientAddress')?.hasAttribute('required'),
+                venueRequired: document.getElementById('venueAddress')?.hasAttribute('required')
+            });
+            
             setupSignaturePad();
             setupFormValidation();
             
             // Set up form submission handler
             var form = document.getElementById('signingForm');
             if (form) {
+                console.log('✅ Form found, adding submit handler');
                 form.addEventListener('submit', handleSign);
-            }
+            } else {
+                console.error('❌ Form not found!');
             
             // Pre-populate client IP (optional)
             fetch('https://api.ipify.org?format=json')
