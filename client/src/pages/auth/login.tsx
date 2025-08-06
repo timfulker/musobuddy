@@ -69,6 +69,18 @@ export default function LoginPage() {
         throw new Error(result.error || 'Login failed');
       }
 
+      // Clear tokens from other environments for forced separation
+      const hostname = window.location.hostname;
+      if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
+        // Development login - clear production token
+        localStorage.removeItem('authToken_prod');
+        console.log('🔄 Cleared production token for development login');
+      } else {
+        // Production login - clear development token  
+        localStorage.removeItem('authToken_dev_admin');
+        console.log('🔄 Cleared development token for production login');
+      }
+      
       // Store JWT token with environment-specific key
       const authTokenKey = getAuthTokenKey();
       console.log('🔑 Storing token with key:', authTokenKey);
