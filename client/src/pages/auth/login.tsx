@@ -61,13 +61,20 @@ export default function LoginPage() {
       });
 
       const result = await response.json();
+      console.log('🔐 Login response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Store JWT token
-      localStorage.setItem(getAuthTokenKey(), result.authToken);
+      // Store JWT token with environment-specific key
+      const authTokenKey = getAuthTokenKey();
+      console.log('🔑 Storing token with key:', authTokenKey);
+      localStorage.setItem(authTokenKey, result.authToken);
+      
+      // Verify token was stored
+      const storedToken = localStorage.getItem(authTokenKey);
+      console.log('✅ Token stored successfully:', !!storedToken);
       
       toast({
         title: "Login successful",

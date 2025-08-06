@@ -25,8 +25,11 @@ export function useAuth() {
   // Custom fetch function that includes JWT token
   const fetchUser = async () => {
     const token = localStorage.getItem(authTokenKey);
+    console.log('🔍 Auth check - Token key:', authTokenKey);
+    console.log('🔍 Auth check - Token found:', !!token);
     
     if (!token) {
+      console.log('❌ No auth token found');
       throw new Error('No auth token');
     }
 
@@ -37,13 +40,18 @@ export function useAuth() {
       },
     });
 
+    console.log('🔍 Auth response status:', response.status);
+
     if (!response.ok) {
+      console.log('❌ Auth failed with status:', response.status);
       const error: any = new Error('Authentication failed');
       error.status = response.status;
       throw error;
     }
 
-    return response.json();
+    const userData = await response.json();
+    console.log('✅ Auth successful:', userData);
+    return userData;
   };
   
   const { data: user, isLoading, error, isFetching } = useQuery({
