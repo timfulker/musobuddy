@@ -39,35 +39,58 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(404).json({ error: 'User settings not found' });
       }
       
-      // Generate R2 URL for contract
+      // Generate PDF and upload to R2 (for storage)
       const { uploadContractToCloud } = await import('../core/cloud-storage');
-      const uploadResult = await uploadContractToCloud(contract, userSettings);
+      const pdfUploadResult = await uploadContractToCloud(contract, userSettings);
       
-      if (!uploadResult.success) {
-        console.error('❌ Failed to upload contract to R2:', uploadResult.error);
+      if (!pdfUploadResult.success) {
+        console.error('❌ Failed to upload contract PDF to R2:', pdfUploadResult.error);
         return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
       }
       
-      // Update contract status and cloud URL
+      // Update contract with PDF URL first
       await storage.updateContract(parsedContractId, {
-        status: 'sent',
-        cloudStorageUrl: uploadResult.url,
-        cloudStorageKey: uploadResult.key,
+        cloudStorageUrl: pdfUploadResult.url,
+        cloudStorageKey: pdfUploadResult.key,
         updatedAt: new Date()
       });
       
-      // Send email using EmailService
+      // Get updated contract with PDF URL
+      const updatedContract = await storage.getContract(parsedContractId);
+      if (!updatedContract) {
+        return res.status(404).json({ error: 'Updated contract not found' });
+      }
+      
+      // Generate signing page and upload to R2
+      const { uploadContractSigningPageToR2 } = await import('../contract-signing-page-generator');
+      const signingPageResult = await uploadContractSigningPageToR2(updatedContract, userSettings);
+      
+      if (!signingPageResult.success) {
+        console.error('❌ Failed to upload signing page to R2:', signingPageResult.error);
+        return res.status(500).json({ error: 'Failed to generate contract signing page' });
+      }
+      
+      // Update contract status with signing page URL
+      await storage.updateContract(parsedContractId, {
+        status: 'sent',
+        signingPageUrl: signingPageResult.url,
+        signingPageKey: signingPageResult.key,
+        updatedAt: new Date()
+      });
+      
+      // Send email using EmailService with SIGNING PAGE URL (not PDF URL)
       const emailService = new EmailService();
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       
       try {
-        await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage || undefined);
+        await emailService.sendContractEmail(updatedContract, userSettings, subject, signingPageResult.url, customMessage || '');
         console.log(`✅ Contract email sent successfully for contract ${contractId}`);
         
         res.json({ 
           success: true, 
           message: 'Contract sent successfully',
-          contractUrl: uploadResult.url 
+          contractUrl: signingPageResult.url,
+          pdfUrl: pdfUploadResult.url
         });
         
       } catch (emailError) {
