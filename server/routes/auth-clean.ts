@@ -163,15 +163,12 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Development mode: Use real database user for testing (user ID: 43963086)
-      if ((email === 'timfulker@gmail.com' && password === 'admin123') || 
-          (email === 'timfulkermusic@gmail.com' && password === 'music123')) {
-        
-        // Get the real user from database (ID: 43963086 from replit.md)
+      // Development mode: Use correct database user IDs for testing
+      if (email === 'timfulker@gmail.com' && password === 'admin123') {
+        // Admin account: user ID 43963086
         const realUser = await storage.getUserById('43963086');
         
         if (realUser) {
-          // Use real user data for development access
           const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
           
           return res.json({
@@ -183,26 +180,31 @@ export function setupAuthRoutes(app: Express) {
               email: realUser.email,
               firstName: realUser.firstName,
               lastName: realUser.lastName,
-              isAdmin: email === 'timfulker@gmail.com' // Admin privileges for timfulker@gmail.com
+              isAdmin: true // Admin privileges for timfulker@gmail.com
             }
           });
-        } else {
-          // Fallback if real user not found
-          console.warn('⚠️ Real user 43963086 not found, using fallback');
-          const authToken = generateAuthToken('43963086', email, true);
+        }
+      } else if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
+        // Music business account: user ID music-user-001 (has 1,017 bookings)
+        const realUser = await storage.getUserById('music-user-001');
+        
+        if (realUser) {
+          const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
           
           return res.json({
             success: true,
-            message: 'Development login successful - fallback mode',
+            message: 'Music business login successful - using real user data with bookings',
             authToken,
             user: {
-              userId: '43963086',
-              email: email,
-              firstName: 'Tim',
-              lastName: 'Fulker',
-              isAdmin: email === 'timfulker@gmail.com'
+              userId: realUser.id,
+              email: realUser.email,
+              firstName: realUser.firstName,
+              lastName: realUser.lastName,
+              isAdmin: false // Music business user, not admin
             }
           });
+        } else {
+          return res.status(401).json({ error: 'Music business account not found' });
         }
       }
 
