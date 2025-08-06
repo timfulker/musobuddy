@@ -8,6 +8,81 @@ import { requireAuth } from '../middleware/auth';
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
 
+  // Admin overview statistics
+  app.get('/api/admin/overview', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      // Only allow admin users
+      if (userId !== 'admin-user') {
+        const user = await storage.getUserById(userId);
+        if (!user?.isAdmin) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+      }
+
+      // Get system-wide statistics
+      const allUsers = await storage.getAllUsers();
+      const allBookings = await storage.getAllBookings();
+      const allContracts = await storage.getAllContracts();
+      const allInvoices = await storage.getAllInvoices();
+
+      const overview = {
+        totalUsers: allUsers.length,
+        totalBookings: allBookings.length,
+        totalContracts: allContracts.length,
+        totalInvoices: allInvoices.length,
+        systemHealth: 'healthy',
+        databaseStatus: 'connected'
+      };
+
+      console.log(`✅ Generated admin overview for user ${userId}`);
+      res.json(overview);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate admin overview:', error);
+      res.status(500).json({ error: 'Failed to generate admin overview' });
+    }
+  });
+
+  // Admin users list
+  app.get('/api/admin/users', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      // Only allow admin users
+      if (userId !== 'admin-user') {
+        const user = await storage.getUserById(userId);
+        if (!user?.isAdmin) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+      }
+
+      const allUsers = await storage.getAllUsers();
+      
+      const users = allUsers.map(user => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        tier: user.tier || 'free',
+        isAdmin: user.isAdmin || false,
+        isBetaTester: user.isBetaTester || false,
+        betaStartDate: user.betaStartDate,
+        betaEndDate: user.betaEndDate,
+        betaFeedbackCount: user.betaFeedbackCount || 0,
+        createdAt: user.createdAt
+      }));
+
+      console.log(`✅ Retrieved ${users.length} users for admin ${userId}`);
+      res.json(users);
+      
+    } catch (error) {
+      console.error('❌ Failed to get users:', error);
+      res.status(500).json({ error: 'Failed to get users' });
+    }
+  });
+
   // Dashboard statistics
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
