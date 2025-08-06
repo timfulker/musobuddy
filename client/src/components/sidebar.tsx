@@ -390,7 +390,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {(user as any)?.firstName || (user as any)?.email || "User"}
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Musician</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                {(user as any)?.email || "No email"}
+              </p>
             </div>
           </div>
         </div>

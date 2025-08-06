@@ -9,8 +9,8 @@ const getAuthTokenKey = () => {
     return 'authToken_dev_admin';
   }
   
-  // Production: All accounts
-  return 'authToken_prod';
+  // Production: Environment-specific to prevent conflicts
+  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
 };
 
 export function useAuth() {
