@@ -202,13 +202,8 @@ export function registerSettingsRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to generate widget token' });
       }
       
-      // Use the correct URL based on request origin or environment
-      const host = req.get('host');
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
-      const baseUrl = host?.includes('musobuddy.replit.app') 
-        ? 'https://musobuddy.replit.app'
-        : `${protocol}://${host || 'localhost:5000'}`;
-      const widgetUrl = `${baseUrl}/widget/${token}`;
+      // Always use production URL for widget - clients need to access it from anywhere
+      const widgetUrl = `https://musobuddy.replit.app/widget/${token}`;
       
       console.log(`✅ Widget token generated for user ${userId}: ${widgetUrl}`);
       res.json({ url: widgetUrl, token });
@@ -231,13 +226,8 @@ export function registerSettingsRoutes(app: Express) {
       const widgetToken = user?.quickAddToken;
       
       if (widgetToken) {
-        // Use the correct URL based on request origin
-        const host = req.get('host');
-        const protocol = req.get('x-forwarded-proto') || req.protocol;
-        const baseUrl = host?.includes('musobuddy.replit.app') 
-          ? 'https://musobuddy.replit.app'
-          : `${protocol}://${host || 'localhost:5000'}`;
-        const widgetUrl = `${baseUrl}/widget/${widgetToken}`;
+        // Always use production URL for widget - clients need to access it from anywhere
+        const widgetUrl = `https://musobuddy.replit.app/widget/${widgetToken}`;
         res.json({ url: widgetUrl, token: widgetToken });
       } else {
         res.json({ url: null, token: null });
