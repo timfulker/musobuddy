@@ -687,20 +687,9 @@ export default function Invoices() {
     mutationFn: async (invoiceIds: number[]) => {
       
       const responses = await Promise.all(
-        invoiceIds.map(async (id) => {
-          const response = await fetch(`/api/invoices/${id}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to delete invoice ${id}`);
-          }
-          
-          return response.json();
-        })
+        invoiceIds.map(id => 
+          apiRequest('DELETE', `/api/invoices/${id}`)
+        )
       );
       return responses;
     },
