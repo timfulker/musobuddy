@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed (fixed 07/08/2025).
+Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 
 ## System Architecture
 
