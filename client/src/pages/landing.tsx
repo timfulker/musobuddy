@@ -83,24 +83,24 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <h3 className="text-4xl font-bold text-gray-900 mb-8">
-                Never chase contract signatures again
+                From gig details to signed contract — in seconds
               </h3>
               <p className="text-xl text-gray-700 mb-8 leading-relaxed">
                 Professional PDF contracts generate instantly from your booking details and get signed digitally within hours, not days. 
                 Your clients receive beautiful, branded documents that make you look like the serious professional you are.
               </p>
-              
+
               <div className="bg-gray-50 border-l-4 border-primary p-6 mb-8">
                 <p className="text-gray-700 italic">
-                  <strong>Real example:</strong> Wedding band books Saturday ceremony Friday morning - contract sent, 
+                  <strong>Real example:</strong> Wedding band books Saturday ceremony Friday morning — contract sent, 
                   signed, and filed before lunch.
                 </p>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-start">
                   <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Instant PDF generation → Professional impression in minutes</span>
+                  <span className="text-gray-700">Instant PDF generation → Professional impression in seconds</span>
                 </div>
                 <div className="flex items-start">
                   <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
