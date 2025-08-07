@@ -181,7 +181,7 @@ Best regards,
   };
 
   const handleSelectAll = () => {
-    const validDocuments = documents.filter((doc: ComplianceDocument) => doc.status === 'valid');
+    const validDocuments = documents?.filter((doc: ComplianceDocument) => doc.status === 'valid') || [];
     setSelectedDocuments(validDocuments.map((doc: ComplianceDocument) => doc.id));
   };
 
@@ -216,8 +216,8 @@ Best regards,
     });
   };
 
-  const validDocuments = documents.filter((doc: ComplianceDocument) => doc.status === 'valid');
-  const expiredDocuments = documents.filter((doc: ComplianceDocument) => doc.status !== 'valid');
+  const validDocuments = documents?.filter((doc: ComplianceDocument) => doc.status === 'valid') || [];
+  const expiredDocuments = documents?.filter((doc: ComplianceDocument) => doc.status !== 'valid') || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
