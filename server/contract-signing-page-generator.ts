@@ -488,18 +488,26 @@ export function generateContractSigningPage(
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             width: 100%;
             margin-top: 16px;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
         }
-        .sign-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+        .sign-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+            cursor: pointer;
+        }
+        .sign-button:active:not(:disabled) {
+            transform: translateY(0px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
         }
         .sign-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .success-message {
             background: #f0fff4;
@@ -611,10 +619,6 @@ export function generateContractSigningPage(
                     <p>Loading contract document...</p>
                 </div>
             </div>
-        </div>
-        
-        <div class="contract-document">
-            <a href="#" onclick="downloadContract()" class="download-btn">Download Full Contract</a>
         </div>
 
         ${safeContract.status !== 'signed' ? `
