@@ -509,10 +509,16 @@ export default function Invoices() {
       
       
       // Use direct fetch to avoid middleware interference (same fix as invoice creation)
+      const tokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+      const envSuffix = import.meta.env.VITE_ENV_SUFFIX || '';
+      const finalTokenKey = `${tokenKey}${envSuffix}`;
+      const token = localStorage.getItem(finalTokenKey);
+      
       const response = await fetch('/api/invoices/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
         credentials: 'include', // Important for session handling
         body: JSON.stringify({ invoiceId, customMessage }),
