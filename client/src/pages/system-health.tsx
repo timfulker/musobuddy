@@ -1,10 +1,12 @@
-// System Health Monitoring Dashboard
+// System Health Monitoring Dashboard (Admin Only)
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Activity, Database, Mail, FileText, Shield } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Activity, Database, Mail, FileText, Shield, Lock } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'wouter';
 
 interface ServiceStatus {
   name: string;
@@ -16,6 +18,8 @@ interface ServiceStatus {
 }
 
 export default function SystemHealth() {
+  const { user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
   const [services, setServices] = useState<ServiceStatus[]>([
     { name: 'Database', status: 'checking', icon: <Database className="w-5 h-5" /> },
     { name: 'Authentication', status: 'checking', icon: <Shield className="w-5 h-5" /> },
@@ -27,6 +31,43 @@ export default function SystemHealth() {
   const [isChecking, setIsChecking] = useState(false);
   const [lastFullCheck, setLastFullCheck] = useState<Date | null>(null);
   const [criticalIssues, setCriticalIssues] = useState<string[]>([]);
+
+  // Admin-only access check
+  useEffect(() => {
+    if (!isLoading && (!user || !user.isAdmin)) {
+      navigate('/dashboard');
+    }
+  }, [user, isLoading, navigate]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin-only guard
+  if (!user?.isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="p-8 max-w-md">
+          <div className="flex flex-col items-center text-center gap-4">
+            <Lock className="w-12 h-12 text-gray-400" />
+            <h2 className="text-xl font-semibold">Admin Access Required</h2>
+            <p className="text-gray-600">This page is restricted to administrators only.</p>
+            <Button onClick={() => navigate('/dashboard')}>
+              Return to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   // Check individual services
   const checkDatabase = async () => {
