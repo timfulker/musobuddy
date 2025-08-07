@@ -1,5 +1,5 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { generateWidgetHTML } from './widget-generator';
+import { generateHybridWidgetHTML } from './hybrid-widget-generator';
 
 const s3Client = new S3Client({
   region: 'auto',
@@ -19,7 +19,7 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
   try {
     console.log(`🔧 Generating widget HTML for user ${userId} with token ${token}`);
     
-    const widgetHTML = await generateWidgetHTML(userId, token);
+    const widgetHTML = await generateHybridWidgetHTML(userId, token);
     const key = `widgets/widget-${userId}-${token}.html`;
     
     const command = new PutObjectCommand({

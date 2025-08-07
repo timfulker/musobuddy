@@ -195,5 +195,138 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
+  // Widget endpoints for external booking forms
+  console.log('🔧 Setting up widget endpoints...');
+
+  // Verify widget token
+  app.get('/api/widget/verify/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const user = await storage.getUserByQuickAddToken(token);
+      
+      if (!user) {
+        return res.json({ valid: false });
+      }
+      
+      res.json({ 
+        valid: true, 
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'User'
+      });
+    } catch (error) {
+      console.error('❌ Widget token verification failed:', error);
+      res.json({ valid: false });
+    }
+  });
+
+  // Hybrid widget form submission (combines natural language + structured data)
+  app.post('/api/widget/hybrid-submit', async (req, res) => {
+    try {
+      const { messageText, clientName, clientContact, eventDate, venue, token } = req.body;
+      
+      if (!messageText || !clientName || !clientContact || !token) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      // Verify widget token and get user
+      const user = await storage.getUserByQuickAddToken(token);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid widget token' });
+      }
+      
+      // Parse the message using AI to extract additional details
+      const { parseBookingMessage } = await import('../ai/booking-message-parser');
+      const parsedData = await parseBookingMessage(messageText, clientContact, venue);
+      
+      // Determine contact details (email vs phone)
+      let clientEmail = parsedData.clientEmail;
+      let clientPhone = parsedData.clientPhone;
+      
+      if (!clientEmail && !clientPhone) {
+        // Determine from clientContact field
+        if (clientContact.includes('@')) {
+          clientEmail = clientContact;
+        } else if (/\d{10,}/.test(clientContact)) {
+          clientPhone = clientContact;
+        }
+      }
+      
+      // Create booking with combined data (form data takes precedence over AI parsed data)
+      const bookingData = {
+        userId: user.id,
+        clientName: clientName || parsedData.clientName || 'Unknown Client',
+        clientEmail: clientEmail || null,
+        clientPhone: clientPhone || null,
+        venue: venue || parsedData.venue || null,
+        venueAddress: parsedData.venueAddress || null,
+        eventDate: eventDate || parsedData.eventDate || null,
+        eventTime: parsedData.eventTime || null,
+        eventEndTime: parsedData.eventEndTime || null,
+        fee: parsedData.fee || null,
+        deposit: parsedData.deposit || null,
+        status: 'new',
+        notes: messageText,
+        gigType: parsedData.eventType || null,
+        equipmentRequirements: null,
+        specialRequirements: parsedData.specialRequirements || null
+      };
+      
+      const newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ Widget created booking #${newBooking.id} for user ${user.id} (AI confidence: ${parsedData.confidence})`);
+      
+      // Send notification email to the musician if they have settings
+      try {
+        const userSettings = await storage.getSettings(user.id);
+        if (userSettings?.businessEmail || user.email) {
+          const { EmailService } = await import('../core/services');
+          const emailService = new EmailService();
+          
+          const businessName = userSettings?.businessName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'MusoBuddy User';
+          const subject = `New Booking Request - ${businessName}`;
+          const emailBody = `
+<h2>New Booking Request</h2>
+<p><strong>From:</strong> ${clientName}</p>
+<p><strong>Contact:</strong> ${clientEmail || clientPhone || 'Not provided'}</p>
+<p><strong>Event Date:</strong> ${eventDate || parsedData.eventDate || 'Not specified'}</p>
+<p><strong>Venue:</strong> ${venue || parsedData.venue || 'Not specified'}</p>
+<p><strong>Event Type:</strong> ${parsedData.eventType || 'Not specified'}</p>
+
+<h3>Original Message:</h3>
+<blockquote style="border-left: 4px solid #667eea; padding-left: 16px; margin: 16px 0;">
+${messageText.replace(/\n/g, '<br>')}
+</blockquote>
+
+<p><strong>AI Confidence:</strong> ${Math.round(parsedData.confidence * 100)}%</p>
+<p><em>This booking request was submitted via your MusoBuddy booking widget.</em></p>
+          `;
+          
+          await emailService.sendEmailHTML(
+            userSettings?.businessEmail || user.email!,
+            subject,
+            emailBody
+          );
+          
+          console.log(`✅ Notification email sent for booking #${newBooking.id}`);
+        }
+      } catch (emailError) {
+        console.error('⚠️ Failed to send notification email:', emailError);
+        // Don't fail the request if email fails
+      }
+      
+      res.json({ 
+        success: true, 
+        bookingId: newBooking.id,
+        confidence: parsedData.confidence,
+        message: 'Booking request received successfully'
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Widget booking creation failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to process booking request',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   console.log('✅ Booking routes configured');
 }

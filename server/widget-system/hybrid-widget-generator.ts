@@ -62,34 +62,7 @@ export async function generateHybridWidgetHTML(userId: string, token: string): P
             margin-bottom: 24px;
         }
         
-        /* Mode Toggle */
-        .mode-toggle {
-            display: flex;
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 24px;
-        }
-        .mode-button {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4a5568;
-            transition: all 0.2s;
-        }
-        .mode-button.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .mode-button:hover:not(.active) {
-            color: #2d3748;
-        }
+
         
         /* Forms */
         .form-container {
@@ -174,13 +147,7 @@ export async function generateHybridWidgetHTML(userId: string, token: string): P
             margin-top: 10px;
         }
         
-        /* Hidden forms */
-        .form-mode {
-            display: none;
-        }
-        .form-mode.active {
-            display: block;
-        }
+
         
         /* Help text */
         .help-text {
@@ -252,131 +219,73 @@ export async function generateHybridWidgetHTML(userId: string, token: string): P
             There was an error sending your request. Please try again or contact us directly.
         </div>
 
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-            <button class="mode-button active" onclick="switchMode('quick')" id="quick-btn">
-                💬 Quick Message
-            </button>
-            <button class="mode-button" onclick="switchMode('detailed')" id="detailed-btn">
-                📋 Detailed Form
-            </button>
-        </div>
-
+        <!-- Single Unified Form -->
         <div class="form-container">
-            <!-- Quick Message Mode -->
-            <div id="quick-mode" class="form-mode active">
-                <div class="examples">
-                    <h4>💡 Just tell us about your event in your own words:</h4>
-                    <div class="example-item">"Hi, are you available for our wedding on June 16th in Manchester?"</div>
-                    <div class="example-item">"Looking for a musician for a corporate event next month in London"</div>
-                    <div class="example-item">"Private party on Saturday evening, budget around £300"</div>
-                </div>
-                
-                <form id="quick-form">
-                    <div class="form-group">
-                        <label for="quick-message">Your Message <span class="required">*</span></label>
-                        <textarea 
-                            id="quick-message" 
-                            name="messageText" 
-                            class="textarea-large"
-                            placeholder="Tell us about your event - date, location, type of event, budget, etc. Just write naturally!"
-                            required
-                        ></textarea>
-                        <div class="help-text">
-                            Our AI will extract the details from your message. Include as much or as little as you want!
-                        </div>
+            <div class="examples">
+                <h4>💡 Tell us about your event - as much or as little detail as you like:</h4>
+                <div class="example-item">"Hi, are you available for our wedding on June 16th in Manchester?"</div>
+                <div class="example-item">"Looking for a musician for a corporate event next month in London"</div>
+                <div class="example-item">"Private party on Saturday evening, budget around £300"</div>
+            </div>
+            
+            <form id="booking-form">
+                <!-- Primary message area -->
+                <div class="form-group">
+                    <label for="message-text">Your Event Details <span class="required">*</span></label>
+                    <textarea 
+                        id="message-text" 
+                        name="messageText" 
+                        class="textarea-large"
+                        placeholder="Tell us about your event - date, location, type of event, budget, special requirements, etc. Write as naturally as you like!"
+                        required
+                    ></textarea>
+                    <div class="help-text">
+                        Include whatever details you have. Our system will understand your message and help organize your request.
                     </div>
+                </div>
 
+                <!-- Simple contact fields -->
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="quick-contact">Your Name & Contact <span class="required">*</span></label>
+                        <label for="contact-name">Your Name <span class="required">*</span></label>
                         <input 
                             type="text" 
-                            id="quick-contact" 
-                            name="clientContact" 
-                            placeholder="Your name and email or phone number"
+                            id="contact-name" 
+                            name="clientName" 
+                            placeholder="Your name"
                             required
                         >
                     </div>
 
-                    <button type="submit" class="submit-btn" id="quick-submit">
-                        🚀 Send Quick Message
-                    </button>
-                </form>
-            </div>
-
-            <!-- Detailed Form Mode -->
-            <div id="detailed-mode" class="form-mode">
-                <p style="color: #718096; margin-bottom: 20px; font-size: 14px;">
-                    Fill in as many details as you can. All fields except name and email are optional.
-                </p>
-                
-                <form id="detailed-form">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="name">Your Name <span class="required">*</span></label>
-                            <input type="text" id="name" name="name" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="email">Email Address <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="contact-info">Email or Phone <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="contact-info" 
+                            name="clientContact" 
+                            placeholder="your.email@example.com or phone number"
+                            required
+                        >
                     </div>
+                </div>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="eventType">Event Type</label>
-                            <select id="eventType" name="eventType">
-                                <option value="">Select event type</option>
-                                <option value="wedding">Wedding</option>
-                                <option value="party">Private Party</option>
-                                <option value="corporate">Corporate Event</option>
-                                <option value="pub">Pub/Bar</option>
-                                <option value="restaurant">Restaurant</option>
-                                <option value="festival">Festival</option>
-                                <option value="birthday">Birthday Party</option>
-                                <option value="anniversary">Anniversary</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="eventDate">Event Date</label>
-                            <input type="date" id="eventDate" name="eventDate" min="${new Date().toISOString().split('T')[0]}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="eventTime">Event Time</label>
-                            <input type="time" id="eventTime" name="eventTime">
-                        </div>
+                <!-- Optional quick fields -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="event-date">Event Date (if you know it)</label>
+                        <input type="date" id="event-date" name="eventDate" min="${new Date().toISOString().split('T')[0]}">
                     </div>
 
                     <div class="form-group">
-                        <label for="venue">Venue/Location</label>
-                        <input type="text" id="venue" name="venue" placeholder="Where is your event?">
+                        <label for="event-location">Location (if you know it)</label>
+                        <input type="text" id="event-location" name="venue" placeholder="City or venue name">
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="message">Additional Details & Special Requirements</label>
-                        <textarea 
-                            id="message" 
-                            name="message" 
-                            placeholder="Budget, special requirements, music preferences, etc."
-                        ></textarea>
-                    </div>
-
-                    <button type="submit" class="submit-btn" id="detailed-submit">
-                        📋 Send Detailed Request
-                    </button>
-                </form>
-            </div>
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    🚀 Send Booking Request
+                </button>
+            </form>
         </div>
 
         <div class="loading" id="loading">
@@ -391,88 +300,44 @@ export async function generateHybridWidgetHTML(userId: string, token: string): P
     </div>
 
     <script>
-        let currentMode = 'quick';
-        
-        function switchMode(mode) {
-            currentMode = mode;
+        // Single form handler
+        document.getElementById('booking-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // Update buttons
-            document.getElementById('quick-btn').classList.toggle('active', mode === 'quick');
-            document.getElementById('detailed-btn').classList.toggle('active', mode === 'detailed');
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.token = '${token}';
             
-            // Update forms
-            document.getElementById('quick-mode').classList.toggle('active', mode === 'quick');
-            document.getElementById('detailed-mode').classList.toggle('active', mode === 'detailed');
-            
-            // Clear any previous messages
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submit-btn').disabled = true;
             document.getElementById('success-message').style.display = 'none';
             document.getElementById('error-message').style.display = 'none';
-        }
-
-        async function submitForm(formData, isQuickMode) {
+            
             try {
-                const endpoint = isQuickMode ? '/api/widget/parse-message' : '/api/widget/submit';
-                formData.token = '${token}';
-                formData.mode = isQuickMode ? 'quick' : 'detailed';
-                
-                const response = await fetch('https://musobuddy.replit.app' + endpoint, {
+                const response = await fetch('https://musobuddy.replit.app/api/widget/hybrid-submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(data)
                 });
                 
                 if (response.ok) {
                     document.getElementById('success-message').style.display = 'block';
-                    document.getElementById('quick-mode').style.display = 'none';
-                    document.getElementById('detailed-mode').style.display = 'none';
-                    document.querySelector('.mode-toggle').style.display = 'none';
+                    form.style.display = 'none';
+                    document.querySelector('.examples').style.display = 'none';
                 } else {
                     throw new Error('Request failed');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('error-message').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submit-btn').disabled = false;
             }
-        }
-
-        // Quick form handler
-        document.getElementById('quick-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('quick-submit').disabled = true;
-            document.getElementById('success-message').style.display = 'none';
-            document.getElementById('error-message').style.display = 'none';
-            
-            await submitForm(data, true);
-            
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('quick-submit').disabled = false;
-        });
-
-        // Detailed form handler  
-        document.getElementById('detailed-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('detailed-submit').disabled = true;
-            document.getElementById('success-message').style.display = 'none';
-            document.getElementById('error-message').style.display = 'none';
-            
-            await submitForm(data, false);
-            
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('detailed-submit').disabled = false;
         });
     </script>
 </body>

@@ -213,8 +213,26 @@ export function registerSettingsRoutes(app: Express) {
       
       const widgetUrl = uploadResult.url!;
       
-      console.log(`✅ Widget token generated for user ${userId}: ${widgetUrl}`);
-      res.json({ url: widgetUrl, token });
+      // Generate QR code for the widget URL
+      const qrcode = await import('qrcode');
+      const qrCodeDataURL = await qrcode.toDataURL(widgetUrl, {
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        quality: 0.92,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        width: 256
+      });
+      
+      console.log(`✅ Widget token and QR code generated for user ${userId}: ${widgetUrl}`);
+      res.json({ 
+        url: widgetUrl, 
+        token, 
+        qrCode: qrCodeDataURL 
+      });
       
     } catch (error) {
       console.error('❌ Failed to generate widget token:', error);
@@ -239,9 +257,27 @@ export function registerSettingsRoutes(app: Express) {
         const uploadResult = await uploadWidgetToR2(userId.toString(), widgetToken);
         
         if (uploadResult.success) {
-          res.json({ url: uploadResult.url, token: widgetToken });
+          // Generate QR code for the widget URL
+          const qrcode = await import('qrcode');
+          const qrCodeDataURL = await qrcode.toDataURL(uploadResult.url!, {
+            errorCorrectionLevel: 'M',
+            type: 'image/png',
+            quality: 0.92,
+            margin: 1,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            },
+            width: 256
+          });
+          
+          res.json({ 
+            url: uploadResult.url, 
+            token: widgetToken, 
+            qrCode: qrCodeDataURL 
+          });
         } else {
-          res.json({ url: null, token: null });
+          res.json({ url: null, token: null, qrCode: null });
         }
       } else {
         res.json({ url: null, token: null });
