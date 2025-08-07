@@ -69,7 +69,7 @@ export default function LandingPage() {
       <section className="py-16 bg-gray-50 border-t border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xl text-gray-700 mb-6">
-            Join 500+ UK musicians already saving 10+ hours weekly on admin tasks and earning more through professional workflows.
+            Join the growing list of UK musicians already saving 10+ hours weekly on admin tasks and earning more through professional workflows.
           </p>
           <p className="text-lg text-gray-600">
             Recommended by music industry professionals for serious freelancers
