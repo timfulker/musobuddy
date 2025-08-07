@@ -49,6 +49,8 @@ Lead email format: User prefers clean email format without "leads" prefix - uses
 - **Cloud Services**:
     - Cloudflare R2: PDF storage and delivery.
     - Mailgun: Email delivery service.
+        - Backup sandbox domain: `sandbox2e23cfec66e14ec6b88b9124e39e4926.mailgun.org` (stored 08/01/2025)
+        - Production domain: `enquiries.musobuddy.com` (hardcoded override in server/core/services.ts)
     - Neon Database: PostgreSQL hosting.
     - Replit: Authentication and hosting.
 - **APIs and Services**:
