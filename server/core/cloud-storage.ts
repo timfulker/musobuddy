@@ -474,10 +474,10 @@ ${contract.riderNotes}
             ${generateContractSections(contract, userSettings)}
         
         <div class="signing-section">
-            <h3>Electronic Signature</h3>
+            <h3>Sign Contract</h3>
             <p>Please review the contract details and agree to the terms by signing below.</p>
             
-            ${contract.status === 'signed' ? `<a href="${contract.cloudStorageUrl || `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}.pdf`}" target="_blank" class="pdf-link">📄 View Signed Contract PDF</a>` : ''}
+            ${contract.status === 'signed' ? `<a href="${contract.cloudStorageUrl || 'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/' + contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_') + '.pdf'}" target="_blank" class="pdf-link">📄 View Signed Contract PDF</a>` : ''}
         
         <form id="signingForm">
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -497,19 +497,14 @@ ${contract.riderNotes}
                 <textarea id="venueAddress" name="venueAddress" rows="3" placeholder="e.g., The Grand Hotel, 456 Event Street, London, EC1A 1BB" required style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #2563eb; border-radius: 6px; background-color: #eff6ff; resize: vertical;">${contract.venueAddress || ''}</textarea>
             </div>
             
-            <label for="signature">Digital Signature:</label>
-            <div class="signature-pad" id="signaturePad">
-                <p style="text-align: center; color: #666; margin-top: 60px;">Click here to sign</p>
-            </div>
             <input type="hidden" id="clientSignature" name="clientSignature">
             <input type="hidden" name="clientIP" id="clientIP" value="0.0.0.0">
             
-            <button type="submit" class="btn">Sign Contract</button>
+            <button type="submit" class="btn" style="background: #2563eb;">Sign Contract</button>
         </form>
     </div>
     
     <script>
-        var signatureCaptured = false;
         var contractSigned = false;
         
         // CRITICAL FIX: Detect API URL based on current domain
@@ -525,31 +520,25 @@ ${contract.riderNotes}
             return apiUrl;
         }
         
-        // Enhanced signature capture with better validation
-        function captureSignature() {
+        // Enhanced signature validation function (no signature pad needed)
+        function validateSignature() {
             var clientNameValue = document.getElementById('clientName').value.trim();
             if (!clientNameValue) {
-                alert('Please enter your full name first');
+                alert('Please enter your full name');
                 document.getElementById('clientName').focus();
-                return;
+                return false;
             }
             
             if (clientNameValue.length < 2) {
                 alert('Please enter your full name (at least 2 characters)');
                 document.getElementById('clientName').focus();
-                return;
+                return false;
             }
             
-            signatureCaptured = true;
-            var signaturePad = document.getElementById('signaturePad');
-            signaturePad.innerHTML = '<p style="text-align: center; color: #10b981; margin: 0; font-weight: bold;">✓ Signed by: ' + clientNameValue + '</p>';
-            signaturePad.style.borderColor = '#10b981';
-            signaturePad.style.background = '#ecfdf5';
-            
-            // Set signature data (simplified for better processing)
+            // Set signature data
             document.getElementById('clientSignature').value = clientNameValue;
-            
-            console.log('✅ CORS-FIXED: Signature captured for:', clientNameValue);
+            console.log('✅ CORS-FIXED: Signature validated for:', clientNameValue);
+            return true;
         }
         
         // CRITICAL FIX: Enhanced form submission with proper CORS handling
@@ -567,14 +556,7 @@ ${contract.riderNotes}
             var addressValue = document.getElementById('clientAddress').value.trim();
             var venueAddressValue = document.getElementById('venueAddress').value.trim();
             
-            if (!clientNameValue) {
-                alert('Please enter your full name');
-                document.getElementById('clientName').focus();
-                return false;
-            }
-            
-            if (!signatureCaptured) {
-                alert('Please click in the signature box to sign the contract');
+            if (!validateSignature()) {
                 return false;
             }
             
@@ -731,27 +713,7 @@ ${contract.riderNotes}
             return false; // Always prevent traditional form submission
         }
         
-        // Enhanced signature pad setup
-        function setupSignaturePad() {
-            var signaturePad = document.getElementById('signaturePad');
-            if (signaturePad) {
-                signaturePad.onclick = captureSignature;
-                signaturePad.style.cursor = 'pointer';
-                
-                // Add hover effect
-                signaturePad.addEventListener('mouseenter', function() {
-                    if (!signatureCaptured) {
-                        this.style.background = '#f0f9ff';
-                    }
-                });
-                
-                signaturePad.addEventListener('mouseleave', function() {
-                    if (!signatureCaptured) {
-                        this.style.background = 'white';
-                    }
-                });
-            }
-        }
+        // No signature pad needed - simplified signing process
         
         // Enhanced form validation with real-time feedback
         function setupFormValidation() {
@@ -796,7 +758,6 @@ ${contract.riderNotes}
                 venueRequired: document.getElementById('venueAddress')?.hasAttribute('required')
             });
             
-            setupSignaturePad();
             setupFormValidation();
             
             // Set up form submission handler
