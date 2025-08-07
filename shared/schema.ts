@@ -31,6 +31,9 @@ export const users = pgTable("users", {
   betaEndDate: timestamp("beta_end_date"),
   betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
+  plan: varchar("plan", { length: 50 }).default("free"), // free, trial, core, premium
+  tier: varchar("tier", { length: 50 }).default("free"), // free, core, premium
+  createdViaStripe: boolean("created_via_stripe").default(false), // Track users created via Stripe checkout
   emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
   quickAddToken: text("quick_add_token").unique(), // Unique token for quick-add booking widget
   // SaaS Trial Management Fields

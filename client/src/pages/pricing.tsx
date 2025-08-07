@@ -58,6 +58,16 @@ export default function PricingPage() {
   });
 
   const handleSubscribe = (priceId: string) => {
+    // Check if user is authenticated
+    const isAuthenticated = subscriptionStatus !== undefined && subscriptionStatus !== null;
+    
+    if (!isAuthenticated) {
+      // Redirect to unified signup flow for new users
+      window.location.href = '/start-trial';
+      return;
+    }
+    
+    // Existing users can upgrade directly
     setLoading(true);
     createCheckoutMutation.mutate(priceId);
   };
@@ -74,7 +84,7 @@ export default function PricingPage() {
             Choose Your MusoBuddy Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional tools for serious musicians. Start with a 14-day trial (credit card required) to streamline your business with smart contracts, invoices, and client management.
+            Professional tools for serious musicians. Start with a 30-day trial (credit card required) to streamline your business with smart contracts, invoices, and client management.
           </p>
         </div>
 
@@ -90,12 +100,12 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {/* 14-Day Trial Plan */}
+          {/* 30-Day Trial Plan */}
           <Card className="border-2 border-green-400">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Free Trial</CardTitle>
               <div className="text-3xl font-bold">£0</div>
-              <p className="text-gray-500">14 days free</p>
+              <p className="text-gray-500">30 days free</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
@@ -123,10 +133,11 @@ export default function PricingPage() {
               <Button 
                 variant="outline" 
                 className="w-full bg-green-50 border-green-300 hover:bg-green-100"
-                disabled={currentPlan === 'trial'}
-                onClick={() => window.location.href = '/signup'}
+                disabled={currentPlan === 'trial' || loading}
+                onClick={() => handleSubscribe('price_1RouBwD9Bo26CG1DAF1rkSZI')}
               >
-                {currentPlan === 'trial' ? 'Current Trial' : 'Start Free Trial'}
+                {loading ? 'Processing...' : 
+                 currentPlan === 'trial' ? 'Current Trial' : 'Start 30-Day Free Trial'}
               </Button>
             </CardContent>
           </Card>

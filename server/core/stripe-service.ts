@@ -20,6 +20,51 @@ if (process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY) {
 export class StripeService {
   private stripe = stripe;
 
+  async createNewUserTrialSession(email: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI', userId?: string) {
+    if (!this.stripe) {
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
+    }
+    
+    try {
+      // Create checkout session for new user with 30-day trial
+      // User account will be created after successful payment via webhook
+      const session = await this.stripe.checkout.sessions.create({
+        customer_email: email,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId, // Core monthly price ID
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        subscription_data: {
+          trial_period_days: 30,
+          metadata: {
+            trial_type: 'core_monthly',
+            new_signup: 'true',
+            ...(userId && { userId })
+          },
+        },
+        success_url: `${ENV.appServerUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${ENV.appServerUrl}/pricing`,
+        metadata: {
+          userEmail: email,
+          trial_type: 'core_monthly',
+          new_signup: 'true',
+          ...(userId && { userId })
+        },
+        allow_promotion_codes: false,
+        billing_address_collection: 'required',
+      });
+
+      return { sessionId: session.id, checkoutUrl: session.url };
+    } catch (error) {
+      console.error('Error creating new user trial session:', error);
+      throw error;
+    }
+  }
+
   async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
     if (!this.stripe) {
       throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
@@ -49,7 +94,7 @@ export class StripeService {
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      // Create checkout session with 14-day trial
+      // Create checkout session with 30-day trial
       const session = await this.stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
@@ -61,7 +106,7 @@ export class StripeService {
         ],
         mode: 'subscription',
         subscription_data: {
-          trial_period_days: 14,
+          trial_period_days: 30,
           metadata: {
             userId: userId,
             trial_type: 'core_monthly',
@@ -96,13 +141,10 @@ export class StripeService {
     }
     
     try {
-      const session = await this.stripe.checkout.sessions.retrieve(sessionId);
-      return {
-        id: session.id,
-        customer: session.customer,
-        metadata: session.metadata,
-        status: session.status,
-      };
+      const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['subscription', 'customer']
+      });
+      return session;
     } catch (error) {
       console.error('Error getting session details:', error);
       throw error;
@@ -172,44 +214,72 @@ export class StripeService {
     console.log(`🔥 [CHECKOUT-${sessionId}] [${new Date().toISOString()}] Processing checkout completion`);
     console.log(`🔥 [CHECKOUT-${sessionId}] Session ID: ${session.id}`);
     
+    const isNewSignup = session.metadata?.new_signup === 'true';
     const userId = session.metadata?.userId;
+    const userEmail = session.metadata?.userEmail || session.customer_email;
     const customerId = session.customer as string;
 
+    console.log(`🔥 [CHECKOUT-${sessionId}] Is new signup: ${isNewSignup}`);
     console.log(`🔥 [CHECKOUT-${sessionId}] UserID: ${userId}`);
+    console.log(`🔥 [CHECKOUT-${sessionId}] UserEmail: ${userEmail}`);
     console.log(`🔥 [CHECKOUT-${sessionId}] CustomerID: ${customerId}`);
 
-    if (!userId) {
-      console.error(`🔥 [CHECKOUT-${sessionId}] ❌ No userId in metadata:`, session.metadata);
-      return;
-    }
-
     try {
+      let actualUserId = userId;
+      
+      // Handle new user signup flow
+      if (isNewSignup && userEmail) {
+        console.log(`🔥 [CHECKOUT-${sessionId}] Creating new user account for: ${userEmail}`);
+        
+        // Check if user already exists
+        const existingUser = await storage.getUserByEmail(userEmail);
+        
+        if (existingUser) {
+          console.log(`🔥 [CHECKOUT-${sessionId}] User already exists, updating subscription`);
+          actualUserId = existingUser.id;
+        } else {
+          // Create new user account with trial subscription
+          const newUser = await storage.createUser({
+            email: userEmail,
+            stripeCustomerId: customerId,
+            isSubscribed: true,
+            plan: 'core',
+            tier: 'core',
+            trialStatus: 'active',
+            trialExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            createdViaStripe: true,
+          });
+          
+          actualUserId = newUser.id;
+          console.log(`🔥 [CHECKOUT-${sessionId}] ✅ New user created: ${actualUserId}`);
+        }
+      }
+      
+      if (!actualUserId) {
+        console.error(`🔥 [CHECKOUT-${sessionId}] ❌ No userId available`);
+        return;
+      }
+
       console.log(`🔥 [CHECKOUT-${sessionId}] Updating user subscription...`);
       
       // Update user subscription status
-      console.log(`🔥 [CHECKOUT-${sessionId}] Updating user with:`, {
-        isSubscribed: true,
-        plan: 'core',
-        stripeCustomerId: customerId,
-      });
-      
-      await storage.updateUser(userId, {
+      await storage.updateUser(actualUserId, {
         isSubscribed: true,
         plan: 'core',
         tier: 'core',
         stripeCustomerId: customerId,
         trialStatus: 'active',
-        trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+        trialExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       });
 
-      console.log(`🔥 [CHECKOUT-${sessionId}] ✅ User subscription activated: ${userId}`);
+      console.log(`🔥 [CHECKOUT-${sessionId}] ✅ User subscription activated: ${actualUserId}`);
       
       // Verify the update worked
-      const updatedUser = await storage.getUserById(userId);
+      const updatedUser = await storage.getUserById(actualUserId);
       console.log(`🔥 [CHECKOUT-${sessionId}] ✅ Verification - User plan: ${updatedUser?.plan}, subscribed: ${updatedUser?.isSubscribed}`);
       
     } catch (error) {
-      console.error(`🔥 [CHECKOUT-${sessionId}] ❌ Error updating user:`, error);
+      console.error(`🔥 [CHECKOUT-${sessionId}] ❌ Error processing checkout:`, error);
       throw error; // Re-throw to ensure webhook fails properly
     }
   }

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
 // All authentication pages removed - using clean JWT system
 import Dashboard from "@/pages/dashboard";
@@ -32,6 +33,7 @@ import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
+import StartTrial from "@/pages/start-trial";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
@@ -82,8 +84,10 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/start-trial" component={StartTrial} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
       <Route path="/trial-success" component={TrialSuccessPage} />
+      <Route path="/success" component={SuccessPage} />
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />

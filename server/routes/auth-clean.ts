@@ -319,11 +319,195 @@ export function setupAuthRoutes(app: Express) {
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin: user.isAdmin || false,
-        phoneVerified: user.phoneVerified || false
+        phoneVerified: user.phoneVerified || false,
+        emailPrefix: user.emailPrefix || null
       });
 
     } catch (error) {
       console.error('Get user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Alias for /api/auth/user
+  app.get('/api/auth/me', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin || false,
+        phoneVerified: user.phoneVerified || false,
+        emailPrefix: user.emailPrefix || null
+      });
+
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // New register endpoint - creates user immediately
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { firstName, lastName, email, phoneNumber, password } = req.body;
+
+      if (!firstName || !lastName || !email || !phoneNumber || !password) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ error: 'Email already registered' });
+      }
+
+      // Create user immediately
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const userId = nanoid();
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+
+      await storage.createUser({
+        id: userId,
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        phoneNumber: formattedPhone,
+        phoneVerified: false,
+        createdViaStripe: false,
+        plan: 'free'
+      });
+
+      // Store verification code for later SMS verification
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      pendingVerifications.set(userId, {
+        firstName,
+        lastName,
+        email,
+        phoneNumber: formattedPhone,
+        password: hashedPassword,
+        verificationCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      });
+
+      console.log(`✅ User ${userId} created, pending phone verification`);
+
+      res.json({ 
+        success: true, 
+        userId,
+        message: 'Account created successfully'
+      });
+
+    } catch (error) {
+      console.error('Register error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Send SMS verification code
+  app.post('/api/auth/send-sms', async (req, res) => {
+    try {
+      const { phoneNumber, userId } = req.body;
+
+      if (!phoneNumber || !userId) {
+        return res.status(400).json({ error: 'Phone number and user ID are required' });
+      }
+
+      // Generate new verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+
+      // Store/update verification data
+      const existingData = pendingVerifications.get(userId) || {};
+      pendingVerifications.set(userId, {
+        ...existingData,
+        phoneNumber: formattedPhone,
+        verificationCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      });
+
+      // Send SMS verification using Twilio
+      try {
+        const { SmsService } = await import('../core/sms-service');
+        const smsService = new SmsService();
+        
+        await smsService.sendVerificationCode(formattedPhone, verificationCode);
+        console.log(`✅ SMS verification code sent to ${formattedPhone}`);
+
+        res.json({ 
+          success: true, 
+          message: 'Verification code sent to your phone',
+          // Don't send verification code in production
+          ...(process.env.NODE_ENV === 'development' && { verificationCode })
+        });
+      } catch (smsError) {
+        console.error('❌ SMS sending failed:', smsError);
+        // Fallback to console log in case SMS fails
+        console.log(`📱 FALLBACK - SMS code for ${formattedPhone}: ${verificationCode}`);
+        
+        res.json({ 
+          success: true, 
+          message: 'Verification code sent',
+          verificationCode // Include code when SMS fails
+        });
+      }
+
+    } catch (error) {
+      console.error('Send SMS error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Verify SMS code
+  app.post('/api/auth/verify-sms', async (req, res) => {
+    try {
+      const { phoneNumber, code, userId } = req.body;
+
+      if (!phoneNumber || !code || !userId) {
+        return res.status(400).json({ error: 'Phone number, code, and user ID are required' });
+      }
+
+      const pending = pendingVerifications.get(userId);
+      if (!pending) {
+        return res.status(400).json({ error: 'No pending verification found' });
+      }
+
+      if (pending.expiresAt < new Date()) {
+        pendingVerifications.delete(userId);
+        return res.status(400).json({ error: 'Verification code expired' });
+      }
+
+      if (pending.verificationCode !== code) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+
+      // Update user as phone verified
+      await storage.updateUser(userId, {
+        phoneVerified: true,
+        phoneVerifiedAt: new Date()
+      });
+
+      // Clean up pending verification
+      pendingVerifications.delete(userId);
+
+      console.log(`✅ Phone verified for user ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Phone number verified successfully'
+      });
+
+    } catch (error) {
+      console.error('Verify SMS error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
