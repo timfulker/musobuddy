@@ -111,49 +111,244 @@ export function generateContractSigningPage(
         .contract-content {
             width: 100%;
             min-height: 600px;
-            padding: 30px;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 15px;
-            line-height: 1.8;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border: 2px solid #e3e8ee;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
         }
-        .contract-title {
+        
+        /* Professional Contract Header */
+        .contract-header {
+            background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
+            color: white;
+            padding: 40px;
             text-align: center;
-            font-size: 24px;
-            font-weight: bold;
+            position: relative;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
             margin-bottom: 30px;
-            text-transform: uppercase;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 15px;
-            letter-spacing: 1px;
         }
-        .contract-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: rgba(255,255,255,0.8);
-            border-left: 4px solid #3498db;
-            border-radius: 0 8px 8px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        
+        .metronome-container {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
         }
-        .contract-section h4 {
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid #bdc3c7;
-            padding-bottom: 8px;
+        
+        .metronome-body {
+            width: 24px;
+            height: 38px;
+            background: white;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            position: relative;
         }
-        .contract-section p {
+        
+        .metronome-arm {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%) rotate(10deg);
+            width: 2.5px;
+            height: 24px;
+            background: #191970;
+            border-radius: 1px;
+            transform-origin: bottom center;
+        }
+        
+        .company-name {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: white;
+            line-height: 1;
             margin-bottom: 8px;
-            color: #34495e;
         }
-        .contract-section strong {
-            color: #2c3e50;
+        
+        .tagline {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            font-style: italic;
+            font-weight: 500;
+        }
+        
+        .contract-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 25px 0 15px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .contract-number {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+        }
+        
+        /* Contract Body */
+        .contract-body {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #191970;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1e3a8a;
+        }
+        
+        /* Parties Section */
+        .parties-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        
+        .party-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #1e3a8a;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .party-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #191970;
+            margin-bottom: 15px;
+        }
+        
+        .party-details {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+        
+        .party-details strong {
+            color: #2d3748;
+            font-weight: 700;
+        }
+        
+        /* Details Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #1e3a8a;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        /* Financial Section */
+        .financial-summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #0284c7;
+        }
+        
+        .fee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #bae6fd;
+        }
+        
+        .fee-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .fee-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0c4a6e;
+        }
+        
+        .fee-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0284c7;
+        }
+        
+        .payment-terms {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Requirements and Terms */
+        .requirements-content, .terms-content {
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        
+        .requirements-content p, .terms-content p {
+            margin-bottom: 15px;
+        }
+        
+        .terms-content p strong {
+            color: #191970;
             font-weight: 600;
         }
         .contract-document {
@@ -447,49 +642,131 @@ export function generateContractSigningPage(
         async function loadContractData() {
             try {
                 const contractContent = document.getElementById('contractContent');
+                const eventDate = new Date('${contract.eventDate}');
+                const eventDateStr = eventDate ? eventDate.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long',
+                    day: 'numeric'
+                }) : 'Date TBC';
+                
                 contractContent.innerHTML = \`
-                    <div class="contract-title">Music Performance Contract</div>
-                    
-                    <div class="contract-section">
-                        <h4>Contract Details</h4>
-                        <p><strong>Contract Number:</strong> ${contract.contractNumber}</p>
-                        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <!-- Professional Contract Header -->
+                    <div class="contract-header">
+                        <div class="logo-section">
+                            <div class="metronome-container">
+                                <div class="metronome-body">
+                                    <div class="metronome-arm"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="company-name">${userSettings.businessName || 'MusoBuddy'}</div>
+                                <div class="tagline">Professional Music Services</div>
+                            </div>
+                        </div>
+                        <div class="contract-title">Performance Contract</div>
+                        <div class="contract-number">Contract No. ${contract.contractNumber}</div>
+                        <div class="status-badge status-sent">Awaiting Signature</div>
                     </div>
                     
-                    <div class="contract-section">
-                        <h4>Parties</h4>
-                        <p><strong>Performer:</strong> ${userSettings.businessName || 'Performer'}<br>
-                        ${userSettings.businessAddress || ''}</p>
-                        <p><strong>Client:</strong> ${contract.clientName}<br>
-                        ${contract.clientAddress || ''}</p>
-                    </div>
-                    
-                    <div class="contract-section">
-                        <h4>Event Details</h4>
-                        <p><strong>Event Date:</strong> ${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString() : 'TBD'}</p>
-                        <p><strong>Event Time:</strong> ${contract.eventTime || 'TBD'}</p>
-                        <p><strong>Venue:</strong> ${contract.venue || 'TBD'}</p>
-                        <p><strong>Venue Address:</strong> ${contract.venueAddress || 'TBD'}</p>
-                    </div>
-                    
-                    <div class="contract-section">
-                        <h4>Financial Terms</h4>
-                        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-                        <p><strong>Deposit Required:</strong> £${contract.deposit || '0.00'}</p>
-                        <p><strong>Payment Instructions:</strong> ${contract.paymentInstructions || 'Payment due on completion of performance'}</p>
-                    </div>
-                    
-                    <div class="contract-section">
-                        <h4>Technical Requirements</h4>
-                        <p><strong>Equipment:</strong> ${contract.equipmentRequirements || 'Standard performance setup'}</p>
-                        <p><strong>Special Requirements:</strong> ${contract.specialRequirements || 'None specified'}</p>
-                    </div>
-                    
-                    <div class="contract-section">
-                        <h4>Terms and Conditions</h4>
-                        <p>This contract constitutes the entire agreement between the parties. The performer agrees to provide musical entertainment services as specified above. The client agrees to provide a suitable performance space and pay the agreed fee.</p>
-                        <p>Cancellation by the client within 48 hours of the event may result in forfeiture of the deposit. Force majeure events shall excuse performance by either party.</p>
-                        <p>This contract shall be governed by the laws of England and Wales.</p>
+                    <!-- Contract Content -->
+                    <div class="contract-body">
+                        <!-- Parties Section -->
+                        <div class="section">
+                            <div class="section-title">Parties to this Agreement</div>
+                            <div class="parties-section">
+                                <div class="party-box">
+                                    <div class="party-title">Service Provider</div>
+                                    <div class="party-details">
+                                        <strong>${userSettings.businessName || 'Professional Music Services'}</strong><br>
+                                        ${userSettings.businessAddress || ''}<br>
+                                        ${userSettings.businessEmail || ''}<br>
+                                        ${userSettings.businessPhone || ''}
+                                    </div>
+                                </div>
+                                <div class="party-box">
+                                    <div class="party-title">Client</div>
+                                    <div class="party-details">
+                                        <strong>${contract.clientName}</strong><br>
+                                        ${contract.clientAddress || ''}<br>
+                                        ${contract.clientEmail || ''}<br>
+                                        ${contract.clientPhone || ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Event Details -->
+                        <div class="section">
+                            <div class="section-title">Event Details</div>
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Event Date:</span>
+                                    <span class="detail-value">\${eventDateStr}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Event Time:</span>
+                                    <span class="detail-value">${contract.eventTime || 'TBC'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Venue:</span>
+                                    <span class="detail-value">${contract.venue || 'TBC'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Venue Address:</span>
+                                    <span class="detail-value">${contract.venueAddress || 'TBC'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Financial Terms -->
+                        <div class="section">
+                            <div class="section-title">Financial Terms</div>
+                            <div class="financial-summary">
+                                <div class="fee-item">
+                                    <span class="fee-label">Total Performance Fee:</span>
+                                    <span class="fee-amount">£${contract.fee}</span>
+                                </div>
+                                <div class="fee-item">
+                                    <span class="fee-label">Deposit Required:</span>
+                                    <span class="fee-amount">£${contract.deposit || '0.00'}</span>
+                                </div>
+                            </div>
+                            <div class="payment-terms">
+                                <strong>Payment Instructions:</strong><br>
+                                ${contract.paymentInstructions || 'Payment due on completion of performance'}
+                            </div>
+                        </div>
+                        
+                        <!-- Technical Requirements -->
+                        <div class="section">
+                            <div class="section-title">Technical Requirements</div>
+                            <div class="requirements-content">
+                                <p><strong>Equipment Requirements:</strong><br>
+                                ${contract.equipmentRequirements || 'Standard performance setup as discussed'}</p>
+                                
+                                <p><strong>Special Requirements:</strong><br>
+                                ${contract.specialRequirements || 'None specified'}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="section">
+                            <div class="section-title">Terms and Conditions</div>
+                            <div class="terms-content">
+                                <p>This contract constitutes the entire agreement between the parties for the provision of live musical entertainment services.</p>
+                                
+                                <p><strong>Performance Obligations:</strong> The Service Provider agrees to provide professional musical entertainment services at the specified venue and time, using appropriate equipment and maintaining professional standards throughout the performance.</p>
+                                
+                                <p><strong>Payment Terms:</strong> Payment shall be made according to the schedule specified above. Late payments may incur additional charges.</p>
+                                
+                                <p><strong>Cancellation Policy:</strong> Cancellation by the Client within 48 hours of the event may result in forfeiture of the deposit. Cancellation due to force majeure events shall excuse performance by either party.</p>
+                                
+                                <p><strong>Liability:</strong> The Service Provider's liability is limited to the total contract value. Both parties agree to maintain appropriate insurance coverage.</p>
+                                
+                                <p><strong>Governing Law:</strong> This contract shall be governed by the laws of England and Wales.</p>
+                            </div>
+                        </div>
                     </div>
                 \`;
             } catch (error) {
