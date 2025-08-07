@@ -93,11 +93,30 @@ export function generateContractSigningPage(
             position: relative;
             overflow: hidden;
         }
-        .pdf-embed {
+        .contract-content {
             width: 100%;
-            height: 600px;
-            border: none;
-            display: block;
+            min-height: 600px;
+            padding: 20px;
+            font-family: 'Times New Roman', serif;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #fafafa;
+            border: 1px solid #ddd;
+        }
+        .contract-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        .contract-section {
+            margin-bottom: 20px;
+        }
+        .contract-section h4 {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
         }
         .contract-document {
             text-align: center;
@@ -267,11 +286,11 @@ export function generateContractSigningPage(
         </div>
 
         <div class="contract-viewer">
-            <iframe 
-                src="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/${contract.id}/download#toolbar=1&navpanes=0&scrollbar=1" 
-                class="pdf-embed"
-                title="Contract Document">
-            </iframe>
+            <div class="contract-content" id="contractContent">
+                <div style="padding: 20px; text-align: center; color: #666;">
+                    <p>Loading contract document...</p>
+                </div>
+            </div>
         </div>
         
         <div class="contract-document">
@@ -381,6 +400,64 @@ export function generateContractSigningPage(
                 signButton.textContent = 'Sign Contract';
             }
         });
+        
+        // Load contract content on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContractData();
+        });
+        
+        async function loadContractData() {
+            try {
+                const contractContent = document.getElementById('contractContent');
+                contractContent.innerHTML = \`
+                    <div class="contract-title">Music Performance Contract</div>
+                    
+                    <div class="contract-section">
+                        <h4>Contract Details</h4>
+                        <p><strong>Contract Number:</strong> ${contract.contractNumber}</p>
+                        <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div class="contract-section">
+                        <h4>Parties</h4>
+                        <p><strong>Performer:</strong> ${userSettings.businessName || 'Performer'}<br>
+                        ${userSettings.businessAddress || ''}</p>
+                        <p><strong>Client:</strong> ${contract.clientName}<br>
+                        ${contract.clientAddress || ''}</p>
+                    </div>
+                    
+                    <div class="contract-section">
+                        <h4>Event Details</h4>
+                        <p><strong>Event Date:</strong> ${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString() : 'TBD'}</p>
+                        <p><strong>Event Time:</strong> ${contract.eventTime || 'TBD'}</p>
+                        <p><strong>Venue:</strong> ${contract.venue || 'TBD'}</p>
+                        <p><strong>Venue Address:</strong> ${contract.venueAddress || 'TBD'}</p>
+                    </div>
+                    
+                    <div class="contract-section">
+                        <h4>Financial Terms</h4>
+                        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+                        <p><strong>Deposit Required:</strong> £${contract.deposit || '0.00'}</p>
+                        <p><strong>Payment Instructions:</strong> ${contract.paymentInstructions || 'Payment due on completion of performance'}</p>
+                    </div>
+                    
+                    <div class="contract-section">
+                        <h4>Technical Requirements</h4>
+                        <p><strong>Equipment:</strong> ${contract.equipmentRequirements || 'Standard performance setup'}</p>
+                        <p><strong>Special Requirements:</strong> ${contract.specialRequirements || 'None specified'}</p>
+                    </div>
+                    
+                    <div class="contract-section">
+                        <h4>Terms and Conditions</h4>
+                        <p>This contract constitutes the entire agreement between the parties. The performer agrees to provide musical entertainment services as specified above. The client agrees to provide a suitable performance space and pay the agreed fee.</p>
+                        <p>Cancellation by the client within 48 hours of the event may result in forfeiture of the deposit. Force majeure events shall excuse performance by either party.</p>
+                        <p>This contract shall be governed by the laws of England and Wales.</p>
+                    </div>
+                \`;
+            } catch (error) {
+                console.error('Error loading contract:', error);
+            }
+        }
     </script>
 </body>
 </html>`;
