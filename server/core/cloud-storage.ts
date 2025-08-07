@@ -768,6 +768,7 @@ ${contract.riderNotes}
                 form.addEventListener('submit', handleSign);
             } else {
                 console.error('❌ Form not found!');
+            }
             
             // Pre-populate client IP (optional)
             fetch('https://api.ipify.org?format=json')
