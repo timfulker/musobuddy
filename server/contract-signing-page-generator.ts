@@ -22,6 +22,7 @@ export function generateContractSigningPage(
             align-items: center;
             justify-content: center;
             padding: 20px;
+            font-size: 16px;
         }
         .container {
             background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
@@ -98,7 +99,7 @@ export function generateContractSigningPage(
         }
         .detail-value {
             color: #212529;
-            font-size: 14px;
+            font-size: 16px;
         }
         .contract-viewer {
             background: white;
@@ -118,6 +119,7 @@ export function generateContractSigningPage(
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
             color: #333;
+            font-size: 16px;
         }
         
         /* Professional Contract Header */
@@ -223,7 +225,7 @@ export function generateContractSigningPage(
         }
         
         .section-title {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             color: #191970;
             margin-bottom: 25px;
@@ -248,14 +250,14 @@ export function generateContractSigningPage(
         }
         
         .party-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
             color: #191970;
             margin-bottom: 15px;
         }
         
         .party-details {
-            font-size: 15px;
+            font-size: 17px;
             line-height: 1.6;
             color: #4a5568;
         }
@@ -317,7 +319,7 @@ export function generateContractSigningPage(
         }
         
         .fee-label {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
             color: #0c4a6e;
         }
@@ -333,13 +335,13 @@ export function generateContractSigningPage(
             padding: 20px;
             border-radius: 8px;
             border-left: 4px solid #6c757d;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.6;
         }
         
         /* Requirements and Terms */
         .requirements-content, .terms-content {
-            font-size: 15px;
+            font-size: 17px;
             line-height: 1.7;
         }
         
@@ -498,6 +500,7 @@ export function generateContractSigningPage(
         .terms-list li {
             margin-bottom: 8px;
             line-height: 1.4;
+            font-size: 16px;
         }
         .requirements-box {
             background: #f8fafc;
@@ -506,6 +509,7 @@ export function generateContractSigningPage(
             padding: 15px;
             margin: 10px 0;
             line-height: 1.5;
+            font-size: 16px;
         }
     </style>
 </head>
