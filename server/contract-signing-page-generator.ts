@@ -686,12 +686,12 @@ export function generateContractSigningPage(
                 signButton.disabled = false;
                 signButton.textContent = 'Sign Contract';
             }
-                });
-            }
-            
-            // Load contract content on page load
-            loadContractData();
         });
+        }
+        
+        // Load contract content on page load
+        loadContractData();
+    });
         
         async function loadContractData() {
             try {
