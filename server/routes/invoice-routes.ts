@@ -193,6 +193,8 @@ export function registerInvoiceRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.userId;
       
+      console.log(`🗑️ Delete request for invoice #${invoiceId} by user ${userId}`);
+      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -201,16 +203,26 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid invoice ID' });
       }
       
-      const invoice = await storage.getInvoice(invoiceId);
+      // Use getInvoiceByIdAndUser to check both existence and ownership in one query
+      const invoice = await storage.getInvoiceByIdAndUser(invoiceId, userId);
       if (!invoice) {
-        return res.status(404).json({ error: 'Invoice not found' });
+        // Check if invoice exists at all (for better error message)
+        const existingInvoice = await storage.getInvoice(invoiceId);
+        if (!existingInvoice) {
+          console.log(`❌ Invoice #${invoiceId} does not exist`);
+          return res.status(404).json({ error: `Invoice #${invoiceId} not found` });
+        } else {
+          console.log(`❌ Invoice #${invoiceId} belongs to different user`);
+          return res.status(403).json({ error: 'Access denied - invoice belongs to another user' });
+        }
       }
       
-      if (invoice.userId !== userId) {
-        return res.status(403).json({ error: 'Access denied' });
+      const deleted = await storage.deleteInvoice(invoiceId, userId);
+      if (!deleted) {
+        console.log(`⚠️ Invoice #${invoiceId} may have already been deleted`);
+        return res.status(404).json({ error: 'Invoice already deleted or not found' });
       }
       
-      await storage.deleteInvoice(invoiceId, userId);
       console.log(`✅ Deleted invoice #${invoiceId} for user ${userId}`);
       res.json({ success: true });
       
@@ -248,14 +260,16 @@ export function registerInvoiceRoutes(app: Express) {
             continue;
           }
           
-          const invoice = await storage.getInvoice(invoiceId);
+          // Use getInvoiceByIdAndUser to check both existence and ownership
+          const invoice = await storage.getInvoiceByIdAndUser(invoiceId, userId);
           if (!invoice) {
-            errors.push({ id: invoiceId, error: 'Not found' });
-            continue;
-          }
-          
-          if (invoice.userId !== userId) {
-            errors.push({ id: invoiceId, error: 'Access denied' });
+            // Check if invoice exists at all for better error message
+            const existingInvoice = await storage.getInvoice(invoiceId);
+            if (!existingInvoice) {
+              errors.push({ id: invoiceId, error: 'Not found' });
+            } else {
+              errors.push({ id: invoiceId, error: 'Access denied' });
+            }
             continue;
           }
           
