@@ -358,8 +358,8 @@ export function generateContractSigningPage(
             margin-top: 24px;
         }
         .signature-form {
-            background: #f0f9ff;
-            border: 2px solid #3b82f6;
+            background: #f8fff4;
+            border: 2px solid #28a745;
             border-radius: 12px;
             padding: 24px;
         }
@@ -382,8 +382,8 @@ export function generateContractSigningPage(
         }
         input:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .checkbox-group {
             display: flex;
@@ -396,7 +396,7 @@ export function generateContractSigningPage(
             height: 18px;
         }
 
-        /* Blue Sign Button */
+        /* Sign Button */
         .sign-button {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
@@ -415,47 +415,39 @@ export function generateContractSigningPage(
             background: linear-gradient(135deg, #1d4ed8, #1e40af);
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-            cursor: pointer;
-        }
-        .sign-button:active:not(:disabled) {
-            transform: translateY(0px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         .sign-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .success-message {
-            background: #f0fff4;
-            color: #22543d;
+        .success-message, .error-message {
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
-            border: 2px solid #9ae6b4;
             display: none;
+        }
+        .success-message {
+            background: #f0fff4;
+            color: #22543d;
+            border: 2px solid #9ae6b4;
         }
         .error-message {
             background: #fed7d7;
             color: #742a2a;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
             border: 2px solid #fc8181;
-            display: none;
         }
 
-        @media (max-width: 768px) {
-            .container { padding: 20px; }
-            .detail-grid { grid-template-columns: 1fr; }
-            .parties-section { grid-template-columns: 1fr; }
-            .details-grid { grid-template-columns: 1fr; }
-            .company-name { font-size: 28px; }
-            .contract-title { font-size: 24px; }
+        /* Hide any signature pad elements */
+        canvas, .signature-pad, .signature-canvas, [class*="signature"] canvas {
+            display: none !important;
+        }
+
+        /* Remove any dotted signature areas */
+        .signature-area, .sign-area, [class*="click-to-sign"], [class*="signature-box"] {
+            display: none !important;
         }
     </style>
 </head>
@@ -556,9 +548,9 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Performance Details -->
+                    <!-- Event Details -->
                     <div class="section">
-                        <div class="section-title">Performance Details</div>
+                        <div class="section-title">Event Details</div>
                         <div class="details-grid">
                             <div class="detail-item">
                                 <span class="detail-label">Event Date:</span>
@@ -584,7 +576,7 @@ export function generateContractSigningPage(
                         <div class="section-title">Financial Terms</div>
                         <div class="financial-summary">
                             <div class="fee-item">
-                                <span class="fee-label">Performance Fee:</span>
+                                <span class="fee-label">Total Performance Fee:</span>
                                 <span class="fee-amount">£${fee}</span>
                             </div>
                             <div class="fee-item">
@@ -598,64 +590,72 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Equipment & Requirements -->
+                    <!-- Technical Requirements -->
                     <div class="section">
-                        <div class="section-title">Equipment & Requirements</div>
+                        <div class="section-title">Technical Requirements</div>
                         <div class="requirements-content">
-                            <div class="requirements-box">
-                                <strong>Equipment Requirements:</strong><br>
-                                ${equipmentRequirements}
-                            </div>
-                            <div class="requirements-box">
-                                <strong>Special Requirements:</strong><br>
-                                ${specialRequirements}
-                            </div>
+                            <p><strong>Equipment Requirements:</strong><br>
+                            ${equipmentRequirements}</p>
+
+                            <p><strong>Special Requirements:</strong><br>
+                            ${specialRequirements}</p>
                         </div>
                     </div>
 
                     <!-- Terms and Conditions -->
                     <div class="section">
-                        <div class="section-title">Terms and Conditions</div>
-                        <div class="terms-content">
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Professional Performance Standards</div>
-                                <ul class="terms-list">
-                                    <li>Professional musical performance delivered to industry standards</li>
-                                    <li>Appropriate attire and conduct maintained throughout the event</li>
-                                    <li>Performance to commence promptly at the agreed time</li>
-                                    <li>Equipment setup and sound check completed 30 minutes prior to performance</li>
-                                </ul>
-                            </div>
+                        <div class="section-title">Terms & Conditions</div>
 
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Payment Terms</div>
-                                <ul class="terms-list">
-                                    <li>Deposit of £${deposit} required to secure booking</li>
-                                    <li>Full payment due on completion of performance</li>
-                                    <li>Late payment subject to additional charges</li>
-                                    <li>Payment methods: Bank transfer, cash, or cheque</li>
-                                </ul>
-                            </div>
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Professional Performance Standards</div>
+                            <ul class="terms-list">
+                                <li>Professional musical performance delivered to industry standards with appropriate attire</li>
+                                <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
+                                <li>The performer maintains professional liability insurance as required for musical performances</li>
+                                <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
+                                <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
+                                <li>All musical instruments and equipment remain the exclusive property of the performer</li>
+                                <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
+                                <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
+                            </ul>
+                        </div>
 
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Cancellation Policy</div>
-                                <ul class="terms-list">
-                                    <li>24+ hours notice: Full refund of deposit</li>
-                                    <li>Less than 24 hours: 50% deposit retained</li>
-                                    <li>Day of event: Full deposit retained</li>
-                                    <li>Force majeure events handled case by case</li>
-                                </ul>
-                            </div>
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Payment Terms & Conditions</div>
+                            <div class="requirements-box">
+                                <strong>Payment Due Date:</strong> Full payment of £${fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
 
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Liability and Insurance</div>
-                                <ul class="terms-list">
-                                    <li>Public liability insurance maintained by service provider</li>
-                                    <li>Equipment protection and safety protocols followed</li>
-                                    <li>Client responsible for venue safety and access</li>
-                                    <li>Any damages to venue equipment are client's responsibility</li>
-                                </ul>
+                                <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
+
+                                <strong>Deposit:</strong> £${deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
+
+                                <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
                             </div>
+                        </div>
+
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Cancellation & Refund Policy</div>
+                            <div class="requirements-box">
+                                <strong>Client Cancellation:</strong><br>
+                                • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
+                                • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
+                                • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
+
+                                <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
+
+                                <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
+                            </div>
+                        </div>
+
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Legal Framework</div>
+                            <ul class="terms-list">
+                                <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
+                                <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
+                                <li>Contract governed by the laws of England and Wales</li>
+                                <li>This contract constitutes the entire agreement between parties</li>
+                                <li>Both parties confirm they have authority to enter this agreement</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -663,152 +663,142 @@ export function generateContractSigningPage(
         </div>
 
         ${contract.status !== 'signed' ? `
-        <div class="signature-section">
-            <form id="signatureForm" class="signature-form">
-                <div class="form-group">
-                    <label for="clientName">Full Name (Digital Signature)</label>
-                    <input type="text" id="clientName" name="clientName" value="${clientName}" required>
+            <div class="signature-section">
+                <div class="signature-form">
+                    <form id="signatureForm">
+                        <div class="form-group">
+                            <label for="clientName">Client Name</label>
+                            <input type="text" id="clientName" value="${clientName}" readonly style="background: #f8f9fa;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emailAddress">Email Address</label>
+                            <input type="email" id="emailAddress" value="${clientEmail}" placeholder="Enter your email address">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signatureDate">Signature Date</label>
+                            <input type="text" id="signatureDate" value="${todayFormatted}" readonly style="background: #f8f9fa;">
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="agreeTerms" required>
+                            <label for="agreeTerms" style="margin: 0;">I agree to the terms and conditions outlined in this contract</label>
+                        </div>
+
+                        <button type="submit" class="sign-button" id="signButton">Sign Contract</button>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label for="emailAddress">Email Address</label>
-                    <input type="email" id="emailAddress" name="emailAddress" value="${clientEmail}" required>
-                </div>
-                <div class="form-group">
-                    <label for="signatureDate">Date</label>
-                    <input type="text" id="signatureDate" name="signatureDate" value="${todayFormatted}" readonly>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                    <label for="agreeTerms">I agree to the terms and conditions outlined in this contract</label>
-                </div>
-                
-                <button type="submit" id="signButton" class="sign-button">Sign Contract</button>
-            </form>
-        </div>
+            </div>
         ` : ''}
     </div>
 
     <script>
-        // Store contract data safely
-        const contractData = {
-            id: ${contractId},
-            contractNumber: "${contractNumber}",
-            clientName: "${clientName}",
-            clientEmail: "${clientEmail}",
-            venue: "${venue}",
-            eventTime: "${eventTime}",
-            fee: "${fee}",
-            deposit: "${deposit}",
-            paymentInstructions: "${paymentInstructions}",
-            equipmentRequirements: "${equipmentRequirements}",
-            specialRequirements: "${specialRequirements}"
-        };
+        // Disable any signature pad libraries
+        window.SignaturePad = undefined;
+        if (typeof SignaturePad !== 'undefined') {
+            SignaturePad = undefined;
+        }
 
-        const userSettingsData = {
-            businessName: "${businessName}",
-            businessAddress: "${businessAddress}",
-            businessEmail: "${businessEmail}",
-            phone: "${businessPhone}"
-        };
-
-        const eventDateFormatted = "${eventDateFormatted}";
-
-        // Ensure DOM is loaded before attaching events
         document.addEventListener('DOMContentLoaded', function() {
-            const signatureForm = document.getElementById('signatureForm');
+            // Remove any signature pad elements that might be added by external libraries
+            setTimeout(function() {
+                var signaturePads = document.querySelectorAll('canvas, .signature-pad, .signature-canvas, [class*="signature-pad"]');
+                signaturePads.forEach(function(element) {
+                    element.remove();
+                });
+
+                // Remove any "click to sign" text or boxes
+                var clickToSignElements = document.querySelectorAll('[class*="click-to-sign"], [class*="signature-box"], .signature-area');
+                clickToSignElements.forEach(function(element) {
+                    element.remove();
+                });
+            }, 100);
+
+            var signatureForm = document.getElementById('signatureForm');
             if (signatureForm) {
-                signatureForm.addEventListener('submit', async function(e) {
+                signatureForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    
-                    const signButton = document.getElementById('signButton');
-                    const successMessage = document.getElementById('success-message');
-                    const errorMessage = document.getElementById('error-message');
-                    const errorText = document.getElementById('error-text');
-                    
-                    // Validate form
-                    const emailAddress = document.getElementById('emailAddress').value;
-                    const agreeTerms = document.getElementById('agreeTerms').checked;
-                    
+
+                    var signButton = document.getElementById('signButton');
+                    var successMessage = document.getElementById('success-message');
+                    var errorMessage = document.getElementById('error-message');
+                    var errorText = document.getElementById('error-text');
+
+                    var emailAddress = document.getElementById('emailAddress').value;
+                    var agreeTerms = document.getElementById('agreeTerms').checked;
+
                     if (!agreeTerms) {
                         errorText.textContent = 'Please agree to the terms and conditions';
                         errorMessage.style.display = 'block';
                         return;
                     }
-                    
-                    if (!emailAddress || !emailAddress.includes('@')) {
+
+                    if (!emailAddress || emailAddress.indexOf('@') === -1) {
                         errorText.textContent = 'Please enter a valid email address';
                         errorMessage.style.display = 'block';
                         return;
                     }
-                    
-                    // Hide previous messages
+
                     successMessage.style.display = 'none';
                     errorMessage.style.display = 'none';
-                    
-                    // Disable button and show loading
+
                     signButton.disabled = true;
                     signButton.textContent = 'Signing Contract...';
-                    
-                    try {
-                        console.log('Attempting to sign contract with ID:', contractData.id);
-                        console.log('Request data:', {
-                            clientSignature: document.getElementById('clientName').value,
-                            clientEmail: emailAddress,
-                            clientIP: '0.0.0.0'
-                        });
-                        
-                        // FIXED: Use backticks for template literal
-                        const response = await fetch(\`https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/\${contractData.id}\`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                clientSignature: document.getElementById('clientName').value,
-                                clientEmail: emailAddress,
-                                clientIP: '0.0.0.0',
-                                signedAt: new Date().toISOString()
-                            })
-                        });
-                        
-                        console.log('Response status:', response.status);
-                        const result = await response.json();
-                        console.log('Response result:', result);
-                        
-                        if (response.ok && result.success) {
+
+                    var requestData = {
+                        clientSignature: document.getElementById('clientName').value,
+                        clientEmail: emailAddress,
+                        clientIP: '0.0.0.0',
+                        signedAt: new Date().toISOString()
+                    };
+
+                    // FIXED: Using backticks for template literal  
+                    var apiUrl = 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + contractId;
+
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    }).then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Server error: ' + response.status);
+                        }
+                        return response.json();
+                    }).then(function(result) {
+                        if (result.success) {
                             successMessage.style.display = 'block';
-                            document.getElementById('signatureForm').style.display = 'none';
+                            signatureForm.style.display = 'none';
                             successMessage.scrollIntoView({ behavior: 'smooth' });
                         } else {
                             throw new Error(result.message || result.error || 'Signing failed');
                         }
-                    } catch (error) {
+                    }).catch(function(error) {
                         console.error('Signing error:', error);
-                        errorText.textContent = error.message || 'Unable to sign contract. Please try again.';
+                        errorText.textContent = error.message || 'Error occurred while signing the contract';
                         errorMessage.style.display = 'block';
-                    } finally {
-                        // Re-enable button
+
                         signButton.disabled = false;
                         signButton.textContent = 'Sign Contract';
-                    }
+                    });
                 });
             }
         });
     </script>
 </body>
-</html>`;
+</html>\`;
 }
 
-// HTML escaping function
-function escapeHtml(text: string | null | undefined): string {
-  if (!text) return '';
-  const div = { innerHTML: '' } as any;
-  div.textContent = text;
-  return div.innerHTML || text.toString()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+// Helper function to escape HTML to prevent XSS
+function escapeHtml(unsafe: string): string {
+  if (!unsafe || typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\n/g, "<br>");
 }
