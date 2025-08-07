@@ -342,6 +342,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           <h3>BILL TO:</h3>
           <p><strong>${invoice.clientName}</strong></p>
           ${invoice.clientEmail ? `<p>${invoice.clientEmail}</p>` : ''}
+          ${invoice.clientPhone ? `<p>Phone: ${invoice.clientPhone}</p>` : ''}
           ${invoice.clientAddress ? `<p>${invoice.clientAddress}</p>` : ''}
         </div>
       </div>
