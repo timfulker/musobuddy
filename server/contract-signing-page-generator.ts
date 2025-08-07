@@ -482,6 +482,31 @@ export function generateContractSigningPage(
             border: 2px solid #fc8181;
             display: none;
         }
+        .terms-section {
+            margin-bottom: 25px;
+        }
+        .terms-subtitle {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .terms-list {
+            margin: 0 0 15px 20px;
+            padding: 0;
+        }
+        .terms-list li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .requirements-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -681,7 +706,7 @@ export function generateContractSigningPage(
                                 </div>
                             </div>
                             <div>
-                                <div class="company-name">${userSettings.businessName || 'MusoBuddy'}</div>
+                                <div class="company-name">${userSettings?.businessName || 'MusoBuddy'}</div>
                                 <div class="tagline">Professional Music Services</div>
                             </div>
                         </div>
@@ -701,7 +726,7 @@ export function generateContractSigningPage(
                                     <div class="party-details">
                                         <strong>${userSettings?.businessName || 'Professional Music Services'}</strong><br>
                                         <strong>Address:</strong> ${userSettings?.businessAddress || 'Address not provided'}<br>
-                                        ${userSettings?.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> ${userSettings?.businessPhone || userSettings?.phoneNumber || 'Phone not provided'}
+                                        ${userSettings?.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> Phone not provided
                                     </div>
                                 </div>
                                 <div class="party-box">
@@ -770,19 +795,78 @@ export function generateContractSigningPage(
                         
                         <!-- Terms and Conditions -->
                         <div class="section">
-                            <div class="section-title">Terms and Conditions</div>
-                            <div class="terms-content">
-                                <p>This contract constitutes the entire agreement between the parties for the provision of live musical entertainment services.</p>
-                                
-                                <p><strong>Performance Obligations:</strong> The Service Provider agrees to provide professional musical entertainment services at the specified venue and time, using appropriate equipment and maintaining professional standards throughout the performance.</p>
-                                
-                                <p><strong>Payment Terms:</strong> Payment shall be made according to the schedule specified above. Late payments may incur additional charges.</p>
-                                
-                                <p><strong>Cancellation Policy:</strong> Cancellation by the Client within 48 hours of the event may result in forfeiture of the deposit. Cancellation due to force majeure events shall excuse performance by either party.</p>
-                                
-                                <p><strong>Liability:</strong> The Service Provider's liability is limited to the total contract value. Both parties agree to maintain appropriate insurance coverage.</p>
-                                
-                                <p><strong>Governing Law:</strong> This contract shall be governed by the laws of England and Wales.</p>
+                            <div class="section-title">Terms & Conditions</div>
+                            
+                            <!-- Professional Standards -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Professional Performance Standards</div>
+                                <ul class="terms-list">
+                                    <li>Professional musical performance delivered to industry standards with appropriate attire</li>
+                                    <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
+                                    <li>The performer maintains professional liability insurance as required for musical performances</li>
+                                    <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
+                                    <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
+                                    <li>All musical instruments and equipment remain the exclusive property of the performer</li>
+                                    <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
+                                    <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
+                                </ul>
+                            </div>
+
+                            <!-- Payment Terms -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Payment Terms & Conditions</div>
+                                <div class="requirements-box">
+                                    <strong>Payment Due Date:</strong> Full payment of £${contract.fee || 'Amount TBC'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                                    
+                                    <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
+                                    
+                                    <strong>Deposit:</strong> ${contract.deposit && parseFloat(contract.deposit) > 0 ? `£${contract.deposit}` : 'Deposit amount TBC'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
+                                    
+                                    <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
+                                </div>
+                            </div>
+
+                            <!-- Cancellation Policy -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Cancellation & Refund Policy</div>
+                                <div class="requirements-box">
+                                    <strong>Client Cancellation:</strong><br>
+                                    • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
+                                    • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
+                                    • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
+                                    
+                                    <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
+                                    
+                                    <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
+                                </div>
+                            </div>
+
+                            <!-- Performance Contingencies -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Performance Contingencies</div>
+                                <div class="requirements-box">
+                                    The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.
+                                </div>
+                            </div>
+
+                            <!-- Force Majeure -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Force Majeure</div>
+                                <div class="requirements-box">
+                                    Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.
+                                </div>
+                            </div>
+
+                            <!-- Legal Framework -->
+                            <div class="terms-section">
+                                <div class="terms-subtitle">Legal Framework</div>
+                                <ul class="terms-list">
+                                    <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
+                                    <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
+                                    <li>Contract governed by the laws of England and Wales</li>
+                                    <li>This contract constitutes the entire agreement between parties</li>
+                                    <li>Both parties confirm they have authority to enter this agreement</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
