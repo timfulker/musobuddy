@@ -1,12 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Environment-specific auth token key - MUST MATCH login.tsx exactly
+// Environment-specific auth token key - MUST MATCH useAuth.tsx exactly
 const getAuthTokenKey = () => {
   const hostname = window.location.hostname;
   
   // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_musobuddy_replit_app';
+    return 'authToken_dev_admin';
   }
   
   // Production: Environment-specific to prevent conflicts (match login.tsx format)
