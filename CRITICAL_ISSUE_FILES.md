@@ -13,7 +13,8 @@
 - `client/src/hooks/useAuth.tsx` - Auth hook that manages JWT tokens
 - `client/src/lib/queryClient.ts` - API request wrapper that should include auth headers
 - `client/src/pages/invoices.tsx` - Invoice send function missing proper auth (lines 505-545)
-- `client/src/pages/login.tsx` - Where JWT tokens are stored to localStorage
+- `client/src/pages/auth/login.tsx` - Where JWT tokens are stored to localStorage
+- `client/src/pages/auth/signup.tsx` - Also stores JWT tokens to localStorage
 
 **Backend:**
 - `server/core/auth.ts` - JWT verification middleware
