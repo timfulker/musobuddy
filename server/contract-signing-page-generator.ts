@@ -29,7 +29,7 @@ export function generateContractSigningPage(
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             padding: 32px;
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
         }
         .header {
             text-align: center;
@@ -85,18 +85,33 @@ export function generateContractSigningPage(
             color: #212529;
             font-size: 14px;
         }
+        .contract-viewer {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .pdf-embed {
+            width: 100%;
+            height: 600px;
+            border: none;
+            display: block;
+        }
         .contract-document {
             text-align: center;
-            margin: 24px 0;
+            margin: 16px 0;
         }
         .download-btn {
             display: inline-block;
             background: #6c757d;
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
             text-decoration: none;
             font-weight: 500;
+            font-size: 14px;
             transition: background-color 0.2s;
         }
         .download-btn:hover {
@@ -251,10 +266,16 @@ export function generateContractSigningPage(
             </div>
         </div>
 
+        <div class="contract-viewer">
+            <iframe 
+                src="https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/${contract.id}/download#toolbar=1&navpanes=0&scrollbar=1" 
+                class="pdf-embed"
+                title="Contract Document">
+            </iframe>
+        </div>
+        
         <div class="contract-document">
-            <h3>Contract Document</h3>
-            <p style="margin-bottom: 16px; color: #666;">Review the full contract before signing</p>
-            <a href="#" onclick="downloadContract()" class="download-btn">Download Contract</a>
+            <a href="#" onclick="downloadContract()" class="download-btn">Download Full Contract</a>
         </div>
 
         ${contract.status !== 'signed' ? `
