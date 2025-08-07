@@ -128,10 +128,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          const updatedInvoice = await storage.updateInvoice(newInvoice.id, userId, {
+          const updatedInvoice = await storage.updateInvoice(newInvoice.id, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          });
+          }, userId);
           
           res.json(updatedInvoice);
         } else {
@@ -175,7 +175,7 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, userId, req.body);
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
       res.json(updatedInvoice);
       
     } catch (error: any) {
@@ -322,10 +322,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          await storage.updateInvoice(parsedInvoiceId, userId, {
+          await storage.updateInvoice(parsedInvoiceId, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          });
+          }, userId);
           pdfUrl = uploadResult.url;
         } else {
           throw new Error('Failed to upload invoice to cloud storage');
@@ -333,10 +333,10 @@ export function registerInvoiceRoutes(app: Express) {
       }
       
       // Update invoice status to sent
-      await storage.updateInvoice(parsedInvoiceId, userId, {
+      await storage.updateInvoice(parsedInvoiceId, {
         status: 'sent',
         updatedAt: new Date()
-      });
+      }, userId);
       
       // Send email
       const emailService = new EmailService();
