@@ -7,6 +7,7 @@ MusoBuddy is a comprehensive music business management platform designed to stre
 Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
+Email notifications: Both client AND performer receive confirmation emails when contracts are signed (fixed 07/08/2025).
 
 ## System Architecture
 

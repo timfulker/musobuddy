@@ -465,8 +465,8 @@ export function registerContractRoutes(app: Express) {
         console.log(`📄 Signed contract PDF uploaded: ${uploadResult.url}`);
       }
 
-      // Send confirmation emails
-      if (userSettings && signedContract.clientEmail) {
+      // Send confirmation emails to BOTH client and performer
+      if (userSettings) {
         try {
           const EmailService = (await import('../core/services')).EmailService;
           const emailService = new EmailService();
@@ -474,12 +474,78 @@ export function registerContractRoutes(app: Express) {
           const subject = `Contract Signed - ${signedContract.contractNumber}`;
           const message = `The contract has been successfully signed and is now legally binding.`;
           
-          await emailService.sendContractEmail(
-            signedContract, 
-            userSettings, 
-            subject, 
-            uploadResult.url || ''
-          );
+          // Send to client if they have an email
+          if (signedContract.clientEmail) {
+            await emailService.sendContractEmail(
+              signedContract, 
+              userSettings, 
+              subject, 
+              uploadResult.url || ''
+            );
+            console.log(`📧 Contract signing confirmation email sent to client: ${signedContract.clientEmail}`);
+          }
+          
+          // ALSO send to performer/business owner
+          if (userSettings.businessEmail) {
+            // Create a notification email for the performer
+            const performerSubject = `✅ Contract Signed by ${signedContract.clientName} - ${signedContract.contractNumber}`;
+            const performerHtml = `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Contract Signed Notification</title>
+              </head>
+              <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #10b981;">✅ Contract Successfully Signed!</h2>
+                  
+                  <p>Great news! Your contract has been signed by <strong>${signedContract.clientName}</strong>.</p>
+                  
+                  <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                    <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
+                    <p><strong>Contract Number:</strong> ${signedContract.contractNumber}</p>
+                    <p><strong>Client:</strong> ${signedContract.clientName}</p>
+                    <p><strong>Event Date:</strong> ${new Date(signedContract.eventDate).toLocaleDateString('en-GB')}</p>
+                    <p><strong>Time:</strong> ${signedContract.eventTime} - ${signedContract.eventEndTime}</p>
+                    <p><strong>Venue:</strong> ${signedContract.venue}</p>
+                    <p><strong>Fee:</strong> £${signedContract.fee}</p>
+                    ${signedContract.deposit ? `<p><strong>Deposit:</strong> £${signedContract.deposit}</p>` : ''}
+                  </div>
+                  
+                  <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0;"><strong>Signing Information:</strong></p>
+                    <p style="margin: 5px 0;">Signed by: ${signedContract.clientSignature}</p>
+                    <p style="margin: 5px 0;">Date: ${new Date(signedContract.signedAt).toLocaleString('en-GB')}</p>
+                    <p style="margin: 5px 0;">IP Address: ${signedContract.clientIpAddress}</p>
+                  </div>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${uploadResult.url || ''}" 
+                       style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                      📄 View Signed Contract PDF
+                    </a>
+                  </div>
+                  
+                  <p>The contract is now legally binding. A copy has been sent to the client at ${signedContract.clientEmail || 'their email address'}.</p>
+                  
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                  
+                  <p style="font-size: 14px; color: #666;">
+                    This is an automated notification from your MusoBuddy system.
+                  </p>
+                </div>
+              </body>
+              </html>
+            `;
+            
+            await emailService.sendEmail({
+              to: userSettings.businessEmail,
+              subject: performerSubject,
+              html: performerHtml
+            });
+            console.log(`📧 Contract signing confirmation email sent to performer: ${userSettings.businessEmail}`);
+          }
           
           console.log(`📧 Contract signing confirmation emails sent`);
         } catch (emailError) {
