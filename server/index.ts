@@ -996,15 +996,29 @@ async function startServer() {
     
     app.use(sanitizeInput);
     
-    // SINGLE AUTH SYSTEM: Register once and only once
+    // Setup authentication ONCE
     console.log('🔐 Setting up authentication system...');
     const { setupAuthRoutes } = await import('./routes/auth-clean');
     setupAuthRoutes(app);
-    console.log('✅ Authentication routes registered');
     
     // Register all other routes
-    const { registerRoutes } = await import('./routes/index');
-    await registerRoutes(app);
+    console.log('🔄 Registering API routes...');
+    const { registerContractRoutes } = await import('./routes/contract-routes');
+    const { registerInvoiceRoutes } = await import('./routes/invoice-routes');
+    const { registerBookingRoutes } = await import('./routes/booking-routes');
+    const { registerSettingsRoutes } = await import('./routes/settings-routes');
+    const { registerAdminRoutes } = await import('./routes/admin-routes');
+    const { registerStripeRoutes } = await import('./routes/stripe-routes');
+    const { registerHealthRoutes } = await import('./routes/health-routes');
+    
+    // Register routes directly without wrapper
+    registerStripeRoutes(app);
+    await registerContractRoutes(app);
+    await registerInvoiceRoutes(app);
+    await registerBookingRoutes(app);
+    await registerSettingsRoutes(app);
+    await registerAdminRoutes(app);
+    registerHealthRoutes(app);
     
     // Apply global error handling ONLY to API routes
     app.use('/api/*', errorHandler);

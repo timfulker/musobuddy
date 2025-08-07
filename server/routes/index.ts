@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import { setupAuthRoutes } from "./auth-clean";
 import { registerContractRoutes } from "./contract-routes";
 import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
