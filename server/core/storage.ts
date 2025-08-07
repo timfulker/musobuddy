@@ -212,6 +212,16 @@ export class Storage {
     return contractStorage.getContractsByStatus(userId, status);
   }
 
+  async updateContractSigningUrl(contractId: number, signingPageUrl: string) {
+    try {
+      await db.query('UPDATE contracts SET signing_page_url = $1 WHERE id = $2', [signingPageUrl, contractId]);
+      return true;
+    } catch (error) {
+      console.error('Failed to update contract signing URL:', error);
+      return false;
+    }
+  }
+
   // Legacy contract signing method for backward compatibility
   async signContract(contractId: number, signatureData: any) {
     try {

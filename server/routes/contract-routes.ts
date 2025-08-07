@@ -1,5 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
+import { db } from "../core/database";
 import { EmailService } from "../core/services";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
@@ -9,6 +10,102 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
+
+  // Fix all signing pages with JavaScript errors
+  app.post('/api/contracts/fix-all-signing-pages', async (req: any, res) => {
+    try {
+      console.log('🔧 Starting to fix all signing pages with JavaScript errors...');
+      
+      // Get all contracts that might have buggy signing pages
+      const result = await db.query(`
+        SELECT * FROM contracts 
+        WHERE status IN ('sent', 'draft') 
+        AND signing_page_url IS NOT NULL
+        ORDER BY created_at DESC
+      `);
+      const unsignedContracts = result.rows;
+      
+      console.log(`📋 Found ${unsignedContracts.length} contracts to fix`);
+      
+      let fixed = 0;
+      let errors = 0;
+      
+      for (const contract of unsignedContracts) {
+        try {
+          const userSettings = await storage.getSettings(contract.user_id);
+          const { uploadContractSigningPage } = await import('../core/cloud-storage');
+          const result = await uploadContractSigningPage(contract, userSettings);
+          
+          if (result.success && result.url) {
+            await storage.updateContractSigningUrl(contract.id, result.url);
+            console.log(`✅ Fixed contract #${contract.id}: ${contract.contract_number}`);
+            fixed++;
+          } else {
+            errors++;
+          }
+        } catch (error) {
+          console.error(`❌ Error fixing contract #${contract.id}:`, error);
+          errors++;
+        }
+      }
+      
+      res.json({ 
+        success: true,
+        message: `Fixed ${fixed} signing pages, ${errors} errors`,
+        fixed,
+        errors,
+        total: unsignedContracts.length
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to fix signing pages:', error);
+      res.status(500).json({ error: 'Failed to fix signing pages' });
+    }
+  });
+  
+  // Regenerate signing page endpoint - fixes JavaScript errors
+  app.post('/api/contracts/:id/regenerate-signing-page', requireAuth, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (contract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get user settings and regenerate signing page
+      const userSettings = await storage.getSettings(userId);
+      const { uploadContractSigningPage } = await import('../core/cloud-storage');
+      const result = await uploadContractSigningPage(contract, userSettings);
+      
+      if (result.success && result.url) {
+        // Update contract with new signing page URL
+        await storage.updateContractSigningUrl(contractId, result.url);
+        
+        console.log(`✅ Regenerated signing page for contract #${contractId}`);
+        res.json({ 
+          success: true, 
+          signingPageUrl: result.url,
+          message: 'Signing page regenerated successfully' 
+        });
+      } else {
+        throw new Error(result.error || 'Failed to regenerate signing page');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Failed to regenerate signing page:', error);
+      res.status(500).json({ error: error.message || 'Failed to regenerate signing page' });
+    }
+  });
 
   // CRITICAL: Direct contract signing page endpoint (GET)
   app.get('/api/contracts/sign/:id', async (req: any, res) => {

@@ -69,8 +69,14 @@ export function generateContractSigningPage(
   const venueAddressDisplay = contract.venueAddress ? escapeHtml(contract.venueAddress) : '<em>To be provided</em>';
 
   // Escape values for JavaScript - use JSON.stringify for safety
+  // This ensures proper escaping of all special characters
   const contractIdJs = JSON.stringify(contractId);
   const clientNameJs = JSON.stringify(contract.clientName || '');
+  
+  // CRITICAL: Verify these are valid JSON strings
+  if (!contractIdJs || contractIdJs === 'undefined') {
+    throw new Error('Invalid contract ID for signing page');
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
