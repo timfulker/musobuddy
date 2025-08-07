@@ -198,8 +198,23 @@ export function registerBookingRoutes(app: Express) {
   // Widget endpoints for external booking forms
   console.log('🔧 Setting up widget endpoints...');
 
+  // CORS middleware for widget endpoints (allow Cloudflare R2 and other origins)
+  const widgetCorsHandler = (req: any, res: any, next: any) => {
+    const origin = req.headers.origin || '*';
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for widgets
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    next();
+  };
+
   // Verify widget token
-  app.get('/api/widget/verify/:token', async (req, res) => {
+  app.get('/api/widget/verify/:token', widgetCorsHandler, async (req, res) => {
     try {
       const { token } = req.params;
       const user = await storage.getUserByQuickAddToken(token);
@@ -218,8 +233,12 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
+  // Handle OPTIONS preflight for widget endpoints
+  app.options('/api/widget/verify/:token', widgetCorsHandler);
+  app.options('/api/widget/hybrid-submit', widgetCorsHandler);
+
   // Hybrid widget form submission (combines natural language + structured data)
-  app.post('/api/widget/hybrid-submit', async (req, res) => {
+  app.post('/api/widget/hybrid-submit', widgetCorsHandler, async (req, res) => {
     try {
       const { messageText, clientName, clientContact, eventDate, venue, token } = req.body;
       
@@ -299,10 +318,11 @@ ${messageText.replace(/\n/g, '<br>')}
 <p><em>This booking request was submitted via your MusoBuddy booking widget.</em></p>
           `;
           
-          await emailService.sendEmailHTML(
+          await emailService.sendEmail(
             userSettings?.businessEmail || user.email!,
             subject,
-            emailBody
+            emailBody,
+            emailBody // HTML version
           );
           
           console.log(`✅ Notification email sent for booking #${newBooking.id}`);
