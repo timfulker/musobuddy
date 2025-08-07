@@ -6,7 +6,7 @@ const getAuthTokenKey = () => {
   
   // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
+    return 'authToken_musobuddy_replit_app';
   }
   
   // Production: Environment-specific to prevent conflicts (match login.tsx format)

@@ -6,7 +6,7 @@ import { requireAuth } from '../middleware/auth';
 export function registerIsolatedRoutes(app: Express) {
   console.log('🔗 Setting up isolated routes for cloud compatibility...');
 
-  // FIXED: Add missing isolated contract email endpoint
+  // CRITICAL: Use regular contract email endpoint (working version)
   app.post('/api/isolated/contracts/send-email', requireAuth, async (req: any, res) => {
     try {
       const { contractId, customMessage } = req.body;

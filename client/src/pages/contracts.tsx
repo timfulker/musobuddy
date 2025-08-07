@@ -387,8 +387,8 @@ export default function Contracts() {
       console.log('📧 FIXED: Sending to:', `/api/isolated/contracts/send-email`);
       console.log('📧 FIXED: Contract ID:', contractId);
       
-      // CRITICAL FIX: Use isolated contract email endpoint
-      return apiRequest("/api/isolated/contracts/send-email", {
+      // REVERT: Use working contract email endpoint
+      return apiRequest("/api/contracts/send-email", {
         method: "POST",
         body: JSON.stringify({ contractId, customMessage }),
       });
