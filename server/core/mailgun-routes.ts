@@ -27,7 +27,11 @@ export class MailgunRouteManager {
       console.log(`📧 Creating Mailgun route for user ${userId} with prefix "${emailPrefix}"`);
       
       const expression = `match_recipient("${emailPrefix}@${this.domain}")`;
-      const webhookUrl = `${process.env.APP_SERVER_URL || 'https://musobuddy.replit.app'}/api/webhook/mailgun`;
+      
+      // Use production URL for webhook to ensure reliability
+      const webhookUrl = `https://www.musobuddy.com/api/webhook/mailgun`;
+      
+      console.log(`🔧 Creating route with webhook URL: ${webhookUrl}`);
       
       const route = await this.mg.routes.create({
         priority: 1,
@@ -41,6 +45,11 @@ export class MailgunRouteManager {
       
     } catch (error: any) {
       console.error(`❌ Failed to create Mailgun route:`, error);
+      console.error(`❌ Error details:`, {
+        message: error.message,
+        statusCode: error.status,
+        details: error.details
+      });
       return { success: false, error: error.message };
     }
   }

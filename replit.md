@@ -10,6 +10,7 @@ Contract signing: User wants only ONE simple sign contract button, no redundant 
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed (fixed 07/08/2025).
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com` (updated 08/08/2025).
+Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musobuddy.com/api/webhook/mailgun` for production reliability (fixed 08/08/2025).
 
 ## System Architecture
 
