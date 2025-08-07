@@ -252,15 +252,40 @@ export default function Invoices() {
       
       
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("🔥 Frontend: Error response:", errorData);
-        throw new Error(errorData || 'Failed to create invoice');
+        let errorMessage = 'Failed to create invoice';
+        try {
+          const errorData = await response.text();
+          console.error("🔥 Frontend: Error response:", errorData);
+          if (errorData) {
+            // Try to parse JSON error message
+            try {
+              const errorJson = JSON.parse(errorData);
+              errorMessage = errorJson.error || errorJson.message || errorData;
+            } catch {
+              errorMessage = errorData;
+            }
+          }
+          
+          // Special handling for 404 errors (production deployment issue)
+          if (response.status === 404) {
+            errorMessage = 'Invoice service unavailable. The server may need to be redeployed.';
+          }
+        } catch (e) {
+          console.error("🔥 Error reading response:", e);
+        }
+        throw new Error(errorMessage);
       }
       
       // Check if response has content before parsing
       const contentType = response.headers.get('content-type');
       const contentLength = response.headers.get('content-length');
       console.log("📝 Response content-type:", contentType, "content-length:", contentLength);
+      
+      // Handle empty responses
+      if (!contentLength || contentLength === '0') {
+        console.error("🔥 Empty response from server");
+        throw new Error('Server returned empty response. Please try again.');
+      }
       
       if (!contentType || !contentType.includes('application/json')) {
         console.error("🔥 Response is not JSON:", contentType);
