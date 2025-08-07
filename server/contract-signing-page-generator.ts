@@ -4,6 +4,30 @@ export function generateContractSigningPage(
   contract: Contract, 
   userSettings: UserSettings | null
 ): string {
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(unsafe: string): string {
+    if (!unsafe || typeof unsafe !== 'string') return '';
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\n/g, "<br>");
+  }
+
+  // Helper function to escape JavaScript strings
+  function escapeJs(unsafe: string): string {
+    if (!unsafe || typeof unsafe !== 'string') return '';
+    return unsafe
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
+  }
+
   // Safely process all data server-side
   const contractId = contract.id.toString();
   const contractNumber = escapeHtml(contract.contractNumber);
@@ -43,7 +67,9 @@ export function generateContractSigningPage(
 
   const venueAddressDisplay = contract.venueAddress ? escapeHtml(contract.venueAddress) : '<em>To be provided</em>';
 
-  const apiUrl = `https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contractId}`;
+  // Escape values for JavaScript
+  const contractIdJs = escapeJs(contractId);
+  const clientNameJs = escapeJs(contract.clientName);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -268,14 +294,6 @@ export function generateContractSigningPage(
             border-radius: 8px;
             border-left: 3px solid #1e3a8a;
         }
-        .detail-label {
-            font-weight: 600;
-            color: #495057;
-        }
-        .detail-value {
-            font-weight: 500;
-            color: #212529;
-        }
         .financial-summary {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             padding: 25px;
@@ -436,26 +454,6 @@ export function generateContractSigningPage(
             background: #fed7d7;
             color: #742a2a;
             border: 2px solid #fc8181;
-        }
-
-        /* Hide any signature pad elements */
-        canvas, .signature-pad, .signature-canvas, [class*="signature"] canvas {
-            display: none !important;
-        }
-
-        /* Remove any dotted signature areas */
-        .signature-area, .sign-area, [class*="click-to-sign"], [class*="signature-box"] {
-            display: none !important;
-        }
-
-        /* Hide common signature pad class names */
-        .jSignature, .signature_pad, [id*="signature"], [class*="signaturepad"], [class*="sign-pad"] {
-            display: none !important;
-        }
-
-        /* Hide any element with "Click here to sign" text */
-        *:contains("Click here to sign") {
-            display: none !important;
         }
     </style>
 </head>
@@ -697,133 +695,87 @@ export function generateContractSigningPage(
     </div>
 
     <script>
-        // Contract ID for API calls
-        var CONTRACT_ID = '${contractId}';
+        (function() {
+            'use strict';
 
-        // Completely disable signature pad libraries
-        window.SignaturePad = undefined;
-        window.jSignature = undefined;
-        window.SignatureCanvas = undefined;
+            // Contract ID for API calls - properly escaped
+            var CONTRACT_ID = '${contractIdJs}';
 
-        // Override common signature pad functions
-        if (typeof SignaturePad !== 'undefined') {
-            SignaturePad = undefined;
-        }
-        if (typeof jSignature !== 'undefined') {
-            jSignature = undefined;
-        }
+            document.addEventListener('DOMContentLoaded', function() {
+                var signatureForm = document.getElementById('signatureForm');
 
-        // Aggressive signature pad removal
-        function removeSignaturePads() {
-            // Remove canvas elements
-            var canvasElements = document.querySelectorAll('canvas, .signature-pad, .signature-canvas, [class*="signature-pad"], .jSignature, .signature_pad, [id*="signature"], [class*="signaturepad"], [class*="sign-pad"]');
-            canvasElements.forEach(function(element) {
-                element.remove();
-            });
+                if (signatureForm) {
+                    signatureForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
 
-            // Remove "click to sign" elements
-            var clickToSignElements = document.querySelectorAll('[class*="click-to-sign"], [class*="signature-box"], .signature-area, .sign-area');
-            clickToSignElements.forEach(function(element) {
-                element.remove();
-            });
+                        var signButton = document.getElementById('signButton');
+                        var successMessage = document.getElementById('success-message');
+                        var errorMessage = document.getElementById('error-message');
+                        var errorText = document.getElementById('error-text');
 
-            // Find and remove elements containing "Click here to sign" text
-            var allElements = document.querySelectorAll('*');
-            allElements.forEach(function(element) {
-                if (element.textContent && element.textContent.includes('Click here to sign')) {
-                    element.remove();
+                        var emailAddress = document.getElementById('emailAddress').value;
+                        var agreeTerms = document.getElementById('agreeTerms').checked;
+
+                        if (!agreeTerms) {
+                            errorText.textContent = 'Please agree to the terms and conditions';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        if (!emailAddress || emailAddress.indexOf('@') === -1) {
+                            errorText.textContent = 'Please enter a valid email address';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        successMessage.style.display = 'none';
+                        errorMessage.style.display = 'none';
+
+                        signButton.disabled = true;
+                        signButton.textContent = 'Signing Contract...';
+
+                        var requestData = {
+                            clientSignature: '${clientNameJs}',
+                            clientEmail: emailAddress,
+                            clientIP: '0.0.0.0',
+                            signedAt: new Date().toISOString()
+                        };
+
+                        fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + CONTRACT_ID, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        })
+                        .then(function(response) {
+                            if (!response.ok) {
+                                throw new Error('Server error: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(function(result) {
+                            if (result.success) {
+                                successMessage.style.display = 'block';
+                                signatureForm.style.display = 'none';
+                                successMessage.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                throw new Error(result.message || result.error || 'Signing failed');
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Signing error:', error);
+                            errorText.textContent = error.message || 'Error occurred while signing the contract';
+                            errorMessage.style.display = 'block';
+
+                            signButton.disabled = false;
+                            signButton.textContent = 'Sign Contract';
+                        });
+                    });
                 }
             });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Remove signature pads immediately and repeatedly
-            removeSignaturePads();
-            setTimeout(removeSignaturePads, 100);
-            setTimeout(removeSignaturePads, 500);
-            setTimeout(removeSignaturePads, 1000);
-
-            var signatureForm = document.getElementById('signatureForm');
-            if (signatureForm) {
-                signatureForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    var signButton = document.getElementById('signButton');
-                    var successMessage = document.getElementById('success-message');
-                    var errorMessage = document.getElementById('error-message');
-                    var errorText = document.getElementById('error-text');
-
-                    var emailAddress = document.getElementById('emailAddress').value;
-                    var agreeTerms = document.getElementById('agreeTerms').checked;
-
-                    if (!agreeTerms) {
-                        errorText.textContent = 'Please agree to the terms and conditions';
-                        errorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    if (!emailAddress || emailAddress.indexOf('@') === -1) {
-                        errorText.textContent = 'Please enter a valid email address';
-                        errorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    successMessage.style.display = 'none';
-                    errorMessage.style.display = 'none';
-
-                    signButton.disabled = true;
-                    signButton.textContent = 'Signing Contract...';
-
-                    var requestData = {
-                        clientSignature: document.getElementById('clientName').value,
-                        clientEmail: emailAddress,
-                        clientIP: '0.0.0.0',
-                        signedAt: new Date().toISOString()
-                    };
-
-                    fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + CONTRACT_ID, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(requestData)
-                    }).then(function(response) {
-                        if (!response.ok) {
-                            throw new Error('Server error: ' + response.status);
-                        }
-                        return response.json();
-                    }).then(function(result) {
-                        if (result.success) {
-                            successMessage.style.display = 'block';
-                            signatureForm.style.display = 'none';
-                            successMessage.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                            throw new Error(result.message || result.error || 'Signing failed');
-                        }
-                    }).catch(function(error) {
-                        console.error('Signing error:', error);
-                        errorText.textContent = error.message || 'Error occurred while signing the contract';
-                        errorMessage.style.display = 'block';
-
-                        signButton.disabled = false;
-                        signButton.textContent = 'Sign Contract';
-                    });
-                });
-            }
-        });
+        })();
     </script>
 </body>
 </html>`;
-}
-
-// Helper function to escape HTML to prevent XSS
-function escapeHtml(unsafe: string): string {
-  if (!unsafe || typeof unsafe !== 'string') return '';
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
-    .replace(/\n/g, "<br>");
 }
