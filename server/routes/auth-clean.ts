@@ -389,6 +389,7 @@ export function setupAuthRoutes(app: Express) {
 
       // Store verification code for later SMS verification
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
       pendingVerifications.set(userId, {
         firstName,
         lastName,
@@ -397,9 +398,15 @@ export function setupAuthRoutes(app: Express) {
         password: hashedPassword,
         verificationCode,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      } as {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phoneNumber: string;
+        password: string;
+        verificationCode: string;
+        expiresAt: Date;
       });
-
-      console.log(`✅ User ${userId} created, pending phone verification`);
 
       res.json({ 
         success: true, 
@@ -427,7 +434,16 @@ export function setupAuthRoutes(app: Express) {
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
       // Store/update verification data
-      const existingData = pendingVerifications.get(userId) || {};
+      const existingData = pendingVerifications.get(userId) || {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: formattedPhone,
+        password: '',
+        verificationCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+      };
+      
       pendingVerifications.set(userId, {
         ...existingData,
         phoneNumber: formattedPhone,
@@ -470,10 +486,10 @@ export function setupAuthRoutes(app: Express) {
   // Verify SMS code
   app.post('/api/auth/verify-sms', async (req, res) => {
     try {
-      const { phoneNumber, code, userId } = req.body;
+      const { userId, verificationCode } = req.body;
 
-      if (!phoneNumber || !code || !userId) {
-        return res.status(400).json({ error: 'Phone number, code, and user ID are required' });
+      if (!userId || !verificationCode) {
+        return res.status(400).json({ error: 'User ID and verification code are required' });
       }
 
       const pending = pendingVerifications.get(userId);
@@ -486,20 +502,15 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Verification code expired' });
       }
 
-      if (pending.verificationCode !== code) {
+      if (pending.verificationCode !== verificationCode) {
         return res.status(400).json({ error: 'Invalid verification code' });
       }
 
-      // Update user as phone verified
-      await storage.updateUser(userId, {
-        phoneVerified: true,
-        phoneVerifiedAt: new Date()
-      });
+      // Update user's phone verification status
+      await storage.updateUser(userId, { phoneVerified: true });
 
       // Clean up pending verification
       pendingVerifications.delete(userId);
-
-      console.log(`✅ Phone verified for user ${userId}`);
 
       res.json({
         success: true,
@@ -512,48 +523,6 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Duplicate route - remove this one
-  app.get('/api/auth/user-duplicate-to-remove', async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      
-      if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-      }
-
-      const { verifyAuthToken } = await import('../middleware/auth');
-      const decoded = verifyAuthToken(token);
-      
-      if (!decoded) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
-      }
-
-      // Handle regular users
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      res.json({
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isAdmin: user.isAdmin || false,
-        phoneVerified: user.phoneVerified || false
-      });
-
-    } catch (error) {
-      console.error('Get user error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-
-
-
-
   // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
   app.get('/api/subscription/status', requireAuth, async (req: any, res) => {
     try {
@@ -564,23 +533,25 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // Import StripeService dynamically to avoid circular dependencies
-      const { StripeService } = await import('../core/stripe-service');
-      const stripeService = new StripeService();
-      
-      const subscriptionStatus = await stripeService.getSubscriptionStatus(userId);
-      console.log('✅ Subscription status retrieved:', subscriptionStatus);
-      
-      res.json(subscriptionStatus);
-    } catch (error) {
-      console.error('❌ Error getting subscription status:', error);
-      res.status(500).json({ error: 'Failed to get subscription status' });
-    }
-  });
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
 
-  // Logout endpoint
-  app.post('/api/auth/logout', (req, res) => {
-    res.json({ success: true, message: 'Logged out successfully' });
+      const subscription = await storage.getSubscription(userId);
+      
+      res.json({
+        subscription: subscription || null,
+        user: {
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        }
+      });
+    } catch (error) {
+      console.error('❌ Subscription status error:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription status' });
+    }
   });
 
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
