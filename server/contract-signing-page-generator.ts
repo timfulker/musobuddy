@@ -442,9 +442,19 @@ export function generateContractSigningPage(
         canvas, .signature-pad, .signature-canvas, [class*="signature"] canvas {
             display: none !important;
         }
-        
+
         /* Remove any dotted signature areas */
         .signature-area, .sign-area, [class*="click-to-sign"], [class*="signature-box"] {
+            display: none !important;
+        }
+
+        /* Hide common signature pad class names */
+        .jSignature, .signature_pad, [id*="signature"], [class*="signaturepad"], [class*="sign-pad"] {
+            display: none !important;
+        }
+
+        /* Hide any element with "Click here to sign" text */
+        *:contains("Click here to sign") {
             display: none !important;
         }
     </style>
@@ -687,26 +697,51 @@ export function generateContractSigningPage(
     </div>
 
     <script>
-        // Disable any signature pad libraries
+        // Contract ID for API calls
+        var CONTRACT_ID = '${contractId}';
+
+        // Completely disable signature pad libraries
         window.SignaturePad = undefined;
+        window.jSignature = undefined;
+        window.SignatureCanvas = undefined;
+
+        // Override common signature pad functions
         if (typeof SignaturePad !== 'undefined') {
             SignaturePad = undefined;
         }
+        if (typeof jSignature !== 'undefined') {
+            jSignature = undefined;
+        }
+
+        // Aggressive signature pad removal
+        function removeSignaturePads() {
+            // Remove canvas elements
+            var canvasElements = document.querySelectorAll('canvas, .signature-pad, .signature-canvas, [class*="signature-pad"], .jSignature, .signature_pad, [id*="signature"], [class*="signaturepad"], [class*="sign-pad"]');
+            canvasElements.forEach(function(element) {
+                element.remove();
+            });
+
+            // Remove "click to sign" elements
+            var clickToSignElements = document.querySelectorAll('[class*="click-to-sign"], [class*="signature-box"], .signature-area, .sign-area');
+            clickToSignElements.forEach(function(element) {
+                element.remove();
+            });
+
+            // Find and remove elements containing "Click here to sign" text
+            var allElements = document.querySelectorAll('*');
+            allElements.forEach(function(element) {
+                if (element.textContent && element.textContent.includes('Click here to sign')) {
+                    element.remove();
+                }
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Remove any signature pad elements that might be added by external libraries
-            setTimeout(function() {
-                var signaturePads = document.querySelectorAll('canvas, .signature-pad, .signature-canvas, [class*="signature-pad"]');
-                signaturePads.forEach(function(element) {
-                    element.remove();
-                });
-                
-                // Remove any "click to sign" text or boxes
-                var clickToSignElements = document.querySelectorAll('[class*="click-to-sign"], [class*="signature-box"], .signature-area');
-                clickToSignElements.forEach(function(element) {
-                    element.remove();
-                });
-            }, 100);
+            // Remove signature pads immediately and repeatedly
+            removeSignaturePads();
+            setTimeout(removeSignaturePads, 100);
+            setTimeout(removeSignaturePads, 500);
+            setTimeout(removeSignaturePads, 1000);
 
             var signatureForm = document.getElementById('signatureForm');
             if (signatureForm) {
@@ -746,7 +781,7 @@ export function generateContractSigningPage(
                         signedAt: new Date().toISOString()
                     };
 
-                    fetch('${apiUrl}', {
+                    fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + CONTRACT_ID, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
