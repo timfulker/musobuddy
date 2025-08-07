@@ -724,6 +724,13 @@ export function generateContractSigningPage(
                     signButton.textContent = 'Signing Contract...';
                     
                     try {
+                        console.log('Attempting to sign contract with ID:', contractData.id);
+                        console.log('Request data:', {
+                            clientSignature: document.getElementById('clientName').value,
+                            clientEmail: emailAddress,
+                            clientIP: '0.0.0.0'
+                        });
+                        
                         const response = await fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + contractData.id, {
                             method: 'POST',
                             headers: {
@@ -737,14 +744,16 @@ export function generateContractSigningPage(
                             })
                         });
                         
+                        console.log('Response status:', response.status);
                         const result = await response.json();
+                        console.log('Response result:', result);
                         
-                        if (result.success) {
+                        if (response.ok && result.success) {
                             successMessage.style.display = 'block';
                             document.getElementById('signatureForm').style.display = 'none';
                             successMessage.scrollIntoView({ behavior: 'smooth' });
                         } else {
-                            throw new Error(result.message || 'Signing failed');
+                            throw new Error(result.message || result.error || 'Signing failed');
                         }
                         
                     } catch (error) {
