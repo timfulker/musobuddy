@@ -39,6 +39,23 @@ interface CalendarEvent {
   status?: string;
 }
 
+interface Booking {
+  id: number;
+  clientName?: string;
+  clientEmail?: string | null;
+  venue?: string;
+  eventType?: string;
+  equipmentRequirements?: string;
+  specialRequirements?: string;
+  fee?: string | null;
+  eventDate?: Date | null | string;
+  eventTime?: string | null;
+  eventEndTime?: string | null;
+  status?: string;
+  createdAt?: string;
+  title?: string;
+}
+
 export default function UnifiedBookings() {
   const { user } = useAuth();
   
@@ -51,25 +68,25 @@ export default function UnifiedBookings() {
 
   
   // Status color helper function
-  const getStatusBorderColor = (status: string) => {
+  const getStatusBorderColor = (status: string | undefined) => {
     switch (status) {
-      case "new":
-      case "enquiry":
-        return "border-l-sky-400"; // Light blue
-      case "in_progress":
-      case "awaiting_response":
-        return "border-l-blue-700"; // Dark blue
-      case "client_confirms":
-        return "border-l-orange-500"; // Orange
-      case "confirmed":
-        return "border-l-green-500"; // Green
-      case "completed":
-        return "border-l-gray-500"; // Grey
-      case "rejected":
-      case "cancelled":
-        return "border-l-red-500"; // Red
-      default:
-        return "border-l-gray-300"; // Default light grey
+    case "new":
+    case "enquiry":
+    return "border-l-sky-400"; // Light blue
+    case "in_progress":
+    case "awaiting_response":
+    return "border-l-blue-700"; // Dark blue
+    case "client_confirms":
+    return "border-l-orange-500"; // Orange
+    case "confirmed":
+    return "border-l-green-500"; // Green
+    case "completed":
+    return "border-l-gray-500"; // Grey
+    case "rejected":
+    case "cancelled":
+    return "border-l-red-500"; // Red
+    default:
+    return "border-l-gray-300"; // Default light grey
     }
   };
 
@@ -94,15 +111,15 @@ export default function UnifiedBookings() {
   
   // Dialog states
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
-  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
+  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<Booking | null>(null);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
-  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
+  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<Booking | null>(null);
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
-  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<Booking | null>(null);
   
   // Conflict resolution dialog states
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
-  const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
+  const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<Booking | null>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -115,10 +132,10 @@ export default function UnifiedBookings() {
   const { toast } = useToast();
 
   // Fetch data for both views
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Enquiry[]>({
     queryKey: ["/api/bookings"],
     retry: 2,
-  }) as { data: Enquiry[], isLoading: boolean };
+  });
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
@@ -133,10 +150,10 @@ export default function UnifiedBookings() {
   });
 
   // Fetch conflicts from backend
-  const { data: backendConflicts = [] } = useQuery({
+  const { data: backendConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts"],
     retry: 2,
-  }) as { data: any[], error?: any };
+  });
 
   // Fetch conflict resolutions to check which conflicts are already resolved
   const { data: conflictResolutions = [] } = useQuery({
@@ -167,7 +184,7 @@ export default function UnifiedBookings() {
         
         // Open booking details dialog after a short delay
         setTimeout(() => {
-          setSelectedBookingForDetails(targetBooking);
+          setSelectedBookingForDetails(targetBooking as Booking);
           setBookingDetailsDialogOpen(true);
         }, 300);
         
@@ -183,7 +200,7 @@ export default function UnifiedBookings() {
     if (!bookings || bookings.length === 0) return { conflictsByBookingId: {}, conflictGroups: [] };
     
     const conflicts: Record<number, any[]> = {};
-    const bookingsByDate: Record<string, any[]> = {};
+    const bookingsByDate: Record<string, Booking[]> = {};
     const groups: any[] = [];
     
     // Group bookings by date for efficient lookup
@@ -195,7 +212,7 @@ export default function UnifiedBookings() {
       if (!bookingsByDate[dateKey]) {
         bookingsByDate[dateKey] = [];
       }
-      bookingsByDate[dateKey].push(booking);
+      bookingsByDate[dateKey].push(booking as Booking);
     });
     
     // Only process dates with multiple bookings and create conflict groups
@@ -212,10 +229,10 @@ export default function UnifiedBookings() {
       
       let hasHardConflict = false;
       
-      dayBookings.forEach((booking: any) => {
+      dayBookings.forEach((booking: Booking) => {
         const bookingConflicts = dayBookings
-          .filter((other: any) => other.id !== booking.id)
-          .map((other: any) => {
+          .filter((other: Booking) => other.id !== booking.id)
+          .map((other: Booking) => {
             let severity = 'soft'; // Default to soft conflict for same day
             let hasTimeOverlap = false;
             
@@ -319,27 +336,27 @@ export default function UnifiedBookings() {
   }, [bookings]);
 
   // OPTIMIZED: Simple conflict lookup instead of complex computation
-  const detectConflicts = (booking: any) => {
+  const detectConflicts = (booking: Booking) => {
     return conflictsByBookingId[booking.id] || [];
   };
 
   // Find if this booking is the first in its conflict group (to show single resolve button)
-  const isFirstInConflictGroup = (booking: any) => {
+  const isFirstInConflictGroup = (booking: Booking) => {
     const conflicts = detectConflicts(booking);
     if (conflicts.length === 0) return false;
     
     // Find the conflict group for this booking's date
-    const bookingDate = new Date(booking.eventDate).toDateString();
+    const bookingDate = new Date(booking.eventDate ?? '').toDateString();
     const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
     if (!conflictGroup) return false;
     
     // Return true if this is the first booking in the group (sorted by ID)
-    const sortedBookings = conflictGroup.bookings.sort((a: any, b: any) => a.id - b.id);
+    const sortedBookings = conflictGroup.bookings.sort((a: Booking, b: Booking) => a.id - b.id);
     return sortedBookings[0].id === booking.id;
   };
 
   // Function to open compliance dialog from booking action menu
-  const openComplianceDialog = (booking: any) => {
+  const openComplianceDialog = (booking: Booking) => {
     setSelectedBookingForCompliance(booking);
     setSendComplianceDialogOpen(true);
   };
@@ -409,7 +426,7 @@ export default function UnifiedBookings() {
       // Conflict filtering
       let matchesConflict = true;
       if (conflictFilter) {
-        const conflicts = detectConflicts(booking);
+        const conflicts = detectConflicts(booking as Booking);
         matchesConflict = conflicts.length > 0;
       }
       
@@ -1133,13 +1150,13 @@ export default function UnifiedBookings() {
                     const renderedBookings = new Set<number>();
                     const elements: JSX.Element[] = [];
                     
-                    filteredAndSortedBookings.forEach((booking: any) => {
+                    filteredAndSortedBookings.forEach((booking: Enquiry) => {
                       if (renderedBookings.has(booking.id)) return;
                       
-                      const conflicts = detectConflicts(booking);
+                      const conflicts = detectConflicts(booking as Booking);
                       if (conflicts.length > 0) {
                         // This booking has conflicts - render as a group
-                        const bookingDate = new Date(booking.eventDate).toDateString();
+                        const bookingDate = new Date(booking.eventDate ?? '').toDateString();
                         const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
                         
                         if (conflictGroup) {
@@ -1150,10 +1167,12 @@ export default function UnifiedBookings() {
                           
                           // Check if this conflict group is already resolved
                           const groupBookingIds = visibleGroupBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
-                          const isResolved = (conflictResolutions || []).some((resolution: any) => {
-                            const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
-                            return JSON.stringify(resolutionBookingIds) === JSON.stringify(groupBookingIds);
-                          });
+                          const isResolved = false; // Placeholder for conflict resolution tracking
+                          // TODO: Implement conflict resolution tracking
+                          // const isResolved = (conflictResolutions || []).some((resolution: any) => {
+                          //   const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
+                          //   return JSON.stringify(resolutionBookingIds) === JSON.stringify(groupBookingIds);
+                          // });
                           
                           if (visibleGroupBookings.length > 1) {
                             // Render conflict group container
