@@ -199,7 +199,8 @@ export async function uploadContractSigningPage(
     const contractDate = new Date(contract.createdAt || new Date());
     const dateFolder = contractDate.toISOString().split('T')[0];
     const securityToken = nanoid(16);
-    const filename = `${contract.contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}-signing-${securityToken}.html`;
+    const contractNumber = contract.contractNumber || contract.contract_number || `contract-${contract.id}`;
+    const filename = `${contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}-signing-${securityToken}.html`;
     const storageKey = `contract-signing/${dateFolder}/${filename}`;
     
     console.log(`🔑 Signing page storage key: ${storageKey}`);
@@ -212,7 +213,7 @@ export async function uploadContractSigningPage(
       ContentType: 'text/html',
       Metadata: {
         'contract-id': contract.id.toString(),
-        'contract-number': contract.contractNumber,
+        'contract-number': contractNumber,
         'type': 'signing-page',
         'uploaded-at': new Date().toISOString()
       }

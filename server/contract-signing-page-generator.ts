@@ -29,26 +29,26 @@ export function generateContractSigningPage(
       .replace(/\u0000/g, ""); // Remove null bytes
   }
 
-  // Safely process all data server-side
+  // Safely process all data server-side - handle both camelCase and snake_case field names
   const contractId = contract.id.toString();
-  const contractNumber = escapeHtml(contract.contractNumber);
-  const clientName = escapeHtml(contract.clientName);
-  const clientEmail = escapeHtml(contract.clientEmail || '');
+  const contractNumber = escapeHtml(contract.contractNumber || contract.contract_number || `Contract-${contract.id}`);
+  const clientName = escapeHtml(contract.clientName || contract.client_name || '');
+  const clientEmail = escapeHtml(contract.clientEmail || contract.client_email || '');
   const venue = escapeHtml(contract.venue || 'TBD');
-  const eventTime = escapeHtml(contract.eventTime || 'TBD');
-  const fee = escapeHtml(contract.fee?.toString() || '0');
+  const eventTime = escapeHtml(contract.eventTime || contract.event_time || 'TBD');
+  const fee = escapeHtml((contract.fee || contract.total_fee)?.toString() || '0');
   const deposit = escapeHtml(contract.deposit?.toString() || '0.00');
-  const paymentInstructions = escapeHtml(contract.paymentInstructions || 'Payment due on completion of performance');
-  const equipmentRequirements = escapeHtml(contract.equipmentRequirements || 'Standard performance setup as discussed');
-  const specialRequirements = escapeHtml(contract.specialRequirements || 'None specified');
+  const paymentInstructions = escapeHtml(contract.paymentInstructions || contract.payment_instructions || 'Payment due on completion of performance');
+  const equipmentRequirements = escapeHtml(contract.equipmentRequirements || contract.equipment_requirements || 'Standard performance setup as discussed');
+  const specialRequirements = escapeHtml(contract.specialRequirements || contract.special_requirements || 'None specified');
 
-  const businessName = escapeHtml(userSettings?.businessName || 'MusoBuddy');
-  const businessAddress = escapeHtml(userSettings?.businessAddress || 'Address not provided');
-  const businessEmail = escapeHtml(userSettings?.businessEmail || '');
+  const businessName = escapeHtml(userSettings?.businessName || userSettings?.business_name || 'MusoBuddy');
+  const businessAddress = escapeHtml(userSettings?.businessAddress || userSettings?.business_address || 'Address not provided');
+  const businessEmail = escapeHtml(userSettings?.businessEmail || userSettings?.business_email || '');
   const businessPhone = escapeHtml(userSettings?.phone || 'Phone not provided');
 
   // Format dates safely
-  const eventDate = new Date(contract.eventDate);
+  const eventDate = new Date(contract.eventDate || contract.event_date);
   const eventDateFormatted = eventDate.toLocaleDateString('en-GB', {
     weekday: 'long',
     year: 'numeric', 
@@ -59,19 +59,19 @@ export function generateContractSigningPage(
 
   // Build client info display
   const clientEmailDisplay = clientEmail ? `<strong>Email:</strong> ${clientEmail}<br>` : '';
-  const clientAddressDisplay = contract.clientAddress 
-    ? `<strong>Address:</strong> ${escapeHtml(contract.clientAddress)}<br>`
+  const clientAddressDisplay = (contract.clientAddress || contract.client_address)
+    ? `<strong>Address:</strong> ${escapeHtml(contract.clientAddress || contract.client_address)}<br>`
     : '<div class="missing-field"><strong>Address:</strong> <em>To be provided</em></div>';
-  const clientPhoneDisplay = contract.clientPhone 
-    ? `<strong>Phone:</strong> ${escapeHtml(contract.clientPhone)}`
+  const clientPhoneDisplay = (contract.clientPhone || contract.client_phone)
+    ? `<strong>Phone:</strong> ${escapeHtml(contract.clientPhone || contract.client_phone)}`
     : '<div class="missing-field"><strong>Phone:</strong> <em>To be provided</em></div>';
 
-  const venueAddressDisplay = contract.venueAddress ? escapeHtml(contract.venueAddress) : '<em>To be provided</em>';
+  const venueAddressDisplay = escapeHtml(contract.venueAddress || contract.venue_address || '<em>To be provided</em>');
 
   // Escape values for JavaScript - use JSON.stringify for safety
   // This ensures proper escaping of all special characters
   const contractIdJs = JSON.stringify(contractId);
-  const clientNameJs = JSON.stringify(contract.clientName || '');
+  const clientNameJs = JSON.stringify(contract.clientName || contract.client_name || '');
   
   // CRITICAL: Verify these are valid JSON strings
   if (!contractIdJs || contractIdJs === 'undefined') {
