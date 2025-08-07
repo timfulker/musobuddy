@@ -351,6 +351,27 @@ export function generateContractSigningPage(
             color: #191970;
             font-weight: 600;
         }
+        
+        /* Missing Field Styling */
+        .missing-field {
+            color: #dc3545;
+            font-style: italic;
+            margin-top: 5px;
+            padding: 8px 12px;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #dc3545;
+        }
+        
+        .missing-field-item {
+            background: rgba(220, 53, 69, 0.05);
+            border-left: 3px solid #dc3545;
+        }
+        
+        .missing-field-item .detail-value em {
+            color: #dc3545;
+            font-style: italic;
+        }
         .contract-document {
             text-align: center;
             margin: 16px 0;
@@ -679,18 +700,15 @@ export function generateContractSigningPage(
                                     <div class="party-title">Service Provider</div>
                                     <div class="party-details">
                                         <strong>${userSettings.businessName || 'Professional Music Services'}</strong><br>
-                                        ${userSettings.businessAddress || ''}<br>
-                                        ${userSettings.businessEmail || ''}<br>
-                                        ${userSettings.businessPhone || ''}
+                                        ${userSettings.businessAddress ? userSettings.businessAddress + '<br>' : ''}<strong>Address:</strong> ${userSettings.businessAddress || 'Address not provided'}<br>
+                                        ${userSettings.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> ${userSettings.businessPhone || 'Phone not provided'}
                                     </div>
                                 </div>
                                 <div class="party-box">
                                     <div class="party-title">Client</div>
                                     <div class="party-details">
                                         <strong>${contract.clientName}</strong><br>
-                                        ${contract.clientAddress || ''}<br>
-                                        ${contract.clientEmail || ''}<br>
-                                        ${contract.clientPhone || ''}
+                                        ${contract.clientEmail ? '<strong>Email:</strong> ' + contract.clientEmail + '<br>' : ''}${contract.clientAddress ? '<strong>Address:</strong> ' + contract.clientAddress + '<br>' : '<div class="missing-field"><strong>Address:</strong> <em>To be provided</em></div>'}${contract.clientPhone ? '<strong>Phone:</strong> ' + contract.clientPhone : '<div class="missing-field"><strong>Phone:</strong> <em>To be provided</em></div>'}
                                     </div>
                                 </div>
                             </div>
@@ -712,9 +730,9 @@ export function generateContractSigningPage(
                                     <span class="detail-label">Venue:</span>
                                     <span class="detail-value">${contract.venue || 'TBC'}</span>
                                 </div>
-                                <div class="detail-item">
+                                <div class="detail-item ${!contract.venueAddress ? 'missing-field-item' : ''}">
                                     <span class="detail-label">Venue Address:</span>
-                                    <span class="detail-value">${contract.venueAddress || 'TBC'}</span>
+                                    <span class="detail-value">${contract.venueAddress || '<em>To be provided</em>'}</span>
                                 </div>
                             </div>
                         </div>
