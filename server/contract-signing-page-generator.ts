@@ -6,12 +6,49 @@ export function generateContractSigningPage(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
+  // Pre-process contract data to avoid JavaScript injection issues
+  const safeContract = {
+    id: contract.id,
+    contractNumber: escapeHtml(contract.contractNumber),
+    clientName: escapeHtml(contract.clientName),
+    clientEmail: escapeHtml(contract.clientEmail || ''),
+    clientPhone: escapeHtml(contract.clientPhone || ''),
+    clientAddress: escapeHtml(contract.clientAddress || ''),
+    venue: escapeHtml(contract.venue || ''),
+    venueAddress: escapeHtml(contract.venueAddress || ''),
+    eventDate: contract.eventDate,
+    eventTime: escapeHtml(contract.eventTime || ''),
+    eventEndTime: escapeHtml(contract.eventEndTime || ''),
+    fee: escapeHtml(contract.fee?.toString() || ''),
+    deposit: escapeHtml(contract.deposit?.toString() || '0.00'),
+    paymentInstructions: escapeHtml(contract.paymentInstructions || ''),
+    equipmentRequirements: escapeHtml(contract.equipmentRequirements || ''),
+    specialRequirements: escapeHtml(contract.specialRequirements || ''),
+    status: contract.status
+  };
+
+  const safeUserSettings = {
+    businessName: escapeHtml(userSettings?.businessName || 'MusoBuddy'),
+    businessAddress: escapeHtml(userSettings?.businessAddress || ''),
+    businessEmail: escapeHtml(userSettings?.businessEmail || ''),
+    phone: escapeHtml(userSettings?.phone || '')
+  };
+
+  // Format event date safely
+  const eventDate = new Date(contract.eventDate);
+  const eventDateFormatted = eventDate.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long',
+    day: 'numeric'
+  });
+  
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contract Signing - ${contract.contractNumber}</title>
+    <title>Contract Signing - ${safeContract.contractNumber}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -531,7 +568,7 @@ export function generateContractSigningPage(
             <p id="error-text">Please try again or contact support if the problem persists.</p>
         </div>
 
-        ${contract.status === 'signed' ? `
+        ${safeContract.status === 'signed' ? `
             <div class="failure-notice">
                 <h3>Contract Already Signed</h3>
                 <p>This contract has already been signed and cannot be signed again.</p>
@@ -543,27 +580,27 @@ export function generateContractSigningPage(
             <div class="detail-grid">
                 <div class="detail-row">
                     <span class="detail-label">Contract Number</span>
-                    <span class="detail-value">${contract.contractNumber}</span>
+                    <span class="detail-value">${safeContract.contractNumber}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Client</span>
-                    <span class="detail-value">${contract.clientName}</span>
+                    <span class="detail-value">${safeContract.clientName}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Event Date</span>
-                    <span class="detail-value">${new Date(contract.eventDate).toLocaleDateString()}</span>
+                    <span class="detail-value">${eventDateFormatted}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Venue</span>
-                    <span class="detail-value">${contract.venue}</span>
+                    <span class="detail-value">${safeContract.venue || 'TBD'}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Event Time</span>
-                    <span class="detail-value">${contract.eventTime || 'TBD'}</span>
+                    <span class="detail-value">${safeContract.eventTime || 'TBD'}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Fee</span>
-                    <span class="detail-value">£${contract.fee}</span>
+                    <span class="detail-value">£${safeContract.fee}</span>
                 </div>
             </div>
         </div>
@@ -580,7 +617,7 @@ export function generateContractSigningPage(
             <a href="#" onclick="downloadContract()" class="download-btn">Download Full Contract</a>
         </div>
 
-        ${contract.status !== 'signed' ? `
+        ${safeContract.status !== 'signed' ? `
             <div class="signature-section">
                 <h3>Digital Signature</h3>
                 <p class="signature-notice">Please fill in the following details to complete the contract</p>
@@ -588,12 +625,12 @@ export function generateContractSigningPage(
                 <form id="signatureForm">
                     <div class="form-group">
                         <label for="clientName">Client Name</label>
-                        <input type="text" id="clientName" value="${contract.clientName}" readonly style="background: #f8f9fa;">
+                        <input type="text" id="clientName" value="${safeContract.clientName}" readonly style="background: #f8f9fa;">
                     </div>
                     
                     <div class="form-group">
                         <label for="emailAddress">Email Address</label>
-                        <input type="email" id="emailAddress" value="${contract.clientEmail || ''}" placeholder="Enter your email address">
+                        <input type="email" id="emailAddress" value="${safeContract.clientEmail}" placeholder="Enter your email address">
                     </div>
                     
                     <div class="form-group">
@@ -613,8 +650,36 @@ export function generateContractSigningPage(
     </div>
 
     <script>
+        // Store contract data safely
+        const contractData = {
+            id: ${safeContract.id},
+            contractNumber: "${safeContract.contractNumber}",
+            clientName: "${safeContract.clientName}",
+            clientEmail: "${safeContract.clientEmail}",
+            clientPhone: "${safeContract.clientPhone}",
+            clientAddress: "${safeContract.clientAddress}",
+            venue: "${safeContract.venue}",
+            venueAddress: "${safeContract.venueAddress}",
+            eventTime: "${safeContract.eventTime}",
+            eventEndTime: "${safeContract.eventEndTime}",
+            fee: "${safeContract.fee}",
+            deposit: "${safeContract.deposit}",
+            paymentInstructions: "${safeContract.paymentInstructions}",
+            equipmentRequirements: "${safeContract.equipmentRequirements}",
+            specialRequirements: "${safeContract.specialRequirements}"
+        };
+
+        const userSettingsData = {
+            businessName: "${safeUserSettings.businessName}",
+            businessAddress: "${safeUserSettings.businessAddress}",
+            businessEmail: "${safeUserSettings.businessEmail}",
+            phone: "${safeUserSettings.phone}"
+        };
+
+        const eventDateFormatted = "${eventDateFormatted}";
+
         function downloadContract() {
-            const apiUrl = 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/${contract.id}/download';
+            const apiUrl = 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/' + contractData.id + '/download';
             window.open(apiUrl, '_blank');
         }
 
@@ -623,267 +688,296 @@ export function generateContractSigningPage(
             const signatureForm = document.getElementById('signatureForm');
             if (signatureForm) {
                 signatureForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const signButton = document.getElementById('signButton');
-            const successMessage = document.getElementById('success-message');
-            const errorMessage = document.getElementById('error-message');
-            const errorText = document.getElementById('error-text');
-            
-            // Validate form
-            const emailAddress = document.getElementById('emailAddress').value;
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            
-            if (!agreeTerms) {
-                errorText.textContent = 'Please agree to the terms and conditions';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            if (!emailAddress || !emailAddress.includes('@')) {
-                errorText.textContent = 'Please enter a valid email address';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            // Hide previous messages
-            successMessage.style.display = 'none';
-            errorMessage.style.display = 'none';
-            
-            // Disable button and show loading
-            signButton.disabled = true;
-            signButton.textContent = 'Signing Contract...';
-            
-            try {
-                const response = await fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contract.id}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        clientSignature: document.getElementById('clientName').value,
-                        clientEmail: emailAddress,
-                        clientIP: '0.0.0.0',
-                        signedAt: new Date().toISOString()
-                    })
+                    e.preventDefault();
+                    
+                    const signButton = document.getElementById('signButton');
+                    const successMessage = document.getElementById('success-message');
+                    const errorMessage = document.getElementById('error-message');
+                    const errorText = document.getElementById('error-text');
+                    
+                    // Validate form
+                    const emailAddress = document.getElementById('emailAddress').value;
+                    const agreeTerms = document.getElementById('agreeTerms').checked;
+                    
+                    if (!agreeTerms) {
+                        errorText.textContent = 'Please agree to the terms and conditions';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (!emailAddress || !emailAddress.includes('@')) {
+                        errorText.textContent = 'Please enter a valid email address';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Hide previous messages
+                    successMessage.style.display = 'none';
+                    errorMessage.style.display = 'none';
+                    
+                    // Disable button and show loading
+                    signButton.disabled = true;
+                    signButton.textContent = 'Signing Contract...';
+                    
+                    try {
+                        const response = await fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + contractData.id, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                clientSignature: document.getElementById('clientName').value,
+                                clientEmail: emailAddress,
+                                clientIP: '0.0.0.0',
+                                signedAt: new Date().toISOString()
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            successMessage.style.display = 'block';
+                            document.getElementById('signatureForm').style.display = 'none';
+                            successMessage.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            throw new Error(result.message || 'Signing failed');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Signing error:', error);
+                        errorText.textContent = error.message || 'Error occurred while signing the contract';
+                        errorMessage.style.display = 'block';
+                        
+                        signButton.disabled = false;
+                        signButton.textContent = 'Sign Contract';
+                    }
                 });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    successMessage.style.display = 'block';
-                    document.getElementById('signatureForm').style.display = 'none';
-                    successMessage.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    throw new Error(result.message || 'Signing failed');
-                }
-                
-            } catch (error) {
-                console.error('Signing error:', error);
-                errorText.textContent = error.message || 'Error occurred while signing the contract';
-                errorMessage.style.display = 'block';
-                
-                signButton.disabled = false;
-                signButton.textContent = 'Sign Contract';
             }
+            
+            // Load contract content on page load
+            loadContractData();
         });
-        }
         
-        // Load contract content on page load
-        loadContractData();
-    });
-        
-        async function loadContractData() {
+        function loadContractData() {
             try {
                 const contractContent = document.getElementById('contractContent');
-                const eventDate = new Date('${contract.eventDate}');
-                const eventDateStr = eventDate ? eventDate.toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    year: 'numeric', 
-                    month: 'long',
-                    day: 'numeric'
-                }) : 'Date TBC';
                 
-                contractContent.innerHTML = \`
-                    <!-- Professional Contract Header -->
-                    <div class="contract-header">
-                        <div class="logo-section">
-                            <div class="metronome-container">
-                                <div class="metronome-body">
-                                    <div class="metronome-arm"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="company-name">${userSettings?.businessName || 'MusoBuddy'}</div>
-                                <div class="tagline">Professional Music Services</div>
-                            </div>
-                        </div>
-                        <div class="contract-title">Performance Contract</div>
-                        <div class="contract-number">Contract No. ${contract.contractNumber}</div>
-                        <div class="status-badge status-sent">Awaiting Signature</div>
-                    </div>
-                    
-                    <!-- Contract Content -->
-                    <div class="contract-body">
-                        <!-- Parties Section -->
-                        <div class="section">
-                            <div class="section-title">Parties to this Agreement</div>
-                            <div class="parties-section">
-                                <div class="party-box">
-                                    <div class="party-title">Service Provider</div>
-                                    <div class="party-details">
-                                        <strong>${userSettings?.businessName || 'Professional Music Services'}</strong><br>
-                                        <strong>Address:</strong> ${userSettings?.businessAddress || 'Address not provided'}<br>
-                                        ${userSettings?.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> Phone not provided
-                                    </div>
-                                </div>
-                                <div class="party-box">
-                                    <div class="party-title">Client</div>
-                                    <div class="party-details">
-                                        <strong>${contract.clientName}</strong><br>
-                                        ${contract.clientEmail ? '<strong>Email:</strong> ' + contract.clientEmail + '<br>' : ''}${contract.clientAddress ? '<strong>Address:</strong> ' + contract.clientAddress + '<br>' : '<div class="missing-field"><strong>Address:</strong> <em>To be provided</em></div>'}${contract.clientPhone ? '<strong>Phone:</strong> ' + contract.clientPhone : '<div class="missing-field"><strong>Phone:</strong> <em>To be provided</em></div>'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Event Details -->
-                        <div class="section">
-                            <div class="section-title">Event Details</div>
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <span class="detail-label">Event Date:</span>
-                                    <span class="detail-value">\${eventDateStr}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Event Time:</span>
-                                    <span class="detail-value">${contract.eventTime || 'TBC'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Venue:</span>
-                                    <span class="detail-value">${contract.venue || 'TBC'}</span>
-                                </div>
-                                <div class="detail-item ${!contract.venueAddress ? 'missing-field-item' : ''}">
-                                    <span class="detail-label">Venue Address:</span>
-                                    <span class="detail-value">${contract.venueAddress || '<em>To be provided</em>'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Financial Terms -->
-                        <div class="section">
-                            <div class="section-title">Financial Terms</div>
-                            <div class="financial-summary">
-                                <div class="fee-item">
-                                    <span class="fee-label">Total Performance Fee:</span>
-                                    <span class="fee-amount">£${contract.fee}</span>
-                                </div>
-                                <div class="fee-item">
-                                    <span class="fee-label">Deposit Required:</span>
-                                    <span class="fee-amount">£${contract.deposit || '0.00'}</span>
-                                </div>
-                            </div>
-                            <div class="payment-terms">
-                                <strong>Payment Instructions:</strong><br>
-                                ${contract.paymentInstructions || 'Payment due on completion of performance'}
-                            </div>
-                        </div>
-                        
-                        <!-- Technical Requirements -->
-                        <div class="section">
-                            <div class="section-title">Technical Requirements</div>
-                            <div class="requirements-content">
-                                <p><strong>Equipment Requirements:</strong><br>
-                                ${contract.equipmentRequirements || 'Standard performance setup as discussed'}</p>
-                                
-                                <p><strong>Special Requirements:</strong><br>
-                                ${contract.specialRequirements || 'None specified'}</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Terms and Conditions -->
-                        <div class="section">
-                            <div class="section-title">Terms & Conditions</div>
-                            
-                            <!-- Professional Standards -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Professional Performance Standards</div>
-                                <ul class="terms-list">
-                                    <li>Professional musical performance delivered to industry standards with appropriate attire</li>
-                                    <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
-                                    <li>The performer maintains professional liability insurance as required for musical performances</li>
-                                    <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
-                                    <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
-                                    <li>All musical instruments and equipment remain the exclusive property of the performer</li>
-                                    <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
-                                    <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
-                                </ul>
-                            </div>
-
-                            <!-- Payment Terms -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Payment Terms & Conditions</div>
-                                <div class="requirements-box">
-                                    <strong>Payment Due Date:</strong> Full payment of £${contract.fee || 'Amount TBC'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
-                                    
-                                    <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
-                                    
-                                    <strong>Deposit:</strong> ${contract.deposit && parseFloat(contract.deposit) > 0 ? `£${contract.deposit}` : 'Deposit amount TBC'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
-                                    
-                                    <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
-                                </div>
-                            </div>
-
-                            <!-- Cancellation Policy -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Cancellation & Refund Policy</div>
-                                <div class="requirements-box">
-                                    <strong>Client Cancellation:</strong><br>
-                                    • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
-                                    • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
-                                    • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
-                                    
-                                    <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
-                                    
-                                    <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
-                                </div>
-                            </div>
-
-                            <!-- Performance Contingencies -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Performance Contingencies</div>
-                                <div class="requirements-box">
-                                    The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.
-                                </div>
-                            </div>
-
-                            <!-- Force Majeure -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Force Majeure</div>
-                                <div class="requirements-box">
-                                    Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.
-                                </div>
-                            </div>
-
-                            <!-- Legal Framework -->
-                            <div class="terms-section">
-                                <div class="terms-subtitle">Legal Framework</div>
-                                <ul class="terms-list">
-                                    <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
-                                    <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
-                                    <li>Contract governed by the laws of England and Wales</li>
-                                    <li>This contract constitutes the entire agreement between parties</li>
-                                    <li>Both parties confirm they have authority to enter this agreement</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                \`;
+                contractContent.innerHTML = generateContractHTML();
             } catch (error) {
                 console.error('Error loading contract:', error);
+                contractContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #dc3545;"><p>Error loading contract content. Please refresh the page.</p></div>';
             }
+        }
+
+        function generateContractHTML() {
+            // Build client address display
+            const clientAddressDisplay = contractData.clientAddress 
+                ? '<strong>Address:</strong> ' + contractData.clientAddress + '<br>' 
+                : '<div class="missing-field"><strong>Address:</strong> <em>To be provided</em></div>';
+
+            const clientPhoneDisplay = contractData.clientPhone 
+                ? '<strong>Phone:</strong> ' + contractData.clientPhone 
+                : '<div class="missing-field"><strong>Phone:</strong> <em>To be provided</em></div>';
+
+            const clientEmailDisplay = contractData.clientEmail 
+                ? '<strong>Email:</strong> ' + contractData.clientEmail + '<br>' 
+                : '';
+
+            const venueAddressDisplay = contractData.venueAddress || '<em>To be provided</em>';
+            const venueAddressClass = contractData.venueAddress ? '' : 'missing-field-item';
+
+            return \`
+                <!-- Professional Contract Header -->
+                <div class="contract-header">
+                    <div class="logo-section">
+                        <div class="metronome-container">
+                            <div class="metronome-body">
+                                <div class="metronome-arm"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="company-name">\${userSettingsData.businessName}</div>
+                            <div class="tagline">Professional Music Services</div>
+                        </div>
+                    </div>
+                    <div class="contract-title">Performance Contract</div>
+                    <div class="contract-number">Contract No. \${contractData.contractNumber}</div>
+                    <div class="status-badge status-sent">Awaiting Signature</div>
+                </div>
+                
+                <!-- Contract Content -->
+                <div class="contract-body">
+                    <!-- Parties Section -->
+                    <div class="section">
+                        <div class="section-title">Parties to this Agreement</div>
+                        <div class="parties-section">
+                            <div class="party-box">
+                                <div class="party-title">Service Provider</div>
+                                <div class="party-details">
+                                    <strong>\${userSettingsData.businessName}</strong><br>
+                                    <strong>Address:</strong> \${userSettingsData.businessAddress || 'Address not provided'}<br>
+                                    \${userSettingsData.businessEmail ? '<strong>Email:</strong> ' + userSettingsData.businessEmail + '<br>' : ''}
+                                    <strong>Phone:</strong> \${userSettingsData.phone || 'Phone not provided'}
+                                </div>
+                            </div>
+                            <div class="party-box">
+                                <div class="party-title">Client</div>
+                                <div class="party-details">
+                                    <strong>\${contractData.clientName}</strong><br>
+                                    \${clientEmailDisplay}
+                                    \${clientAddressDisplay}
+                                    \${clientPhoneDisplay}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Event Details -->
+                    <div class="section">
+                        <div class="section-title">Event Details</div>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Event Date:</span>
+                                <span class="detail-value">\${eventDateFormatted}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Event Time:</span>
+                                <span class="detail-value">\${contractData.eventTime || 'TBC'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Venue:</span>
+                                <span class="detail-value">\${contractData.venue || 'TBC'}</span>
+                            </div>
+                            <div class="detail-item \${venueAddressClass}">
+                                <span class="detail-label">Venue Address:</span>
+                                <span class="detail-value">\${venueAddressDisplay}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Terms -->
+                    <div class="section">
+                        <div class="section-title">Financial Terms</div>
+                        <div class="financial-summary">
+                            <div class="fee-item">
+                                <span class="fee-label">Total Performance Fee:</span>
+                                <span class="fee-amount">£\${contractData.fee}</span>
+                            </div>
+                            <div class="fee-item">
+                                <span class="fee-label">Deposit Required:</span>
+                                <span class="fee-amount">£\${contractData.deposit}</span>
+                            </div>
+                        </div>
+                        <div class="payment-terms">
+                            <strong>Payment Instructions:</strong><br>
+                            \${contractData.paymentInstructions || 'Payment due on completion of performance'}
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Requirements -->
+                    <div class="section">
+                        <div class="section-title">Technical Requirements</div>
+                        <div class="requirements-content">
+                            <p><strong>Equipment Requirements:</strong><br>
+                            \${contractData.equipmentRequirements || 'Standard performance setup as discussed'}</p>
+                            
+                            <p><strong>Special Requirements:</strong><br>
+                            \${contractData.specialRequirements || 'None specified'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="section">
+                        <div class="section-title">Terms & Conditions</div>
+                        
+                        <!-- Professional Standards -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Professional Performance Standards</div>
+                            <ul class="terms-list">
+                                <li>Professional musical performance delivered to industry standards with appropriate attire</li>
+                                <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
+                                <li>The performer maintains professional liability insurance as required for musical performances</li>
+                                <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
+                                <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
+                                <li>All musical instruments and equipment remain the exclusive property of the performer</li>
+                                <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
+                                <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
+                            </ul>
+                        </div>
+
+                        <!-- Payment Terms -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Payment Terms & Conditions</div>
+                            <div class="requirements-box">
+                                <strong>Payment Due Date:</strong> Full payment of £\${contractData.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                                
+                                <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
+                                
+                                <strong>Deposit:</strong> £\${contractData.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
+                                
+                                <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
+                            </div>
+                        </div>
+
+                        <!-- Cancellation Policy -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Cancellation & Refund Policy</div>
+                            <div class="requirements-box">
+                                <strong>Client Cancellation:</strong><br>
+                                • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
+                                • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
+                                • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
+                                
+                                <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
+                                
+                                <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
+                            </div>
+                        </div>
+
+                        <!-- Performance Contingencies -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Performance Contingencies</div>
+                            <div class="requirements-box">
+                                The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.
+                            </div>
+                        </div>
+
+                        <!-- Force Majeure -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Force Majeure</div>
+                            <div class="requirements-box">
+                                Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.
+                            </div>
+                        </div>
+
+                        <!-- Legal Framework -->
+                        <div class="terms-section">
+                            <div class="terms-subtitle">Legal Framework</div>
+                            <ul class="terms-list">
+                                <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
+                                <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
+                                <li>Contract governed by the laws of England and Wales</li>
+                                <li>This contract constitutes the entire agreement between parties</li>
+                                <li>Both parties confirm they have authority to enter this agreement</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            \`;
         }
     </script>
 </body>
 </html>`;
+}
+
+// Helper function to escape HTML to prevent XSS
+function escapeHtml(unsafe: string): string {
+  if (!unsafe || typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\n/g, "<br>");
 }
