@@ -10,6 +10,37 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
 
+  // CRITICAL: Direct contract signing page endpoint (GET)
+  app.get('/api/contracts/sign/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      if (isNaN(contractId)) {
+        return res.status(400).send('<h1>Error: Invalid contract ID</h1>');
+      }
+
+      console.log(`📄 Serving signing page for contract #${contractId}`);
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).send('<h1>Error: Contract not found</h1>');
+      }
+
+      // Get user settings for the contract owner
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Generate the signing page HTML
+      const { generateContractSigningPage } = await import('../contract-signing-page-generator');
+      const signingPageHtml = generateContractSigningPage(contract, userSettings);
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.send(signingPageHtml);
+      
+    } catch (error) {
+      console.error('❌ Failed to serve contract signing page:', error);
+      res.status(500).send('<h1>Error: Failed to load contract signing page</h1>');
+    }
+  });
+
   // Get all contracts for authenticated user (requires subscription)
   app.get('/api/contracts', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
@@ -192,8 +223,6 @@ export function registerContractRoutes(app: Express) {
         hasClientPhone: !!contract.clientPhone,
         hasClientAddress: !!contract.clientAddress,
         hasVenueAddress: !!contract.venueAddress,
-        hasSetlist: !!contract.setlist,
-        hasRiderNotes: !!contract.riderNotes,
         hasTemplate: !!contract.template,
         template: contract.template,
         fields: Object.keys(contract)
