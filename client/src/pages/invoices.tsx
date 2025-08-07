@@ -248,13 +248,23 @@ export default function Invoices() {
         body: data,
       });
       
-      
+      console.log("📝 Invoice response status:", response.status, response.ok);
       
       
       if (!response.ok) {
         const errorData = await response.text();
         console.error("🔥 Frontend: Error response:", errorData);
         throw new Error(errorData || 'Failed to create invoice');
+      }
+      
+      // Check if response has content before parsing
+      const contentType = response.headers.get('content-type');
+      const contentLength = response.headers.get('content-length');
+      console.log("📝 Response content-type:", contentType, "content-length:", contentLength);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error("🔥 Response is not JSON:", contentType);
+        throw new Error('Server returned invalid response format');
       }
       
       const result = await response.json();
@@ -597,7 +607,10 @@ export default function Invoices() {
   // Send overdue reminder mutation
   const sendReminderMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest('POST', `/api/invoices/${invoice.id}/send-reminder`, {});
+      const response = await apiRequest(`/api/invoices/${invoice.id}/send-reminder`, {
+        method: 'POST',
+        body: {}
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -643,7 +656,10 @@ export default function Invoices() {
   // Restore archived invoice mutation
   const restoreInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest('PATCH', `/api/invoices/${invoice.id}`, { status: "draft" });
+      const response = await apiRequest(`/api/invoices/${invoice.id}`, { 
+        method: 'PATCH',
+        body: { status: "draft" }
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -688,7 +704,7 @@ export default function Invoices() {
       
       const responses = await Promise.all(
         invoiceIds.map(id => 
-          apiRequest('DELETE', `/api/invoices/${id}`)
+          apiRequest(`/api/invoices/${id}`, { method: 'DELETE' })
         )
       );
       return responses;
@@ -716,7 +732,10 @@ export default function Invoices() {
     mutationFn: async (invoiceIds: number[]) => {
       const responses = await Promise.all(
         invoiceIds.map(id => 
-          apiRequest('PATCH', `/api/invoices/${id}`, { status: "archived" })
+          apiRequest(`/api/invoices/${id}`, {
+            method: 'PATCH',
+            body: { status: "archived" }
+          })
         )
       );
       return responses;
@@ -743,7 +762,10 @@ export default function Invoices() {
     mutationFn: async (invoiceIds: number[]) => {
       const responses = await Promise.all(
         invoiceIds.map(id => 
-          apiRequest("PATCH", `/api/invoices/${id}`, { status: "draft" })
+          apiRequest(`/api/invoices/${id}`, {
+            method: 'PATCH',
+            body: { status: "draft" }
+          })
         )
       );
       return responses;
