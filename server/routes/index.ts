@@ -17,8 +17,7 @@ import { requireAuth } from '../middleware/auth';
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');
   
-  // Setup clean JWT-based authentication (replaces session-based auth)
-  setupAuthRoutes(app);
+  // REMOVED: Duplicate auth setup - already done in server/index.ts
   
   // CRITICAL FIX: Register Stripe routes FIRST to prevent conflicts
   console.log('🔥 PRIORITY: Registering Stripe routes first to avoid conflicts...');

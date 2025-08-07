@@ -996,15 +996,13 @@ async function startServer() {
     
     app.use(sanitizeInput);
     
-    // EMERGENCY FIX: Add direct auth routes to bypass registration issues
-    console.log('🚨 EMERGENCY: Adding direct auth routes for production fix');
-    
-    // Import auth functions directly 
+    // SINGLE AUTH SYSTEM: Register once and only once
+    console.log('🔐 Setting up authentication system...');
     const { setupAuthRoutes } = await import('./routes/auth-clean');
     setupAuthRoutes(app);
-    console.log('✅ Direct auth routes registered');
+    console.log('✅ Authentication routes registered');
     
-    // Register consolidated routes
+    // Register all other routes
     const { registerRoutes } = await import('./routes/index');
     await registerRoutes(app);
     
