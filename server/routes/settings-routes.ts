@@ -5,9 +5,152 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
 
-export function registerSettingsRoutes(app: Express) {
+export async function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
+  
+  // Import Mailgun route manager for lead email setup
+  const { mailgunRoutes } = await import('../core/mailgun-routes');
 
+  // Lead Email Setup Endpoints
+  
+  // Get user's lead email address
+  app.get('/api/email/my-address', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // If user has an email prefix, return the full email
+      if (user.emailPrefix) {
+        const fullEmail = `${user.emailPrefix}-leads@mg.musobuddy.com`;
+        res.json({ 
+          email: fullEmail,
+          needsSetup: false 
+        });
+      } else {
+        res.json({ 
+          email: null,
+          needsSetup: true 
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to get user email:', error);
+      res.status(500).json({ error: 'Failed to get user email' });
+    }
+  });
+  
+  // Check if email prefix is available
+  app.post('/api/email/check-availability', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { prefix } = req.body;
+      if (!prefix) {
+        return res.status(400).json({ error: 'Prefix is required' });
+      }
+      
+      // Validate the prefix format
+      const validation = await mailgunRoutes.validateEmailPrefix(prefix);
+      if (!validation.valid) {
+        return res.json({ 
+          available: false, 
+          error: validation.error 
+        });
+      }
+      
+      // Check if prefix is already taken
+      const existingUser = await storage.getUserByEmailPrefix(prefix);
+      if (existingUser && existingUser.id !== userId) {
+        return res.json({ 
+          available: false, 
+          error: 'This prefix is already taken',
+          suggestion: `${prefix}-${Math.floor(Math.random() * 100)}`
+        });
+      }
+      
+      // Prefix is available
+      const fullEmail = `${prefix}-leads@mg.musobuddy.com`;
+      res.json({ 
+        available: true,
+        fullEmail 
+      });
+      
+    } catch (error) {
+      console.error('❌ Failed to check email availability:', error);
+      res.status(500).json({ error: 'Failed to check email availability' });
+    }
+  });
+  
+  // Assign email prefix to user
+  app.post('/api/email/assign-prefix', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { prefix } = req.body;
+      if (!prefix) {
+        return res.status(400).json({ error: 'Prefix is required' });
+      }
+      
+      // Validate the prefix format
+      const validation = await mailgunRoutes.validateEmailPrefix(prefix);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+      
+      // Check if user already has a prefix
+      const user = await storage.getUserById(userId);
+      if (user?.emailPrefix) {
+        return res.status(400).json({ 
+          error: 'You already have a lead email address. Contact support to change it.' 
+        });
+      }
+      
+      // Check if prefix is already taken
+      const existingUser = await storage.getUserByEmailPrefix(prefix);
+      if (existingUser) {
+        return res.status(400).json({ 
+          error: 'This prefix is no longer available' 
+        });
+      }
+      
+      // Create Mailgun route for this email
+      const routeResult = await mailgunRoutes.createUserEmailRoute(prefix, userId);
+      if (!routeResult.success) {
+        console.error('❌ Failed to create Mailgun route:', routeResult.error);
+        return res.status(500).json({ 
+          error: 'Failed to set up email forwarding. Please try again.' 
+        });
+      }
+      
+      // Update user with email prefix
+      await storage.updateUser(userId, { emailPrefix: prefix });
+      
+      const fullEmail = `${prefix}-leads@mg.musobuddy.com`;
+      console.log(`✅ Lead email ${fullEmail} assigned to user ${userId}`);
+      
+      res.json({ 
+        success: true,
+        email: fullEmail 
+      });
+      
+    } catch (error) {
+      console.error('❌ Failed to assign email prefix:', error);
+      res.status(500).json({ error: 'Failed to assign email prefix' });
+    }
+  });
+  
   // Get user settings
   app.get('/api/settings', requireAuth, async (req: any, res) => {
     try {
