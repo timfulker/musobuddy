@@ -24,18 +24,33 @@ export function generateContractSigningPage(
             padding: 20px;
         }
         .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 32px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);
+            padding: 40px;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
+            border: 1px solid #e9ecef;
         }
         .header {
             text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 28px;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
         }
         .header h1 {
             color: #333;
@@ -96,27 +111,50 @@ export function generateContractSigningPage(
         .contract-content {
             width: 100%;
             min-height: 600px;
-            padding: 20px;
-            font-family: 'Times New Roman', serif;
-            font-size: 14px;
-            line-height: 1.6;
-            background: #fafafa;
-            border: 1px solid #ddd;
+            padding: 30px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 15px;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px solid #e3e8ee;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         .contract-title {
             text-align: center;
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             text-transform: uppercase;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+            letter-spacing: 1px;
         }
         .contract-section {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-left: 4px solid #3498db;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .contract-section h4 {
             font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 8px;
+        }
+        .contract-section p {
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+        .contract-section strong {
+            color: #2c3e50;
+            font-weight: 600;
         }
         .contract-document {
             text-align: center;
@@ -233,7 +271,7 @@ export function generateContractSigningPage(
 <body>
     <div class="container">
         <div class="header">
-            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">MB</div>
+            <div class="logo">MB</div>
             <h1>Contract Signing</h1>
             <p style="color: #666; margin-top: 8px;">Please review and sign the contract below</p>
         </div>
