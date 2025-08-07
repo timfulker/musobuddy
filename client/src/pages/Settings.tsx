@@ -684,6 +684,129 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
+              {/* Email Settings */}
+              <Card>
+                <Collapsible open={expandedSections.email} onOpenChange={() => toggleSection('email')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Mail className="h-5 w-5 text-blue-600" />
+                          <CardTitle>Email Settings</CardTitle>
+                        </div>
+                        {expandedSections.email ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="emailFromName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email From Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your Business Name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Banking Information */}
+              <Card>
+                <Collapsible open={expandedSections.bank} onOpenChange={() => toggleSection('bank')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <CreditCard className="h-5 w-5 text-green-600" />
+                          <CardTitle>Banking Information</CardTitle>
+                        </div>
+                        {expandedSections.bank ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="bankDetails"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bank Details</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Enter your bank details for payments..."
+                                className="min-h-24"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Performance Settings */}
+              <Card>
+                <Collapsible open={expandedSections.performance} onOpenChange={() => toggleSection('performance')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <SettingsIcon className="h-5 w-5 text-gray-600" />
+                          <CardTitle>Performance Settings</CardTitle>
+                        </div>
+                        {expandedSections.performance ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="bookingDisplayLimit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Booking Display Limit</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select display limit" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="50">50 bookings</SelectItem>
+                                <SelectItem value="all">All bookings</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
               {/* Save Button */}
               <div className="flex justify-end">
                 <Button 
