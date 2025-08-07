@@ -35,7 +35,7 @@ export class EmailService {
 
     try {
       // CRITICAL WORKAROUND: Force correct production domain since ENV is set to sandbox
-      const domain = 'mg.musobuddy.com';
+      const domain = 'enquiries.musobuddy.com';
       
       const messageData: any = {
         from: emailData.from || `MusoBuddy <noreply@${domain}>`,

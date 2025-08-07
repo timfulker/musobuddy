@@ -13,7 +13,7 @@ export class MailgunRouteManager {
       this.mg = mailgun.client({
         username: 'api',
         key: process.env.MAILGUN_API_KEY,
-        url: 'https://api.eu.mailgun.net' // EU endpoint for mg.musobuddy.com
+        url: 'https://api.eu.mailgun.net' // EU endpoint for enquiries.musobuddy.com
       });
     }
   }

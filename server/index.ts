@@ -713,31 +713,28 @@ app.post('/api/webhook/mailgun',
     
     let userId = null;
     
-    // Parse email format: leads+customprefix@mg.musobuddy.com OR leads@mg.musobuddy.com (fallback to admin)
-    if (recipientField.includes('@mg.musobuddy.com')) {
-      // Check for generic leads@ address first
-      if (recipientField.includes('leads@mg.musobuddy.com')) {
-        console.log(`📧 [${requestId}] Generic leads@ address, using admin user`);
-        userId = "43963086"; // Admin user for generic leads@ emails
+    // Parse email format: customprefix@enquiries.musobuddy.com
+    if (recipientField.includes('@enquiries.musobuddy.com')) {
+      // Extract prefix from before @ sign
+      const emailPrefix = recipientField.split('@')[0].trim();
+      console.log(`📧 [${requestId}] Extracted email prefix:`, emailPrefix);
+      
+      // Check for system addresses
+      if (emailPrefix === 'noreply' || emailPrefix === 'admin') {
+        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using admin user`);
+        userId = "43963086"; // Admin user for system emails
       } else {
-        // Extract custom prefix from plus addressing - handle both + and space (URL decoded)
-        const prefixMatch = recipientField.match(/leads[\+\s]([^@]+)@mg\.musobuddy\.com$/);
-        if (prefixMatch) {
-          const customPrefix = prefixMatch[1].trim();
-          console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
-          
-          // FALLBACK PROTECTION: Look up user using authentication-independent method
-          try {
-            const user = await getUserByEmailPrefix(customPrefix);
-            if (user) {
-              userId = user.id;
-              console.log(`📧 [${requestId}] FALLBACK: Found user for custom prefix "${customPrefix}":`, userId);
-            } else {
-              console.log(`📧 [${requestId}] FALLBACK: No user found for custom prefix "${customPrefix}"`);
-            }
-          } catch (error) {
-            console.log(`❌ [${requestId}] FALLBACK: Error looking up user by custom prefix:`, error);
+        // FALLBACK PROTECTION: Look up user using authentication-independent method
+        try {
+          const user = await getUserByEmailPrefix(emailPrefix);
+          if (user) {
+            userId = user.id;
+            console.log(`📧 [${requestId}] FALLBACK: Found user for prefix "${emailPrefix}":`, userId);
+          } else {
+            console.log(`📧 [${requestId}] FALLBACK: No user found for prefix "${emailPrefix}"`);
           }
+        } catch (error) {
+          console.log(`❌ [${requestId}] FALLBACK: Error looking up user by prefix:`, error);
         }
       }
     }
