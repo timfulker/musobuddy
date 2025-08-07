@@ -128,10 +128,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          const updatedInvoice = await storage.updateInvoice(newInvoice.id, userId, {
+          const updatedInvoice = await storage.updateInvoice(newInvoice.id, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          });
+          }, userId);
           
           res.json(updatedInvoice);
         } else {
@@ -263,10 +263,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          await storage.updateInvoice(parsedInvoiceId, userId, {
+          await storage.updateInvoice(parsedInvoiceId, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          });
+          }, userId);
           pdfUrl = uploadResult.url;
         } else {
           throw new Error('Failed to upload invoice to cloud storage');
@@ -274,20 +274,39 @@ export function registerInvoiceRoutes(app: Express) {
       }
       
       // Update invoice status to sent
-      await storage.updateInvoice(parsedInvoiceId, userId, {
+      await storage.updateInvoice(parsedInvoiceId, {
         status: 'sent',
         updatedAt: new Date()
-      });
+      }, userId);
       
       // Send email
       const emailService = new EmailService();
       const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
       
       try {
-        await emailService.sendInvoiceEmail(invoice, userSettings, subject, pdfUrl, customMessage);
-        console.log(`✅ Invoice email sent successfully for invoice ${invoiceId}`);
+        // Generate invoice email HTML using the service method
+        const emailHtml = emailService.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl);
         
-        res.json({ success: true, message: 'Invoice sent successfully' });
+        // Add custom message if provided
+        const finalEmailHtml = customMessage ? 
+          emailHtml.replace('<p>Please find your invoice attached.</p>', 
+                           `<p>${customMessage}</p><p>Please find your invoice attached.</p>`) : 
+          emailHtml;
+        
+        // Send email using the general sendEmail method
+        const emailResult = await emailService.sendEmail({
+          to: invoice.clientEmail,
+          subject: subject,
+          html: finalEmailHtml
+        });
+        
+        if (emailResult.success) {
+          console.log(`✅ Invoice email sent successfully for invoice ${invoiceId}`);
+          res.json({ success: true, message: 'Invoice sent successfully' });
+        } else {
+          console.error('❌ Failed to send invoice email:', emailResult.error);
+          res.status(500).json({ error: 'Failed to send invoice email' });
+        }
         
       } catch (emailError) {
         console.error('❌ Failed to send invoice email:', emailError);
