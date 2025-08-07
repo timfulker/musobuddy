@@ -348,5 +348,41 @@ ${messageText.replace(/\n/g, '<br>')}
     }
   });
 
+  // Add missing QR code generation endpoint for production compatibility
+  app.post('/api/generate-qr-code', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Generate widget token for the user
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.default.sign(
+        { userId, type: 'widget' },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '30d' }
+      );
+      
+      const widgetUrl = `${process.env.APP_URL || 'https://www.musobuddy.com'}/widget?token=${encodeURIComponent(token)}`;
+      
+      // Import QRCode library
+      const QRCode = await import('qrcode');
+      const qrCode = await QRCode.default.toDataURL(widgetUrl, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      res.json({ qrCode, widgetUrl });
+    } catch (error) {
+      console.error('QR code generation error:', error);
+      res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
+
   console.log('✅ Booking routes configured');
 }
