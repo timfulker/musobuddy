@@ -6,7 +6,7 @@ const mailgun = new Mailgun(formData);
 // ENHANCED: Mailgun route management for multi-user email system
 export class MailgunRouteManager {
   private mg: any;
-  private domain = 'mg.musobuddy.com';
+  private domain = 'enquiries.musobuddy.com';
 
   constructor() {
     if (process.env.MAILGUN_API_KEY) {
@@ -26,12 +26,12 @@ export class MailgunRouteManager {
     try {
       console.log(`📧 Creating Mailgun route for user ${userId} with prefix "${emailPrefix}"`);
       
-      const expression = `match_recipient("${emailPrefix}-leads@${this.domain}")`;
+      const expression = `match_recipient("${emailPrefix}@${this.domain}")`;
       const webhookUrl = `${process.env.APP_SERVER_URL || 'https://musobuddy.replit.app'}/api/webhook/mailgun`;
       
       const route = await this.mg.routes.create({
         priority: 1,
-        description: `MusoBuddy lead emails for user ${userId} (${emailPrefix})`,
+        description: `MusoBuddy enquiry emails for user ${userId} (${emailPrefix})`,
         expression: expression,
         action: [`forward("${webhookUrl}")`]
       });

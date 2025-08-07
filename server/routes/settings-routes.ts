@@ -28,7 +28,7 @@ export async function registerSettingsRoutes(app: Express) {
       
       // If user has an email prefix, return the full email
       if (user.emailPrefix) {
-        const fullEmail = `${user.emailPrefix}-leads@mg.musobuddy.com`;
+        const fullEmail = `${user.emailPrefix}@enquiries.musobuddy.com`;
         res.json({ 
           email: fullEmail,
           needsSetup: false 
@@ -78,7 +78,7 @@ export async function registerSettingsRoutes(app: Express) {
       }
       
       // Prefix is available
-      const fullEmail = `${prefix}-leads@mg.musobuddy.com`;
+      const fullEmail = `${prefix}@enquiries.musobuddy.com`;
       res.json({ 
         available: true,
         fullEmail 
@@ -137,8 +137,8 @@ export async function registerSettingsRoutes(app: Express) {
       // Update user with email prefix
       await storage.updateUser(userId, { emailPrefix: prefix });
       
-      const fullEmail = `${prefix}-leads@mg.musobuddy.com`;
-      console.log(`✅ Lead email ${fullEmail} assigned to user ${userId}`);
+      const fullEmail = `${prefix}@enquiries.musobuddy.com`;
+      console.log(`✅ Enquiry email ${fullEmail} assigned to user ${userId}`);
       
       res.json({ 
         success: true,

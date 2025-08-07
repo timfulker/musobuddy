@@ -234,10 +234,10 @@ export default function EmailSetup() {
                       className="pr-4"
                     />
                   </div>
-                  <span className="text-gray-500 font-mono">@mg.musobuddy.com</span>
+                  <span className="text-gray-500 font-mono">@enquiries.musobuddy.com</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Your full email will be: <code>leads+{prefix || 'yourprefix'}@mg.musobuddy.com</code>
+                  Your full email will be: <code>{prefix || 'yourprefix'}@enquiries.musobuddy.com</code>
                 </p>
               </div>
 
@@ -255,7 +255,7 @@ export default function EmailSetup() {
                     <Alert className="border-green-200 bg-green-50">
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">
-                        Great! <code>leads+{prefix}@mg.musobuddy.com</code> is available
+                        Great! <code>{prefix}@enquiries.musobuddy.com</code> is available
                       </AlertDescription>
                     </Alert>
                   ) : (
