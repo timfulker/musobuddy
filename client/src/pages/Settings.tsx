@@ -218,7 +218,7 @@ export default function Settings() {
   if (settingsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {!isDesktop && <MobileNav isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
+        {!isDesktop && <MobileNav />}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className={`${isDesktop ? 'ml-64' : 'ml-0'} transition-all duration-300`}>
           <div className="flex items-center justify-center py-12">
@@ -232,7 +232,7 @@ export default function Settings() {
   if (settingsError) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {!isDesktop && <MobileNav isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
+        {!isDesktop && <MobileNav />}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className={`${isDesktop ? 'ml-64' : 'ml-0'} transition-all duration-300`}>
           <div className="p-6">
@@ -251,7 +251,7 @@ export default function Settings() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile Navigation */}
       {!isDesktop && (
-        <MobileNav isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <MobileNav />
       )}
 
       {/* Sidebar */}
@@ -672,6 +672,23 @@ export default function Settings() {
                             <FormControl>
                               <Textarea 
                                 placeholder="Additional notes about your pricing structure..."
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="specialOffers"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Special Offers</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Any special offers or packages you provide..."
                                 {...field} 
                               />
                             </FormControl>
