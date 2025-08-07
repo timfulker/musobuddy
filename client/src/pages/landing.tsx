@@ -196,6 +196,47 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Feature Section: QR Booking System */}
+      <section className="py-20 bg-white border-t border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h3 className="text-4xl font-bold text-gray-900 mb-8">
+                Get booked instantly — just by scanning a QR code
+              </h3>
+              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+                MusoBuddy gives every musician a unique QR code linked to a simple booking form. Stick it on your socials, business card, WhatsApp message — anywhere.
+              </p>
+              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+                As soon as a client fills out the form, the enquiry is parsed and turned into a real booking inside your dashboard — with zero manual input.
+              </p>
+
+              <div className="bg-gray-50 border-l-4 border-primary p-6 mb-8">
+                <p className="text-gray-700 italic">
+                  <strong>Real example:</strong> A pub owner scans your QR from a flyer → sends inquiry at 2:43 PM → contract generated and sent by 2:46 PM.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-gray-700">• Static HTML booking form — opens instantly, works everywhere</p>
+                <p className="text-gray-700">• Embedded into QR → Perfect for posters, cards, set lists, or WhatsApp</p>
+                <p className="text-gray-700">• Enquiries instantly parsed into real bookings</p>
+                <p className="text-gray-700">• Customise your widget with pre-filled options (e.g. gig types)</p>
+                <p className="text-gray-700">• Boost response rate with a no-fuss enquiry process</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-8 rounded text-center">
+              {/* Placeholder for visual */}
+              <img 
+                src="/images/qr-demo-placeholder.png" 
+                alt="QR code demo" 
+                className="mx-auto w-64 h-64 mb-4 border rounded" 
+              />
+              <p className="text-gray-500 text-sm italic">Example QR booking code in action</p>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Video and CTA Section */}
       <section className="py-20 bg-white border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

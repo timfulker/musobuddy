@@ -43,6 +43,8 @@ export function generateContractSigningPage(
 
   const venueAddressDisplay = contract.venueAddress ? escapeHtml(contract.venueAddress) : '<em>To be provided</em>';
 
+  const apiUrl = `https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/${contractId}`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -158,7 +160,6 @@ export function generateContractSigningPage(
             font-size: 16px;
         }
 
-        /* Contract Header */
         .contract-header {
             background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
             color: white;
@@ -211,7 +212,6 @@ export function generateContractSigningPage(
             opacity: 0.9;
         }
 
-        /* Contract Body */
         .contract-body {
             padding: 40px;
         }
@@ -353,7 +353,6 @@ export function generateContractSigningPage(
             font-size: 16px;
         }
 
-        /* Clean Signature Section */
         .signature-section {
             margin-top: 24px;
         }
@@ -396,7 +395,6 @@ export function generateContractSigningPage(
             height: 18px;
         }
 
-        /* Sign Button */
         .sign-button {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
@@ -444,7 +442,7 @@ export function generateContractSigningPage(
         canvas, .signature-pad, .signature-canvas, [class*="signature"] canvas {
             display: none !important;
         }
-
+        
         /* Remove any dotted signature areas */
         .signature-area, .sign-area, [class*="click-to-sign"], [class*="signature-box"] {
             display: none !important;
@@ -523,7 +521,6 @@ export function generateContractSigningPage(
                 </div>
 
                 <div class="contract-body">
-                    <!-- Parties Section -->
                     <div class="section">
                         <div class="section-title">Parties to this Agreement</div>
                         <div class="parties-section">
@@ -548,7 +545,6 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Event Details -->
                     <div class="section">
                         <div class="section-title">Event Details</div>
                         <div class="details-grid">
@@ -571,7 +567,6 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Financial Terms -->
                     <div class="section">
                         <div class="section-title">Financial Terms</div>
                         <div class="financial-summary">
@@ -590,7 +585,6 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Technical Requirements -->
                     <div class="section">
                         <div class="section-title">Technical Requirements</div>
                         <div class="requirements-content">
@@ -602,7 +596,6 @@ export function generateContractSigningPage(
                         </div>
                     </div>
 
-                    <!-- Terms and Conditions -->
                     <div class="section">
                         <div class="section-title">Terms & Conditions</div>
 
@@ -707,7 +700,7 @@ export function generateContractSigningPage(
                 signaturePads.forEach(function(element) {
                     element.remove();
                 });
-
+                
                 // Remove any "click to sign" text or boxes
                 var clickToSignElements = document.querySelectorAll('[class*="click-to-sign"], [class*="signature-box"], .signature-area');
                 clickToSignElements.forEach(function(element) {
@@ -753,10 +746,7 @@ export function generateContractSigningPage(
                         signedAt: new Date().toISOString()
                     };
 
-                    // FIXED: Using backticks for template literal  
-                    var apiUrl = 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + contractId;
-
-                    fetch(apiUrl, {
+                    fetch('${apiUrl}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -788,7 +778,7 @@ export function generateContractSigningPage(
         });
     </script>
 </body>
-</html>\`;
+</html>`;
 }
 
 // Helper function to escape HTML to prevent XSS
