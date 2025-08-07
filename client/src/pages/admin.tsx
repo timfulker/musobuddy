@@ -316,14 +316,14 @@ export default function AdminPanel() {
 
   const filteredUsers = (users || []).filter((user: AdminUser) => {
     const matchesSearch = userSearch === '' || 
-      user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(userSearch.toLowerCase());
+      (user.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+      `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase().includes(userSearch.toLowerCase());
     
     const matchesFilter = userFilter === 'all' ||
       (userFilter === 'admin' && user.isAdmin === true) ||
       (userFilter === 'beta' && user.isBetaTester === true) ||
       (userFilter === 'regular' && !user.isAdmin && !user.isBetaTester) ||
-      userFilter === user.tier;
+      userFilter === (user.tier || 'free');
     
     return matchesSearch && matchesFilter;
   });
@@ -795,12 +795,12 @@ export default function AdminPanel() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">
-                                {user.firstName} {user.lastName}
+                                {user.firstName || 'Unknown'} {user.lastName || 'User'}
                               </div>
                               <div className="text-sm text-muted-foreground truncate">{user.email}</div>
                               <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                <Badge className={getTierBadge(user.tier)}>
-                                  {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
+                                <Badge className={getTierBadge(user.tier || 'free')}>
+                                  {user.tier ? user.tier.charAt(0).toUpperCase() + user.tier.slice(1) : 'Free'}
                                 </Badge>
                                 {user.isAdmin && (
                                   <Badge variant="outline" className="text-yellow-600 border-yellow-200">
