@@ -465,7 +465,7 @@ export default function SignContract() {
             {!signed && (
               <Card className="sticky top-8">
                 <CardHeader>
-                  <CardTitle>Digital Signature</CardTitle>
+                  <CardTitle>Sign Contract</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                 {/* Client-fillable fields section */}
@@ -560,7 +560,7 @@ export default function SignContract() {
                   <Button
                     onClick={handleSign}
                     disabled={signing || !signatureName.trim() || !agreed}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     size="lg"
                   >
                     {signing ? (
