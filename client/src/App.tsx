@@ -35,6 +35,7 @@ import SignupPage from "@/pages/auth/signup";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
+import SystemHealth from "@/pages/system-health";
 import { useEffect } from "react";
 
 function Router() {
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/templates" component={Templates} />
       <Route path="/unparseable-messages" component={UnparseableMessages} />
       <Route path="/user-guide" component={UserGuide} />
+      <Route path="/system-health" component={SystemHealth} />
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />
       <Route path="/admin" component={Admin} />

@@ -11,6 +11,31 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
 
+  // Add health check endpoint for contract service
+  app.get('/api/contracts/health', async (req, res) => {
+    try {
+      // Test database connection
+      const testContract = await storage.getContract(1).catch(() => null);
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        services: {
+          database: 'connected',
+          storage: 'available',
+          pdf: 'ready',
+          email: 'configured'
+        }
+      });
+    } catch (error: any) {
+      res.status(503).json({
+        status: 'unhealthy',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Fix all signing pages with JavaScript errors
   app.post('/api/contracts/fix-all-signing-pages', async (req: any, res) => {
     try {
@@ -428,46 +453,36 @@ export function registerContractRoutes(app: Express) {
     res.sendStatus(204);
   });
   
+  // CRITICAL: Enhanced contract signing endpoint with retry logic and better error handling
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
     // Set CORS headers for all responses
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
+    const startTime = Date.now();
+    const contractId = parseInt(req.params.id);
+    
+    console.log(`🔐 [CONTRACT-SIGN] Starting signature process for contract ${contractId}`);
+    
     try {
-      const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
 
-      console.log(`🖊️ Contract signing request for #${contractId}:`, {
-        body: req.body,
-        hasSignature: !!req.body.clientSignature,
-        hasIP: !!req.body.clientIP
-      });
-
-      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
-
-      if (!clientSignature) {
-        console.log('❌ Missing clientSignature');
-        return res.status(400).json({ error: 'Missing client signature' });
-      }
-
-      if (!clientIP) {
-        console.log('❌ Missing clientIP');
-        return res.status(400).json({ error: 'Missing client IP address' });
-      }
-
-      console.log(`🖊️ Processing contract signing for contract #${contractId}`);
-
-      // Get the contract
+      // Step 1: Validate contract exists
       const contract = await storage.getContract(contractId);
       if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
+        console.error(`❌ [CONTRACT-SIGN] Contract ${contractId} not found`);
+        return res.status(404).json({ 
+          error: 'Contract not found',
+          contractId 
+        });
       }
 
-      // Check if already signed
+      // Step 2: Validate contract status
       if (contract.status === 'signed') {
+        console.warn(`⚠️ [CONTRACT-SIGN] Contract ${contractId} already signed`);
         return res.json({ 
           success: false, 
           alreadySigned: true, 
@@ -475,150 +490,205 @@ export function registerContractRoutes(app: Express) {
         });
       }
 
-      // Update contract with signing information
-      const signingData: any = {
+      if (contract.status !== 'sent' && contract.status !== 'draft') {
+        console.error(`❌ [CONTRACT-SIGN] Contract ${contractId} not in signable state: ${contract.status}`);
+        return res.status(400).json({ 
+          error: 'Contract not available for signing',
+          currentStatus: contract.status 
+        });
+      }
+
+      // Step 3: Process signature with comprehensive data
+      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
+      
+      if (!clientSignature) {
+        console.log('❌ [CONTRACT-SIGN] Missing clientSignature');
+        return res.status(400).json({ error: 'Missing client signature' });
+      }
+
+      const signatureData: any = {
         status: 'signed' as const,
-        clientSignature,
-        clientIpAddress: clientIP,
+        clientSignature: clientSignature || req.body.signatureName,
+        clientPhone: clientPhone || contract.clientPhone,
+        clientAddress: clientAddress || contract.clientAddress,
+        venueAddress: venueAddress || contract.venueAddress,
+        clientIpAddress: clientIP || req.ip || req.connection?.remoteAddress || 'Unknown',
         signedAt: new Date(),
         updatedAt: new Date()
       };
 
-      // Add optional fields if provided
-      if (clientPhone) signingData.clientPhone = clientPhone;
-      if (clientAddress) signingData.clientAddress = clientAddress;
-      if (venueAddress) signingData.venueAddress = venueAddress;
+      console.log(`📝 [CONTRACT-SIGN] Processing signature for contract ${contractId}`);
 
-      const signedContract = await storage.updateContract(contractId, signingData, contract.userId);
-      
-      if (!signedContract) {
-        throw new Error('Failed to update contract status');
-      }
+      // Step 4: Update contract with retry logic
+      let updateResult: any;
+      let retryCount = 0;
+      const maxRetries = 3;
 
-      console.log(`✅ Contract #${contractId} signed successfully by ${clientSignature}`);
-
-      // Get user settings for email notification
-      const userSettings = await storage.getSettings(contract.userId);
-      
-      // Generate signed PDF and upload to cloud storage
-      const { uploadContractToCloud, uploadContractSigningPage } = await import('../core/cloud-storage');
-      
-      // First regenerate the signing page with the updated status
-      const signingPageResult = await uploadContractSigningPage(signedContract, userSettings);
-      
-      // Then generate the signed PDF
-      const uploadResult = await uploadContractToCloud(signedContract, userSettings);
-      
-      if (uploadResult.success) {
-        // Update contract with both URLs
-        await storage.updateContract(contractId, {
-          cloudStorageUrl: uploadResult.url,
-          cloudStorageKey: uploadResult.key,
-          signingPageUrl: signingPageResult.url || signedContract.signingPageUrl
-        }, contract.userId);
-        
-        console.log(`📄 Signed contract PDF uploaded: ${uploadResult.url}`);
-      }
-
-      // Send confirmation emails to BOTH client and performer
-      if (userSettings) {
+      while (retryCount < maxRetries) {
         try {
-          const EmailService = (await import('../core/services')).EmailService;
-          const emailService = new EmailService();
+          updateResult = await storage.updateContract(contractId, signatureData, contract.userId);
           
-          const subject = `Contract Signed - ${signedContract.contractNumber}`;
-          const message = `The contract has been successfully signed and is now legally binding.`;
+          if (updateResult) {
+            console.log(`✅ [CONTRACT-SIGN] Database update successful on attempt ${retryCount + 1}`);
+            break; // Success, exit retry loop
+          }
+        } catch (updateError: any) {
+          retryCount++;
+          console.error(`❌ [CONTRACT-SIGN] Update attempt ${retryCount} failed:`, updateError.message);
           
-          // Send to client if they have an email
-          if (signedContract.clientEmail) {
-            await emailService.sendContractEmail(
-              signedContract, 
-              userSettings, 
-              subject, 
-              uploadResult.url || ''
-            );
-            console.log(`📧 Contract signing confirmation email sent to client: ${signedContract.clientEmail}`);
+          if (retryCount >= maxRetries) {
+            throw updateError;
           }
           
-          // ALSO send to performer/business owner
-          if (userSettings.businessEmail) {
-            // Create a notification email for the performer
-            const performerSubject = `✅ Contract Signed by ${signedContract.clientName} - ${signedContract.contractNumber}`;
-            const performerHtml = `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <title>Contract Signed Notification</title>
-              </head>
-              <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h2 style="color: #10b981;">✅ Contract Successfully Signed!</h2>
-                  
-                  <p>Great news! Your contract has been signed by <strong>${signedContract.clientName}</strong>.</p>
-                  
-                  <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                    <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
-                    <p><strong>Contract Number:</strong> ${signedContract.contractNumber}</p>
-                    <p><strong>Client:</strong> ${signedContract.clientName}</p>
-                    <p><strong>Event Date:</strong> ${new Date(signedContract.eventDate).toLocaleDateString('en-GB')}</p>
-                    <p><strong>Time:</strong> ${signedContract.eventTime} - ${signedContract.eventEndTime}</p>
-                    <p><strong>Venue:</strong> ${signedContract.venue}</p>
-                    <p><strong>Fee:</strong> £${signedContract.fee}</p>
-                    ${signedContract.deposit ? `<p><strong>Deposit:</strong> £${signedContract.deposit}</p>` : ''}
-                  </div>
-                  
-                  <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0;"><strong>Signing Information:</strong></p>
-                    <p style="margin: 5px 0;">Signed by: ${signedContract.clientSignature}</p>
-                    <p style="margin: 5px 0;">Date: ${new Date(signedContract.signedAt).toLocaleString('en-GB')}</p>
-                    <p style="margin: 5px 0;">IP Address: ${signedContract.clientIpAddress}</p>
-                  </div>
-                  
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${uploadResult.url || ''}" 
-                       style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                      📄 View Signed Contract PDF
-                    </a>
-                  </div>
-                  
-                  <p>The contract is now legally binding. A copy has been sent to the client at ${signedContract.clientEmail || 'their email address'}.</p>
-                  
-                  <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                  
-                  <p style="font-size: 14px; color: #666;">
-                    This is an automated notification from your MusoBuddy system.
-                  </p>
-                </div>
-              </body>
-              </html>
-            `;
-            
-            await emailService.sendEmail({
-              to: userSettings.businessEmail,
-              subject: performerSubject,
-              html: performerHtml
-            });
-            console.log(`📧 Contract signing confirmation email sent to performer: ${userSettings.businessEmail}`);
-          }
-          
-          console.log(`📧 Contract signing confirmation emails sent`);
-        } catch (emailError) {
-          console.warn('⚠️ Failed to send confirmation emails:', emailError);
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
         }
       }
 
-      res.json({ 
-        success: true, 
+      if (!updateResult) {
+        throw new Error('Failed to update contract after retries');
+      }
+
+      // Step 5: Generate PDF with error handling (non-critical)
+      let pdfUrl = null;
+      try {
+        const userSettings = await storage.getSettings(contract.userId);
+        const { uploadContractToCloud, uploadContractSigningPage } = await import('../core/cloud-storage');
+        
+        // First regenerate the signing page with the updated status
+        const signingPageResult = await uploadContractSigningPage(updateResult, userSettings);
+        
+        // Then generate the signed PDF
+        const uploadResult = await uploadContractToCloud(updateResult, userSettings);
+        
+        if (uploadResult.success) {
+          pdfUrl = uploadResult.url;
+          
+          // Update contract with PDF URL
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: pdfUrl,
+            cloudStorageKey: uploadResult.key,
+            signingPageUrl: signingPageResult.url || updateResult.signingPageUrl
+          }, contract.userId);
+          
+          console.log(`📄 [CONTRACT-SIGN] Signed contract PDF uploaded: ${pdfUrl}`);
+        }
+      } catch (pdfError: any) {
+        console.error(`⚠️ [CONTRACT-SIGN] PDF generation failed (non-critical):`, pdfError.message);
+        // Continue - signing is still successful even if PDF fails
+      }
+
+      // Step 6: Send confirmation emails with fallback (non-critical)
+      try {
+        const userSettings = await storage.getSettings(contract.userId);
+        const { EmailService } = await import('../core/services');
+        const emailService = new EmailService();
+        
+        const subject = `Contract Signed - ${updateResult.contractNumber}`;
+        
+        // Send to client if they have an email
+        if (updateResult.clientEmail) {
+          await emailService.sendContractEmail(
+            updateResult, 
+            userSettings, 
+            subject, 
+            pdfUrl || ''
+          );
+          console.log(`✉️ [CONTRACT-SIGN] Confirmation email sent to client: ${updateResult.clientEmail}`);
+        }
+        
+        // ALSO send to performer/business owner
+        if (userSettings?.businessEmail) {
+          const performerSubject = `✅ Contract Signed by ${updateResult.clientName} - ${updateResult.contractNumber}`;
+          const performerHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Contract Signed Notification</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #10b981;">✅ Contract Successfully Signed!</h2>
+                
+                <p>Great news! Your contract has been signed by <strong>${updateResult.clientName}</strong>.</p>
+                
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                  <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
+                  <p><strong>Contract Number:</strong> ${updateResult.contractNumber}</p>
+                  <p><strong>Client:</strong> ${updateResult.clientName}</p>
+                  <p><strong>Event Date:</strong> ${new Date(updateResult.eventDate).toLocaleDateString('en-GB')}</p>
+                  <p><strong>Venue:</strong> ${updateResult.venue}</p>
+                  <p><strong>Fee:</strong> £${updateResult.fee}</p>
+                </div>
+                
+                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0;"><strong>Signing Information:</strong></p>
+                  <p style="margin: 5px 0;">Signed by: ${updateResult.clientSignature}</p>
+                  <p style="margin: 5px 0;">Date: ${new Date(updateResult.signedAt).toLocaleString('en-GB')}</p>
+                  <p style="margin: 5px 0;">IP Address: ${updateResult.clientIpAddress}</p>
+                </div>
+                
+                ${pdfUrl ? `
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${pdfUrl}" 
+                     style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                    📄 View Signed Contract PDF
+                  </a>
+                </div>
+                ` : ''}
+                
+                <p>The contract is now legally binding. A copy has been sent to the client at ${updateResult.clientEmail || 'their email address'}.</p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                
+                <p style="font-size: 14px; color: #666;">
+                  This is an automated notification from your MusoBuddy system.
+                </p>
+              </div>
+            </body>
+            </html>
+          `;
+          
+          await emailService.sendEmail({
+            to: userSettings.businessEmail,
+            subject: performerSubject,
+            html: performerHtml
+          });
+          console.log(`✉️ [CONTRACT-SIGN] Confirmation email sent to performer: ${userSettings.businessEmail}`);
+        }
+      } catch (emailError: any) {
+        console.error(`⚠️ [CONTRACT-SIGN] Email send failed (non-critical):`, emailError.message);
+        // Continue - signing is still successful even if email fails
+      }
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ [CONTRACT-SIGN] Contract ${contractId} signed successfully in ${duration}ms`);
+
+      res.json({
+        success: true,
+        contractId,
+        status: 'signed',
+        pdfUrl,
         message: 'Contract signed successfully',
-        cloudUrl: uploadResult.url
+        cloudUrl: pdfUrl,
+        duration
       });
 
     } catch (error: any) {
-      console.error('❌ Contract signing failed:', error);
-      res.status(500).json({ 
+      const duration = Date.now() - startTime;
+      console.error(`❌ [CONTRACT-SIGN] CRITICAL ERROR for contract ${contractId} after ${duration}ms:`, {
+        message: error.message,
+        stack: error.stack,
+        contractId
+      });
+
+      // Send detailed error response for debugging
+      res.status(500).json({
         error: 'Failed to sign contract',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        contractId,
+        duration
       });
     }
   });

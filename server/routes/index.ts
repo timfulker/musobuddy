@@ -11,6 +11,7 @@ import { registerClientRoutes } from "./client-routes";
 import { registerFeedbackRoutes } from "./feedback-routes";
 import { registerUnparseableRoutes } from "./unparseable-routes";
 import { registerComplianceRoutes } from "./compliance-routes";
+import { registerHealthRoutes } from "./health-routes";
 import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
@@ -38,6 +39,9 @@ export async function registerRoutes(app: Express) {
   
   // Register isolated routes for cloud compatibility  
   registerIsolatedRoutes(app);
+  
+  // Register health monitoring routes
+  registerHealthRoutes(app);
   
   // Add missing endpoints to prevent 404s
   app.get('/api/conflicts', requireAuth, (req, res) => {

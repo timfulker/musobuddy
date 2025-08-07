@@ -11,6 +11,7 @@ Email notifications: Both client AND performer receive confirmation emails when 
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com` (updated 08/08/2025).
 Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musobuddy.com/api/webhook/mailgun` for production reliability (fixed 08/08/2025).
+System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
 
 ## System Architecture
 
@@ -41,6 +42,9 @@ Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musob
     - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
     - **Data Flow**: Streamlined authentication, booking lifecycle management, and AI integration for automated data extraction and processing.
     - **Security**: Robust session validation, comprehensive rate limiting, enhanced database connection pooling, secure password hashing, input validation, input sanitization, and async error handling.
+    - **System Health Monitoring**: Real-time dashboard (/system-health) tracking database, authentication, email, storage services with performance metrics and automated health checks.
+    - **Enhanced Contract Reliability**: Enterprise-grade retry logic with exponential backoff, non-critical failure handling, and revenue protection mechanisms.
+    - **Unified Authentication**: Middleware supporting 4 token sources (Bearer header, x-auth-token, query parameter, cookies) eliminating random 401 errors.
     - **Deployment**: Node.js server serving built frontend, environment configuration, build process with Vite and esbuild.
     - **API Design**: RESTful API endpoints, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components like invoice and contract generation are designed as entirely separate, isolated systems.
