@@ -15,6 +15,41 @@ function getLogoBase64(): string {
   }
 }
 
+function formatBusinessAddress(userSettings: UserSettings | null): string {
+  if (!userSettings) return '';
+  
+  // Use individual address fields: addressLine1, addressLine2, city, county, postcode
+  const addressParts: string[] = [];
+  
+  if (userSettings.addressLine1) {
+    addressParts.push(userSettings.addressLine1);
+  }
+  
+  if (userSettings.addressLine2) {
+    addressParts.push(userSettings.addressLine2);
+  }
+  
+  if (userSettings.city) {
+    addressParts.push(userSettings.city);
+  }
+  
+  if (userSettings.county) {
+    addressParts.push(userSettings.county);
+  }
+  
+  if (userSettings.postcode) {
+    addressParts.push(userSettings.postcode);
+  }
+  
+  // Fall back to legacy businessAddress if no individual fields are set
+  if (addressParts.length === 0 && userSettings.businessAddress) {
+    return userSettings.businessAddress.replace(/\n/g, '<br>');
+  }
+  
+  // Join the address parts with line breaks
+  return addressParts.length > 0 ? addressParts.join('<br>') : 'Address not provided';
+}
+
 // MAIN EXPORT: Unified contract PDF generator
 export async function generateContractPDF(
   contract: Contract,
@@ -548,7 +583,7 @@ function generateUnifiedContractHTML(
                             <strong>${businessName}</strong><br>
                             ${userSettings?.businessEmail ? `Email: ${userSettings.businessEmail}<br>` : ''}
                             ${userSettings?.phone ? `Phone: ${userSettings.phone}<br>` : ''}
-                            ${userSettings?.businessAddress ? userSettings.businessAddress.replace(/\n/g, '<br>') : ''}
+                            ${formatBusinessAddress(userSettings)}
                         </div>
                     </div>
                     <div class="party-box">
