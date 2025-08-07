@@ -175,7 +175,7 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, userId, req.body);
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
       res.json(updatedInvoice);
       
     } catch (error: any) {
@@ -218,6 +218,65 @@ export function registerInvoiceRoutes(app: Express) {
       console.error('❌ Failed to delete invoice:', error);
       res.status(500).json({ 
         error: 'Failed to delete invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Bulk delete invoices
+  app.post('/api/invoices/bulk-delete', requireAuth, async (req: any, res) => {
+    try {
+      const { invoiceIds } = req.body;
+      const userId = req.user.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (!Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+        return res.status(400).json({ error: 'Invoice IDs array is required' });
+      }
+      
+      let deletedCount = 0;
+      const errors: any[] = [];
+      
+      for (const id of invoiceIds) {
+        try {
+          const invoiceId = parseInt(id);
+          if (isNaN(invoiceId)) {
+            errors.push({ id, error: 'Invalid ID format' });
+            continue;
+          }
+          
+          const invoice = await storage.getInvoice(invoiceId);
+          if (!invoice) {
+            errors.push({ id: invoiceId, error: 'Not found' });
+            continue;
+          }
+          
+          if (invoice.userId !== userId) {
+            errors.push({ id: invoiceId, error: 'Access denied' });
+            continue;
+          }
+          
+          await storage.deleteInvoice(invoiceId, userId);
+          deletedCount++;
+        } catch (error: any) {
+          errors.push({ id, error: error.message });
+        }
+      }
+      
+      console.log(`✅ Bulk deleted ${deletedCount} invoices for user ${userId}`);
+      res.json({ 
+        success: true, 
+        deletedCount,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to bulk delete invoices:', error);
+      res.status(500).json({ 
+        error: 'Failed to bulk delete invoices',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
