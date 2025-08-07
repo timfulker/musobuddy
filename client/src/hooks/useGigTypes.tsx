@@ -1,9 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
 
-// Custom hook to fetch and combine static gig types with user's custom gig types
+interface Settings {
+  id?: number;
+  customGigTypes?: string[];
+  [key: string]: any;
+}
+
+interface UseGigTypesReturn {
+  gigTypes: string[];
+  isLoading: boolean;
+  error: Error | null;
+  staticGigTypes: string[];
+  customGigTypes: string[];
+}
+
 // Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
+const getAuthTokenKey = (): string => {
   const hostname = window.location.hostname;
   
   // Development: Admin-only access for simplified testing
@@ -15,24 +28,24 @@ const getAuthTokenKey = () => {
   return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
 };
 
-const getAuthToken = () => {
+const getAuthToken = (): string | null => {
   const tokenKey = getAuthTokenKey();
   return localStorage.getItem(tokenKey);
 };
 
-export const useGigTypes = () => {
-  const { data: settings, isLoading, error } = useQuery({
+export const useGigTypes = (): UseGigTypesReturn => {
+  const { data: settings, isLoading, error }: UseQueryResult<Settings, Error> = useQuery({
     queryKey: ['settings'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Settings> => {
       const token = getAuthToken();
       
       if (!token) {
-        console.error('❌ No auth token found for useGigTypes');
+        console.error('No auth token found for useGigTypes');
         throw new Error('No authentication token');
       }
       
-      console.log('🔍 useGigTypes - Token key:', getAuthTokenKey());
-      console.log('🔍 useGigTypes - Token found:', !!token);
+      console.log('useGigTypes - Token key:', getAuthTokenKey());
+      console.log('useGigTypes - Token found:', !!token);
       
       const response = await fetch('/api/settings', {
         headers: {
@@ -42,12 +55,12 @@ export const useGigTypes = () => {
       });
       
       if (!response.ok) {
-        console.error('❌ Settings API error in useGigTypes:', response.status, response.statusText);
+        console.error('Settings API error in useGigTypes:', response.status, response.statusText);
         throw new Error('Failed to fetch settings');
       }
       
-      const data = await response.json();
-      console.log('✅ useGigTypes settings loaded successfully');
+      const data: Settings = await response.json();
+      console.log('useGigTypes settings loaded successfully');
       return data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -56,23 +69,23 @@ export const useGigTypes = () => {
 
   // Combine static gig types with user's custom gig types
   // Ensure customGigTypes is always an array to prevent iteration errors
-  const customGigTypes = Array.isArray(settings?.customGigTypes) ? settings.customGigTypes : [];
+  const customGigTypes: string[] = Array.isArray(settings?.customGigTypes) ? settings.customGigTypes : [];
   
   // Defensive check: ensure COMMON_GIG_TYPES is an array
-  const staticGigTypes = Array.isArray(COMMON_GIG_TYPES) ? COMMON_GIG_TYPES : [];
+  const staticGigTypes: string[] = Array.isArray(COMMON_GIG_TYPES) ? COMMON_GIG_TYPES : [];
   
-  const allGigTypes = [
+  const allGigTypes: string[] = [
     ...staticGigTypes,
     ...customGigTypes
   ];
 
   // Remove duplicates and sort alphabetically
-  const uniqueGigTypes = [...new Set(allGigTypes)].sort();
+  const uniqueGigTypes: string[] = Array.from(new Set(allGigTypes)).sort();
 
   return {
     gigTypes: uniqueGigTypes,
     isLoading: isLoading,
-    error: error,
+    error: error || null,
     staticGigTypes: staticGigTypes,
     customGigTypes: customGigTypes
   };

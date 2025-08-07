@@ -1,613 +1,311 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
-import { insertInvoiceSchema, type Invoice } from "@shared/schema";
-import { useLocation, Link } from "wouter";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-import Sidebar from "@/components/sidebar";
-import MobileNav from "@/components/mobile-nav";
-import { useResponsive } from "@/hooks/useResponsive";
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import Sidebar from '@/components/sidebar';
+import MobileNav from '@/components/mobile-nav';
+import { useResponsive } from '@/hooks/useResponsive';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { 
+  FileText, 
+  Plus, 
+  Send, 
+  Download, 
+  Edit2, 
+  Trash2, 
+  Search, 
+  Filter,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Calendar,
+  MapPin,
+  PoundSterling,
+  Mail,
+  Eye,
+  Archive,
+  FileDown,
+  DollarSign
+} from 'lucide-react';
 
-const invoiceFormSchema = z.object({
-  contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
-  clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
-  ccEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
+interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  clientName: string;
+  clientEmail: string;
+  ccEmail?: string;
+  clientAddress?: string;
+  venueAddress?: string;
+  amount: string;
+  dueDate: string;
+  performanceDate?: string;
+  description?: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'archived';
+  createdAt: string;
+  sentAt?: string;
+  paidAt?: string;
+  cloudStorageUrl?: string;
+}
+
+const invoiceSchema = z.object({
+  invoiceNumber: z.string().min(1, 'Invoice number is required'),
+  clientName: z.string().min(1, 'Client name is required'),
+  clientEmail: z.string().email('Valid email is required'),
+  ccEmail: z.string().email('Valid CC email required').optional().or(z.literal('')),
   clientAddress: z.string().optional(),
   venueAddress: z.string().optional(),
-  amount: z.string().min(1, "Amount is required").refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, "Amount must be a valid number greater than 0"),
-  dueDate: z.string().min(1, "Due date is required"),
+  amount: z.string().min(1, 'Amount is required'),
+  dueDate: z.string().min(1, 'Due date is required'),
   performanceDate: z.string().optional(),
-  performanceFee: z.string().optional(),
-  depositPaid: z.string().optional(),
+  description: z.string().optional()
 });
 
+type InvoiceForm = z.infer<typeof invoiceSchema>;
+
 export default function Invoices() {
-  const { toast } = useToast();
-  const [location, setLocation] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [editAndResendMode, setEditAndResendMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [customMessageDialog, setCustomMessageDialog] = useState(false);
   const [invoiceToSend, setInvoiceToSend] = useState<Invoice | null>(null);
-  const [customMessage, setCustomMessage] = useState("");
+  const [customMessage, setCustomMessage] = useState('');
+  const [customMessageDialog, setCustomMessageDialog] = useState(false);
+
   const { isDesktop } = useResponsive();
-  const { user } = useAuth();
-  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-
-  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
-    queryKey: ['/api/invoices'],
-  });
-
-  const { data: contracts = [] } = useQuery<any[]>({
-    queryKey: ['/api/contracts'],
-  });
-
-  const { data: userSettings } = useQuery<any>({
-    queryKey: ['/api/settings'],
-  });
-
-  const { data: enquiries = [] } = useQuery<any[]>({
-    queryKey: ['/api/bookings'],
-  });
-
-  const form = useForm<z.infer<typeof invoiceFormSchema>>({
-    resolver: zodResolver(invoiceFormSchema),
+  const form = useForm<InvoiceForm>({
+    resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      contractId: undefined, // Optional contract selection
-      clientName: "", 
-      clientEmail: "",
-      ccEmail: "",
-      clientAddress: "",
-      venueAddress: "",
-      amount: "",
-      dueDate: "",
-      performanceDate: "",
-      performanceFee: "",
-      depositPaid: "",
-    },
+      invoiceNumber: '',
+      clientName: '',
+      clientEmail: '',
+      ccEmail: '',
+      clientAddress: '',
+      venueAddress: '',
+      amount: '',
+      dueDate: '',
+      performanceDate: '',
+      description: ''
+    }
   });
 
-  // Auto-set due date using user's default setting
-  useEffect(() => {
-    if (userSettings?.defaultInvoiceDueDays) {
-      // Use user's setting for default due days
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + (userSettings.defaultInvoiceDueDays || 7));
-      form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
-    }
-  }, [userSettings]);
-
-  // Check for URL parameters to auto-open dialog and pre-fill with booking/enquiry data
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const createNew = params.get('create');
-    const action = params.get('action');
-    const bookingId = params.get('bookingId');
-    const enquiryId = params.get('enquiryId');
-    
-    if (createNew === 'true' || action === 'create') {
-      setIsDialogOpen(true);
-      
-      // Pre-fill with booking data if bookingId is provided
-      if (bookingId) {
-        // Fetch booking data and auto-fill form using authenticated apiRequest
-        apiRequest(`/api/bookings/${bookingId}`)
-          .then(response => response.json())
-          .then(booking => {
-            if (booking) {
-              // Calculate due date using user's default setting
-              const dueDate = new Date();
-              const dueDays = userSettings?.defaultInvoiceDueDays || 7;
-              dueDate.setDate(dueDate.getDate() + dueDays);
-              
-              // Calculate performance date from event date
-              const performanceDate = booking.eventDate 
-                ? new Date(booking.eventDate).toISOString().split('T')[0]
-                : "";
-              
-              form.reset({
-                contractId: undefined,
-                clientName: booking.clientName || "",
-                clientEmail: booking.clientEmail || "",
-                ccEmail: "",
-                clientAddress: booking.clientAddress || "",
-                venueAddress: booking.venueAddress || booking.venue || "",
-                amount: booking.fee || "",
-                dueDate: dueDate.toISOString().split('T')[0],
-                performanceDate: performanceDate,
-                performanceFee: booking.fee || "",
-                depositPaid: "",
-              });
-              
-              toast({
-                title: "Booking Data Loaded",
-                description: "Invoice form pre-filled with booking information",
-              });
-            }
-          })
-          .catch(error => {
-            console.error('Error fetching booking data:', error);
-            toast({
-              title: "Error",
-              description: "Could not load booking data for auto-fill",
-              variant: "destructive",
-            });
-          });
-      } else if (enquiryId && enquiries && enquiries.length > 0) {
-        const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
-        if (selectedEnquiry) {
-          // Calculate due date using user's default setting
-          const dueDate = new Date();
-          const dueDays = userSettings?.defaultInvoiceDueDays || 7;
-          dueDate.setDate(dueDate.getDate() + dueDays);
-          
-          // Calculate performance date from event date
-          const performanceDate = selectedEnquiry.eventDate 
-            ? new Date(selectedEnquiry.eventDate).toISOString().split('T')[0]
-            : "";
-          
-          form.reset({
-            contractId: undefined,
-            clientName: selectedEnquiry.clientName || "",
-            clientEmail: selectedEnquiry.clientEmail || "",
-            ccEmail: "",
-            clientAddress: selectedEnquiry.clientAddress || "",
-            venueAddress: selectedEnquiry.venue || "",
-            amount: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
-            dueDate: dueDate.toISOString().split('T')[0],
-            performanceDate: performanceDate,
-            performanceFee: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
-            depositPaid: "",
-          });
-        }
+  // Fetch invoices
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ['/api/invoices'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/invoices');
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoices');
       }
+      return response.json();
     }
-  }, [location, enquiries]);
+  });
 
-  // Watch contract ID changes
-  const selectedContractId = form.watch("contractId");
-
-  // Auto-fill fields when contract is selected (for convenience)
-  // Only auto-fill when user explicitly selects a contract (not when form first loads)
-  const [contractHasBeenSelected, setContractHasBeenSelected] = useState(false);
-  
-  useEffect(() => {
-    // Only auto-fill if a contract is explicitly selected AND we have contracts loaded
-    if (selectedContractId && contracts.length > 0 && contractHasBeenSelected) {
-      const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
-      if (selectedContract) {
-        // Only fill empty fields to preserve user edits
-        if (!form.getValues("clientName")) {
-          form.setValue("clientName", selectedContract.clientName);
-        }
-        if (!form.getValues("clientEmail")) {
-          form.setValue("clientEmail", selectedContract.clientEmail || "");
-        }
-        if (!form.getValues("venueAddress")) {
-          form.setValue("venueAddress", selectedContract.venue || "");
-        }
-        if (!form.getValues("performanceDate") && selectedContract.eventDate) {
-          form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
-        }
-        if (!form.getValues("amount") && selectedContract.fee) {
-          // Set the performance fee and calculate amount due (fee minus any deposit)
-          const fee = Number(selectedContract.fee);
-          const deposit = Number(selectedContract.deposit) || 0;
-          const amountDue = fee - deposit;
-          form.setValue("amount", amountDue.toString());
-          // Store fee and deposit for backend
-          form.setValue("performanceFee", fee.toString());
-          form.setValue("depositPaid", deposit.toString());
-        }
-      }
-    }
-  }, [selectedContractId, contracts, form, contractHasBeenSelected]);
-
-  // Auto-fill business address and phone from settings
-  useEffect(() => {
-    if (userSettings?.businessAddress) {
-      form.setValue("businessAddress", userSettings.businessAddress);
-    }
-    if (userSettings?.phone) {
-      form.setValue("businessPhone", userSettings.phone);
-    }
-  }, [userSettings, form]);
-
+  // Create invoice mutation
   const createInvoiceMutation = useMutation({
-    mutationFn: async (data: any) => {
-      
-      
-      
-      
-      // Use apiRequest to include JWT authentication
+    mutationFn: async (data: InvoiceForm) => {
       const response = await apiRequest('/api/invoices', {
         method: 'POST',
-        body: data,
+        body: JSON.stringify(data)
       });
-      
-      console.log("📝 Invoice response status:", response.status, response.ok);
-      
-      
       if (!response.ok) {
-        let errorMessage = 'Failed to create invoice';
-        try {
-          const errorData = await response.text();
-          console.error("🔥 Frontend: Error response:", errorData);
-          if (errorData) {
-            // Try to parse JSON error message
-            try {
-              const errorJson = JSON.parse(errorData);
-              errorMessage = errorJson.error || errorJson.message || errorData;
-            } catch {
-              errorMessage = errorData;
-            }
-          }
-          
-          // Special handling for 404 errors (production deployment issue)
-          if (response.status === 404) {
-            errorMessage = 'Invoice service unavailable. The server may need to be redeployed.';
-          }
-        } catch (e) {
-          console.error("🔥 Error reading response:", e);
-        }
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create invoice');
       }
-      
-      // Check if response has content before parsing
-      const contentType = response.headers.get('content-type');
-      const contentLength = response.headers.get('content-length');
-      console.log("📝 Response content-type:", contentType, "content-length:", contentLength);
-      
-      // Handle empty responses
-      if (!contentLength || contentLength === '0') {
-        console.error("🔥 Empty response from server");
-        throw new Error('Server returned empty response. Please try again.');
-      }
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error("🔥 Response is not JSON:", contentType);
-        throw new Error('Server returned invalid response format');
-      }
-      
-      const result = await response.json();
-      
-      return result;
-    },
-    onSuccess: (data) => {
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
-      form.reset();
-      setIsDialogOpen(false);
-      setEditingInvoice(null);
-      toast({
-        title: "Success",
-        description: "Invoice created successfully!",
-      });
-    },
-    onError: (error: any) => {
-      console.error("🔥 Frontend: Mutation error:", error);
-      console.error("🔥 Frontend: Error message:", error.message);
-      console.error("🔥 Frontend: Error stack:", error.stack);
-      
-      // Check if it's an authentication error and provide helpful guidance
-      if (error.message && error.message.includes("session has expired")) {
-        toast({
-          title: "Session Expired",
-          description: "Your session has expired. Please log out and log back in to continue.",
-          variant: "destructive",
-          action: (
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = "/api/logout"}
-              className="ml-2 text-sm"
-            >
-              Log Out
-            </Button>
-          ),
-        });
-      } else {
-        // Show specific error message if available
-        const errorMessage = error.message || "Failed to create invoice. Please try again.";
-        
-        toast({
-          title: "Error Creating Invoice",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
-    },
-  });
-
-  const updateInvoiceMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      
-      const response = await apiRequest(`/api/invoices/${id}`, {
-        method: 'PATCH',
-        body: data
-      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
-      form.reset();
-      setIsDialogOpen(false);
-      setEditingInvoice(null);
-      
-      // Always show simple success message - no automatic sending
-      setEditAndResendMode(false);
       toast({
-        title: "Success",
-        description: "Invoice updated successfully!",
+        title: 'Invoice Created',
+        description: 'The invoice has been created successfully.'
       });
+      handleDialogClose(true);
     },
-    onError: (error: any) => {
-      console.error("Update invoice error:", error);
-      setEditAndResendMode(false);
-      
-      // Show specific error message if available
-      const errorMessage = error.message || "Failed to update invoice. Please try again.";
-      
+    onError: (error: Error) => {
       toast({
-        title: "Error Updating Invoice",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
       });
-    },
+    }
   });
 
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: InvoiceForm }) => {
+      const response = await apiRequest(`/api/invoices/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update invoice');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: 'Invoice Updated',
+        description: 'The invoice has been updated successfully.'
+      });
+      handleDialogClose(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Send invoice mutation
+  const sendInvoiceMutation = useMutation({
+    mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number; customMessage?: string }) => {
+      const response = await apiRequest(`/api/invoices/${invoiceId}/send`, {
+        method: 'POST',
+        body: JSON.stringify({ customMessage })
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send invoice');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: 'Invoice Sent',
+        description: 'The invoice has been sent successfully.'
+      });
+      setCustomMessageDialog(false);
+      setInvoiceToSend(null);
+      setCustomMessage('');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+      setCustomMessageDialog(false);
+    }
+  });
+
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: async (invoiceId: number) => {
+      const response = await apiRequest(`/api/invoices/${invoiceId}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete invoice');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: 'Invoice Deleted',
+        description: 'The invoice has been deleted successfully.'
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Filter invoices
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((invoice: Invoice) => {
+      const matchesSearch = searchQuery === '' || 
+        invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [invoices, searchQuery, statusFilter]);
+
+  // Handle form submission
+  const handleSubmit = async (data: InvoiceForm) => {
+    try {
+      if (editingInvoice) {
+        await updateInvoiceMutation.mutateAsync({ id: editingInvoice.id, data });
+      } else {
+        // Generate invoice number if not provided
+        if (!data.invoiceNumber) {
+          const now = new Date();
+          data.invoiceNumber = `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(invoices.length + 1).padStart(3, '0')}`;
+        }
+        await createInvoiceMutation.mutateAsync(data);
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
+  };
+
+  // Handle dialog close
+  const handleDialogClose = (reset: boolean = false) => {
+    setIsDialogOpen(false);
+    setEditingInvoice(null);
+    if (reset) {
+      form.reset();
+    }
+  };
+
+  // Handle edit invoice
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingInvoice(invoice);
-    setEditAndResendMode(false);
-    // Pre-fill form with invoice data - fix field mappings
     form.reset({
-      contractId: invoice.contractId || undefined,
+      invoiceNumber: invoice.invoiceNumber,
       clientName: invoice.clientName,
-      clientEmail: invoice.clientEmail || "",
-      ccEmail: invoice.ccEmail || "",
-      clientAddress: invoice.clientAddress || "",
-      venueAddress: invoice.venueAddress || "",
-      amount: invoice.amount.toString(),
-      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
-      performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
-      performanceFee: invoice.fee ? invoice.fee.toString() : "",
-      depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
+      clientEmail: invoice.clientEmail,
+      ccEmail: invoice.ccEmail || '',
+      clientAddress: invoice.clientAddress || '',
+      venueAddress: invoice.venueAddress || '',
+      amount: invoice.amount,
+      dueDate: invoice.dueDate,
+      performanceDate: invoice.performanceDate || '',
+      description: invoice.description || ''
     });
     setIsDialogOpen(true);
   };
 
-
-
-  const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
-    
-    
-    
-    // Client-side validation with user-friendly prompts
-    const validationIssues = [];
-    
-    if (!data.clientName.trim()) {
-      validationIssues.push("Client name cannot be empty");
-    }
-    
-    if (!data.amount.trim()) {
-      validationIssues.push("Amount is required");
-    } else {
-      const amount = parseFloat(data.amount);
-      if (isNaN(amount) || amount <= 0) {
-        validationIssues.push("Amount must be a valid number greater than 0");
-      }
-    }
-    
-    if (!data.dueDate) {
-      validationIssues.push("Due date is required");
-    }
-    
-    if (data.clientEmail && data.clientEmail.trim() && !data.clientEmail.includes('@')) {
-      validationIssues.push("Please enter a valid email address");
-    }
-    
-    // Show validation issues as a prompt instead of failing
-    if (validationIssues.length > 0) {
-      toast({
-        title: "Please fix the following issues:",
-        description: validationIssues.join(", "),
-        variant: "destructive",
-      });
-      return; // Don't submit the form
-    }
-    
-    // Warn if no client email provided
-    if (!data.clientEmail || !data.clientEmail.trim()) {
-      toast({
-        title: "Note",
-        description: "No client email provided. You won't be able to send this invoice via email until you add one.",
-      });
-      // Still allow creation but warn the user
-    }
-    
-    // Send data exactly as expected by the API
-    const finalData = {
-      contractId: selectedContractId || null, // Can be null for standalone invoices
-      // invoiceNumber is auto-generated by backend - don't send it
-      clientName: data.clientName.trim(),
-      clientEmail: data.clientEmail?.trim() || null,
-      ccEmail: data.ccEmail?.trim() || null,
-      clientAddress: data.clientAddress?.trim() || null,
-      venueAddress: data.venueAddress?.trim() || null,
-      amount: data.amount.trim(),
-      dueDate: data.dueDate, // Keep as string - server will convert
-      performanceDate: data.performanceDate || null,
-      performanceFee: data.performanceFee?.trim() || null,
-      depositPaid: data.depositPaid?.trim() || null,
-    };
-    
-    
-    
-    if (editingInvoice) {
-      // Update existing invoice
-      updateInvoiceMutation.mutate({ id: editingInvoice.id, data: finalData });
-    } else {
-      // Create new invoice
-      createInvoiceMutation.mutate(finalData);
-    }
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setEditAndResendMode(false);
-    setEditingInvoice(null);
-    setContractHasBeenSelected(false); // Reset contract selection tracking
-    form.reset(); // Clear the form completely when closing
-    if (window.location.search) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "draft": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
-      case "sent": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "paid": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "overdue": return "bg-red-500 text-white font-bold dark:bg-red-600 dark:text-red-100";
-      case "archived": return "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "No date set";
-    return new Date(dateString).toLocaleDateString("en-GB");
-  };
-
-  // Invoice action handlers
-  const sendInvoiceMutation = useMutation({
-    mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number, customMessage?: string }) => {
-      
-      
-      
-      
-      // Use direct fetch to avoid middleware interference (same fix as invoice creation)
-      // Get token using the same logic as useAuth hook
-      const hostname = window.location.hostname;
-      const authTokenKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
-        ? 'authToken_dev_admin'
-        : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-      const token = localStorage.getItem(authTokenKey);
-      
-      console.log('📧 Send email - Token key:', authTokenKey);
-      console.log('📧 Send email - Token found:', !!token);
-      
-      const response = await fetch('/api/invoices/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-        credentials: 'include', // Important for session handling
-        body: JSON.stringify({ invoiceId, customMessage }),
-      });
-      
-      
-      
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('🔥 Email Send: Error response:', errorText);
-        throw new Error(errorText || 'Failed to send invoice email');
-      }
-      
-      const result = await response.json();
-      
-      return result;
-    },
-    onSuccess: () => {
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
-      setCustomMessageDialog(false);
-      setInvoiceToSend(null);
-      setCustomMessage("");
-      toast({
-        title: "Success",
-        description: "Invoice sent successfully with view link!",
-      });
-    },
-    onError: (error: any) => {
-      console.error('🔥 Email Send: ERROR');
-      console.error('🔥 Email Send: Full error object:', error);
-      console.error('🔥 Email Send: Error message:', error.message);
-      console.error('🔥 Email Send: Error stack:', error.stack);
-      
-      if (error.message && error.message.includes("session has expired")) {
-        toast({
-          title: "Session Expired",
-          description: "Your session has expired. Please log out and log back in to continue.",
-          variant: "destructive",
-          action: (
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = "/api/logout"}
-              className="ml-2 text-sm"
-            >
-              Log Out
-            </Button>
-          ),
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: `Failed to send invoice email: ${error.message}`,
-          variant: "destructive",
-        });
-      }
-    },
-  });
-
+  // Handle send invoice
   const handleSendInvoice = (invoice: Invoice) => {
-    
-    
-    
-    
-    // Check if invoice has client email
-    if (!invoice.clientEmail) {
-      toast({
-        title: "No Email Address",
-        description: "This invoice doesn't have a client email address. Please edit the invoice to add an email address first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Open custom message dialog
     setInvoiceToSend(invoice);
-    setCustomMessage("");
+    setCustomMessage('');
     setCustomMessageDialog(true);
   };
 
+  // Handle confirm send invoice
   const handleConfirmSendInvoice = () => {
     if (invoiceToSend) {
-      
       sendInvoiceMutation.mutate({
         invoiceId: invoiceToSend.id,
         customMessage: customMessage.trim() || undefined
@@ -615,110 +313,74 @@ export default function Invoices() {
     }
   };
 
-  // Mark invoice as paid mutation
-  const markPaidMutation = useMutation({
-    mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest(`/api/invoices/${invoice.id}/mark-paid`, {
-        method: 'POST',
-        body: {}
+  // Handle download invoice
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    try {
+      const response = await apiRequest(`/api/invoices/${invoice.id}/download`, {
+        method: 'GET'
       });
-      return response.json();
-    },
-    onSuccess: () => {
+      
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+      
+      // Get the blob and create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'Download Started',
+        description: 'The invoice PDF is being downloaded.'
+      });
+    } catch (error) {
+      toast({
+        title: 'Download Failed',
+        description: error instanceof Error ? error.message : 'Failed to download invoice',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Handle delete invoice
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    if (window.confirm(`Are you sure you want to delete invoice ${invoice.invoiceNumber}?`)) {
+      deleteInvoiceMutation.mutate(invoice.id);
+    }
+  };
+
+  // Handle mark as paid
+  const handleMarkAsPaid = async (invoice: Invoice) => {
+    try {
+      const response = await apiRequest(`/api/invoices/${invoice.id}/mark-paid`, {
+        method: 'PATCH'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark invoice as paid');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       toast({
-        title: "Success",
-        description: "Invoice marked as paid successfully!",
+        title: 'Invoice Marked as Paid',
+        description: 'The invoice has been marked as paid successfully.'
       });
-    },
-    onError: () => {
+    } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to mark invoice as paid",
-        variant: "destructive",
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to mark as paid',
+        variant: 'destructive'
       });
-    },
-  });
-
-  // Send overdue reminder mutation
-  const sendReminderMutation = useMutation({
-    mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest(`/api/invoices/${invoice.id}/send-reminder`, {
-        method: 'POST',
-        body: {}
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Overdue reminder sent successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to send overdue reminder",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleMarkAsPaid = (invoice: Invoice) => {
-    markPaidMutation.mutate(invoice);
-  };
-
-  const handleSendReminder = (invoice: Invoice) => {
-    sendReminderMutation.mutate(invoice);
-  };
-
-  const handleResendInvoice = (invoice: Invoice) => {
-    // Check if invoice has client email
-    if (!invoice.clientEmail) {
-      toast({
-        title: "No Email Address",
-        description: "This invoice doesn't have a client email address. Please edit the invoice to add an email address first.",
-        variant: "destructive",
-      });
-      return;
     }
-    
-    // Open custom message dialog for resend
-    setInvoiceToSend(invoice);
-    setCustomMessage("");
-    setCustomMessageDialog(true);
   };
 
-  // Restore archived invoice mutation
-  const restoreInvoiceMutation = useMutation({
-    mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest(`/api/invoices/${invoice.id}`, { 
-        method: 'PATCH',
-        body: { status: "draft" }
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      toast({
-        title: "Success",
-        description: "Invoice restored from archive successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to restore invoice",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleRestoreInvoice = (invoice: Invoice) => {
-    restoreInvoiceMutation.mutate(invoice);
-  };
-
-  // Bulk action handlers
+  // Handle select invoice
   const handleSelectInvoice = (invoiceId: number, checked: boolean) => {
     if (checked) {
       setSelectedInvoices(prev => [...prev, invoiceId]);
@@ -727,192 +389,347 @@ export default function Invoices() {
     }
   };
 
+  // Handle select all
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoices(filteredInvoices.map(invoice => invoice.id));
+      setSelectedInvoices(filteredInvoices.map((invoice: Invoice) => invoice.id));
     } else {
       setSelectedInvoices([]);
     }
   };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (invoiceIds: number[]) => {
-      
-      const responses = await Promise.all(
-        invoiceIds.map(id => 
-          apiRequest(`/api/invoices/${id}`, { method: 'DELETE' })
-        )
-      );
-      return responses;
-    },
-    onSuccess: () => {
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      setSelectedInvoices([]);
-      toast({
-        title: "Invoices deleted",
-        description: `${selectedInvoices.length} invoice(s) deleted successfully`,
-      });
-    },
-    onError: (error: any) => {
-      console.error("🔥 Frontend: Delete error:", error);
-      toast({
-        title: "Error deleting invoices",
-        description: "Failed to delete selected invoices",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const archiveMutation = useMutation({
-    mutationFn: async (invoiceIds: number[]) => {
-      const responses = await Promise.all(
-        invoiceIds.map(id => 
-          apiRequest(`/api/invoices/${id}`, {
-            method: 'PATCH',
-            body: { status: "archived" }
-          })
-        )
-      );
-      return responses;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      setSelectedInvoices([]);
-      toast({
-        title: "Invoices archived",
-        description: `${selectedInvoices.length} invoice(s) archived successfully`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error archiving invoices",
-        description: "Failed to archive selected invoices",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Bulk restore mutation
-  const bulkRestoreMutation = useMutation({
-    mutationFn: async (invoiceIds: number[]) => {
-      const responses = await Promise.all(
-        invoiceIds.map(id => 
-          apiRequest(`/api/invoices/${id}`, {
-            method: 'PATCH',
-            body: { status: "draft" }
-          })
-        )
-      );
-      return responses;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      setSelectedInvoices([]);
-      toast({
-        title: "Invoices restored",
-        description: `${selectedInvoices.length} invoice(s) restored from archive successfully`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error restoring invoices",
-        description: "Failed to restore selected invoices",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleBulkAction = async (action: string) => {
-    if (selectedInvoices.length === 0) return;
+  // Handle bulk action
+  const handleBulkAction = async (action: 'download' | 'archive' | 'delete') => {
+    if (!selectedInvoices.length) return;
     
     setBulkActionLoading(true);
-    
     try {
       switch (action) {
-        case 'delete':
-          await deleteMutation.mutateAsync(selectedInvoices);
+        case 'download':
+          for (const id of selectedInvoices) {
+            const invoice = invoices.find((inv: Invoice) => inv.id === id);
+            if (invoice) {
+              await handleDownloadInvoice(invoice);
+            }
+          }
           break;
         case 'archive':
-          await archiveMutation.mutateAsync(selectedInvoices);
-          break;
-        case 'restore':
-          await bulkRestoreMutation.mutateAsync(selectedInvoices);
-          break;
-        case 'download':
-          // Download each selected invoice
-          for (const invoiceId of selectedInvoices) {
-            window.open(`/api/isolated/invoices/${invoiceId}/pdf`, '_blank');
+        case 'delete':
+          const confirmed = window.confirm(`Are you sure you want to ${action} ${selectedInvoices.length} invoice(s)?`);
+          if (confirmed) {
+            await Promise.all(
+              selectedInvoices.map(id => 
+                action === 'delete' ? deleteInvoiceMutation.mutateAsync(id) : 
+                apiRequest(`/api/invoices/${id}/archive`, { method: 'PATCH' })
+              )
+            );
+            queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
           }
-          setSelectedInvoices([]);
-          toast({
-            title: "Downloads started",
-            description: `Downloading ${selectedInvoices.length} invoice(s)`,
-          });
           break;
       }
+      setSelectedInvoices([]);
     } catch (error) {
-      console.error('Bulk action error:', error);
+      console.error(`Bulk ${action} error:`, error);
     } finally {
       setBulkActionLoading(false);
     }
   };
 
-  const handleDownloadInvoice = async (invoice: Invoice) => {
-    try {
-      const response = await fetch(`/api/isolated/invoices/${invoice.id}/pdf`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Invoice-${invoice.invoiceNumber}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Success",
-        description: "Invoice PDF downloaded successfully!",
-      });
-    } catch (error) {
-      console.error('Error downloading invoice:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download invoice PDF",
-        variant: "destructive",
-      });
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Get status badge variant
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'paid': return 'default';
+      case 'sent': return 'secondary';
+      case 'overdue': return 'destructive';
+      case 'archived': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const handleViewInvoice = (invoice: Invoice) => {
-    // Always use production URL to bypass development gateway and ensure R2 redirect works
-    const productionUrl = `https://musobuddy.replit.app/view/invoices/${invoice.id}`;
-    console.log('🔗 Opening invoice view URL:', productionUrl);
-    window.open(productionUrl, '_blank');
+  // Get status icon
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'paid': return <CheckCircle2 className="w-4 h-4" />;
+      case 'sent': return <Mail className="w-4 h-4" />;
+      case 'overdue': return <AlertTriangle className="w-4 h-4" />;
+      case 'archived': return <Archive className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
   };
 
-  const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
-    const matchesSearch = searchQuery === "" || 
-      invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const InvoicesContent = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Invoices</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Manage your performance invoices and track payments
+          </p>
+        </div>
+        <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" />
+          New Invoice
+        </Button>
+      </div>
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+      {/* Invoice Form Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleDialogClose()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingInvoice ? 'Edit Invoice' : 'Create New Invoice'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="invoiceNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invoice Number *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="INV-2024-01-001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="clientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Smith" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="clientEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Email *</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="client@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="ccEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CC Email (optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email" 
+                          placeholder="manager@company.com" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Performance description, songs, duration, etc." 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="clientAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Client's address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="venueAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Venue Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Performance venue address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount (£) *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="500.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="dueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="performanceDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Performance Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={handleDialogClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}>
+                  {createInvoiceMutation.isPending || updateInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Invoice Email</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
+            {invoiceToSend && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Invoice #{invoiceToSend.invoiceNumber}
+                </h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p><strong>Client:</strong> {invoiceToSend.clientName}</p>
+                  <p><strong>Email:</strong> {invoiceToSend.clientEmail}</p>
+                  {invoiceToSend.ccEmail && <p><strong>CC:</strong> {invoiceToSend.ccEmail}</p>}
+                  <p><strong>Amount:</strong> £{invoiceToSend.amount}</p>
+                  <p><strong>Due Date:</strong> {formatDate(invoiceToSend.dueDate)}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Add a personal message (optional)
+              </label>
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
+                <p className="text-xs text-amber-700">
+                  <strong>Important:</strong> This message is for personal communication only. 
+                  Do not include payment terms, invoice details, or business changes here - 
+                  these should be made in the invoice itself.
+                </p>
+              </div>
+              <p className="text-xs text-gray-500">
+                Use this space for friendly greetings, additional context, or special instructions that don't modify the invoice terms.
+              </p>
+              <Textarea
+                placeholder="e.g., 'Thank you for your business!' or 'Please let me know if you have any questions about this invoice.'"
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setCustomMessageDialog(false)}
+                disabled={sendInvoiceMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmSendInvoice}
+                disabled={sendInvoiceMutation.isPending || !invoiceToSend?.clientEmail}
+              >
+                {sendInvoiceMutation.isPending ? "Sending..." : "Send Invoice"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
+          <Sidebar isOpen={true} onClose={() => {}} />
+        </div>
+        <div className="flex-1 ml-64 min-h-screen">
+          <div className="p-6">
+            <InvoicesContent />
           </div>
         </div>
       </div>
@@ -920,945 +737,24 @@ export default function Invoices() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile menu toggle */}
-      {!isDesktop && (
-        <div className="fixed top-4 left-4 z-50">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="bg-white p-2 rounded-lg shadow-lg"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
+    <div className="min-h-screen bg-background">
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
-
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content */}
-      <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 ml-12 md:ml-0">Invoices</h1>
-                <p className="text-gray-600">Manage your invoices and payments</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) {
-                setEditingInvoice(null);
-                form.reset();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Invoice
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editAndResendMode ? "Edit Invoice & Resend" : editingInvoice ? "Edit Invoice" : "Create New Invoice"}
-                  </DialogTitle>
-                  {editAndResendMode && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Invoice number {editingInvoice?.invoiceNumber} will remain unchanged for tax compliance.
-                    </p>
-                  )}
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-
-                      <FormField
-                        control={form.control}
-                        name="contractId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Select Contract (optional - for auto-fill)</FormLabel>
-                            <Select 
-                              value={field.value?.toString()} 
-                              onValueChange={(value) => {
-                                field.onChange(parseInt(value));
-                                setContractHasBeenSelected(true); // Mark that user has selected a contract
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Choose a contract to auto-fill fields" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {contracts.map((contract: any) => (
-                                  <SelectItem key={contract.id} value={contract.id.toString()}>
-                                    <div className="flex items-center justify-between w-full">
-                                      <span>{contract.clientName} - {formatDate(contract.eventDate)}</span>
-                                      {!contract.clientEmail && (
-                                        <span className="text-xs text-red-500 ml-2">⚠ No email</span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="clientName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Client name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="clientEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="client@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="ccEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CC Email (Optional)</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="cc@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="clientAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Client Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Client's address" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="venueAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Venue Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Performance venue address" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount (£)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="500.00" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="dueDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Due Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="performanceDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Performance Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-3">
-                      <Button type="button" variant="outline" onClick={handleDialogClose}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={createInvoiceMutation.isPending}>
-                        {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Custom Message Dialog */}
-            <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Send Invoice Email</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {invoiceToSend && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        Invoice #{invoiceToSend.invoiceNumber}
-                      </h4>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p><strong>Client:</strong> {invoiceToSend.clientName}</p>
-                        <p><strong>Email:</strong> {invoiceToSend.clientEmail}</p>
-                        {invoiceToSend.ccEmail && <p><strong>CC:</strong> {invoiceToSend.ccEmail}</p>}
-                        <p><strong>Amount:</strong> £{invoiceToSend.amount}</p>
-                        <p><strong>Due Date:</strong> {formatDate(invoiceToSend.dueDate)}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Add a personal message (optional)
-                    </label>
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
-                      <p className="text-xs text-amber-700">
-                        <strong>Important:</strong> This message is for personal communication only. 
-                        Do not include payment terms, invoice details, or business changes here - 
-                        these should be made in the invoice itself.
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Use this space for friendly greetings, additional context, or special instructions that don't modify the invoice terms.
-                    </p>
-                    <Textarea
-                      placeholder="e.g., 'Thank you for your business!' or 'Please let me know if you have any questions about this invoice.'"
-                      value={customMessage}
-                      onChange={(e) => setCustomMessage(e.target.value)}
-                      rows={4}
-                      className="resize-none"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCustomMessageDialog(false)}
-                      disabled={sendInvoiceMutation.isPending}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleConfirmSendInvoice}
-                      disabled={sendInvoiceMutation.isPending || !invoiceToSend?.clientEmail}
-                    >
-                      {sendInvoiceMutation.isPending ? "Sending..." : "Send Invoice"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+      <div className={`
+        fixed left-0 top-0 h-full w-80 bg-white dark:bg-slate-900 shadow-xl z-50 
+        transform transition-transform duration-300 ease-in-out md:hidden
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
 
-      {/* Filters and Search */}
       <div className="p-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-              <Input
-                placeholder="Search by invoice number or client name..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Outstanding</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    £{(invoices || []).filter((inv: Invoice) => inv.status === "sent").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(invoices || []).filter((inv: Invoice) => inv.status === "sent").length} invoices
-                  </p>
-                </div>
-                <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Overdue</p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {(invoices || []).filter((inv: Invoice) => inv.status === "overdue").length}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Need attention</p>
-                </div>
-                <Calendar className="w-8 h-8 text-red-600 dark:text-red-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Paid This Month</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    £{(invoices || []).filter((inv: Invoice) => inv.status === "paid").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Great progress!</p>
-                </div>
-                <PoundSterling className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Invoices</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{(invoices || []).length}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">All time</p>
-                </div>
-                <FileText className="w-8 h-8 text-gray-600 dark:text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Bulk Actions Bar */}
-        {selectedInvoices.length > 0 && (
-          <Card className="mb-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    {selectedInvoices.length} invoice(s) selected
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedInvoices([])}
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkAction('download')}
-                    disabled={bulkActionLoading}
-                  >
-                    <FileDown className="w-4 h-4 mr-1" />
-                    Download PDFs
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkAction('archive')}
-                    disabled={bulkActionLoading}
-                  >
-                    <Archive className="w-4 h-4 mr-1" />
-                    Archive
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleBulkAction('delete')}
-                    disabled={bulkActionLoading}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Invoices List */}
-        <div className="space-y-4">
-          {filteredInvoices.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No invoices found</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  {searchQuery || statusFilter !== "all" 
-                    ? "Try adjusting your search or filter criteria."
-                    : "Get started by creating your first invoice."
-                  }
-                </p>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Invoice
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Select All Checkbox */}
-              {filteredInvoices.length > 0 && (
-                <Card className="mb-4">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Select All ({filteredInvoices.length} invoices)
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-{filteredInvoices.map((invoice: Invoice) => {
-  const isSelected = selectedInvoices.includes(invoice.id);
-  return (
-    <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {/* Header with title, status, and checkbox */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={(e) => handleSelectInvoice(invoice.id, e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-              Invoice #{invoice.invoiceNumber}
-            </h3>
-            <Badge className={getStatusColor(invoice.status)}>
-              {invoice.status}
-            </Badge>
-          </div>
-          
-          {/* Desktop Layout */}
-          <div className="hidden lg:block">
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Invoice details - fixed columns */}
-              <div className="col-span-8">
-                <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div className="min-w-0">
-                    <span className="font-medium text-gray-600 dark:text-gray-400 block">Client:</span>
-                    <p className="text-gray-900 dark:text-gray-100 truncate" title={invoice.clientName}>
-                      {invoice.clientName}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-medium text-gray-600 dark:text-gray-400 block">Amount:</span>
-                    <p className="text-gray-900 dark:text-gray-100 font-semibold">
-                      £{Number(invoice.amount).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-medium text-gray-600 dark:text-gray-400 block">Due:</span>
-                    <p className="text-gray-900 dark:text-gray-100">
-                      {formatDate(invoice.dueDate)}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-medium text-gray-600 dark:text-gray-400 block">Created:</span>
-                    <p className="text-gray-900 dark:text-gray-100">
-                      {formatDate(invoice.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Action buttons - fixed column */}
-              <div className="col-span-4">
-                <div className="flex items-center justify-end gap-2 flex-wrap">
-                  {/* View button - available for all statuses */}
-                  <Button 
-                    size="sm" 
-                    className="text-xs whitespace-nowrap bg-green-600 hover:bg-green-700 text-white min-w-[70px]"
-                    onClick={() => handleViewInvoice(invoice)}
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    View
-                  </Button>
-
-                  {invoice.status === "draft" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700 min-w-[60px]"
-                        onClick={() => handleEditInvoice(invoice)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white min-w-[65px]" 
-                        onClick={() => handleSendInvoice(invoice)}
-                        disabled={sendInvoiceMutation.isPending}
-                      >
-                        <Send className="w-3 h-3 mr-1" />
-                        {sendInvoiceMutation.isPending ? 'Sending...' : 'Send'}
-                      </Button>
-                    </>
-                  )}
-                  
-                  {invoice.status === "sent" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Download
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleMarkAsPaid(invoice)}
-                        disabled={markPaidMutation.isPending}
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Mark Paid
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[70px]" 
-                        onClick={() => handleResendInvoice(invoice)}
-                        disabled={sendInvoiceMutation.isPending}
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Resend
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
-                        onClick={() => handleEditInvoice(invoice)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                    </>
-                  )}
-                  
-                  {invoice.status === "overdue" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Download
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleMarkAsPaid(invoice)}
-                        disabled={markPaidMutation.isPending}
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Mark Paid
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[70px]" 
-                        onClick={() => handleResendInvoice(invoice)}
-                        disabled={sendInvoiceMutation.isPending}
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Resend
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
-                        onClick={() => handleEditInvoice(invoice)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap min-w-[110px]" 
-                        onClick={() => handleSendReminder(invoice)}
-                        disabled={sendReminderMutation.isPending}
-                      >
-                        <AlertTriangle className="w-3 h-3 mr-1" />
-                        Overdue Notice
-                      </Button>
-                    </>
-                  )}
-                  
-                  {invoice.status === "paid" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Download
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[95px]" 
-                        onClick={() => handleResendInvoice(invoice)}
-                        disabled={sendInvoiceMutation.isPending}
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Resend Copy
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
-                        onClick={() => handleEditInvoice(invoice)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                    </>
-                  )}
-
-                  {invoice.status === "archived" && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Download
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap min-w-[75px]" 
-                        onClick={() => handleRestoreInvoice(invoice)}
-                        disabled={restoreInvoiceMutation.isPending}
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Restore
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Layout */}
-          <div className="lg:hidden space-y-4">
-            {/* Invoice details in mobile-friendly layout */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-600 dark:text-gray-400">Client:</span>
-                <p className="text-gray-900 dark:text-gray-100">{invoice.clientName}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-600 dark:text-gray-400">Amount:</span>
-                <p className="text-gray-900 dark:text-gray-100 font-semibold">£{Number(invoice.amount).toLocaleString()}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-600 dark:text-gray-400">Due:</span>
-                <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.dueDate)}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-600 dark:text-gray-400">Created:</span>
-                <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.createdAt)}</p>
-              </div>
-            </div>
-            
-            {/* Mobile action buttons - same as before but in mobile layout */}
-            <div className="flex flex-wrap gap-2">
-              {/* Keep existing mobile button layout as-is */}
-              <Button 
-                size="sm" 
-                className="text-xs bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => handleViewInvoice(invoice)}
-              >
-                <Eye className="w-3 h-3 mr-1" />
-                View
-              </Button>
-              
-              {invoice.status === "draft" && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700"
-                    onClick={() => handleEditInvoice(invoice)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white" 
-                    onClick={() => handleSendInvoice(invoice)}
-                    disabled={sendInvoiceMutation.isPending}
-                  >
-                    <Send className="w-3 h-3 mr-1" />
-                    {sendInvoiceMutation.isPending ? 'Sending...' : 'Send'}
-                  </Button>
-                </>
-              )}
-              
-              {invoice.status === "sent" && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700" 
-                    onClick={() => handleDownloadInvoice(invoice)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-green-600 hover:text-green-700" 
-                    onClick={() => handleMarkAsPaid(invoice)}
-                    disabled={markPaidMutation.isPending}
-                  >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Mark Paid
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-blue-600 hover:text-blue-700" 
-                    onClick={() => handleResendInvoice(invoice)}
-                    disabled={sendInvoiceMutation.isPending}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Resend
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-primary hover:text-primary/80" 
-                    onClick={() => handleEditInvoice(invoice)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
-                  </Button>
-                </>
-              )}
-              
-              {invoice.status === "overdue" && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700" 
-                    onClick={() => handleDownloadInvoice(invoice)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-green-600 hover:text-green-700" 
-                    onClick={() => handleMarkAsPaid(invoice)}
-                    disabled={markPaidMutation.isPending}
-                  >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Mark Paid
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-blue-600 hover:text-blue-700" 
-                    onClick={() => handleResendInvoice(invoice)}
-                    disabled={sendInvoiceMutation.isPending}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Resend
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-primary hover:text-primary/80" 
-                    onClick={() => handleEditInvoice(invoice)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-red-600 hover:text-red-700" 
-                    onClick={() => handleSendReminder(invoice)}
-                    disabled={sendReminderMutation.isPending}
-                  >
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    Overdue Notice
-                  </Button>
-                </>
-              )}
-              
-              {invoice.status === "paid" && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700" 
-                    onClick={() => handleDownloadInvoice(invoice)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-blue-600 hover:text-blue-700" 
-                    onClick={() => handleResendInvoice(invoice)}
-                    disabled={sendInvoiceMutation.isPending}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Resend Copy
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-primary hover:text-primary/80" 
-                    onClick={() => handleEditInvoice(invoice)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
-                  </Button>
-                </>
-              )}
-
-              {invoice.status === "archived" && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700" 
-                    onClick={() => handleDownloadInvoice(invoice)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-green-600 hover:text-green-700" 
-                    onClick={() => handleRestoreInvoice(invoice)}
-                    disabled={restoreInvoiceMutation.isPending}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Restore
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-})}
-            </>
-          )}
-        </div>
-      </div>
+        <InvoicesContent />
       </div>
 
       <MobileNav />

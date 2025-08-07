@@ -28,8 +28,6 @@ export default function Dashboard() {
     const stripeSessionId = urlParams.get('stripe_session');
     
     if (stripeSessionId) {
-      
-      
       // Call session restoration API
       apiRequest('/api/auth/restore-session', {
         method: 'POST',
@@ -39,7 +37,6 @@ export default function Dashboard() {
         }
       })
       .then(() => {
-        
         // Remove the stripe_session parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
@@ -51,7 +48,7 @@ export default function Dashboard() {
         setTimeout(() => window.location.reload(), 100);
       })
       .catch((error) => {
-        console.error('❌ Session restoration failed:', error);
+        console.error('Session restoration failed:', error);
         toast({
           title: "Authentication Issue",
           description: "Please log in again to continue.",
@@ -126,46 +123,41 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
-      {!isDesktop && (
-        <div className="fixed top-4 left-4 z-50">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="bg-card p-2 rounded-lg shadow-lg"
-          >
-            <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
+      <MobileNav isOpen={sidebarOpen} onToggle={setSidebarOpen} />
+      
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
+      
+      {/* Mobile sidebar */}
+      <div className={`
+        fixed left-0 top-0 h-full w-80 bg-white dark:bg-slate-900 shadow-xl z-50 
+        transform transition-transform duration-300 ease-in-out md:hidden
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
 
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* Main Content */}
-      <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
+      {/* Main content */}
+      <div className="min-h-screen">
         <DashboardHeader />
-        
-        <main className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <main className="p-4 space-y-6">
           <StatsCards />
-          
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
-            <div className="xl:col-span-3 space-y-4 md:space-y-6">
-              <ActionableEnquiries />
-              <CalendarWidget />
-            </div>
-            
-            <div className="space-y-4">
-              <BookingCTAButtons />
-              <QuickActions />
-              <ConflictsWidget />
-              <ComplianceAlerts />
-              <ContractNotifications />
-            </div>
+          <ActionableEnquiries />
+          <div className="grid grid-cols-1 gap-6">
+            <BookingCTAButtons />
+            <QuickActions />
+            <CalendarWidget />
+            <ConflictsWidget />
+            <ComplianceAlerts />
+            <ContractNotifications />
           </div>
         </main>
       </div>
-
-      <MobileNav />
     </div>
   );
 }

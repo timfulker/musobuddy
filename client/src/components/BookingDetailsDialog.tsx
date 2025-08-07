@@ -33,8 +33,6 @@ import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import type { Booking } from "@shared/schema";
 
-// Note: Custom auth functions removed - now using standard apiRequest for JWT authentication
-
 const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   eventDate: z.string().min(1, "Event date is required"),
@@ -66,6 +64,14 @@ const bookingDetailsSchema = z.object({
   notes: z.string().optional(),
 });
 
+type BookingFormData = z.infer<typeof bookingDetailsSchema>;
+
+interface CustomField {
+  id: string;
+  name: string;
+  value: string;
+}
+
 interface BookingDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,36 +79,63 @@ interface BookingDetailsDialogProps {
   onBookingUpdate?: () => void;
 }
 
+interface Contract {
+  id: number;
+  enquiryId: number;
+  clientName?: string;
+  eventDate?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  venue?: string;
+  venueAddress?: string;
+  eventTime?: string;
+  eventEndTime?: string;
+  fee?: number;
+  equipmentRequirements?: string;
+  specialRequirements?: string;
+  signedAt?: string;
+  signature?: string;
+}
+
+interface ParseResult {
+  fieldsUpdated: number;
+  confidence: number;
+}
+
+interface UploadStatus {
+  type: 'success' | 'error';
+  message: string;
+}
+
 export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
   const { gigTypes } = useGigTypes();
-  const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldValue, setNewFieldValue] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
-  const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [initialData, setInitialData] = useState<BookingFormData | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [isParsingContract, setIsParsingContract] = useState(false);
-  const [parseResult, setParseResult] = useState<any>(null);
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [documentType, setDocumentType] = useState<'contract' | 'invoice' | 'other'>('contract');
   const [extractedData, setExtractedData] = useState<any>(null);
   const [contractParsingResult, setContractParsingResult] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user's personalized gig types from settings
   const { data: userSettings } = useQuery({
     queryKey: ['settings'],
-    enabled: open // Only fetch when dialog is open
+    enabled: open
   });
 
-  // Fetch contracts for this booking to enable copying data
-  const { data: contracts } = useQuery({
+  const { data: contracts } = useQuery<Contract[]>({
     queryKey: ['/api/contracts'],
     enabled: open && booking !== null
   });
 
-  const form = useForm<z.infer<typeof bookingDetailsSchema>>({
+  const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingDetailsSchema),
     defaultValues: {
       clientName: "",
@@ -136,27 +169,21 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     },
   });
 
-  // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
-      // Reduced logging for production
-      
-      // Parse time values - handle time ranges like "13:30 - 15:30"
       const parseTimeValue = (timeValue: string) => {
         if (!timeValue) return "";
-        // If it's a time range, extract just the start time
         const timeRange = timeValue.split(' - ');
         return timeRange[0].trim();
       };
 
       const parseEndTimeValue = (timeValue: string) => {
         if (!timeValue) return "";
-        // If it's a time range, extract the end time
         const timeRange = timeValue.split(' - ');
         return timeRange.length > 1 ? timeRange[1].trim() : "";
       };
 
-      const bookingData = {
+      const bookingData: BookingFormData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
         eventTime: parseTimeValue(booking.eventTime || ""),
@@ -190,18 +217,14 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       form.reset(bookingData);
       setInitialData(bookingData);
       setHasChanges(false);
-      
-      // Initialize custom fields - customFields doesn't exist in schema yet
       setCustomFields([]);
     } else {
-      // Reset form when no booking is provided
       form.reset();
       setInitialData(null);
       setCustomFields([]);
     }
   }, [booking, form]);
 
-  // Watch for form changes
   useEffect(() => {
     if (initialData) {
       const subscription = form.watch(() => {
@@ -213,7 +236,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
   const updateBookingMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Sanitize data before sending - convert empty strings to null for numeric fields
       const sanitizedData = { ...data };
       const numericFields = ['fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
       numericFields.forEach(field => {
@@ -226,7 +248,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         throw new Error('Booking ID is required');
       }
       
-      // Use apiRequest for proper JWT authentication
       const response = await apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         body: JSON.stringify(sanitizedData),
@@ -236,14 +257,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] }); // Phase 3: Use main bookings table
-      // Cache invalidation handled by main /api/bookings
       toast({
         title: "Success",
         description: "Booking details updated successfully",
       });
       setHasChanges(false);
-      // Keep dialog open after saving - removed onOpenChange(false)
     },
     onError: (error) => {
       console.error('Error updating booking:', error);
@@ -255,21 +273,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     },
   });
 
-  // Early return if no booking is provided (after ALL hooks)
   if (!booking) {
     return null;
   }
 
-  // Convert time from "8pm" format to "20:00" format
   const convertTimeFormat = (timeStr: string): string => {
     if (!timeStr) return '';
     
-    // Already in 24-hour format
     if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
       return timeStr;
     }
     
-    // Convert from 12-hour format like "8pm", "11pm", "2:30pm", etc.
     const match = timeStr.toLowerCase().match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);
     if (match) {
       let hour = parseInt(match[1]);
@@ -285,23 +299,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       return `${hour.toString().padStart(2, '0')}:${minute}`;
     }
     
-    return timeStr; // Return original if can't parse
+    return timeStr;
   };
 
-  // Find the most recent contract for this booking
   const bookingContract = Array.isArray(contracts) 
-    ? contracts.find((contract: any) => contract.enquiryId === booking?.id)
+    ? contracts.find((contract: Contract) => contract.enquiryId === booking?.id)
     : null;
 
-  // Function to copy contract data to booking form
-  const handleCopyFromContract = (contract?: any) => {
-    // Use provided contract or find the latest one
+  const handleCopyFromContract = (contract?: Contract) => {
     const contractToUse = contract || bookingContract;
     
-    // handleCopyFromContract called
-    
     if (!contractToUse) {
-      // No contract found to copy from
       toast({
         title: "No Contract Found",
         description: "No contract found for this booking to copy data from.",
@@ -311,28 +319,24 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     }
 
     const currentFormData = form.getValues();
-    // Current form data logged
     let fieldsUpdated = 0;
     
-    // Define protected fields that should never be overwritten by contract imports
     const protectedFields = ['clientName', 'eventDate'];
     const isFieldProtected = (fieldName: string) => {
-      const fieldValue = currentFormData[fieldName as keyof typeof currentFormData];
+      const fieldValue = currentFormData[fieldName as keyof BookingFormData];
       return protectedFields.includes(fieldName) && 
              typeof fieldValue === 'string' && 
              fieldValue.trim() !== '';
     };
 
-    const updatedFormData = {
+    const updatedFormData: BookingFormData = {
       ...currentFormData,
-      // Protected fields: Never overwrite client name and event date if they exist
       ...(contractToUse.clientName && !isFieldProtected('clientName') && !currentFormData.clientName.trim() && { 
         clientName: contractToUse.clientName 
       }),
       ...(contractToUse.eventDate && !isFieldProtected('eventDate') && !currentFormData.eventDate && { 
         eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
       }),
-      // Regular fields: Only update if empty
       ...(contractToUse.clientEmail && !currentFormData.clientEmail?.trim() && { clientEmail: contractToUse.clientEmail }),
       ...(contractToUse.clientPhone && !currentFormData.clientPhone?.trim() && { clientPhone: contractToUse.clientPhone }),
       ...(contractToUse.clientAddress && !currentFormData.clientAddress?.trim() && { clientAddress: contractToUse.clientAddress }),
@@ -353,16 +357,15 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       }),
     };
 
-    // Count how many fields were actually updated and track protected fields
     let protectedFieldsSkipped = 0;
     Object.keys(updatedFormData).forEach(key => {
-      const updatedValue = updatedFormData[key as keyof typeof updatedFormData];
-      const currentValue = currentFormData[key as keyof typeof currentFormData];
+      const updatedValue = updatedFormData[key as keyof BookingFormData];
+      const currentValue = currentFormData[key as keyof BookingFormData];
       if (updatedValue !== currentValue) {
         fieldsUpdated++;
       }
-      const contractValue = contractToUse?.[key as keyof typeof contractToUse];
-      const currentFieldValue = currentFormData?.[key as keyof typeof currentFormData];
+      const contractValue = contractToUse[key as keyof Contract];
+      const currentFieldValue = currentFormData[key as keyof BookingFormData];
       if (isFieldProtected(key) && contractValue && contractValue !== currentFieldValue) {
         protectedFieldsSkipped++;
       }
@@ -391,19 +394,15 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       });
     }
 
-    // Automatically update booking status to "confirmed" when contract is imported
-    // Check if the imported contract is signed (has signature or signedAt date)
     const contractIsSigned = contractToUse.signedAt || contractToUse.signature;
     
     if (booking && contractIsSigned && booking.status !== 'confirmed' && booking.status !== 'completed') {
-      // Update booking status asynchronously using authenticated apiRequest
       apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ status: 'confirmed' })
       }).then(() => {
-        // Refresh the data to show updated status
         if (onBookingUpdate) onBookingUpdate();
         
         toast({
@@ -414,7 +413,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         console.error('Failed to update booking status:', error);
       });
     } else if (booking && !contractIsSigned && booking.status === 'confirmed') {
-      // If importing an unsigned contract to a confirmed booking, suggest updating to contract_sent
       toast({
         title: "Contract Imported",
         description: "Unsigned contract imported. Consider updating status to 'Contract Sent' if this reflects the current state.",
@@ -424,7 +422,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
   const addCustomField = () => {
     if (newFieldName.trim() && newFieldValue.trim()) {
-      const newField = {
+      const newField: CustomField = {
         id: Date.now().toString(),
         name: newFieldName.trim(),
         value: newFieldValue.trim(),
@@ -442,7 +440,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   };
 
   const handleCancel = () => {
-    form.reset(initialData);
+    form.reset(initialData || undefined);
     setHasChanges(false);
     onOpenChange(false);
   };
@@ -472,159 +470,67 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       
       setUploadStatus({
         type: 'success',
-        message: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document uploaded successfully!`
+        message: `Document uploaded and processed successfully! ${result.fieldsExtracted} fields extracted.`
       });
       
-      // Clear the file input
-      setContractFile(null);
-      
-      // Refresh booking data if callback provided
-      if (onBookingUpdate) {
-        onBookingUpdate();
+      if (result.extractedData) {
+        setExtractedData(result.extractedData);
+        setContractParsingResult(result);
       }
       
-      toast({
-        title: "Document Uploaded",
-        description: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document has been stored successfully.`,
-      });
-      
     } catch (error: any) {
-      console.error('Document upload error:', error);
       setUploadStatus({
         type: 'error',
-        message: error.message || 'Failed to upload document'
+        message: error.message || 'Failed to upload and process document'
       });
-      
-      toast({
-        title: "Upload Failed",
-        description: `Failed to upload ${documentType} document. Please try again.`,
-        variant: "destructive",
-      });
-    } finally {
-      // No parsing state to reset for simple document upload
     }
   };
 
-  const handleParseContract = async () => {
+  const handleParseUploadedContract = async () => {
     if (!contractFile || !booking) return;
     
     setIsParsingContract(true);
     
     try {
       const formData = new FormData();
-      formData.append('file', contractFile);
+      formData.append('contract', contractFile);
       
-      const response = await fetch('/api/contracts/parse-pdf', {
+      const response = await fetch(`/api/bookings/${booking.id}/parse-contract`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
       });
       
       if (!response.ok) {
-        throw new Error('Failed to parse contract');
+        const error = await response.text();
+        throw new Error(error || 'Failed to parse contract');
       }
       
       const result = await response.json();
-      const extractedData = result.data;
+      setParseResult({ fieldsUpdated: result.fieldsUpdated, confidence: result.confidence });
       
-      // Only update empty fields to preserve existing data
-      const currentData = form.getValues();
-      let fieldsUpdated = 0;
-      const updates: any = {};
-      
-      // Map extracted data to form fields (only if current field is empty)
-      if (extractedData.clientName && !currentData.clientName?.trim()) {
-        updates.clientName = extractedData.clientName;
-        fieldsUpdated++;
-      }
-      if (extractedData.clientEmail && !currentData.clientEmail?.trim()) {
-        updates.clientEmail = extractedData.clientEmail;
-        fieldsUpdated++;
-      }
-      if (extractedData.clientPhone && !currentData.clientPhone?.trim()) {
-        updates.clientPhone = extractedData.clientPhone;
-        fieldsUpdated++;
-      }
-      if (extractedData.clientAddress && !currentData.clientAddress?.trim()) {
-        updates.clientAddress = extractedData.clientAddress;
-        fieldsUpdated++;
-      }
-      if (extractedData.venue && !currentData.venue?.trim()) {
-        updates.venue = extractedData.venue;
-        fieldsUpdated++;
-      }
-      if (extractedData.venueAddress && !currentData.venueAddress?.trim()) {
-        updates.venueAddress = extractedData.venueAddress;
-        fieldsUpdated++;
-      }
-      if (extractedData.eventDate && !currentData.eventDate) {
-        updates.eventDate = extractedData.eventDate;
-        fieldsUpdated++;
-      }
-      if (extractedData.eventTime && !currentData.eventTime?.trim()) {
-        updates.eventTime = extractedData.eventTime;
-        fieldsUpdated++;
-      }
-      if (extractedData.eventEndTime && !currentData.eventEndTime?.trim()) {
-        updates.eventEndTime = extractedData.eventEndTime;
-        fieldsUpdated++;
-      }
-      if (extractedData.fee && (!currentData.fee || currentData.fee === '0')) {
-        updates.fee = extractedData.fee;
-        fieldsUpdated++;
-      }
-      if (extractedData.equipmentRequirements && !currentData.equipmentRequirements?.trim()) {
-        updates.equipmentRequirements = extractedData.equipmentRequirements;
-        fieldsUpdated++;
-      }
-      if (extractedData.specialRequirements && !currentData.specialRequirements?.trim()) {
-        updates.specialRequirements = extractedData.specialRequirements;
-        fieldsUpdated++;
-      }
-      
-      if (fieldsUpdated > 0) {
-        form.reset({ ...currentData, ...updates });
+      if (result.updatedBooking) {
+        const updatedData: BookingFormData = {
+          ...form.getValues(),
+          ...result.updatedBooking,
+          eventDate: result.updatedBooking.eventDate ? 
+            new Date(result.updatedBooking.eventDate).toISOString().split('T')[0] : 
+            form.getValues('eventDate'),
+        };
+        
+        form.reset(updatedData);
         setHasChanges(true);
       }
       
-      setParseResult({
-        fieldsUpdated,
-        confidence: extractedData.confidence
+      toast({
+        title: "Contract Parsed Successfully",
+        description: `Updated ${result.fieldsUpdated} fields with ${result.confidence}% confidence`,
       });
       
-      // Enhanced feedback based on confidence and extraction results
-      if (extractedData.extractionFailed) {
-        const errorMsg = extractedData.error || 'Unknown error';
-        if (errorMsg.includes('overloaded_error') || errorMsg.includes('Overloaded')) {
-          toast({
-            title: "AI Service Busy",
-            description: "The AI service is temporarily overloaded. Please try parsing again in a moment.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Unable to Process Contract",
-            description: `The system had difficulty reading this PDF. Please check if the file contains clear text and try again, or fill the form manually.`,
-            variant: "destructive",
-          });
-        }
-      } else if (fieldsUpdated === 0) {
-        toast({
-          title: "No Updates Needed",
-          description: `Contract parsed with ${extractedData.confidence}% confidence, but all fields were already filled.`,
-        });
-      } else {
-        toast({
-          title: "Contract Parsed",
-          description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
-        });
-      }
-      
-    } catch (error) {
-      console.error('Parse error:', error);
+    } catch (error: any) {
       toast({
-        title: "Processing Issue",
-        description: "Unable to automatically read this contract. The file was saved, but please fill the form manually.",
+        title: "Parse Failed",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -632,903 +538,537 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     }
   };
 
-  const onSubmit = async (data: z.infer<typeof bookingDetailsSchema>) => {
-    try {
-      // Clear all parsing caches immediately when save is clicked
-      setExtractedData(null);
-      setContractParsingResult(null);
-      await updateBookingMutation.mutateAsync({
-        ...data,
-        customFields: JSON.stringify(customFields),
-      });
-    } catch (error) {
-      console.error('Error updating booking:', error);
-    }
-  };
-
-  const handleSave = () => {
-    if (!booking?.id) {
-      toast({
-        title: "Error",
-        description: "No booking selected",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!hasChanges) {
-      toast({
-        title: "Info",
-        description: "No changes detected to save",
-        variant: "default"
-      });
-      return;
-    }
-
+  const handleSave = async () => {
     const formData = form.getValues();
-    
-    // Prepare data for backend - let storage.ts handle date conversion
-    const updateData = {
-      ...formData,
-      customFields: JSON.stringify(customFields),
-      // Keep eventDate as string, storage.ts will convert it to Date
-    };
-    
-    updateBookingMutation.mutate(updateData);
+    await updateBookingMutation.mutateAsync(formData);
   };
 
-  if (!booking) {
-    return null;
-  }
+  const handleSubmit = (data: BookingFormData) => {
+    updateBookingMutation.mutate(data);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col" aria-describedby="booking-details-description">
-        {/* Sticky Header */}
-        <div className="sticky top-0 bg-white z-10 border-b pb-4 pr-12">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Booking Details - {booking.clientName}
-            </DialogTitle>
-            <DialogDescription id="booking-details-description">
-              Edit and manage booking information for {booking.clientName}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-2 mt-4 pr-4">
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges || updateBookingMutation.isPending}
-              className={`${hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
-            >
-              {updateBookingMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit3 className="h-5 w-5" />
+            Edit Booking Details
+            {hasChanges && <Badge variant="secondary" className="text-xs">Unsaved changes</Badge>}
+          </DialogTitle>
+          <DialogDescription>
+            Update booking information and add additional details.
+            {bookingContract && (
+              <span className="text-blue-600 font-medium ml-1">
+                Contract found - you can copy data from it.
+              </span>
+            )}
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pt-4">
-          <div className="space-y-6">
-          <Form {...form}>
-            <form className="space-y-6">
-              {/* Section 1: Basic Information - Purple Theme */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">1</span>
-                    </div>
-                    <Calendar className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Basic Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="clientName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Date</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="eventTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Start Time</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventEndTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Finish Time</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Basic Details */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <h3 className="font-medium">Client Details</h3>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="clientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="client@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Phone number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Client address" className="min-h-[80px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Middle Column - Event Details */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <h3 className="font-medium">Event Details</h3>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="eventDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Date *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-2">
                   <FormField
                     control={form.control}
-                    name="venue"
+                    name="eventTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Venue</FormLabel>
+                        <FormLabel>Start Time</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input type="time" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="fee"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Fee (£)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" step="0.01" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="space-y-2">
-                      <Label className="text-gray-400">Status (edit via status buttons)</Label>
-                      <div className="p-2 bg-gray-100 rounded-md opacity-60">
-                        <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                          {booking.status}
-                        </Badge>
-                        {booking.previousStatus && booking.status === 'completed' && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            <span className="font-medium">Previous:</span> {booking.previousStatus}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="eventEndTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="venue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Venue</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Event venue" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="venueAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Venue Address</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Venue address" className="min-h-[80px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="eventType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Wedding, corporate event, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gigType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gig Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gig type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {gigTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="fee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Performance Fee</FormLabel>
+                      <FormControl>
+                        <Input placeholder="£0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Right Column - Additional Details */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Music className="h-4 w-4 text-gray-500" />
+                  <h3 className="font-medium">Performance Details</h3>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="performanceDuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 2 hours, 3x45min sets" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="styles"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Musical Styles</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jazz, Pop, Classical, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="equipmentRequirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Equipment Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="PA system, microphones, etc." className="min-h-[60px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="equipmentProvided"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Equipment Provided</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="What equipment you will bring" className="min-h-[60px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="specialRequirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Special Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Dietary, access, parking, etc." className="min-h-[60px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="whatsIncluded"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>What's Included</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Performance, equipment, setup, etc." className="min-h-[60px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Any other relevant information" className="min-h-[80px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Contract Import Section */}
+            {bookingContract && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-blue-900 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Contract Found
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-blue-700 mb-3">
+                    A contract exists for this booking. You can copy its data to fill empty fields above.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyFromContract()}
+                    className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  >
+                    Copy Contract Data to Booking
+                  </Button>
                 </CardContent>
               </Card>
+            )}
 
-              {/* Section 2: Client Contact Information - Blue Theme */}
-              <Card className="border-blue-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">2</span>
-                    </div>
-                    <User className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Client Contact Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-blue-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="clientEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="clientPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            {/* Document Upload Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Import Document Data
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="document-type" className="text-xs text-gray-600">Document Type</Label>
+                    <Select value={documentType} onValueChange={(value: 'contract' | 'invoice' | 'other') => setDocumentType(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contract">Contract</SelectItem>
+                        <SelectItem value="invoice">Invoice</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="clientAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 3: Event Details - Green Theme */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">3</span>
-                    </div>
-                    <Music className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Event Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0 grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="eventType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Type</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="Wedding, Corporate, etc." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gigType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gig Type</FormLabel>
-                          <div className="space-y-2">
-                            <Select onValueChange={(value) => {
-                              if (value !== 'custom') {
-                                field.onChange(value);
-                              }
-                            }} value={gigTypes.includes(field.value as string) ? field.value : 'custom'}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select or type custom gig type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
-                                  <SelectItem key={index} value={gigType}>
-                                    {gigType}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="custom">Custom - Type your own</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            
-                            {(!gigTypes.includes(field.value as string) || field.value === '') && (
-                              <FormControl>
-                                <Input 
-                                  placeholder="Type custom gig type"
-                                  value={gigTypes.includes(field.value as string) ? '' : field.value}
-                                  onChange={(e) => field.onChange(e.target.value)}
-                                />
-                              </FormControl>
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="dressCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dress Code</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="Black tie, casual, etc." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="styles"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Styles Requested <span className="text-blue-600">[Styles]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Musical styles requested for this booking: jazz, classical, pop, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 4: Venue Information - Orange Theme */}
-              <Card className="border-orange-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">4</span>
-                    </div>
-                    <MapPin className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Venue Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-orange-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="venueAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="venueContactInfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue Contact Information</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="contactPerson"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day-of Contact Person</FormLabel>
-                          <FormControl>
-                            <Input {...field}  />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="contactPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Contact Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field}  />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="parkingInfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Parking Information</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 5: Timing & Setup - Indigo Theme */}
-              <Card className="border-yellow-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">5</span>
-                    </div>
-                    <Clock className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Timing & Setup</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-yellow-50 rounded-b-lg border-t-0 grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="setupTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Setup Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 30 minutes before" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="soundCheckTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sound Check Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 15 minutes before start" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="packupTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pack-up Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 15 minutes after finish" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="travelTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Travel Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 1 hour each way" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Section 6: Equipment & Special Requests - Pink Theme */}
-              <Card className="border-pink-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">6</span>
-                    </div>
-                    <Settings className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Equipment & Special Requests</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-pink-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="equipmentRequirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipment Needed</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} placeholder="PA system, microphones, stands, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="specialRequirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Special Requests</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Special songs, timing requests, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 7: Performance Details - TEMPLATE VARIABLES - Teal Theme */}
-              <Card className="border-teal-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">7</span>
-                    </div>
-                    <Music className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Performance Details</span>
-                    <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full ml-2">📧 Template Variables</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-teal-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="performanceDuration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Performance Duration <span className="text-blue-600">[Performance Duration]</span></FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., 2 hours, 3 x 45 minute sets" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="equipmentProvided"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipment Provided <span className="text-blue-600">[Equipment Provided]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} placeholder="What equipment/instruments you'll bring" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="whatsIncluded"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>What's Included <span className="text-blue-600">[What's Included]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} placeholder="What's included in your service/package" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 8: Custom Fields - Gray Theme */}
-              <Card className="border-gray-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">8</span>
-                    </div>
-                    <Edit3 className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Custom Fields</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-gray-50 rounded-b-lg border-t-0 space-y-4">
-                  {customFields.map((field) => (
-                    <div key={field.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <Label className="text-sm font-medium">{field.name}</Label>
-                        <p className="text-sm text-gray-600">{field.value}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeCustomField(field.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  <div className="flex gap-2">
+                  <div>
+                    <Label htmlFor="contract-upload" className="text-xs text-gray-600">Upload Document</Label>
                     <Input
-                      placeholder="Field name"
-                      value={newFieldName}
-                      onChange={(e) => setNewFieldName(e.target.value)}
+                      id="contract-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setContractFile(file);
+                      }}
+                      className="file:mr-2 file:px-2 file:py-1 file:border-0 file:text-xs file:bg-gray-100"
                     />
-                    <Input
-                      placeholder="Field value"
-                      value={newFieldValue}
-                      onChange={(e) => setNewFieldValue(e.target.value)}
-                    />
+                  </div>
+                  
+                  <div className="flex items-end">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={addCustomField}
-                      disabled={!newFieldName.trim() || !newFieldValue.trim()}
+                      onClick={handleUploadContract}
+                      disabled={!contractFile}
+                      className="w-full"
                     >
-                      <Plus className="h-4 w-4" />
+                      {isParsingContract ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3 mr-1" />
+                          Import Data
+                        </>
+                      )}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                
+                {uploadStatus && (
+                  <div className={`p-3 rounded-md text-sm ${
+                    uploadStatus.type === 'success' 
+                      ? 'bg-green-50 text-green-700 border border-green-200' 
+                      : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    {uploadStatus.message}
+                  </div>
+                )}
 
-              {/* Section 9: Comprehensive Document Management - Violet Theme */}
-              <Card className="border-black shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-900 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">9</span>
-                    </div>
-                    <FileText className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Booking Documents</span>
-                  </CardTitle>
-                  <p className="text-white/90 text-sm mt-2">
-                    Upload contracts, invoices, and other booking-related documents. Use AI parsing to extract and populate booking details.
-                  </p>
-                </CardHeader>
-                <CardContent className="p-6 bg-slate-50 rounded-b-lg border-t-0 space-y-4">
-                  {/* Document Type Selection */}
-                  <div className="space-y-2">
-                    <Label>Document Type</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={documentType === 'contract' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('contract')}
-                      >
-                        Contract
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'invoice' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('invoice')}
-                      >
-                        Invoice
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'other' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('other')}
-                      >
-                        Other
-                      </Button>
+                {parseResult && (
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-md">
+                    <div className="text-sm text-green-700">
+                      <strong>Parse Result:</strong> Updated {parseResult.fieldsUpdated} fields with {parseResult.confidence}% confidence
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
 
-                  {/* Existing Documents Display */}
-                  {(booking?.uploadedContractUrl || booking?.uploadedInvoiceUrl || (booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0)) && (
-                    <div className="space-y-2">
-                      <Label>Uploaded Documents</Label>
-                      <div className="space-y-2">
-                        {booking?.uploadedContractUrl && (
-                          <div className="bg-blue-50 p-3 rounded-md">
-                            <p className="text-sm text-blue-700 mb-2">
-                              📄 Contract: {String(booking.uploadedContractFilename || 'Unknown')}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(booking.uploadedContractUrl!, '_blank')}
-                            >
-                              View Contract
-                            </Button>
-                          </div>
-                        )}
-                        {booking?.uploadedInvoiceUrl && (
-                          <div className="bg-green-50 p-3 rounded-md">
-                            <p className="text-sm text-green-700 mb-2">
-                              💰 Invoice: {String(booking.uploadedInvoiceFilename || 'Unknown')}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(booking.uploadedInvoiceUrl!, '_blank')}
-                            >
-                              View Invoice
-                            </Button>
-                          </div>
-                        )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && 
-                         (booking.uploadedDocuments as Array<{type?: string, filename?: string, url?: string}>).map((doc, index) => (
-                          <div key={index} className="bg-gray-50 p-3 rounded-md">
-                            <p className="text-sm text-gray-700 mb-2">
-                              📎 {doc.type || 'Document'}: {doc.filename || 'Unknown'}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => doc.url && window.open(doc.url, '_blank')}
-                            >
-                              View Document
-                            </Button>
-                          </div>
-                        ))}
+            {/* Custom Fields Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Custom Fields
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {customFields.length > 0 && (
+                  <div className="space-y-2">
+                    {customFields.map((field) => (
+                      <div key={field.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">{field.name}:</span>
+                          <span className="text-sm text-gray-600 ml-2">{field.value}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomField(field.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Input
+                    placeholder="Field name"
+                    value={newFieldName}
+                    onChange={(e) => setNewFieldName(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Field value"
+                    value={newFieldValue}
+                    onChange={(e) => setNewFieldValue(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCustomField}
+                    disabled={!newFieldName.trim() || !newFieldValue.trim()}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Field
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-                  {/* Upload New Document */}
-                  {(
-                    (documentType === 'contract' && !booking?.uploadedContractUrl) ||
-                    (documentType === 'invoice' && !booking?.uploadedInvoiceUrl) ||
-                    documentType === 'other'
-                  ) ? (
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-gray-400" />
+                <span className="text-xs text-gray-500">
+                  Changes are saved automatically when you click Save Changes
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateBookingMutation.isPending || !hasChanges}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {updateBookingMutation.isPending ? (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="document-upload">Upload {documentType === 'contract' ? 'Contract' : documentType === 'invoice' ? 'Invoice' : 'Document'} PDF</Label>
-                        <Input
-                          id="document-upload"
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setContractFile(e.target.files?.[0] || null)}
-                        />
-                      </div>
-                      
-                      {contractFile && (
-                        <div className="space-y-3">
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              onClick={handleUploadContract}
-                              disabled={isParsingContract}
-                              className="flex items-center gap-2"
-                            >
-                              {isParsingContract ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Uploading...
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="h-4 w-4" />
-                                  Store Document
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleParseContract}
-                              disabled={isParsingContract}
-                              className="flex items-center gap-2"
-                            >
-                              {isParsingContract ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Parsing...
-                                </>
-                              ) : (
-                                <>
-                                  <FileText className="h-4 w-4" />
-                                  Parse & Fill Form
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setContractFile(null)}
-                            >
-                              Clear
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Choose "Store Document" to simply save the PDF, or "Parse & Fill Form" to extract data and populate booking fields
-                          </p>
-                        </div>
-                      )}
-                      
-                      {parseResult && (
-                        <div className="bg-green-50 p-3 rounded-md">
-                          <p className="text-sm text-green-700">
-                            Document parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
-                            Confidence: {parseResult.confidence || 0}%
-                          </p>
-                        </div>
-                      )}
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
                     </>
                   ) : (
-                    <div className="bg-gray-50 p-3 rounded-md text-center">
-                      <p className="text-sm text-gray-600">
-                        {documentType === 'contract' ? 'Contract already uploaded' : 
-                         documentType === 'invoice' ? 'Invoice already uploaded' : 
-                         'Select a different document type to upload more files'}
-                      </p>
-                    </div>
+                    'Save Changes'
                   )}
-                  
-                  {uploadStatus && (
-                    <div className={`p-3 rounded-md ${uploadStatus.type === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
-                      <p className={`text-sm ${uploadStatus.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
-                        {uploadStatus.message}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Notes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Textarea {...field}  rows={4} placeholder="Additional notes..." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-              
-
-            </form>
-          </Form>
-          </div>
-        </div>
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

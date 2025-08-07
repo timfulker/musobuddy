@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -123,437 +123,297 @@ const guideSteps: GuideStep[] = [
       'Contract status updates to "Signed" in your dashboard'
     ],
     tips: [
-      'Signing links work on any device (phone, tablet, desktop)',
-      'Contracts remain accessible even if MusoBuddy is offline',
-      'Automatic reminders sent for unsigned contracts',
-      'Digital signatures include legal metadata for enforceability'
+      'Signing links expire after 30 days for security',
+      'No account creation required for clients',
+      'Digital signatures meet UK legal requirements',
+      'Both parties get immediate email confirmation'
     ]
   },
   {
-    id: 'invoice-creation',
-    title: 'Invoice Creation & Editing',
-    description: 'Professional invoicing with payment tracking',
+    id: 'invoice-management',
+    title: 'Invoice Creation & Tracking',
+    description: 'Professional invoicing and payment tracking',
     icon: <DollarSign className="h-5 w-5" />,
     steps: [
-      'Create invoices from signed contracts or manually',
-      'Invoice details auto-populate from contract information',
-      'Edit invoice amounts, due dates, and payment terms',
-      'Add line items for equipment, travel, or additional services',
-      'Generate professional PDF invoices with UK tax compliance',
-      'Preview invoices before sending to clients'
+      'Create invoices from contracts or manually',
+      'Set payment terms and due dates (default in Settings)',
+      'Generate professional PDF invoices with your branding',
+      'Email invoices directly to clients',
+      'Track payment status: Sent → Paid → Overdue'
     ],
     tips: [
-      'Invoice numbers auto-increment (customizable in Settings)',
-      'Invoice amounts default to contract fee but can be edited',
-      'Include your bank details for client payments',
-      'Add CC email addresses for client accounts departments'
+      'Include performance date and deposit information',
+      'Set up automatic payment reminders in Settings',
+      'Export invoices for accounting software integration',
+      'Mark invoices as paid when payment received'
     ]
   },
   {
-    id: 'invoice-sending',
-    title: 'Sending & Tracking Invoices',
-    description: 'Email delivery and payment monitoring',
-    icon: <Target className="h-5 w-5" />,
-    steps: [
-      'Send invoices directly from the system via email',
-      'Invoice PDFs are attached and also available via web link',
-      'Track invoice status: Draft → Sent → Paid → Overdue',
-      'Mark invoices as paid when payment is received',
-      'Send automated reminders for overdue invoices',
-      'Download invoice PDFs for your records'
-    ],
-    tips: [
-      'Email includes professional branding with your business name',
-      'Web links allow clients to view invoices without downloading',
-      'Payment tracking helps with cash flow management',
-      'Overdue detection runs automatically with reminder options'
-    ]
-  },
-  {
-    id: 'calendar-system',
-    title: 'Calendar & Scheduling',
-    description: 'Visual booking management and conflict detection',
+    id: 'calendar-integration',
+    title: 'Calendar Integration',
+    description: 'Sync your bookings with external calendars',
     icon: <Calendar className="h-5 w-5" />,
     steps: [
-      'View all bookings in calendar format by month',
-      'Import existing calendar events from .ics files',
-      'Export your MusoBuddy calendar to external calendar apps',
-      'Identify conflicts with red warning indicators',
-      'Mark dates as unavailable for booking',
-      'Switch between calendar and list views'
+      'Navigate to Settings → Calendar Integration',
+      'Generate your unique calendar feed URL',
+      'Subscribe to this feed in your preferred calendar app',
+      'All confirmed bookings sync automatically',
+      'Updates appear in real-time across all devices'
     ],
     tips: [
-      'Calendar shows confirmed gigs, potential bookings, and conflicts',
-      'Expired enquiries are hidden to keep calendar clean',
-      'Works with Google Calendar, Apple Calendar, and Outlook',
-      'Conflict detection prevents double-booking mistakes'
+      'Works with Google Calendar, Apple Calendar, Outlook',
+      'Only confirmed bookings appear in external calendar',
+      'Calendar events include client name, venue, and time',
+      'Private feed URL - keep it secure'
     ]
   },
   {
-    id: 'compliance-management',
-    title: 'Compliance & Document Management',
-    description: 'Track insurance, licenses, and certifications',
-    icon: <Users className="h-5 w-5" />,
-    steps: [
-      'Upload compliance documents (insurance, PAT testing, licenses)',
-      'Set expiry dates for automatic renewal reminders',
-      'Share compliance documents with clients for venue requirements',
-      'Track compliance status across all your documents',
-      'Receive alerts before documents expire'
-    ],
-    tips: [
-      'Many venues require public liability insurance and PAT certificates',
-      'Upload documents once and share with multiple clients',
-      'Automatic reminders help avoid expired certifications',
-      'Professional document sharing builds client trust'
-    ]
-  },
-  {
-    id: 'business-settings',
-    title: 'Business Configuration',
-    description: 'Set up your business details and preferences',
+    id: 'settings-customization',
+    title: 'Settings & Customization',
+    description: 'Personalize your MusoBuddy experience',
     icon: <Settings className="h-5 w-5" />,
     steps: [
-      'Add business name, address, and contact details',
-      'Set up bank account information for invoices',
-      'Configure default payment terms and invoice numbering',
-      'Customize email branding with your business name',
-      'Set buffer times for different event types',
-      'Configure instruments played and gig types'
+      'Add your business name, address, and contact details',
+      'Set default payment terms and invoice due days',
+      'Configure email templates for contracts and invoices',
+      'Add custom gig types for your specific services',
+      'Set up calendar integration and notification preferences'
     ],
     tips: [
-      'Business details auto-populate on all invoices and contracts',
-      'Email branding maintains professional appearance',
-      'Invoice numbering ensures legal compliance',
-      'Buffer times help with travel and setup scheduling'
-    ]
-  },
-  {
-    id: 'advanced-features',
-    title: 'Advanced Features',
-    description: 'Power user features and automation',
-    icon: <Lightbulb className="h-5 w-5" />,
-    steps: [
-      'Use AI-powered conflict resolution suggestions',
-      'Set up automated contract and invoice reminders',
-      'Import calendar events from other booking platforms',
-      'Use bulk operations for multiple bookings',
-      'Export data for accounting software integration',
-      'Configure custom gig types and instruments'
-    ],
-    tips: [
-      'AI learns from your booking patterns to improve suggestions',
-      'Automation reduces manual follow-up tasks',
-      'Data export helps with tax preparation',
-      'Custom configurations adapt the system to your specific needs'
-    ]
-  },
-  {
-    id: 'client-management',
-    title: 'Client Address Book',
-    description: 'Manage client contacts and relationships',
-    icon: <Users className="h-5 w-5" />,
-    steps: [
-      'Add clients manually or from enquiries',
-      'Store complete contact information',
-      'Track client booking history',
-      'Search and filter client records',
-      'View client statistics and preferences'
-    ],
-    tips: [
-      'Only add clients you want to keep long-term',
-      'Client details auto-fill when creating new contracts',
-      'Useful for tracking repeat customers'
+      'Business details appear on all contracts and invoices',
+      'Save time by setting sensible defaults',
+      'Email templates can be customized with personal touch',
+      'Custom gig types help with filtering and organization'
     ]
   }
 ];
 
 export default function UserGuide() {
-  const [selectedStep, setSelectedStep] = useState<string>('email-setup');
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isMobile } = useResponsive();
+  const [selectedStep, setSelectedStep] = useState<string>('getting-started');
+  const { isDesktop } = useResponsive();
 
-  const currentStep = guideSteps.find(step => step.id === selectedStep);
+  const currentStep = guideSteps.find(step => step.id === selectedStep) || guideSteps[0];
 
-  const markAsComplete = (stepId: string) => {
-    setCompletedSteps(prev => new Set([...prev, stepId]));
-  };
+  const GuideContent = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Guide</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            Learn how to make the most of your MusoBuddy account
+          </p>
+        </div>
+        <Badge variant="outline" className="hidden sm:flex">
+          Version 2.0
+        </Badge>
+      </div>
 
-  const resetProgress = () => {
-    setCompletedSteps(new Set());
-  };
-
-  return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col content-container main-content">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">User Guide</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">Complete step-by-step guide to using MusoBuddy</p>
+      {/* Quick Start */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
+            <Target className="h-5 w-5" />
+            Quick Start Checklist
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm">Set up your business details in Settings</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm">Forward your first client email to leads@musobuddy.com</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm">Create and send your first contract</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm">Generate your first professional invoice</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary">
-              {completedSteps.size} of {guideSteps.length} completed
-            </Badge>
-            <Button onClick={resetProgress} variant="outline" size="sm">
-              Reset Progress
-            </Button>
-          </div>
+        </CardContent>
+      </Card>
+
+      {/* Guide Steps Navigation */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Topics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <nav className="space-y-1">
+                {guideSteps.map((step, index) => (
+                  <button
+                    key={step.id}
+                    onClick={() => setSelectedStep(step.id)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-l-2 ${
+                      selectedStep === step.id
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300'
+                        : 'border-transparent text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-1 rounded ${selectedStep === step.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}>
+                        {step.icon}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{step.title}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{step.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </nav>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="flex h-full">
-            {/* Guide Navigation - Hidden on mobile, shown on desktop */}
-            <div className="hidden md:block w-80 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-              <div className="p-4">
-                <h2 className="font-bold mb-6 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                  <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
-                  </div>
-                  Getting Started
-                </h2>
+        {/* Selected Step Content */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {currentStep.icon}
+                {currentStep.title}
+              </CardTitle>
+              <p className="text-gray-600 dark:text-gray-300">{currentStep.description}</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Steps */}
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  Step-by-Step Instructions
+                </h3>
                 <div className="space-y-3">
-                  {guideSteps.map((step, index) => (
-                    <Button
-                      key={step.id}
-                      variant={selectedStep === step.id ? "default" : "ghost"}
-                      className={`w-full justify-start h-auto p-4 rounded-lg transition-all duration-200 ${
-                        selectedStep === step.id 
-                          ? 'bg-gradient-to-r bg-primary text-white shadow-lg' 
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
-                      }`}
-                      onClick={() => setSelectedStep(step.id)}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="flex-shrink-0">
-                          {completedSteps.has(step.id) ? (
-                            <div className="p-1 bg-green-100 rounded-full">
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            </div>
-                          ) : (
-                            <div className={`p-1 rounded-full ${
-                              selectedStep === step.id 
-                                ? 'bg-white/20 text-white' 
-                                : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-                            }`}>
-                              {step.icon}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="font-semibold text-sm">{step.title}</div>
-                          <div className={`text-xs mt-1 ${
-                            selectedStep === step.id ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
-                          }`}>{step.description}</div>
-                        </div>
-                        <div className={`text-xs font-bold ${
-                          selectedStep === step.id ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'
-                        }`}>
-                          {index + 1}
-                        </div>
+                  {currentStep.steps.map((step, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-sm font-medium">
+                        {index + 1}
                       </div>
-                    </Button>
+                      <p className="text-gray-700 dark:text-gray-300">{step}</p>
+                    </div>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-              {/* Mobile Navigation Dropdown - Show above content on mobile */}
-              <div className="md:hidden mb-4">
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h2 className="font-bold mb-4 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                    <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
+              {/* Tips */}
+              {currentStep.tips && currentStep.tips.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-yellow-500" />
+                      Pro Tips
+                    </h3>
+                    <div className="space-y-2">
+                      {currentStep.tips.map((tip, index) => (
+                        <div key={index} className="flex gap-2 items-start">
+                          <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">{tip}</p>
+                        </div>
+                      ))}
                     </div>
-                    Getting Started
-                  </h2>
-                  <div className="space-y-2">
-                    {guideSteps.map((step, index) => (
-                      <Button
-                        key={step.id}
-                        variant={selectedStep === step.id ? "default" : "ghost"}
-                        className={`w-full justify-start h-auto p-3 rounded-lg transition-all duration-200 ${
-                          selectedStep === step.id 
-                            ? 'bg-gradient-to-r bg-primary text-white shadow-lg' 
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
-                        }`}
-                        onClick={() => setSelectedStep(step.id)}
-                      >
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="flex-shrink-0">
-                            {completedSteps.has(step.id) ? (
-                              <div className="p-1 bg-green-100 rounded-full">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              </div>
-                            ) : (
-                              <div className={`p-1 rounded-full ${
-                                selectedStep === step.id 
-                                  ? 'bg-white/20 text-white' 
-                                  : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-                              }`}>
-                                {step.icon}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-semibold text-sm">{step.title}</div>
-                            <div className={`text-xs mt-1 ${
-                              selectedStep === step.id ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
-                            }`}>{step.description}</div>
-                          </div>
-                          <div className={`text-xs font-bold ${
-                            selectedStep === step.id ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {index + 1}
-                          </div>
-                        </div>
-                      </Button>
-                    ))}
                   </div>
-                </div>
-              </div>
-              {currentStep && (
-                <div className="max-w-4xl mx-auto">
-                  <Card className="shadow-lg border-0">
-                    <CardHeader className="bg-gradient-to-r bg-primary text-white">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 md:p-3 bg-white/20 rounded-lg">
-                          {currentStep.icon}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg md:text-xl">{currentStep.title}</CardTitle>
-                          <p className="text-white/90 mt-1 text-sm md:text-base">{currentStep.description}</p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 md:p-6">
-                      <div className="space-y-4 md:space-y-6">
-                        {/* Step-by-step Instructions */}
-                        <div>
-                          <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Target className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                            Step-by-step Instructions
-                          </h3>
-                          <div className="space-y-3">
-                            {currentStep.steps.map((step, index) => (
-                              <div key={index} className="flex items-start gap-3 p-3 bg-gradient-to-r bg-primary/10 dark:bg-primary/20 rounded-lg border border-primary/30 dark:border-primary/40">
-                                <div className="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-sm font-bold">
-                                  {index + 1}
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 pt-1 text-sm md:text-base">{step}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Tips & Best Practices */}
-                        {currentStep.tips && (
-                          <div>
-                            <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center gap-2">
-                              <Lightbulb className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
-                              Tips & Best Practices
-                            </h3>
-                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                              <ul className="space-y-2">
-                                {currentStep.tips.map((tip, index) => (
-                                  <li key={index} className="flex items-start gap-2">
-                                    <Lightbulb className="h-3 w-3 md:h-4 md:w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                                    <span className="text-gray-700 dark:text-gray-300 text-sm md:text-base">{tip}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        )}
-
-                        <Separator />
-
-                        {/* Action Buttons */}
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <Button
-                              onClick={() => markAsComplete(currentStep.id)}
-                              disabled={completedSteps.has(currentStep.id)}
-                              className={`${
-                                completedSteps.has(currentStep.id) 
-                                  ? 'bg-green-600 hover:bg-green-700' 
-                                  : 'bg-green-600 hover:bg-green-700'
-                              } shadow-md w-full md:w-auto`}
-                            >
-                              {completedSteps.has(currentStep.id) ? (
-                                <>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Completed
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Mark as Complete
-                                </>
-                              )}
-                            </Button>
-
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                              {selectedStep !== 'email-setup' && (
-                                <Button
-                                  variant="outline"
-                                  className="border-purple-300 text-primary hover:bg-purple-50 dark:border-purple-600 dark:text-purple-400 dark:hover:bg-purple-900/20 flex-1 md:flex-none"
-                                  onClick={() => {
-                                    const currentIndex = guideSteps.findIndex(s => s.id === selectedStep);
-                                    if (currentIndex > 0) {
-                                      setSelectedStep(guideSteps[currentIndex - 1].id);
-                                    }
-                                  }}
-                                >
-                                  Previous
-                                </Button>
-                              )}
-                              
-                              {selectedStep !== 'client-management' && (
-                                <Button
-                                  className="bg-primary hover:bg-purple-700 shadow-md flex-1 md:flex-none"
-                                  onClick={() => {
-                                    const currentIndex = guideSteps.findIndex(s => s.id === selectedStep);
-                                    if (currentIndex < guideSteps.length - 1) {
-                                      setSelectedStep(guideSteps[currentIndex + 1].id);
-                                    }
-                                  }}
-                                >
-                                  Next
-                                  <ArrowRight className="h-4 w-4 ml-2" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                </>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {isMobile && <MobileNav />}
+      {/* Additional Help */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Need More Help?</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 border rounded-lg">
+              <Mail className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+              <h3 className="font-semibold mb-1">Email Support</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Get help from our support team
+              </p>
+              <Button variant="outline" size="sm">
+                Contact Support
+              </Button>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <Users className="h-8 w-8 mx-auto text-green-600 mb-2" />
+              <h3 className="font-semibold mb-1">Community Forum</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Connect with other musicians
+              </p>
+              <Button variant="outline" size="sm">
+                Join Community
+              </Button>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <BookOpen className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+              <h3 className="font-semibold mb-1">Feature Requests</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Suggest new features
+              </p>
+              <Button variant="outline" size="sm">
+                Submit Idea
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
+          <Sidebar isOpen={true} onClose={() => {}} />
+        </div>
+        <div className="flex-1 ml-64 min-h-screen">
+          <div className="p-6">
+            <GuideContent />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <MobileNav />
+      
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <div className={`
+        fixed left-0 top-0 h-full w-80 bg-white dark:bg-slate-900 shadow-xl z-50 
+        transform transition-transform duration-300 ease-in-out md:hidden
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
+
+      <div className="min-h-screen p-4">
+        <GuideContent />
+      </div>
     </div>
   );
 }

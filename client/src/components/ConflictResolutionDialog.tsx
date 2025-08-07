@@ -13,12 +13,32 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
+interface ConflictingBooking {
+  id: number;
+  clientName: string;
+  eventDate: string;
+  eventTime?: string;
+  eventEndTime?: string;
+  venue?: string;
+  eventType?: string;
+  agreedFee?: string;
+  status: string;
+  previousStatus?: string;
+}
+
+interface ConflictResolution {
+  id: number;
+  bookingIds: string | number[];
+  conflictDate: string;
+  notes?: string;
+}
+
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  conflictingBookings: any[];
-  onEditBooking?: (booking: any) => void;
-  onResolveConflict?: (bookingToKeep: any) => void;
+  conflictingBookings: ConflictingBooking[];
+  onEditBooking?: (booking: ConflictingBooking) => void;
+  onResolveConflict?: (bookingToKeep: ConflictingBooking) => void;
 }
 
 export default function ConflictResolutionDialog({
@@ -29,33 +49,33 @@ export default function ConflictResolutionDialog({
   onResolveConflict
 }: ConflictResolutionDialogProps) {
   const { toast } = useToast();
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBooking, setSelectedBooking] = useState<ConflictingBooking | null>(null);
   const [conflictSeverity, setConflictSeverity] = useState<'hard' | 'soft'>('soft');
   const [conflictDate, setConflictDate] = useState<string>('');
 
   // Get conflict resolutions to check if this conflict group is already resolved
-  const { data: resolutions = [] } = useQuery({
+  const { data: resolutions = [] } = useQuery<ConflictResolution[]>({
     queryKey: ['/api/conflicts/resolutions'],
     enabled: isOpen && conflictingBookings.length > 0,
   });
 
   // Check if the current conflict group is already resolved
-  const isResolved = resolutions?.some((resolution: any) => {
+  const isResolved = resolutions?.some((resolution: ConflictResolution) => {
     if (!resolution?.bookingIds) return false;
     
     try {
       // Handle both string and array formats for bookingIds
-      let resolutionBookingIds;
+      let resolutionBookingIds: number[];
       if (typeof resolution.bookingIds === 'string') {
         resolutionBookingIds = JSON.parse(resolution.bookingIds);
       } else if (Array.isArray(resolution.bookingIds)) {
-        resolutionBookingIds = resolution.bookingIds;
+        resolutionBookingIds = resolution.bookingIds as number[];
       } else {
         return false;
       }
       
-      const currentBookingIds = conflictingBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
-      return JSON.stringify(resolutionBookingIds.sort((a: number, b: number) => a - b)) === JSON.stringify(currentBookingIds);
+      const currentBookingIds = conflictingBookings.map((b) => b.id).sort((a, b) => a - b);
+      return JSON.stringify(resolutionBookingIds.sort((a, b) => a - b)) === JSON.stringify(currentBookingIds);
     } catch (error) {
       console.warn('Error parsing resolution bookingIds:', error);
       return false;
@@ -154,14 +174,14 @@ export default function ConflictResolutionDialog({
     onClose();
   };
 
-  const handleEditBooking = (booking: any) => {
+  const handleEditBooking = (booking: ConflictingBooking) => {
     if (onEditBooking) {
       onEditBooking(booking);
       onClose(); // Close conflict dialog when opening edit
     }
   };
 
-  const handleRejectBooking = (booking: any) => {
+  const handleRejectBooking = (booking: ConflictingBooking) => {
     deleteMutation.mutate(booking.id);
   };
 
@@ -268,17 +288,17 @@ export default function ConflictResolutionDialog({
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-500" />
                       <span className="text-sm">
-                        {booking.eventTime} - {booking.eventEndTime || 'TBC'}
+                        {booking.eventTime || 'TBC'} - {booking.eventEndTime || 'TBC'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{booking.venue}</span>
+                      <span className="text-sm">{booking.venue || 'TBC'}</span>
                     </div>
                   </div>
 
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Event:</span> {booking.eventType} | 
+                    <span className="font-medium">Event:</span> {booking.eventType || 'TBC'} | 
                     <span className="font-medium ml-2">Fee:</span> £{booking.agreedFee || 'TBC'}
                   </div>
                 </div>
