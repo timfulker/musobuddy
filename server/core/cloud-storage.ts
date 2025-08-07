@@ -188,8 +188,8 @@ export async function uploadContractSigningPage(
       clientAddress: contract.clientAddress,
       venueAddress: contract.venueAddress,
       template: contract.template,
-      setlist: contract.setlist?.substring(0, 50),
-      riderNotes: contract.riderNotes?.substring(0, 50)
+      setlist: contract.specialRequirements?.substring(0, 50) || '',
+      riderNotes: contract.additionalInfo?.substring(0, 50) || ''
     });
     
     // Generate HTML signing page
@@ -199,7 +199,7 @@ export async function uploadContractSigningPage(
     const contractDate = new Date(contract.createdAt || new Date());
     const dateFolder = contractDate.toISOString().split('T')[0];
     const securityToken = nanoid(16);
-    const contractNumber = contract.contractNumber || contract.contract_number || `contract-${contract.id}`;
+    const contractNumber = contract.contractNumber || `contract-${contract.id}`;
     const filename = `${contractNumber.replace(/[^a-zA-Z0-9-]/g, '_')}-signing-${securityToken}.html`;
     const storageKey = `contract-signing/${dateFolder}/${filename}`;
     

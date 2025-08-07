@@ -997,7 +997,7 @@ async function startServer() {
     app.use(sanitizeInput);
     
     // Register consolidated routes
-    const { registerRoutes } = await import('./routes');
+    const { registerRoutes } = await import('./routes/index');
     await registerRoutes(app);
     
     // Apply global error handling ONLY to API routes
