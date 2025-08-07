@@ -6,6 +6,78 @@ import { requireAuth } from '../middleware/auth';
 export function registerIsolatedRoutes(app: Express) {
   console.log('🔗 Setting up isolated routes for cloud compatibility...');
 
+  // Get contract R2 URL endpoint - used by frontend for viewing contracts
+  app.get('/api/isolated/contracts/:id/r2-url', requireAuth, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      if (contract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Return existing cloud URL if available
+      if (contract.cloudStorageUrl) {
+        console.log(`✅ Returning existing R2 URL for contract ${contractId}`);
+        return res.json({ 
+          success: true, 
+          url: contract.cloudStorageUrl,
+          key: contract.cloudStorageKey 
+        });
+      }
+
+      // Generate new cloud URL if needed
+      try {
+        const userSettings = await storage.getSettings(userId);
+        const { uploadContractToCloud } = await import('../core/cloud-storage');
+        
+        const uploadResult = await uploadContractToCloud(contract, userSettings);
+        
+        if (!uploadResult.success) {
+          console.error('❌ Failed to upload contract to R2:', uploadResult.error);
+          return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
+        }
+
+        // Update contract with new cloud URL
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key
+        }, userId);
+
+        console.log(`✅ Generated new R2 URL for contract ${contractId}: ${uploadResult.url}`);
+        res.json({ 
+          success: true, 
+          url: uploadResult.url,
+          key: uploadResult.key 
+        });
+
+      } catch (cloudError) {
+        console.error('❌ Cloud storage error:', cloudError);
+        res.status(500).json({ error: 'Failed to generate cloud storage URL' });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Isolated R2 URL generation failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate R2 URL',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // CRITICAL: Use regular contract email endpoint (working version)
   app.post('/api/isolated/contracts/send-email', requireAuth, async (req: any, res) => {
     try {
@@ -61,20 +133,16 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(404).json({ error: 'Updated contract not found' });
       }
       
-      // Generate signing page and upload to R2
-      const { uploadContractSigningPageToR2 } = await import('../contract-signing-page-generator');
-      const signingPageResult = await uploadContractSigningPageToR2(updatedContract, userSettings);
-      
-      if (!signingPageResult.success) {
-        console.error('❌ Failed to upload signing page to R2:', signingPageResult.error);
-        return res.status(500).json({ error: 'Failed to generate contract signing page' });
-      }
+      // Generate signing page URL (served dynamically, not uploaded to R2)
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://www.musobuddy.com' 
+        : `http://localhost:${process.env.PORT || 5000}`;
+      const signingPageUrl = `${baseUrl}/contracts/${parsedContractId}/sign`;
       
       // Update contract status with signing page URL
       await storage.updateContract(parsedContractId, {
         status: 'sent',
-        signingPageUrl: signingPageResult.url,
-        signingPageKey: signingPageResult.key,
+        signingPageUrl: signingPageUrl,
         updatedAt: new Date()
       });
       
@@ -83,13 +151,13 @@ export function registerIsolatedRoutes(app: Express) {
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       
       try {
-        await emailService.sendContractEmail(updatedContract, userSettings, subject, signingPageResult.url!, customMessage || '');
+        await emailService.sendContractEmail(updatedContract, userSettings, subject, signingPageUrl, customMessage || '');
         console.log(`✅ Contract email sent successfully for contract ${contractId}`);
         
         res.json({ 
           success: true, 
           message: 'Contract sent successfully',
-          contractUrl: signingPageResult.url,
+          contractUrl: signingPageUrl,
           pdfUrl: pdfUploadResult.url
         });
         

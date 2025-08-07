@@ -219,6 +219,61 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
+  // Add download endpoint for fallback when isolated endpoints fail
+  app.get('/api/contracts/:id/download', requireAuth, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      if (contract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // If cloud URL exists, redirect to it
+      if (contract.cloudStorageUrl) {
+        console.log(`✅ Redirecting to cloud URL for contract ${contractId}`);
+        return res.redirect(contract.cloudStorageUrl);
+      }
+
+      // Try to generate cloud URL if not exists
+      try {
+        const userSettings = await storage.getSettings(userId);
+        const { uploadContractToCloud } = await import('../core/cloud-storage');
+        
+        const uploadResult = await uploadContractToCloud(contract, userSettings);
+        
+        if (uploadResult.success) {
+          // Update contract with new cloud URL
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key
+          }, userId);
+          
+          console.log(`✅ Generated and redirecting to new cloud URL for contract ${contractId}`);
+          return res.redirect(uploadResult.url);
+        }
+      } catch (error) {
+        console.error('Failed to generate cloud URL:', error);
+      }
+
+      // If all else fails, return error
+      return res.status(404).json({ error: 'Contract PDF not available' });
+      
+    } catch (error) {
+      console.error('Error downloading contract:', error);
+      res.status(500).json({ error: 'Failed to download contract' });
+    }
+  });
+
   // Create new contract
   app.post('/api/contracts', 
     requireAuth, 
