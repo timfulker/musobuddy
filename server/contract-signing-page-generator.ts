@@ -614,7 +614,11 @@ export function generateContractSigningPage(
             window.open(apiUrl, '_blank');
         }
 
-        document.getElementById('signatureForm')?.addEventListener('submit', async function(e) {
+        // Ensure DOM is loaded before attaching events
+        document.addEventListener('DOMContentLoaded', function() {
+            const signatureForm = document.getElementById('signatureForm');
+            if (signatureForm) {
+                signatureForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const signButton = document.getElementById('signButton');
@@ -678,10 +682,10 @@ export function generateContractSigningPage(
                 signButton.disabled = false;
                 signButton.textContent = 'Sign Contract';
             }
-        });
-        
-        // Load contract content on page load
-        document.addEventListener('DOMContentLoaded', function() {
+                });
+            }
+            
+            // Load contract content on page load
             loadContractData();
         });
         
