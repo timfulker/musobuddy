@@ -17,7 +17,7 @@ export function generateContractSigningPage(
   }
 
   // Helper function to escape JavaScript strings
-  function escapeJs(unsafe: string): string {
+  function escapeJs(unsafe: string | null | undefined): string {
     if (!unsafe || typeof unsafe !== 'string') return '';
     return unsafe
       .replace(/\\/g, "\\\\")
@@ -25,7 +25,8 @@ export function generateContractSigningPage(
       .replace(/"/g, '\\"')
       .replace(/\n/g, "\\n")
       .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t");
+      .replace(/\t/g, "\\t")
+      .replace(/\u0000/g, ""); // Remove null bytes
   }
 
   // Safely process all data server-side
@@ -67,9 +68,9 @@ export function generateContractSigningPage(
 
   const venueAddressDisplay = contract.venueAddress ? escapeHtml(contract.venueAddress) : '<em>To be provided</em>';
 
-  // Escape values for JavaScript
-  const contractIdJs = escapeJs(contractId);
-  const clientNameJs = escapeJs(contract.clientName);
+  // Escape values for JavaScript - use JSON.stringify for safety
+  const contractIdJs = JSON.stringify(contractId);
+  const clientNameJs = JSON.stringify(contract.clientName || '');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -699,7 +700,7 @@ export function generateContractSigningPage(
             'use strict';
 
             // Contract ID for API calls - properly escaped
-            var CONTRACT_ID = '${contractIdJs}';
+            var CONTRACT_ID = ${contractIdJs};
 
             document.addEventListener('DOMContentLoaded', function() {
                 var signatureForm = document.getElementById('signatureForm');
@@ -735,7 +736,7 @@ export function generateContractSigningPage(
                         signButton.textContent = 'Signing Contract...';
 
                         var requestData = {
-                            clientSignature: '${clientNameJs}',
+                            clientSignature: ${clientNameJs},
                             clientEmail: emailAddress,
                             clientIP: '0.0.0.0',
                             signedAt: new Date().toISOString()
