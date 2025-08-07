@@ -699,9 +699,9 @@ export function generateContractSigningPage(
                                 <div class="party-box">
                                     <div class="party-title">Service Provider</div>
                                     <div class="party-details">
-                                        <strong>${userSettings.businessName || 'Professional Music Services'}</strong><br>
-                                        ${userSettings.businessAddress ? userSettings.businessAddress + '<br>' : ''}<strong>Address:</strong> ${userSettings.businessAddress || 'Address not provided'}<br>
-                                        ${userSettings.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> ${userSettings.businessPhone || 'Phone not provided'}
+                                        <strong>${userSettings?.businessName || 'Professional Music Services'}</strong><br>
+                                        <strong>Address:</strong> ${userSettings?.businessAddress || 'Address not provided'}<br>
+                                        ${userSettings?.businessEmail ? '<strong>Email:</strong> ' + userSettings.businessEmail + '<br>' : ''}<strong>Phone:</strong> ${userSettings?.businessPhone || userSettings?.phoneNumber || 'Phone not provided'}
                                     </div>
                                 </div>
                                 <div class="party-box">
