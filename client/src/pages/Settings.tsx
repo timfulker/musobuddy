@@ -399,6 +399,291 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
+              {/* Address Information */}
+              <Card>
+                <Collapsible open={expandedSections.address} onOpenChange={() => toggleSection('address')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <MapPin className="h-5 w-5 text-purple-600" />
+                          <CardTitle>Business Address</CardTitle>
+                        </div>
+                        {expandedSections.address ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="addressLine1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address Line 1</FormLabel>
+                            <FormControl>
+                              <Input placeholder="123 Main Street" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="addressLine2"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address Line 2 (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Apartment, suite, etc." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City</FormLabel>
+                              <FormControl>
+                                <Input placeholder="London" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="county"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>County (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Greater London" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="postcode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Postcode</FormLabel>
+                              <FormControl>
+                                <Input placeholder="SW1A 1AA" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Financial Information */}
+              <Card>
+                <Collapsible open={expandedSections.financial} onOpenChange={() => toggleSection('financial')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <CreditCard className="h-5 w-5 text-orange-600" />
+                          <CardTitle>Financial Information</CardTitle>
+                        </div>
+                        {expandedSections.financial ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="taxNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tax/VAT Number (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="123456789" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="nextInvoiceNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Next Invoice Number</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="1001" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="defaultTerms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Default Contract Terms</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Enter your standard terms and conditions..." 
+                                className="min-h-32"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* AI Pricing Settings */}
+              <Card>
+                <Collapsible open={expandedSections.pricing} onOpenChange={() => toggleSection('pricing')}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Music className="h-5 w-5 text-pink-600" />
+                          <CardTitle>AI Pricing Guide</CardTitle>
+                        </div>
+                        {expandedSections.pricing ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="aiPricingEnabled"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Enable AI Pricing</FormLabel>
+                              <div className="text-sm text-muted-foreground">
+                                Let AI suggest prices for enquiries based on your rates
+                              </div>
+                            </div>
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="baseHourlyRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Base Hourly Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="130" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="minimumBookingHours"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Minimum Booking Hours</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="2" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="additionalHourRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Additional Hour Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="60" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="djServiceRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>DJ Service Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="300" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="pricingNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pricing Notes</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Additional notes about your pricing structure..."
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
               {/* Save Button */}
               <div className="flex justify-end">
                 <Button 
