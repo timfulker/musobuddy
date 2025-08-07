@@ -693,15 +693,53 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
-  // Get individual contract
-  app.get('/api/contracts/:id', requireAuth, async (req: any, res) => {
+  // EMERGENCY FIX: Contract viewing with multiple auth sources
+  app.get('/api/contracts/:id', async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
       
-      const userId = req.user.userId;
+      // EMERGENCY: Check multiple auth sources
+      let userId = null;
+      let authToken = null;
+      
+      // Check Authorization header
+      if (req.headers.authorization?.startsWith('Bearer ')) {
+        authToken = req.headers.authorization.slice(7);
+      }
+      
+      // Check x-auth-token header
+      if (!authToken && req.headers['x-auth-token']) {
+        authToken = req.headers['x-auth-token'];
+      }
+      
+      // Check query parameter
+      if (!authToken && req.query.token) {
+        authToken = req.query.token;
+      }
+      
+      if (authToken) {
+        try {
+          const { verifyAuthToken } = await import('../middleware/auth');
+          const decoded = verifyAuthToken(authToken);
+          if (decoded?.userId) {
+            userId = decoded.userId;
+            console.log('✅ Contract auth successful for user:', userId);
+          }
+        } catch (authError) {
+          console.error('❌ Auth token verification failed:', authError);
+        }
+      }
+      
+      if (!userId) {
+        console.error('❌ No valid authentication found for contract view');
+        return res.status(401).json({ 
+          error: 'Authentication required', 
+          details: 'No authentication token provided' 
+        });
+      }
       const contract = await storage.getContract(contractId);
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });

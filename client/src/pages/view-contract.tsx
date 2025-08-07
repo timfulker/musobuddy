@@ -59,12 +59,20 @@ export default function ViewContract() {
       try {
         console.log('🔍 Fetching contract:', contractId);
         
-        // ROBUST APPROACH: Handle the specific 200-but-HTML issue
+        // Get authentication token from localStorage
+        const authToken = localStorage.getItem('authToken') || 
+                         localStorage.getItem('authToken_www_musobuddy_com') ||
+                         localStorage.getItem('token');
+        
+        console.log('🔍 Auth token found:', !!authToken);
+        
+        // ROBUST APPROACH: Handle the specific 200-but-HTML issue with proper auth
         const response = await fetch(`/api/contracts/${contractId}`, {
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
           }
         });
         
@@ -129,13 +137,14 @@ export default function ViewContract() {
         console.log('✅ Contract data received:', contractData);
         setContract(contractData);
         
-        // Get user settings for business details - use same robust approach
+        // Get user settings for business details - use same robust approach with auth
         try {
           const settingsResponse = await fetch(`/api/settings`, {
             credentials: 'include',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
+              ...(authToken && { 'Authorization': `Bearer ${authToken}` })
             }
           });
           
