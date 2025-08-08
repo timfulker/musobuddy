@@ -623,37 +623,7 @@ app.post('/api/webhook/mailgun',
         console.log(`🔍 [${requestId}] AI parsing completed for ${fromField} - result:`, JSON.stringify(aiResult, null, 2));
       }
       
-      // Check if this is a price enquiry and handle appropriately
-      if (aiResult.isPriceEnquiry || aiResult.messageType === 'price_enquiry') {
-        try {
-          // Import storage methods for price enquiry handling
-          const { storage } = await import('./core/storage');
-          
-          await storage.createUnparseableMessage({
-            userId: "43963086", // Will be corrected after user lookup
-            source: 'email',
-            fromContact: `${clientName} <${clientEmail}>`,
-            rawMessage: bodyField,
-            clientAddress: null,
-            messageType: 'price_enquiry',
-            parsingErrorDetails: 'Price enquiry detected - needs custom response with pricing'
-          });
-          
-          console.log(`💰 [${requestId}] Saved price enquiry for custom response from ${fromField}`);
-          
-          // Return success but note it's saved for price response
-          return res.json({
-            success: true,
-            savedForPricing: true,
-            message: 'Price enquiry saved for custom response',
-            requestId: requestId,
-            fromEmail: clientEmail
-          });
-        } catch (storageError: any) {
-          console.error(`❌ [${requestId}] Failed to save price enquiry:`, storageError);
-          // Continue with normal booking creation if storage fails
-        }
-      }
+      // MOVED: Price enquiry check will happen after user lookup below
     } catch (aiError: any) {
       console.error(`❌ [${requestId}] AI parsing failed:`, {
         message: aiError?.message,
@@ -743,6 +713,39 @@ app.post('/api/webhook/mailgun',
     if (!userId) {
       userId = "43963086"; // Default admin user
       console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
+    }
+
+    // CHECK: Handle price enquiries after user lookup
+    if (aiResult.isPriceEnquiry || aiResult.messageType === 'price_enquiry') {
+      try {
+        // Import storage methods for price enquiry handling
+        const { storage } = await import('./core/storage');
+        
+        await storage.createUnparseableMessage({
+          userId: userId, // Now using the correct user ID
+          source: 'email',
+          fromContact: `${clientName} <${clientEmail}>`,
+          rawMessage: bodyField,
+          clientAddress: null,
+          messageType: 'price_enquiry',
+          parsingErrorDetails: 'Price enquiry detected - needs custom response with pricing'
+        });
+        
+        console.log(`💰 [${requestId}] Saved price enquiry for user ${userId} from ${fromField}`);
+        
+        // Return success and stop processing - don't create a booking
+        return res.json({
+          success: true,
+          savedForPricing: true,
+          message: 'Price enquiry saved for custom response',
+          requestId: requestId,
+          fromEmail: clientEmail,
+          userId: userId
+        });
+      } catch (storageError: any) {
+        console.error(`❌ [${requestId}] Failed to save price enquiry:`, storageError);
+        // Continue with normal booking creation if storage fails
+      }
     }
 
     // Parse currency values for database
