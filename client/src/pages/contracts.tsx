@@ -554,72 +554,7 @@ export default function Contracts() {
     }
   };
 
-  // DEBUGGING: Add this temporary function to test API connectivity
-  const handleTestContractAPI = async (contract: Contract) => {
-    try {
-      console.log('🧪 Testing contract API connectivity...');
-      
-      // Test session endpoint first
-      const sessionResponse = await fetch('/api/debug/session', {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      console.log('🔐 Session test result:', {
-        status: sessionResponse.status,
-        contentType: sessionResponse.headers.get('content-type')
-      });
-      
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        console.log('✅ Session data:', sessionData);
-      }
-      
-      // Test contract endpoint
-      const contractResponse = await fetch(`/api/contracts/${contract.id}`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      console.log('📋 Contract test result:', {
-        status: contractResponse.status,
-        contentType: contractResponse.headers.get('content-type')
-      });
-      
-      if (contractResponse.ok) {
-        const contractData = await contractResponse.json();
-        console.log('✅ Contract data:', contractData);
-        
-        toast({
-          title: "API Test Successful",
-          description: `Contract ${contractData.contractNumber} loaded successfully`,
-        });
-      } else {
-        const errorText = await contractResponse.text();
-        console.error('❌ Contract API error:', errorText.substring(0, 500));
-        
-        toast({
-          title: "API Test Failed",
-          description: `Status: ${contractResponse.status}. Check console for details.`,
-          variant: "destructive",
-        });
-      }
-      
-    } catch (error: any) {
-      console.error('❌ API test error:', error);
-      toast({
-        title: "API Test Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleSelectContract = (contractId: number) => {
     if (selectedContracts.includes(contractId)) {
@@ -1334,17 +1269,7 @@ export default function Contracts() {
                               View
                             </Button>
 
-                            {/* Debug button - only in development */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="text-xs whitespace-nowrap text-primary hover:text-primary/80 border-primary/30"
-                                onClick={() => handleTestContractAPI(contract)}
-                              >
-                                🧪 Test API
-                              </Button>
-                            )}
+
 
                             {contract.status === "draft" && (
                               <>
