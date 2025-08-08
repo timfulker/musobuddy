@@ -38,6 +38,7 @@ import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
+import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
 import { useEffect } from "react";
 
 function Router() {
@@ -126,6 +127,7 @@ function Router() {
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />
+      <Route path="/mobile-send" component={MobileInvoiceSender} />
       <Route path="/admin" component={Admin} />
       
       <Route component={NotFound} />
