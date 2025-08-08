@@ -53,7 +53,7 @@ export class SettingsStorage {
   async getEmailTemplates(userId: string) {
     return await db.select().from(emailTemplates)
       .where(eq(emailTemplates.userId, userId))
-      .orderBy(emailTemplates.type);
+      .orderBy(emailTemplates.name);
   }
 
   async getEmailTemplate(userId: string, type: string) {
