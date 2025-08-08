@@ -647,7 +647,7 @@ export default function Settings() {
         </header>
 
         {/* Settings Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 pb-24 md:pb-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Add a debug div to see if form is working */}
@@ -2237,7 +2237,7 @@ export default function Settings() {
               </Card>
 
               {/* Save Button */}
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-4 pb-8 md:pb-4">
                 <Button
                   type="submit"
                   disabled={saveSettings.isPending || !hasChanges}

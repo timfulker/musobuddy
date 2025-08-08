@@ -34,7 +34,7 @@ export function Layout({ children }: LayoutProps) {
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               MusoBuddy
             </h1>
-            <QuickFeedback buttonText="Feedback" buttonSize="sm" />
+            <QuickFeedback buttonText="?" buttonSize="sm" />
           </div>
         </div>
       )}
@@ -52,7 +52,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Desktop quick feedback button */}
       {isDesktop && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-40">
           <QuickFeedback buttonText="Feedback" buttonVariant="default" />
         </div>
       )}

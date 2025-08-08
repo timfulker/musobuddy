@@ -11,7 +11,10 @@ interface QuickFeedbackProps {
 
 export function QuickFeedback({ buttonText = "Feedback", buttonVariant = "default", buttonSize = "sm" }: QuickFeedbackProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    // Check if user has dismissed feedback widget in this session
+    return localStorage.getItem('feedback-dismissed') === 'true';
+  });
 
   if (isDismissed) {
     return null;
@@ -37,7 +40,10 @@ export function QuickFeedback({ buttonText = "Feedback", buttonVariant = "defaul
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsDismissed(true)}
+          onClick={() => {
+            setIsDismissed(true);
+            localStorage.setItem('feedback-dismissed', 'true');
+          }}
           className="h-6 w-6 hover:bg-gray-100"
         >
           <X className="h-4 w-4" />
