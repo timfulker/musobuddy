@@ -86,9 +86,8 @@ export default function SignupPage() {
       await apiRequest('/api/auth/verify-sms', {
         method: 'POST',
         body: {
-          phoneNumber,
-          code: verificationCode,
-          userId
+          userId,
+          verificationCode
         }
       });
 
