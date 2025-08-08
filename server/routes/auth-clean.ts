@@ -423,15 +423,19 @@ export function setupAuthRoutes(app: Express) {
   // Send SMS verification code
   app.post('/api/auth/send-sms', async (req, res) => {
     try {
+      console.log('📱 Send SMS request body:', req.body);
       const { phoneNumber, userId } = req.body;
 
       if (!phoneNumber || !userId) {
+        console.log('❌ Missing SMS required fields:', { phoneNumber: !!phoneNumber, userId: !!userId });
         return res.status(400).json({ error: 'Phone number and user ID are required' });
       }
 
+      console.log('📱 Generating SMS verification code for userId:', userId);
       // Generate new verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const formattedPhone = formatPhoneNumber(phoneNumber);
+      console.log('📱 Formatted phone number:', formattedPhone);
 
       // Store/update verification data
       const existingData = pendingVerifications.get(userId) || {
@@ -543,10 +547,15 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      const subscription = await storage.getSubscription(userId);
-      
+      // Return user subscription info from user record
       res.json({
-        subscription: subscription || null,
+        subscription: {
+          plan: user.plan || 'free',
+          stripeCustomerId: user.stripeCustomerId || null,
+          stripeSubscriptionId: user.stripeSubscriptionId || null,
+          trialStartDate: user.trialStartDate || null,
+          trialEndDate: user.trialEndDate || null
+        },
         user: {
           email: user.email,
           firstName: user.firstName,

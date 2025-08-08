@@ -40,6 +40,8 @@ export default function SignupPage() {
     setError('');
 
     try {
+      console.log('🔄 Starting account creation...', { email, firstName, lastName, phoneNumber });
+      
       const response = await apiRequest('/api/auth/register', {
         method: 'POST',
         body: {
@@ -51,11 +53,18 @@ export default function SignupPage() {
         }
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create account');
+      }
+
       const data = await response.json();
+      console.log('✅ Account created, userId:', data.userId);
       setUserId(data.userId);
       
+      console.log('📱 Sending SMS verification code...');
       // Send SMS verification code
-      await apiRequest('/api/auth/send-sms', {
+      const smsResponse = await apiRequest('/api/auth/send-sms', {
         method: 'POST',
         body: {
           phoneNumber,
@@ -63,13 +72,21 @@ export default function SignupPage() {
         }
       });
 
+      if (!smsResponse.ok) {
+        const smsError = await smsResponse.json();
+        throw new Error(smsError.error || 'Failed to send verification code');
+      }
+
+      console.log('✅ SMS sent, transitioning to verification step');
       setStep('sms');
       toast({
         title: "Account created",
         description: "We've sent a verification code to your phone"
       });
     } catch (err: any) {
+      console.error('❌ Account creation failed:', err);
       setError(err.message || 'Failed to create account');
+      setStep('email'); // Reset to email step on error
     } finally {
       setLoading(false);
     }
@@ -83,7 +100,9 @@ export default function SignupPage() {
     setStep('verifying');
 
     try {
-      await apiRequest('/api/auth/verify-sms', {
+      console.log('🔍 Verifying SMS code...', { userId, verificationCode });
+      
+      const verifyResponse = await apiRequest('/api/auth/verify-sms', {
         method: 'POST',
         body: {
           userId,
@@ -91,6 +110,13 @@ export default function SignupPage() {
         }
       });
 
+      if (!verifyResponse.ok) {
+        const verifyError = await verifyResponse.json();
+        throw new Error(verifyError.error || 'Verification failed');
+      }
+
+      console.log('✅ SMS verified, creating Stripe checkout...');
+      
       // After SMS verification, redirect to Stripe checkout
       const stripeResponse = await apiRequest('/api/stripe/create-checkout', {
         method: 'POST',
@@ -101,13 +127,21 @@ export default function SignupPage() {
         }
       });
 
+      if (!stripeResponse.ok) {
+        const stripeError = await stripeResponse.json();
+        throw new Error(stripeError.error || 'Failed to create payment session');
+      }
+
       const stripeData = await stripeResponse.json();
-      if (stripeData.url) {
-        window.location.href = stripeData.url;
+      console.log('✅ Stripe checkout created:', stripeData);
+      
+      if (stripeData.url || stripeData.checkoutUrl) {
+        window.location.href = stripeData.url || stripeData.checkoutUrl;
       } else {
         throw new Error('No checkout URL received');
       }
     } catch (err: any) {
+      console.error('❌ SMS verification or Stripe setup failed:', err);
       setError(err.message || 'Verification failed');
       setStep('sms');
       setLoading(false);
