@@ -33,6 +33,9 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
   - Stripe test mode active in production for safe pre-launch testing
   - Complete Stripe configuration: STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
   - Ready for launch - simply switch to live Stripe keys when ready for real payments
+- PHONE NUMBER TESTING ENABLED: Removed unique constraint temporarily for production testing
+  - User can now create multiple test accounts with same phone number
+  - IMPORTANT: Re-add .unique() constraint before launch to prevent duplicate phone numbers
 
 ## Previous Updates (08/08/2025)
 - CRITICAL FIX: Email processing user assignment issue resolved:

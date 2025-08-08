@@ -39,7 +39,7 @@ export const users = pgTable("users", {
   widgetUrl: text("widget_url"), // Permanent widget URL for booking requests
   widgetQrCode: text("widget_qr_code"), // Base64 QR code for the widget URL
   // SaaS Trial Management Fields
-  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
+  phoneNumber: varchar("phone_number", { length: 20 }), // .unique() removed for testing - re-add for launch
   phoneVerified: boolean("phone_verified").default(false),
   phoneVerifiedAt: timestamp("phone_verified_at"),
   trialStartedAt: timestamp("trial_started_at"),
