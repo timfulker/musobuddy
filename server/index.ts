@@ -27,6 +27,15 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// TEST ENDPOINT: Check recent webhook logs
+app.get('/api/webhook-logs', (req: Request, res: Response) => {
+  res.json({
+    recentWebhooks: recentWebhooks.slice(0, 20),
+    environment: ENV.isProduction ? 'production' : 'development',
+    webhookUrl: ENV.isProduction ? 'https://www.musobuddy.com/api/webhook/mailgun' : 'http://localhost:5000/api/webhook/mailgun'
+  });
+});
+
 // PRODUCTION DEPLOYMENT VALIDATION - Enhanced for Replit deployment
 // Prevents production deployment with wrong environment settings
 console.log('🔍 Production validation check:', {
