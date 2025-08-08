@@ -303,7 +303,7 @@ export default function Settings() {
         console.log('✅ Retrieved existing permanent widget');
       } else {
         // Create new permanent widget
-        const newData = await apiRequest('/api/generate-qr-code', {
+        const newData = await apiRequest('/api/generate-widget-token', {
           method: 'POST',
         });
         
@@ -1647,29 +1647,31 @@ export default function Settings() {
                       </div>
 
                       <div className="space-y-4">
-                        <div className="text-center p-6">
-                          <p className="text-gray-600 dark:text-gray-400 mb-4">
-                            Get your permanent booking widget URL and QR code to start accepting direct booking requests.
-                          </p>
-                          <Button
-                            type="button"
-                            onClick={getOrCreateWidgetUrl}
-                            disabled={isGeneratingToken}
-                            className="bg-primary hover:bg-primary/90"
-                          >
-                            {isGeneratingToken ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Link className="w-4 h-4 mr-2" />
-                                Get My Widget & QR Code
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                        {!widgetUrl && (
+                          <div className="text-center p-6">
+                            <p className="text-gray-600 dark:text-gray-400 mb-4">
+                              Get your permanent booking widget URL and QR code to start accepting direct booking requests.
+                            </p>
+                            <Button
+                              type="button"
+                              onClick={getOrCreateWidgetUrl}
+                              disabled={isGeneratingToken}
+                              className="bg-primary hover:bg-primary/90"
+                            >
+                              {isGeneratingToken ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Link className="w-4 h-4 mr-2" />
+                                  Get My Widget & QR Code
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                         
                         {widgetUrl && (
                           <div className="space-y-3">
