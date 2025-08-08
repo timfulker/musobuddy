@@ -296,9 +296,12 @@ export default function Settings() {
   const getOrCreateWidgetUrl = async () => {
     setIsGeneratingToken(true);
     try {
-      const data = await apiRequest('/api/get-widget-info', {
+      const response = await apiRequest('/api/get-widget-info', {
         method: 'GET',
       });
+      
+      // Parse JSON from response
+      const data = await response.json();
       
       if (data.url && data.qrCode) {
         // User already has a permanent widget
@@ -307,9 +310,12 @@ export default function Settings() {
         console.log('✅ Retrieved existing permanent widget');
       } else {
         // Create new permanent widget
-        const newData = await apiRequest('/api/generate-qr-code', {
+        const response = await apiRequest('/api/generate-qr-code', {
           method: 'POST',
         });
+        
+        // Parse JSON from response
+        const newData = await response.json();
         
         // Handle response - check for either qrCode or qrCodeDataUrl (for compatibility)
         const qrCodeData = newData.qrCode || newData.qrCodeDataUrl;
@@ -482,9 +488,12 @@ export default function Settings() {
   useEffect(() => {
     const loadWidgetInfo = async () => {
       try {
-        const data = await apiRequest('/api/get-widget-info', {
+        const response = await apiRequest('/api/get-widget-info', {
           method: 'GET',
         });
+        
+        // Parse JSON from response
+        const data = await response.json();
         
         if (data.url && data.qrCode) {
           // User already has a permanent widget
