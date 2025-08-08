@@ -15,13 +15,13 @@ System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "a
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
 ## Recent Updates (08/08/2025)
-- Fixed Settings page authentication (was using raw fetch instead of apiRequest)
-- Connected all existing but unregistered features:
-  - Conflict detection system for booking conflicts
-  - Compliance tracking for document expiry monitoring  
-  - QR code generation for booking widgets
-  - Unparseable messages for email parsing system
-- All features now properly registered and operational
+- Fixed critical AI date defaulting issue in email parsing:
+  - Removed "Today is [date]" from AI prompt to prevent date assumptions
+  - Enhanced keyword detection for price enquiries
+  - Messages without explicit dates now route to Review Messages instead of creating bookings
+  - Added validation to catch and correct AI date defaults
+- Removed leftover test API buttons from contract page
+- Confirmed webhook processing works correctly (development vs production environment distinction noted)
 
 ## System Architecture
 
