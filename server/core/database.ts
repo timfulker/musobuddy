@@ -9,28 +9,11 @@ neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
   return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
 };
 
-// Environment-aware database URL selection
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
-
-let connectionString: string;
-
-if (isDevelopment && process.env.DATABASE_URL_DEV) {
-  connectionString = process.env.DATABASE_URL_DEV;
-  console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV');
-} else if (isProduction && process.env.DATABASE_URL) {
-  connectionString = process.env.DATABASE_URL;
-  console.log('🏭 PRODUCTION: Using DATABASE_URL');
-} else if (process.env.DATABASE_URL) {
-  connectionString = process.env.DATABASE_URL;
-  console.log(`🔍 FALLBACK: Using DATABASE_URL for ${process.env.NODE_ENV || 'unknown'} environment`);
-} else {
-  throw new Error('DATABASE_URL (or DATABASE_URL_DEV for dev) environment variable is required');
+// Database connection setup with connection pooling
+const connectionString = process.env.DATABASE_URL!;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
 }
-
-// Log database connection details (without exposing full URL)
-const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
-console.log(`📊 Database: ${isDevelopment ? 'DEV' : isProduction ? 'PROD' : 'UNKNOWN'} environment → ${dbHost}`);
 
 const sql = neon(connectionString, {
   fetchOptions: {
