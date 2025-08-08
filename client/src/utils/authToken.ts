@@ -64,3 +64,6 @@ export const storeAuthToken = (token: string, userEmail: string): void => {
   // Store the new token
   localStorage.setItem(tokenKey, token);
 };
+
+// Alias for compatibility with existing code
+export const getAuthToken = findActiveAuthToken;

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { storeAuthToken } from '@/utils/authToken';
 
 export default function SuccessPage() {
   const [, setLocation] = useLocation();
@@ -41,12 +42,8 @@ export default function SuccessPage() {
       }
 
       // Store auth token if provided
-      if (data.token) {
-        const hostname = window.location.hostname;
-        const tokenKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost')
-          ? 'authToken_dev_fallback'
-          : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        localStorage.setItem(tokenKey, data.token);
+      if (data.token && data.email) {
+        storeAuthToken(data.token, data.email);
       }
 
       setStatus('success');

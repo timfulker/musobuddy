@@ -1,37 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
+import { findActiveAuthToken } from "@/utils/authToken";
 
 // Custom hook to fetch and combine static gig types with user's custom gig types
-// Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_fallback';
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match standard format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-const getAuthToken = () => {
-  const tokenKey = getAuthTokenKey();
-  return localStorage.getItem(tokenKey);
-};
 
 export const useGigTypes = () => {
   const { data: settings, isLoading, error } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
-      const token = getAuthToken();
+      const token = findActiveAuthToken();
       
       if (!token) {
         console.error('❌ No auth token found for useGigTypes');
         throw new Error('No authentication token');
       }
       
-      console.log('🔍 useGigTypes - Token key:', getAuthTokenKey());
       console.log('🔍 useGigTypes - Token found:', !!token);
       
       const response = await fetch('/api/settings', {

@@ -15,7 +15,15 @@ Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musob
 System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
-## Recent Updates (08/08/2025)
+## Recent Updates (09/08/2025)
+- CRITICAL AUTHENTICATION CLEANUP: Removed shared token vulnerability
+  - Created centralized `authToken.ts` utility for consistent token management
+  - Fixed cross-user authentication conflicts caused by shared `authToken_dev_admin` key
+  - Updated all frontend files to use user-specific token storage
+  - Cleaned up dead authentication code across codebase
+  - Prevents users from accidentally switching accounts
+
+## Previous Updates (08/08/2025)
 - CRITICAL FIX: Email processing user assignment issue resolved:
   - Fixed webhook user lookup system that was assigning bookings to wrong user accounts
   - Corrected admin account email prefix setup (now "admin@enquiries.musobuddy.com")

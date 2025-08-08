@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getAuthToken } from "@/utils/authToken"; // ADD THIS IMPORT
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,32 +112,7 @@ type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
 // Removed AI gig suggestion function - feature moved to documentation for future implementation
 
-// Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    // Use user-specific token (updated with security fix)
-    const baseKey = 'authToken_dev';
-    // Look for user-specific tokens in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(baseKey + '_')) {
-        return key;
-      }
-    }
-    return baseKey; // Fallback
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match standard format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-const getAuthToken = () => {
-  const tokenKey = getAuthTokenKey();
-  return localStorage.getItem(tokenKey);
-};
+// REMOVED LOCAL AUTH FUNCTIONS - Using centralized utility instead
 
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
@@ -199,10 +175,17 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
 // Theme preview functionality
 const generateThemePreview = async (themeSettings: any) => {
   try {
+    // For blob responses, we need to use fetch directly with auth token
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
     const response = await fetch('/api/theme-preview', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(themeSettings),
       credentials: 'include',
@@ -247,7 +230,7 @@ export default function Settings() {
   
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<SettingsFormData | null>(null);
   
   // Collapsible state for each section
   const [expandedSections, setExpandedSections] = useState({
@@ -305,12 +288,9 @@ export default function Settings() {
   const getOrCreateWidgetUrl = async () => {
     setIsGeneratingToken(true);
     try {
-      const response = await apiRequest('/api/get-widget-info', {
+      const data = await apiRequest('/api/get-widget-info', {
         method: 'GET',
       });
-      
-      // Parse JSON from response
-      const data = await response.json();
       
       if (data.url && data.qrCode) {
         // User already has a permanent widget
@@ -319,12 +299,9 @@ export default function Settings() {
         console.log('✅ Retrieved existing permanent widget');
       } else {
         // Create new permanent widget
-        const response = await apiRequest('/api/generate-qr-code', {
+        const newData = await apiRequest('/api/generate-qr-code', {
           method: 'POST',
         });
-        
-        // Parse JSON from response
-        const newData = await response.json();
         
         // Handle response - check for either qrCode or qrCodeDataUrl (for compatibility)
         const qrCodeData = newData.qrCode || newData.qrCodeDataUrl;

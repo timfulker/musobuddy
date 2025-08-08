@@ -9,23 +9,7 @@ import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
-// Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_fallback';
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match standard format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-const getAuthToken = () => {
-  const tokenKey = getAuthTokenKey();
-  return localStorage.getItem(tokenKey);
-};
+import { getAuthToken } from '@/utils/authToken';
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading, error } = useQuery({
