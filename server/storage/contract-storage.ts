@@ -31,6 +31,10 @@ export class ContractStorage {
       .orderBy(desc(contracts.createdAt));
   }
 
+  async getAllContracts() {
+    return await db.select().from(contracts).orderBy(desc(contracts.createdAt));
+  }
+
   async createContract(contractData: any) {
     try {
       // FIXED: Align with actual schema fields

@@ -24,6 +24,10 @@ export class InvoiceStorage {
       .orderBy(desc(invoices.createdAt));
   }
 
+  async getAllInvoices() {
+    return await db.select().from(invoices).orderBy(desc(invoices.createdAt));
+  }
+
   async createInvoice(invoiceData: any) {
     // FIXED: Align with actual schema fields from shared/schema.ts
     const result = await db.insert(invoices).values({
