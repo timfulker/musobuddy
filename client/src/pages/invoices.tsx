@@ -508,40 +508,39 @@ export default function Invoices() {
       
       
       
-      // MOBILE FIX v2 - Force fresh import and comprehensive token search
-      console.log('📧 MOBILE FIX v2 - Starting token search');
-      
-      // First try direct localStorage scan (bypass any import caching)
+      // MOBILE EMERGENCY FIX - Direct token extraction to bypass cache
+      console.log('🚨 MOBILE EMERGENCY FIX - Scanning ALL localStorage');
       let token = null;
-      const hostname = window.location.hostname;
-      const possibleKeys = [
-        `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`,
-        'authToken_www_musobuddy_com', 
-        'authToken_dev',
-        'authToken'
-      ];
       
-      console.log('📧 Scanning localStorage keys:', possibleKeys);
+      // Brute force scan of ALL localStorage keys
+      const allKeys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        allKeys.push(localStorage.key(i));
+      }
+      console.log('🚨 All localStorage keys found:', allKeys);
       
-      for (const key of possibleKeys) {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-          console.log(`📧 Found token in key: ${key}`);
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed.token) {
-              token = parsed.token;
-              console.log(`📧 Using parsed token from ${key}`);
-              break;
+      // Look for ANY key containing 'token' or 'auth'
+      for (const key of allKeys) {
+        if (key && (key.includes('token') || key.includes('auth'))) {
+          const stored = localStorage.getItem(key);
+          console.log(`🚨 Checking ${key}: ${stored ? 'HAS VALUE' : 'EMPTY'}`);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
+                token = parsed.token;
+                console.log(`🚨 SUCCESS: Using token from ${key}`);
+                break;
+              }
+            } catch {
+              // Plain string token
+              if (typeof stored === 'string' && stored.length > 10 && !stored.includes('{')) {
+                token = stored;
+                console.log(`🚨 SUCCESS: Using plain token from ${key}`);
+                break;
+              }
             }
-          } catch {
-            // Plain string token
-            token = stored;
-            console.log(`📧 Using plain token from ${key}`);
-            break;
           }
-        } else {
-          console.log(`📧 No token in key: ${key}`);
         }
       }
       
