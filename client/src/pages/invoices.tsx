@@ -644,7 +644,7 @@ export default function Invoices() {
               </div>
 
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={handleDialogClose}>
+                <Button type="button" variant="outline" onClick={() => handleDialogClose()}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}>
