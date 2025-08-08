@@ -508,12 +508,38 @@ export default function Invoices() {
       
       
       
-      // Use centralized token system
+      // Use centralized token system with mobile fallback
       const { findActiveAuthToken } = await import('../utils/authToken');
-      const token = findActiveAuthToken();
+      let token = findActiveAuthToken();
       
-      console.log('📧 Send email - Using centralized token system');
-      console.log('📧 Send email - Token found:', !!token);
+      // iOS Safari fallback - check all possible token locations
+      if (!token) {
+        console.log('📧 Mobile fallback - checking all localStorage keys');
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes('authToken')) {
+            const stored = localStorage.getItem(key);
+            console.log(`📧 Found token key: ${key}, has value: ${!!stored}`);
+            if (stored) {
+              try {
+                const parsed = JSON.parse(stored);
+                if (parsed.token) {
+                  token = parsed.token;
+                  console.log(`📧 Using token from ${key}`);
+                  break;
+                }
+              } catch {
+                // Plain string token
+                token = stored;
+                console.log(`📧 Using plain token from ${key}`);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('📧 Send email - Final token found:', !!token);
       console.log('📧 Send email - Invoice ID:', invoiceId);
       console.log('📧 Send email - Custom message:', customMessage ? 'Present' : 'None');
       
