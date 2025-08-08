@@ -15,13 +15,17 @@ System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "a
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
 ## Recent Updates (08/08/2025)
+- CRITICAL FIX: Email processing user assignment issue resolved:
+  - Fixed webhook user lookup system that was assigning bookings to wrong user accounts
+  - Corrected admin account email prefix setup (now "admin@enquiries.musobuddy.com")
+  - Updated Settings page to display actual email prefix instead of placeholder text
+  - Enhanced settings API to include user email prefix data
 - Fixed critical AI date defaulting issue in email parsing:
   - Removed "Today is [date]" from AI prompt to prevent date assumptions
   - Enhanced keyword detection for price enquiries
   - Messages without explicit dates now route to Review Messages instead of creating bookings
   - Added validation to catch and correct AI date defaults
-- Removed leftover test API buttons from contract page
-- Confirmed webhook processing works correctly (development vs production environment distinction noted)
+- Email system architectural fix: Removed "leads+" prefix format, now uses clean "prefix@enquiries.musobuddy.com" format
 
 ## System Architecture
 

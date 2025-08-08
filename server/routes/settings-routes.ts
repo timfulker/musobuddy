@@ -158,7 +158,12 @@ export async function registerSettingsRoutes(app: Express) {
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      const settings = await storage.getSettings(userId);
+      
+      // Get both settings and user info (for email prefix)
+      const [settings, user] = await Promise.all([
+        storage.getSettings(userId),
+        storage.getUserById(userId)
+      ]);
       
       if (!settings) {
         // Create default settings if none exist
@@ -174,10 +179,19 @@ export async function registerSettingsRoutes(app: Express) {
         };
         
         const newSettings = await storage.createSettings(defaultSettings);
-        return res.json(newSettings);
+        
+        // Include email prefix in response
+        return res.json({
+          ...newSettings,
+          emailPrefix: user?.emailPrefix || null
+        });
       }
       
-      res.json(settings);
+      // Include email prefix in response
+      res.json({
+        ...settings,
+        emailPrefix: user?.emailPrefix || null
+      });
       
     } catch (error) {
       console.error('❌ Failed to fetch settings:', error);
