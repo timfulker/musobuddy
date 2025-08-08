@@ -580,6 +580,29 @@ export default function UnifiedBookings() {
     }
   });
 
+  // Detect conflicts for a booking
+  const detectConflicts = (booking: Booking) => {
+    return conflictsByBookingId[booking.id] || [];
+  };
+
+  // Helper to check if booking has conflicts
+  const hasConflicts = (booking: Booking) => {
+    const conflicts = detectConflicts(booking);
+    return conflicts.length > 0;
+  };
+
+  // Open compliance dialog
+  const openComplianceDialog = (booking: Booking) => {
+    setSelectedBookingForCompliance(booking);
+    setSendComplianceDialogOpen(true);
+  };
+
+  // Handle edit booking
+  const handleEditBooking = (booking: Booking) => {
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
+
   // Event handlers
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
@@ -693,6 +716,19 @@ export default function UnifiedBookings() {
         return 'bg-red-100 text-red-700 border-red-200';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  // Get status color for calendar badges  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'contract_sent': return 'bg-primary/10 text-primary';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-blue-100 text-blue-800';
     }
   };
 
@@ -1025,8 +1061,8 @@ export default function UnifiedBookings() {
                       
                       <BookingActionMenu 
                         booking={booking}
-                        onEditBooking={handleBookingClick}
-                        onSendCompliance={handleSendCompliance}
+                        onEditBooking={handleEditBooking}
+                        onSendCompliance={openComplianceDialog}
                       />
                     </div>
                   </div>
@@ -1272,11 +1308,16 @@ export default function UnifiedBookings() {
         onOpenChange={setBookingStatusDialogOpen}
       />
 
-      <SendComplianceDialog
-        booking={selectedBookingForCompliance as any}
-        open={sendComplianceDialogOpen}
-        onOpenChange={setSendComplianceDialogOpen}
-      />
+      {selectedBookingForCompliance && (
+        <SendComplianceDialog
+          booking={selectedBookingForCompliance as any}
+          isOpen={sendComplianceDialogOpen}
+          onClose={() => {
+            setSendComplianceDialogOpen(false);
+            setSelectedBookingForCompliance(null);
+          }}
+        />
+      )}
 
       <ConflictResolutionDialog
         isOpen={conflictResolutionDialogOpen}
