@@ -25,33 +25,48 @@ export const findActiveAuthToken = (): string | null => {
     : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
   // Find the most recently stored token by checking all matching tokens
-  let latestToken = null;
+  let latestTokenData = null;
+  let latestTimestamp = 0;
   let latestKey = null;
   
   // Check for user-specific tokens first
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith(baseKey + '_')) {
-      const token = localStorage.getItem(key);
-      if (token) {
-        // Use the last found token as browsers typically iterate in insertion order
-        latestToken = token;
-        latestKey = key;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try {
+          // Try to parse as JSON (new format)
+          const tokenData = JSON.parse(stored);
+          if (tokenData.token && tokenData.timestamp > latestTimestamp) {
+            latestTokenData = tokenData;
+            latestTimestamp = tokenData.timestamp;
+            latestKey = key;
+          }
+        } catch {
+          // Fallback to old format (plain string)
+          if (!latestTokenData) {
+            latestTokenData = { token: stored, userEmail: 'unknown' };
+            latestKey = key;
+          }
+        }
       }
     }
   }
   
-  if (latestToken) {
-    console.log(`🔐 Using auth token from key: ${latestKey}`);
-    return latestToken;
+  if (latestTokenData) {
+    console.log(`🔐 Using auth token for user: ${latestTokenData.userEmail} from key: ${latestKey}`);
+    return latestTokenData.token;
   }
   
-  // Fallback to base token
+  // Fallback to base token (old format)
   const baseToken = localStorage.getItem(baseKey);
   if (baseToken) {
     console.log(`🔐 Using fallback auth token from key: ${baseKey}`);
+    return baseToken;
   }
-  return baseToken;
+  
+  return null;
 };
 
 export const clearAllAuthTokens = (): void => {
@@ -75,11 +90,18 @@ export const clearAllAuthTokens = (): void => {
 export const storeAuthToken = (token: string, userEmail: string): void => {
   const tokenKey = getAuthTokenKey(userEmail);
   
-  // Clear any conflicting tokens first
+  // Clear any conflicting tokens first to prevent cross-contamination
   clearAllAuthTokens();
   
-  // Store the new token
-  localStorage.setItem(tokenKey, token);
+  // Store the new token with timestamp for proper selection
+  const tokenData = {
+    token,
+    userEmail,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(tokenKey, JSON.stringify(tokenData));
+  
+  console.log(`🔐 Stored auth token for user: ${userEmail}`);
 };
 
 // Alias for compatibility with existing code
