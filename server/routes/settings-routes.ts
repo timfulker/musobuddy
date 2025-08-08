@@ -463,11 +463,16 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
-  // Templates endpoint - return empty array for now (templates are database-driven)
+  // Templates endpoint - fetch user's email templates
   app.get('/api/templates', requireAuth, async (req: any, res) => {
     try {
-      // TODO: Add template management functionality
-      res.json([]);
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const templates = await storage.getEmailTemplates(userId);
+      res.json(templates);
     } catch (error) {
       console.error('❌ Failed to fetch templates:', error);
       res.status(500).json({ error: 'Failed to fetch templates' });
