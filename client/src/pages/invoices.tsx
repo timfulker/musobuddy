@@ -508,11 +508,42 @@ export default function Invoices() {
       
       
       
-      // Use centralized token system with mobile fallback
-      const { findActiveAuthToken } = await import('../utils/authToken');
-      console.log('📧 About to call findActiveAuthToken()');
-      let token = findActiveAuthToken();
-      console.log('📧 findActiveAuthToken returned:', token);
+      // MOBILE FIX v2 - Force fresh import and comprehensive token search
+      console.log('📧 MOBILE FIX v2 - Starting token search');
+      
+      // First try direct localStorage scan (bypass any import caching)
+      let token = null;
+      const hostname = window.location.hostname;
+      const possibleKeys = [
+        `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        'authToken_www_musobuddy_com', 
+        'authToken_dev',
+        'authToken'
+      ];
+      
+      console.log('📧 Scanning localStorage keys:', possibleKeys);
+      
+      for (const key of possibleKeys) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          console.log(`📧 Found token in key: ${key}`);
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed.token) {
+              token = parsed.token;
+              console.log(`📧 Using parsed token from ${key}`);
+              break;
+            }
+          } catch {
+            // Plain string token
+            token = stored;
+            console.log(`📧 Using plain token from ${key}`);
+            break;
+          }
+        } else {
+          console.log(`📧 No token in key: ${key}`);
+        }
+      }
       
       // iOS Safari fallback - check all possible token locations  
       if (!token) {
