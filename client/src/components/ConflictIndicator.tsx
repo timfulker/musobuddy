@@ -56,7 +56,7 @@ export default function ConflictIndicator({
   // Fetch the current booking data for the resolution modal
   const { data: currentBooking, refetch: refetchBooking } = useQuery<ConflictingBooking>({
     queryKey: [`/api/bookings/${bookingId}`],
-    enabled: showResolutionModal,
+    enabled: showResolutionModal && !isNaN(bookingId) && bookingId > 0,
     staleTime: 0,
     gcTime: 0,
   });

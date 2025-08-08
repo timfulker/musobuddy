@@ -266,7 +266,7 @@ export default function UnifiedBookings() {
       
       dayBookings.forEach((booking) => {
         const bookingConflicts = dayBookings
-          .filter((other) => other.id !== booking.id)
+          .filter((other) => other.id !== booking.id && other.id && !isNaN(Number(other.id)))
           .map((other): Conflict => {
             let severity: 'soft' | 'hard' = 'soft';
             let hasTimeOverlap = false;

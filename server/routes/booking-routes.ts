@@ -147,6 +147,13 @@ export function registerBookingRoutes(app: Express) {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.userId;
+      
+      // CRITICAL FIX: Validate booking ID
+      if (isNaN(bookingId) || bookingId <= 0) {
+        console.error(`❌ Invalid booking ID: "${req.params.id}" -> ${bookingId}`);
+        return res.status(400).json({ error: 'Invalid booking ID' });
+      }
+      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
