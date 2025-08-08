@@ -359,6 +359,10 @@ export class Storage {
     return settingsStorage.deleteEmailTemplate(id, userId);
   }
 
+  async setDefaultEmailTemplate(id: number, userId: string) {
+    return settingsStorage.setDefaultEmailTemplate(id, userId);
+  }
+
   async getGlobalGigTypes(userId: string) {
     return settingsStorage.getGlobalGigTypes(userId);
   }

@@ -144,6 +144,24 @@ export class SettingsStorage {
     return result[0];
   }
 
+  async setDefaultEmailTemplate(id: number, userId: string): Promise<any> {
+    // First, set all templates to non-default
+    await db.update(emailTemplates)
+      .set({ isDefault: false })
+      .where(eq(emailTemplates.userId, userId));
+    
+    // Then set the selected template as default
+    const result = await db.update(emailTemplates)
+      .set({ isDefault: true })
+      .where(and(
+        eq(emailTemplates.id, id),
+        eq(emailTemplates.userId, userId)
+      ))
+      .returning();
+    
+    return result[0];
+  }
+
   // ==== GLOBAL GIG TYPES METHODS ====
   
   async getGlobalGigTypes(userId: string): Promise<string[]> {

@@ -247,6 +247,33 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
+  app.post('/api/settings/email-templates/:id/set-default', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+      
+      // Set all templates to non-default first, then set the selected one as default
+      const result = await storage.setDefaultEmailTemplate(templateId, userId);
+      if (!result) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+      
+      res.json({ message: 'Default template updated successfully' });
+      
+    } catch (error) {
+      console.error('❌ Failed to set default email template:', error);
+      res.status(500).json({ error: 'Failed to set default email template' });
+    }
+  });
+
   // Global gig types endpoint
   app.get('/api/gig-types', async (req: Request, res: Response) => {
     try {
