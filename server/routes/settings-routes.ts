@@ -180,18 +180,107 @@ export async function registerSettingsRoutes(app: Express) {
         
         const newSettings = await storage.createSettings(defaultSettings);
         
-        // Include email prefix in response
-        return res.json({
-          ...newSettings,
+        // Transform default settings to camelCase for frontend
+        const transformedDefaults = {
+          businessName: "",
+          businessEmail: "",
+          businessAddress: "",
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          county: "",
+          postcode: "",
+          phone: "",
+          website: "",
+          taxNumber: "",
+          emailFromName: "",
+          nextInvoiceNumber: 1,
+          defaultTerms: "",
+          bankDetails: "",
+          aiPricingEnabled: true,
+          baseHourlyRate: 130,
+          minimumBookingHours: 2,
+          additionalHourRate: 60,
+          djServiceRate: 300,
+          pricingNotes: "",
+          specialOffers: "",
+          primaryInstrument: "",
+          secondaryInstruments: [],
+          customGigTypes: [],
+          themeTemplate: "classic",
+          themeTone: "formal",
+          themeFont: "roboto",
+          themeAccentColor: "#673ab7",
+          themeLogoUrl: "",
+          themeSignatureUrl: "",
+          themeBanner: "",
+          themeShowSetlist: false,
+          themeShowRiderNotes: false,
+          themeShowQrCode: false,
+          themeShowTerms: true,
+          themeCustomTitle: "",
+          bookingDisplayLimit: "50",
           emailPrefix: user?.emailPrefix || null
-        });
+        };
+        
+        return res.json(transformedDefaults);
       }
       
-      // Include email prefix in response
-      res.json({
-        ...settings,
+      // Transform snake_case database fields to camelCase for frontend
+      const transformedSettings = {
+        // Basic business info
+        businessName: settings.business_name || "",
+        businessEmail: settings.business_email || "",
+        businessAddress: settings.business_address || "",
+        addressLine1: settings.address_line1 || "",
+        addressLine2: settings.address_line2 || "",
+        city: settings.city || "",
+        county: settings.county || "",
+        postcode: settings.postcode || "",
+        phone: settings.phone || "",
+        website: settings.website || "",
+        taxNumber: settings.tax_number || "",
+        emailFromName: settings.email_from_name || "",
+        nextInvoiceNumber: settings.next_invoice_number || 1,
+        defaultTerms: settings.default_terms || "",
+        bankDetails: settings.bank_details || "",
+        
+        // AI pricing settings
+        aiPricingEnabled: settings.ai_pricing_enabled ?? true,
+        baseHourlyRate: settings.base_hourly_rate || 130,
+        minimumBookingHours: settings.minimum_booking_hours || 2,
+        additionalHourRate: settings.additional_hour_rate || 60,
+        djServiceRate: settings.dj_service_rate || 300,
+        pricingNotes: settings.pricing_notes || "",
+        specialOffers: settings.special_offers || "",
+        
+        // Instruments and gig types
+        primaryInstrument: settings.primary_instrument || "",
+        secondaryInstruments: settings.secondary_instruments || [],
+        customGigTypes: settings.custom_gig_types || [],
+        
+        // Theme settings
+        themeTemplate: settings.theme_template || "classic",
+        themeTone: settings.theme_tone || "formal", 
+        themeFont: settings.theme_font || "roboto",
+        themeAccentColor: settings.theme_accent_color || "#673ab7",
+        themeLogoUrl: settings.theme_logo_url || "",
+        themeSignatureUrl: settings.theme_signature_url || "",
+        themeBanner: settings.theme_banner || "",
+        themeShowSetlist: settings.theme_show_setlist || false,
+        themeShowRiderNotes: settings.theme_show_rider_notes || false,
+        themeShowQrCode: settings.theme_show_qr_code || false,
+        themeShowTerms: settings.theme_show_terms !== false,
+        themeCustomTitle: settings.theme_custom_title || "",
+        
+        // Performance settings
+        bookingDisplayLimit: settings.booking_display_limit || "50",
+        
+        // Email management
         emailPrefix: user?.emailPrefix || null
-      });
+      };
+      
+      res.json(transformedSettings);
       
     } catch (error) {
       console.error('❌ Failed to fetch settings:', error);
