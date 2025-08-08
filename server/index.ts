@@ -747,8 +747,8 @@ app.post('/api/webhook/mailgun',
           fromContact: `${clientName} <${clientEmail}>`,
           rawMessage: bodyField,
           clientAddress: null,
-          messageType: 'price_enquiry',
-          parsingErrorDetails: 'Price enquiry detected - needs custom response with pricing'
+          messageType: aiResult.subcategory || 'price_enquiry',
+          parsingErrorDetails: `Categorized as: ${aiResult.subcategory || 'price_enquiry'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
         });
         
         console.log(`💰 [${requestId}] Saved price enquiry for user ${userId} from ${fromField}`);
@@ -780,8 +780,8 @@ app.post('/api/webhook/mailgun',
           fromContact: `${clientName} <${clientEmail}>`,
           rawMessage: bodyField,
           clientAddress: null,
-          messageType: 'vague',
-          parsingErrorDetails: 'No clear event date found - cannot create booking without specific date'
+          messageType: aiResult.subcategory || 'vague',
+          parsingErrorDetails: `No event date found | Categorized as: ${aiResult.subcategory || 'vague'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
         });
         
         console.log(`📅 [${requestId}] No event date found - saved to review messages instead of creating booking`);
@@ -935,6 +935,22 @@ export async function parseEmailWithAI(emailBody: string, subject: string): Prom
 Email Subject: ${subject}
 Email Content: ${processedBody}
 
+MESSAGE CATEGORIZATION SYSTEM:
+Analyze the message content and classify into specific subcategories:
+- "price_enquiry": Asking for pricing/quotes without specific event details
+- "availability_check": Asking about availability without pricing focus
+- "incomplete_booking": Has some details but missing critical information (date/venue)
+- "general_inquiry": General questions about services
+- "spam_promotional": Promotional/marketing messages or obvious spam
+- "vendor_outreach": Other vendors trying to partner/sell services
+- "follow_up": Follow-up to previous conversations
+- "vague": Unclear intent or insufficient information
+
+PRIORITY DETECTION:
+- "high": Urgent bookings with confirmed dates/venues
+- "medium": General inquiries requiring response
+- "low": Spam, promotional, or vendor messages
+
 IMPORTANT DATE PARSING INSTRUCTIONS:
 - "sixth of September this year" = 2025-09-06
 - "September 6th this year" = 2025-09-06  
@@ -971,15 +987,18 @@ Extract in JSON format:
   "budget": "budget range or amount if mentioned, or null",
   "estimatedValue": "any other monetary value mentioned, or null",
   "applyNowLink": "URL or null",
-  "messageType": "general/price_enquiry/vague",
-  "isPriceEnquiry": true/false
+  "messageType": "price_enquiry/availability_check/incomplete_booking/general_inquiry/spam_promotional/vendor_outreach/follow_up/vague",
+  "isPriceEnquiry": true/false,
+  "subcategory": "detailed classification from categories above",
+  "urgencyLevel": "high/medium/low",
+  "requiresPersonalResponse": true/false
 }`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
-      max_tokens: 300,
+      max_tokens: 500,
       temperature: 0.1
     });
 
