@@ -514,6 +514,8 @@ export default function Invoices() {
       
       console.log('📧 Send email - Using centralized token system');
       console.log('📧 Send email - Token found:', !!token);
+      console.log('📧 Send email - Invoice ID:', invoiceId);
+      console.log('📧 Send email - Custom message:', customMessage ? 'Present' : 'None');
       
       const response = await fetch('/api/invoices/send-email', {
         method: 'POST',
