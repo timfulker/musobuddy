@@ -299,6 +299,13 @@ export class ContractStorage {
     const result = await db.select({ count: sql<number>`count(*)` }).from(contracts);
     return result[0]?.count || 0;
   }
+
+  async getAllContractsForAdmin(): Promise<Contract[]> {
+    // Admin method: Get all contracts across all users
+    const result = await db.select().from(contracts)
+      .orderBy(desc(contracts.createdAt));
+    return result as Contract[];
+  }
 }
 
 export const contractStorage = new ContractStorage();

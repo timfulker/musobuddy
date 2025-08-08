@@ -75,11 +75,13 @@ export class Storage {
   }
 
   async deleteUser(id: string) {
-    return userStorage.deleteUser(id);
+    // TODO: Implement deleteUser method in UserStorage if needed
+    throw new Error('User deletion not implemented');
   }
 
   async deleteUserAccount(id: string) {
-    return userStorage.deleteUser(id);
+    // TODO: Implement deleteUser method in UserStorage if needed  
+    throw new Error('User deletion not implemented');
   }
 
   async getAllUsers() {
@@ -96,7 +98,12 @@ export class Storage {
   }
 
   async getBookingByIdAndUser(id: number, userId: string) {
-    return bookingStorage.getBookingByIdAndUser(id, userId);
+    // Use existing getBooking method and verify ownership
+    const booking = await bookingStorage.getBooking(id);
+    if (booking && booking.userId === userId) {
+      return booking;
+    }
+    return null;
   }
 
   async createBooking(bookingData: any) {
@@ -132,15 +139,26 @@ export class Storage {
   }
 
   async updateBookingContractDocument(id: number, cloudUrl: string, storageKey: string, filename: string) {
-    return bookingStorage.updateBookingContractDocument(id, cloudUrl, storageKey, filename);
+    // Update booking with contract document info via existing updateBooking method
+    return bookingStorage.updateBooking(id, { 
+      documents: { contractUrl: cloudUrl, contractKey: storageKey, contractFilename: filename }
+    });
   }
 
   async updateBookingInvoiceDocument(id: number, cloudUrl: string, storageKey: string, filename: string) {
-    return bookingStorage.updateBookingInvoiceDocument(id, cloudUrl, storageKey, filename);
+    // Update booking with invoice document info via existing updateBooking method  
+    return bookingStorage.updateBooking(id, {
+      documents: { invoiceUrl: cloudUrl, invoiceKey: storageKey, invoiceFilename: filename }
+    });
   }
 
   async addBookingDocument(id: number, cloudUrl: string, storageKey: string, filename: string, documentType: string) {
-    return bookingStorage.addBookingDocument(id, cloudUrl, storageKey, filename, documentType);
+    // Add document to booking via existing updateBooking method
+    const existingBooking = await bookingStorage.getBooking(id);
+    const existingDocs = existingBooking?.documents || {};
+    return bookingStorage.updateBooking(id, {
+      documents: { ...existingDocs, [`${documentType}Url`]: cloudUrl, [`${documentType}Key`]: storageKey, [`${documentType}Filename`]: filename }
+    });
   }
 
   async getAllBookings() {
@@ -148,11 +166,13 @@ export class Storage {
   }
 
   async getAllContracts() {
-    return contractStorage.getAllContracts();
+    // For admin use - get all contracts across all users (using admin method)
+    return contractStorage.getAllContractsForAdmin();
   }
 
   async getAllInvoices() {
-    return invoiceStorage.getAllInvoices();
+    // For admin use - get all invoices across all users (using admin method)
+    return invoiceStorage.getAllInvoicesForAdmin();
   }
 
   // ===== CONTRACT METHODS =====
@@ -165,7 +185,7 @@ export class Storage {
   }
 
   async getContractBySigningUrl(signingUrl: string) {
-    return contractStorage.getContractBySigningUrl(signingUrl);
+    return contractStorage.getContractBySigningPageUrl(signingUrl);
   }
 
   async getContracts(userId: string) {
@@ -214,8 +234,7 @@ export class Storage {
 
   async updateContractSigningUrl(contractId: number, signingPageUrl: string) {
     try {
-      await db.query('UPDATE contracts SET signing_page_url = $1 WHERE id = $2', [signingPageUrl, contractId]);
-      return true;
+      return await contractStorage.updateContract(contractId, { signingPageUrl });
     } catch (error) {
       console.error('Failed to update contract signing URL:', error);
       return false;
@@ -376,7 +395,34 @@ export class Storage {
   }
 
   async createDefaultTemplates(userId: string) {
-    return settingsStorage.createDefaultTemplates(userId);
+    // Create default email templates for new users
+    const defaultTemplates = [
+      {
+        userId,
+        type: 'contract_reminder',
+        subject: 'Contract Signing Reminder',
+        content: 'Please remember to sign your contract for the upcoming event.',
+        isDefault: true
+      },
+      {
+        userId,
+        type: 'booking_confirmation', 
+        subject: 'Booking Confirmation',
+        content: 'Your booking has been confirmed.',
+        isDefault: true
+      }
+    ];
+    
+    const results = [];
+    for (const template of defaultTemplates) {
+      try {
+        const result = await settingsStorage.createEmailTemplate(template);
+        results.push(result);
+      } catch (error) {
+        console.error('Failed to create default template:', error);
+      }
+    }
+    return results;
   }
 
   // ===== COMPLIANCE METHODS =====

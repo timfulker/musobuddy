@@ -26,23 +26,8 @@ import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 
-// Type definitions
-interface Booking {
-  id: number;
-  title?: string;
-  clientName?: string;
-  clientEmail?: string;
-  venue?: string;
-  eventDate?: string;
-  eventTime?: string;
-  eventEndTime?: string;
-  eventType?: string;
-  status?: string;
-  fee?: string | number;
-  equipmentRequirements?: string;
-  specialRequirements?: string;
-  createdAt?: string;
-}
+// Import proper types from shared schema
+import type { Booking } from "@shared/schema";
 
 interface Contract {
   id: number;
@@ -498,7 +483,7 @@ export default function UnifiedBookings() {
       const dayEvents: CalendarEvent[] = dayBookings.map(booking => ({
         id: booking.id,
         title: booking.title || booking.clientName || 'Untitled Event',
-        date: booking.eventDate || '',
+        date: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '',
         type: 'booking' as const,
         status: booking.status
       }));
@@ -798,7 +783,7 @@ export default function UnifiedBookings() {
                       text-xs p-1 rounded truncate
                       ${getStatusBadgeColor(event.status || '')}
                     `}
-                    title={`${event.title} - ${formatTime(bookings.find(b => b.id === event.id)?.eventTime)}`}
+                    title={`${event.title} - ${formatTime(bookings.find(b => b.id === event.id)?.eventTime || undefined)}`}
                   >
                     {event.title}
                   </div>
@@ -1014,7 +999,7 @@ export default function UnifiedBookings() {
                           {booking.eventDate && (
                             <div className="flex items-center space-x-1">
                               <Calendar className="w-4 h-4" />
-                              <span>{formatDate(booking.eventDate)}</span>
+                              <span>{formatDate(booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '')}</span>
                             </div>
                           )}
                           {booking.eventTime && (
@@ -1298,28 +1283,27 @@ export default function UnifiedBookings() {
 
       {/* Dialogs */}
       <BookingDetailsDialog
-        booking={selectedBookingForDetails}
+        booking={selectedBookingForDetails as any}
         open={bookingDetailsDialogOpen}
         onOpenChange={setBookingDetailsDialogOpen}
       />
 
       <BookingStatusDialog
-        booking={selectedBookingForUpdate}
+        booking={selectedBookingForUpdate as any}
         open={bookingStatusDialogOpen}
         onOpenChange={setBookingStatusDialogOpen}
       />
 
       <SendComplianceDialog
-        booking={selectedBookingForCompliance}
+        booking={selectedBookingForCompliance as any}
         open={sendComplianceDialogOpen}
         onOpenChange={setSendComplianceDialogOpen}
       />
 
       <ConflictResolutionDialog
-        booking={selectedBookingForConflict}
-        conflicts={selectedBookingForConflict ? conflictsByBookingId[selectedBookingForConflict.id] || [] : []}
-        open={conflictResolutionDialogOpen}
-        onOpenChange={setConflictResolutionDialogOpen}
+        isOpen={conflictResolutionDialogOpen}
+        onClose={() => setConflictResolutionDialogOpen(false)}
+        conflictingBookings={selectedBookingForConflict ? [selectedBookingForConflict as any] : []}
       />
 
       {/* Bulk delete dialog */}

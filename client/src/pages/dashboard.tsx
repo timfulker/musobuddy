@@ -123,7 +123,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
-      <MobileNav isOpen={sidebarOpen} onToggle={setSidebarOpen} />
+      <MobileNav />
       
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (

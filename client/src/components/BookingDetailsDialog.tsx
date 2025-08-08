@@ -400,7 +400,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+
         body: JSON.stringify({ status: 'confirmed' })
       }).then(() => {
         if (onBookingUpdate) onBookingUpdate();

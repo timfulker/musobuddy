@@ -673,7 +673,7 @@ app.post('/api/webhook/mailgun',
           const { storage } = await import('./core/storage');
           
           await storage.createUnparseableMessage({
-            userId: "43963086", // Default admin user for now, will be corrected after user lookup
+            userId: "system", // Temporary system user for unparseable messages
             source: 'email',
             fromContact: `${clientName} <${clientEmail}>`,
             rawMessage: bodyField || 'No message content',
@@ -703,10 +703,10 @@ app.post('/api/webhook/mailgun',
     
     console.log(`📧 [${requestId}] Recipient field:`, recipientField);
     
-    // FALLBACK PROTECTION: Import webhook fallbacks
+    // FALLBACK PROTECTION: Import webhook fallbacks  
     const { getUserByEmailPrefix } = await import('./core/webhook-auth-fallbacks');
     
-    let userId = null;
+    let userId: string | null = null;
     
     // Parse email format: customprefix@enquiries.musobuddy.com
     if (recipientField.includes('@enquiries.musobuddy.com')) {
@@ -716,8 +716,10 @@ app.post('/api/webhook/mailgun',
       
       // Check for system addresses
       if (emailPrefix === 'noreply' || emailPrefix === 'admin') {
-        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using admin user`);
-        userId = "43963086"; // Admin user for system emails
+        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using system user`);
+        // Look up actual admin user instead of hardcoding
+        const adminUser = await storage.getUserByEmail('timfulker@gmail.com');
+        userId = adminUser?.id || "system";
       } else {
         // FALLBACK PROTECTION: Look up user using authentication-independent method
         try {
@@ -734,10 +736,12 @@ app.post('/api/webhook/mailgun',
       }
     }
     
-    // Fallback to default user if no match found
+    // Fallback to system user if no match found
     if (!userId) {
-      userId = "43963086"; // Default admin user
-      console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
+      // Try to look up admin user as fallback
+      const adminUser = await storage.getUserByEmail('timfulker@gmail.com');
+      userId = adminUser?.id || "system";
+      console.log(`📧 [${requestId}] No user match found, using fallback user:`, userId);
     }
 
     // Parse currency values for database

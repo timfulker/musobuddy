@@ -899,7 +899,7 @@ export default function Contracts() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex">
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
             <div className="p-6">
               <ContractsContent />
@@ -912,7 +912,7 @@ export default function Contracts() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <MobileNav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <MobileNav />
       <main className="p-4">
         <ContractsContent />
       </main>

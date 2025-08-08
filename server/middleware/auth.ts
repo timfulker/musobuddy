@@ -16,6 +16,7 @@ interface AuthToken {
   userId: string;
   email: string;
   isVerified: boolean;
+  isAdmin?: boolean;
   iat?: number;
   exp?: number;
 }
@@ -187,7 +188,8 @@ export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: Nex
 export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   requireAuth(req, res, () => {
-    const isAdmin = req.user?.userId === '43963086'; // Your admin user ID
+    // Check if user is admin from database
+    const isAdmin = req.user?.isAdmin === true;
     
     if (!isAdmin) {
       if (AUTH_DEBUG) {

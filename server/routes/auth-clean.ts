@@ -173,8 +173,8 @@ export function setupAuthRoutes(app: Express) {
 
       // Development mode: Quick access for testing accounts
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Admin account: user ID 43963086
-        const realUser = await storage.getUserById('43963086');
+        // Admin account - look up by email instead of hardcoded ID
+        const realUser = await storage.getUserByEmail('timfulker@gmail.com');
         
         if (realUser) {
           const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
