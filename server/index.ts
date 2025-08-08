@@ -769,14 +769,7 @@ app.post('/api/webhook/mailgun',
     }
 
     // CRITICAL CHECK: Don't create booking without valid event date
-    // Also check for "today" date which means AI couldn't find a real date
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const isInvalidDate = !aiResult.eventDate || 
-                         aiResult.eventDate === null || 
-                         aiResult.eventDate === today ||
-                         aiResult.eventDate === 'today';
-    
-    if (isInvalidDate) {
+    if (!aiResult.eventDate || aiResult.eventDate === null) {
       try {
         // Import storage methods for unparseable message handling
         const { storage } = await import('./core/storage');
@@ -791,7 +784,7 @@ app.post('/api/webhook/mailgun',
           parsingErrorDetails: `No event date found | Categorized as: ${aiResult.subcategory || 'vague'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
         });
         
-        console.log(`📅 [${requestId}] Invalid/missing event date (${aiResult.eventDate}) - saved to review messages instead of creating booking`);
+        console.log(`📅 [${requestId}] No event date found - saved to review messages instead of creating booking`);
         
         return res.json({
           success: true,
@@ -937,7 +930,7 @@ export async function parseEmailWithAI(emailBody: string, subject: string): Prom
     const currentYear = new Date().getFullYear();
     const processedBody = emailBody.replace(/next year/gi, `${currentYear + 1}`);
     
-    const prompt = `Extract booking details from this email. Today is ${new Date().toDateString()}.
+    const prompt = `Extract booking details from this email. IMPORTANT: Only extract dates that are explicitly mentioned in the email content. Do NOT assume or default to today's date.
 
 Email Subject: ${subject}
 Email Content: ${processedBody}
@@ -958,14 +951,13 @@ PRIORITY DETECTION:
 - "medium": General inquiries requiring response
 - "low": Spam, promotional, or vendor messages
 
-IMPORTANT DATE PARSING INSTRUCTIONS:
-- ONLY extract dates if they are explicitly mentioned in the message
-- "sixth of September this year" = 2025-09-06
-- "September 6th this year" = 2025-09-06  
-- "6th September this year" = 2025-09-06
-- Handle ordinal numbers (1st, 2nd, 3rd, 4th, etc.) and written numbers (first, second, third, etc.)
-- If no specific date is mentioned, return NULL - DO NOT default to today
-- Messages like "Hi", "Hello", "What's your availability?" have NO date - return NULL
+CRITICAL DATE PARSING RULES:
+- NEVER default to today's date or current date
+- ONLY extract dates explicitly mentioned in the email text
+- If no date is mentioned, eventDate MUST be null
+- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?"
+- Examples WITH DATE: "sixth of September", "September 6th", "next Friday", "25th December"
+- When in doubt, return null for eventDate
 
 IMPORTANT FEE PARSING INSTRUCTIONS:
 - Look for any amount with £, $, € symbols
@@ -987,7 +979,7 @@ MESSAGE CLASSIFICATION:
 
 Extract in JSON format:
 {
-  "eventDate": "YYYY-MM-DD or null",
+  "eventDate": "YYYY-MM-DD ONLY if explicitly mentioned, otherwise null",
   "eventTime": "HH:MM or null", 
   "venue": "venue name or null",
   "eventType": "wedding/party/corporate/etc or null",
@@ -1006,13 +998,27 @@ Extract in JSON format:
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a booking information extractor. CRITICAL: Only extract eventDate if a specific date is explicitly mentioned in the email. If no date is mentioned, return null for eventDate. Do not default to today or assume any dates."
+        },
+        { role: "user", content: prompt }
+      ],
       response_format: { type: "json_object" },
       max_tokens: 500,
       temperature: 0.1
     });
 
     const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+    
+    // ADDITIONAL VALIDATION: Check if AI returned today's date incorrectly
+    const today = new Date().toISOString().split('T')[0];
+    if (aiResult.eventDate === today) {
+      console.log(`⚠️ AI incorrectly returned today's date (${today}) - forcing to null`);
+      aiResult.eventDate = null;
+    }
+    
     console.log('🤖 AI extraction result:', JSON.stringify(aiResult, null, 2));
     
     // Additional logging for debugging price enquiry detection
