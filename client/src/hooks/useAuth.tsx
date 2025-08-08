@@ -1,15 +1,28 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { findActiveAuthToken, clearAllAuthTokens } from '@/utils/authToken';
+import { isMobileDevice, findMobileAuthToken, forceMobileAuthRefresh } from '@/utils/mobileAuth';
 
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  // Custom fetch function that includes JWT token
+  // Custom fetch function that includes JWT token with mobile fallback
   const fetchUser = async () => {
-    const token = findActiveAuthToken();
+    // Force mobile auth refresh on first load
+    if (isMobileDevice()) {
+      forceMobileAuthRefresh();
+    }
     
-    console.log('🔍 Auth check - Token found:', !!token);
+    // Try standard token detection first
+    let token = findActiveAuthToken();
+    
+    // Mobile fallback: use enhanced mobile detection
+    if (!token && isMobileDevice()) {
+      console.log('📱 Standard token detection failed, trying mobile fallback');
+      token = findMobileAuthToken();
+    }
+    
+    console.log('🔍 Auth check - Token found:', !!token, isMobileDevice() ? '(Mobile)' : '(Desktop)');
     
     if (!token) {
       console.log('❌ No auth token found');

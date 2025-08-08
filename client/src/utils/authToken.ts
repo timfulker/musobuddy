@@ -27,57 +27,68 @@ export const findActiveAuthToken = (): string | null => {
   console.log(`🔐 findActiveAuthToken - hostname: ${hostname}`);
   console.log(`🔐 findActiveAuthToken - baseKey: ${baseKey}`);
   
-  // Debug: show all localStorage keys
-  console.log('🔐 All localStorage keys:');
+  // MOBILE FIX: Comprehensive token scanning for all auth keys
+  const allAuthKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.includes('authToken')) {
-      console.log(`  - ${key}: ${!!localStorage.getItem(key)}`);
+    if (key && key.includes('auth')) {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        allAuthKeys.push({ key, value: stored });
+        console.log(`🔐 Found auth key: ${key}, hasValue: ${!!stored}`);
+      }
     }
   }
-    
+  
   // Find the most recently stored token by checking all matching tokens
   let latestTokenData = null;
   let latestTimestamp = 0;
   let latestKey = null;
   
-  // Check for user-specific tokens first
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith(baseKey + '_')) {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        try {
-          // Try to parse as JSON (new format)
-          const tokenData = JSON.parse(stored);
-          if (tokenData.token && tokenData.timestamp > latestTimestamp) {
-            latestTokenData = tokenData;
-            latestTimestamp = tokenData.timestamp;
-            latestKey = key;
-          }
-        } catch {
-          // Fallback to old format (plain string)
-          if (!latestTokenData) {
-            latestTokenData = { token: stored, userEmail: 'unknown' };
-            latestKey = key;
-          }
+  // Check for user-specific tokens first (new format)
+  for (const { key, value } of allAuthKeys) {
+    if (key.startsWith(baseKey + '_')) {
+      try {
+        // Try to parse as JSON (new format)
+        const tokenData = JSON.parse(value);
+        if (tokenData.token && tokenData.timestamp > latestTimestamp) {
+          latestTokenData = tokenData;
+          latestTimestamp = tokenData.timestamp;
+          latestKey = key;
+        }
+      } catch {
+        // Fallback to old format (plain string)
+        if (!latestTokenData && typeof value === 'string' && value.length > 20) {
+          latestTokenData = { token: value, userEmail: 'unknown' };
+          latestKey = key;
         }
       }
     }
   }
   
   if (latestTokenData) {
-    console.log(`🔐 Using auth token for user: ${latestTokenData.userEmail} from key: ${latestKey}`);
+    console.log(`🔐 SUCCESS: Using auth token for user: ${latestTokenData.userEmail} from key: ${latestKey}`);
     return latestTokenData.token;
   }
   
-  // Fallback to base token (old format)
-  const baseToken = localStorage.getItem(baseKey);
-  if (baseToken) {
-    console.log(`🔐 Using fallback auth token from key: ${baseKey}`);
-    return baseToken;
+  // MOBILE FALLBACK: Try any auth token we can find
+  for (const { key, value } of allAuthKeys) {
+    try {
+      const tokenData = JSON.parse(value);
+      if (tokenData.token && typeof tokenData.token === 'string') {
+        console.log(`🔐 MOBILE FALLBACK: Using token from ${key}`);
+        return tokenData.token;
+      }
+    } catch {
+      // Plain string token
+      if (typeof value === 'string' && value.length > 20) {
+        console.log(`🔐 MOBILE FALLBACK: Using plain token from ${key}`);
+        return value;
+      }
+    }
   }
   
+  console.log('🔐 NO TOKEN FOUND in localStorage');
   return null;
 };
 
