@@ -1,43 +1,27 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import Sidebar from '@/components/sidebar';
-import MobileNav from '@/components/mobile-nav';
-import { useResponsive } from '@/hooks/useResponsive';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { 
-  FileText, 
-  Plus, 
-  Send, 
-  Download, 
-  Edit2, 
-  Trash2, 
-  Search, 
-  Filter,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Calendar,
-  MapPin,
-  PoundSterling,
-  Mail,
-  CheckSquare,
-  Square,
-  Info
-} from 'lucide-react';
+import React, { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info } from "lucide-react";
+import { z } from "zod";
+import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 
 interface Contract {
   id: number;
@@ -63,198 +47,290 @@ interface Contract {
   clientFillableFields?: string[];
 }
 
-const contractSchema = z.object({
-  contractNumber: z.string().min(1, 'Contract number is required'),
-  clientName: z.string().min(1, 'Client name is required'),
-  clientEmail: z.string().email('Valid email is required'),
-  clientPhone: z.string().optional(),
-  clientAddress: z.string().optional(),
-  eventDate: z.string().min(1, 'Event date is required'),
+interface Enquiry {
+  id: number;
+  clientName: string;
+  clientEmail: string;
+  eventDate: string;
+  venue?: string;
+  fee?: string;
+}
+
+const contractFormSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Valid email required").min(1, "Client email is required"),
+  eventDate: z.string().min(1, "Event date is required"),
+  fee: z.string().min(1, "Performance fee is required"),
+  
+  contractNumber: z.string().optional(),
+  venue: z.string().optional(),
   eventTime: z.string().optional(),
-  venue: z.string().min(1, 'Venue is required'),
-  venueAddress: z.string().optional(),
-  fee: z.string().min(1, 'Fee is required'),
+  eventEndTime: z.string().optional(),
   deposit: z.string().optional(),
+  clientAddress: z.string().optional(),
+  clientPhone: z.string().optional(),
+  venueAddress: z.string().optional(),
   paymentInstructions: z.string().optional(),
   equipmentRequirements: z.string().optional(),
   specialRequirements: z.string().optional(),
-  terms: z.string().optional()
+  clientFillableFields: z.array(z.string()).optional(),
+  enquiryId: z.number().optional(),
+  status: z.string().default("draft"),
+  template: z.string().optional().default("professional"),
 });
 
-type ContractForm = z.infer<typeof contractSchema>;
+type ContractFormData = z.infer<typeof contractFormSchema>;
+
+interface Settings {
+  businessName?: string;
+  businessEmail?: string;
+  businessAddress?: string;
+  phone?: string;
+  website?: string;
+  defaultInvoiceDueDays?: number;
+  customGigTypes?: string[];
+}
 
 export default function Contracts() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [previewContract, setPreviewContract] = useState<Contract | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [contractToSend, setContractToSend] = useState<Contract | null>(null);
-  const [customMessage, setCustomMessage] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [customMessageDialog, setCustomMessageDialog] = useState(false);
-
+  const [contractToSend, setContractToSend] = useState<Contract | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
+  const [dataLoaded, setDataLoaded] = useState(false);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [location, setLocation] = useLocation();
+  const { user } = useAuth();
 
-  const form = useForm<ContractForm>({
-    resolver: zodResolver(contractSchema),
+  const { data: contracts = [], isLoading, error } = useQuery<Contract[]>({
+    queryKey: ["/api/contracts"],
+  });
+
+  const { data: enquiries = [] } = useQuery<Enquiry[]>({
+    queryKey: ["/api/bookings"],
+  });
+
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ["/api/settings"],
+  });
+
+  const form = useForm<ContractFormData>({
+    resolver: zodResolver(contractFormSchema),
     defaultValues: {
-      contractNumber: '',
-      clientName: '',
-      clientEmail: '',
-      clientPhone: '',
-      clientAddress: '',
-      eventDate: '',
-      eventTime: '',
-      venue: '',
-      venueAddress: '',
-      fee: '',
-      deposit: '',
-      paymentInstructions: '',
-      equipmentRequirements: '',
-      specialRequirements: '',
-      terms: ''
-    }
+      enquiryId: 0,
+      contractNumber: "",
+      clientName: "",
+      clientEmail: "",
+      clientPhone: "",
+      clientAddress: "",
+      eventDate: "",
+      eventTime: "",
+      eventEndTime: "",
+      venue: "",
+      venueAddress: "",
+      fee: "",
+      deposit: "",
+      paymentInstructions: "",
+      equipmentRequirements: "",
+      specialRequirements: "",
+      status: "draft",
+      template: "professional",
+    },
   });
 
-  // Fetch contracts
-  const { data: contracts = [], isLoading } = useQuery({
-    queryKey: ['/api/contracts'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/contracts');
-      if (!response.ok) {
-        throw new Error('Failed to fetch contracts');
-      }
-      return response.json();
+  const watchEventDate = form.watch('eventDate');
+  const watchClientName = form.watch('clientName');
+  
+  React.useEffect(() => {
+    if (watchEventDate && watchClientName && !editingContract) {
+      const contractNumber = `(${new Date(watchEventDate).toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      })} - ${watchClientName})`;
+      
+      form.setValue('contractNumber', contractNumber);
     }
-  });
+  }, [watchEventDate, watchClientName, editingContract, form]);
 
-  // Create contract mutation
   const createContractMutation = useMutation({
-    mutationFn: async (data: ContractForm) => {
-      const response = await apiRequest('/api/contracts', {
-        method: 'POST',
-        body: JSON.stringify(data)
+    mutationFn: async (data: ContractFormData) => {
+      const response = await apiRequest("/api/contracts", {
+        method: "POST",
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create contract');
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create contract");
       }
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
-        title: 'Contract Created',
-        description: 'The contract has been created successfully.'
+        title: "Success",
+        description: "Contract created successfully",
       });
-      handleDialogClose(true);
+      setIsDialogOpen(false);
+      form.reset();
+      setEditingContract(null);
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  // Update contract mutation  
   const updateContractMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: ContractForm }) => {
+    mutationFn: async ({ id, data }: { id: number; data: ContractFormData }) => {
       const response = await apiRequest(`/api/contracts/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
+        method: "PUT",
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update contract');
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update contract");
       }
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
-        title: 'Contract Updated',
-        description: 'The contract has been updated successfully.'
+        title: "Success",
+        description: "Contract updated successfully",
       });
-      handleDialogClose(true);
+      setIsDialogOpen(false);
+      form.reset();
+      setEditingContract(null);
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  // Send email mutation
-  const sendEmailMutation = useMutation({
-    mutationFn: async ({ contractId, customMessage }: { contractId: number; customMessage?: string }) => {
-      const response = await apiRequest(`/api/contracts/${contractId}/send`, {
-        method: 'POST',
-        body: JSON.stringify({ customMessage })
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to send contract');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
-      toast({
-        title: 'Contract Sent',
-        description: 'The contract has been sent successfully.'
-      });
-      setCustomMessageDialog(false);
-      setContractToSend(null);
-      setCustomMessage('');
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-      setCustomMessageDialog(false);
-    }
-  });
-
-  // Delete contract mutation
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
       const response = await apiRequest(`/api/contracts/${contractId}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete contract');
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete contract");
       }
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
-        title: 'Contract Deleted',
-        description: 'The contract has been deleted successfully.'
+        title: "Success",
+        description: "Contract deleted successfully",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  // Filter contracts
-  const filteredContracts = useMemo(() => {
+  const sendContractMutation = useMutation({
+    mutationFn: async ({ contractId, customMessage }: { contractId: number; customMessage?: string }) => {
+      const response = await apiRequest(`/api/contracts/${contractId}/send`, {
+        method: "POST",
+        body: JSON.stringify({ customMessage }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send contract");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Success",
+        description: "Contract sent successfully to client",
+      });
+      setCustomMessageDialog(false);
+      setContractToSend(null);
+      setCustomMessage("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setCustomMessageDialog(false);
+    },
+  });
+
+  const handleSubmit = (data: ContractFormData) => {
+    if (editingContract) {
+      updateContractMutation.mutate({ id: editingContract.id, data });
+    } else {
+      createContractMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (contract: Contract) => {
+    setEditingContract(contract);
+    
+    // Map contract data to form data
+    const formData: ContractFormData = {
+      contractNumber: contract.contractNumber || '',
+      clientName: contract.clientName || '',
+      clientEmail: contract.clientEmail || '',
+      clientPhone: contract.clientPhone || '',
+      clientAddress: contract.clientAddress || '',
+      eventDate: contract.eventDate || '',
+      eventTime: contract.eventTime || '',
+      venue: contract.venue || '',
+      venueAddress: contract.venueAddress || '',
+      fee: contract.fee || '',
+      deposit: contract.deposit || '',
+      paymentInstructions: contract.paymentInstructions || '',
+      equipmentRequirements: contract.equipmentRequirements || '',
+      specialRequirements: contract.specialRequirements || '',
+      clientFillableFields: contract.clientFillableFields || [],
+      status: contract.status || 'draft',
+      template: 'professional',
+    };
+    
+    form.reset(formData);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (contract: Contract) => {
+    if (confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
+      deleteContractMutation.mutate(contract.id);
+    }
+  };
+
+  const handleSendContract = (contract: Contract) => {
+    setContractToSend(contract);
+    setCustomMessage("");
+    setCustomMessageDialog(true);
+  };
+
+  const filteredContracts = React.useMemo(() => {
     return contracts.filter((contract: Contract) => {
       const matchesSearch = searchQuery === '' || 
         contract.contractNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -267,156 +343,6 @@ export default function Contracts() {
     });
   }, [contracts, searchQuery, statusFilter]);
 
-  // Handle form submission
-  const handleSubmit = async (data: ContractForm) => {
-    try {
-      if (editingContract) {
-        await updateContractMutation.mutateAsync({ id: editingContract.id, data });
-      } else {
-        // Generate contract number if not provided
-        if (!data.contractNumber) {
-          const now = new Date();
-          data.contractNumber = `CT-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(contracts.length + 1).padStart(3, '0')}`;
-        }
-        await createContractMutation.mutateAsync(data);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-    }
-  };
-
-  // Handle dialog close
-  const handleDialogClose = (reset: boolean = false) => {
-    setIsDialogOpen(false);
-    setEditingContract(null);
-    if (reset) {
-      form.reset();
-    }
-  };
-
-  // Handle edit contract
-  const handleEditContract = (contract: Contract) => {
-    setEditingContract(contract);
-    form.reset({
-      contractNumber: contract.contractNumber,
-      clientName: contract.clientName,
-      clientEmail: contract.clientEmail,
-      clientPhone: contract.clientPhone || '',
-      clientAddress: contract.clientAddress || '',
-      eventDate: contract.eventDate,
-      eventTime: contract.eventTime || '',
-      venue: contract.venue,
-      venueAddress: contract.venueAddress || '',
-      fee: contract.fee,
-      deposit: contract.deposit || '',
-      paymentInstructions: contract.paymentInstructions || '',
-      equipmentRequirements: contract.equipmentRequirements || '',
-      specialRequirements: contract.specialRequirements || '',
-      terms: contract.terms || ''
-    });
-    setIsDialogOpen(true);
-  };
-
-  // Handle send contract
-  const handleSendContract = (contract: Contract) => {
-    setContractToSend(contract);
-    setCustomMessage('');
-    setCustomMessageDialog(true);
-  };
-
-  // Handle confirm send contract
-  const handleConfirmSendContract = () => {
-    if (contractToSend) {
-      sendEmailMutation.mutate({
-        contractId: contractToSend.id,
-        customMessage: customMessage.trim() || undefined
-      });
-    }
-  };
-
-  // Handle download contract
-  const handleDownloadContract = async (contract: Contract) => {
-    try {
-      const response = await apiRequest(`/api/contracts/${contract.id}/download`, {
-        method: 'GET'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to download contract');
-      }
-      
-      // Get the blob and create download link
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${contract.contractNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: 'Download Started',
-        description: 'The contract PDF is being downloaded.'
-      });
-    } catch (error) {
-      toast({
-        title: 'Download Failed',
-        description: error instanceof Error ? error.message : 'Failed to download contract',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Handle delete contract
-  const handleDeleteContract = (contract: Contract) => {
-    if (window.confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
-      deleteContractMutation.mutate(contract.id);
-    }
-  };
-
-  // Handle select contract
-  const handleSelectContract = (contractId: number) => {
-    setSelectedContracts(prev => 
-      prev.includes(contractId) 
-        ? prev.filter(id => id !== contractId)
-        : [...prev, contractId]
-    );
-  };
-
-  // Handle select all
-  const handleSelectAll = () => {
-    if (selectedContracts.length === filteredContracts.length) {
-      setSelectedContracts([]);
-    } else {
-      setSelectedContracts(filteredContracts.map((contract: Contract) => contract.id));
-    }
-  };
-
-  // Handle bulk delete
-  const handleBulkDelete = async () => {
-    if (!selectedContracts.length) return;
-    
-    const confirmed = window.confirm(`Are you sure you want to delete ${selectedContracts.length} contract(s)?`);
-    if (!confirmed) return;
-    
-    setBulkActionLoading(true);
-    try {
-      await Promise.all(
-        selectedContracts.map(id => 
-          deleteContractMutation.mutateAsync(id)
-        )
-      );
-      setSelectedContracts([]);
-    } catch (error) {
-      console.error('Bulk delete error:', error);
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
-  // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
@@ -425,23 +351,12 @@ export default function Contracts() {
     });
   };
 
-  // Get status badge variant
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'signed': return 'default';
       case 'sent': return 'secondary';
       case 'completed': return 'default';
       default: return 'outline';
-    }
-  };
-
-  // Get status icon
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'signed': return <CheckCircle2 className="w-4 h-4" />;
-      case 'sent': return <Mail className="w-4 h-4" />;
-      case 'completed': return <CheckCircle2 className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
     }
   };
 
@@ -456,7 +371,7 @@ export default function Contracts() {
           </p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
+          <FileText className="w-4 h-4 mr-2" />
           New Contract
         </Button>
       </div>
@@ -486,7 +401,7 @@ export default function Contracts() {
                   {contracts.filter((c: Contract) => c.status === 'sent').length}
                 </p>
               </div>
-              <Send className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -500,7 +415,7 @@ export default function Contracts() {
                   {contracts.filter((c: Contract) => c.status === 'signed').length}
                 </p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+              <CheckSquare className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -514,142 +429,259 @@ export default function Contracts() {
                   {contracts.filter((c: Contract) => c.status === 'draft').length}
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+              <Edit className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Contract Form Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleDialogClose()}>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search contracts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="sent">Sent</SelectItem>
+            <SelectItem value="signed">Signed</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Contracts List */}
+      {isLoading ? (
+        <div className="text-center py-8">Loading contracts...</div>
+      ) : filteredContracts.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No contracts found</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Get started by creating your first contract'}
+            </p>
+            {(!searchQuery && statusFilter === 'all') && (
+              <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+                <FileText className="w-4 h-4 mr-2" />
+                Create Contract
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredContracts.map((contract: Contract) => (
+            <Card key={contract.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                        {contract.contractNumber}
+                      </h3>
+                      <Badge variant={getStatusBadgeVariant(contract.status)} className="capitalize">
+                        {contract.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">{contract.clientName}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">{formatDate(contract.eventDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">{contract.venue}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-300">£{contract.fee}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(contract)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      {contract.status === 'draft' && (
+                        <DropdownMenuItem onClick={() => handleSendContract(contract)}>
+                          <Mail className="w-4 h-4 mr-2" />
+                          Send to Client
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => handleDelete(contract)} className="text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Enhanced Contract Form Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsDialogOpen(false);
+          setEditingContract(null);
+          form.reset();
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {editingContract ? 'Edit Contract' : 'Create New Contract'}
             </DialogTitle>
+            <DialogDescription>
+              {editingContract 
+                ? 'Make changes to the existing contract details'
+                : 'Fill in the contract details. Fields marked with * are required. Optional fields can be completed by you or the client later.'
+              }
+            </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {/* Essential Fields Section */}
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              {/* Essential Information Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                  Essential Contract Information
-                </h3>
+                <div className="flex items-center gap-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Essential Contract Information
+                  </h3>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="contractNumber"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
+                      <FormItem>
                         <FormLabel className="text-red-600 font-medium">Contract Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="CT-2024-01-001" {...field} value={field.value || ""} />
+                          <Input 
+                            placeholder="Auto-generated: (DD/MM/YYYY - Client Name)"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="clientName"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
+                      <FormItem>
                         <FormLabel className="text-red-600 font-medium">Client Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Smith" {...field} value={field.value || ""} />
+                          <Input 
+                            placeholder="e.g., John Smith"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="eventDate"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-red-600 font-medium">Event Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="eventTime"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-red-600 font-medium">Event Time</FormLabel>
-                        <FormControl>
-                          <Input placeholder="7:30 PM - 11:00 PM" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="venue"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-red-600 font-medium">Venue *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="The Grand Hotel" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="fee"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-red-600 font-medium">Fee (£) *</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="500" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="deposit"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-red-600 font-medium">Deposit (£)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="100" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                  
                   <FormField
                     control={form.control}
                     name="clientEmail"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
+                      <FormItem>
                         <FormLabel className="text-red-600 font-medium">Client Email *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                          <Input 
+                            type="email"
+                            placeholder="client@example.com"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="eventDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-red-600 font-medium">Event Date *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="date"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="venue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-red-600 font-medium">Venue *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., The Grand Hotel"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-red-600 font-medium">Performance Fee (£) *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number"
+                            placeholder="500"
+                            {...field}
+                            className="border-red-200 focus:border-red-400"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -658,63 +690,139 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* Optional Fields Section */}
+              {/* Optional Information Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  Optional Fields (Can be filled by musician or client)
-                </h3>
+                <div className="flex items-center gap-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Additional Details
+                  </h3>
+                  <span className="text-sm text-gray-500">(Optional - can be filled by client later)</span>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="eventTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Start Time</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 7:30 PM" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="eventEndTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">End Time</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 11:00 PM" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="clientPhone"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-blue-600 font-medium">Client Phone</FormLabel>
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Client Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="07123 456789" {...field} value={field.value || ""} />
+                          <Input placeholder="e.g., +44 7700 900123" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="clientAddress"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-blue-600 font-medium">Client Address</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="123 Main Street, London, SW1A 1AA" 
-                            {...field} 
-                            value={field.value || ""} 
-                            rows={2}
-                            className="min-h-[60px]"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
                   <FormField
                     control={form.control}
                     name="venueAddress"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-blue-600 font-medium">Venue Address</FormLabel>
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Venue Address</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="456 Event Street, London, EC1A 1BB" 
-                            {...field} 
-                            value={field.value || ""} 
-                            rows={2}
-                            className="min-h-[60px]"
-                          />
+                          <Input placeholder="Full venue address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="deposit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Deposit (£)</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="100" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="clientAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Client Address</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Client's full address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="equipmentRequirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Equipment Requirements</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Sound system, lighting, instruments needed..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="specialRequirements"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Special Requirements</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Dress code, special requests, accessibility needs..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="paymentInstructions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-blue-600">Payment Instructions</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Bank details, payment schedule, preferred payment method..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -723,105 +831,25 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* Rider Fields Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Rider Information (Optional - for professional requirements)
-                </h3>
-                
-                <FormField
-                  control={form.control}
-                  name="paymentInstructions"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-green-600 font-medium">Payment Instructions</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="How payment should be made (bank transfer, cash on day, etc.)" 
-                          {...field} 
-                          value={field.value || ""} 
-                          rows={2}
-                          className="min-h-[60px]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="equipmentRequirements"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-green-600 font-medium">Equipment Requirements</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Equipment needed from venue (power, microphones, etc.)" 
-                          {...field} 
-                          value={field.value || ""} 
-                          rows={2}
-                          className="min-h-[60px]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="specialRequirements"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-green-600 font-medium">Special Requirements</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Any special requests or rider requirements" 
-                          {...field} 
-                          value={field.value || ""} 
-                          rows={2}
-                          className="min-h-[60px]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-medium text-blue-900 mb-1">Personal Contract Conditions</h4>
-                      <p className="text-sm text-blue-700 mb-2">
-                        You can set default contract terms, payment instructions, and professional conditions in Settings → Default Contract Terms.
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        These will be automatically included in all contracts alongside the fields above.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => handleDialogClose(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setEditingContract(null);
+                    form.reset();
+                  }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createContractMutation.isPending || updateContractMutation.isPending}>
-                  {editingContract ? (
-                    updateContractMutation.isPending ? "Updating..." : "Update Contract"
-                  ) : (
-                    createContractMutation.isPending ? "Generating..." : "Generate Contract"
-                  )}
+                <Button 
+                  type="submit" 
+                  disabled={createContractMutation.isPending || updateContractMutation.isPending}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {createContractMutation.isPending || updateContractMutation.isPending ? 'Saving...' : 
+                   editingContract ? 'Update Contract' : 'Create Contract'}
                 </Button>
               </div>
             </form>
@@ -829,352 +857,65 @@ export default function Contracts() {
         </DialogContent>
       </Dialog>
 
-      {/* Filters */}
-      <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Search contracts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="signed">Signed</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-
-    {/* Bulk Actions */}
-    {selectedContracts.length > 0 && (
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-blue-900">
-                {selectedContracts.length} contract{selectedContracts.length !== 1 ? 's' : ''} selected
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedContracts([])}
-                className="text-blue-700 border-blue-300 hover:bg-blue-100"
-              >
-                Clear Selection
-              </Button>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleBulkDelete()}
-                disabled={bulkActionLoading}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                {bulkActionLoading ? "Deleting..." : "Delete Selected"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    )}
-
-    {/* Contracts List */}
-    <div className="space-y-4">
-      {filteredContracts.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No contracts found</p>
-            <p className="text-gray-400">Generate your first contract from a qualified enquiry</p>
-            <Button 
-              className="mt-4 bg-primary hover:bg-primary/90"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Generate Contract
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Select All Header */}
-          <Card className="bg-gray-50">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSelectAll()}
-                  className="p-1 h-8 w-8"
-                >
-                  {selectedContracts.length === filteredContracts.length ? 
-                    <CheckSquare className="w-4 h-4 text-blue-600" /> : 
-                    <Square className="w-4 h-4 text-gray-400" />
-                  }
-                </Button>
-                <span className="text-sm text-gray-600">
-                  {selectedContracts.length === filteredContracts.length ? 
-                    "All contracts selected" : 
-                    "Select all contracts"
-                  }
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {filteredContracts.map((contract: Contract) => (
-            <Card key={contract.id} className={`hover:shadow-md transition-shadow cursor-pointer ${selectedContracts.includes(contract.id) ? 'bg-blue-50 border-blue-200' : ''}`}>
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSelectContract(contract.id)}
-                      className="p-1 h-8 w-8 mt-1"
-                    >
-                      {selectedContracts.includes(contract.id) ? 
-                        <CheckSquare className="w-4 h-4 text-blue-600" /> : 
-                        <Square className="w-4 h-4 text-gray-400" />
-                      }
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900 text-lg">
-                          {contract.contractNumber}
-                        </h3>
-                        <Badge variant={getStatusBadgeVariant(contract.status)} className="capitalize">
-                          {getStatusIcon(contract.status)}
-                          <span className="ml-1">{contract.status}</span>
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          <span className="font-medium">{contract.clientName}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <PoundSterling className="w-4 h-4" />
-                          <span>£{contract.fee}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>{formatDate(contract.eventDate)}</span>
-                          {contract.eventTime && <span>• {contract.eventTime}</span>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span className="truncate">{contract.venue}</span>
-                        </div>
-                      </div>
-                      
-                      {contract.signedAt && (
-                        <div className="mt-2 text-sm text-green-600">
-                          <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                          Signed on {formatDate(contract.signedAt)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 lg:flex-col lg:items-end">
-                    <div className="text-xs text-gray-500 mb-2 hidden lg:block">
-                      Created {formatDate(contract.createdAt)}
-                    </div>
-                    <div className="flex gap-2">
-                      {contract.status === "draft" && (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
-                            onClick={() => handleEditContract(contract)}
-                          >
-                            <Edit2 className="w-3 h-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700"
-                            onClick={() => handleSendContract(contract)}
-                          >
-                            <Send className="w-3 h-3 mr-1" />
-                            Send
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs whitespace-nowrap text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteContract(contract)}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      )}
-
-                      {contract.status === "sent" && (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
-                            onClick={() => handleDownloadContract(contract)}
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            Download
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs whitespace-nowrap text-blue-600 hover:text-blue-700"
-                            onClick={() => handleSendContract(contract)}
-                          >
-                            Resend
-                          </Button>
-                        </>
-                      )}
-
-                      {contract.status === "signed" && (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
-                            onClick={() => handleDownloadContract(contract)}
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            Download
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </>
-      )}
-    </div>
-
-    <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Send Contract Email</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {contractToSend && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">
-                Contract #{contractToSend.contractNumber}
-              </h4>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Client:</strong> {contractToSend.clientName}</p>
-                <p><strong>Email:</strong> {contractToSend.clientEmail}</p>
-                <p><strong>Event:</strong> {formatDate(contractToSend.eventDate?.toString() || '')} at {contractToSend.venue}</p>
-                <p><strong>Fee:</strong> £{contractToSend.fee}</p>
-              </div>
-            </div>
-          )}
+      {/* Send Contract Dialog */}
+      <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Contract to Client</DialogTitle>
+            <DialogDescription>
+              Add a personal message to include with the contract (optional)
+            </DialogDescription>
+          </DialogHeader>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Add a personal message (optional)
-            </label>
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
-              <p className="text-xs text-amber-700">
-                <strong>Important:</strong> This message is for personal communication only. 
-                Do not include payment terms, event details, or contractual changes here - 
-                these should be made in the contract itself.
-              </p>
-            </div>
-            <p className="text-xs text-gray-500">
-              Use this space for friendly greetings, additional context, or special instructions that don't modify the contract terms.
-            </p>
+          <div className="space-y-4">
             <Textarea
-              placeholder="e.g., 'Looking forward to performing at your special event!' or 'Please let me know if you have any questions.'"
+              placeholder="Hi [Client Name], please find your contract attached. Looking forward to performing at your event!"
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
               rows={4}
-              className="resize-none"
             />
+            
+            <div className="flex justify-end gap-4">
+              <Button variant="outline" onClick={() => setCustomMessageDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => contractToSend && sendContractMutation.mutate({ 
+                  contractId: contractToSend.id, 
+                  customMessage 
+                })}
+                disabled={sendContractMutation.isPending}
+              >
+                {sendContractMutation.isPending ? 'Sending...' : 'Send Contract'}
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setCustomMessageDialog(false)}
-              disabled={sendEmailMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmSendContract}
-              disabled={sendEmailMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {sendEmailMutation.isPending ? "Sending..." : "Send Contract"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
   if (isDesktop) {
     return (
-      <div className="min-h-screen bg-background flex">
-        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
-          <Sidebar isOpen={true} onClose={() => {}} />
-        </div>
-        <div className="flex-1 ml-64 min-h-screen">
-          <div className="p-6">
-            <ContractsContent />
-          </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex">
+          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+            <div className="p-6">
+              <ContractsContent />
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      <div className={`
-        fixed left-0 top-0 h-full w-80 bg-white dark:bg-slate-900 shadow-xl z-50 
-        transform transition-transform duration-300 ease-in-out md:hidden
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      </div>
-
-      <div className="p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <MobileNav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <main className="p-4">
         <ContractsContent />
-      </div>
-
-      <MobileNav />
+      </main>
     </div>
   );
 }
