@@ -377,7 +377,15 @@ ${messageText.replace(/\n/g, '<br>')}
         }
       });
       
-      res.json({ qrCode, widgetUrl });
+      // Save the widget URL and QR code to the user's record for persistence
+      await storage.updateUser(userId, {
+        widgetUrl: widgetUrl,
+        widgetQrCode: qrCode
+      });
+      
+      console.log(`✅ Permanent widget created and saved for user ${userId}`);
+      
+      res.json({ qrCode, url: widgetUrl });
     } catch (error) {
       console.error('QR code generation error:', error);
       res.status(500).json({ error: 'Failed to generate QR code' });
