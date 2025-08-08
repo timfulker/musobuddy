@@ -715,8 +715,27 @@ app.post('/api/webhook/mailgun',
       console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
     }
 
-    // CHECK: Handle price enquiries after user lookup
-    if (aiResult.isPriceEnquiry || aiResult.messageType === 'price_enquiry') {
+    // CHECK: Handle price enquiries after user lookup - Enhanced detection
+    const containsPricingKeywords = bodyField && (
+      bodyField.toLowerCase().includes('pricing') ||
+      bodyField.toLowerCase().includes('idea of cost') ||
+      bodyField.toLowerCase().includes('idea of pricing') ||
+      bodyField.toLowerCase().includes('how much') ||
+      bodyField.toLowerCase().includes('what do you charge')
+    );
+    
+    const isPriceEnquiry = aiResult.isPriceEnquiry || 
+                          aiResult.messageType === 'price_enquiry' ||
+                          containsPricingKeywords;
+    
+    console.log('🔍 Price enquiry check:', {
+      aiDetection: aiResult.isPriceEnquiry,
+      messageType: aiResult.messageType,
+      keywordDetection: containsPricingKeywords,
+      finalDecision: isPriceEnquiry
+    });
+    
+    if (isPriceEnquiry) {
       try {
         // Import storage methods for price enquiry handling
         const { storage } = await import('./core/storage');
@@ -896,8 +915,10 @@ IMPORTANT FEE PARSING INSTRUCTIONS:
 PRICE ENQUIRY DETECTION:
 Detect if this is primarily a price/quote request by looking for phrases like:
 - "how much", "what do you charge", "price", "quote", "cost", "rate", "fee"
-- "pricing", "budget", "rates", "charges", "quotation"
+- "pricing", "budget", "rates", "charges", "quotation", "idea of pricing"
+- "some idea of costs", "idea of cost", "ballpark figure", "rough cost"
 - Messages asking about availability AND pricing together
+- If the message mentions pricing/cost without specific event details, classify as price_enquiry
 
 MESSAGE CLASSIFICATION:
 - vague: Messages under 20 characters, just "hi", "hello", "test", or no clear intent
@@ -930,6 +951,16 @@ Extract in JSON format:
 
     const aiResult = JSON.parse(response.choices[0].message.content || '{}');
     console.log('🤖 AI extraction result:', JSON.stringify(aiResult, null, 2));
+    
+    // Additional logging for debugging price enquiry detection
+    if (emailBody.toLowerCase().includes('pricing') || emailBody.toLowerCase().includes('idea of')) {
+      console.log('🔍 DEBUG: Message contains pricing keywords, AI result:', {
+        messageType: aiResult.messageType,
+        isPriceEnquiry: aiResult.isPriceEnquiry,
+        emailBody: emailBody.substring(0, 100) + '...'
+      });
+    }
+    
     return aiResult;
   } catch (error) {
     console.log('🤖 AI parsing failed, using fallback');
