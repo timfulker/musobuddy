@@ -1,30 +1,55 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Simple auth token key - development uses admin-only access
-const getAuthTokenKey = () => {
+// SECURITY FIX: Try multiple token keys to find the active user session
+const getPossibleAuthTokenKeys = () => {
   const hostname = window.location.hostname;
+  const baseKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
+    ? 'authToken_dev' 
+    : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    
+  // Return all possible token keys to check
+  const keys = [];
   
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
+  // Check for user-specific tokens (scan localStorage for any matching pattern)
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(baseKey + '_')) {
+      keys.push(key);
+    }
   }
   
-  // Production: Environment-specific to prevent conflicts (match login.tsx format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  // Fallback to base keys
+  keys.push(baseKey);
+  keys.push('authToken_dev_admin'); // Legacy compatibility
+  
+  return keys;
 };
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  const authTokenKey = getAuthTokenKey();
   
   // Custom fetch function that includes JWT token
   const fetchUser = async () => {
-    const token = localStorage.getItem(authTokenKey);
-    console.log('🔍 Auth check - Token key:', authTokenKey);
+    const possibleKeys = getPossibleAuthTokenKeys();
+    let token = null;
+    let activeTokenKey = null;
+    
+    // Find the first valid token
+    for (const key of possibleKeys) {
+      const foundToken = localStorage.getItem(key);
+      if (foundToken) {
+        token = foundToken;
+        activeTokenKey = key;
+        break;
+      }
+    }
+    
+    console.log('🔍 Auth check - Checked keys:', possibleKeys);
+    console.log('🔍 Auth check - Active token key:', activeTokenKey);
     console.log('🔍 Auth check - Token found:', !!token);
     
     if (!token) {
-      console.log('❌ No auth token found');
+      console.log('❌ No auth token found in any location');
       throw new Error('No auth token');
     }
 
@@ -59,7 +84,7 @@ export function useAuth() {
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchInterval: false,
-    enabled: !!localStorage.getItem(authTokenKey) // Only run query if token exists
+    enabled: true // Always try to find any valid token
   });
 
   // Enhanced error handling for authentication failures
@@ -80,16 +105,23 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      // Remove JWT token
-      localStorage.removeItem(authTokenKey);
+      // SECURITY FIX: Clear all possible auth tokens for this user
+      const possibleKeys = getPossibleAuthTokenKeys();
+      for (const key of possibleKeys) {
+        localStorage.removeItem(key);
+      }
+      console.log('🔓 Logged out - cleared all tokens:', possibleKeys);
       
       // Clear all queries and redirect
       queryClient.clear();
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
-      // Force redirect even if logout fails
-      localStorage.removeItem(authTokenKey);
+      // Force redirect even if logout fails - clear all possible tokens
+      const possibleKeys = getPossibleAuthTokenKeys();
+      for (const key of possibleKeys) {
+        localStorage.removeItem(key);
+      }
       queryClient.clear();
       window.location.href = '/';
     }

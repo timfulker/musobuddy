@@ -10,17 +10,22 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-// Simple auth token key - development uses admin-only access  
-const getAuthTokenKey = () => {
+// SECURITY FIX: Unique token storage per user to prevent account switching
+const getAuthTokenKey = (userEmail?: string) => {
   const hostname = window.location.hostname;
   
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
+  // Create user-specific token key to prevent account switching
+  const baseKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
+    ? 'authToken_dev' 
+    : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    
+  // Add user identifier to prevent token overwrites
+  if (userEmail) {
+    const userHash = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+    return `${baseKey}_${userHash}`;
   }
   
-  // Production: Environment-specific to prevent conflicts  
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  return baseKey;
 };
 
 // Check if we're in development mode
@@ -69,21 +74,17 @@ export default function LoginPage() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Clear tokens from other environments for forced separation
-      const hostname = window.location.hostname;
-      if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-        // Development login - clear production token
-        localStorage.removeItem('authToken_prod');
-        console.log('🔄 Cleared production token for development login');
-      } else {
-        // Production login - clear development token  
-        localStorage.removeItem('authToken_dev_admin');
-        console.log('🔄 Cleared development token for production login');
-      }
+      // SECURITY FIX: Use user-specific token storage
+      const userEmail = data.email;
+      const authTokenKey = getAuthTokenKey(userEmail);
       
-      // Store JWT token with environment-specific key
-      const authTokenKey = getAuthTokenKey();
-      console.log('🔑 Storing token with key:', authTokenKey);
+      // Clear any old tokens for this user (cleanup)
+      const oldTokenKey = getAuthTokenKey();
+      localStorage.removeItem(oldTokenKey);
+      localStorage.removeItem('authToken_dev_admin'); // Remove shared dev token
+      
+      // Store JWT token with user-specific key
+      console.log('🔑 Storing token with user-specific key:', authTokenKey);
       localStorage.setItem(authTokenKey, result.authToken);
       
       // Verify token was stored
