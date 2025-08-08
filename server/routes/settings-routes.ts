@@ -159,6 +159,94 @@ export async function registerSettingsRoutes(app: Express) {
     })
   );
 
+  // Email templates endpoints
+  app.get('/api/settings/email-templates', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📧 Fetching email templates for user ${userId}`);
+      const templates = await storage.getEmailTemplates(userId);
+      console.log(`📧 Found ${templates.length} email templates for user ${userId}`);
+      res.json(templates);
+      
+    } catch (error) {
+      console.error('❌ Failed to fetch email templates:', error);
+      res.status(500).json({ error: 'Failed to fetch email templates' });
+    }
+  });
+
+  app.post('/api/settings/email-templates', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const templateData = { ...req.body, userId };
+      const template = await storage.createEmailTemplate(templateData);
+      res.status(201).json(template);
+      
+    } catch (error) {
+      console.error('❌ Failed to create email template:', error);
+      res.status(500).json({ error: 'Failed to create email template' });
+    }
+  });
+
+  app.put('/api/settings/email-templates/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+      
+      const template = await storage.updateEmailTemplate(templateId, req.body, userId);
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+      
+      res.json(template);
+      
+    } catch (error) {
+      console.error('❌ Failed to update email template:', error);
+      res.status(500).json({ error: 'Failed to update email template' });
+    }
+  });
+
+  app.delete('/api/settings/email-templates/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+      
+      const template = await storage.deleteEmailTemplate(templateId, userId);
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+      
+      res.json({ message: 'Template deleted successfully' });
+      
+    } catch (error) {
+      console.error('❌ Failed to delete email template:', error);
+      res.status(500).json({ error: 'Failed to delete email template' });
+    }
+  });
+
   // Global gig types endpoint
   app.get('/api/gig-types', async (req: Request, res: Response) => {
     try {
