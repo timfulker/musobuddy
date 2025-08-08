@@ -122,53 +122,57 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   
   // Removed instrument and gig type parsing - feature moved to documentation
   
-  // Transform the data to match the expected form structure - include ALL fields
+  // Transform the data to match the expected form structure - fix snake_case to camelCase mapping
   return {
-    businessName: data.businessName || "",
-    businessEmail: data.businessEmail || "",  // Added missing field
-    businessAddress: data.businessAddress || "",
-    addressLine1: data.addressLine1 || "",    // Added missing field
-    addressLine2: data.addressLine2 || "",    // Added missing field
-    city: data.city || "",                    // Added missing field
-    county: data.county || "",                // Added missing field
-    postcode: data.postcode || "",            // Added missing field
+    businessName: data.business_name || data.businessName || "",
+    businessEmail: data.business_email || data.businessEmail || "",
+    businessAddress: data.business_address || data.businessAddress || "",
+    addressLine1: data.address_line1 || data.addressLine1 || "",
+    addressLine2: data.address_line2 || data.addressLine2 || "",
+    city: data.city || "",
+    county: data.county || "",
+    postcode: data.postcode || "",
     phone: data.phone || "",
     website: data.website || "",
-    taxNumber: data.taxNumber || "",
-    emailFromName: data.emailFromName || "",
-    nextInvoiceNumber: data.nextInvoiceNumber || 1,
-    defaultTerms: data.defaultTerms || "",
-    bankDetails: data.bankDetails || "",
+    taxNumber: data.tax_number || data.taxNumber || "",
+    emailFromName: data.email_from_name || data.emailFromName || "",
+    nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
+    defaultTerms: data.default_terms || data.defaultTerms || "",
+    bankDetails: data.bank_details || data.bankDetails || "",
     // Instrument settings
-    primaryInstrument: data.primaryInstrument || "",
-    secondaryInstruments: Array.isArray(data.secondaryInstruments) ? data.secondaryInstruments : 
-                          (typeof data.secondaryInstruments === 'string' ? JSON.parse(data.secondaryInstruments || '[]') : []),
-    customGigTypes: Array.isArray(data.customGigTypes) ? data.customGigTypes : 
-                    (typeof data.customGigTypes === 'string' ? JSON.parse(data.customGigTypes || '[]') : []),
+    primaryInstrument: data.primary_instrument || data.primaryInstrument || "",
+    secondaryInstruments: Array.isArray(data.secondary_instruments || data.secondaryInstruments) ? 
+                          (data.secondary_instruments || data.secondaryInstruments) : 
+                          (typeof (data.secondary_instruments || data.secondaryInstruments) === 'string' ? 
+                           JSON.parse((data.secondary_instruments || data.secondaryInstruments) || '[]') : []),
+    customGigTypes: Array.isArray(data.custom_gig_types || data.customGigTypes) ? 
+                    (data.custom_gig_types || data.customGigTypes) : 
+                    (typeof (data.custom_gig_types || data.customGigTypes) === 'string' ? 
+                     JSON.parse((data.custom_gig_types || data.customGigTypes) || '[]') : []),
     // Performance settings
-    bookingDisplayLimit: data.bookingDisplayLimit || "50",
+    bookingDisplayLimit: data.booking_display_limit || data.bookingDisplayLimit || "50",
     // Theme preferences
-    themeTemplate: data.themeTemplate || "classic",
-    themeTone: data.themeTone || "formal",
-    themeFont: data.themeFont || "roboto",
-    themeAccentColor: data.themeAccentColor || "#673ab7",
-    themeLogoUrl: data.themeLogoUrl || "",
-    themeSignatureUrl: data.themeSignatureUrl || "",
-    themeBanner: data.themeBanner || "",
-    themeShowSetlist: data.themeShowSetlist || false,
-    themeShowRiderNotes: data.themeShowRiderNotes || false,
-    themeShowQrCode: data.themeShowQrCode || false,
-    themeShowTerms: data.themeShowTerms !== false, // Default to true
-    themeCustomTitle: data.themeCustomTitle || "",
+    themeTemplate: data.theme_template || data.themeTemplate || "classic",
+    themeTone: data.theme_tone || data.themeTone || "formal",
+    themeFont: data.theme_font || data.themeFont || "roboto",
+    themeAccentColor: data.theme_accent_color || data.themeAccentColor || "#673ab7",
+    themeLogoUrl: data.theme_logo_url || data.themeLogoUrl || "",
+    themeSignatureUrl: data.theme_signature_url || data.themeSignatureUrl || "",
+    themeBanner: data.theme_banner || data.themeBanner || "",
+    themeShowSetlist: data.theme_show_setlist || data.themeShowSetlist || false,
+    themeShowRiderNotes: data.theme_show_rider_notes || data.themeShowRiderNotes || false,
+    themeShowQrCode: data.theme_show_qr_code || data.themeShowQrCode || false,
+    themeShowTerms: (data.theme_show_terms !== undefined ? data.theme_show_terms : data.themeShowTerms) !== false, // Default to true
+    themeCustomTitle: data.theme_custom_title || data.themeCustomTitle || "",
     
     // AI Pricing Guide fields
-    aiPricingEnabled: data.aiPricingEnabled ?? true,
-    baseHourlyRate: data.baseHourlyRate || 130,
-    minimumBookingHours: data.minimumBookingHours || 2,
-    additionalHourRate: data.additionalHourRate || 60,
-    djServiceRate: data.djServiceRate || 300,
-    pricingNotes: data.pricingNotes || "",
-    specialOffers: data.specialOffers || "",
+    aiPricingEnabled: (data.ai_pricing_enabled !== undefined ? data.ai_pricing_enabled : data.aiPricingEnabled) ?? true,
+    baseHourlyRate: data.base_hourly_rate || data.baseHourlyRate || 130,
+    minimumBookingHours: data.minimum_booking_hours || data.minimumBookingHours || 2,
+    additionalHourRate: data.additional_hour_rate || data.additionalHourRate || 60,
+    djServiceRate: data.dj_service_rate || data.djServiceRate || 300,
+    pricingNotes: data.pricing_notes || data.pricingNotes || "",
+    specialOffers: data.special_offers || data.specialOffers || "",
   };
 };
 
@@ -501,23 +505,23 @@ export default function Settings() {
     if (settings && !saveSettings.isPending) {
       
       
-      // Create the form data object with actual values - include ALL fields from database
+      // Create the form data object with actual values - fix snake_case to camelCase mapping
       const formData = {
-        businessName: settings.businessName || "",
-        businessEmail: settings.businessEmail || "",
-        businessAddress: settings.businessAddress || "",
-        addressLine1: settings.addressLine1 || "",
-        addressLine2: settings.addressLine2 || "",
+        businessName: settings.business_name || settings.businessName || "",
+        businessEmail: settings.business_email || settings.businessEmail || "",
+        businessAddress: settings.business_address || settings.businessAddress || "",
+        addressLine1: settings.address_line1 || settings.addressLine1 || "",
+        addressLine2: settings.address_line2 || settings.addressLine2 || "",
         city: settings.city || "",
         county: settings.county || "",
         postcode: settings.postcode || "",
         phone: settings.phone || "",
         website: settings.website || "",
-        taxNumber: settings.taxNumber || "",
-        emailFromName: settings.emailFromName || "",
-        nextInvoiceNumber: settings.nextInvoiceNumber || 1,
-        defaultTerms: settings.defaultTerms || "",
-        bankDetails: settings.bankDetails || "",
+        taxNumber: settings.tax_number || settings.taxNumber || "",
+        emailFromName: settings.email_from_name || settings.emailFromName || "",
+        nextInvoiceNumber: settings.next_invoice_number || settings.nextInvoiceNumber || 1,
+        defaultTerms: settings.default_terms || settings.defaultTerms || "",
+        bankDetails: settings.bank_details || settings.bankDetails || "",
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
         baseHourlyRate: settings.baseHourlyRate || 130,
