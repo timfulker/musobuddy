@@ -44,7 +44,7 @@ export default function SuccessPage() {
       if (data.token) {
         const hostname = window.location.hostname;
         const tokenKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost')
-          ? 'authToken_dev_admin'
+          ? 'authToken_dev_fallback'
           : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
         localStorage.setItem(tokenKey, data.token);
       }

@@ -28,7 +28,7 @@ export function generateAuthToken(userId: string, email: string, isVerified: boo
   const token = jwt.sign(payload, JWT_CONFIG.secret, {
     expiresIn: JWT_CONFIG.expiresIn,
     issuer: JWT_CONFIG.issuer
-  });
+  } as jwt.SignOptions);
   
   if (AUTH_DEBUG) {
     console.log(`🔑 [AUTH] Token generated for user ${userId} (${email})`);
@@ -180,7 +180,7 @@ export const optionalAuth = (req: any, res: Response, next: NextFunction) => {
 };
 
 // Admin-only middleware
-export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
+export const requireAdmin = async (req: any, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   // Extract token from multiple sources (in priority order)
@@ -239,8 +239,16 @@ export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
     });
   }
   
-  // Check for admin access
-  const isAdmin = decoded.userId === '43963086'; // Your admin user ID
+  // Check for admin access via database lookup
+  let isAdmin = false;
+  try {
+    const { storage } = await import('../core/storage');
+    const user = await storage.getUserById(decoded.userId);
+    isAdmin = user?.isAdmin || false;
+  } catch (error) {
+    console.error('Admin lookup error:', error);
+    isAdmin = false;
+  }
   
   if (!isAdmin) {
     const duration = Date.now() - startTime;

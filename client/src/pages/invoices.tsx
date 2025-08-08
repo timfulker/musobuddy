@@ -512,7 +512,7 @@ export default function Invoices() {
       // Get token using the same logic as useAuth hook
       const hostname = window.location.hostname;
       const authTokenKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
-        ? 'authToken_dev_admin'
+        ? 'authToken_dev_fallback'
         : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const token = localStorage.getItem(authTokenKey);
       

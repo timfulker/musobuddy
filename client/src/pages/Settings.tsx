@@ -117,7 +117,16 @@ const getAuthTokenKey = () => {
   
   // Development: Admin-only access for simplified testing
   if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
+    // Use user-specific token (updated with security fix)
+    const baseKey = 'authToken_dev';
+    // Look for user-specific tokens in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(baseKey + '_')) {
+        return key;
+      }
+    }
+    return baseKey; // Fallback
   }
   
   // Production: Environment-specific to prevent conflicts (match standard format)

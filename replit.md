@@ -25,6 +25,11 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
   - Root cause: Authentication mixing up admin (43963086) vs personal (1754488522516) account access
   - Fixed frontend to use PATCH instead of POST for settings updates
   - Prevent settings loading wrong user account data
+- AUTHENTICATION CLEANUP: Removed dead authentication code:
+  - Deleted unused `auth-validation.ts` file (never imported, 55 lines of dead code)
+  - Fixed hardcoded admin ID in `requireAdmin` middleware - now uses database lookup
+  - Updated frontend token storage to use user-specific keys instead of shared `authToken_dev_admin`
+  - All routes continue using main `auth.ts` system (283 lines, actively maintained)
 - Fixed critical AI date defaulting issue in email parsing:
   - Removed "Today is [date]" from AI prompt to prevent date assumptions
   - Enhanced keyword detection for price enquiries

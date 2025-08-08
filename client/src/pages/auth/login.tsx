@@ -10,23 +10,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-// SECURITY FIX: Unique token storage per user to prevent account switching
-const getAuthTokenKey = (userEmail?: string) => {
-  const hostname = window.location.hostname;
-  
-  // Create user-specific token key to prevent account switching
-  const baseKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
-    ? 'authToken_dev' 
-    : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    
-  // Add user identifier to prevent token overwrites
-  if (userEmail) {
-    const userHash = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
-    return `${baseKey}_${userHash}`;
-  }
-  
-  return baseKey;
-};
+import { storeAuthToken } from '@/utils/authToken';
 
 // Check if we're in development mode
 const isDevelopment = () => {
@@ -74,21 +58,13 @@ export default function LoginPage() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // SECURITY FIX: Use user-specific token storage
-      const userEmail = data.email;
-      const authTokenKey = getAuthTokenKey(userEmail);
-      
-      // Clear any old tokens for this user (cleanup)
-      const oldTokenKey = getAuthTokenKey();
-      localStorage.removeItem(oldTokenKey);
-      localStorage.removeItem('authToken_dev_admin'); // Remove shared dev token
-      
-      // Store JWT token with user-specific key
-      console.log('🔑 Storing token with user-specific key:', authTokenKey);
-      localStorage.setItem(authTokenKey, result.authToken);
+      // SECURITY FIX: Use centralized token storage
+      storeAuthToken(result.authToken, data.email);
+      console.log('🔑 Token stored with user-specific key for:', data.email);
       
       // Verify token was stored
-      const storedToken = localStorage.getItem(authTokenKey);
+      const { findActiveAuthToken } = await import('@/utils/authToken');
+      const storedToken = findActiveAuthToken();
       console.log('✅ Token stored successfully:', !!storedToken);
       
       toast({
