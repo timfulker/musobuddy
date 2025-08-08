@@ -296,8 +296,16 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Send invoice via email
-  app.post('/api/invoices/send-email', requireAuth, async (req: any, res) => {
+  // Send invoice via email (with enhanced mobile debugging)
+  app.post('/api/invoices/send-email', (req: any, res, next) => {
+    console.log('🚨 MOBILE DEBUG - Invoice send request received');
+    console.log('🚨 Authorization header:', req.headers.authorization ? 'Present' : 'Missing');
+    console.log('🚨 X-Auth-Token header:', req.headers['x-auth-token'] ? 'Present' : 'Missing');
+    console.log('🚨 All headers:', Object.keys(req.headers));
+    
+    // Call the original auth middleware
+    requireAuth(req, res, next);
+  }, async (req: any, res) => {
     try {
       const { invoiceId, customMessage } = req.body;
       const parsedInvoiceId = parseInt(invoiceId);
