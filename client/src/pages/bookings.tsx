@@ -1023,33 +1023,11 @@ export default function UnifiedBookings() {
                         </div>
                       </div>
                       
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleBookingClick(booking)}>
-                            <FileText className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(booking)}>
-                            <Settings className="w-4 h-4 mr-2" />
-                            Update Status
-                          </DropdownMenuItem>
-                          {conflicts.length > 0 && (
-                            <DropdownMenuItem onClick={() => handleConflictResolve(booking)}>
-                              <Crown className="w-4 h-4 mr-2" />
-                              Resolve Conflict
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => handleSendCompliance(booking)}>
-                            <Receipt className="w-4 h-4 mr-2" />
-                            Send Compliance
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <BookingActionMenu 
+                        booking={booking}
+                        onEditBooking={handleBookingClick}
+                        onSendCompliance={handleSendCompliance}
+                      />
                     </div>
                   </div>
                 </div>
