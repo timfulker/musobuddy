@@ -1,11 +1,19 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { requireAuth } from '../middleware/auth';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    isVerified: boolean;
+  };
+}
 
 export function registerFeedbackRoutes(app: Express) {
   console.log('💬 Setting up feedback routes...');
 
   // Get all feedback
-  app.get('/api/feedback', requireAuth, async (req, res) => {
+  app.get('/api/feedback', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       
@@ -14,7 +22,7 @@ export function registerFeedbackRoutes(app: Express) {
       }
 
       // For now, return empty array since feedback storage isn't implemented yet
-      const feedback = [];
+      const feedback: any[] = [];
       
       res.json(feedback);
 
@@ -25,7 +33,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Create new feedback
-  app.post('/api/feedback', requireAuth, async (req, res) => {
+  app.post('/api/feedback', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       
@@ -48,7 +56,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Update feedback status (admin only)
-  app.patch('/api/feedback/:id/status', requireAuth, async (req, res) => {
+  app.patch('/api/feedback/:id/status', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       const feedbackId = req.params.id;

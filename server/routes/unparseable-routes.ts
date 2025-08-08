@@ -1,11 +1,19 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { requireAuth } from '../middleware/auth';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    isVerified: boolean;
+  };
+}
 
 export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
 
   // Get all unparseable messages
-  app.get('/api/unparseable-messages', requireAuth, async (req, res) => {
+  app.get('/api/unparseable-messages', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       
@@ -14,7 +22,7 @@ export function registerUnparseableRoutes(app: Express) {
       }
 
       // For now, return empty array since unparseable message storage isn't implemented yet
-      const messages = [];
+      const messages: any[] = [];
       
       res.json(messages);
 
@@ -25,7 +33,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Mark message as reviewed
-  app.patch('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
+  app.patch('/api/unparseable-messages/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       const messageId = req.params.id;
@@ -51,7 +59,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Convert message to booking
-  app.post('/api/unparseable-messages/:id/convert', requireAuth, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/convert', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       const messageId = req.params.id;
@@ -76,7 +84,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Delete message
-  app.delete('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
+  app.delete('/api/unparseable-messages/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.userId;
       const messageId = req.params.id;

@@ -1,15 +1,23 @@
-// Health Check Routes for System Monitoring
-import { type Express } from "express";
+import { type Express, type Request, type Response } from "express";
 import { db } from "../core/database";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { requireAdmin } from "../middleware/auth";
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    isVerified: boolean;
+    isAdmin?: boolean;
+  };
+}
+
 export function registerHealthRoutes(app: Express) {
   console.log('🏥 Setting up health check routes...');
 
   // Database health check
-  app.get('/api/health/database', async (req, res) => {
+  app.get('/api/health/database', async (req: Request, res: Response) => {
     try {
       // Test database connectivity with a simple query
       const result = await db.query('SELECT 1 as test');
@@ -34,7 +42,7 @@ export function registerHealthRoutes(app: Express) {
   });
 
   // Email service health check
-  app.get('/api/health/email', async (req, res) => {
+  app.get('/api/health/email', async (req: Request, res: Response) => {
     try {
       const emailService = new EmailService();
       
@@ -65,7 +73,7 @@ export function registerHealthRoutes(app: Express) {
   });
 
   // Cloud storage (R2) health check
-  app.get('/api/health/storage', async (req, res) => {
+  app.get('/api/health/storage', async (req: Request, res: Response) => {
     try {
       // Check if R2 credentials are configured
       const r2AccountId = process.env.R2_ACCOUNT_ID;
@@ -94,7 +102,7 @@ export function registerHealthRoutes(app: Express) {
   });
 
   // Authentication service health check
-  app.get('/api/auth/verify', async (req, res) => {
+  app.get('/api/auth/verify', async (req: Request, res: Response) => {
     try {
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -136,8 +144,8 @@ export function registerHealthRoutes(app: Express) {
   });
 
   // Combined system health check (admin only)
-  app.get('/api/health/system', requireAdmin, async (req, res) => {
-    const healthChecks = {
+  app.get('/api/health/system', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    const healthChecks: Record<string, any> = {
       database: { status: 'checking' },
       email: { status: 'checking' },
       storage: { status: 'checking' },
