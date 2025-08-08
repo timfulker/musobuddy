@@ -131,21 +131,8 @@ const getAuthToken = () => {
 
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
-  const token = getAuthToken();
-  
-  const response = await fetch('/api/settings', {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  if (!response.ok) {
-    console.error('🔥 Settings API error:', response.status, response.statusText);
-    throw new Error(`Failed to fetch settings: ${response.status}`);
-  }
-  
-  const data = await response.json();
+  // Use apiRequest which handles authentication properly
+  const data = await apiRequest('/api/settings');
   
   
   // Removed instrument and gig type parsing - feature moved to documentation
@@ -398,23 +385,11 @@ export default function Settings() {
           data.customGigTypes : []
       };
       
-      const token = getAuthToken();
-      
-      const response = await fetch('/api/settings', {
+      // Use apiRequest which handles authentication properly
+      return await apiRequest('/api/settings', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(processedData),
       });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
-      }
-      
-      return await response.json();
     },
     onSuccess: (data) => {
       
@@ -502,16 +477,7 @@ export default function Settings() {
   useEffect(() => {
     const loadWidgetToken = async () => {
       try {
-        const token = getAuthToken();
-        const response = await fetch('/api/get-widget-token', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        const data = await apiRequest('/api/get-widget-token');
           if (data.url) {
             setWidgetUrl(data.url);
             
