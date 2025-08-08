@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -516,15 +517,12 @@ export default function Settings() {
             
             // Generate QR code for existing widget URL
             try {
-              const qrResponse = await fetch('/api/generate-qr-code', {
+              const qrData = await apiRequest('/api/generate-qr-code', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: data.url }),
-                credentials: 'include',
               });
               
-              if (qrResponse.ok) {
-                const qrData = await qrResponse.json();
+              if (qrData && qrData.qrCodeDataUrl) {
                 setQrCodeUrl(qrData.qrCodeDataUrl);
               }
             } catch (qrError) {
