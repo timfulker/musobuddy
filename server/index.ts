@@ -769,7 +769,14 @@ app.post('/api/webhook/mailgun',
     }
 
     // CRITICAL CHECK: Don't create booking without valid event date
-    if (!aiResult.eventDate || aiResult.eventDate === null) {
+    // Also check for "today" date which means AI couldn't find a real date
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const isInvalidDate = !aiResult.eventDate || 
+                         aiResult.eventDate === null || 
+                         aiResult.eventDate === today ||
+                         aiResult.eventDate === 'today';
+    
+    if (isInvalidDate) {
       try {
         // Import storage methods for unparseable message handling
         const { storage } = await import('./core/storage');
@@ -784,7 +791,7 @@ app.post('/api/webhook/mailgun',
           parsingErrorDetails: `No event date found | Categorized as: ${aiResult.subcategory || 'vague'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
         });
         
-        console.log(`📅 [${requestId}] No event date found - saved to review messages instead of creating booking`);
+        console.log(`📅 [${requestId}] Invalid/missing event date (${aiResult.eventDate}) - saved to review messages instead of creating booking`);
         
         return res.json({
           success: true,
@@ -952,10 +959,13 @@ PRIORITY DETECTION:
 - "low": Spam, promotional, or vendor messages
 
 IMPORTANT DATE PARSING INSTRUCTIONS:
+- ONLY extract dates if they are explicitly mentioned in the message
 - "sixth of September this year" = 2025-09-06
 - "September 6th this year" = 2025-09-06  
 - "6th September this year" = 2025-09-06
 - Handle ordinal numbers (1st, 2nd, 3rd, 4th, etc.) and written numbers (first, second, third, etc.)
+- If no specific date is mentioned, return NULL - DO NOT default to today
+- Messages like "Hi", "Hello", "What's your availability?" have NO date - return NULL
 
 IMPORTANT FEE PARSING INSTRUCTIONS:
 - Look for any amount with £, $, € symbols
