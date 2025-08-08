@@ -310,9 +310,13 @@ export default function Settings() {
         const newData = await apiRequest('/api/generate-qr-code', {
           method: 'POST',
         });
-        setWidgetUrl(newData.url);
-        setQrCodeUrl(newData.qrCode);
-        console.log('✅ Created new permanent widget');
+        if (newData.url && newData.qrCode) {
+          setWidgetUrl(newData.url);
+          setQrCodeUrl(newData.qrCode);
+          console.log('✅ Created new permanent widget');
+        } else {
+          throw new Error('Invalid response from QR code generation');
+        }
       }
       
       toast({
@@ -468,34 +472,27 @@ export default function Settings() {
     }
   };
 
-  // Load existing widget token on page load
+  // Load existing widget info on page load
   useEffect(() => {
-    const loadWidgetToken = async () => {
+    const loadWidgetInfo = async () => {
       try {
-        const data = await apiRequest('/api/get-widget-token');
-        if (data.url) {
+        const data = await apiRequest('/api/get-widget-info', {
+          method: 'GET',
+        });
+        
+        if (data.url && data.qrCode) {
+          // User already has a permanent widget
           setWidgetUrl(data.url);
-          
-          // Generate QR code for existing widget URL
-          try {
-            const qrData = await apiRequest('/api/generate-qr-code', {
-              method: 'POST',
-              body: JSON.stringify({ url: data.url }),
-            });
-            
-            if (qrData && qrData.qrCodeDataUrl) {
-              setQrCodeUrl(qrData.qrCodeDataUrl);
-            }
-          } catch (qrError) {
-            console.error('Failed to generate QR code:', qrError);
-          }
+          setQrCodeUrl(data.qrCode);
+          console.log('✅ Loaded existing permanent widget on page load');
         }
       } catch (error) {
-        console.error('Error loading widget token:', error);
+        console.error('Error loading widget info:', error);
+        // Silently fail - user can still click the button to create a new widget
       }
     };
     
-    loadWidgetToken();
+    loadWidgetInfo();
   }, []);
 
   // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
