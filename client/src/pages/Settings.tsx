@@ -398,7 +398,7 @@ export default function Settings() {
       
       // Use apiRequest which handles authentication properly
       return await apiRequest('/api/settings', {
-        method: 'POST',
+        method: 'PATCH',
         body: JSON.stringify(processedData),
       });
     },

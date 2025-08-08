@@ -20,6 +20,10 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
   - Corrected admin account email prefix setup (now "admin@enquiries.musobuddy.com")
   - Updated Settings page to display actual email prefix instead of placeholder text
   - Enhanced settings API to include user email prefix data
+- CRITICAL FIX: Settings reset issue identified and resolved:
+  - Root cause: Authentication mixing up admin (43963086) vs personal (1754488522516) account access
+  - Fixed frontend to use PATCH instead of POST for settings updates
+  - Prevent settings loading wrong user account data
 - Fixed critical AI date defaulting issue in email parsing:
   - Removed "Today is [date]" from AI prompt to prevent date assumptions
   - Enhanced keyword detection for price enquiries
