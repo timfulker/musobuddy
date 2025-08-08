@@ -285,6 +285,7 @@ export default function UnifiedBookings() {
           .map((other): Conflict => {
             let severity: 'soft' | 'hard' = 'soft';
             let hasTimeOverlap = false;
+            let start1 = 0, end1 = 0, start2 = 0, end2 = 0; // Declare variables in outer scope
             
             // Check for time conflicts
             if (!booking.eventTime || !other.eventTime || 
@@ -333,8 +334,8 @@ export default function UnifiedBookings() {
                   return [startMinutes, endMinutes];
                 };
                 
-                const [start1, end1] = getTimeRange(booking.eventTime, booking.eventEndTime);
-                const [start2, end2] = getTimeRange(other.eventTime, other.eventEndTime);
+                [start1, end1] = getTimeRange(booking.eventTime, booking.eventEndTime);
+                [start2, end2] = getTimeRange(other.eventTime, other.eventEndTime);
                 
                 hasTimeOverlap = start1 < end2 && end1 > start2;
                 severity = hasTimeOverlap ? 'hard' : 'soft';
