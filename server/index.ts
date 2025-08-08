@@ -724,7 +724,8 @@ app.post('/api/webhook/mailgun',
       bodyField.toLowerCase().includes('what do you charge')
     );
     
-    const isPriceEnquiry = aiResult.isPriceEnquiry || 
+    // FIXED: AI returns isPriceEnquiry: true but messageType: "general", so prioritize isPriceEnquiry flag
+    const isPriceEnquiry = aiResult.isPriceEnquiry === true || 
                           aiResult.messageType === 'price_enquiry' ||
                           containsPricingKeywords;
     
