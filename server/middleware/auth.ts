@@ -27,8 +27,7 @@ export function generateAuthToken(userId: string, email: string, isVerified: boo
   
   const token = jwt.sign(payload, JWT_CONFIG.secret, {
     expiresIn: JWT_CONFIG.expiresIn,
-    issuer: JWT_CONFIG.issuer,
-    algorithm: 'HS256'
+    issuer: JWT_CONFIG.issuer
   });
   
   if (AUTH_DEBUG) {
@@ -182,26 +181,88 @@ export const optionalAuth = (req: any, res: Response, next: NextFunction) => {
 
 // Admin-only middleware
 export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
-  // First ensure user is authenticated
-  requireAuth(req, res, () => {
-    const isAdmin = req.user?.userId === '43963086'; // Your admin user ID
-    
-    if (!isAdmin) {
-      if (AUTH_DEBUG) {
-        console.log(`❌ [AUTH-ADMIN] User ${req.user?.userId} denied admin access`);
-      }
-      return res.status(403).json({ 
-        error: 'Admin access required',
-        details: 'You do not have permission to access this resource'
-      });
-    }
-    
+  const startTime = Date.now();
+  
+  // Extract token from multiple sources (in priority order)
+  let token: string | null = null;
+  let tokenSource = 'none';
+  
+  // 1. Authorization header (Bearer token)
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+    tokenSource = 'bearer';
+  }
+  
+  // 2. Custom header (fallback for some clients)
+  if (!token && req.headers['x-auth-token']) {
+    token = req.headers['x-auth-token'] as string;
+    tokenSource = 'x-auth-token';
+  }
+  
+  // 3. Query parameter (for download links, etc.)
+  if (!token && req.query.token) {
+    token = req.query.token as string;
+    tokenSource = 'query';
+  }
+  
+  // 4. Cookie (for browser-based requests)
+  if (!token && req.cookies?.authToken) {
+    token = req.cookies.authToken;
+    tokenSource = 'cookie';
+  }
+  
+  if (AUTH_DEBUG) {
+    console.log(`🔍 [AUTH-ADMIN] Token extraction: source=${tokenSource}, hasToken=${!!token}`);
+  }
+  
+  if (!token) {
+    const duration = Date.now() - startTime;
     if (AUTH_DEBUG) {
-      console.log(`✅ [AUTH-ADMIN] Admin access granted to user ${req.user.userId}`);
+      console.log(`❌ [AUTH-ADMIN] No token found (${duration}ms)`);
     }
-    
-    next();
-  });
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      details: 'No authentication token provided'
+    });
+  }
+  
+  const decoded = verifyAuthToken(token);
+  if (!decoded) {
+    const duration = Date.now() - startTime;
+    if (AUTH_DEBUG) {
+      console.log(`❌ [AUTH-ADMIN] Invalid token (${duration}ms)`);
+    }
+    return res.status(401).json({ 
+      error: 'Invalid or expired token',
+      details: 'Please log in again'
+    });
+  }
+  
+  // Check for admin access
+  const isAdmin = decoded.userId === '43963086'; // Your admin user ID
+  
+  if (!isAdmin) {
+    const duration = Date.now() - startTime;
+    if (AUTH_DEBUG) {
+      console.log(`❌ [AUTH-ADMIN] User ${decoded.userId} denied admin access (${duration}ms)`);
+    }
+    return res.status(403).json({ 
+      error: 'Admin access required',
+      details: 'You do not have permission to access this resource'
+    });
+  }
+  
+  // Attach user info to request
+  req.user = decoded;
+  req.authSource = tokenSource;
+  
+  const duration = Date.now() - startTime;
+  if (AUTH_DEBUG) {
+    console.log(`✅ [AUTH-ADMIN] Admin access granted to user ${decoded.userId} via ${tokenSource} (${duration}ms)`);
+  }
+  
+  next();
 };
 
 // Token refresh endpoint
