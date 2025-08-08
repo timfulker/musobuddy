@@ -510,29 +510,63 @@ export default function Invoices() {
       
       // Use centralized token system with mobile fallback
       const { findActiveAuthToken } = await import('../utils/authToken');
+      console.log('📧 About to call findActiveAuthToken()');
       let token = findActiveAuthToken();
+      console.log('📧 findActiveAuthToken returned:', token);
       
-      // iOS Safari fallback - check all possible token locations
+      // iOS Safari fallback - check all possible token locations  
       if (!token) {
-        console.log('📧 Mobile fallback - checking all localStorage keys');
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.includes('authToken')) {
-            const stored = localStorage.getItem(key);
-            console.log(`📧 Found token key: ${key}, has value: ${!!stored}`);
-            if (stored) {
-              try {
-                const parsed = JSON.parse(stored);
-                if (parsed.token) {
-                  token = parsed.token;
-                  console.log(`📧 Using token from ${key}`);
+        console.log('📧 Mobile fallback - scanning localStorage');
+        
+        // First, try the exact same logic that works in useAuth
+        const hostname = window.location.hostname;
+        const possibleKeys = [
+          `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          'authToken_www_musobuddy_com',
+          'authToken_dev',
+          'authToken'
+        ];
+        
+        for (const key of possibleKeys) {
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            console.log(`📧 Found token in key: ${key}`);
+            try {
+              const parsed = JSON.parse(stored);
+              if (parsed.token) {
+                token = parsed.token;
+                console.log(`📧 Using parsed token from ${key}`);
+                break;
+              }
+            } catch {
+              // Plain string token
+              token = stored;
+              console.log(`📧 Using plain token from ${key}`);
+              break;
+            }
+          }
+        }
+        
+        // If still no token, scan everything
+        if (!token) {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('authToken')) {
+              const stored = localStorage.getItem(key);
+              console.log(`📧 Scanning key: ${key}, has value: ${!!stored}`);
+              if (stored) {
+                try {
+                  const parsed = JSON.parse(stored);
+                  if (parsed.token) {
+                    token = parsed.token;
+                    console.log(`📧 Emergency token from ${key}`);
+                    break;
+                  }
+                } catch {
+                  token = stored;
+                  console.log(`📧 Emergency plain token from ${key}`);
                   break;
                 }
-              } catch {
-                // Plain string token
-                token = stored;
-                console.log(`📧 Using plain token from ${key}`);
-                break;
               }
             }
           }
