@@ -316,7 +316,7 @@ export async function generateHybridWidgetHTML(userId: string, token: string): P
             document.getElementById('error-message').style.display = 'none';
             
             try {
-                const response = await fetch('https://musobuddy.replit.app/api/widget/hybrid-submit', {
+                const response = await fetch('${process.env.APP_SERVER_URL || 'https://musobuddy.replit.app'}/api/widget/hybrid-submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
