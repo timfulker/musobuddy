@@ -9,6 +9,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed (fixed 07/08/2025).
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
+TypeScript approach: Prioritize system stability over TypeScript "fixes". If TypeScript changes cause production issues, rollback immediately to the last stable state. Minor type errors that don't affect functionality should be left alone rather than risk breaking working systems (learned 08/01/2025).
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com` (updated 08/08/2025).
 Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musobuddy.com/api/webhook/mailgun` for production reliability (fixed 08/08/2025).
 System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
