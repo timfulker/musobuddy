@@ -486,14 +486,19 @@ export function setupAuthRoutes(app: Express) {
   // Verify SMS code
   app.post('/api/auth/verify-sms', async (req, res) => {
     try {
+      console.log('🔍 SMS verification request body:', req.body);
       const { userId, verificationCode } = req.body;
 
       if (!userId || !verificationCode) {
+        console.log('❌ Missing required fields:', { userId: !!userId, verificationCode: !!verificationCode });
         return res.status(400).json({ error: 'User ID and verification code are required' });
       }
 
+      console.log('🔍 Looking for pending verification for userId:', userId);
       const pending = pendingVerifications.get(userId);
       if (!pending) {
+        console.log('❌ No pending verification found for userId:', userId);
+        console.log('🔍 Current pending verifications:', Array.from(pendingVerifications.keys()));
         return res.status(400).json({ error: 'No pending verification found' });
       }
 
