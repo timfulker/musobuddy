@@ -194,6 +194,17 @@ export class UserStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
+
+    // Seed default email templates for new users
+    try {
+      const { SettingsStorage } = await import('./settings-storage.js');
+      const settingsStorage = new SettingsStorage();
+      await settingsStorage.seedDefaultEmailTemplates(data.id);
+    } catch (error) {
+      console.error(`Failed to seed default templates for user ${data.id}:`, error);
+      // Don't fail user creation if template seeding fails
+    }
+
     return result[0];
   }
 

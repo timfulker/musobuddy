@@ -351,6 +351,10 @@ export class Storage {
     return settingsStorage.getEmailTemplates(userId);
   }
 
+  async seedDefaultEmailTemplates(userId: string) {
+    return settingsStorage.seedDefaultEmailTemplates(userId);
+  }
+
   async getEmailTemplate(userId: string, type: string) {
     return settingsStorage.getEmailTemplate(userId, type);
   }
