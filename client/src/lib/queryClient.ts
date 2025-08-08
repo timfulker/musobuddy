@@ -1,22 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-
-// Environment-specific auth token key - MUST MATCH useAuth.tsx exactly
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    return 'authToken_dev_admin';
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match login.tsx format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-// Helper function to get the actual auth token value
-const getAuthToken = () => {
-  return localStorage.getItem(getAuthTokenKey());
-};
+import { findActiveAuthToken } from '@/utils/authToken';
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -43,9 +26,8 @@ export async function apiRequest(
   let body = options?.body;
   const headers = options?.headers || {};
   
-  // Add JWT token to all API requests
-  const token = getAuthToken();
-  // Remove debug logging for production
+  // Add JWT token to all API requests using centralized token system
+  const token = findActiveAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -64,7 +46,7 @@ export async function apiRequest(
 
   // Add JWT auth token to headers (remove duplicate)
   if (!headers['Authorization']) {
-    const authToken = getAuthToken();
+    const authToken = findActiveAuthToken();
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
@@ -93,14 +75,13 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Query request to: ${queryKey[0]}
     
-    // Get auth token using our helper function
-    const authToken = getAuthToken();
+    // Get auth token using centralized token system
+    const authToken = findActiveAuthToken();
     const headers: HeadersInit = {};
     
     // Add Bearer token if available
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
-      // Using token authentication
     }
     
     const res = await fetch(queryKey[0] as string, {
