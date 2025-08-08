@@ -41,6 +41,13 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
   - Solution: Created console command workaround for direct API calls bypassing cached code
   - Authentication system confirmed working - token detection and API calls successful
   - Mobile invoice sending now operational via console commands until cache clears
+- WIDGET SYSTEM OPTIMIZATION: Complete R2 external URL implementation
+  - Widget URLs: External Cloudflare R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)
+  - QR Codes: Now external R2 URLs instead of base64 database storage for better performance
+  - Form submissions: Use custom domain (www.musobuddy.com) instead of replit.app URLs
+  - No Replit branding visible to clients in any widget-related URLs
+  - Button visibility: "Get My Widget & QR Code" button hides after widget creation
+  - Fixed API endpoint: Widget creation uses '/api/generate-widget-token' (corrected from broken '/api/generate-qr-code')
 
 ## Previous Updates (08/08/2025)
 - CRITICAL FIX: Email processing user assignment issue resolved:
