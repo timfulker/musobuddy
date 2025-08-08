@@ -16,6 +16,12 @@ const app = express();
 app.set('trust proxy', 1);
 console.log('🔧 Proxy trust enabled for Replit infrastructure');
 
+// QUICK FIX: Serve built assets in development mode
+if (!ENV.isProduction) {
+  app.use('/assets', express.static('dist/public/assets'));
+  console.log('🔧 Development mode: serving built assets from /assets');
+}
+
 // Add health check endpoint for deployment validation
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
