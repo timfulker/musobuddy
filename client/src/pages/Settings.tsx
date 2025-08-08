@@ -310,12 +310,18 @@ export default function Settings() {
         const newData = await apiRequest('/api/generate-qr-code', {
           method: 'POST',
         });
-        if (newData.url && newData.qrCode) {
-          setWidgetUrl(newData.url);
-          setQrCodeUrl(newData.qrCode);
+        
+        // Handle response - check for either qrCode or qrCodeDataUrl (for compatibility)
+        const qrCodeData = newData.qrCode || newData.qrCodeDataUrl;
+        const widgetUrlData = newData.url || newData.widgetUrl;
+        
+        if (widgetUrlData && qrCodeData) {
+          setWidgetUrl(widgetUrlData);
+          setQrCodeUrl(qrCodeData);
           console.log('✅ Created new permanent widget');
         } else {
-          throw new Error('Invalid response from QR code generation');
+          console.error('QR code response:', newData);
+          throw new Error('Failed to generate QR code - please try again');
         }
       }
       
