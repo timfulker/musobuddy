@@ -24,17 +24,34 @@ export const findActiveAuthToken = (): string | null => {
     ? 'authToken_dev' 
     : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
+  // Find the most recently stored token by checking all matching tokens
+  let latestToken = null;
+  let latestKey = null;
+  
   // Check for user-specific tokens first
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith(baseKey + '_')) {
       const token = localStorage.getItem(key);
-      if (token) return token;
+      if (token) {
+        // Use the last found token as browsers typically iterate in insertion order
+        latestToken = token;
+        latestKey = key;
+      }
     }
   }
   
+  if (latestToken) {
+    console.log(`🔐 Using auth token from key: ${latestKey}`);
+    return latestToken;
+  }
+  
   // Fallback to base token
-  return localStorage.getItem(baseKey);
+  const baseToken = localStorage.getItem(baseKey);
+  if (baseToken) {
+    console.log(`🔐 Using fallback auth token from key: ${baseKey}`);
+  }
+  return baseToken;
 };
 
 export const clearAllAuthTokens = (): void => {
