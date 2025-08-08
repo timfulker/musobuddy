@@ -8,6 +8,68 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
+  
+  // Admin: Regenerate widget tokens for specific users
+  app.post('/api/admin/regenerate-widget-tokens', requireAdmin, async (req: any, res) => {
+    try {
+      const { emails } = req.body;
+      if (!emails || !Array.isArray(emails)) {
+        return res.status(400).json({ error: 'Emails array is required' });
+      }
+      
+      const results = [];
+      const jwt = await import('jsonwebtoken');
+      const QRCode = await import('qrcode');
+      
+      for (const email of emails) {
+        try {
+          // Get user by email
+          const user = await storage.getUserByEmail(email);
+          if (!user) {
+            results.push({ email, error: 'User not found' });
+            continue;
+          }
+          
+          // Generate new widget token
+          const token = jwt.default.sign(
+            { userId: user.id, type: 'widget' },
+            process.env.JWT_SECRET || 'your-secret-key',
+            { expiresIn: '30d' }
+          );
+          
+          const widgetUrl = `${process.env.APP_URL || 'https://www.musobuddy.com'}/widget?token=${encodeURIComponent(token)}`;
+          
+          // Generate QR code
+          const qrCodeDataUrl = await QRCode.default.toDataURL(widgetUrl, {
+            width: 400,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          
+          results.push({
+            email,
+            success: true,
+            userId: user.id,
+            widgetUrl,
+            qrCode: qrCodeDataUrl
+          });
+          
+          console.log(`✅ Regenerated widget token for ${email} (ID: ${user.id})`);
+        } catch (error: any) {
+          console.error(`❌ Failed to regenerate token for ${email}:`, error);
+          results.push({ email, error: error.message });
+        }
+      }
+      
+      res.json({ results });
+    } catch (error: any) {
+      console.error('❌ Widget token regeneration failed:', error);
+      res.status(500).json({ error: 'Failed to regenerate widget tokens' });
+    }
+  });
 
   // Admin overview statistics
   app.get('/api/admin/overview', requireAdmin, async (req: any, res) => {
