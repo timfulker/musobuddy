@@ -1010,6 +1010,9 @@ async function startServer() {
     const { registerAdminRoutes } = await import('./routes/admin-routes');
     const { registerStripeRoutes } = await import('./routes/stripe-routes');
     const { registerHealthRoutes } = await import('./routes/health-routes');
+    const { registerComplianceRoutes } = await import('./routes/compliance-routes');
+    const { registerUnparseableRoutes } = await import('./routes/unparseable-routes');
+    const { registerRoutes: registerConflictRoutes } = await import('./routes/index');
     
     // Register routes directly without wrapper
     registerStripeRoutes(app);
@@ -1019,6 +1022,9 @@ async function startServer() {
     await registerSettingsRoutes(app);
     await registerAdminRoutes(app);
     registerHealthRoutes(app);
+    await registerComplianceRoutes(app);
+    await registerUnparseableRoutes(app);
+    await registerConflictRoutes(app);
     
     // Apply global error handling ONLY to API routes
     app.use('/api/*', errorHandler);

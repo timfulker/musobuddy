@@ -14,6 +14,15 @@ Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musob
 System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
+## Recent Updates (08/08/2025)
+- Fixed Settings page authentication (was using raw fetch instead of apiRequest)
+- Connected all existing but unregistered features:
+  - Conflict detection system for booking conflicts
+  - Compliance tracking for document expiry monitoring  
+  - QR code generation for booking widgets
+  - Unparseable messages for email parsing system
+- All features now properly registered and operational
+
 ## System Architecture
 
 ### Frontend

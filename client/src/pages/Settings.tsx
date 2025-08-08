@@ -478,22 +478,21 @@ export default function Settings() {
     const loadWidgetToken = async () => {
       try {
         const data = await apiRequest('/api/get-widget-token');
-          if (data.url) {
-            setWidgetUrl(data.url);
+        if (data.url) {
+          setWidgetUrl(data.url);
+          
+          // Generate QR code for existing widget URL
+          try {
+            const qrData = await apiRequest('/api/generate-qr-code', {
+              method: 'POST',
+              body: JSON.stringify({ url: data.url }),
+            });
             
-            // Generate QR code for existing widget URL
-            try {
-              const qrData = await apiRequest('/api/generate-qr-code', {
-                method: 'POST',
-                body: JSON.stringify({ url: data.url }),
-              });
-              
-              if (qrData && qrData.qrCodeDataUrl) {
-                setQrCodeUrl(qrData.qrCodeDataUrl);
-              }
-            } catch (qrError) {
-              console.error('Failed to generate QR code:', qrError);
+            if (qrData && qrData.qrCodeDataUrl) {
+              setQrCodeUrl(qrData.qrCodeDataUrl);
             }
+          } catch (qrError) {
+            console.error('Failed to generate QR code:', qrError);
           }
         }
       } catch (error) {
