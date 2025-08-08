@@ -9,20 +9,19 @@ import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
-import { getAuthToken } from '@/utils/authToken';
+import { findActiveAuthToken } from '@/utils/authToken';
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     queryFn: async () => {
-      const token = getAuthToken();
+      const token = findActiveAuthToken();
       
       if (!token) {
         console.error('❌ No auth token found for kanban board');
         throw new Error('No authentication token');
       }
       
-      console.log('🔍 Kanban board - Token key:', getAuthTokenKey());
       console.log('🔍 Kanban board - Token found:', !!token);
       
       const response = await fetch('/api/bookings', {
