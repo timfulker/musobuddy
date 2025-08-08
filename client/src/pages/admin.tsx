@@ -30,7 +30,8 @@ import {
   Search,
   Trash2,
   Edit,
-  Mail
+  Mail,
+  RotateCcw
 } from "lucide-react";
 
 interface AdminOverview {
@@ -240,6 +241,28 @@ export default function AdminPanel() {
       toast({
         title: "Error sending invitation",
         description: error.message || "Failed to send invitation",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetWidgetMutation = useMutation({
+    mutationFn: (userId: string) => apiRequest('/api/admin/reset-user-widget', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Widget reset successfully",
+        description: data.message || "User widget has been reset.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error resetting widget",
+        description: error.message || "Failed to reset user widget",
         variant: "destructive",
       });
     },
@@ -827,6 +850,20 @@ export default function AdminPanel() {
                             >
                               <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Reset widget for ${user.firstName} ${user.lastName} (${user.email})? This will clear their widget URL and QR code.`)) {
+                                  resetWidgetMutation.mutate(user.id);
+                                }
+                              }}
+                              disabled={resetWidgetMutation.isPending}
+                              className="text-xs sm:text-sm text-orange-600 border-orange-200 hover:bg-orange-50"
+                            >
+                              <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              <span className="hidden sm:inline">Reset Widget</span>
                             </Button>
                             <Button
                               variant="destructive"

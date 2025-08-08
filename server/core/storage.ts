@@ -53,6 +53,14 @@ export class Storage {
     return userStorage.generateQuickAddToken(userId);
   }
 
+  async updateUserWidgetInfo(userId: string, widgetUrl: string, qrCode: string): Promise<void> {
+    return userStorage.updateUserWidgetInfo(userId, widgetUrl, qrCode);
+  }
+
+  async resetUserWidget(userId: string): Promise<void> {
+    return userStorage.resetUserWidget(userId);
+  }
+
   async authenticateUser(email: string, password: string) {
     return userStorage.authenticateUser(email, password);
   }

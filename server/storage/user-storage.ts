@@ -120,6 +120,35 @@ export class UserStorage {
     }
   }
 
+  async updateUserWidgetInfo(userId: string, widgetUrl: string, qrCode: string): Promise<void> {
+    try {
+      await db.update(users).set({ 
+        widgetUrl: widgetUrl, 
+        widgetQrCode: qrCode,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+      console.log(`✅ Updated widget info for user ${userId}`);
+    } catch (error: any) {
+      console.error(`❌ Failed to update widget info for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  async resetUserWidget(userId: string): Promise<void> {
+    try {
+      await db.update(users).set({ 
+        widgetUrl: null, 
+        widgetQrCode: null,
+        quickAddToken: null,
+        updatedAt: new Date()
+      }).where(eq(users.id, userId));
+      console.log(`✅ Reset widget for user ${userId}`);
+    } catch (error: any) {
+      console.error(`❌ Failed to reset widget for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
   async authenticateUser(email: string, password: string) {
     const user = await this.getUserByEmail(email);
     if (!user || !user.password) {

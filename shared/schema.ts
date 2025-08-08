@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   createdViaStripe: boolean("created_via_stripe").default(false), // Track users created via Stripe checkout
   emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
   quickAddToken: text("quick_add_token").unique(), // Unique token for quick-add booking widget
+  widgetUrl: text("widget_url"), // Permanent widget URL for booking requests
+  widgetQrCode: text("widget_qr_code"), // Base64 QR code for the widget URL
   // SaaS Trial Management Fields
   phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   phoneVerified: boolean("phone_verified").default(false),

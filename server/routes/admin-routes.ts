@@ -71,6 +71,35 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Admin: Reset user widget (clear widget URL and QR code)
+  app.post('/api/admin/reset-user-widget', requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      // Get user info
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Reset widget data
+      await storage.resetUserWidget(userId);
+      
+      console.log(`✅ Reset widget for user ${userId} (${user.email})`);
+      res.json({ 
+        success: true, 
+        message: `Widget reset for user ${user.email}`,
+        userId: userId
+      });
+    } catch (error: any) {
+      console.error('❌ Failed to reset user widget:', error);
+      res.status(500).json({ error: 'Failed to reset user widget' });
+    }
+  });
+
   // Admin overview statistics
   app.get('/api/admin/overview', requireAdmin, async (req: any, res) => {
     try {
