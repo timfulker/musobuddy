@@ -24,7 +24,6 @@ interface Contract {
   status: string;
   signedAt?: string;
   clientFillableFields?: string[];
-  cloudStorageUrl?: string;
 }
 
 interface UserSettings {
@@ -36,7 +35,7 @@ interface UserSettings {
 }
 
 export default function SignContract() {
-  const params = useParams<{ id: string }>();
+  const params = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const contractId = params.id;
@@ -67,6 +66,7 @@ export default function SignContract() {
         }
         const contractData = await response.json();
         
+        
         setContract(contractData);
         
         // Get business settings for the contract owner
@@ -84,7 +84,7 @@ export default function SignContract() {
         setClientAddress(contractData.clientAddress || "");
         
         // Check for missing client-fillable fields
-        const missing: string[] = [];
+        const missing = [];
         if (contractData.clientFillableFields) {
           if (contractData.clientFillableFields.includes('clientPhone') && !contractData.clientPhone) {
             missing.push('clientPhone');
@@ -123,82 +123,116 @@ export default function SignContract() {
 
     if (!agreed) {
       toast({
-        title: "Error",
-        description: "Please agree to the contract terms to proceed",
+        title: "Error", 
+        description: "Please confirm you agree to the terms and conditions",
         variant: "destructive",
       });
       return;
     }
 
-    // Check for missing required fields
-    const stillMissing: string[] = [];
-    if (missingFields.includes('clientPhone') && !clientPhone.trim()) {
-      stillMissing.push('Client Phone');
-    }
-    if (missingFields.includes('clientAddress') && !clientAddress.trim()) {
-      stillMissing.push('Client Address');
-    }
-    
-    if (stillMissing.length > 0) {
+    // Check for missing required client-fillable fields
+    const requiredMissingFields = missingFields.filter(field => {
+      if (field === 'clientPhone' && !clientPhone.trim()) return true;
+      if (field === 'clientAddress' && !clientAddress.trim()) return true;
+      if (field === 'venueAddress' && !venueAddress.trim()) return true;
+      return false;
+    });
+
+    if (requiredMissingFields.length > 0) {
       toast({
-        title: "Missing Required Information",
-        description: `Please provide: ${stillMissing.join(', ')}`,
+        title: "Error",
+        description: "Please complete all required fields before signing",
         variant: "destructive",
       });
       return;
     }
 
     setSigning(true);
-
     try {
-      const signatureData = {
-        signatureName: signatureName.trim(),
-        agreedToTerms: agreed,
-        ipAddress: await fetch('https://api.ipify.org?format=json')
-          .then(r => r.json())
-          .then(data => data.ip)
-          .catch(() => 'unknown'),
-        userAgent: navigator.userAgent,
-        signedAt: new Date().toISOString(),
-        // Include client fillable fields
-        clientPhone: clientPhone.trim() || undefined,
-        clientAddress: clientAddress.trim() || undefined,
-      };
-
-      console.log('Signing contract with data:', signatureData);
-
-      const response = await fetch(`/api/contracts/public/${contractId}/sign`, {
+      console.log('🔥 FRONTEND: Starting contract signing process...');
+      
+      const response = await fetch(`/api/contracts/sign/${contractId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest', // Mark as AJAX request
         },
-        body: JSON.stringify(signatureData),
+        credentials: 'same-origin', // Include cookies but stay on same origin
+        body: JSON.stringify({
+          clientSignature: signatureName.trim(),
+          clientIP: '0.0.0.0',
+          clientPhone: clientPhone.trim() || undefined,
+          clientAddress: clientAddress.trim() || undefined,
+          venueAddress: venueAddress.trim() || undefined,
+        }),
       });
 
+      console.log('🔥 FRONTEND: Response status:', response.status);
+      console.log('🔥 FRONTEND: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Failed to sign contract' }));
+        throw new Error(errorData.error || 'Failed to sign contract');
       }
 
       const result = await response.json();
-      console.log('Contract signed successfully:', result);
-
+      console.log('🔥 FRONTEND: Success response received:', result);
+      
+      // Check if contract was already signed
+      if (result.alreadySigned) {
+        console.log('🔥 FRONTEND: Contract already signed, updating state...');
+        
+        // Update contract state to reflect it's already signed
+        const updatedContract = {
+          ...contract,
+          status: 'signed' as const,
+          signedAt: contract.signedAt || new Date().toISOString(),
+        };
+        
+        setContract(updatedContract);
+        setSigned(true);
+        
+        // Show "already signed" message instead of error
+        toast({
+          title: "Contract Already Signed", 
+          description: "This contract has already been signed successfully.",
+          variant: "default", // Not an error, just info
+        });
+        
+        console.log('🔥 FRONTEND: Already signed state updated');
+        return;
+      }
+      
+      console.log('🔥 FRONTEND: Processing successful signing response...');
+      
+      // CRITICAL FIX: Update local contract state for new signing
+      const updatedContract = {
+        ...contract,
+        status: 'signed' as const,
+        signedAt: result.signedAt || new Date().toISOString(),
+        cloudStorageUrl: result.cloudUrl
+      };
+      
+      setContract(updatedContract);
       setSigned(true);
+      console.log('🔥 FRONTEND: Contract state updated to signed, setSigned(true) called');
+
+      // Success notification for new signing
       toast({
-        title: "Contract Signed Successfully",
-        description: "You will receive a copy via email shortly",
+        title: "Contract Signed Successfully!", 
+        description: "Confirmation emails have been sent to both parties.",
       });
 
-      // Update contract state to show signed status
-      if (contract) {
-        setContract({ ...contract, status: 'signed', signedAt: new Date().toISOString() });
-      }
+      console.log('🔥 FRONTEND: Contract signing completed successfully - staying on page');
 
     } catch (error) {
-      console.error('Error signing contract:', error);
+      console.error("Error signing contract:", error);
+      setError("Failed to sign contract. Please try again.");
       toast({
-        title: "Signing Failed",
-        description: error instanceof Error ? error.message : "Please try again or contact support",
+        title: "Error",
+        description: "Failed to sign contract. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -206,105 +240,88 @@ export default function SignContract() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatCurrency = (amount: string) => {
-    const num = parseFloat(amount.replace(/[^\d.]/g, ''));
-    return isNaN(num) ? amount : `£${num.toLocaleString()}`;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading contract...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading contract...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !contract) {
+  if (!contract) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">Contract Not Found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground mb-4">
-              {error || "This contract could not be found or has expired."}
-            </p>
-            <p className="text-center text-sm text-muted-foreground">
-              Please check the link or contact the sender for assistance.
-            </p>
+          <CardContent className="text-center py-6">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Contract Not Found</h2>
+            <p className="text-gray-600">This contract may have already been signed or the link is invalid.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (contract.status === 'signed' && !signed) {
+  if (contract.status === 'signed') {
+    const handleDownloadPDF = async () => {
+      try {
+        const response = await fetch(`/api/contracts/public/${contractId}/pdf`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Contract-${contract.contractNumber}-Signed.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Success",
+          description: "Signed contract PDF downloaded successfully!",
+        });
+      } catch (error) {
+        console.error('Error downloading contract:', error);
+        toast({
+          title: "Error",
+          description: "Failed to download contract PDF",
+          variant: "destructive",
+        });
+      }
+    };
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-green-600 flex items-center justify-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Already Signed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground mb-4">
-              This contract has already been signed.
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-lg">
+          <CardContent className="text-center py-8">
+            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Contract Successfully Signed!</h2>
+            <p className="text-gray-600 mb-6">
+              This contract was signed on {new Date(contract.signedAt || '').toLocaleDateString('en-GB')}.
             </p>
-            {contract.signedAt && (
-              <p className="text-center text-sm text-muted-foreground">
-                Signed on {formatDate(contract.signedAt)}
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-800 text-sm">
+                📧 Confirmation emails with the signed contract have been sent to both parties.
               </p>
-            )}
-            {contract.cloudStorageUrl && (
-              <div className="mt-4 text-center">
-                <Button asChild variant="outline">
-                  <a href={contract.cloudStorageUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Copy
-                  </a>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (signed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-green-600 flex items-center justify-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Contract Signed Successfully
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground mb-4">
-              Thank you for signing the contract. Both parties will receive a copy via email.
-            </p>
-            <p className="text-center text-sm font-medium">
-              Contract: {contract.contractNumber}
-            </p>
-            <p className="text-center text-sm text-muted-foreground">
-              Event: {formatDate(contract.eventDate)}
+            </div>
+            
+            <Button 
+              onClick={handleDownloadPDF}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Signed Contract (PDF)
+            </Button>
+            
+            <p className="text-xs text-gray-500 mt-4">
+              Keep this copy for your records
             </p>
           </CardContent>
         </Card>
@@ -313,203 +330,292 @@ export default function SignContract() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto max-w-4xl px-4">
         {/* Header */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <FileText className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Performance Contract</h1>
-          </div>
-          {userSettings?.businessName && (
-            <p className="text-muted-foreground">{userSettings.businessName}</p>
-          )}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Performance Contract</h1>
+          <p className="text-gray-600">Contract #{contract.contractNumber}</p>
+          <Badge variant="outline" className="mt-2">
+            {contract.status === 'sent' ? 'Awaiting Signature' : contract.status}
+          </Badge>
         </div>
 
-        {/* Contract Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contract Details</CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{contract.contractNumber}</Badge>
-              <Badge variant="outline" className="capitalize">
-                {contract.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Event Date</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(contract.eventDate)}
+        {/* Success Message - shown on same page after signing */}
+        {signed && (
+          <div className="mb-8">
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-8 w-8 text-green-600 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-green-900 mb-2">
+                      Contract Successfully Signed!
+                    </h3>
+                    <p className="text-green-800 mb-3">
+                      Your contract has been digitally signed and is now legally binding.
+                    </p>
+                    <div className="bg-green-100 border border-green-200 rounded-lg p-3">
+                      <p className="text-green-800 text-sm font-medium">
+                        📧 Confirmation emails with the signed contract have been sent to both parties.
+                      </p>
+                    </div>
+                    <p className="text-green-700 text-sm mt-3">
+                      Contract #{contract.contractNumber} • Signed on {new Date().toLocaleDateString('en-GB')} at {new Date().toLocaleTimeString('en-GB')}
                     </p>
                   </div>
                 </div>
-                
-                {contract.eventTime && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Time</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contract.eventTime}
-                      </p>
-                    </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Contract Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Event Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Event Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Date</Label>
+                    <p className="text-gray-900">{new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Time</Label>
+                    <p className="text-gray-900">{contract.eventTime}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Venue</Label>
+                    <p className="text-gray-900">{contract.venue}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Fee</Label>
+                    <p className="text-gray-900 font-semibold">£{contract.fee}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Performer Details */}
+            {userSettings && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performer Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="font-semibold">{userSettings.businessName}</p>
+                    {userSettings.businessAddress && (
+                      <p className="text-gray-600">{userSettings.businessAddress.replace(/\n/g, ', ')}</p>
+                    )}
+                    {userSettings.phone && (
+                      <p className="text-gray-600">Phone: {userSettings.phone}</p>
+                    )}
+                    {userSettings.businessEmail && (
+                      <p className="text-gray-600">Email: {userSettings.businessEmail}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Client Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="font-semibold">{contract.clientName}</p>
+                  <p className="text-gray-600">Email: {contract.clientEmail}</p>
+                  {(contract.clientPhone || clientPhone) && (
+                    <p className="text-gray-600">Phone: {contract.clientPhone || clientPhone}</p>
+                  )}
+                  {(contract.clientAddress || clientAddress) && (
+                    <p className="text-gray-600">Address: {contract.clientAddress || clientAddress}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Terms and Conditions */}
+            {contract.terms && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Terms and Conditions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none">
+                    <p className="whitespace-pre-line text-gray-700">{contract.terms}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Signature Section */}
+          <div className="lg:col-span-1">
+            {!signed && (
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle>Sign Contract</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                {/* Client-fillable fields section */}
+                {missingFields.length > 0 && (
+                  <div className="space-y-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                    <h3 className="font-semibold text-blue-900 text-sm">
+                      Please complete your information:
+                    </h3>
+                    
+                    {missingFields.includes('clientPhone') && (
+                      <div>
+                        <Label htmlFor="clientPhone" className="text-blue-700 font-medium">
+                          Phone Number
+                        </Label>
+                        <Input
+                          id="clientPhone"
+                          type="tel"
+                          value={clientPhone}
+                          onChange={(e) => setClientPhone(e.target.value)}
+                          placeholder="07123 456789"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    {missingFields.includes('clientAddress') && (
+                      <div>
+                        <Label htmlFor="clientAddress" className="text-blue-700 font-medium">
+                          Address
+                        </Label>
+                        <Input
+                          id="clientAddress"
+                          type="text"
+                          value={clientAddress}
+                          onChange={(e) => setClientAddress(e.target.value)}
+                          placeholder="123 Main Street, London, SW1A 1AA"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    {missingFields.includes('venueAddress') && (
+                      <div>
+                        <Label htmlFor="venueAddress" className="text-blue-700 font-medium">
+                          Venue Address
+                        </Label>
+                        <Input
+                          id="venueAddress"
+                          type="text"
+                          value={venueAddress}
+                          onChange={(e) => setVenueAddress(e.target.value)}
+                          placeholder="Event venue address"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-blue-600">
+                      These fields are required to complete the contract signing process.
+                    </p>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Venue</p>
-                    <p className="text-sm text-muted-foreground">
-                      {contract.venue}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Performance Fee</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatCurrency(contract.fee)}
-                    </p>
-                  </div>
-                </div>
-                
                 <div>
-                  <p className="font-medium">Client</p>
-                  <p className="text-sm text-muted-foreground">
-                    {contract.clientName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {contract.clientEmail}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Client-fillable fields */}
-        {missingFields.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information Required</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {missingFields.includes('clientPhone') && (
-                <div>
-                  <Label htmlFor="clientPhone">Contact Phone Number *</Label>
+                  <Label htmlFor="signatureName">Full Name</Label>
                   <Input
-                    id="clientPhone"
-                    type="tel"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                    placeholder="Enter your contact phone number"
+                    id="signatureName"
+                    type="text"
+                    value={signatureName}
+                    onChange={(e) => setSignatureName(e.target.value)}
+                    placeholder="Enter your full legal name"
+                    className="mt-1"
                   />
                 </div>
-              )}
-              
-              {missingFields.includes('clientAddress') && (
-                <div>
-                  <Label htmlFor="clientAddress">Contact Address *</Label>
-                  <Input
-                    id="clientAddress"
-                    value={clientAddress}
-                    onChange={(e) => setClientAddress(e.target.value)}
-                    placeholder="Enter your contact address"
+
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="agreed"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className="mt-1"
                   />
+                  <Label htmlFor="agreed" className="text-sm leading-tight">
+                    I agree to the terms and conditions outlined in this contract and confirm that the information provided is accurate.
+                  </Label>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Terms */}
-        {contract.terms && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Terms and Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
-                  {contract.terms}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                <Separator />
 
-        {/* Signature Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Digital Signature</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="signatureName">Full Name (Digital Signature) *</Label>
-              <Input
-                id="signatureName"
-                value={signatureName}
-                onChange={(e) => setSignatureName(e.target.value)}
-                placeholder="Enter your full name"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                By typing your name, you are providing a legally binding digital signature
-              </p>
-            </div>
+                <div>
+                  <Button
+                    onClick={handleSign}
+                    disabled={signing || !signatureName.trim() || !agreed}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    size="lg"
+                  >
+                    {signing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Signing Contract...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Sign Contract
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <p className="text-xs text-gray-500 text-center">
+                  By signing, you agree to the terms and create a legally binding agreement.
+                </p>
+              </CardContent>
+            </Card>
+            )}
             
-            <div className="flex items-start space-x-2">
-              <input
-                type="checkbox"
-                id="agreed"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-1"
-              />
-              <Label htmlFor="agreed" className="text-sm cursor-pointer">
-                I agree to the terms and conditions of this contract and confirm that all
-                information provided is accurate. I understand this constitutes a legally
-                binding digital signature.
-              </Label>
-            </div>
-            
-            <Separator />
-            
-            <Button
-              onClick={handleSign}
-              disabled={signing || !signatureName.trim() || !agreed}
-              className="w-full"
-              size="lg"
-            >
-              {signing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing Contract...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Sign Contract
-                </>
-              )}
-            </Button>
-            
-            <p className="text-xs text-center text-muted-foreground">
-              By clicking "Sign Contract", you are creating a legally binding digital signature.
-              Both parties will receive a signed copy via email.
-            </p>
-          </CardContent>
-        </Card>
+            {signed && (
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-5 w-5" />
+                    Contract Signed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center space-y-3">
+                    <p className="text-green-800">
+                      This contract has been successfully signed and is now legally binding.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        // Create download link for signed contract
+                        const link = document.createElement('a');
+                        link.href = `/api/contracts/public/${contractId}/pdf`;
+                        link.download = `Contract-${contract.contractNumber}-Signed.pdf`;
+                        link.click();
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Signed Contract
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -25,50 +25,8 @@ import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
-
-// Import proper types from shared schema
-import type { Booking } from "@shared/schema";
-
-interface Contract {
-  id: number;
-  contractNumber?: string;
-  clientName?: string;
-  eventDate?: string;
-  status?: string;
-}
-
-interface Invoice {
-  id: number;
-  invoiceNumber?: string;
-  clientName?: string;
-  amount?: number;
-  status?: string;
-}
-
-interface Conflict {
-  withBookingId: number;
-  severity: 'hard' | 'soft';
-  clientName: string;
-  status: string;
-  time: string;
-  canEdit: boolean;
-  canReject: boolean;
-  type: string;
-  message: string;
-  overlapMinutes?: number;
-}
-
-interface ConflictGroup {
-  id: string;
-  date: string;
-  bookings: Booking[];
-  severity: 'hard' | 'soft';
-}
-
-interface ConflictResolution {
-  id: number;
-  bookingIds: string;
-}
+import type { Enquiry } from "@shared/schema";
+import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
 
 type ViewMode = 'list' | 'calendar';
 type CalendarView = 'day' | 'week' | 'month' | 'year';
@@ -81,24 +39,6 @@ interface CalendarEvent {
   status?: string;
 }
 
-interface CalendarDay {
-  date: Date;
-  day: number | string;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  hasEvents?: boolean;
-  events: CalendarEvent[];
-}
-
-interface CalendarMonth {
-  date: Date;
-  month: number;
-  year: number;
-  isCurrentMonth: boolean;
-  bookingCount: number;
-  bookings: Booking[];
-}
-
 export default function UnifiedBookings() {
   const { user } = useAuth();
   
@@ -108,26 +48,28 @@ export default function UnifiedBookings() {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
   
+
+  
   // Status color helper function
   const getStatusBorderColor = (status: string) => {
     switch (status) {
       case "new":
       case "enquiry":
-        return "border-l-sky-400";
+        return "border-l-sky-400"; // Light blue
       case "in_progress":
       case "awaiting_response":
-        return "border-l-blue-700";
+        return "border-l-blue-700"; // Dark blue
       case "client_confirms":
-        return "border-l-orange-500";
+        return "border-l-orange-500"; // Orange
       case "confirmed":
-        return "border-l-green-500";
+        return "border-l-green-500"; // Green
       case "completed":
-        return "border-l-gray-500";
+        return "border-l-gray-500"; // Grey
       case "rejected":
       case "cancelled":
-        return "border-l-red-500";
+        return "border-l-red-500"; // Red
       default:
-        return "border-l-gray-300";
+        return "border-l-gray-300"; // Default light grey
     }
   };
 
@@ -152,15 +94,15 @@ export default function UnifiedBookings() {
   
   // Dialog states
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
-  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<Booking | null>(null);
+  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
-  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<Booking | null>(null);
+  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
-  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<Booking | null>(null);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   
   // Conflict resolution dialog states
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
-  const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<Booking | null>(null);
+  const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -173,32 +115,36 @@ export default function UnifiedBookings() {
   const { toast } = useToast();
 
   // Fetch data for both views
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["/api/bookings"],
     retry: 2,
-  });
+  }) as { data: Enquiry[], isLoading: boolean };
 
-  const { data: contracts = [] } = useQuery<Contract[]>({
+  const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
   });
 
-  const { data: invoices = [] } = useQuery<Invoice[]>({
+
+
+  const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
     retry: 2,
   });
 
   // Fetch conflicts from backend
-  const { data: backendConflicts = [] } = useQuery<any[]>({
+  const { data: backendConflicts = [] } = useQuery({
     queryKey: ["/api/conflicts"],
     retry: 2,
-  });
+  }) as { data: any[], error?: any };
 
   // Fetch conflict resolutions to check which conflicts are already resolved
-  const { data: conflictResolutions = [] } = useQuery<ConflictResolution[]>({
+  const { data: conflictResolutions = [] } = useQuery({
     queryKey: ["/api/conflicts/resolutions"],
     retry: 2,
   });
+
+  // Backend conflicts loaded
 
   // Handle URL parameters for booking navigation from dashboard
   useEffect(() => {
@@ -207,7 +153,8 @@ export default function UnifiedBookings() {
     
     if (bookingId && bookings.length > 0) {
       // Find the booking by ID
-      const targetBooking = bookings.find((b) => b.id.toString() === bookingId);
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const targetBooking = validBookings.find((b) => b.id.toString() === bookingId);
       
       if (targetBooking && targetBooking.eventDate) {
         // Navigate calendar to booking's month
@@ -229,18 +176,19 @@ export default function UnifiedBookings() {
         window.history.replaceState({}, '', newUrl);
       }
     }
-  }, [bookings]);
+  }, [bookings]); // Depend on bookings data
 
-  // Memoized conflict detection with conflict groups
+  // OPTIMIZED: Memoized conflict detection with conflict groups to prevent excessive re-computation
   const { conflictsByBookingId, conflictGroups } = React.useMemo(() => {
     if (!bookings || bookings.length === 0) return { conflictsByBookingId: {}, conflictGroups: [] };
     
-    const conflicts: Record<number, Conflict[]> = {};
-    const bookingsByDate: Record<string, Booking[]> = {};
-    const groups: ConflictGroup[] = [];
+    const conflicts: Record<number, any[]> = {};
+    const bookingsByDate: Record<string, any[]> = {};
+    const groups: any[] = [];
     
     // Group bookings by date for efficient lookup
-    bookings.forEach((booking) => {
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    validBookings.forEach((booking) => {
       if (!booking.eventDate || booking.status === 'cancelled' || booking.status === 'rejected') return;
       
       const dateKey = new Date(booking.eventDate).toDateString();
@@ -252,39 +200,42 @@ export default function UnifiedBookings() {
     
     // Only process dates with multiple bookings and create conflict groups
     Object.entries(bookingsByDate).forEach(([dateKey, dayBookings]) => {
-      if (dayBookings.length < 2) return;
+      if (dayBookings.length < 2) return; // No conflicts possible
       
       // Create a conflict group for this date
-      const conflictGroup: ConflictGroup = {
+      const conflictGroup = {
         id: `conflict-${dateKey}`,
         date: dateKey,
         bookings: dayBookings,
-        severity: 'soft'
+        severity: 'soft' // Will be updated based on individual conflicts
       };
       
       let hasHardConflict = false;
       
-      dayBookings.forEach((booking) => {
+      dayBookings.forEach((booking: any) => {
         const bookingConflicts = dayBookings
-          .filter((other) => other.id !== booking.id && other.id && !isNaN(Number(other.id)))
-          .map((other): Conflict => {
-            let severity: 'soft' | 'hard' = 'soft';
+          .filter((other: any) => other.id !== booking.id)
+          .map((other: any) => {
+            let severity = 'soft'; // Default to soft conflict for same day
             let hasTimeOverlap = false;
-            let start1 = 0, end1 = 0, start2 = 0, end2 = 0; // Declare variables in outer scope
             
-            // Check for time conflicts
+            // CRITICAL FIX: Incomplete time info = Hard conflicts (red) because overlap cannot be determined
+            // Must have BOTH start and end times to properly assess conflicts
             if (!booking.eventTime || !other.eventTime || 
                 !booking.eventEndTime || !other.eventEndTime ||
                 booking.eventTime === '' || other.eventTime === '' ||
                 booking.eventEndTime === '' || other.eventEndTime === '' ||
                 booking.eventTime === 'Time not specified' || other.eventTime === 'Time not specified') {
+              // If either booking lacks complete time info, it's a hard conflict
               severity = 'hard';
-              hasTimeOverlap = false;
+              hasTimeOverlap = false; // Not a time overlap, but still hard conflict
             } else {
+              // Both bookings have times - check for actual overlap
               try {
-                // Helper function to parse time
+                // Helper function to get start and end times
                 const getTimeRange = (timeStr: string, endTimeStr?: string): [number, number] => {
                   const parseTime = (time: string): number => {
+                    // Handle various time formats: "20:00", "8pm", "8:00 PM", etc.
                     const cleanTime = time.toLowerCase().replace(/[^\d:apm]/g, '');
                     let hours = 0, minutes = 0;
                     
@@ -296,6 +247,7 @@ export default function UnifiedBookings() {
                       hours = parseInt(cleanTime.replace(/[^0-9]/g, ''), 10);
                     }
                     
+                    // Handle PM/AM
                     if (cleanTime.includes('pm') && hours < 12) hours += 12;
                     if (cleanTime.includes('am') && hours === 12) hours = 0;
                     
@@ -305,27 +257,32 @@ export default function UnifiedBookings() {
                   let startMinutes, endMinutes;
                   
                   if (timeStr.includes(' - ')) {
+                    // Format: "20:00 - 22:00"
                     const [start, end] = timeStr.split(' - ');
                     startMinutes = parseTime(start);
                     endMinutes = parseTime(end);
                   } else if (endTimeStr) {
+                    // Separate start and end time fields
                     startMinutes = parseTime(timeStr);
                     endMinutes = parseTime(endTimeStr);
                   } else {
+                    // Only start time given - assume 2 hour duration
                     startMinutes = parseTime(timeStr);
-                    endMinutes = startMinutes + 120;
+                    endMinutes = startMinutes + 120; // Default 2 hour duration
                   }
                   
                   return [startMinutes, endMinutes];
                 };
                 
-                [start1, end1] = getTimeRange(booking.eventTime, booking.eventEndTime);
-                [start2, end2] = getTimeRange(other.eventTime, other.eventEndTime);
+                const [start1, end1] = getTimeRange(booking.eventTime, booking.eventEndTime);
+                const [start2, end2] = getTimeRange(other.eventTime, other.eventEndTime);
                 
+                // Proper overlap detection: start1 < end2 && end1 > start2
                 hasTimeOverlap = start1 < end2 && end1 > start2;
                 severity = hasTimeOverlap ? 'hard' : 'soft';
                 
               } catch (error) {
+                // Parsing failed - treat as hard conflict for safety
                 severity = 'hard';
               }
             }
@@ -338,24 +295,22 @@ export default function UnifiedBookings() {
               withBookingId: other.id,
               severity,
               clientName: other.clientName || 'Unknown Client',
-              status: other.status || 'unknown',
+              status: other.status || 'new',
               time: other.eventTime || 'Time not specified',
-              canEdit: booking.status !== 'completed' && booking.status !== 'rejected' && booking.status !== 'cancelled',
-              canReject: booking.status !== 'completed' && booking.status !== 'rejected' && booking.status !== 'cancelled',
-              type: hasTimeOverlap ? 'time_overlap' : 'same_date',
-              message: hasTimeOverlap ? 
-                `Time overlap with ${other.clientName || 'Unknown Client'}` : 
-                `Same date as ${other.clientName || 'Unknown Client'}`,
-              overlapMinutes: hasTimeOverlap ? Math.min(end1, end2) - Math.max(start1, start2) : undefined
+              canEdit: true,
+              canReject: true,
+              type: 'same_day',
+              message: hasTimeOverlap 
+                ? `Time overlap with ${other.clientName} (${other.eventTime})`
+                : `Same day booking with ${other.clientName} (${other.eventTime})`,
+              overlapMinutes: hasTimeOverlap ? 60 : undefined
             };
           });
         
-        if (bookingConflicts.length > 0) {
-          conflicts[booking.id] = bookingConflicts;
-        }
+        conflicts[booking.id] = bookingConflicts;
       });
       
-      // Set the group severity based on whether it has hard conflicts
+      // Update conflict group severity
       conflictGroup.severity = hasHardConflict ? 'hard' : 'soft';
       groups.push(conflictGroup);
     });
@@ -363,363 +318,301 @@ export default function UnifiedBookings() {
     return { conflictsByBookingId: conflicts, conflictGroups: groups };
   }, [bookings]);
 
-  // Filter resolved conflicts
-  const filteredConflictGroups = React.useMemo(() => {
-    return conflictGroups.filter(group => {
-      const groupBookingIds = group.bookings.map(b => b.id).sort().join(',');
-      return !conflictResolutions.some(resolution => 
-        resolution.bookingIds === groupBookingIds
-      );
-    });
-  }, [conflictGroups, conflictResolutions]);
+  // OPTIMIZED: Simple conflict lookup instead of complex computation
+  const detectConflicts = (booking: any) => {
+    return conflictsByBookingId[booking.id] || [];
+  };
 
-  // Filter bookings based on search, status, and date
-  const filteredBookings = React.useMemo(() => {
-    let filtered = bookings;
+  // Find if this booking is the first in its conflict group (to show single resolve button)
+  const isFirstInConflictGroup = (booking: any) => {
+    const conflicts = detectConflicts(booking);
+    if (conflicts.length === 0) return false;
+    
+    // Find the conflict group for this booking's date
+    const bookingDate = new Date(booking.eventDate).toDateString();
+    const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
+    if (!conflictGroup) return false;
+    
+    // Return true if this is the first booking in the group (sorted by ID)
+    const sortedBookings = conflictGroup.bookings.sort((a: any, b: any) => a.id - b.id);
+    return sortedBookings[0].id === booking.id;
+  };
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(booking => 
-        (booking.clientName?.toLowerCase().includes(query)) ||
-        (booking.venue?.toLowerCase().includes(query)) ||
-        (booking.eventType?.toLowerCase().includes(query)) ||
-        (booking.title?.toLowerCase().includes(query))
-      );
+  // Function to open compliance dialog from booking action menu
+  const openComplianceDialog = (booking: any) => {
+    setSelectedBookingForCompliance(booking);
+    setSendComplianceDialogOpen(true);
+  };
+  
+  // Enhanced sorting function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
     }
+  };
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
-    }
+  // Enhanced filtering and sorting
+  const filteredAndSortedBookings = React.useMemo(() => {
+    if (!bookings || !Array.isArray(bookings)) return [];
 
-    // Apply date filter
-    if (dateFilter !== 'all') {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    let filtered = validBookings.filter((booking) => {
+      // Enhanced search - includes more fields
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        booking.clientName?.toLowerCase().includes(searchLower) ||
+        booking.clientEmail?.toLowerCase().includes(searchLower) ||
+        booking.venue?.toLowerCase().includes(searchLower) ||
+        booking.eventType?.toLowerCase().includes(searchLower) ||
+        booking.equipmentRequirements?.toLowerCase().includes(searchLower) ||
+        booking.specialRequirements?.toLowerCase().includes(searchLower) ||
+        booking.fee?.toString().includes(searchLower) ||
+        booking.id?.toString().includes(searchLower);
       
-      filtered = filtered.filter(booking => {
-        if (!booking.eventDate) return false;
-        const bookingDate = new Date(booking.eventDate);
-        const bookingDateOnly = new Date(bookingDate.getFullYear(), bookingDate.getMonth(), bookingDate.getDate());
+      const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+      
+      // Date filtering
+      let matchesDate = true;
+      if (dateFilter !== 'all' && booking.eventDate) {
+        const eventDate = new Date(booking.eventDate);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
         switch (dateFilter) {
           case 'today':
-            return bookingDateOnly.getTime() === today.getTime();
-          case 'this_week':
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            return bookingDateOnly >= startOfWeek && bookingDateOnly <= endOfWeek;
-          case 'this_month':
-            return bookingDate.getFullYear() === now.getFullYear() && 
-                   bookingDate.getMonth() === now.getMonth();
-          case 'upcoming':
-            return bookingDateOnly >= today;
+            const todayEnd = new Date(today);
+            todayEnd.setDate(todayEnd.getDate() + 1);
+            matchesDate = eventDate >= today && eventDate < todayEnd;
+            break;
+          case 'week':
+            const weekEnd = new Date(today);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            matchesDate = eventDate >= today && eventDate < weekEnd;
+            break;
+          case 'month':
+            const monthEnd = new Date(today);
+            monthEnd.setMonth(monthEnd.getMonth() + 1);
+            matchesDate = eventDate >= today && eventDate < monthEnd;
+            break;
           case 'past':
-            return bookingDateOnly < today;
-          default:
-            return true;
+            matchesDate = eventDate < today;
+            break;
+          case 'upcoming':
+            matchesDate = eventDate >= today;
+            break;
         }
-      });
-    }
+      }
+      
+      // Conflict filtering
+      let matchesConflict = true;
+      if (conflictFilter) {
+        const conflicts = detectConflicts(booking);
+        matchesConflict = conflicts.length > 0;
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate && matchesConflict;
+    });
 
-    // Apply conflict filter
-    if (conflictFilter) {
-      filtered = filtered.filter(booking => conflictsByBookingId[booking.id]);
-    }
-
-    // Sort bookings
-    filtered.sort((a, b) => {
-      let aVal: any = a[sortField as keyof Booking];
-      let bVal: any = b[sortField as keyof Booking];
+    // Sort the filtered results
+    filtered.sort((a: any, b: any) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
       
-      // Handle date sorting
-      if (sortField === 'eventDate') {
-        aVal = a.eventDate ? new Date(a.eventDate).getTime() : 0;
-        bVal = b.eventDate ? new Date(b.eventDate).getTime() : 0;
+      // Handle different data types
+      if (sortField === 'eventDate' || sortField === 'createdAt') {
+        aValue = aValue ? new Date(aValue) : new Date(0);
+        bValue = bValue ? new Date(bValue) : new Date(0);
+      } else if (sortField === 'fee') {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      } else if (typeof aValue === 'string') {
+        aValue = aValue?.toLowerCase() || '';
+        bValue = bValue?.toLowerCase() || '';
       }
       
-      // Handle string comparison
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
-      }
-      
-      // Handle numeric comparison
-      if (sortField === 'fee') {
-        aVal = parseFloat(String(aVal)) || 0;
-        bVal = parseFloat(String(bVal)) || 0;
-      }
-      
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
 
     return filtered;
-  }, [bookings, searchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection, conflictsByBookingId]);
+  }, [bookings, searchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
 
-  // Generate calendar data for current month
-  const calendarData = React.useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(firstDay.getDate() - firstDay.getDay());
+  const toggleSelectAll = () => {
+    const isAllSelected = filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length;
     
-    const days: CalendarDay[] = [];
-    const currentDateObj = new Date(startDate);
-    
-    for (let i = 0; i < 42; i++) {
-      const dateStr = currentDateObj.toDateString();
-      const dayBookings = bookings.filter(booking => {
-        if (!booking.eventDate) return false;
-        return new Date(booking.eventDate).toDateString() === dateStr;
-      });
-      
-      const dayEvents: CalendarEvent[] = dayBookings.map(booking => ({
-        id: booking.id,
-        title: booking.title || booking.clientName || 'Untitled Event',
-        date: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '',
-        type: 'booking' as const,
-        status: booking.status
-      }));
-      
-      days.push({
-        date: new Date(currentDateObj),
-        day: currentDateObj.getDate(),
-        isCurrentMonth: currentDateObj.getMonth() === month,
-        isToday: currentDateObj.toDateString() === new Date().toDateString(),
-        hasEvents: dayEvents.length > 0,
-        events: dayEvents
-      });
-      
-      currentDateObj.setDate(currentDateObj.getDate() + 1);
+    if (isAllSelected) {
+      setSelectedBookings([]);
+    } else {
+      setSelectedBookings(filteredAndSortedBookings.map((b: any) => b.id));
     }
-    
-    return days;
-  }, [currentDate, bookings]);
-
-  // Generate year view data
-  const yearData = React.useMemo(() => {
-    const year = currentDate.getFullYear();
-    const months: CalendarMonth[] = [];
-    
-    for (let month = 0; month < 12; month++) {
-      const monthBookings = bookings.filter(booking => {
-        if (!booking.eventDate) return false;
-        const bookingDate = new Date(booking.eventDate);
-        return bookingDate.getFullYear() === year && bookingDate.getMonth() === month;
-      });
-      
-      months.push({
-        date: new Date(year, month, 1),
-        month,
-        year,
-        isCurrentMonth: month === new Date().getMonth() && year === new Date().getFullYear(),
-        bookingCount: monthBookings.length,
-        bookings: monthBookings
-      });
-    }
-    
-    return months;
-  }, [currentDate, bookings]);
-
-  // Bulk action mutations
-  const bulkDeleteMutation = useMutation({
+  };
+  
+  const toggleSelectBooking = (bookingId: number) => {
+    setSelectedBookings(prev => 
+      prev.includes(bookingId) 
+        ? prev.filter(id => id !== bookingId)
+        : [...prev, bookingId]
+    );
+  };
+  
+  // Bulk delete mutation
+  const deleteMutation = useMutation({
     mutationFn: async (bookingIds: number[]) => {
-      await apiRequest(`/api/bookings/bulk-delete`, {
-        method: 'POST',
-        body: { bookingIds }
-      });
+      const promises = bookingIds.map(id => 
+        apiRequest(`/api/bookings/${id}`, { method: 'DELETE' })
+      );
+      return Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       setSelectedBookings([]);
       setShowDeleteDialog(false);
       toast({
-        title: "Bookings deleted",
-        description: `${selectedBookings.length} bookings have been deleted.`,
+        title: "Success",
+        description: `${selectedBookings.length} booking(s) deleted successfully`,
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to delete bookings. Please try again.",
+        description: "Failed to delete bookings",
         variant: "destructive",
       });
-    }
+    },
   });
-
-  const bulkStatusMutation = useMutation({
+  
+  // Bulk status change mutation
+  const statusChangeMutation = useMutation({
     mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
-      await apiRequest(`/api/bookings/bulk-status`, {
-        method: 'POST',
-        body: { bookingIds, status }
-      });
+      const promises = bookingIds.map(id => 
+        apiRequest(`/api/bookings/${id}`, { 
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        })
+      );
+      return Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       setSelectedBookings([]);
       setShowBulkStatusDialog(false);
       setBulkStatusChange("");
       toast({
-        title: "Bookings updated",
-        description: `${selectedBookings.length} bookings have been updated.`,
+        title: "Success",
+        description: `${selectedBookings.length} booking(s) status updated successfully`,
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update bookings. Please try again.",
+        description: "Failed to update booking status",
         variant: "destructive",
       });
-    }
+    },
   });
-
-  // Detect conflicts for a booking
-  const detectConflicts = (booking: Booking) => {
-    return conflictsByBookingId[booking.id] || [];
+  
+  const handleBulkDelete = () => {
+    if (selectedBookings.length > 0) {
+      setShowDeleteDialog(true);
+    }
   };
-
-  // Helper to check if booking has conflicts
-  const hasConflicts = (booking: Booking) => {
-    const conflicts = detectConflicts(booking);
-    return conflicts.length > 0;
+  
+  const handleBulkStatusChange = (status: string) => {
+    setBulkStatusChange(status);
+    setShowBulkStatusDialog(true);
   };
-
-  // Open compliance dialog
-  const openComplianceDialog = (booking: Booking) => {
-    setSelectedBookingForCompliance(booking);
-    setSendComplianceDialogOpen(true);
+  
+  const confirmBulkDelete = () => {
+    deleteMutation.mutate(selectedBookings);
   };
-
-  // Handle edit booking
-  const handleEditBooking = (booking: Booking) => {
-    setSelectedBookingForDetails(booking);
-    setBookingDetailsDialogOpen(true);
+  
+  const confirmBulkStatusChange = () => {
+    if (bulkStatusChange && selectedBookings.length > 0) {
+      statusChangeMutation.mutate({ bookingIds: selectedBookings, status: bulkStatusChange });
+    }
   };
-
-  // Event handlers
-  const handleViewModeChange = (mode: ViewMode) => {
+  
+  // Toggle view mode and persist preference
+  const toggleView = (mode: ViewMode) => {
     setViewMode(mode);
     localStorage.setItem('bookingViewMode', mode);
   };
 
-  const handleBookingClick = (booking: Booking) => {
-    setSelectedBookingForDetails(booking);
-    setBookingDetailsDialogOpen(true);
-  };
-
-  const handleStatusUpdate = (booking: Booking) => {
-    setSelectedBookingForUpdate(booking);
-    setBookingStatusDialogOpen(true);
-  };
-
-  const handleSendCompliance = (booking: Booking) => {
-    setSelectedBookingForCompliance(booking);
-    setSendComplianceDialogOpen(true);
-  };
-
-  const handleConflictResolve = (booking: Booking) => {
-    setSelectedBookingForConflict(booking);
-    setConflictResolutionDialogOpen(true);
-  };
-
-  const handleBulkSelect = (bookingId: number, selected: boolean) => {
-    if (selected) {
-      setSelectedBookings(prev => [...prev, bookingId]);
-    } else {
-      setSelectedBookings(prev => prev.filter(id => id !== bookingId));
-    }
-  };
-
-  const handleSelectAll = (selected: boolean) => {
-    if (selected) {
-      setSelectedBookings(filteredBookings.map(b => b.id));
-    } else {
-      setSelectedBookings([]);
-    }
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedBookings.length > 0) {
-      bulkDeleteMutation.mutate(selectedBookings);
-    }
-  };
-
-  const handleBulkStatusChange = () => {
-    if (selectedBookings.length > 0 && bulkStatusChange) {
-      bulkStatusMutation.mutate({ 
-        bookingIds: selectedBookings, 
-        status: bulkStatusChange 
-      });
-    }
-  };
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  // Calendar navigation functions
+  const goToPrevious = () => {
     const newDate = new Date(currentDate);
-    if (direction === 'prev') {
-      newDate.setMonth(newDate.getMonth() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
+    switch (calendarView) {
+      case 'day':
+        newDate.setDate(newDate.getDate() - 1);
+        break;
+      case 'week':
+        newDate.setDate(newDate.getDate() - 7);
+        break;
+      case 'month':
+        newDate.setMonth(newDate.getMonth() - 1);
+        break;
+      case 'year':
+        newDate.setFullYear(newDate.getFullYear() - 1);
+        break;
     }
     setCurrentDate(newDate);
   };
 
-  const navigateYear = (direction: 'prev' | 'next') => {
+  const goToNext = () => {
     const newDate = new Date(currentDate);
-    if (direction === 'prev') {
-      newDate.setFullYear(newDate.getFullYear() - 1);
-    } else {
-      newDate.setFullYear(newDate.getFullYear() + 1);
+    switch (calendarView) {
+      case 'day':
+        newDate.setDate(newDate.getDate() + 1);
+        break;
+      case 'week':
+        newDate.setDate(newDate.getDate() + 7);
+        break;
+      case 'month':
+        newDate.setMonth(newDate.getMonth() + 1);
+        break;
+      case 'year':
+        newDate.setFullYear(newDate.getFullYear() + 1);
+        break;
     }
     setCurrentDate(newDate);
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
+  // Get events for a specific date
+  const getEventsForDate = (date: Date): CalendarEvent[] => {
+    const dateStr = date.getFullYear() + '-' + 
+      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(date.getDate()).padStart(2, '0');
+    const events: CalendarEvent[] = [];
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    validBookings.forEach((booking) => {
+      if (booking.eventDate) {
+        const bookingDate = new Date(booking.eventDate);
+        const bookingDateStr = bookingDate.getFullYear() + '-' + 
+          String(bookingDate.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(bookingDate.getDate()).padStart(2, '0');
+        
+        if (bookingDateStr === dateStr) {
+          events.push({
+            id: booking.id,
+            title: booking.title || booking.clientName || 'Booking',
+            date: dateStr,
+            type: 'booking',
+            status: booking.status
+          });
+        }
+      }
     });
+
+    return events;
   };
 
-  const formatTime = (timeString?: string) => {
-    if (!timeString) return 'Time TBD';
-    return timeString;
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'new':
-      case 'enquiry':
-        return 'bg-sky-100 text-sky-700 border-sky-200';
-      case 'in_progress':
-      case 'awaiting_response':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'client_confirms':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'confirmed':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'completed':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-      case 'rejected':
-      case 'cancelled':
-        return 'bg-red-100 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
-  // Get status color for calendar badges  
+  // Get status color
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'new': return 'bg-blue-100 text-blue-800';
@@ -732,639 +625,1193 @@ export default function UnifiedBookings() {
     }
   };
 
-  // Calendar view components
-  const CalendarMonthView = () => (
-    <div className="space-y-4">
-      {/* Calendar header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h2>
-          <div className="flex items-center space-x-1">
-            <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        
-        <Select value={calendarView} onValueChange={(value: CalendarView) => setCalendarView(value)}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="year">Year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* Calendar grid */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
-        {/* Day headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200 dark:border-slate-700">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="p-3 text-sm font-medium text-gray-500 dark:text-gray-400 text-center">
-              {day}
-            </div>
-          ))}
-        </div>
-        
-        {/* Calendar days */}
-        <div className="grid grid-cols-7">
-          {calendarData.map((day, index) => (
-            <div 
-              key={index} 
-              className={`
-                min-h-24 p-2 border-r border-b border-gray-200 dark:border-slate-700 
-                ${!day.isCurrentMonth ? 'bg-gray-50 dark:bg-slate-900' : ''} 
-                ${day.isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
-                hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer
-              `}
-              onClick={() => {
-                if (day.events.length > 0) {
-                  // If there are events, show the first one or allow selection
-                  const firstEvent = day.events[0];
-                  const booking = bookings.find(b => b.id === firstEvent.id);
-                  if (booking) {
-                    handleBookingClick(booking);
-                  }
-                }
-              }}
-            >
-              <div className="flex justify-between items-start">
-                <span className={`
-                  text-sm 
-                  ${!day.isCurrentMonth ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300'} 
-                  ${day.isToday ? 'font-semibold text-blue-600 dark:text-blue-400' : ''}
-                `}>
-                  {day.day}
-                </span>
-                {day.hasEvents && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                )}
-              </div>
-              
-              <div className="mt-1 space-y-1">
-                {day.events.slice(0, 3).map((event) => (
-                  <div 
-                    key={event.id} 
-                    className={`
-                      text-xs p-1 rounded truncate
-                      ${getStatusBadgeColor(event.status || '')}
-                    `}
-                    title={`${event.title} - ${formatTime(bookings.find(b => b.id === event.id)?.eventTime || undefined)}`}
-                  >
-                    {event.title}
-                  </div>
-                ))}
-                {day.events.length > 3 && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    +{day.events.length - 3} more
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
-  const CalendarYearView = () => (
-    <div className="space-y-4">
-      {/* Year header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold">
-            {currentDate.getFullYear()}
-          </h2>
-          <div className="flex items-center space-x-1">
-            <Button variant="outline" size="sm" onClick={() => navigateYear('prev')}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              This Year
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateYear('next')}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        
-        <Select value={calendarView} onValueChange={(value: CalendarView) => setCalendarView(value)}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="year">Year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+  // Generate calendar data based on view type
+  const generateCalendarData = () => {
+    switch (calendarView) {
+      case 'day':
+        return generateDayView();
+      case 'week':
+        return generateWeekView();
+      case 'month':
+        return generateMonthView();
+      case 'year':
+        return generateYearView();
+      default:
+        return generateMonthView();
+    }
+  };
 
-      {/* Year grid */}
-      <div className="grid grid-cols-3 gap-4">
-        {yearData.map((month) => (
-          <Card 
-            key={month.month} 
-            className={`
-              cursor-pointer hover:shadow-md transition-shadow
-              ${month.isCurrentMonth ? 'ring-2 ring-blue-500' : ''}
-            `}
-            onClick={() => {
-              setCurrentDate(new Date(month.year, month.month, 1));
-              setCalendarView('month');
-            }}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                {monthNames[month.month]}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                {month.bookingCount}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {month.bookingCount === 1 ? 'booking' : 'bookings'}
-              </div>
-              {month.bookings.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {month.bookings.slice(0, 3).map((booking) => (
-                    <div 
-                      key={booking.id} 
-                      className="text-xs p-1 bg-gray-100 dark:bg-gray-700 rounded truncate"
-                      title={booking.title || booking.clientName}
-                    >
-                      {booking.clientName}
-                    </div>
-                  ))}
-                  {month.bookings.length > 3 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      +{month.bookings.length - 3} more
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  // Generate day view
+  const generateDayView = () => {
+    const date = new Date(currentDate);
+    const isToday = date.toDateString() === new Date().toDateString();
+    const events = getEventsForDate(date);
+    
+    return [{
+      date,
+      day: date.getDate(),
+      isCurrentMonth: true,
+      isToday,
+      hasEvents: events.length > 0,
+      events
+    }];
+  };
 
-  // List view component
-  const ListView = () => (
-    <div className="space-y-4">
-      {/* Bulk actions bar */}
-      {selectedBookings.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              {selectedBookings.length} booking{selectedBookings.length !== 1 ? 's' : ''} selected
-            </span>
-            <div className="flex items-center space-x-2">
-              <Select value={bulkStatusChange} onValueChange={setBulkStatusChange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Change status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enquiry">Enquiry</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              {bulkStatusChange && (
-                <Button size="sm" onClick={handleBulkStatusChange}>
-                  Update Status
-                </Button>
-              )}
-              <Button 
-                size="sm" 
-                variant="destructive" 
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Delete
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => setSelectedBookings([])}
-              >
-                Clear
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+  // Generate week view
+  const generateWeekView = () => {
+    const startOfWeek = new Date(currentDate);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
 
-      {/* Select all checkbox */}
-      {filteredBookings.length > 0 && (
-        <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-          <Checkbox
-            checked={selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
-            onCheckedChange={handleSelectAll}
-          />
-          <span className="text-sm font-medium">
-            Select all ({filteredBookings.length} bookings)
-          </span>
-        </div>
-      )}
+    const days = [];
+    const currentDateCopy = new Date(startOfWeek);
 
-      {/* Bookings list */}
-      <div className="space-y-3">
-        {filteredBookings.map((booking) => {
-          const conflicts = conflictsByBookingId[booking.id] || [];
-          const isSelected = selectedBookings.includes(booking.id);
-          
-          return (
-            <Card 
-              key={booking.id} 
-              className={`
-                ${getStatusBorderColor(booking.status || '')} border-l-4 
-                ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}
-                hover:shadow-md transition-shadow
-              `}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={(checked) => handleBulkSelect(booking.id, !!checked)}
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 
-                            className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                            onClick={() => handleBookingClick(booking)}
-                          >
-                            {booking.title || booking.clientName || 'Untitled Booking'}
-                          </h3>
-                          <Badge className={getStatusBadgeColor(booking.status || '')}>
-                            {booking.status?.replace('_', ' ') || 'unknown'}
-                          </Badge>
-                          {conflicts.length > 0 && (
-                            <ConflictIndicator 
-                              bookingId={booking.id}
-                              conflicts={conflicts}
-                            />
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          {booking.clientName && (
-                            <div className="flex items-center space-x-1">
-                              <User className="w-4 h-4" />
-                              <span>{booking.clientName}</span>
-                            </div>
-                          )}
-                          {booking.eventDate && (
-                            <div className="flex items-center space-x-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>{formatDate(booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '')}</span>
-                            </div>
-                          )}
-                          {booking.eventTime && (
-                            <div className="flex items-center space-x-1">
-                              <Clock className="w-4 h-4" />
-                              <span>{formatTime(booking.eventTime)}</span>
-                            </div>
-                          )}
-                          {booking.venue && (
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-4 h-4" />
-                              <span className="truncate">{booking.venue}</span>
-                            </div>
-                          )}
-                          {booking.fee && (
-                            <div className="flex items-center space-x-1">
-                              <PoundSterling className="w-4 h-4" />
-                              <span>£{booking.fee}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <BookingActionMenu 
-                        booking={booking}
-                        onEditBooking={handleEditBooking}
-                        onSendCompliance={openComplianceDialog}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(currentDateCopy);
+      const isToday = date.toDateString() === new Date().toDateString();
+      const events = getEventsForDate(date);
+
+      days.push({
+        date,
+        day: date.getDate(),
+        isCurrentMonth: date.getMonth() === currentDate.getMonth(),
+        isToday,
+        hasEvents: events.length > 0,
+        events
+      });
+
+      currentDateCopy.setDate(currentDateCopy.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  // Generate month view (existing logic)
+  const generateMonthView = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(firstDay);
+    
+    // Start from Monday of the first week
+    const firstDayOfWeek = firstDay.getDay();
+    const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+
+    const days = [];
+    const currentDateCopy = new Date(startDate);
+
+    // Generate 6 weeks (42 days)
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(currentDateCopy);
+      const isCurrentMonth = date.getMonth() === month;
+      const isToday = date.toDateString() === new Date().toDateString();
+      const events = getEventsForDate(date);
+      const hasEvents = events.length > 0;
+
+      days.push({
+        date,
+        day: date.getDate(),
+        isCurrentMonth,
+        isToday,
+        hasEvents,
+        events
+      });
+
+      currentDateCopy.setDate(currentDateCopy.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  // Generate year view
+  const generateYearView = () => {
+    const year = currentDate.getFullYear();
+    const months = [];
+    
+    for (let month = 0; month < 12; month++) {
+      const monthDate = new Date(year, month, 1);
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const monthBookings = validBookings.filter((booking) => {
+        if (!booking.eventDate) return false;
+        const bookingDate = new Date(booking.eventDate);
+        return bookingDate.getFullYear() === year && bookingDate.getMonth() === month;
+      });
       
-      {filteredBookings.length === 0 && !bookingsLoading && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No bookings found</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || conflictFilter 
-                ? "Try adjusting your search or filter criteria." 
-                : "Your bookings will appear here once you start receiving them."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+      months.push({
+        date: monthDate,
+        month: monthDate.getMonth(),
+        year: monthDate.getFullYear(),
+        isCurrentMonth: month === new Date().getMonth() && year === new Date().getFullYear(),
+        bookingCount: monthBookings.length,
+        bookings: monthBookings
+      });
+    }
+    
+    return months;
+  };
 
-  // Main component content
-  const BookingsContent = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Bookings</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">Manage your performance bookings and schedule</p>
-        </div>
-        {!isDesktop && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+  const handleDateClick = (date: Date) => {
+    const events = getEventsForDate(date);
+    if (events.length > 0) {
+      const firstEvent = events[0];
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const booking = validBookings.find((b) => b.id === firstEvent.id);
+      if (booking) {
+        setSelectedBookingForDetails(booking);
+        setBookingDetailsDialogOpen(true);
+      }
+    }
+  };
 
-      {/* View mode toggle */}
-      <div className="flex items-center justify-between">
-        <Tabs value={viewMode} onValueChange={(value) => handleViewModeChange(value as ViewMode)}>
-          <TabsList>
-            <TabsTrigger value="calendar" className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4" />
-              <span>Calendar</span>
-            </TabsTrigger>
-            <TabsTrigger value="list" className="flex items-center space-x-2">
-              <List className="w-4 h-4" />
-              <span>List</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+  const handleBookingClick = (booking: any) => {
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
 
-        <div className="flex items-center space-x-2">
-          <CalendarImport />
-          <Link href="/new-booking">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Booking
-            </Button>
-          </Link>
-        </div>
-      </div>
+  // Handler for editing booking from conflict resolution dialog
+  const handleEditBookingFromConflict = (booking: any) => {
+    console.log('handleEditBookingFromConflict called with booking:', booking);
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-              <Input
-                placeholder="Search bookings..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="enquiry">Enquiry</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <Calendar className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Dates</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="this_week">This Week</SelectItem>
-                <SelectItem value="this_month">This Month</SelectItem>
-                <SelectItem value="upcoming">Upcoming</SelectItem>
-                <SelectItem value="past">Past</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={conflictFilter}
-                onCheckedChange={setConflictFilter}
-              />
-              <label className="text-sm font-medium">
-                Conflicts Only
-              </label>
-            </div>
+  // Handler for editing booking from action menu
+  const handleEditBooking = (booking: any) => {
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
 
-            {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || conflictFilter) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('all');
-                  setDateFilter('all');
-                  setConflictFilter(false);
-                }}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Conflict alerts */}
-      {filteredConflictGroups.length > 0 && (
-        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-orange-800 dark:text-orange-200">
-              <Crown className="w-5 h-5" />
-              <span>Booking Conflicts Detected</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {filteredConflictGroups.slice(0, 3).map((group) => (
-                <div key={group.id} className="text-sm text-orange-700 dark:text-orange-300">
-                  <strong>{formatDate(group.date)}:</strong> {group.bookings.length} bookings on same date
-                  {group.severity === 'hard' && <span className="text-red-600 dark:text-red-400 ml-1">(Time conflict)</span>}
-                </div>
-              ))}
-              {filteredConflictGroups.length > 3 && (
-                <div className="text-sm text-orange-600 dark:text-orange-400">
-                  +{filteredConflictGroups.length - 3} more conflicts
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Main content */}
-      {bookingsLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Loading bookings...</span>
-        </div>
-      ) : (
-        <>
-          {viewMode === 'calendar' && (
-            <>
-              {calendarView === 'month' && <CalendarMonthView />}
-              {calendarView === 'year' && <CalendarYearView />}
-            </>
-          )}
-          {viewMode === 'list' && <ListView />}
-        </>
-      )}
-    </div>
-  );
-
-  if (isDesktop) {
-    return (
-      <div className="min-h-screen bg-background flex">
-        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
-          <Sidebar isOpen={true} onClose={() => {}} />
-        </div>
-        <div className="flex-1 ml-64 min-h-screen">
-          <div className="p-6">
-            <BookingsContent />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Get calendar data for the current view
+  const calendarData = generateCalendarData();
 
   return (
-    <div className="min-h-screen bg-background">
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="min-h-screen bg-background layout-consistent">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className={`
-        fixed left-0 top-0 h-full w-80 bg-white dark:bg-slate-900 shadow-xl z-50 
-        transform transition-transform duration-300 ease-in-out md:hidden
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      </div>
+      {/* Main Content - Viewport Height Container */}
+      <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+        {/* Mobile Header */}
+        {!isDesktop && (
+          <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-semibold">Bookings</h1>
+            </div>
+          </div>
+        )}
 
-      <div className="p-6">
-        <BookingsContent />
-      </div>
+        {/* Fixed Header Area */}
+        <div className="bg-white border-b flex-shrink-0">
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h1 className={`text-3xl font-bold ${isDesktop ? "" : "hidden lg:block"}`}>
+                  Bookings
+                </h1>
+                
+                {/* View Toggle */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleView('list')}
+                      className="rounded-md"
+                    >
+                      <List className="w-4 h-4 mr-2" />
+                      List
+                    </Button>
+                    <Button
+                      variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleView('calendar')}
+                      className="rounded-md"
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Calendar
+                    </Button>
+                  </div>
+                  
+                  <Link href="/new-booking">
+                    <Button className="bg-primary hover:bg-primary/90">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Booking
+                    </Button>
+                  </Link>
+                </div>
+              </div>
 
-      <MobileNav />
+              {/* Enhanced Filters */}
+              <div className="space-y-4">
+                {/* Search and Main Filters Row */}
+                <div className="flex flex-wrap gap-4">
+                  <div className="relative flex-1 min-w-64">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by client, venue, event type, fee, booking ID..."
+                      className="pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Select 
+                    value={statusFilter} 
+                    onValueChange={(value) => {
+                      setStatusFilter(value);
+                      if (!conflictFilter) {
+                        setPreviousStatusFilter(value);
+                      }
+                    }}
+                    disabled={conflictFilter}
+                  >
+                    <SelectTrigger className={`w-48 ${conflictFilter ? 'opacity-50' : ''}`}>
+                      <SelectValue placeholder={conflictFilter ? "All Status (Conflict Mode)" : "Filter by status"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="client_confirms">Client Confirms</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Dates</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Next 7 Days</SelectItem>
+                      <SelectItem value="month">Next 30 Days</SelectItem>
+                      <SelectItem value="upcoming">All Upcoming</SelectItem>
+                      <SelectItem value="past">Past Events</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Conflict Filter Toggle */}
+                  <div className="flex items-center gap-3 bg-white border rounded-lg px-3 py-2">
+                    <Switch
+                      id="conflict-filter"
+                      checked={conflictFilter}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Save current status filter before switching to conflicts
+                          setPreviousStatusFilter(statusFilter);
+                          setStatusFilter('all');
+                        } else {
+                          // Restore previous status filter when disabling conflicts
+                          setStatusFilter(previousStatusFilter);
+                        }
+                        setConflictFilter(checked);
+                      }}
+                      className="data-[state=checked]:bg-red-500"
+                    />
+                    <label 
+                      htmlFor="conflict-filter" 
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Show Conflicts Only
+                    </label>
+                    {conflictFilter && (
+                      <Badge variant="destructive" className="text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sort Controls Row - Only show in list view */}
+                {viewMode === 'list' && (
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="font-medium text-gray-700">Sort by:</span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={sortField === 'eventDate' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('eventDate')}
+                        className="h-8"
+                      >
+                        Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'clientName' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('clientName')}
+                        className="h-8"
+                      >
+                        Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'fee' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('fee')}
+                        className="h-8"
+                      >
+                        Fee {sortField === 'fee' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'status' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('status')}
+                        className="h-8"
+                      >
+                        Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'venue' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('venue')}
+                        className="h-8"
+                      >
+                        Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'createdAt' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('createdAt')}
+                        className="h-8"
+                      >
+                        Date Added {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Results Counter and Clear Filters */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {filteredAndSortedBookings.length} of {Array.isArray(bookings) ? bookings.length : 0} bookings
+                  {searchQuery && ` matching "${searchQuery}"`}
+                </div>
+                {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || conflictFilter || sortField !== 'eventDate') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('all');
+                      setPreviousStatusFilter('all');
+                      setDateFilter('all');
+                      setConflictFilter(false);
+                      setSortField('eventDate');
+                      setSortDirection('desc');
+                    }}
+                    className="h-8"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
+              </div>
+
+              {/* Bulk Actions Toolbar - Fixed in Header */}
+              {selectedBookings.length > 0 && (
+                <Card className="bg-blue-50 border-blue-200 mt-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-blue-700">
+                          {selectedBookings.length} booking(s) selected
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedBookings([])}
+                        >
+                          Clear Selection
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Change Status
+                              <MoreHorizontal className="w-4 h-4 ml-2" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('new')}>
+                              Mark as New
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('in_progress')}>
+                              Mark as In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
+                              Mark as Client Confirms
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
+                              Mark as Confirmed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('completed')}>
+                              Mark as Completed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('rejected')}>
+                              Mark as Rejected
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Selected
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Select All Header - Fixed in Header */}
+              {!bookingsLoading && filteredAndSortedBookings.length > 0 && viewMode === 'list' && (
+                <Card className="bg-gray-50 mt-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length}
+                        ref={(el) => {
+                          if (el && el.querySelector('input')) {
+                            const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredAndSortedBookings.length;
+                            (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
+                          }
+                        }}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                      <span className="text-sm font-medium">
+                        {(filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length) ? 'Deselect All' : 'Select All'} ({filteredAndSortedBookings.length} bookings)
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area - Different handling for list vs calendar */}
+        <div className={`${viewMode === 'list' ? 'overflow-y-auto' : 'flex flex-col'}`} style={{ height: 'calc(100vh - 450px)' }}>
+          <div className={`${viewMode === 'list' ? 'p-6' : 'p-6 flex-1 flex flex-col'}`}>
+            <div className={`max-w-7xl mx-auto ${viewMode === 'list' ? 'space-y-6' : 'flex-1 flex flex-col'}`}>
+
+            {/* Content Based on View Mode */}
+            {viewMode === 'list' ? (
+              /* List View with Conflict Grouping */
+              <div className="space-y-4">
+                
+                {bookingsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading bookings...</p>
+                  </div>
+                ) : filteredAndSortedBookings.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    {searchQuery || statusFilter !== 'all' || dateFilter !== 'all' ? 'No bookings match your filters' : 'No bookings found'}
+                  </div>
+                ) : (
+                  (() => {
+                    // Group bookings by conflict groups for visual grouping
+                    const renderedBookings = new Set<number>();
+                    const elements: JSX.Element[] = [];
+                    
+                    filteredAndSortedBookings.forEach((booking: any) => {
+                      if (renderedBookings.has(booking.id)) return;
+                      
+                      const conflicts = detectConflicts(booking);
+                      if (conflicts.length > 0) {
+                        // This booking has conflicts - render as a group
+                        const bookingDate = new Date(booking.eventDate).toDateString();
+                        const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
+                        
+                        if (conflictGroup) {
+                          // Filter group bookings to only show those in current filtered list
+                          const visibleGroupBookings = conflictGroup.bookings.filter((groupBooking: any) =>
+                            filteredAndSortedBookings.some((filtered: any) => filtered.id === groupBooking.id)
+                          );
+                          
+                          // Check if this conflict group is already resolved
+                          const groupBookingIds = visibleGroupBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
+                          const isResolved = (conflictResolutions || []).some((resolution: any) => {
+                            const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
+                            return JSON.stringify(resolutionBookingIds) === JSON.stringify(groupBookingIds);
+                          });
+                          
+                          if (visibleGroupBookings.length > 1) {
+                            // Render conflict group container
+                            elements.push(
+                              <div key={`conflict-group-${bookingDate}`} className="relative">
+                                {/* Conflict Group Header with Smart Resolve Button */}
+                                <div className={`flex items-center justify-between mb-2 p-3 border rounded-t-lg ${
+                                  isResolved 
+                                    ? 'bg-green-50 border-green-200' 
+                                    : conflictGroup.severity === 'hard' 
+                                    ? 'bg-red-50 border-red-200' 
+                                    : 'bg-orange-50 border-orange-200'
+                                }`}>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-medium ${
+                                      isResolved 
+                                        ? 'text-green-700' 
+                                        : conflictGroup.severity === 'hard' 
+                                        ? 'text-red-700' 
+                                        : 'text-orange-700'
+                                    }`}>
+                                      {isResolved ? '✅ Resolved Conflict Group' : '⚠️ Conflict Group'} - {new Date(booking.eventDate).toLocaleDateString()}
+                                    </span>
+                                    <span className={`text-sm ${
+                                      isResolved 
+                                        ? 'text-green-600' 
+                                        : conflictGroup.severity === 'hard' 
+                                        ? 'text-red-600' 
+                                        : 'text-orange-600'
+                                    }`}>
+                                      ({visibleGroupBookings.length} bookings) {conflictGroup.severity === 'soft' ? '- Soft conflict' : '- Hard conflict'}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Smart Resolution Button Logic */}
+                                  {isResolved ? (
+                                    <span className="px-4 py-2 bg-green-100 text-green-700 font-medium rounded-md">
+                                      Resolved
+                                    </span>
+                                  ) : conflictGroup.severity === 'hard' ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForConflict(booking);
+                                        setConflictResolutionDialogOpen(true);
+                                      }}
+                                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
+                                    >
+                                      Edit/Reject Bookings
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForConflict(booking);
+                                        setConflictResolutionDialogOpen(true);
+                                      }}
+                                      className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md transition-colors"
+                                    >
+                                      Resolve Soft Conflict
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                {/* Grouped Bookings */}
+                                <div className="border border-red-200 border-t-0 rounded-b-lg overflow-hidden">
+                                  {visibleGroupBookings.map((groupBooking: any, index: number) => {
+                                    renderedBookings.add(groupBooking.id);
+                                    return (
+                                      <Card 
+                                        key={groupBooking.id} 
+                                        className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status)} ${
+                                          selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                                        } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
+                                      >
+                                        <CardContent className="p-6">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4 flex-1">
+                                              <Checkbox
+                                                checked={selectedBookings.includes(groupBooking.id)}
+                                                onCheckedChange={() => toggleSelectBooking(groupBooking.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                              />
+                                              <div 
+                                                className="flex-1 cursor-pointer" 
+                                                onClick={() => handleBookingClick(groupBooking)}
+                                              >
+                                                <div className="flex items-center gap-4 mb-2">
+                                                <h3 className="text-lg font-semibold">
+                                                  {groupBooking.eventType || 'Event'}
+                                                </h3>
+                                                <Badge className={getStatusColor(groupBooking.status)}>
+                                                  {groupBooking.status?.replace('_', ' ') || 'New'}
+                                                </Badge>
+                                                {/* Conflict badge - matching dashboard style */}
+                                                {detectConflicts(groupBooking).length > 0 && (
+                                                  <Badge 
+                                                    variant="outline" 
+                                                    className={`text-xs ${
+                                                      detectConflicts(groupBooking).some(c => c.severity === 'hard')
+                                                        ? 'text-red-700 bg-red-50 border-red-300'
+                                                        : 'text-orange-700 bg-orange-50 border-orange-300'
+                                                    }`}
+                                                  >
+                                                    ⚠️ Conflict
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                              <div className="text-sm text-gray-600 space-y-1">
+                                                <div className="flex items-center gap-4">
+                                                  <span className="flex items-center gap-1">
+                                                    <User className="w-4 h-4" />
+                                                    {groupBooking.clientName || 'Unknown Client'}
+                                                  </span>
+                                                  {groupBooking.venue && (
+                                                    <span className="flex items-center gap-1">
+                                                      <MapPin className="w-4 h-4" />
+                                                      {groupBooking.venue}
+                                                    </span>
+                                                  )}
+                                                  {groupBooking.eventTime && (
+                                                    <span className="flex items-center gap-1">
+                                                      <Clock className="w-4 h-4" />
+                                                      {groupBooking.eventTime}
+                                                    </span>
+                                                  )}
+                                                  {groupBooking.fee && (
+                                                    <span className="flex items-center gap-1 font-medium text-green-600">
+                                                      <PoundSterling className="w-4 h-4" />
+                                                      {groupBooking.fee}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <p className="text-gray-500">
+                                                  {new Date(groupBooking.eventDate).toLocaleDateString('en-GB', {
+                                                    weekday: 'long',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                  })}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                          <div className="flex items-center justify-end mt-4">
+                                            <BookingActionMenu
+                                              booking={groupBooking}
+                                              onEditBooking={handleEditBooking}
+                                              onSendCompliance={openComplianceDialog}
+                                            />
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                            return;
+                          }
+                        }
+                      }
+                      
+                      // Non-conflicting booking or single booking in group - render normally
+                      renderedBookings.add(booking.id);
+                      elements.push(
+                        <Card 
+                          key={booking.id} 
+                          className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
+                            selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                          }`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
+                                <Checkbox
+                                  checked={selectedBookings.includes(booking.id)}
+                                  onCheckedChange={() => toggleSelectBooking(booking.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div 
+                                  className="flex-1 cursor-pointer" 
+                                  onClick={() => handleBookingClick(booking)}
+                                >
+                                  <div className="flex items-center gap-4 mb-2">
+                                  <h3 className="text-lg font-semibold">
+                                    {booking.eventType || 'Event'}
+                                  </h3>
+                                  <Badge className={getStatusColor(booking.status)}>
+                                    {booking.status?.replace('_', ' ') || 'New'}
+                                  </Badge>
+                                  {/* Conflict badge - matching dashboard style */}
+                                  {detectConflicts(booking).length > 0 && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${
+                                        detectConflicts(booking).some(c => c.severity === 'hard')
+                                          ? 'text-red-700 bg-red-50 border-red-300'
+                                          : 'text-orange-700 bg-orange-50 border-orange-300'
+                                      }`}
+                                    >
+                                      ⚠️ Conflict
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 space-y-1">
+                                  <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1">
+                                      <User className="w-4 h-4" />
+                                      {booking.clientName || 'Unknown Client'}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-4 h-4" />
+                                      {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
+                                    </span>
+                                    {booking.eventTime && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        {booking.eventTime}
+                                      </span>
+                                    )}
+                                    {booking.fee && (
+                                      <span className="flex items-center gap-1">
+                                        <PoundSterling className="w-4 h-4" />
+                                        £{booking.fee}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {booking.venue && (
+                                    <div className="text-gray-500">
+                                      {booking.venue}
+                                    </div>
+                                  )}
+                                </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <BookingActionMenu
+                                  booking={booking}
+                                  onEditBooking={handleEditBooking}
+                                  onSendCompliance={openComplianceDialog}
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    });
+                    
+                    return elements;
+                  })()
+                )}
+              </div>
+            ) : (
+              /* Calendar View - Fixed Window */
+              <Card className="h-full">
+                <CardHeader className="flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-center gap-4">
+                      {/* Calendar View Toggle */}
+                      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                        <Button
+                          variant={calendarView === 'day' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('day')}
+                          className="rounded-md text-xs"
+                        >
+                          Day
+                        </Button>
+                        <Button
+                          variant={calendarView === 'week' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('week')}
+                          className="rounded-md text-xs"
+                        >
+                          Week
+                        </Button>
+                        <Button
+                          variant={calendarView === 'month' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('month')}
+                          className="rounded-md text-xs"
+                        >
+                          Month
+                        </Button>
+                        <Button
+                          variant={calendarView === 'year' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('year')}
+                          className="rounded-md text-xs"
+                        >
+                          Year
+                        </Button>
+                      </div>
+                      
+                      {/* Date Display - Fixed Width */}
+                      <div className="text-center">
+                        <h2 className="text-xl font-semibold min-w-[200px]">
+                          {calendarView === 'day' && currentDate.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                          {calendarView === 'week' && (() => {
+                            const startOfWeek = new Date(currentDate);
+                            const day = startOfWeek.getDay();
+                            const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+                            startOfWeek.setDate(diff);
+                            const endOfWeek = new Date(startOfWeek);
+                            endOfWeek.setDate(startOfWeek.getDate() + 6);
+                            return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                          })()}
+                          {calendarView === 'month' && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                          {calendarView === 'year' && currentDate.getFullYear()}
+                        </h2>
+                        
+                        {/* Navigation Arrows - Fixed Position Below Date */}
+                        <div className="flex items-center justify-center gap-4 mt-2">
+                          <Button variant="outline" size="sm" onClick={goToPrevious}>
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentDate(new Date())}
+                            className="text-xs px-3"
+                          >
+                            Today
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={goToNext}>
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <CalendarImport />
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="h-full flex-1">
+                  {/* Dynamic Calendar Content Based on View */}
+                  {calendarView === 'day' && (
+                    <div className="h-full">
+                      {(() => {
+                        const dayData = generateCalendarData()[0];
+                        return (
+                          <div className="h-full p-4 border border-gray-200 rounded-lg">
+                            <div className="mb-4">
+                              <h3 className="text-lg font-semibold">
+                                {dayData.date.toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                {dayData.events.length} event{dayData.events.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                            <div className="space-y-3 overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
+                              {dayData.events.length > 0 ? (
+                                dayData.events.map((event, index) => {
+                                  const validBookings = validateBookingArray(bookings) ? bookings : [];
+                                  const booking = validBookings.find((b) => b.id === event.id);
+                                  return (
+                                    <div
+                                      key={index}
+                                      className={`p-3 border rounded-lg cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(event.status || 'new')}`}
+                                      onClick={() => {
+                                        if (booking) {
+                                          setSelectedBookingForDetails(booking);
+                                          setBookingDetailsDialogOpen(true);
+                                        }
+                                      }}
+                                    >
+                                      <div className="font-medium">{event.title}</div>
+                                      {booking && (
+                                        <div className="text-sm mt-1 space-y-1">
+                                          {booking.eventTime && <div>Time: {booking.eventTime}</div>}
+                                          {booking.venue && <div>Venue: {booking.venue}</div>}
+                                          {booking.fee && <div>Fee: £{booking.fee}</div>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <div className="text-center text-gray-500 py-8">
+                                  No events scheduled for this day
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  
+                  {calendarView === 'week' && (
+                    <div className="h-full">
+                      <div className="grid grid-cols-7 gap-1 h-full">
+                        {/* Week Day Headers */}
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                            {day}
+                          </div>
+                        ))}
+                        
+                        {/* Week Days */}
+                        {generateCalendarData().map((day, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
+                              ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                              ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                            `}
+                            style={{ height: 'calc(100% - 40px)' }}
+                            onClick={() => handleDateClick(day.date)}
+                          >
+                            <div className="font-medium text-sm mb-2">
+                              {day.day}
+                            </div>
+                            <div className="space-y-1">
+                              {day.events.slice(0, 4).map((event, eventIndex) => (
+                                <div
+                                  key={eventIndex}
+                                  className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {day.events.length > 4 && (
+                                <div className="text-xs text-gray-500">
+                                  +{day.events.length - 4} more
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {calendarView === 'month' && (
+                    <div className="h-full flex flex-col">
+                      {/* Month Day Headers - Fixed Height */}
+                      <div className="grid grid-cols-7 gap-1 flex-shrink-0">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Month Calendar Days - Fixed Grid Height */}
+                      <div className="grid grid-cols-7 gap-1 flex-1" style={{ gridTemplateRows: 'repeat(6, 1fr)' }}>
+                        {(() => {
+                          const calendarData = generateCalendarData();
+                          // Ensure we always have 42 cells (6 weeks × 7 days) for consistent layout
+                          const paddedData = [...calendarData];
+                          while (paddedData.length < 42) {
+                            paddedData.push({
+                              date: new Date(),
+                              day: '',
+                              isCurrentMonth: false,
+                              isToday: false,
+                              events: []
+                            });
+                          }
+                          return paddedData.map((day, index) => (
+                            <div
+                              key={index}
+                              className={`
+                                p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden flex flex-col
+                                ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                                ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                                ${day.day === '' ? 'invisible' : ''}
+                              `}
+                              onClick={() => day.day !== '' && handleDateClick(day.date)}
+                            >
+                              <div className="font-medium text-sm mb-1 flex-shrink-0">
+                                {day.day}
+                              </div>
+                              <div className="space-y-1 flex-1 overflow-hidden">
+                                {day.events.slice(0, 2).map((event, eventIndex) => (
+                                  <div
+                                    key={eventIndex}
+                                    className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                                  >
+                                    {event.title}
+                                  </div>
+                                ))}
+                                {day.events.length > 2 && (
+                                  <div className="text-xs text-gray-500">
+                                    +{day.events.length - 2} more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {calendarView === 'year' && (
+                    <div className="h-full p-4 overflow-y-auto">
+                      <div className="grid grid-cols-3 gap-4">
+                        {generateCalendarData().map((month, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              p-4 border border-gray-200 rounded-lg cursor-pointer hover:shadow-md transition-shadow
+                              ${month.isCurrentMonth ? 'bg-blue-50 border-blue-200' : ''}
+                            `}
+                            onClick={() => {
+                              setCurrentDate(month.date);
+                              setCalendarView('month');
+                            }}
+                          >
+                            <div className="text-center">
+                              <h4 className="font-semibold text-sm mb-2">
+                                {month.date.toLocaleDateString('en-US', { month: 'short' })}
+                              </h4>
+                              <div className="text-2xl font-bold text-gray-700 mb-2">
+                                {month.bookingCount}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                booking{month.bookingCount !== 1 ? 's' : ''}
+                              </div>
+                              {month.bookingCount > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {month.bookings.slice(0, 3).map((booking: any, bookingIndex: number) => (
+                                    <div
+                                      key={bookingIndex}
+                                      className="text-xs bg-white px-2 py-1 rounded truncate"
+                                    >
+                                      {booking.clientName || booking.title || 'Event'}
+                                    </div>
+                                  ))}
+                                  {month.bookingCount > 3 && (
+                                    <div className="text-xs text-gray-500">
+                                      +{month.bookingCount - 3} more
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Dialogs */}
       <BookingDetailsDialog
-        booking={selectedBookingForDetails as any}
         open={bookingDetailsDialogOpen}
         onOpenChange={setBookingDetailsDialogOpen}
+        booking={selectedBookingForDetails}
+        onBookingUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        }}
       />
-
+      
       <BookingStatusDialog
-        booking={selectedBookingForUpdate as any}
         open={bookingStatusDialogOpen}
         onOpenChange={setBookingStatusDialogOpen}
+        booking={selectedBookingForUpdate}
       />
-
-      {selectedBookingForCompliance && (
-        <SendComplianceDialog
-          booking={selectedBookingForCompliance as any}
-          isOpen={sendComplianceDialogOpen}
-          onClose={() => {
-            setSendComplianceDialogOpen(false);
-            setSelectedBookingForCompliance(null);
-          }}
-        />
-      )}
-
+      
+      <SendComplianceDialog
+        isOpen={sendComplianceDialogOpen}
+        onOpenChange={setSendComplianceDialogOpen}
+        booking={selectedBookingForCompliance}
+      />
+      
       <ConflictResolutionDialog
         isOpen={conflictResolutionDialogOpen}
         onClose={() => setConflictResolutionDialogOpen(false)}
-        conflictingBookings={selectedBookingForConflict ? [selectedBookingForConflict as any] : []}
+        conflictingBookings={selectedBookingForConflict ? 
+          // Find the conflict group that contains this booking
+          conflictGroups
+            .find(group => group.bookings.some((b: any) => b.id === selectedBookingForConflict.id))
+            ?.bookings || []
+          : []
+        }
+        onEditBooking={handleEditBooking}
+        onResolveConflict={(bookingToKeep) => {
+          // Handle the conflict resolution logic here
+          toast({
+            title: "Conflict Resolved",
+            description: `Kept booking for ${bookingToKeep.clientName}`,
+          });
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+          setConflictResolutionDialogOpen(false);
+        }}
       />
 
-      {/* Bulk delete dialog */}
+      {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Bookings</AlertDialogTitle>
+            <AlertDialogTitle>Delete Selected Bookings</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedBookings.length} booking{selectedBookings.length !== 1 ? 's' : ''}? 
+              Are you sure you want to delete {selectedBookings.length} selected booking(s)? 
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleBulkDelete}
+              onClick={confirmBulkDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
             >
-              Delete
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk status change dialog */}
+      {/* Bulk Status Change Confirmation Dialog */}
       <AlertDialog open={showBulkStatusDialog} onOpenChange={setShowBulkStatusDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Update Booking Status</AlertDialogTitle>
+            <AlertDialogTitle>Change Status for Selected Bookings</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change the status of {selectedBookings.length} booking{selectedBookings.length !== 1 ? 's' : ''} 
-              to "{bulkStatusChange?.replace('_', ' ')}"?
+              Are you sure you want to change the status of {selectedBookings.length} selected booking(s) to "{bulkStatusChange?.replace('_', ' ')}"?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkStatusChange}>
-              Update Status
+            <AlertDialogAction 
+              onClick={confirmBulkStatusChange}
+              disabled={statusChangeMutation.isPending}
+            >
+              {statusChangeMutation.isPending ? "Updating..." : "Update Status"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Mobile Navigation */}
+      {!isDesktop && <MobileNav />}
     </div>
   );
 }

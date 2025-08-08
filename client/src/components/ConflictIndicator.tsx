@@ -7,9 +7,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import ConflictResolutionDialog from "./ConflictResolutionDialog";
+import { ConflictResolutionDialog } from "./ConflictResolutionDialog";
 
 interface Conflict {
   withBookingId: number;
@@ -24,19 +25,6 @@ interface Conflict {
   overlapMinutes?: number;
 }
 
-interface ConflictingBooking {
-  id: number;
-  clientName: string;
-  eventDate: string;
-  eventTime?: string;
-  eventEndTime?: string;
-  venue?: string;
-  eventType?: string;
-  agreedFee?: string;
-  status: string;
-  previousStatus?: string;
-}
-
 interface ConflictIndicatorProps {
   bookingId: number;
   conflicts: Conflict[];
@@ -44,53 +32,22 @@ interface ConflictIndicatorProps {
   onEditBooking?: (booking: any) => void;
 }
 
-export default function ConflictIndicator({ 
-  bookingId, 
-  conflicts, 
-  onOpenModal, 
-  onEditBooking 
-}: ConflictIndicatorProps) {
+export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, onEditBooking }: ConflictIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
 
   // Fetch the current booking data for the resolution modal
-  const { data: currentBooking, refetch: refetchBooking } = useQuery<ConflictingBooking>({
+  const { data: currentBooking, refetch: refetchBooking } = useQuery({
     queryKey: [`/api/bookings/${bookingId}`],
-    enabled: showResolutionModal && !isNaN(bookingId) && bookingId > 0,
-    staleTime: 0,
-    gcTime: 0,
-  });
-
-  // Fetch all conflicting bookings based on the conflicts array
-  const { data: conflictingBookings = [] } = useQuery<ConflictingBooking[]>({
-    queryKey: [`/api/bookings/conflicting`, conflicts.map(c => c.withBookingId)],
-    queryFn: async () => {
-      if (!showResolutionModal || conflicts.length === 0) return [];
-      
-      // Fetch all conflicting bookings
-      const bookingPromises = conflicts.map(conflict => 
-        fetch(`/api/bookings/${conflict.withBookingId}`, {
-          credentials: 'include'
-        }).then(res => res.json())
-      );
-      
-      const bookings = await Promise.all(bookingPromises);
-      
-      // Add current booking if available
-      if (currentBooking) {
-        return [currentBooking, ...bookings];
-      }
-      
-      return bookings;
-    },
-    enabled: showResolutionModal && conflicts.length > 0,
-    staleTime: 0,
+    enabled: showResolutionModal,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache (v5 property name)
   });
 
   // Refetch when modal opens to ensure fresh data
   const handleResolveClick = () => {
     setShowResolutionModal(true);
-    refetchBooking();
+    refetchBooking(); // Force fresh data fetch
   };
 
   if (!conflicts || conflicts.length === 0) {
@@ -103,6 +60,20 @@ export default function ConflictIndicator({
   
   const severity = hasHard ? 'hard' : hasSoft ? 'soft' : 'resolved';
   
+  // Get color based on severity
+  const getIndicatorColor = (severity: string) => {
+    switch (severity) {
+      case 'hard':
+        return 'bg-red-500';
+      case 'soft':
+        return 'bg-orange-500';
+      case 'resolved':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-gray-400';
+    }
+  };
+
   const getTooltipText = () => {
     if (conflicts.length === 1) {
       const conflict = conflicts[0];
@@ -122,14 +93,9 @@ export default function ConflictIndicator({
     if (onOpenModal) {
       onOpenModal();
     } else {
+      // Skip simple modal and go directly to full resolution modal
       handleResolveClick();
     }
-  };
-
-  const handleResolveConflict = (bookingToKeep: ConflictingBooking) => {
-    // Handle the resolution logic here
-    console.log('Resolving conflict, keeping booking:', bookingToKeep);
-    setShowResolutionModal(false);
   };
 
   return (
@@ -218,9 +184,9 @@ export default function ConflictIndicator({
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
         onClose={() => setShowResolutionModal(false)}
-        conflictingBookings={conflictingBookings}
+        selectedBooking={currentBooking}
+        conflicts={conflicts || []}
         onEditBooking={onEditBooking}
-        onResolveConflict={handleResolveConflict}
       />
     </>
   );

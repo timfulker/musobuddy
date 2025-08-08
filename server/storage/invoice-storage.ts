@@ -188,13 +188,6 @@ export class InvoiceStorage {
     const result = await db.select({ count: sql<number>`count(*)` }).from(invoices);
     return result[0]?.count || 0;
   }
-
-  async getAllInvoicesForAdmin() {
-    // Admin method: Get all invoices across all users
-    const result = await db.select().from(invoices)
-      .orderBy(desc(invoices.createdAt));
-    return result;
-  }
 }
 
 export const invoiceStorage = new InvoiceStorage();

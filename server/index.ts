@@ -16,12 +16,6 @@ const app = express();
 app.set('trust proxy', 1);
 console.log('🔧 Proxy trust enabled for Replit infrastructure');
 
-// QUICK FIX: Serve built assets in development mode
-if (!ENV.isProduction) {
-  app.use('/assets', express.static('dist/public/assets'));
-  console.log('🔧 Development mode: serving built assets from /assets');
-}
-
 // Add health check endpoint for deployment validation
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
@@ -42,18 +36,23 @@ console.log('🔍 Production validation check:', {
   isProduction: ENV.isProduction
 });
 
-// Simplified production validation - less strict for deployment
 if (process.env.NODE_ENV === 'production' && !ENV.isProduction) {
-  console.warn('⚠️ PRODUCTION ENVIRONMENT MISMATCH:');
-  console.warn('NODE_ENV=production but REPLIT_DEPLOYMENT detection issue');
-  console.log('Environment vars:', {
+  console.error('❌ PRODUCTION DEPLOYMENT ERROR:');
+  console.error('NODE_ENV=production but REPLIT_DEPLOYMENT not detected properly');
+  console.error('Expected: REPLIT_DEPLOYMENT should be truthy (string "true" or numeric "1")');
+  console.error('Actual environment vars:', {
     NODE_ENV: process.env.NODE_ENV,
     REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-    REPL_ID: process.env.REPL_ID
+    type: typeof process.env.REPLIT_DEPLOYMENT,
+    boolean_result: Boolean(process.env.REPLIT_DEPLOYMENT)
   });
   
-  // Continue anyway - let Replit deployment handle the environment
-  console.warn('⚠️ Continuing with deployment - Replit will handle environment setup...');
+  // Try to continue anyway if we can detect Replit environment
+  if (process.env.REPLIT_DEPLOYMENT) {
+    console.warn('⚠️ Continuing deployment despite environment detection issue...');
+  } else {
+    process.exit(1);
+  }
 }
 
 // Health check endpoint moved - deployment systems should use /health
@@ -679,7 +678,7 @@ app.post('/api/webhook/mailgun',
           const { storage } = await import('./core/storage');
           
           await storage.createUnparseableMessage({
-            userId: "system", // Temporary system user for unparseable messages
+            userId: "43963086", // Default admin user for now, will be corrected after user lookup
             source: 'email',
             fromContact: `${clientName} <${clientEmail}>`,
             rawMessage: bodyField || 'No message content',
@@ -709,10 +708,10 @@ app.post('/api/webhook/mailgun',
     
     console.log(`📧 [${requestId}] Recipient field:`, recipientField);
     
-    // FALLBACK PROTECTION: Import webhook fallbacks  
+    // FALLBACK PROTECTION: Import webhook fallbacks
     const { getUserByEmailPrefix } = await import('./core/webhook-auth-fallbacks');
     
-    let userId: string | null = null;
+    let userId = null;
     
     // Parse email format: customprefix@enquiries.musobuddy.com
     if (recipientField.includes('@enquiries.musobuddy.com')) {
@@ -722,10 +721,8 @@ app.post('/api/webhook/mailgun',
       
       // Check for system addresses
       if (emailPrefix === 'noreply' || emailPrefix === 'admin') {
-        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using system user`);
-        // Look up actual admin user instead of hardcoding
-        const adminUser = await storage.getUserByEmail('timfulker@gmail.com');
-        userId = adminUser?.id || "system";
+        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using admin user`);
+        userId = "43963086"; // Admin user for system emails
       } else {
         // FALLBACK PROTECTION: Look up user using authentication-independent method
         try {
@@ -742,12 +739,10 @@ app.post('/api/webhook/mailgun',
       }
     }
     
-    // Fallback to system user if no match found
+    // Fallback to default user if no match found
     if (!userId) {
-      // Try to look up admin user as fallback
-      const adminUser = await storage.getUserByEmail('timfulker@gmail.com');
-      userId = adminUser?.id || "system";
-      console.log(`📧 [${requestId}] No user match found, using fallback user:`, userId);
+      userId = "43963086"; // Default admin user
+      console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
     }
 
     // Parse currency values for database
@@ -1006,10 +1001,24 @@ async function startServer() {
     const { setupAuthRoutes } = await import('./routes/auth-clean');
     setupAuthRoutes(app);
     
-    // Register all routes using the consolidated route registration
+    // Register all other routes
     console.log('🔄 Registering API routes...');
-    const { registerRoutes } = await import('./routes/index');
-    await registerRoutes(app);
+    const { registerContractRoutes } = await import('./routes/contract-routes');
+    const { registerInvoiceRoutes } = await import('./routes/invoice-routes');
+    const { registerBookingRoutes } = await import('./routes/booking-routes');
+    const { registerSettingsRoutes } = await import('./routes/settings-routes');
+    const { registerAdminRoutes } = await import('./routes/admin-routes');
+    const { registerStripeRoutes } = await import('./routes/stripe-routes');
+    const { registerHealthRoutes } = await import('./routes/health-routes');
+    
+    // Register routes directly without wrapper
+    registerStripeRoutes(app);
+    await registerContractRoutes(app);
+    await registerInvoiceRoutes(app);
+    await registerBookingRoutes(app);
+    await registerSettingsRoutes(app);
+    await registerAdminRoutes(app);
+    registerHealthRoutes(app);
     
     // Apply global error handling ONLY to API routes
     app.use('/api/*', errorHandler);

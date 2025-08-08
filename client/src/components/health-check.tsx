@@ -12,28 +12,23 @@ interface HealthCheckResult {
   responseTime?: number;
 }
 
-interface HealthCheck {
-  name: string;
-  url: string;
-}
-
 export function HealthCheckComponent() {
   const [results, setResults] = useState<HealthCheckResult[]>([]);
   const [testing, setTesting] = useState(false);
   const { toast } = useToast();
 
-  const healthChecks: HealthCheck[] = [
+  const healthChecks = [
     { name: 'Basic Health', url: '/api/health' },
     { name: 'Detailed Health', url: '/api/health/detailed' },
     { name: 'Session Debug', url: '/api/debug/session' },
     { name: 'Contracts List', url: '/api/contracts' }
   ];
 
-  const runHealthCheck = async (check: HealthCheck): Promise<HealthCheckResult> => {
+  const runHealthCheck = async (check: { name: string; url: string }): Promise<HealthCheckResult> => {
     const startTime = Date.now();
     
     try {
-      console.log(`Testing ${check.name} at ${check.url}`);
+      console.log(`🧪 Testing ${check.name} at ${check.url}`);
       
       const response = await fetch(check.url, {
         credentials: 'include',
@@ -46,7 +41,7 @@ export function HealthCheckComponent() {
       const responseTime = Date.now() - startTime;
       const contentType = response.headers.get('content-type');
       
-      console.log(`${check.name} response:`, {
+      console.log(`📊 ${check.name} response:`, {
         status: response.status,
         contentType,
         responseTime: `${responseTime}ms`
@@ -74,198 +69,179 @@ export function HealthCheckComponent() {
         };
       }
 
-      // Try to parse as JSON
       try {
-        responseData = responseText ? JSON.parse(responseText) : {};
+        responseData = JSON.parse(responseText);
       } catch (parseError) {
         return {
           endpoint: check.url,
           status: 'error',
-          message: `Invalid JSON response (${response.status})`,
+          message: `Failed to parse JSON (${response.status})`,
           responseTime,
           details: {
             status: response.status,
             contentType,
-            parseError: parseError instanceof Error ? parseError.message : String(parseError),
-            rawResponse: responseText.substring(0, 500)
+            parseError: parseError.message,
+            preview: responseText.substring(0, 200) + '...'
           }
         };
       }
 
-      if (!response.ok) {
+      if (response.ok) {
+        return {
+          endpoint: check.url,
+          status: 'success',
+          message: `✅ Success (${response.status}) - ${responseTime}ms`,
+          responseTime,
+          details: responseData
+        };
+      } else {
         return {
           endpoint: check.url,
           status: 'error',
-          message: `HTTP ${response.status}: ${responseData?.message || response.statusText}`,
+          message: `HTTP ${response.status}: ${responseData.error || response.statusText}`,
           responseTime,
           details: responseData
         };
       }
 
-      return {
-        endpoint: check.url,
-        status: 'success',
-        message: `OK (${responseTime}ms)`,
-        responseTime,
-        details: responseData
-      };
-
-    } catch (error) {
-      console.error(`Error testing ${check.name}:`, error);
+    } catch (error: any) {
       const responseTime = Date.now() - startTime;
-      
       return {
         endpoint: check.url,
         status: 'error',
-        message: `Network error: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Network error: ${error.message}`,
         responseTime,
-        details: { error: error instanceof Error ? error.message : String(error) }
+        details: { error: error.message }
       };
     }
   };
 
-  const runAllTests = async () => {
+  const runAllHealthChecks = async () => {
     setTesting(true);
     setResults([]);
-    
-    const initialResults: HealthCheckResult[] = healthChecks.map(check => ({
-      endpoint: check.url,
-      status: 'testing' as const,
-      message: 'Testing...'
-    }));
-    
-    setResults(initialResults);
 
-    try {
-      console.log('Starting health checks...');
+    console.log('🔍 Starting comprehensive health checks...');
+
+    const newResults: HealthCheckResult[] = [];
+
+    for (const check of healthChecks) {
+      // Add testing state
+      const testingResult: HealthCheckResult = {
+        endpoint: check.url,
+        status: 'testing',
+        message: 'Testing...'
+      };
+      newResults.push(testingResult);
+      setResults([...newResults]);
+
+      // Run the actual test
+      const result = await runHealthCheck(check);
       
-      const testResults = await Promise.all(
-        healthChecks.map(check => runHealthCheck(check))
-      );
-      
-      setResults(testResults);
-      
-      const successCount = testResults.filter(r => r.status === 'success').length;
-      const errorCount = testResults.filter(r => r.status === 'error').length;
-      
-      toast({
-        title: "Health Check Complete",
-        description: `${successCount} passed, ${errorCount} failed`,
-        variant: errorCount > 0 ? "destructive" : "default"
-      });
-      
-    } catch (error) {
-      console.error('Health check failed:', error);
-      toast({
-        title: "Health Check Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive"
-      });
-    } finally {
-      setTesting(false);
+      // Replace testing result with actual result
+      newResults[newResults.length - 1] = result;
+      setResults([...newResults]);
+
+      // Small delay between tests
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
+
+    setTesting(false);
+
+    // Show summary toast
+    const successCount = newResults.filter(r => r.status === 'success').length;
+    const totalCount = newResults.length;
+
+    toast({
+      title: "Health Check Complete",
+      description: `${successCount}/${totalCount} checks passed`,
+      variant: successCount === totalCount ? "default" : "destructive",
+    });
   };
 
-  const getStatusIcon = (status: HealthCheckResult['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'error':
         return <XCircle className="w-4 h-4 text-red-600" />;
       case 'testing':
-        return <Activity className="w-4 h-4 text-blue-600 animate-spin" />;
+        return <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />;
       default:
         return <AlertCircle className="w-4 h-4 text-gray-400" />;
     }
   };
 
-  const getStatusColor = (status: HealthCheckResult['status']) => {
-    switch (status) {
-      case 'success':
-        return 'border-green-200 bg-green-50';
-      case 'error':
-        return 'border-red-200 bg-red-50';
-      case 'testing':
-        return 'border-blue-200 bg-blue-50';
-      default:
-        return 'border-gray-200 bg-gray-50';
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            System Health Check
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Button 
-              onClick={runAllTests} 
-              disabled={testing}
-              className="w-full"
-            >
-              {testing ? (
-                <>
-                  <Activity className="w-4 h-4 mr-2 animate-spin" />
-                  Running Tests...
-                </>
-              ) : (
-                <>
-                  <Activity className="w-4 h-4 mr-2" />
-                  Run Health Checks
-                </>
-              )}
-            </Button>
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="w-5 h-5" />
+          System Health Check
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-600">
+            Test server connectivity and API endpoints
+          </p>
+          <Button 
+            onClick={runAllHealthChecks}
+            disabled={testing}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {testing ? "Testing..." : "Run Health Checks"}
+          </Button>
+        </div>
 
-            {results.length > 0 && (
-              <div className="space-y-3">
-                {results.map((result, index) => (
-                  <div
-                    key={result.endpoint}
-                    className={`p-4 border rounded-lg ${getStatusColor(result.status)}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(result.status)}
-                        <span className="font-medium">
-                          {healthChecks[index]?.name || result.endpoint}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {result.responseTime && `${result.responseTime}ms`}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2">
-                      <div className="text-sm">
-                        <span className="font-medium">Endpoint:</span> {result.endpoint}
-                      </div>
-                      <div className="text-sm mt-1">
-                        <span className="font-medium">Status:</span> {result.message}
-                      </div>
-                    </div>
-                    
-                    {result.details && result.status !== 'testing' && (
-                      <details className="mt-2">
-                        <summary className="text-sm font-medium cursor-pointer text-gray-600 hover:text-gray-800">
-                          View Details
-                        </summary>
-                        <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-40">
-                          {JSON.stringify(result.details, null, 2)}
-                        </pre>
-                      </details>
+        {results.length > 0 && (
+          <div className="space-y-2">
+            {results.map((result, index) => (
+              <div 
+                key={`${result.endpoint}-${index}`}
+                className={`p-3 rounded-lg border ${
+                  result.status === 'success' ? 'bg-green-50 border-green-200' :
+                  result.status === 'error' ? 'bg-red-50 border-red-200' :
+                  'bg-blue-50 border-blue-200'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(result.status)}
+                    <span className="font-medium">{result.endpoint}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-gray-600">{result.message}</span>
+                    {result.responseTime && (
+                      <div className="text-xs text-gray-500">{result.responseTime}ms</div>
                     )}
                   </div>
-                ))}
+                </div>
+
+                {result.details && process.env.NODE_ENV === 'development' && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-500 cursor-pointer">
+                      Show Details
+                    </summary>
+                    <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-auto">
+                      {JSON.stringify(result.details, null, 2)}
+                    </pre>
+                  </details>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+
+        <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+          <strong>Troubleshooting Tips:</strong>
+          <ul className="mt-1 space-y-1">
+            <li>• If "Received HTML instead of JSON" - Server routing issue</li>
+            <li>• If "Network error" - Server is down or unreachable</li>
+            <li>• If "HTTP 401" - Authentication problem</li>
+            <li>• If "HTTP 502/503" - Server temporarily unavailable</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

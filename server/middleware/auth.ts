@@ -1,12 +1,13 @@
+// CRITICAL FIX: Unified authentication middleware to prevent inconsistent token validation
 import jwt from 'jsonwebtoken';
 import { type Request, type Response, type NextFunction } from 'express';
 
 // Centralized JWT configuration
 const JWT_CONFIG = {
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'fallback-secret-key',
-  expiresIn: '7d' as const,
+  expiresIn: '7d',
   issuer: 'musobuddy',
-  algorithms: ['HS256'] as const
+  algorithms: ['HS256'] as jwt.Algorithm[]
 };
 
 // Enhanced logging for debugging
@@ -16,14 +17,8 @@ interface AuthToken {
   userId: string;
   email: string;
   isVerified: boolean;
-  isAdmin?: boolean;
   iat?: number;
   exp?: number;
-}
-
-interface AuthenticatedRequest extends Request {
-  user?: AuthToken;
-  authSource?: string;
 }
 
 // Centralized token generation with consistent format
@@ -32,7 +27,8 @@ export function generateAuthToken(userId: string, email: string, isVerified: boo
   
   const token = jwt.sign(payload, JWT_CONFIG.secret, {
     expiresIn: JWT_CONFIG.expiresIn,
-    issuer: JWT_CONFIG.issuer
+    issuer: JWT_CONFIG.issuer,
+    algorithm: 'HS256'
   });
   
   if (AUTH_DEBUG) {
@@ -53,7 +49,7 @@ export function verifyAuthToken(token: string): AuthToken | null {
     // Primary verification with full options
     const decoded = jwt.verify(token, JWT_CONFIG.secret, {
       issuer: JWT_CONFIG.issuer,
-      algorithms: ['HS256']
+      algorithms: JWT_CONFIG.algorithms
     }) as AuthToken;
     
     if (AUTH_DEBUG) {
@@ -66,7 +62,7 @@ export function verifyAuthToken(token: string): AuthToken | null {
     if (error.name === 'JsonWebTokenError' && error.message.includes('issuer')) {
       try {
         const decoded = jwt.verify(token, JWT_CONFIG.secret, {
-          algorithms: ['HS256']
+          algorithms: JWT_CONFIG.algorithms
         }) as AuthToken;
         
         if (AUTH_DEBUG) {
@@ -95,7 +91,7 @@ export function verifyAuthToken(token: string): AuthToken | null {
 }
 
 // Unified authentication middleware with comprehensive token extraction
-export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const requireAuth = (req: any, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   // Extract token from multiple sources (in priority order)
@@ -122,8 +118,8 @@ export const requireAuth = (req: AuthenticatedRequest, res: Response, next: Next
   }
   
   // 4. Cookie (for browser-based requests)
-  if (!token && (req as any).cookies?.authToken) {
-    token = (req as any).cookies.authToken;
+  if (!token && req.cookies?.authToken) {
+    token = req.cookies.authToken;
     tokenSource = 'cookie';
   }
   
@@ -167,7 +163,7 @@ export const requireAuth = (req: AuthenticatedRequest, res: Response, next: Next
 };
 
 // Optional authentication (doesn't fail if no token)
-export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: any, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
   
@@ -185,11 +181,10 @@ export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: Nex
 };
 
 // Admin-only middleware
-export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   requireAuth(req, res, () => {
-    // Check if user is admin from database
-    const isAdmin = req.user?.isAdmin === true;
+    const isAdmin = req.user?.userId === '43963086'; // Your admin user ID
     
     if (!isAdmin) {
       if (AUTH_DEBUG) {
@@ -202,7 +197,7 @@ export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: Nex
     }
     
     if (AUTH_DEBUG) {
-      console.log(`✅ [AUTH-ADMIN] Admin access granted to user ${req.user!.userId}`);
+      console.log(`✅ [AUTH-ADMIN] Admin access granted to user ${req.user.userId}`);
     }
     
     next();
@@ -210,7 +205,7 @@ export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: Nex
 };
 
 // Token refresh endpoint
-export const refreshToken = (req: AuthenticatedRequest, res: Response) => {
+export const refreshToken = (req: any, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ error: 'No user in request' });
   }

@@ -1,20 +1,12 @@
-import type { Express, Request, Response } from "express";
+import type { Express } from "express";
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    isVerified: boolean;
-  };
-}
 
 export function registerClientRoutes(app: Express) {
   console.log('👥 Setting up client routes...');
 
   // Get all clients for the authenticated user
-  app.get('/api/clients', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/clients', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
       
@@ -24,7 +16,7 @@ export function registerClientRoutes(app: Express) {
 
       // For now, return empty array since client storage isn't implemented yet
       // In a full implementation, this would fetch from database
-      const clients: any[] = [];
+      const clients = [];
       
       res.json(clients);
 
@@ -35,7 +27,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Create a new client
-  app.post('/api/clients', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/clients', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
       
@@ -59,7 +51,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Update a client
-  app.put('/api/clients/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.put('/api/clients/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
       const clientId = req.params.id;
@@ -84,7 +76,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Delete a client
-  app.delete('/api/clients/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.delete('/api/clients/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
       const clientId = req.params.id;

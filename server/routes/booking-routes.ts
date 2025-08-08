@@ -1,36 +1,16 @@
-import { type Express, type Request, type Response, type NextFunction } from "express";
+import { type Express } from "express";
 import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
+import { asyncHandler } from '../middleware/errorHandler';
+import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    isVerified: boolean;
-  };
-}
-
-// Async handler wrapper
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
-
-// Rate limiting middleware placeholder
-const generalApiRateLimit = (req: Request, res: Response, next: NextFunction) => {
-  next();
-};
-
-// Subscription middleware placeholder
-const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunction) => {
-  next();
-};
+import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
   // Get all bookings for authenticated user (requires subscription)
-  app.get('/api/bookings', requireAuth, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/bookings', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
       if (!userId) {
@@ -52,48 +32,47 @@ export function registerBookingRoutes(app: Express) {
     generalApiRateLimit,
     sanitizeInput,
     validateBody(schemas.createBooking),
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      try {
-        const userId = req.user?.userId;
-        if (!userId) {
-          return res.status(401).json({ error: 'Authentication required' });
-        }
-        
-        const bookingData = {
-          userId,
-          clientName: req.body.clientName,
-          clientEmail: req.body.clientEmail || null,
-          clientPhone: req.body.clientPhone || null,
-          venue: req.body.venue || null,
-          venueAddress: req.body.venueAddress || null,
-          eventDate: req.body.eventDate,
-          eventTime: req.body.eventTime || null,
-          eventEndTime: req.body.eventEndTime || null,
-          fee: req.body.fee || null,
-          deposit: req.body.deposit || "0.00",
-          status: req.body.status || 'new',
-          notes: req.body.notes || null,
-          gigType: req.body.gigType || null,
-          equipmentRequirements: req.body.equipmentRequirements || null,
-          specialRequirements: req.body.specialRequirements || null
-        };
-        
-        const newBooking = await storage.createBooking(bookingData);
-        console.log(`✅ Created booking #${newBooking.id} for user ${userId}`);
-        res.json(newBooking);
-        
-      } catch (error: any) {
-        console.error('❌ Failed to create booking:', error);
-        res.status(500).json({ 
-          error: 'Failed to create booking',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+    asyncHandler(async (req: any, res: any) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
-    })
-  );
+      
+      const bookingData = {
+        userId,
+        clientName: req.body.clientName,
+        clientEmail: req.body.clientEmail || null,
+        clientPhone: req.body.clientPhone || null,
+        venue: req.body.venue || null,
+        venueAddress: req.body.venueAddress || null,
+        eventDate: req.body.eventDate,
+        eventTime: req.body.eventTime || null,
+        eventEndTime: req.body.eventEndTime || null,
+        fee: req.body.fee || null,
+        deposit: req.body.deposit || "0.00",
+        status: req.body.status || 'new',
+        notes: req.body.notes || null,
+        gigType: req.body.gigType || null,
+        equipmentRequirements: req.body.equipmentRequirements || null,
+        specialRequirements: req.body.specialRequirements || null
+      };
+      
+      const newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ Created booking #${newBooking.id} for user ${userId}`);
+      res.json(newBooking);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create booking:', error);
+      res.status(500).json({ 
+        error: 'Failed to create booking',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }));
 
   // Update booking
-  app.patch('/api/bookings/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.patch('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.userId;
@@ -118,7 +97,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Delete booking
-  app.delete('/api/bookings/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.delete('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.userId;
@@ -143,17 +122,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Get individual booking
-  app.get('/api/bookings/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/bookings/:id', requireAuth, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.userId;
-      
-      // CRITICAL FIX: Validate booking ID
-      if (isNaN(bookingId) || bookingId <= 0) {
-        console.error(`❌ Invalid booking ID: "${req.params.id}" -> ${bookingId}`);
-        return res.status(400).json({ error: 'Invalid booking ID' });
-      }
-      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -172,7 +144,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Bulk delete bookings
-  app.post('/api/bookings/bulk-delete', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/bookings/bulk-delete', requireAuth, async (req: any, res) => {
     try {
       const { bookingIds } = req.body;
       const userId = req.user?.userId;
@@ -227,7 +199,7 @@ export function registerBookingRoutes(app: Express) {
   console.log('🔧 Setting up widget endpoints...');
 
   // CORS middleware for widget endpoints (allow Cloudflare R2 and other origins)
-  const widgetCorsHandler = (req: Request, res: Response, next: NextFunction) => {
+  const widgetCorsHandler = (req: any, res: any, next: any) => {
     const origin = req.headers.origin || '*';
     res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for widgets
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -242,7 +214,7 @@ export function registerBookingRoutes(app: Express) {
   };
 
   // Verify widget token
-  app.get('/api/widget/verify/:token', widgetCorsHandler, async (req: Request, res: Response) => {
+  app.get('/api/widget/verify/:token', widgetCorsHandler, async (req, res) => {
     try {
       const { token } = req.params;
       const user = await storage.getUserByQuickAddToken(token);
@@ -266,7 +238,7 @@ export function registerBookingRoutes(app: Express) {
   app.options('/api/widget/hybrid-submit', widgetCorsHandler);
 
   // Hybrid widget form submission (combines natural language + structured data)
-  app.post('/api/widget/hybrid-submit', widgetCorsHandler, async (req: Request, res: Response) => {
+  app.post('/api/widget/hybrid-submit', widgetCorsHandler, async (req, res) => {
     try {
       const { messageText, clientName, clientContact, eventDate, venue, token } = req.body;
       
@@ -347,7 +319,10 @@ ${messageText.replace(/\n/g, '<br>')}
           `;
           
           await emailService.sendEmail(
-            userSettings?.businessEmail || user.email!
+            userSettings?.businessEmail || user.email!,
+            subject,
+            emailBody,
+            emailBody // HTML version
           );
           
           console.log(`✅ Notification email sent for booking #${newBooking.id}`);
@@ -374,7 +349,7 @@ ${messageText.replace(/\n/g, '<br>')}
   });
 
   // Add missing QR code generation endpoint for production compatibility
-  app.post('/api/generate-qr-code', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/generate-qr-code', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
       if (!userId) {
@@ -397,8 +372,8 @@ ${messageText.replace(/\n/g, '<br>')}
         width: 400,
         margin: 2,
         color: {
-          dark: '#0000',
-          light: '#FFFF'
+          dark: '#000000',
+          light: '#FFFFFF'
         }
       });
       

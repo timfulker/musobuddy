@@ -2,79 +2,38 @@ import { db } from "../core/database";
 import { userSettings, emailTemplates, globalGigTypes } from "../../shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 
-interface UserSettingsData {
-  userId: string;
-  businessName?: string;
-  businessAddress?: string;
-  businessPhone?: string;
-  businessEmail?: string;
-  businessWebsite?: string;
-  businessBio?: string;
-  logoUrl?: string;
-  bankDetails?: any;
-  notificationPreferences?: any;
-  gigTypes?: string[];
-  defaultTheme?: string;
-  nextInvoiceNumber?: number;
-  defaultInvoiceDueDays?: number;
-  emailSignature?: string;
-  paymentInstructions?: string;
-}
-
-interface EmailTemplateData {
-  userId: string;
-  type: string;
-  name: string;
-  subject: string;
-  body: string;
-  variables?: any;
-}
-
-interface UserSettingsUpdate {
-  businessName?: string;
-  businessAddress?: string;
-  businessPhone?: string;
-  businessEmail?: string;
-  businessWebsite?: string;
-  businessBio?: string;
-  logoUrl?: string;
-  bankDetails?: any;
-  notificationPreferences?: any;
-  gigTypes?: string[];
-  defaultTheme?: string;
-  nextInvoiceNumber?: number;
-  defaultInvoiceDueDays?: number;
-  emailSignature?: string;
-  paymentInstructions?: string;
-}
-
-interface EmailTemplateUpdate {
-  type?: string;
-  name?: string;
-  subject?: string;
-  body?: string;
-  variables?: any;
-}
-
 export class SettingsStorage {
   private db = db;
 
-  // ==== USER SETTINGS METHODS ====
+  // ===== USER SETTINGS METHODS =====
   
-  async getSettings(userId: string): Promise<any | null> {
+  async getSettings(userId: string) {
     const result = await db.select().from(userSettings)
       .where(eq(userSettings.userId, userId));
     return result[0] || null;
   }
 
-  async createSettings(data: UserSettingsData): Promise<any> {
+  async createSettings(data: {
+    userId: string;
+    businessName?: string;
+    businessAddress?: string;
+    businessPhone?: string;
+    businessEmail?: string;
+    businessWebsite?: string;
+    businessBio?: string;
+    logoUrl?: string;
+    bankDetails?: any;
+    notificationPreferences?: any;
+  }) {
     const result = await db.insert(userSettings).values({
       ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning();
     return result[0];
   }
 
-  async updateSettings(userId: string, updates: UserSettingsUpdate): Promise<any> {
+  async updateSettings(userId: string, updates: any) {
     const existing = await this.getSettings(userId);
     
     if (!existing) {
@@ -82,49 +41,49 @@ export class SettingsStorage {
     }
 
     const result = await db.update(userSettings)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(userSettings.userId, userId))
       .returning();
     
     return result[0];
   }
 
-  // ==== EMAIL TEMPLATE METHODS ====
+  // ===== EMAIL TEMPLATE METHODS =====
   
-  async getEmailTemplates(userId: string): Promise<any[]> {
+  async getEmailTemplates(userId: string) {
     return await db.select().from(emailTemplates)
-      .where(eq(emailTemplates.userId, userId));
+      .where(eq(emailTemplates.userId, userId))
+      .orderBy(emailTemplates.type);
   }
 
-  async getEmailTemplate(userId: string, name: string): Promise<any | null> {
+  async getEmailTemplate(userId: string, type: string) {
     const result = await db.select().from(emailTemplates)
       .where(and(
         eq(emailTemplates.userId, userId),
-        eq(emailTemplates.name, name)
+        eq(emailTemplates.type, type)
       ));
     return result[0] || null;
   }
 
-  async createEmailTemplate(data: EmailTemplateData): Promise<any> {
+  async createEmailTemplate(data: {
+    userId: string;
+    type: string;
+    name: string;
+    subject: string;
+    body: string;
+    variables?: any;
+  }) {
     const result = await db.insert(emailTemplates).values({
-      userId: data.userId,
-      name: data.name,
-      subject: data.subject,
-      emailBody: data.body,
-      smsBody: data.variables?.smsBody,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning();
     return result[0];
   }
 
-  async updateEmailTemplate(id: number, userId: string, updates: EmailTemplateUpdate): Promise<any> {
-    const updateData: any = {};
-    if (updates.name !== undefined) updateData.name = updates.name;
-    if (updates.subject !== undefined) updateData.subject = updates.subject;
-    if (updates.body !== undefined) updateData.emailBody = updates.body;
-    if (updates.variables?.smsBody !== undefined) updateData.smsBody = updates.variables.smsBody;
-    
+  async updateEmailTemplate(id: number, userId: string, updates: any) {
     const result = await db.update(emailTemplates)
-      .set(updateData)
+      .set({ ...updates, updatedAt: new Date() })
       .where(and(
         eq(emailTemplates.id, id),
         eq(emailTemplates.userId, userId)
@@ -134,7 +93,7 @@ export class SettingsStorage {
     return result[0];
   }
 
-  async deleteEmailTemplate(id: number, userId: string): Promise<any> {
+  async deleteEmailTemplate(id: number, userId: string) {
     const result = await db.delete(emailTemplates)
       .where(and(
         eq(emailTemplates.id, id),
@@ -144,27 +103,9 @@ export class SettingsStorage {
     return result[0];
   }
 
-  async setDefaultEmailTemplate(id: number, userId: string): Promise<any> {
-    // First, set all templates to non-default
-    await db.update(emailTemplates)
-      .set({ isDefault: false })
-      .where(eq(emailTemplates.userId, userId));
-    
-    // Then set the selected template as default
-    const result = await db.update(emailTemplates)
-      .set({ isDefault: true })
-      .where(and(
-        eq(emailTemplates.id, id),
-        eq(emailTemplates.userId, userId)
-      ))
-      .returning();
-    
-    return result[0];
-  }
-
-  // ==== GLOBAL GIG TYPES METHODS ====
+  // ===== GLOBAL GIG TYPES METHODS =====
   
-  async getGlobalGigTypes(userId: string): Promise<string[]> {
+  async getGlobalGigTypes(userId: string) {
     const result = await db.select().from(globalGigTypes)
       .where(eq(globalGigTypes.userId, userId));
     
@@ -178,7 +119,7 @@ export class SettingsStorage {
     return [];
   }
 
-  async setGlobalGigTypes(userId: string, gigTypes: string[]): Promise<any> {
+  async setGlobalGigTypes(userId: string, gigTypes: string[]) {
     const gigTypesJson = JSON.stringify(gigTypes);
     
     const existing = await db.select().from(globalGigTypes)
@@ -186,7 +127,10 @@ export class SettingsStorage {
     
     if (existing[0]) {
       const result = await db.update(globalGigTypes)
-        .set({ gigTypes: gigTypesJson })
+        .set({ 
+          gigTypes: gigTypesJson,
+          updatedAt: new Date()
+        })
         .where(eq(globalGigTypes.userId, userId))
         .returning();
       return result[0];
@@ -194,12 +138,14 @@ export class SettingsStorage {
       const result = await db.insert(globalGigTypes).values({
         userId,
         gigTypes: gigTypesJson,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }).returning();
       return result[0];
     }
   }
 
-  async getAllUserSettingsForGigTypes(): Promise<Array<{ userId: string; gigTypes: string[] }>> {
+  async getAllUserSettingsForGigTypes() {
     const result = await db.select({
       userId: userSettings.userId,
       gigTypes: userSettings.gigTypes,
@@ -207,7 +153,7 @@ export class SettingsStorage {
 
     return result.map(row => ({
       userId: row.userId,
-      gigTypes: typeof row.gigTypes === 'string' ? JSON.parse(row.gigTypes) : (row.gigTypes || [])
+      gigTypes: row.gigTypes || []
     }));
   }
 }

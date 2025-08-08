@@ -1,16 +1,8 @@
-import { type Express, type Request, type Response } from "express";
+import { type Express } from "express";
 import { storage } from "../core/storage";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import { generateAuthToken, requireAuth } from '../middleware/auth';
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    isVerified: boolean;
-  };
-}
 
 // Phone number formatting
 function formatPhoneNumber(phone: string): string {
@@ -41,7 +33,7 @@ export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up clean JWT-based authentication...');
 
   // Signup endpoint
-  app.post('/api/auth/signup', async (req: Request, res: Response) => {
+  app.post('/api/auth/signup', async (req, res) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = req.body;
 
@@ -56,7 +48,7 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Generate verification code
-      const verificationCode = Math.floor(10000 + Math.random() * 90000).toString();
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
       // Store pending verification
@@ -103,7 +95,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Verify signup endpoint
-  app.post('/api/auth/verify-signup', async (req: Request, res: Response) => {
+  app.post('/api/auth/verify-signup', async (req, res) => {
     try {
       const { email, verificationCode } = req.body;
 
@@ -163,7 +155,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Login endpoint
-  app.post('/api/auth/login', async (req: Request, res: Response) => {
+  app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = req.body;
 
@@ -173,8 +165,8 @@ export function setupAuthRoutes(app: Express) {
 
       // Development mode: Quick access for testing accounts
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Admin account - look up by email instead of hardcoded ID
-        const realUser = await storage.getUserByEmail('timfulker@gmail.com');
+        // Admin account: user ID 43963086
+        const realUser = await storage.getUserById('43963086');
         
         if (realUser) {
           const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
@@ -244,14 +236,10 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Change password endpoint
-  app.post('/api/auth/change-password', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/auth/change-password', requireAuth, async (req: any, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const userId = req.user?.userId;
-
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
+      const userId = req.user.userId;
 
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Current password and new password are required' });
@@ -315,13 +303,9 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Get current user endpoint
-  app.get('/api/auth/user', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user?.userId;
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
+      const userId = req.user.userId;
       
       // Handle admin user from database
       const user = await storage.getUserById(userId);
@@ -346,13 +330,9 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Alias for /api/auth/user
-  app.get('/api/auth/me', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/auth/me', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user?.userId;
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
+      const userId = req.user.userId;
       
       const user = await storage.getUserById(userId);
       if (!user) {
@@ -376,7 +356,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // New register endpoint - creates user immediately
-  app.post('/api/auth/register', async (req: Request, res: Response) => {
+  app.post('/api/auth/register', async (req, res) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = req.body;
 
@@ -408,7 +388,7 @@ export function setupAuthRoutes(app: Express) {
       });
 
       // Store verification code for later SMS verification
-      const verificationCode = Math.floor(10000 + Math.random() * 90000).toString();
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
       pendingVerifications.set(userId, {
         firstName,
@@ -418,6 +398,14 @@ export function setupAuthRoutes(app: Express) {
         password: hashedPassword,
         verificationCode,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      } as {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phoneNumber: string;
+        password: string;
+        verificationCode: string;
+        expiresAt: Date;
       });
 
       res.json({ 
@@ -433,7 +421,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Send SMS verification code
-  app.post('/api/auth/send-sms', async (req: Request, res: Response) => {
+  app.post('/api/auth/send-sms', async (req, res) => {
     try {
       const { phoneNumber, userId } = req.body;
 
@@ -442,7 +430,7 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Generate new verification code
-      const verificationCode = Math.floor(10000 + Math.random() * 90000).toString();
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
       // Store/update verification data
@@ -496,7 +484,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Verify SMS code
-  app.post('/api/auth/verify-sms', async (req: Request, res: Response) => {
+  app.post('/api/auth/verify-sms', async (req, res) => {
     try {
       const { userId, verificationCode } = req.body;
 
@@ -536,9 +524,9 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
-  app.get('/api/subscription/status', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/subscription/status', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user.userId;
       console.log('📊 Auth route handling subscription status for userId:', userId);
       
       if (!userId) {
@@ -550,9 +538,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // Note: storage.getSubscription method needs to be implemented
-      // For now, returning null subscription
-      const subscription = null;
+      const subscription = await storage.getSubscription(userId);
       
       res.json({
         subscription: subscription || null,
