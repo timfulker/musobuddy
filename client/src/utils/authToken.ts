@@ -24,6 +24,18 @@ export const findActiveAuthToken = (): string | null => {
     ? 'authToken_dev' 
     : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
+  console.log(`🔐 findActiveAuthToken - hostname: ${hostname}`);
+  console.log(`🔐 findActiveAuthToken - baseKey: ${baseKey}`);
+  
+  // Debug: show all localStorage keys
+  console.log('🔐 All localStorage keys:');
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.includes('authToken')) {
+      console.log(`  - ${key}: ${!!localStorage.getItem(key)}`);
+    }
+  }
+    
   // Find the most recently stored token by checking all matching tokens
   let latestTokenData = null;
   let latestTimestamp = 0;
