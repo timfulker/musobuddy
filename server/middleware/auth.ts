@@ -10,8 +10,8 @@ const JWT_CONFIG = {
   algorithms: ['HS256'] as jwt.Algorithm[]
 };
 
-// Enhanced logging for debugging
-const AUTH_DEBUG = process.env.AUTH_DEBUG === 'true';
+// Enhanced logging for debugging - TEMPORARILY ENABLED for mobile debug
+const AUTH_DEBUG = true; // process.env.AUTH_DEBUG === 'true';
 
 interface AuthToken {
   userId: string;
