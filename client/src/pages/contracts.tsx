@@ -159,7 +159,7 @@ export default function Contracts() {
       
       form.setValue('contractNumber', contractNumber);
     }
-  }, [watchEventDate, watchClientName, editingContract, form]);
+  }, [watchEventDate, watchClientName, editingContract]); // Removed 'form' from deps to prevent infinite loop
 
   const createContractMutation = useMutation({
     mutationFn: async (data: ContractFormData) => {
