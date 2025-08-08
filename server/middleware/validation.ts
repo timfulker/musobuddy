@@ -52,7 +52,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
         });
       }
       
-      req.query = result.data;
+      req.query = result.data as any;
       next();
     } catch (error) {
       console.error('Query validation middleware error:', error);
@@ -89,7 +89,7 @@ export const schemas = {
 
   // Booking creation
   createBooking: z.object({
-    title: z.string().trim().min(1, 'Title is required').max(200, 'Title too long'),
+    title: z.string().trim().min(1, 'Title is required').max(200, 'Title too long').optional(),
     clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
     clientEmail: z.string().email('Invalid email format').optional(),
     clientPhone: z.string().optional(),
@@ -98,7 +98,15 @@ export const schemas = {
     endTime: z.string().optional(),
     fee: z.number().positive('Fee must be positive').optional(),
     venue: z.string().trim().min(1, 'Venue is required').max(200, 'Venue name too long'),
-    description: z.string().max(1000, 'Description too long').optional()
+    description: z.string().max(1000, 'Description too long').optional(),
+    venueAddress: z.string().optional(),
+    eventEndTime: z.string().optional(),
+    deposit: z.string().optional(),
+    status: z.string().optional(),
+    notes: z.string().optional(),
+    gigType: z.string().optional(),
+    equipmentRequirements: z.string().optional(),
+    specialRequirements: z.string().optional()
   }),
 
   // Invoice creation
@@ -123,7 +131,7 @@ export const schemas = {
   // AI template generation
   generateTemplate: z.object({
     enquiryText: z.string().trim().min(10, 'Enquiry text too short').max(5000, 'Enquiry text too long'),
-    templateType: z.enum(['quote', 'contract', 'email'], 'Invalid template type')
+    templateType: z.enum(['quote', 'contract', 'email'], { errorMap: () => ({ message: 'Invalid template type' }) })
   }),
 
   // Pagination
