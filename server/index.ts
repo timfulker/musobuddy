@@ -768,11 +768,44 @@ app.post('/api/webhook/mailgun',
       }
     }
 
+    // CRITICAL CHECK: Don't create booking without valid event date
+    if (!aiResult.eventDate || aiResult.eventDate === null) {
+      try {
+        // Import storage methods for unparseable message handling
+        const { storage } = await import('./core/storage');
+        
+        await storage.createUnparseableMessage({
+          userId: userId,
+          source: 'email',
+          fromContact: `${clientName} <${clientEmail}>`,
+          rawMessage: bodyField,
+          clientAddress: null,
+          messageType: 'vague',
+          parsingErrorDetails: 'No clear event date found - cannot create booking without specific date'
+        });
+        
+        console.log(`📅 [${requestId}] No event date found - saved to review messages instead of creating booking`);
+        
+        return res.json({
+          success: true,
+          savedForReview: true,
+          message: 'No event date found - saved for manual review',
+          requestId: requestId,
+          fromEmail: clientEmail,
+          reason: 'no_date'
+        });
+      } catch (storageError: any) {
+        console.error(`❌ [${requestId}] Failed to save no-date message:`, storageError);
+        return res.status(500).json({ error: 'Failed to process message without date' });
+      }
+    }
+
     // Parse currency values for database
     const parsedFee = parseCurrencyToNumber(aiResult.fee) || parseCurrencyToNumber(aiResult.estimatedValue) || null;
     const parsedEstimatedValue = parseCurrencyToNumber(aiResult.estimatedValue);
     
     console.log(`📧 [${requestId}] Currency parsing: fee "${aiResult.fee}" -> ${parsedFee}, estimatedValue "${aiResult.estimatedValue}" -> ${parsedEstimatedValue}`);
+    console.log(`📅 [${requestId}] Event date found: ${aiResult.eventDate} - proceeding with booking creation`);
 
     // Create booking
     const bookingData = {
