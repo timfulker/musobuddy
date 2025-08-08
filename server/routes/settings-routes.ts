@@ -411,28 +411,14 @@ export async function registerSettingsRoutes(app: Express) {
       
       const widgetUrl = uploadResult.url!;
       
-      // Generate QR code for the widget URL
-      const qrcode = await import('qrcode');
-      const qrCodeDataURL = await qrcode.toDataURL(widgetUrl, {
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
-        width: 256
-      });
+      // Store permanent widget URL and QR code (both now R2 URLs)
+      await storage.updateUserWidgetInfo(userId, uploadResult.url!, uploadResult.qrCodeUrl!);
       
-      // Store permanent widget URL and QR code
-      await storage.updateUserWidgetInfo(userId, widgetUrl, qrCodeDataURL);
-      
-      console.log(`✅ Widget token and QR code generated for user ${userId}: ${widgetUrl}`);
+      console.log(`✅ Widget token and QR code generated for user ${userId}: ${uploadResult.url}`);
       res.json({ 
-        url: widgetUrl, 
+        url: uploadResult.url, 
         token, 
-        qrCode: qrCodeDataURL 
+        qrCode: uploadResult.qrCodeUrl 
       });
       
     } catch (error) {
@@ -458,24 +444,10 @@ export async function registerSettingsRoutes(app: Express) {
         const uploadResult = await uploadWidgetToR2(userId.toString(), widgetToken);
         
         if (uploadResult.success) {
-          // Generate QR code for the widget URL
-          const qrcode = await import('qrcode');
-          const qrCodeDataURL = await qrcode.toDataURL(uploadResult.url!, {
-            errorCorrectionLevel: 'M',
-            type: 'image/png',
-            quality: 0.92,
-            margin: 1,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            },
-            width: 256
-          });
-          
           res.json({ 
             url: uploadResult.url, 
             token: widgetToken, 
-            qrCode: qrCodeDataURL 
+            qrCode: uploadResult.qrCodeUrl 
           });
         } else {
           res.json({ url: null, token: null, qrCode: null });
