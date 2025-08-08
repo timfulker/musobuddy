@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Eye, Trash2, ArrowRight, Calendar } from "lucide-react";
+import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Layout } from "@/components/layout";
+import { useLocation } from "wouter";
 
 interface UnparseableMessage {
   id: number;
@@ -29,6 +30,7 @@ export default function UnparseableMessages() {
   const [reviewNotes, setReviewNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['/api/unparseable-messages'],
@@ -229,6 +231,21 @@ export default function UnparseableMessages() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          // Extract client email from fromContact (format: "Name <email>")
+                          const emailMatch = message.fromContact.match(/<(.+)>/);
+                          const clientEmail = emailMatch ? emailMatch[1] : message.fromContact;
+                          // Navigate to templates page with prefilled client info
+                          navigate(`/templates?clientEmail=${encodeURIComponent(clientEmail)}&context=reply&messageId=${message.id}`);
+                        }}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                      >
+                        <Reply className="w-4 h-4" />
+                        Reply
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => deleteMutation.mutate(message.id)}
                         className="flex items-center gap-2 text-red-600 hover:text-red-700"
                       >
@@ -287,6 +304,20 @@ export default function UnparseableMessages() {
                 >
                   <ArrowRight className="w-4 h-4" />
                   Convert to Booking
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Extract client email from fromContact (format: "Name <email>")
+                    const emailMatch = selectedMessage.fromContact.match(/<(.+)>/);
+                    const clientEmail = emailMatch ? emailMatch[1] : selectedMessage.fromContact;
+                    // Navigate to templates page with prefilled client info
+                    navigate(`/templates?clientEmail=${encodeURIComponent(clientEmail)}&context=reply&messageId=${selectedMessage.id}`);
+                  }}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                >
+                  <Reply className="w-4 h-4" />
+                  Reply
                 </Button>
                 <Button
                   variant="outline"

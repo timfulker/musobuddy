@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { requireAuth } from '../middleware/auth';
+import { storage } from '../core/storage';
 
 export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
@@ -13,9 +14,7 @@ export function registerUnparseableRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // For now, return empty array since unparseable message storage isn't implemented yet
-      const messages = [];
-      
+      const messages = await storage.getUnparseableMessages(userId);
       res.json(messages);
 
     } catch (error) {
@@ -28,7 +27,7 @@ export function registerUnparseableRoutes(app: Express) {
   app.patch('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
-      const messageId = req.params.id;
+      const messageId = parseInt(req.params.id);
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -36,9 +35,14 @@ export function registerUnparseableRoutes(app: Express) {
 
       const { status, reviewNotes } = req.body;
       
-      // For now, return success without actually updating
+      await storage.updateUnparseableMessage(messageId, {
+        status,
+        reviewNotes,
+        reviewedAt: new Date()
+      });
+      
       res.json({ 
-        message: 'Message review functionality in development',
+        message: 'Message updated successfully',
         messageId,
         status,
         reviewNotes
@@ -54,7 +58,7 @@ export function registerUnparseableRoutes(app: Express) {
   app.post('/api/unparseable-messages/:id/convert', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
-      const messageId = req.params.id;
+      const messageId = parseInt(req.params.id);
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -62,10 +66,62 @@ export function registerUnparseableRoutes(app: Express) {
 
       const { reviewNotes } = req.body;
       
-      // For now, return success without actually converting
+      // Get the message details
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+      
+      // Extract client info from message
+      const emailMatch = message.fromContact.match(/<(.+)>/);
+      const clientEmail = emailMatch ? emailMatch[1] : message.fromContact;
+      const clientName = message.fromContact.replace(/<.*>/, '').trim();
+      
+      // Create booking from message
+      const booking = await storage.createBooking({
+        userId: userId,
+        title: "Manual Entry from Review",
+        clientName: clientName,
+        clientEmail: clientEmail,
+        clientPhone: null,
+        eventDate: null, // No date available
+        eventTime: null,
+        eventEndTime: null,
+        performanceDuration: null,
+        venue: null,
+        venueAddress: null,
+        clientAddress: null,
+        eventType: null,
+        gigType: null,
+        fee: null,
+        equipmentRequirements: null,
+        specialRequirements: null,
+        estimatedValue: null,
+        status: "new",
+        notes: message.rawMessage,
+        originalEmailContent: message.rawMessage,
+        applyNowLink: null,
+        responseNeeded: true,
+        lastContactedAt: null,
+        hasConflicts: false,
+        conflictCount: 0,
+        quotedAmount: null,
+        depositAmount: null,
+        finalAmount: null
+      });
+      
+      // Update message as converted
+      await storage.updateUnparseableMessage(messageId, {
+        status: 'converted',
+        reviewNotes,
+        convertedToBookingId: booking.id,
+        reviewedAt: new Date()
+      });
+      
       res.json({ 
-        message: 'Message conversion functionality in development',
+        message: 'Message converted to booking successfully',
         messageId,
+        bookingId: booking.id,
         reviewNotes
       });
 
@@ -79,15 +135,22 @@ export function registerUnparseableRoutes(app: Express) {
   app.delete('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
-      const messageId = req.params.id;
+      const messageId = parseInt(req.params.id);
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // For now, return success without actually deleting
+      // Verify ownership before deleting
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      await storage.deleteUnparseableMessage(messageId);
+      
       res.json({ 
-        message: 'Message delete functionality in development',
+        message: 'Message deleted successfully',
         messageId
       });
 
