@@ -16,6 +16,12 @@ System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "a
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
 ## Recent Updates (09/08/2025)
+- **QR CODE GENERATION FULLY FIXED**: Complete resolution of widget generation system (CONFIRMED WORKING)
+  - **ROOT CAUSE**: apiRequest function returning Response objects instead of parsed JSON data
+  - **ERROR**: "TypeError: (intermediate value).json is not a function" when frontend tried to parse already-parsed data
+  - **SOLUTION**: Fixed apiRequest to return Response objects, updated Settings component to properly parse JSON
+  - **CONFIRMED WORKING**: QR code generation, widget URL creation, and R2 storage integration all functioning
+  - **USER TESTED**: Widget generation button successfully creates permanent booking widgets with QR codes
 - CRITICAL EMAIL PARSING BUG FIX: Root cause identified and resolved (BUSINESS-CRITICAL)
   - **ROOT CAUSE**: AI preprocessing was converting "next year" to "2026" BEFORE analysis, making AI think it found a specific date
   - **BUG CHAIN**: "next year" → "2026" → AI assumes date exists → Layer 2 validation bypassed → booking created incorrectly

@@ -117,7 +117,8 @@ type SettingsFormData = z.infer<typeof settingsFormSchema>;
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
   // Use apiRequest which handles authentication properly
-  const data = await apiRequest('/api/settings');
+  const response = await apiRequest('/api/settings');
+  const data = await response.json();
   
   
   // Removed instrument and gig type parsing - feature moved to documentation
@@ -292,9 +293,10 @@ export default function Settings() {
   const getOrCreateWidgetUrl = async () => {
     setIsGeneratingToken(true);
     try {
-      const data = await apiRequest('/api/get-widget-info', {
+      const response = await apiRequest('/api/get-widget-info', {
         method: 'GET',
       });
+      const data = await response.json();
       
       if (data.url && data.qrCode) {
         // User already has a permanent widget
@@ -304,9 +306,10 @@ export default function Settings() {
       } else {
         // Create new permanent widget
         console.log('🔧 Calling generate-widget-token API...');
-        const newData = await apiRequest('/api/generate-widget-token', {
+        const newResponse = await apiRequest('/api/generate-widget-token', {
           method: 'POST',
         });
+        const newData = await newResponse.json();
         console.log('🔧 Parsed response data:', newData);
         
         // Check if the API returned an error message instead of data

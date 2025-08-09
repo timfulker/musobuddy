@@ -21,7 +21,7 @@ export async function apiRequest(
     body?: any;
     headers?: Record<string, string>;
   }
-): Promise<any> {
+): Promise<Response> {
   const method = options?.method || 'GET';
   let body = options?.body;
   const headers = options?.headers || {};
@@ -64,15 +64,7 @@ export async function apiRequest(
   }
 
   await throwIfResNotOk(res);
-  
-  // Parse JSON response
-  const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return await res.json();
-  }
-  
-  // Return text for non-JSON responses
-  return await res.text();
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
