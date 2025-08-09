@@ -18,6 +18,19 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
   error?: string;
 }> {
   try {
+    // Verify R2 environment variables
+    const requiredEnvVars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      const error = `Missing R2 environment variables: ${missingVars.join(', ')}`;
+      console.error('❌', error);
+      return {
+        success: false,
+        error
+      };
+    }
+    
     console.log(`🔧 Generating widget HTML for user ${userId} with token ${token}`);
     
     const widgetHTML = await generateHybridWidgetHTML(userId, token);
@@ -74,9 +87,21 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
     
   } catch (error: any) {
     console.error('❌ Failed to upload widget to R2:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = error.message || 'Unknown error occurred';
+    
+    if (error.code === 'CredentialsError' || error.message?.includes('credentials')) {
+      errorMessage = 'R2 credentials are invalid or missing';
+    } else if (error.code === 'NetworkingError' || error.message?.includes('network')) {
+      errorMessage = 'Network error connecting to R2 storage';
+    } else if (error.message?.includes('Bucket')) {
+      errorMessage = 'R2 bucket configuration error';
+    }
+    
     return {
       success: false,
-      error: error.message || 'Unknown error occurred'
+      error: errorMessage
     };
   }
 }

@@ -406,7 +406,7 @@ export async function registerSettingsRoutes(app: Express) {
       
       if (!uploadResult.success) {
         console.error('❌ Failed to upload widget to R2:', uploadResult.error);
-        return res.status(500).json({ error: 'Failed to generate widget' });
+        return res.status(500).json({ error: `Failed to generate QR code - ${uploadResult.error || 'please try again'}` });
       }
       
       const widgetUrl = uploadResult.url!;
