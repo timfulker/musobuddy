@@ -16,13 +16,15 @@ System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "a
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
 ## Recent Updates (09/08/2025)
-- CRITICAL EMAIL PARSING FIX: Enhanced price enquiry detection system (BUSINESS-CRITICAL)
-  - Fixed issue where "Hi, we're getting married next year. Can you let us have some prices please?" created bookings instead of Review Messages
-  - Added comprehensive keyword detection: "prices please", "some prices", "quote", "cost", "rate", "fee"
-  - Enhanced AI prompt with expanded pricing terminology
-  - Added "next year" validation - messages without specific dates route to Review Messages
-  - Comprehensive test validation shows 100% accuracy for price enquiry detection
-  - Protects revenue by ensuring pricing requests get personalized responses instead of automated bookings
+- CRITICAL EMAIL PARSING BUG FIX: Root cause identified and resolved (BUSINESS-CRITICAL)
+  - **ROOT CAUSE**: AI preprocessing was converting "next year" to "2026" BEFORE analysis, making AI think it found a specific date
+  - **BUG CHAIN**: "next year" → "2026" → AI assumes date exists → Layer 2 validation bypassed → booking created incorrectly
+  - **SOLUTION**: Removed problematic preprocessing, enhanced AI prompt to handle "next year" as vague date
+  - **DUAL PROTECTION RESTORED**: 
+    - Layer 1: Enhanced price keyword detection ("prices please", "some prices", "quote", "cost", "rate", "fee")  
+    - Layer 2: Date validation now properly catches vague dates like "next year" without specifics
+  - **TESTED**: Both protection layers now work correctly, preventing revenue loss from misrouted pricing enquiries
+  - **BUSINESS IMPACT**: Protects livelihood by ensuring pricing requests get personalized responses instead of automated bookings
 - WIDGET SYSTEM COMPLETE FIX: R2 external hosting with working form submissions
   - Fixed widget URLs to use external R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)
   - Fixed QR code generation and upload to R2 storage

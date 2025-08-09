@@ -942,10 +942,11 @@ export async function parseEmailWithAI(emailBody: string, subject: string): Prom
   }
 
   try {
-    const currentYear = new Date().getFullYear();
-    const processedBody = emailBody.replace(/next year/gi, `${currentYear + 1}`);
+    // CRITICAL FIX: DO NOT preprocess "next year" - let AI handle it naturally
+    // Previous bug: replacing "next year" with "2025" made AI think there was a specific date
+    const processedBody = emailBody; // No preprocessing needed
     
-    const prompt = `Extract booking details from this email. IMPORTANT: Only extract dates that are explicitly mentioned in the email content. Do NOT assume or default to today's date.
+    const prompt = `Extract booking details from this email. IMPORTANT: Only extract dates that are explicitly mentioned in the email content. Do NOT assume or default to today's date. "Next year" without a specific date should result in eventDate: null.
 
 Email Subject: ${subject}
 Email Content: ${processedBody}
