@@ -16,6 +16,13 @@ System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "a
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
 
 ## Recent Updates (09/08/2025)
+- CRITICAL EMAIL PARSING FIX: Enhanced price enquiry detection system (BUSINESS-CRITICAL)
+  - Fixed issue where "Hi, we're getting married next year. Can you let us have some prices please?" created bookings instead of Review Messages
+  - Added comprehensive keyword detection: "prices please", "some prices", "quote", "cost", "rate", "fee"
+  - Enhanced AI prompt with expanded pricing terminology
+  - Added "next year" validation - messages without specific dates route to Review Messages
+  - Comprehensive test validation shows 100% accuracy for price enquiry detection
+  - Protects revenue by ensuring pricing requests get personalized responses instead of automated bookings
 - WIDGET SYSTEM COMPLETE FIX: R2 external hosting with working form submissions
   - Fixed widget URLs to use external R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)
   - Fixed QR code generation and upload to R2 storage

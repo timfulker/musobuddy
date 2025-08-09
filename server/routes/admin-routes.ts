@@ -8,6 +8,24 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
+
+  // Temporary diagnostic endpoint for R2 configuration (no auth required for debugging)
+  app.get('/api/debug/r2-status', async (req: any, res) => {
+    const requiredEnvVars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];
+    const envStatus = requiredEnvVars.reduce((acc, varName) => {
+      acc[varName] = {
+        present: !!process.env[varName],
+        length: process.env[varName]?.length || 0
+      };
+      return acc;
+    }, {} as any);
+
+    res.json({
+      environment: process.env.NODE_ENV,
+      r2Status: envStatus,
+      missingVars: requiredEnvVars.filter(varName => !process.env[varName])
+    });
+  });
   
   // Admin: Regenerate widget tokens for specific users
   app.post('/api/admin/regenerate-widget-tokens', requireAdmin, async (req: any, res) => {
