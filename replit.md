@@ -24,6 +24,7 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
     - Layer 1: Enhanced price keyword detection ("prices please", "some prices", "quote", "cost", "rate", "fee")  
     - Layer 2: Date validation now properly catches vague dates like "next year" without specifics
   - **TESTED**: Both protection layers now work correctly, preventing revenue loss from misrouted pricing enquiries
+  - **INTELLIGENT DATE LOGIC**: Enhanced AI to assume next occurrence of month+day combinations (e.g., "August 13" = this year if after today's date, next year if already passed)
   - **BUSINESS IMPACT**: Protects livelihood by ensuring pricing requests get personalized responses instead of automated bookings
 - WIDGET SYSTEM COMPLETE FIX: R2 external hosting with working form submissions
   - Fixed widget URLs to use external R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)

@@ -971,7 +971,12 @@ CRITICAL DATE PARSING RULES:
 - NEVER default to today's date or current date
 - ONLY extract dates explicitly mentioned in the email text
 - A VALID DATE must include: day, month (can be "next month"), and year (can be "next year")
-- Examples of VALID DATES: "6th September 2025", "next Friday", "25th December", "next Wednesday", "15th next month"
+- DATE ASSUMPTION LOGIC: When month+day is mentioned, assume next occurrence relative to today (August 9th):
+  * "August 13" = this year (after today)
+  * "August 10" = next year (already passed this year)  
+  * "September 15" = this year (upcoming month)
+  * "July 20" = next year (month already passed)
+- Examples of VALID DATES: "6th September 2025", "next Friday", "25th December", "next Wednesday", "15th next month", "August 13", "September 20"
 - Examples of INVALID DATES: "next year" (no specific day/month), "sometime in 2025" (no specific day/month), "this summer" (vague)
 - If no specific date is mentioned, eventDate MUST be null
 - Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?", "next year", "sometime next year"
