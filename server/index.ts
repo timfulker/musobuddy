@@ -727,10 +727,16 @@ app.post('/api/webhook/mailgun',
     // CHECK: Handle price enquiries after user lookup - Enhanced detection
     const containsPricingKeywords = bodyField && (
       bodyField.toLowerCase().includes('pricing') ||
+      bodyField.toLowerCase().includes('prices please') ||
+      bodyField.toLowerCase().includes('some prices') ||
       bodyField.toLowerCase().includes('idea of cost') ||
       bodyField.toLowerCase().includes('idea of pricing') ||
       bodyField.toLowerCase().includes('how much') ||
-      bodyField.toLowerCase().includes('what do you charge')
+      bodyField.toLowerCase().includes('what do you charge') ||
+      bodyField.toLowerCase().includes('quote') ||
+      bodyField.toLowerCase().includes('cost') ||
+      bodyField.toLowerCase().includes('rate') ||
+      bodyField.toLowerCase().includes('fee')
     );
     
     // FIXED: AI returns isPriceEnquiry: true but messageType: "general", so prioritize isPriceEnquiry flag
@@ -976,7 +982,7 @@ IMPORTANT FEE PARSING INSTRUCTIONS:
 PRICE ENQUIRY DETECTION:
 Detect if this is primarily a price/quote request by looking for phrases like:
 - "how much", "what do you charge", "price", "quote", "cost", "rate", "fee"
-- "pricing", "budget", "rates", "charges", "quotation", "idea of pricing"
+- "pricing", "prices please", "some prices", "budget", "rates", "charges", "quotation", "idea of pricing"
 - "some idea of costs", "idea of cost", "ballpark figure", "rough cost"
 - Messages asking about availability AND pricing together
 - If the message mentions pricing/cost without specific event details, classify as price_enquiry
@@ -1028,13 +1034,29 @@ Extract in JSON format:
       aiResult.eventDate = null;
     }
     
+    // EXTRA VALIDATION: Check for "next year" scenarios without specific dates
+    const hasNextYear = emailBody.toLowerCase().includes('next year');
+    const hasSpecificDate = /\b\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(emailBody);
+    
+    if (hasNextYear && !hasSpecificDate && aiResult.eventDate) {
+      console.log(`⚠️ AI found date for "next year" without specific date - forcing to null for review`);
+      aiResult.eventDate = null;
+    }
+    
     console.log('🤖 AI extraction result:', JSON.stringify(aiResult, null, 2));
     
-    // Additional logging for debugging price enquiry detection
-    if (emailBody.toLowerCase().includes('pricing') || emailBody.toLowerCase().includes('idea of')) {
+    // Enhanced logging for debugging price enquiry detection
+    const hasPricingWords = emailBody.toLowerCase().includes('pricing') || 
+                           emailBody.toLowerCase().includes('prices') ||
+                           emailBody.toLowerCase().includes('idea of') ||
+                           emailBody.toLowerCase().includes('cost') ||
+                           emailBody.toLowerCase().includes('quote');
+                           
+    if (hasPricingWords) {
       console.log('🔍 DEBUG: Message contains pricing keywords, AI result:', {
         messageType: aiResult.messageType,
         isPriceEnquiry: aiResult.isPriceEnquiry,
+        eventDate: aiResult.eventDate,
         emailBody: emailBody.substring(0, 100) + '...'
       });
     }
