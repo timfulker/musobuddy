@@ -15,6 +15,29 @@ Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musob
 System reliability: Comprehensive 4-phase fix applied addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
+## Recent Updates (09/08/2025)
+- **QR CODE GENERATION FULLY FIXED**: Complete resolution of widget generation system (CONFIRMED WORKING)
+  - **ROOT CAUSE**: apiRequest function returning Response objects instead of parsed JSON data
+  - **ERROR**: "TypeError: (intermediate value).json is not a function" when frontend tried to parse already-parsed data
+  - **SOLUTION**: Fixed apiRequest to return Response objects, updated Settings component to properly parse JSON
+  - **PERSISTENCE FIX**: Added React Query integration for automatic widget data persistence across page navigations
+  - **CONFIRMED WORKING**: QR code generation, widget URL creation, R2 storage integration, and widget persistence all functioning
+  - **USER TESTED**: Widget generation button successfully creates permanent booking widgets with QR codes that persist
+- **CRITICAL EMAIL PARSING BUG FIX (EMERGENCY)**: Fixed "next April" availability queries creating bookings for today
+  - **BUSINESS IMPACT**: Prevents revenue loss from misrouted availability enquiries that should get personal responses
+  - **ROOT CAUSE**: Multiple silent failures - rules conflict, string "null" vs JSON null, pre-validation resolution
+  - **COMPREHENSIVE SOLUTION**: Bulletproof validation system with exactness checking and provenance tracking
+  - **PROTECTION LAYERS**: 
+    - **AI Prompt Fix**: Removed contradictory rules, added exactness classification (exact|relative-day|partial|none)
+    - **Robust Validator**: TypeScript validator checks date format, exactness, and source snippet authenticity
+    - **Safety Net Regex**: Pre-AI detection of vague patterns like "next April", "next year"
+    - **Multiple Traps**: Catches string "null", empty strings, today's date defaults, and partial dates
+  - **NEW AI FIELDS**: `eventDate_text` (source snippet), `eventDate_exactness` (validation level)
+  - **TEST CASES**: 
+    - "Are you available next April" → `eventDate_exactness: "partial"` → Review Messages ✅
+    - "next Friday" → `eventDate_exactness: "relative-day"` → Valid booking ✅
+    - "August 13th" → `eventDate_exactness: "exact"` → Valid booking ✅
+
 ## System Architecture
 
 ### Frontend

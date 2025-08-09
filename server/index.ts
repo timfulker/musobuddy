@@ -934,6 +934,78 @@ app.post('/api/webhook/mailgun',
   }
 });
 
+// Robust TypeScript validator for date extraction
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/i;
+const WEEKDAYS = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+
+function containsWeekdayWord(s: string): boolean {
+  const lc = s.toLowerCase();
+  return WEEKDAYS.some(d => lc.includes(d));
+}
+
+function containsDayOfMonth(s: string): boolean {
+  // rough but effective: a 1–31 number possibly with st/nd/rd/th
+  return /\b([12]?\d|3[01])(st|nd|rd|th)?\b/i.test(s);
+}
+
+function shouldCreateBooking(ai: any, rawEmailText: string): { ok: boolean; reason: string } {
+  // 1) Type strictness
+  if (ai.eventDate !== null && typeof ai.eventDate !== "string") {
+    return { ok: false, reason: "eventDate not string/null" };
+  }
+  if (ai.eventDate && !ISO_DATE_RE.test(ai.eventDate)) {
+    return { ok: false, reason: "eventDate not ISO YYYY-MM-DD" };
+  }
+
+  // 2) Null-string traps
+  if (ai.eventDate === "" || ai.eventDate === "null") {
+    return { ok: false, reason: "eventDate empty or string-null" };
+  }
+
+  // 3) Exactness gating
+  if (ai.eventDate_exactness === "none" || ai.eventDate_exactness === "partial") {
+    return { ok: false, reason: "date is none/partial -> Review" };
+  }
+
+  // 4) Require provenance snippet
+  if (!ai.eventDate_text) {
+    return { ok: false, reason: "missing eventDate_text" };
+  }
+
+  const txt = ai.eventDate_text;
+
+  // 5) The snippet must contain either a weekday word (for relative-day)
+  //    or a day-of-month (for exact). Month-only like "next April" will fail here.
+  const hasWeekday = containsWeekdayWord(txt);
+  const hasDayNum = containsDayOfMonth(txt);
+
+  if (ai.eventDate_exactness === "relative-day" && !hasWeekday) {
+    return { ok: false, reason: "relative-day without weekday -> Review" };
+  }
+
+  if (ai.eventDate_exactness === "exact" && !hasDayNum) {
+    return { ok: false, reason: "exact without day-of-month -> Review" };
+  }
+
+  // 6) Final guard: if eventDate is still null here, do not create
+  if (!ai.eventDate) {
+    return { ok: false, reason: "no concrete date set" };
+  }
+
+  return { ok: true, reason: "date valid" };
+}
+
+// Safety net regex - check for vague patterns before AI processing
+function hasVaguePatterns(emailText: string): boolean {
+  const vague = [
+    /\b(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i,
+    /\b(next|this)\s+(year|month|summer|winter|spring|autumn|fall)\b/i,
+    /\bsometime\s+(next|this)\s+(year|month)\b/i
+  ];
+  
+  return vague.some(pattern => pattern.test(emailText));
+}
+
 // AI email parsing function
 export async function parseEmailWithAI(emailBody: string, subject: string): Promise<any> {
   const openai = process.env.OPENAI_EMAIL_PARSING_KEY ? 
@@ -944,6 +1016,11 @@ export async function parseEmailWithAI(emailBody: string, subject: string): Prom
   }
 
   try {
+    // SAFETY NET: Check for vague patterns before AI processing
+    if (hasVaguePatterns(emailBody)) {
+      console.log(`⚠️ Pre-AI safety net detected vague date patterns - likely Review Message`);
+    }
+    
     // CRITICAL FIX: DO NOT preprocess "next year" - let AI handle it naturally
     // Previous bug: replacing "next year" with "2025" made AI think there was a specific date
     const processedBody = emailBody; // No preprocessing needed
@@ -970,20 +1047,19 @@ PRIORITY DETECTION:
 - "low": Spam, promotional, or vendor messages
 
 CRITICAL DATE PARSING RULES:
-- NEVER default to today's date or current date
-- ONLY extract dates explicitly mentioned in the email text
-- A VALID DATE must include: day, month (can be "next month"), and year (can be "next year")
-- DATE ASSUMPTION LOGIC: When month+day is mentioned, assume next occurrence relative to today (August 9th):
-  * "August 13" = this year (after today)
-  * "August 10" = next year (already passed this year)  
-  * "September 15" = this year (upcoming month)
-  * "July 20" = next year (month already passed)
-- Examples of VALID DATES: "6th September 2025", "next Friday", "25th December", "next Wednesday", "15th next month", "August 13", "September 20"
-- Examples of INVALID DATES: "next year" (no specific day/month), "next April" (no specific day), "sometime in 2025" (no specific day/month), "this summer" (vague)
-- If no specific date is mentioned, eventDate MUST be null
-- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?", "next year", "next April", "sometime next year", "Are you available next April"
-- CRITICAL: "next [month]" without a specific day is VAGUE and should return null
-- When in doubt, return null for eventDate
+- Never default to today/now
+- Only output eventDate when the email explicitly includes either:
+  (a) a specific day-of-month + month (year optional), or  
+  (b) a weekday with a modifier (e.g., "next Friday", "this Wednesday")
+- Month-only, year-only, or season-only phrases (e.g., "next April", "April 2026", "this summer", "next year") must result in eventDate: null
+- Never default to today. When unsure, return eventDate: null
+- Additionally return:
+  • eventDate_text: exact substring used to infer the date, or null
+  • eventDate_exactness: one of "exact" | "relative-day" | "partial" | "none"
+- Examples of EXACT dates: "6th September 2025", "August 13", "25th December" (contain day-of-month)
+- Examples of RELATIVE-DAY dates: "next Friday", "this Wednesday" (contain weekday + modifier)
+- Examples of PARTIAL dates: "next April", "April 2026", "next year", "this summer" (month/year/season only - INVALID)
+- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "Are you available next April"
 
 IMPORTANT FEE PARSING INSTRUCTIONS:
 - Look for any amount with £, $, € symbols
@@ -1007,6 +1083,8 @@ MESSAGE CLASSIFICATION:
 Extract in JSON format:
 {
   "eventDate": "YYYY-MM-DD ONLY if explicitly mentioned, otherwise null",
+  "eventDate_text": "exact snippet from the email used to infer date, or null",
+  "eventDate_exactness": "exact|relative-day|partial|none",
   "eventTime": "HH:MM or null", 
   "venue": "venue name or null",
   "eventType": "wedding/party/corporate/etc or null",
@@ -1028,7 +1106,7 @@ Extract in JSON format:
       messages: [
         { 
           role: "system", 
-          content: "You are a booking information extractor. CRITICAL: Only extract eventDate if a specific date is explicitly mentioned in the email. If no date is mentioned, return null for eventDate. Do not default to today or assume any dates."
+          content: "You are a booking information extractor. Only extract eventDate if the email explicitly includes either: (a) a specific day-of-month + month (year optional), or (b) a weekday with a modifier (e.g., 'next Friday', 'this Wednesday'). Month-only, year-only, or season-only phrases (e.g., 'next April', 'April 2026', 'this summer', 'next year') must result in eventDate: null. Never default to today. When unsure, return eventDate: null. Additionally return: eventDate_text (exact snippet used) and eventDate_exactness ('exact'|'relative-day'|'partial'|'none')."
         },
         { role: "user", content: prompt }
       ],
@@ -1038,6 +1116,15 @@ Extract in JSON format:
     });
 
     const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+    
+    // ROBUST VALIDATION: Enhanced date validation with exactness checking
+    const validationResult = shouldCreateBooking(aiResult, emailBody);
+    
+    if (!validationResult.ok) {
+      console.log(`⚠️ Date validation failed: ${validationResult.reason} - forcing eventDate to null`);
+      aiResult.eventDate = null;
+      aiResult.eventDate_exactness = 'none';
+    }
     
     // ADDITIONAL VALIDATION: Check if AI returned today's date incorrectly
     const today = new Date().toISOString().split('T')[0];
