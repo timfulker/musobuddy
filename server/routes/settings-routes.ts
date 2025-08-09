@@ -411,8 +411,12 @@ export async function registerSettingsRoutes(app: Express) {
       }
       
       // Generate R2-hosted widget (always accessible)
+      console.log(`🔧 Starting R2 upload for user ${userId} with token ${token}`);
       const { uploadWidgetToR2 } = await import('../widget-system/widget-storage');
+      
+      console.log(`🔧 Calling uploadWidgetToR2...`);
       const uploadResult = await uploadWidgetToR2(userId.toString(), token);
+      console.log(`🔧 Upload result:`, uploadResult);
       
       if (!uploadResult.success) {
         console.error('❌ Failed to upload widget to R2:', uploadResult.error);

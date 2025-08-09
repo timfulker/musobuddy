@@ -32,6 +32,7 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
     }
     
     console.log(`🔧 Generating widget HTML for user ${userId} with token ${token}`);
+    console.log(`🔧 R2 Config: account=${process.env.R2_ACCOUNT_ID}, bucket=${process.env.R2_BUCKET_NAME}`);
     
     const widgetHTML = await generateHybridWidgetHTML(userId, token);
     const widgetKey = `widgets/widget-${userId}-${token}.html`;
