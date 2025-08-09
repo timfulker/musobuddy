@@ -970,9 +970,11 @@ PRIORITY DETECTION:
 CRITICAL DATE PARSING RULES:
 - NEVER default to today's date or current date
 - ONLY extract dates explicitly mentioned in the email text
-- If no date is mentioned, eventDate MUST be null
-- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?"
-- Examples WITH DATE: "sixth of September", "September 6th", "next Friday", "25th December"
+- A VALID DATE must include: day, month (can be "next month"), and year (can be "next year")
+- Examples of VALID DATES: "6th September 2025", "next Friday", "25th December", "next Wednesday", "15th next month"
+- Examples of INVALID DATES: "next year" (no specific day/month), "sometime in 2025" (no specific day/month), "this summer" (vague)
+- If no specific date is mentioned, eventDate MUST be null
+- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?", "next year", "sometime next year"
 - When in doubt, return null for eventDate
 
 IMPORTANT FEE PARSING INSTRUCTIONS:
@@ -1035,12 +1037,19 @@ Extract in JSON format:
       aiResult.eventDate = null;
     }
     
-    // EXTRA VALIDATION: Check for "next year" scenarios without specific dates
+    // ENHANCED VALIDATION: Check for vague date scenarios
     const hasNextYear = emailBody.toLowerCase().includes('next year');
-    const hasSpecificDate = /\b\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(emailBody);
+    const hasSometime = /\b(sometime|around|roughly|approximately)\b/i.test(emailBody.toLowerCase());
     
-    if (hasNextYear && !hasSpecificDate && aiResult.eventDate) {
-      console.log(`⚠️ AI found date for "next year" without specific date - forcing to null for review`);
+    // Check for specific date patterns (day + month combinations)
+    const hasSpecificDate = /\b(next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|may|june|july|august|september|october|november|december)|\d{1,2}(st|nd|rd|th)?\s+next\s+month|next\s+(friday|saturday|sunday|monday|tuesday|wednesday|thursday))\b/i.test(emailBody);
+    
+    // Check for vague patterns that should be routed to review
+    const hasVagueDate = hasNextYear && !hasSpecificDate;
+    const hasVagueTerms = hasSometime && !hasSpecificDate;
+    
+    if ((hasVagueDate || hasVagueTerms) && aiResult.eventDate) {
+      console.log(`⚠️ AI found date for vague request - forcing to null for review. Patterns: nextYear=${hasNextYear}, sometime=${hasSometime}, specificDate=${hasSpecificDate}`);
       aiResult.eventDate = null;
     }
     
