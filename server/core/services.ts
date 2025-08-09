@@ -144,6 +144,24 @@ export class EmailService {
   }
 
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
+    // Helper function to safely format date
+    const formatDate = (date: any) => {
+      if (!date) return 'TBC';
+      try {
+        const dateObj = new Date(date);
+        return isNaN(dateObj.getTime()) ? 'TBC' : dateObj.toDateString();
+      } catch {
+        return 'TBC';
+      }
+    };
+
+    // Helper function to safely format fee
+    const formatFee = (fee: any) => {
+      if (fee === null || fee === undefined || fee === '') return 'TBC';
+      const numFee = typeof fee === 'string' ? parseFloat(fee) : fee;
+      return isNaN(numFee) ? 'TBC' : numFee.toFixed(2);
+    };
+
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <h2>Invoice ${invoice.invoiceNumber}</h2>
@@ -153,9 +171,9 @@ export class EmailService {
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
           <h3>Invoice Details:</h3>
           <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
-          <p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toDateString()}</p>
-          <p><strong>Fee:</strong> £${invoice.performanceFee}</p>
-          <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toDateString()}</p>
+          <p><strong>Performance Date:</strong> ${formatDate(invoice.eventDate)}</p>
+          <p><strong>Fee:</strong> £${formatFee(invoice.fee)}</p>
+          <p><strong>Due Date:</strong> ${formatDate(invoice.dueDate)}</p>
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
