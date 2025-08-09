@@ -303,6 +303,9 @@ export default function Settings() {
         setWidgetUrl(data.url);
         setQrCodeUrl(data.qrCode);
         console.log('✅ Retrieved existing permanent widget');
+        
+        // Ensure widget info query is also updated
+        await refetchWidgetInfo();
       } else {
         // Create new permanent widget
         console.log('🔧 Calling generate-widget-token API...');
@@ -326,6 +329,9 @@ export default function Settings() {
           setWidgetUrl(widgetUrlData);
           setQrCodeUrl(qrCodeData);
           console.log('✅ Created new permanent widget');
+          
+          // Invalidate and refetch widget info to ensure persistence
+          await refetchWidgetInfo();
         } else {
           console.error('QR code response missing data:', newData);
           throw new Error('Failed to generate QR code - please try again');
@@ -485,31 +491,25 @@ export default function Settings() {
     }
   };
 
-  // Load existing widget info on page load
+  // Load existing widget info using React Query
+  const { data: widgetInfo, refetch: refetchWidgetInfo } = useQuery({
+    queryKey: ['widget-info'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/get-widget-info');
+      return response.json();
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  // Update local state when widget info changes
   useEffect(() => {
-    const loadWidgetInfo = async () => {
-      try {
-        const response = await apiRequest('/api/get-widget-info', {
-          method: 'GET',
-        });
-        
-        // Parse JSON from response
-        const data = await response.json();
-        
-        if (data.url && data.qrCode) {
-          // User already has a permanent widget
-          setWidgetUrl(data.url);
-          setQrCodeUrl(data.qrCode);
-          console.log('✅ Loaded existing permanent widget on page load');
-        }
-      } catch (error) {
-        console.error('Error loading widget info:', error);
-        // Silently fail - user can still click the button to create a new widget
-      }
-    };
-    
-    loadWidgetInfo();
-  }, []);
+    if (widgetInfo?.url && widgetInfo?.qrCode) {
+      setWidgetUrl(widgetInfo.url);
+      setQrCodeUrl(widgetInfo.qrCode);
+      console.log('✅ Loaded widget info from query');
+    }
+  }, [widgetInfo]);
 
   // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
   useEffect(() => {
