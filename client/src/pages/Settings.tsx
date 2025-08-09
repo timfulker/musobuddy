@@ -303,9 +303,11 @@ export default function Settings() {
         console.log('✅ Retrieved existing permanent widget');
       } else {
         // Create new permanent widget
+        console.log('🔧 Calling generate-widget-token API...');
         const newData = await apiRequest('/api/generate-widget-token', {
           method: 'POST',
         });
+        console.log('🔧 Parsed response data:', newData);
         
         // Check if the API returned an error message instead of data
         if (newData.error) {
@@ -322,7 +324,7 @@ export default function Settings() {
           setQrCodeUrl(qrCodeData);
           console.log('✅ Created new permanent widget');
         } else {
-          console.error('QR code response:', newData);
+          console.error('QR code response missing data:', newData);
           throw new Error('Failed to generate QR code - please try again');
         }
       }
