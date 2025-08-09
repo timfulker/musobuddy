@@ -307,6 +307,12 @@ export default function Settings() {
           method: 'POST',
         });
         
+        // Check if the API returned an error message instead of data
+        if (newData.error) {
+          console.error('API Error:', newData.error);
+          throw new Error(`Failed to generate QR code - ${newData.error}`);
+        }
+        
         // Handle response - check for either qrCode or qrCodeDataUrl (for compatibility)
         const qrCodeData = newData.qrCode || newData.qrCodeDataUrl;
         const widgetUrlData = newData.url || newData.widgetUrl;

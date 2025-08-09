@@ -392,6 +392,16 @@ export async function registerSettingsRoutes(app: Express) {
 
       console.log(`🎲 Generating widget token for user ${userId}`);
       
+      // First check R2 environment variables
+      const requiredEnvVars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];
+      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+      
+      if (missingVars.length > 0) {
+        const error = `Missing R2 environment variables: ${missingVars.join(', ')}`;
+        console.error('❌', error);
+        return res.status(500).json({ error });
+      }
+      
       // Generate and store token in user record using the existing quickAddToken field
       const token = await storage.generateQuickAddToken(userId);
       
