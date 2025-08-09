@@ -33,8 +33,10 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
     - **Safety Net Regex**: Pre-AI detection of vague patterns like "next April", "next year"
     - **Multiple Traps**: Catches string "null", empty strings, today's date defaults, and partial dates
   - **NEW AI FIELDS**: `eventDate_text` (source snippet), `eventDate_exactness` (validation level)
+  - **CRITICAL SAFETY NET**: Pre-AI regex detection immediately catches vague patterns before AI processing
   - **TEST CASES**: 
-    - "Are you available next April" → `eventDate_exactness: "partial"` → Review Messages ✅
+    - "Are you available for a wedding next March, in London" → Pre-AI safety net → Review Messages ✅
+    - "Are you available next April" → Pre-AI safety net → Review Messages ✅  
     - "next Friday" → `eventDate_exactness: "relative-day"` → Valid booking ✅
     - "August 13th" → `eventDate_exactness: "exact"` → Valid booking ✅
 

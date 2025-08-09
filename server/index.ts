@@ -998,12 +998,24 @@ function shouldCreateBooking(ai: any, rawEmailText: string): { ok: boolean; reas
 // Safety net regex - check for vague patterns before AI processing
 function hasVaguePatterns(emailText: string): boolean {
   const vague = [
+    // Match "next March", "this April", etc. - month without specific day
     /\b(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i,
+    // Match "next year", "this summer", etc.
     /\b(next|this)\s+(year|month|summer|winter|spring|autumn|fall)\b/i,
-    /\bsometime\s+(next|this)\s+(year|month)\b/i
+    // Match "sometime next month", etc.
+    /\bsometime\s+(next|this)\s+(year|month)\b/i,
+    // Additional patterns for availability checks
+    /\b(available|availability).*?(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i
   ];
   
-  return vague.some(pattern => pattern.test(emailText));
+  const text = emailText.toLowerCase();
+  const hasVaguePattern = vague.some(pattern => pattern.test(text));
+  
+  if (hasVaguePattern) {
+    console.log(`🚨 VAGUE PATTERN DETECTED in: "${emailText.substring(0, 100)}..."`);
+  }
+  
+  return hasVaguePattern;
 }
 
 // AI email parsing function
@@ -1016,9 +1028,29 @@ export async function parseEmailWithAI(emailBody: string, subject: string): Prom
   }
 
   try {
-    // SAFETY NET: Check for vague patterns before AI processing
+    // CRITICAL SAFETY NET: Check for vague patterns before AI processing
     if (hasVaguePatterns(emailBody)) {
-      console.log(`⚠️ Pre-AI safety net detected vague date patterns - likely Review Message`);
+      console.log(`⚠️ Pre-AI safety net detected vague date patterns - forcing to Review Message`);
+      // Return immediately for vague patterns like "next March", "next April"
+      return { 
+        eventDate: null, 
+        eventDate_text: null,
+        eventDate_exactness: 'none',
+        eventTime: null, 
+        venue: null, 
+        eventType: null, 
+        gigType: null, 
+        clientPhone: null, 
+        fee: null, 
+        budget: null, 
+        estimatedValue: null, 
+        applyNowLink: null,
+        messageType: 'availability_check',
+        isPriceEnquiry: true,
+        subcategory: 'availability_check',
+        urgencyLevel: 'medium',
+        requiresPersonalResponse: true
+      };
     }
     
     // CRITICAL FIX: DO NOT preprocess "next year" - let AI handle it naturally
