@@ -272,6 +272,7 @@ export function registerBookingRoutes(app: Express) {
       // Create booking with combined data (form data takes precedence over AI parsed data)
       const bookingData = {
         userId: user.id,
+        title: clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request',
         clientName: clientName || parsedData.clientName || 'Unknown Client',
         clientEmail: clientEmail || null,
         clientPhone: clientPhone || null,

@@ -39,10 +39,15 @@ export class BookingStorage {
   }
 
   async createBooking(data: any) {
-    // Remove undefined values to prevent database errors
+    // Remove undefined values to prevent database errors, but ensure title is always present
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined)
     );
+
+    // Ensure title is always present
+    if (!cleanData.title) {
+      cleanData.title = 'Booking Request';
+    }
 
     const result = await db.insert(bookings).values({
       ...cleanData,
