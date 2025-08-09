@@ -520,5 +520,124 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
+  // Create new email template
+  app.post('/api/templates', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { name, subject, emailBody, smsBody, isAutoRespond } = req.body;
+      
+      if (!name || !subject || !emailBody) {
+        return res.status(400).json({ error: 'Name, subject, and email body are required' });
+      }
+
+      const template = await storage.createEmailTemplate({
+        userId,
+        name,
+        subject,
+        emailBody,
+        smsBody: smsBody || '',
+        isAutoRespond: Boolean(isAutoRespond)
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('❌ Failed to create template:', error);
+      res.status(500).json({ error: 'Failed to create template' });
+    }
+  });
+
+  // Update email template
+  app.patch('/api/templates/:id', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+
+      const { name, subject, emailBody, smsBody, isAutoRespond } = req.body;
+      
+      const template = await storage.updateEmailTemplate(templateId, {
+        name,
+        subject,
+        emailBody,
+        smsBody,
+        isAutoRespond: Boolean(isAutoRespond)
+      }, userId);
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found or access denied' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('❌ Failed to update template:', error);
+      res.status(500).json({ error: 'Failed to update template' });
+    }
+  });
+
+  // Delete email template
+  app.delete('/api/templates/:id', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+
+      const success = await storage.deleteEmailTemplate(templateId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Template not found or access denied' });
+      }
+
+      res.json({ success: true, message: 'Template deleted successfully' });
+    } catch (error) {
+      console.error('❌ Failed to delete template:', error);
+      res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
+  // Set template as default
+  app.post('/api/templates/:id/set-default', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      const templateId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+
+      const success = await storage.setDefaultEmailTemplate(templateId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Template not found or access denied' });
+      }
+
+      res.json({ success: true, message: 'Template set as default successfully' });
+    } catch (error) {
+      console.error('❌ Failed to set default template:', error);
+      res.status(500).json({ error: 'Failed to set default template' });
+    }
+  });
+
   console.log('✅ Settings routes configured');
 }

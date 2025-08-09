@@ -185,10 +185,13 @@ export default function Templates() {
 
   const handleCreateTemplate = async () => {
     try {
+      const token = getAuthToken();
       const response = await fetch('/api/templates', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify(formData)
       });
 
@@ -216,10 +219,13 @@ export default function Templates() {
     if (!editingTemplate) return;
 
     try {
+      const token = getAuthToken();
       const response = await fetch(`/api/templates/${editingTemplate.id}`, {
         method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify(formData)
       });
 
@@ -247,9 +253,13 @@ export default function Templates() {
     if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
 
     try {
+      const token = getAuthToken();
       const response = await fetch(`/api/templates/${template.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        }
       });
 
       if (!response.ok) {
@@ -272,9 +282,13 @@ export default function Templates() {
 
   const handleSetDefault = async (template: EmailTemplate) => {
     try {
+      const token = getAuthToken();
       const response = await fetch(`/api/templates/${template.id}/set-default`, {
         method: 'POST',
-        credentials: 'include'
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        }
       });
 
       if (!response.ok) {

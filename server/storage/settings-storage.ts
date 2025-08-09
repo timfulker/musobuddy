@@ -67,14 +67,19 @@ export class SettingsStorage {
 
   async createEmailTemplate(data: {
     userId: string;
-    type: string;
     name: string;
     subject: string;
-    body: string;
-    variables?: any;
+    emailBody: string;
+    smsBody?: string;
+    isAutoRespond?: boolean;
   }) {
     const result = await db.insert(emailTemplates).values({
-      ...data,
+      userId: data.userId,
+      name: data.name,
+      subject: data.subject,
+      emailBody: data.emailBody,
+      smsBody: data.smsBody || '',
+      isAutoRespond: data.isAutoRespond || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
@@ -250,7 +255,30 @@ Best regards,
         eq(emailTemplates.userId, userId)
       ))
       .returning();
-    return result[0];
+    return result.length > 0;
+  }
+
+  async setDefaultEmailTemplate(id: number, userId: string) {
+    try {
+      // First, remove default status from all user's templates
+      await db.update(emailTemplates)
+        .set({ isDefault: false })
+        .where(eq(emailTemplates.userId, userId));
+
+      // Then set the specified template as default
+      const result = await db.update(emailTemplates)
+        .set({ isDefault: true })
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, userId)
+        ))
+        .returning();
+
+      return result.length > 0;
+    } catch (error) {
+      console.error('❌ Error setting default template:', error);
+      return false;
+    }
   }
 
   // ===== GLOBAL GIG TYPES METHODS =====
