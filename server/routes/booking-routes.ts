@@ -39,10 +39,17 @@ export function registerBookingRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
+      // Generate a meaningful title if none provided
+      const title = req.body.title || 
+        (req.body.clientName ? `Booking for ${req.body.clientName}` : 
+         req.body.venue ? `Event at ${req.body.venue}` :
+         req.body.eventDate ? `Event on ${req.body.eventDate}` :
+         'New Booking');
+
       const bookingData = {
         userId,
-        title: req.body.title || `Booking for ${req.body.clientName}`,
-        clientName: req.body.clientName,
+        title,
+        clientName: req.body.clientName || null,
         clientEmail: req.body.clientEmail || null,
         clientPhone: req.body.clientPhone || null,
         venue: req.body.venue || null,

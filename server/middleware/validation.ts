@@ -87,24 +87,29 @@ export const schemas = {
     venueAddress: z.string().optional()
   }),
 
-  // Booking creation - matches database schema with flexible validation
+  // Booking creation - extremely flexible validation, only basic checks
   createBooking: z.object({
-    title: z.string().trim().min(1, 'Title is required').max(200, 'Title too long').optional(),
-    clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
+    title: z.string().optional().nullable(),
+    clientName: z.string().optional().nullable(), // Even client name can be empty for incomplete bookings
     clientEmail: z.string().email('Invalid email format').optional().nullable(),
     clientPhone: z.string().optional().nullable(),
-    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional().nullable(),
+    eventDate: z.string().optional().nullable(), // Date is optional to allow saving incomplete bookings
     eventTime: z.string().optional().nullable(),
     eventEndTime: z.string().optional().nullable(),
     venue: z.string().optional().nullable(),
     venueAddress: z.string().optional().nullable(),
-    fee: z.string().optional().nullable(), // Fee can be a string from forms
+    fee: z.string().optional().nullable(),
     deposit: z.string().optional().nullable(),
-    status: z.string().optional(),
+    status: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
     gigType: z.string().optional().nullable(),
     equipmentRequirements: z.string().optional().nullable(),
     specialRequirements: z.string().optional().nullable()
+  }).refine((data) => {
+    // At least some basic info should be provided
+    return data.clientName || data.clientEmail || data.clientPhone || data.venue || data.eventDate;
+  }, {
+    message: "At least one field (client name, email, phone, venue, or date) must be provided"
   }),
 
   // Invoice creation
