@@ -364,24 +364,20 @@ ${messageText.replace(/\n/g, '<br>')}
         { expiresIn: '30d' }
       );
       
-      const widgetUrl = `${process.env.APP_URL || 'https://www.musobuddy.com'}/widget?token=${encodeURIComponent(token)}`;
+      // Use R2-hosted widget system
+      const { uploadWidgetToR2 } = await import('../widget-system/widget-storage');
+      const uploadResult = await uploadWidgetToR2(userId.toString(), token);
       
-      // Import QRCode library
-      const QRCode = await import('qrcode');
-      const qrCode = await QRCode.default.toDataURL(widgetUrl, {
-        width: 400,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
+      if (!uploadResult.success) {
+        console.error('❌ Failed to upload widget to R2:', uploadResult.error);
+        return res.status(500).json({ error: 'Failed to generate widget' });
+      }
+      
+      const widgetUrl = uploadResult.url!;
+      const qrCode = uploadResult.qrCodeUrl!;
       
       // Save the widget URL and QR code to the user's record for persistence
-      await storage.updateUser(userId, {
-        widgetUrl: widgetUrl,
-        widgetQrCode: qrCode
-      });
+      await storage.updateUserWidgetInfo(userId, widgetUrl, qrCode);
       
       console.log(`✅ Permanent widget created and saved for user ${userId}`);
       

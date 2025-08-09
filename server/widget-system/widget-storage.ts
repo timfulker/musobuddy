@@ -38,10 +38,9 @@ export async function uploadWidgetToR2(userId: string, token: string): Promise<{
     
     // Generate and upload QR code
     const qrcode = await import('qrcode');
-    const qrCodeBuffer = await qrcode.toBuffer(widgetUrl, {
+    const qrCodeBuffer = await qrcode.default.toBuffer(widgetUrl, {
       errorCorrectionLevel: 'M',
       type: 'png',
-      quality: 0.92,
       margin: 1,
       color: {
         dark: '#000000',

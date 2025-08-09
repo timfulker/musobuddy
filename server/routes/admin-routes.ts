@@ -37,17 +37,17 @@ export function registerAdminRoutes(app: Express) {
             { expiresIn: '30d' }
           );
           
-          const widgetUrl = `${process.env.APP_URL || 'https://www.musobuddy.com'}/widget?token=${encodeURIComponent(token)}`;
+          // Use R2-hosted widget system
+          const { uploadWidgetToR2 } = await import('../widget-system/widget-storage');
+          const uploadResult = await uploadWidgetToR2(user.id.toString(), token);
           
-          // Generate QR code
-          const qrCodeDataUrl = await QRCode.default.toDataURL(widgetUrl, {
-            width: 400,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
+          if (!uploadResult.success) {
+            results.push({ email, error: `Failed to upload widget: ${uploadResult.error}` });
+            continue;
+          }
+          
+          const widgetUrl = uploadResult.url!;
+          const qrCodeDataUrl = uploadResult.qrCodeUrl!;
           
           results.push({
             email,
