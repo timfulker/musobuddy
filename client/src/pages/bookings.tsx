@@ -382,10 +382,22 @@ export default function UnifiedBookings() {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
         switch (dateFilter) {
+          case 'yesterday':
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayEnd = new Date(yesterday);
+            yesterdayEnd.setDate(yesterdayEnd.getDate() + 1);
+            matchesDate = eventDate >= yesterday && eventDate < yesterdayEnd;
+            break;
           case 'today':
             const todayEnd = new Date(today);
             todayEnd.setDate(todayEnd.getDate() + 1);
             matchesDate = eventDate >= today && eventDate < todayEnd;
+            break;
+          case 'last7days':
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            matchesDate = eventDate >= sevenDaysAgo && eventDate <= today;
             break;
           case 'week':
             const weekEnd = new Date(today);
@@ -897,7 +909,9 @@ export default function UnifiedBookings() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Dates</SelectItem>
+                      <SelectItem value="yesterday">Yesterday</SelectItem>
                       <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="last7days">Last 7 Days</SelectItem>
                       <SelectItem value="week">Next 7 Days</SelectItem>
                       <SelectItem value="month">Next 30 Days</SelectItem>
                       <SelectItem value="upcoming">All Upcoming</SelectItem>
