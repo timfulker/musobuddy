@@ -57,8 +57,8 @@ export function registerBookingRoutes(app: Express) {
         eventDate: req.body.eventDate || null,
         eventTime: req.body.eventTime || null,
         eventEndTime: req.body.eventEndTime || null,
-        fee: req.body.fee || null,
-        deposit: req.body.deposit || "0.00",
+        fee: req.body.fee ? String(req.body.fee) : null, // Convert to string if provided
+        deposit: req.body.deposit ? String(req.body.deposit) : "0.00", // Convert to string if provided
         status: req.body.status || 'new',
         notes: req.body.notes || null,
         gigType: req.body.gigType || null,

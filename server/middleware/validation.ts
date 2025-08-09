@@ -98,8 +98,8 @@ export const schemas = {
     eventEndTime: z.string().optional().nullable(),
     venue: z.string().optional().nullable(),
     venueAddress: z.string().optional().nullable(),
-    fee: z.string().optional().nullable(),
-    deposit: z.string().optional().nullable(),
+    fee: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
+    deposit: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
     status: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
     gigType: z.string().optional().nullable(),
