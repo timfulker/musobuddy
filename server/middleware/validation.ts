@@ -87,18 +87,24 @@ export const schemas = {
     venueAddress: z.string().optional()
   }),
 
-  // Booking creation
+  // Booking creation - matches database schema with flexible validation
   createBooking: z.object({
-    title: z.string().trim().min(1, 'Title is required').max(200, 'Title too long'),
+    title: z.string().trim().min(1, 'Title is required').max(200, 'Title too long').optional(),
     clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
-    clientEmail: z.string().email('Invalid email format').optional(),
-    clientPhone: z.string().optional(),
-    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-    eventTime: z.string().optional(),
-    endTime: z.string().optional(),
-    fee: z.number().positive('Fee must be positive').optional(),
-    venue: z.string().trim().min(1, 'Venue is required').max(200, 'Venue name too long'),
-    description: z.string().max(1000, 'Description too long').optional()
+    clientEmail: z.string().email('Invalid email format').optional().nullable(),
+    clientPhone: z.string().optional().nullable(),
+    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional().nullable(),
+    eventTime: z.string().optional().nullable(),
+    eventEndTime: z.string().optional().nullable(),
+    venue: z.string().optional().nullable(),
+    venueAddress: z.string().optional().nullable(),
+    fee: z.string().optional().nullable(), // Fee can be a string from forms
+    deposit: z.string().optional().nullable(),
+    status: z.string().optional(),
+    notes: z.string().optional().nullable(),
+    gigType: z.string().optional().nullable(),
+    equipmentRequirements: z.string().optional().nullable(),
+    specialRequirements: z.string().optional().nullable()
   }),
 
   // Invoice creation
@@ -123,7 +129,7 @@ export const schemas = {
   // AI template generation
   generateTemplate: z.object({
     enquiryText: z.string().trim().min(10, 'Enquiry text too short').max(5000, 'Enquiry text too long'),
-    templateType: z.enum(['quote', 'contract', 'email'], 'Invalid template type')
+    templateType: z.enum(['quote', 'contract', 'email'], { invalid_type_error: 'Invalid template type' })
   }),
 
   // Pagination

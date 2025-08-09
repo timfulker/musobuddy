@@ -41,12 +41,13 @@ export function registerBookingRoutes(app: Express) {
       
       const bookingData = {
         userId,
+        title: req.body.title || `Booking for ${req.body.clientName}`,
         clientName: req.body.clientName,
         clientEmail: req.body.clientEmail || null,
         clientPhone: req.body.clientPhone || null,
         venue: req.body.venue || null,
         venueAddress: req.body.venueAddress || null,
-        eventDate: req.body.eventDate,
+        eventDate: req.body.eventDate || null,
         eventTime: req.body.eventTime || null,
         eventEndTime: req.body.eventEndTime || null,
         fee: req.body.fee || null,
@@ -319,12 +320,11 @@ ${messageText.replace(/\n/g, '<br>')}
 <p><em>This booking request was submitted via your MusoBuddy booking widget.</em></p>
           `;
           
-          await emailService.sendEmail(
-            userSettings?.businessEmail || user.email!,
-            subject,
-            emailBody,
-            emailBody // HTML version
-          );
+          await emailService.sendEmail({
+            to: userSettings?.businessEmail || user.email!,
+            subject: subject,
+            html: emailBody
+          });
           
           console.log(`✅ Notification email sent for booking #${newBooking.id}`);
         }
