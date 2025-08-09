@@ -153,6 +153,31 @@ export default function Templates() {
     fetchTemplates();
   }, []);
 
+  const seedDefaultTemplates = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch('/api/templates/seed-defaults', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Seeded default templates:', result);
+        setTemplates(result.templates || []);
+        toast({
+          title: "Templates Created",
+          description: "5 default email templates have been created for you",
+        });
+      }
+    } catch (err: any) {
+      console.error('❌ Failed to seed templates:', err);
+    }
+  };
+
   const fetchTemplates = async () => {
     try {
       setLoading(true);
@@ -174,7 +199,16 @@ export default function Templates() {
       }
 
       const data = await response.json();
-      setTemplates(Array.isArray(data) ? data : []);
+      const templatesArray = Array.isArray(data) ? data : [];
+      
+      // If no templates exist, seed the defaults
+      if (templatesArray.length === 0) {
+        console.log('📧 No templates found, seeding defaults...');
+        await seedDefaultTemplates();
+      } else {
+        setTemplates(templatesArray);
+      }
+      
       setError(null);
     } catch (err: any) {
       setError(err.message);

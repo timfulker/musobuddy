@@ -639,5 +639,42 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
+  // Seed default templates for existing users
+  app.post('/api/templates/seed-defaults', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Check if user already has templates
+      const existingTemplates = await storage.getEmailTemplates(userId);
+      
+      if (existingTemplates && existingTemplates.length > 0) {
+        return res.json({ 
+          success: false, 
+          message: `You already have ${existingTemplates.length} templates`,
+          templates: existingTemplates 
+        });
+      }
+
+      // Seed the default templates
+      await storage.seedDefaultEmailTemplates(userId);
+      
+      // Get the newly created templates
+      const templates = await storage.getEmailTemplates(userId);
+      
+      res.json({ 
+        success: true, 
+        message: `Created ${templates.length} default templates`,
+        templates 
+      });
+    } catch (error) {
+      console.error('❌ Failed to seed default templates:', error);
+      res.status(500).json({ error: 'Failed to seed default templates' });
+    }
+  });
+
   console.log('✅ Settings routes configured');
 }
