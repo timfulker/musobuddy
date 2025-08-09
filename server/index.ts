@@ -736,7 +736,9 @@ app.post('/api/webhook/mailgun',
       bodyField.toLowerCase().includes('quote') ||
       bodyField.toLowerCase().includes('cost') ||
       bodyField.toLowerCase().includes('rate') ||
-      bodyField.toLowerCase().includes('fee')
+      bodyField.toLowerCase().includes('fee') ||
+      bodyField.toLowerCase().includes('are you available') ||
+      bodyField.toLowerCase().includes('availability')
     );
     
     // FIXED: AI returns isPriceEnquiry: true but messageType: "general", so prioritize isPriceEnquiry flag
@@ -977,9 +979,10 @@ CRITICAL DATE PARSING RULES:
   * "September 15" = this year (upcoming month)
   * "July 20" = next year (month already passed)
 - Examples of VALID DATES: "6th September 2025", "next Friday", "25th December", "next Wednesday", "15th next month", "August 13", "September 20"
-- Examples of INVALID DATES: "next year" (no specific day/month), "sometime in 2025" (no specific day/month), "this summer" (vague)
+- Examples of INVALID DATES: "next year" (no specific day/month), "next April" (no specific day), "sometime in 2025" (no specific day/month), "this summer" (vague)
 - If no specific date is mentioned, eventDate MUST be null
-- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?", "next year", "sometime next year"
+- Examples of NO DATE: "Hi", "Hello", "What's your availability?", "How much do you charge?", "Are you free?", "next year", "next April", "sometime next year", "Are you available next April"
+- CRITICAL: "next [month]" without a specific day is VAGUE and should return null
 - When in doubt, return null for eventDate
 
 IMPORTANT FEE PARSING INSTRUCTIONS:
@@ -988,12 +991,13 @@ IMPORTANT FEE PARSING INSTRUCTIONS:
 - Look for phrases like "fee will be", "cost is", "budget", "price"
 
 PRICE ENQUIRY DETECTION:
-Detect if this is primarily a price/quote request by looking for phrases like:
+Detect if this is primarily a price/quote request OR availability check by looking for phrases like:
 - "how much", "what do you charge", "price", "quote", "cost", "rate", "fee"
 - "pricing", "prices please", "some prices", "budget", "rates", "charges", "quotation", "idea of pricing"
 - "some idea of costs", "idea of cost", "ballpark figure", "rough cost"
-- Messages asking about availability AND pricing together
-- If the message mentions pricing/cost without specific event details, classify as price_enquiry
+- "are you available", "availability", "are you free", "do you have availability"
+- Messages asking about availability without specific date/venue details
+- If the message mentions pricing/cost/availability without specific event details, classify as price_enquiry
 
 MESSAGE CLASSIFICATION:
 - vague: Messages under 20 characters, just "hi", "hello", "test", or no clear intent
@@ -1044,17 +1048,19 @@ Extract in JSON format:
     
     // ENHANCED VALIDATION: Check for vague date scenarios
     const hasNextYear = emailBody.toLowerCase().includes('next year');
+    const hasNextMonth = /\bnext\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(emailBody.toLowerCase());
     const hasSometime = /\b(sometime|around|roughly|approximately)\b/i.test(emailBody.toLowerCase());
     
     // Check for specific date patterns (day + month combinations)
     const hasSpecificDate = /\b(next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|may|june|july|august|september|october|november|december)|\d{1,2}(st|nd|rd|th)?\s+next\s+month|next\s+(friday|saturday|sunday|monday|tuesday|wednesday|thursday))\b/i.test(emailBody);
     
-    // Check for vague patterns that should be routed to review
+    // CRITICAL FIX: "next [month]" without specific day is vague - should be routed to review
     const hasVagueDate = hasNextYear && !hasSpecificDate;
+    const hasVagueMonth = hasNextMonth && !hasSpecificDate; // NEW: catch "next April" etc
     const hasVagueTerms = hasSometime && !hasSpecificDate;
     
-    if ((hasVagueDate || hasVagueTerms) && aiResult.eventDate) {
-      console.log(`⚠️ AI found date for vague request - forcing to null for review. Patterns: nextYear=${hasNextYear}, sometime=${hasSometime}, specificDate=${hasSpecificDate}`);
+    if ((hasVagueDate || hasVagueMonth || hasVagueTerms) && aiResult.eventDate) {
+      console.log(`⚠️ AI found date for vague request - forcing to null for review. Patterns: nextYear=${hasNextYear}, nextMonth=${hasNextMonth}, sometime=${hasSometime}, specificDate=${hasSpecificDate}`);
       aiResult.eventDate = null;
     }
     

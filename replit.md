@@ -7,92 +7,13 @@ MusoBuddy is a comprehensive music business management platform designed to stre
 Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
-Email notifications: Both client AND performer receive confirmation emails when contracts are signed (fixed 07/08/2025).
+Email notifications: Both client AND performer receive confirmation emails when contracts are signed.
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 Authentication system: DO NOT rebuild authentication system from scratch - causes more problems than it solves by creating conflicting duplicate systems. Make minimal surgical fixes only.
-Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com` (updated 08/08/2025).
-Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musobuddy.com/api/webhook/mailgun` for production reliability (fixed 08/08/2025).
-System reliability: Comprehensive 4-phase fix applied (11/08/2025) addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
-Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch (updated 11/08/2025).
-
-## Recent Updates (09/08/2025)
-- **QR CODE GENERATION FULLY FIXED**: Complete resolution of widget generation system (CONFIRMED WORKING)
-  - **ROOT CAUSE**: apiRequest function returning Response objects instead of parsed JSON data
-  - **ERROR**: "TypeError: (intermediate value).json is not a function" when frontend tried to parse already-parsed data
-  - **SOLUTION**: Fixed apiRequest to return Response objects, updated Settings component to properly parse JSON
-  - **CONFIRMED WORKING**: QR code generation, widget URL creation, and R2 storage integration all functioning
-  - **USER TESTED**: Widget generation button successfully creates permanent booking widgets with QR codes
-- CRITICAL EMAIL PARSING BUG FIX: Root cause identified and resolved (BUSINESS-CRITICAL)
-  - **ROOT CAUSE**: AI preprocessing was converting "next year" to "2026" BEFORE analysis, making AI think it found a specific date
-  - **BUG CHAIN**: "next year" → "2026" → AI assumes date exists → Layer 2 validation bypassed → booking created incorrectly
-  - **SOLUTION**: Removed problematic preprocessing, enhanced AI prompt to handle "next year" as vague date
-  - **DUAL PROTECTION RESTORED**: 
-    - Layer 1: Enhanced price keyword detection ("prices please", "some prices", "quote", "cost", "rate", "fee")  
-    - Layer 2: Date validation now properly catches vague dates like "next year" without specifics
-  - **TESTED**: Both protection layers now work correctly, preventing revenue loss from misrouted pricing enquiries
-  - **INTELLIGENT DATE LOGIC**: Enhanced AI to assume next occurrence of month+day combinations (e.g., "August 13" = this year if after today's date, next year if already passed)
-  - **BUSINESS IMPACT**: Protects livelihood by ensuring pricing requests get personalized responses instead of automated bookings
-- WIDGET SYSTEM COMPLETE FIX: R2 external hosting with working form submissions
-  - Fixed widget URLs to use external R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)
-  - Fixed QR code generation and upload to R2 storage
-  - Fixed widget form submission endpoint (/api/widget/hybrid-submit) - missing title field resolved
-  - All widget routes (settings, admin, booking) now use unified R2 system
-  - Widget form submissions work correctly and create bookings with proper AI parsing
-  - Eliminated 404 errors from local URL dependencies
-- DATABASE SAFETY IMPLEMENTATION: Production-grade database management with backwards compatibility
-  - Environment-aware database connections: DATABASE_URL_DEV for development (optional), DATABASE_URL for production
-  - Production safety guards preventing accidental destructive operations on live data
-  - Clear environment logging showing which database environment is active
-  - Safe CLI operations script (`scripts/db-safe.js`) with explicit production operation protection
-  - Backwards compatible: works with existing single DATABASE_URL setup
-- CRITICAL AUTHENTICATION CLEANUP: Removed shared token vulnerability
-  - Created centralized `authToken.ts` utility for consistent token management
-  - Fixed cross-user authentication conflicts caused by shared `authToken_dev_admin` key
-  - Updated all frontend files to use user-specific token storage
-  - Cleaned up dead authentication code across codebase
-  - Prevents users from accidentally switching accounts
-- PRODUCTION DEPLOYMENT SUCCESS: Application deployed with test Stripe configuration
-  - Database separation working correctly (DATABASE_URL_DEV for dev, DATABASE_URL for production)
-  - Stripe test mode active in production for safe pre-launch testing
-  - Complete Stripe configuration: STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
-  - Ready for launch - simply switch to live Stripe keys when ready for real payments
-- PHONE NUMBER TESTING ENABLED: Removed unique constraint temporarily for production testing
-  - User can now create multiple test accounts with same phone number
-  - IMPORTANT: Re-add .unique() constraint before launch to prevent duplicate phone numbers
-- CRITICAL MOBILE BUG FIX: Fixed invoice sending authentication error on mobile devices
-  - Root cause: Browser cache preventing updated JavaScript from loading on mobile Safari
-  - Solution: Created console command workaround for direct API calls bypassing cached code
-  - Authentication system confirmed working - token detection and API calls successful
-  - Mobile invoice sending now operational via console commands until cache clears
-- WIDGET SYSTEM OPTIMIZATION: Complete R2 external URL implementation
-  - Widget URLs: External Cloudflare R2 hosting (https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/)
-  - QR Codes: Now external R2 URLs instead of base64 database storage for better performance
-  - Form submissions: Use custom domain (www.musobuddy.com) instead of replit.app URLs
-  - No Replit branding visible to clients in any widget-related URLs
-  - Button visibility: "Get My Widget & QR Code" button hides after widget creation
-  - Fixed API endpoint: Widget creation uses '/api/generate-widget-token' (corrected from broken '/api/generate-qr-code')
-
-## Previous Updates (08/08/2025)
-- CRITICAL FIX: Email processing user assignment issue resolved:
-  - Fixed webhook user lookup system that was assigning bookings to wrong user accounts
-  - Corrected admin account email prefix setup (now "admin@enquiries.musobuddy.com")
-  - Updated Settings page to display actual email prefix instead of placeholder text
-  - Enhanced settings API to include user email prefix data
-- CRITICAL FIX: Settings reset issue identified and resolved:
-  - Root cause: Authentication mixing up admin (43963086) vs personal (1754488522516) account access
-  - Fixed frontend to use PATCH instead of POST for settings updates
-  - Prevent settings loading wrong user account data
-- AUTHENTICATION CLEANUP: Removed dead authentication code:
-  - Deleted unused `auth-validation.ts` file (never imported, 55 lines of dead code)
-  - Fixed hardcoded admin ID in `requireAdmin` middleware - now uses database lookup
-  - Updated frontend token storage to use user-specific keys instead of shared `authToken_dev_admin`
-  - All routes continue using main `auth.ts` system (283 lines, actively maintained)
-- Fixed critical AI date defaulting issue in email parsing:
-  - Removed "Today is [date]" from AI prompt to prevent date assumptions
-  - Enhanced keyword detection for price enquiries
-  - Messages without explicit dates now route to Review Messages instead of creating bookings
-  - Added validation to catch and correct AI date defaults
-- Email system architectural fix: Removed "leads+" prefix format, now uses clean "prefix@enquiries.musobuddy.com" format
+Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com`.
+Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musobuddy.com/api/webhook/mailgun` for production reliability.
+System reliability: Comprehensive 4-phase fix applied addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
+Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
 ## System Architecture
 
@@ -102,31 +23,27 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
 - **State Management**: React Query.
 - **Routing**: Wouter.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards with left border status indicators, gradient-styled forms, professional action buttons, responsive layouts (mobile-optimized), consistent sidebar navigation, clear visual cues. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) with theme-aware components and an animated metronome logo.
+- **UI/UX Decisions**: Clean white cards with left border status indicators, gradient-styled forms, professional action buttons, responsive layouts (mobile-optimized), consistent sidebar navigation, clear visual cues. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) with theme-aware components and an animated metronome logo. QR code generation, widget URL creation, R2 storage integration, and widget persistence are all functioning.
 
 ### Backend
 - **Runtime**: Node.js with Express.js.
 - **Language**: TypeScript with ES modules.
 - **Core Structure**: Modular route architecture for authentication, contracts, invoices, bookings, settings, and administration.
-- **Authentication**: Pure JWT-based system with SMS verification (Twilio), email/password login, and phone number verification. No session middleware or cookies used; JWT tokens are stored in Authorization headers.
+- **Authentication**: Pure JWT-based system with SMS verification (Twilio), email/password login, and phone number verification. No session middleware or cookies used; JWT tokens are stored in Authorization headers. Centralized `authToken.ts` utility for consistent token management. Unified authentication middleware supporting 4 token sources (Bearer header, x-auth-token, query parameter, cookies).
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails.
+- **Email Service**: Mailgun for transactional emails. Includes enhanced email parsing for availability and pricing queries, preventing incorrect bookings and ensuring personalized responses.
 - **PDF Generation**: Isolated Puppeteer engines for invoices and contracts.
-- **AI Integration**: AI for contract parsing, email parsing, price enquiry detection, and message categorization.
+- **AI Integration**: AI for contract parsing, email parsing, price enquiry detection, and message categorization. Enhanced AI for intelligent date logic.
 - **System Design Choices**:
-    - **User Management**: Simplified two-tier system:
-        1. **Admin Accounts**: Full administrative privileges (isAdmin: true)
-        2. **User Accounts**: All authenticated users have full access to features (created via admin panel or subscription payment)
-    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget. Booking workflow statuses: New, In progress, Client confirms, Confirmed, Completed, Rejected.
-    - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, automated reminders, and guided questionnaire-style creation.
+    - **User Management**: Simplified two-tier system: Admin Accounts (isAdmin: true) and User Accounts (created via admin panel or subscription payment).
+    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget with external R2 hosting. Booking workflow statuses: New, In progress, Client confirms, Confirmed, Completed, Rejected.
+    - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, automated reminders, and guided questionnaire-style creation. Enterprise-grade retry logic with exponential backoff and non-critical failure handling.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring.
     - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
     - **Data Flow**: Streamlined authentication, booking lifecycle management, and AI integration for automated data extraction and processing.
     - **Security**: Robust session validation, comprehensive rate limiting, enhanced database connection pooling, secure password hashing, input validation, input sanitization, and async error handling.
     - **System Health Monitoring**: Real-time dashboard (/system-health) tracking database, authentication, email, storage services with performance metrics and automated health checks.
-    - **Enhanced Contract Reliability**: Enterprise-grade retry logic with exponential backoff, non-critical failure handling, and revenue protection mechanisms.
-    - **Unified Authentication**: Middleware supporting 4 token sources (Bearer header, x-auth-token, query parameter, cookies) eliminating random 401 errors.
-    - **Deployment**: Node.js server serving built frontend, environment configuration, build process with Vite and esbuild.
+    - **Deployment**: Node.js server serving built frontend, environment configuration, build process with Vite and esbuild. Production safety guards prevent accidental destructive operations on live data.
     - **API Design**: RESTful API endpoints, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components like invoice and contract generation are designed as entirely separate, isolated systems.
 
@@ -134,9 +51,7 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
 
 - **Cloud Services**:
     - Cloudflare R2: PDF storage and delivery.
-    - Mailgun: Email delivery service.
-        - Backup sandbox domain: `sandbox2e23cfec66e14ec6b88b9124e39e4926.mailgun.org` (stored 08/01/2025)
-        - Production domain: `enquiries.musobuddy.com` (hardcoded override in server/core/services.ts)
+    - Mailgun: Email delivery service. Production domain: `enquiries.musobuddy.com`.
     - Neon Database: PostgreSQL hosting.
     - Replit: Authentication and hosting.
 - **APIs and Services**:
