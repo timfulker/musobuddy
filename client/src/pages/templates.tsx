@@ -686,19 +686,19 @@ export default function Templates() {
     setIsCreateDialogOpen(true);
   };
 
-  // GlockApps test function
+  // Glockapps deliverability test function
   const runGlockAppsTest = async () => {
     if (templates.length === 0) {
       toast({
         title: "No Templates",
-        description: "Please create a template first to run the GlockApps deliverability test.",
+        description: "Please create a template first to run the deliverability test.",
         variant: "destructive",
       });
       return;
     }
 
     const confirmed = window.confirm(
-      `Run GlockApps deliverability test?\n\nThis will send your first template to 91 test email addresses across Gmail, Outlook, Yahoo, and European providers.\n\nTest ID: 2025-07-31-12:25:46:357t\n\nCheck your GlockApps dashboard in 5-10 minutes for results.`
+      `Run Glockapps deliverability test?\n\nThis will send your first template to 25 test email addresses to check spam filter performance.\n\nTest ID: UK-Launch-Batch1-${Date.now()}\n\nCheck your Glockapps dashboard in 5-10 minutes for results.`
     );
 
     if (!confirmed) return;
@@ -706,11 +706,11 @@ export default function Templates() {
     try {
       setLoading(true);
       toast({
-        title: "Starting GlockApps Test",
-        description: "Sending emails to 91 test addresses...",
+        title: "Starting Deliverability Test",
+        description: "Sending test emails through your MusoBuddy system...",
       });
 
-      // GlockApps seed list - Batch 1 (25 emails for rate limiting)
+      // Your Batch 1 seed emails (25 addresses for rate limiting)
       const seedEmails = [
         "elizabeaver@auth.glockdb.com", 
         "clyde@trustycheck.pro", 
@@ -739,11 +739,12 @@ export default function Templates() {
         "luisl417@yahoo.com"
       ];
 
+      const testId = `UK-Launch-Batch1-${Date.now()}`;
       const response = await fetch('/api/test/glockapp-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          testId: '2025-07-31-12:25:46:357t',
+          testId,
           templateId: templates[0].id.toString(),
           seedEmails: seedEmails
         })
@@ -756,23 +757,24 @@ export default function Templates() {
       const result = await response.json();
       
       toast({
-        title: "GlockApps Test Completed!",
-        description: `✅ ${result.totalSent} emails sent successfully. Check your GlockApps dashboard in 5-10 minutes for deliverability results.`,
+        title: "Deliverability Test Completed!",
+        description: `✅ ${result.totalSent} emails sent successfully. Check your Glockapps dashboard in 5-10 minutes for spam filter results.`,
       });
 
-      console.log('GlockApps test results:', result);
+      console.log('Deliverability test results:', result);
 
     } catch (error: any) {
-      console.error('GlockApps test error:', error);
+      console.error('Deliverability test error:', error);
       toast({
         title: "Test Failed",
-        description: error.message || "Failed to run GlockApps test",
+        description: error.message || "Failed to run deliverability test",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -811,7 +813,7 @@ export default function Templates() {
                 disabled={loading || templates.length === 0}
               >
                 <Bot className="w-4 h-4 mr-2" />
-                GlockApps Test
+                Spam Test
               </Button>
               <Button 
                 onClick={() => setShowAIDialog(true)}
