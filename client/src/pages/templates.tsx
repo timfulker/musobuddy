@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -862,6 +862,9 @@ export default function Templates() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Template</DialogTitle>
+            <DialogDescription>
+              Create a new email template that you can reuse for different booking scenarios and client communications.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -929,6 +932,9 @@ export default function Templates() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Template</DialogTitle>
+            <DialogDescription>
+              Make changes to your existing email template. This will update the template for future use.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -996,9 +1002,9 @@ export default function Templates() {
         <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Email Preview</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Review your email before sending to {bookingData?.clientName}
-            </p>
+            <DialogDescription>
+              Review your email before sending to {bookingData?.clientName}. This preview shows exactly how your email will appear to the recipient.
+            </DialogDescription>
           </DialogHeader>
           
           {previewData && (
@@ -1051,9 +1057,9 @@ export default function Templates() {
               <Bot className="w-5 h-5 mr-2 text-primary" />
               AI Response Generator
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Generate intelligent, personalized responses using AI based on your booking context and preferences
-            </p>
+            <DialogDescription>
+              Generate intelligent, personalized responses using AI based on your booking context and preferences. The AI will create professional templates tailored to your specific situation.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -1207,10 +1213,9 @@ export default function Templates() {
                 <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary via-blue-600 to-primary-600 bg-clip-text text-transparent">
                   Edit AI Response
                 </DialogTitle>
-                <p className="text-sm text-gray-600 mt-1 flex items-center">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                  Perfect your AI-generated content before sending to your client
-                </p>
+                <DialogDescription>
+                  Perfect your AI-generated content before sending to your client. Edit the subject, email body, and SMS content to match your exact needs.
+                </DialogDescription>
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">AI Powered</div>
