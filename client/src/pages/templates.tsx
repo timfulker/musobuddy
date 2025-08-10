@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { apiRequest } from '@/lib/queryClient';
+import { findActiveAuthToken } from '@/utils/authToken';
 
 interface EmailTemplate {
   id: number;
@@ -77,22 +78,10 @@ export default function Templates() {
     fetchUserSettings();
   }, [bookingId, action]);
   
-  // Helper function to get auth token - using standard format
-  const getAuthTokenKey = () => {
-    const hostname = window.location.hostname;
-    
-    // Development: Admin-only access for simplified testing
-    if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-      return 'authToken_dev_fallback';
-    }
-    
-    // Production: Environment-specific to prevent conflicts (match standard format)
-    return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  };
-
+  // Use centralized auth token system
   const getAuthToken = () => {
-    const tokenKey = getAuthTokenKey();
-    return localStorage.getItem(tokenKey);
+    const authData = findActiveAuthToken();
+    return authData?.token || null;
   };
 
   const fetchBookingData = async () => {
