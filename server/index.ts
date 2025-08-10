@@ -491,24 +491,41 @@ app.get('/api/test-sms', async (req, res) => {
 app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/login', '/api/contracts/sign'], (req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Always allow R2 origin for contract signing pages
-  const allowedOrigins = [
-    'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev',
-    'https://musobuddy.replit.app'
-  ];
-  
   // Determine the correct origin to allow
   const requestOrigin = req.headers.origin || 
                        req.headers.referer?.replace(/\/[^\/]*$/, ''); // Extract origin from referer
   
   let origin = 'https://musobuddy.replit.app'; // Default
   
+  // Enhanced origin detection for better R2 support
   if (requestOrigin) {
-    if (allowedOrigins.includes(requestOrigin) || requestOrigin.includes('janeway.replit.dev')) {
+    console.log(`🔍 CORS: Request origin detected: ${requestOrigin}`);
+    
+    // Allow all R2 domains (for contract signing pages)
+    if (requestOrigin.includes('.r2.dev')) {
       origin = requestOrigin;
-    } else if (requestOrigin.includes('localhost')) {
-      origin = 'http://localhost:5000';
+      console.log(`✅ CORS: R2 domain allowed: ${origin}`);
     }
+    // Allow Replit development domains
+    else if (requestOrigin.includes('janeway.replit.dev') || requestOrigin.includes('musobuddy.replit.app')) {
+      origin = requestOrigin;
+      console.log(`✅ CORS: Replit domain allowed: ${origin}`);
+    }
+    // Allow localhost for development
+    else if (requestOrigin.includes('localhost')) {
+      origin = 'http://localhost:5000';
+      console.log(`✅ CORS: Localhost allowed: ${origin}`);
+    }
+    // Allow production domain
+    else if (requestOrigin.includes('musobuddy.com')) {
+      origin = requestOrigin;
+      console.log(`✅ CORS: Production domain allowed: ${origin}`);
+    }
+    else {
+      console.log(`⚠️ CORS: Unknown origin, using default: ${requestOrigin} -> ${origin}`);
+    }
+  } else {
+    console.log(`🔍 CORS: No origin header, using default: ${origin}`);
   }
   
   res.header('Access-Control-Allow-Origin', origin);
@@ -516,6 +533,7 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Cache-Control, X-Requested-With, Authorization');
   
   if (req.method === 'OPTIONS') {
+    console.log(`🔍 CORS: OPTIONS preflight request for ${req.path} from ${requestOrigin}`);
     return res.sendStatus(200);
   }
   next();
