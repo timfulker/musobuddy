@@ -9,6 +9,31 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Invoice, UserSettings } from '@shared/schema';
 
+// Theme color mapping for PDF generation
+function getThemeColor(userSettings: UserSettings | null): string {
+  // Use user's selected theme accent color if available
+  if (userSettings?.themeAccentColor) {
+    return userSettings.themeAccentColor;
+  }
+  
+  // Default fallback to purple (original theme)
+  return '#8b5cf6';
+}
+
+// Generate secondary color (darker shade) from primary color
+function getSecondaryColor(primaryColor: string): string {
+  // Simple approach: if it's a known theme color, use predefined secondary
+  const colorMap: Record<string, string> = {
+    '#8b5cf6': '#a855f7', // Purple
+    '#0ea5e9': '#0284c7', // Ocean Blue
+    '#34d399': '#10b981', // Forest Green
+    '#f87171': '#9ca3af', // Clean Pro Audio
+    '#191970': '#1e3a8a', // Midnight Blue
+  };
+  
+  return colorMap[primaryColor] || primaryColor; // Fallback to same color
+}
+
 function getLogoBase64(): string {
   try {
     const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-midnight-blue.png');
@@ -62,16 +87,22 @@ export async function generateInvoicePDF(
 
 function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null): string {
   const logoBase64 = getLogoBase64();
+  
+  // Get dynamic theme colors
+  const primaryColor = getThemeColor(userSettings);
+  const secondaryColor = getSecondaryColor(primaryColor);
+  
+  console.log(`🎨 INVOICE PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
   // CSS-based animated metronome logo (from your HTML file) - LARGE VERSION
   const cssMetronomeLogo = `
     <div class="logo-invoice" style="display: inline-flex; align-items: center; gap: 20px;">
-      <div class="metronome-icon" style="width: 120px; height: 120px; background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%); border-radius: 25px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 10px 30px rgba(25, 25, 112, 0.3);">
+      <div class="metronome-icon" style="width: 120px; height: 120px; background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); border-radius: 25px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 10px 30px rgba(25, 25, 112, 0.3);">
         <div class="metronome-body" style="width: 42px; height: 68px; background: white; clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%); position: relative;">
-          <div class="metronome-arm" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 4px; height: 42px; background: #191970; border-radius: 2px;"></div>
+          <div class="metronome-arm" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 4px; height: 42px; background: ${primaryColor}; border-radius: 2px;"></div>
         </div>
       </div>
       <div class="logo-text" style="text-align: left;">
-        <div class="metronome-text" style="font-size: 48px; font-weight: 700; color: #191970; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
+        <div class="metronome-text" style="font-size: 48px; font-weight: 700; color: ${primaryColor}; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
         <div class="tagline" style="font-size: 18px; color: #64748b; font-weight: 500; font-style: italic; font-family: 'Arial', sans-serif;">Less admin, more music</div>
       </div>
     </div>
@@ -134,7 +165,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 3px solid #1e3a8a;
+          border-bottom: 3px solid ${secondaryColor};
           padding-bottom: 20px;
         }
         

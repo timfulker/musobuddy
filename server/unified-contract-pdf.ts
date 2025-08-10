@@ -4,6 +4,31 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '@shared/schema';
 
+// Theme color mapping for PDF generation
+function getThemeColor(userSettings: UserSettings | null): string {
+  // Use user's selected theme accent color if available
+  if (userSettings?.themeAccentColor) {
+    return userSettings.themeAccentColor;
+  }
+  
+  // Default fallback to purple (original theme)
+  return '#8b5cf6';
+}
+
+// Generate secondary color (darker shade) from primary color
+function getSecondaryColor(primaryColor: string): string {
+  // Simple approach: if it's a known theme color, use predefined secondary
+  const colorMap: Record<string, string> = {
+    '#8b5cf6': '#a855f7', // Purple
+    '#0ea5e9': '#0284c7', // Ocean Blue
+    '#34d399': '#10b981', // Forest Green
+    '#f87171': '#9ca3af', // Clean Pro Audio
+    '#191970': '#1e3a8a', // Midnight Blue
+  };
+  
+  return colorMap[primaryColor] || primaryColor; // Fallback to same color
+}
+
 function getLogoBase64(): string {
   try {
     const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
@@ -119,6 +144,12 @@ function generateUnifiedContractHTML(
   const signedAt = signatureDetails?.signedAt || (contract.signedAt ? new Date(contract.signedAt) : null);
   const signatureName = signatureDetails?.signatureName || contract.clientSignature || 'Digital Signature';
 
+  // Get dynamic theme colors
+  const primaryColor = getThemeColor(userSettings);
+  const secondaryColor = getSecondaryColor(primaryColor);
+  
+  console.log(`🎨 CONTRACT PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -151,7 +182,7 @@ function generateUnifiedContractHTML(
         
         /* Header */
         .contract-header {
-            background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
+            background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
             color: white;
             padding: 40px;
             text-align: center;
@@ -194,7 +225,7 @@ function generateUnifiedContractHTML(
             transform: translateX(-50%) rotate(10deg);
             width: 2.5px;
             height: 24px;
-            background: #191970;
+            background: ${primaryColor};
             border-radius: 1px;
             transform-origin: bottom center;
         }
@@ -268,10 +299,10 @@ function generateUnifiedContractHTML(
         .section-title {
             font-size: 22px;
             font-weight: 700;
-            color: #191970;
+            color: ${primaryColor};
             margin-bottom: 25px;
             padding-bottom: 10px;
-            border-bottom: 3px solid #1e3a8a;
+            border-bottom: 3px solid ${secondaryColor};
         }
         
         /* Parties Section */
@@ -293,7 +324,7 @@ function generateUnifiedContractHTML(
         .party-title {
             font-size: 16px;
             font-weight: 700;
-            color: #191970;
+            color: ${primaryColor};
             margin-bottom: 15px;
         }
         
@@ -329,7 +360,7 @@ function generateUnifiedContractHTML(
         .detail-label {
             font-size: 12px;
             font-weight: 600;
-            color: #191970;
+            color: ${primaryColor};
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
@@ -353,7 +384,7 @@ function generateUnifiedContractHTML(
         .payment-title {
             font-size: 20px;
             font-weight: 700;
-            color: #191970;
+            color: ${primaryColor};
             text-align: center;
             margin-bottom: 25px;
         }
@@ -386,7 +417,7 @@ function generateUnifiedContractHTML(
         .payment-amount {
             font-size: 26px;
             font-weight: 800;
-            color: #191970;
+            color: ${primaryColor};
         }
         
         .payment-instructions {
@@ -398,7 +429,7 @@ function generateUnifiedContractHTML(
         }
         
         .payment-instructions strong {
-            color: #191970;
+            color: ${primaryColor};
             font-size: 16px;
         }
         
@@ -528,7 +559,7 @@ function generateUnifiedContractHTML(
         
         .footer-logo {
             font-weight: 700;
-            color: #191970;
+            color: ${primaryColor};
         }
         
         /* Print optimizations */

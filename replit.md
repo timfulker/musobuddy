@@ -18,6 +18,12 @@ System reliability: Comprehensive 4-phase fix applied addressing "architectural 
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
 ## Recent Updates (10/01/2025)
+- **DYNAMIC PDF THEMING IMPLEMENTED (MAJOR FEATURE)**: Contract and invoice PDFs now use user's selected theme colors
+  - **FUNCTIONALITY**: PDFs automatically match user's chosen theme (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue)
+  - **TECHNICAL IMPLEMENTATION**: Dynamic color injection using `userSettings.themeAccentColor` with fallback system
+  - **THEME MAPPING**: Automated primary/secondary color pairing for professional gradient effects
+  - **SCOPE**: Both contract and invoice PDFs now respect theme selection instead of hardcoded Midnight Blue
+  - **USER BENEFIT**: Complete brand consistency across all generated documents matching app interface theme
 - **GLOCKAPPS DELIVERABILITY TEST ENDPOINT FIXED**: Created missing `/api/test/glockapp-delivery` endpoint for email deliverability testing
   - **CRITICAL FOR UK LAUNCH**: Proper test ID headers (`X-Glockapps-Test-ID`) now included in emails for spam filter testing
   - **COMPREHENSIVE TESTING**: Endpoint supports all major email providers and spam filters for UK market validation
