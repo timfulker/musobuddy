@@ -1,5 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
+import { services } from "../core/services";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
@@ -676,6 +677,176 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
+  // Send email using template
+  app.post('/api/templates/send-email', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { template, bookingId } = req.body;
+      
+      if (!template || !template.subject || !template.emailBody) {
+        return res.status(400).json({ error: 'Invalid template data' });
+      }
+
+      // Get booking if bookingId provided
+      let booking: any = null;
+      let recipientEmail: string | null = null;
+      let recipientName: string | null = null;
+      
+      if (bookingId) {
+        booking = await storage.getBooking(bookingId);
+        if (booking && booking.userId === userId) {
+          recipientEmail = booking.clientEmail;
+          recipientName = booking.clientName;
+        }
+      }
+
+      if (!recipientEmail) {
+        return res.status(400).json({ error: 'No recipient email found' });
+      }
+
+      // Get user settings for sender info
+      const userSettings = await storage.getSettings(userId);
+      const user = await storage.getUserById(userId);
+      
+      const senderName = userSettings?.businessName || 
+                        `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 
+                        user?.email;
+      const senderEmail = userSettings?.businessEmail || user?.email;
+
+      // Send the email
+      const emailSent = await services.sendEmail(
+        recipientEmail,
+        template.subject,
+        template.emailBody,
+        senderEmail,
+        senderName
+      );
+
+      if (!emailSent) {
+        throw new Error('Failed to send email');
+      }
+
+      // If this is a thank you template and we have a booking, mark it as completed
+      const isThankYouTemplate = template.subject?.toLowerCase().includes('thank you') || 
+                                template.emailBody?.toLowerCase().includes('thank you for');
+      
+      if (isThankYouTemplate && booking) {
+        await storage.updateBookingStatus(bookingId, 'Completed', userId);
+        console.log(`✅ Booking ${bookingId} marked as completed after thank you email`);
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Email sent to ${recipientName || recipientEmail}`,
+        bookingCompleted: isThankYouTemplate 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to send template email:', error);
+      res.status(500).json({ 
+        error: 'Failed to send email',
+        details: error.message 
+      });
+    }
+  });
+
+  // AI Response Generation endpoint
+  app.post('/api/ai/generate-response', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { action, bookingId, customPrompt, tone, travelExpense } = req.body;
+
+      console.log('🤖 AI generation request:', {
+        action,
+        bookingId,
+        hasCustomPrompt: !!customPrompt,
+        tone,
+        travelExpense
+      });
+
+      // Import the AI response generator
+      const { AIResponseGenerator } = require('../core/ai-response-generator');
+      const generator = new AIResponseGenerator();
+
+      // Get booking context if bookingId is provided
+      let bookingContext: any = null;
+      if (bookingId) {
+        const booking = await storage.getBooking(bookingId);
+        if (booking && booking.userId === userId) {
+          bookingContext = {
+            clientName: booking.clientName,
+            eventDate: booking.eventDate,
+            eventTime: booking.eventTime,
+            eventEndTime: booking.eventEndTime,
+            venue: booking.venue,
+            eventType: booking.eventType,
+            gigType: booking.gigType,
+            fee: booking.fee,
+            travelExpense: travelExpense || booking.travelExpense,
+            performanceDuration: booking.performanceDuration,
+            styles: booking.styles,
+            equipment: booking.equipment,
+            additionalInfo: booking.additionalInfo
+          };
+        }
+      }
+
+      // Get user settings for personalization
+      const userSettings = await storage.getSettings(userId);
+      const user = await storage.getUserById(userId);
+
+      // Merge user data with settings
+      const fullSettings = {
+        ...userSettings,
+        businessName: userSettings?.businessName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email,
+        businessEmail: userSettings?.businessEmail || user?.email
+      };
+
+      // Generate the AI response
+      const response = await generator.generateEmailResponse({
+        action: action || 'respond',
+        bookingContext,
+        userSettings: fullSettings,
+        customPrompt,
+        tone: tone || 'professional'
+      });
+
+      console.log('✅ AI response generated successfully');
+      res.json(response);
+      
+    } catch (error: any) {
+      console.error('❌ AI generation failed:', error);
+      
+      // Send appropriate error message
+      if (error.message.includes('OpenAI API key')) {
+        return res.status(500).json({ 
+          error: 'AI service not configured. Please contact support.',
+          details: error.message 
+        });
+      } else if (error.message.includes('rate limit')) {
+        return res.status(429).json({ 
+          error: 'AI service temporarily unavailable. Please try again in a moment.',
+          details: error.message 
+        });
+      } else {
+        return res.status(500).json({ 
+          error: 'Failed to generate AI response',
+          details: error.message 
+        });
+      }
+    }
+  });
+
   // Glockapps deliverability test endpoint
   app.post('/api/test/glockapp-delivery', requireAuth, async (req: any, res) => {
     try {
@@ -715,12 +886,13 @@ export async function registerSettingsRoutes(app: Express) {
       for (const seedEmail of seedEmails) {
         try {
           // Personalize the template
+          const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'MusoBuddy User';
           let subject = template.subject
-            .replace(/\[Your Name\]/g, user?.username || 'MusoBuddy User')
+            .replace(/\[Your Name\]/g, userName)
             .replace(/\[Your Business Name\]/g, settings?.businessName || 'MusoBuddy');
 
           let emailBody = template.emailBody
-            .replace(/\[Your Name\]/g, user?.username || 'MusoBuddy User')
+            .replace(/\[Your Name\]/g, userName)
             .replace(/\[Your Business Name\]/g, settings?.businessName || 'MusoBuddy')
             .replace(/\[Contact Details\]/g, settings?.businessEmail || user?.email || 'contact@musobuddy.com');
 
