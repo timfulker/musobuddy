@@ -676,5 +676,115 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
+  // Glockapps deliverability test endpoint
+  app.post('/api/test/glockapp-delivery', requireAuth, async (req: any, res) => {
+    try {
+      const { testId, templateId, seedEmails } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (!testId || !templateId || !seedEmails || !Array.isArray(seedEmails)) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: testId, templateId, and seedEmails array' 
+        });
+      }
+
+      console.log(`🧪 Starting Glockapps test with ID: ${testId}`);
+      console.log(`📧 Sending to ${seedEmails.length} seed addresses`);
+
+      // Get the template
+      const templates = await storage.getEmailTemplates(userId);
+      const template = templates.find((t: any) => t.id === parseInt(templateId));
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Get user settings for personalization
+      const settings = await storage.getSettings(userId);
+      const user = await storage.getUserById(userId);
+
+      let totalSent = 0;
+      let totalFailed = 0;
+      const results: any[] = [];
+
+      // Send to each seed email with test ID in headers
+      for (const seedEmail of seedEmails) {
+        try {
+          // Personalize the template
+          let subject = template.subject
+            .replace(/\[Your Name\]/g, user?.username || 'MusoBuddy User')
+            .replace(/\[Your Business Name\]/g, settings?.businessName || 'MusoBuddy');
+
+          let emailBody = template.emailBody
+            .replace(/\[Your Name\]/g, user?.username || 'MusoBuddy User')
+            .replace(/\[Your Business Name\]/g, settings?.businessName || 'MusoBuddy')
+            .replace(/\[Contact Details\]/g, settings?.businessEmail || user?.email || 'contact@musobuddy.com');
+
+          // CRITICAL: Add the Glockapps test ID to the email body
+          // This ensures Glockapps can match the email to the test
+          emailBody += `\n\n<!-- Glockapps Test ID: ${testId} -->`;
+
+          const emailData = {
+            to: seedEmail,
+            subject: subject,
+            html: `
+              <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                  ${emailBody.replace(/\n/g, '<br>')}
+                </body>
+              </html>
+            `,
+            // Add custom headers for Glockapps
+            headers: {
+              'X-Glockapps-Test-ID': testId,
+              'X-Campaign-ID': testId,
+              'X-Test-ID': testId
+            }
+          };
+
+          // Send via the email service
+          const result = await services.sendEmail(emailData);
+
+          if (result.success) {
+            totalSent++;
+            results.push({ email: seedEmail, status: 'sent', messageId: result.messageId });
+          } else {
+            totalFailed++;
+            results.push({ email: seedEmail, status: 'failed', error: result.error });
+          }
+
+          // Small delay between emails to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+        } catch (error: any) {
+          totalFailed++;
+          results.push({ email: seedEmail, status: 'error', error: error.message });
+          console.error(`❌ Failed to send to ${seedEmail}:`, error);
+        }
+      }
+
+      console.log(`✅ Glockapps test completed: ${totalSent} sent, ${totalFailed} failed`);
+
+      res.json({
+        success: true,
+        testId,
+        totalSent,
+        totalFailed,
+        results
+      });
+
+    } catch (error: any) {
+      console.error('❌ Glockapps test error:', error);
+      res.status(500).json({ 
+        error: 'Failed to run Glockapps test',
+        details: error.message 
+      });
+    }
+  });
+
   console.log('✅ Settings routes configured');
 }
