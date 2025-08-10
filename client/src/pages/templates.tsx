@@ -80,8 +80,7 @@ export default function Templates() {
   
   // Use centralized auth token system
   const getAuthToken = () => {
-    const authData = findActiveAuthToken();
-    return authData?.token || null;
+    return findActiveAuthToken(); // Returns the token string directly
   };
 
   const fetchBookingData = async () => {
@@ -92,7 +91,7 @@ export default function Templates() {
         return;
       }
       
-      const response = await apiRequest('GET', `/api/bookings/${bookingId}`);
+      const response = await apiRequest(`/api/bookings/${bookingId}`, { method: 'GET' });
       const booking = await response.json();
       setBookingData(booking);
       console.log('✅ Booking data loaded');
@@ -109,7 +108,7 @@ export default function Templates() {
         return;
       }
       
-      const response = await apiRequest('GET', '/api/settings');
+      const response = await apiRequest('/api/settings', { method: 'GET' });
       const settings = await response.json();
       setUserSettings(settings);
       console.log('✅ User settings loaded');
@@ -139,7 +138,7 @@ export default function Templates() {
         return;
       }
       
-      const response = await apiRequest('POST', '/api/templates/seed-defaults');
+      const response = await apiRequest('/api/templates/seed-defaults', { method: 'POST' });
       const result = await response.json();
       console.log('✅ Seeded default templates:', result);
       setTemplates(result.templates || []);
@@ -162,7 +161,7 @@ export default function Templates() {
         return;
       }
       
-      const response = await apiRequest('GET', '/api/templates');
+      const response = await apiRequest('/api/templates', { method: 'GET' });
       const data = await response.json();
       const templatesArray = Array.isArray(data) ? data : [];
       
@@ -184,7 +183,10 @@ export default function Templates() {
 
   const handleCreateTemplate = async () => {
     try {
-      const response = await apiRequest('POST', '/api/templates', formData);
+      const response = await apiRequest('/api/templates', { 
+        method: 'POST',
+        body: formData 
+      });
       await response.json();
 
       await fetchTemplates();
@@ -207,7 +209,10 @@ export default function Templates() {
     if (!editingTemplate) return;
 
     try {
-      const response = await apiRequest('PATCH', `/api/templates/${editingTemplate.id}`, formData);
+      const response = await apiRequest(`/api/templates/${editingTemplate.id}`, { 
+        method: 'PATCH',
+        body: formData 
+      });
       await response.json();
 
       await fetchTemplates();
@@ -230,7 +235,9 @@ export default function Templates() {
     if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
 
     try {
-      const response = await apiRequest('DELETE', `/api/templates/${template.id}`);
+      const response = await apiRequest(`/api/templates/${template.id}`, { 
+        method: 'DELETE' 
+      });
       await response.json();
 
       await fetchTemplates();
@@ -249,7 +256,9 @@ export default function Templates() {
 
   const handleSetDefault = async (template: EmailTemplate) => {
     try {
-      const response = await apiRequest('POST', `/api/templates/${template.id}/set-default`);
+      const response = await apiRequest(`/api/templates/${template.id}/set-default`, { 
+        method: 'POST' 
+      });
       await response.json();
 
       await fetchTemplates();
@@ -425,9 +434,12 @@ export default function Templates() {
 
     try {
       // Send the email using the template
-      const response = await apiRequest('POST', '/api/templates/send-email', {
-        template: customizedTemplate,
-        bookingId: bookingId
+      const response = await apiRequest('/api/templates/send-email', {
+        method: 'POST',
+        body: {
+          template: customizedTemplate,
+          bookingId: bookingId
+        }
       });
       
       const result = await response.json();
@@ -482,12 +494,15 @@ export default function Templates() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
       
-      const response = await apiRequest('POST', '/api/ai/generate-response', {
-        action: action || 'respond',
-        bookingId: bookingId || null,
-        customPrompt: customPrompt || null,
-        tone: aiTone,
-        travelExpense: travelExpense || null
+      const response = await apiRequest('/api/ai/generate-response', {
+        method: 'POST',
+        body: {
+          action: action || 'respond',
+          bookingId: bookingId || null,
+          customPrompt: customPrompt || null,
+          tone: aiTone,
+          travelExpense: travelExpense || null
+        }
       });
       
       clearTimeout(timeoutId);
@@ -629,10 +644,13 @@ export default function Templates() {
       ];
 
       const testId = `UK-Launch-Batch1-${Date.now()}`;
-      const response = await apiRequest('POST', '/api/test/glockapp-delivery', {
-        testId,
-        templateId: templates[0].id.toString(),
-        seedEmails: seedEmails
+      const response = await apiRequest('/api/test/glockapp-delivery', {
+        method: 'POST',
+        body: {
+          testId,
+          templateId: templates[0].id.toString(),
+          seedEmails: seedEmails
+        }
       });
       
       const result = await response.json();
