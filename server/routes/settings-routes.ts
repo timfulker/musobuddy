@@ -775,30 +775,39 @@ export async function registerSettingsRoutes(app: Express) {
       });
 
       // Import the AI response generator
-      const { AIResponseGenerator } = require('../core/ai-response-generator');
+      const { AIResponseGenerator } = await import('../core/ai-response-generator');
       const generator = new AIResponseGenerator();
 
       // Get booking context if bookingId is provided
       let bookingContext: any = null;
-      if (bookingId) {
-        const booking = await storage.getBooking(bookingId);
-        if (booking && booking.userId === userId) {
-          bookingContext = {
-            clientName: booking.clientName,
-            eventDate: booking.eventDate,
-            eventTime: booking.eventTime,
-            eventEndTime: booking.eventEndTime,
-            venue: booking.venue,
-            eventType: booking.eventType,
-            gigType: booking.gigType,
-            fee: booking.fee,
-            travelExpense: travelExpense || booking.travelExpense,
-            performanceDuration: booking.performanceDuration,
-            styles: booking.styles,
-            equipment: booking.equipment,
-            additionalInfo: booking.additionalInfo
-          };
+      if (bookingId && bookingId !== 'none' && bookingId !== '') {
+        try {
+          const booking = await storage.getBooking(bookingId);
+          if (booking && booking.userId === userId) {
+            bookingContext = {
+              clientName: booking.clientName,
+              eventDate: booking.eventDate,
+              eventTime: booking.eventTime,
+              eventEndTime: booking.eventEndTime,
+              venue: booking.venue,
+              eventType: booking.eventType,
+              gigType: booking.gigType,
+              fee: booking.fee,
+              travelExpense: travelExpense || booking.travelExpense,
+              performanceDuration: booking.performanceDuration,
+              styles: booking.styles,
+              equipment: booking.equipment,
+              additionalInfo: booking.additionalInfo
+            };
+            console.log('🤖 Using booking context for AI generation:', bookingContext);
+          } else {
+            console.log('🤖 Booking not found or access denied for booking:', bookingId);
+          }
+        } catch (error) {
+          console.log('🤖 Error fetching booking, proceeding without booking context:', error.message);
         }
+      } else {
+        console.log('🤖 No booking ID provided, generating generic response');
       }
 
       // Get user settings for personalization
