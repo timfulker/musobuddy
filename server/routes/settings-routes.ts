@@ -719,7 +719,7 @@ export async function registerSettingsRoutes(app: Express) {
       const senderEmail = userSettings?.businessEmail || user?.email;
 
       // Send the email
-      const emailSent = await services.sendEmail(
+      const emailSent = await services.sendEmailSimple(
         recipientEmail,
         template.subject,
         template.emailBody,

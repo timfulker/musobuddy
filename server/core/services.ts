@@ -415,4 +415,20 @@ export class EmailService {
       .replace(/\s+/g, ' ')
       .trim();
   }
+
+  // Simple sendEmail method for compatibility with templates
+  async sendEmailSimple(toEmail: string, subject: string, body: string, fromEmail?: string, fromName?: string) {
+    const emailData = {
+      to: toEmail,
+      subject: subject,
+      html: body,
+      from: fromEmail && fromName ? `${fromName} <${fromEmail}>` : undefined
+    };
+    
+    const result = await this.sendEmail(emailData);
+    return result.success;
+  }
 }
+
+// Export instance for direct use
+export const services = new EmailService();
