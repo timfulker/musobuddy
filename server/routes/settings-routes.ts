@@ -723,7 +723,7 @@ export async function registerSettingsRoutes(app: Express) {
         recipientEmail,
         template.subject,
         template.emailBody,
-        senderEmail,
+        senderEmail || '',
         senderName
       );
 
@@ -736,7 +736,7 @@ export async function registerSettingsRoutes(app: Express) {
                                 template.emailBody?.toLowerCase().includes('thank you for');
       
       if (isThankYouTemplate && booking) {
-        await storage.updateBookingStatus(bookingId, 'Completed', userId);
+        await storage.updateBooking(bookingId, { status: 'Completed' }, userId);
         console.log(`✅ Booking ${bookingId} marked as completed after thank you email`);
       }
 
@@ -764,12 +764,13 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { action, bookingId, customPrompt, tone, travelExpense } = req.body;
+      const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo } = req.body;
 
       console.log('🤖 AI generation request:', {
         action,
         bookingId,
         hasCustomPrompt: !!customPrompt,
+        hasContextualInfo: !!contextualInfo,
         tone,
         travelExpense
       });
@@ -796,15 +797,15 @@ export async function registerSettingsRoutes(app: Express) {
               travelExpense: travelExpense || booking.travelExpense,
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
-              equipment: booking.equipment,
-              additionalInfo: booking.additionalInfo
+              equipment: (booking as any).equipment || '',
+              additionalInfo: (booking as any).additionalInfo || ''
             };
             console.log('🤖 Using booking context for AI generation:', bookingContext);
           } else {
             console.log('🤖 Booking not found or access denied for booking:', bookingId);
           }
-        } catch (error) {
-          console.log('🤖 Error fetching booking, proceeding without booking context:', error.message);
+        } catch (error: any) {
+          console.log('🤖 Error fetching booking, proceeding without booking context:', error.message || error);
         }
       } else {
         console.log('🤖 No booking ID provided, generating generic response');
@@ -814,12 +815,20 @@ export async function registerSettingsRoutes(app: Express) {
       const userSettings = await storage.getSettings(userId);
       const user = await storage.getUserById(userId);
 
-      // Merge user data with settings
+      // Merge user data with settings - Convert null to undefined for UserSettings compatibility
       const fullSettings = {
         ...userSettings,
-        businessName: userSettings?.businessName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email,
-        businessEmail: userSettings?.businessEmail || user?.email
-      };
+        businessName: userSettings?.businessName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || undefined,
+        businessEmail: userSettings?.businessEmail || user?.email || undefined,
+        phone: userSettings?.phone || undefined,
+        businessAddress: userSettings?.businessAddress || undefined,
+        addressLine1: userSettings?.addressLine1 || undefined,
+        addressLine2: userSettings?.addressLine2 || undefined,
+        city: userSettings?.city || undefined,
+        postcode: userSettings?.postcode || undefined,
+        country: userSettings?.country || undefined,
+        website: userSettings?.website || undefined
+      } as any; // Use type assertion to resolve the complex type mismatch
 
       // Generate the AI response
       const response = await generator.generateEmailResponse({
@@ -827,7 +836,8 @@ export async function registerSettingsRoutes(app: Express) {
         bookingContext,
         userSettings: fullSettings,
         customPrompt,
-        tone: tone || 'professional'
+        tone: tone || 'professional',
+        contextualInfo: contextualInfo || null
       });
 
       console.log('✅ AI response generated successfully');

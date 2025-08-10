@@ -66,6 +66,7 @@ interface AIResponseRequest {
   userSettings?: UserSettings;
   customPrompt?: string;
   tone?: 'professional' | 'friendly' | 'formal' | 'casual';
+  contextualInfo?: string; // Additional context when no booking is selected
 }
 
 export class AIResponseGenerator {
@@ -83,7 +84,7 @@ export class AIResponseGenerator {
     emailBody: string;
     smsBody?: string;
   }> {
-    const { action, bookingContext, userSettings, customPrompt, tone = 'professional' } = request;
+    const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo } = request;
     
     console.log('🤖 Starting AI response generation...');
     console.log('🤖 Request details:', {
@@ -91,6 +92,7 @@ export class AIResponseGenerator {
       hasBookingContext: !!bookingContext,
       hasUserSettings: !!userSettings,
       hasCustomPrompt: !!customPrompt,
+      hasContextualInfo: !!contextualInfo,
       tone
     });
     
@@ -98,7 +100,7 @@ export class AIResponseGenerator {
       const openai = this.getOpenAIClient();
       
       const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext);
-      const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt);
+      const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
@@ -408,11 +410,11 @@ PROFESSIONAL DETAILS TO INCLUDE:
 IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
   }
 
-  private buildUserPrompt(action: string, bookingContext?: BookingContext, customPrompt?: string): string {
+  private buildUserPrompt(action: string, bookingContext?: BookingContext, customPrompt?: string, contextualInfo?: string): string {
     if (customPrompt) {
       return `Generate a ${action} email response with this custom request: ${customPrompt}
 
-${this.formatBookingContext(bookingContext)}
+${contextualInfo ? `ADDITIONAL CONTEXT: ${contextualInfo}\n\n` : ''}${this.formatBookingContext(bookingContext)}
 
 Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
     }
@@ -426,7 +428,15 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
 
     return `${actionPrompts[action as keyof typeof actionPrompts] || actionPrompts.custom}
 
-${this.formatBookingContext(bookingContext)}
+${contextualInfo ? `ADDITIONAL CONTEXT PROVIDED BY USER: ${contextualInfo}
+
+This additional context should be used to personalize the response and offer relevant services or information. For example:
+- If context mentions "DJ services", highlight your DJ capabilities
+- If context mentions "wedding reception", tailor response for wedding events
+- If context mentions "corporate event", adjust tone and service focus accordingly
+- Use this context to suggest additional services that complement the inquiry
+
+` : ''}${this.formatBookingContext(bookingContext)}
 
 Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
   }
