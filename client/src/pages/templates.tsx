@@ -710,31 +710,33 @@ export default function Templates() {
         description: "Sending emails to 91 test addresses...",
       });
 
-      // GlockApps seed list (from CSV)
+      // GlockApps seed list - Batch 1 (25 emails for rate limiting)
       const seedEmails = [
-        "elizabeaver@auth.glockdb.com", "juliarspivey@aol.com", "davidvcampbell@aol.com", "lynettedweyand@protonmail.com",
-        "bbarretthenryhe@gmail.com", "luisl417@yahoo.com", "jerrybrucedath@gmail.com", "verify79@web.de",
-        "simonetgrimard@laposte.net", "irenem@userflowhq.com", "comwhitttakarticjt@gmx.de", "verifynewssl@zoho.com",
-        "yadiraalfordbj@hotmail.com", "dannakbond@aol.com", "allanb@glockapps.awsapps.com", "eliza@spamcombat.com",
-        "eugenedandy576@gmail.com", "pprestondasavis@gmx.com", "alisonnlawrence@gmail.com", "verifycom79@gmx.com",
-        "b2bdeliver79@mail.com", "romanespor11@icloud.com", "joereddison@outlook.com", "martin@glockapps.tech",
-        "verify79@buyemailsoftware.com", "gailllitle@att.net", "jeffsayerss@yahoo.com", "johnnyjonesjake@hotmail.com",
-        "heavenpeck@freenet.de", "virginia@buyemailsoftware.com", "creissantdubois@laposte.net", "tristonreevestge@outlook.com.br",
-        "irene@postmasterpro.email", "jessicalisa6054@gmail.com", "blaircourtneye@outlook.com", "lashawnrheidrick@yahoo.com",
-        "loganalan654@gmail.com", "assa@auth.glockdb.com", "emilliesunnyk@gmail.com", "williamhensley54@yahoo.com",
-        "debrajhammons@outlook.com", "racheljavierera@hotmail.com", "williamhbishopp@yahoo.com", "anmeiyudobaihq@gmx.de",
-        "cierawilliamsonwq@gmail.com", "frankdesalvo@mailo.com", "jamesjng@outlook.com", "davidkdoyle@hotmail.com",
-        "gd@desktopemail.com", "bookerttubbs@zohomail.eu", "lenorebayerd@gmail.com", "taverasbrianvg@gmail.com",
-        "johntberman@yahoo.com", "raphaelewiley@aol.com", "keenanblooms@gmail.com", "carollpooool@outlook.com",
-        "catherinedwilsonn@aol.com", "mbell@fastdirectorysubmitter.com", "martinawm@gemings.awsapps.com", "luanajortega@yahoo.com",
-        "markjenningson@hotmail.com", "naomimartinsn@hotmail.com", "brittanyrocha@outlook.de", "larrycellis@aol.com",
-        "madeleinecagleks@gmail.com", "geraldmbautista@outlook.com", "williamtkozlowsk@gmail.com", "aileenjamesua@outlook.com",
-        "paul@userflowhq.com", "carlbilly605@gmail.com", "alfredohoffman@fastdirectorysubmitter.com", "tinamallahancr@gmail.com",
-        "verifyde79@gmx.de", "andrewheggins@mailo.com", "johnsimonskh@gmail.com", "jurgeneberhartdd@web.de",
-        "bobbybagdgddwins@mailo.com", "elizabethbetty6054@gmail.com", "deweymadddax@currently.com", "leoefraser@yahoo.com",
-        "glencabrera@outlook.fr", "clyde@trustycheck.pro", "candacechall@aol.com", "augustinlidermann@t-online.de",
-        "wilcoxginax@gmail.com", "daishacorwingx@gmail.com", "louiepettydr@gmail.com", "carloscohenm@freenet.de",
-        "michaelrwoodd@yahoo.com", "fredmrivenburg@aol.com"
+        "elizabeaver@auth.glockdb.com", 
+        "clyde@trustycheck.pro", 
+        "johnsimonskh@gmail.com", 
+        "juliarspivey@aol.com", 
+        "eliza@spamcombat.com", 
+        "madeleinecagleks@gmail.com", 
+        "joereddison@outlook.com", 
+        "virginia@buyemailsoftware.com", 
+        "carollpooool@outlook.com", 
+        "davidkdoyle@hotmail.com", 
+        "simonetgrimard@laposte.net", 
+        "verifycom79@gmx.com", 
+        "dannakbond@aol.com", 
+        "allanb@glockapps.awsapps.com", 
+        "frankdesalvo@mailo.com", 
+        "lynettedweyand@protonmail.com", 
+        "glencabrera@outlook.fr", 
+        "brittanyrocha@outlook.de", 
+        "irene@postmasterpro.email", 
+        "bbarretthenryhe@gmail.com", 
+        "deweymadddax@currently.com", 
+        "gailllitle@att.net", 
+        "bobbybagdgddwins@mailo.com", 
+        "naomimartinsn@hotmail.com", 
+        "luisl417@yahoo.com"
       ];
 
       const response = await fetch('/api/test/glockapp-delivery', {
