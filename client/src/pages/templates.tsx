@@ -12,6 +12,7 @@ import { Plus, Edit3, Trash2, Star, Menu, Wand2, Sparkles, Bot } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
+import { apiRequest } from '@/lib/queryClient';
 
 interface EmailTemplate {
   id: number;
@@ -97,22 +98,15 @@ export default function Templates() {
   const fetchBookingData = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const booking = await response.json();
-        setBookingData(booking);
-        
-      } else {
-        console.error('❌ Failed to fetch booking:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
+      if (!token) {
+        console.error('❌ No auth token for booking data');
+        return;
       }
+      
+      const response = await apiRequest('GET', `/api/bookings/${bookingId}`);
+      const booking = await response.json();
+      setBookingData(booking);
+      console.log('✅ Booking data loaded');
     } catch (error) {
       console.error('❌ Failed to fetch booking data:', error);
     }
@@ -121,20 +115,15 @@ export default function Templates() {
   const fetchUserSettings = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch('/api/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const settings = await response.json();
-        setUserSettings(settings);
-        
-      } else {
-        console.error('❌ Failed to fetch user settings');
+      if (!token) {
+        console.error('❌ No auth token for settings');
+        return;
       }
+      
+      const response = await apiRequest('GET', '/api/settings');
+      const settings = await response.json();
+      setUserSettings(settings);
+      console.log('✅ User settings loaded');
     } catch (error) {
       console.error('❌ Error fetching user settings:', error);
     }
@@ -156,23 +145,19 @@ export default function Templates() {
   const seedDefaultTemplates = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch('/api/templates/seed-defaults', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Seeded default templates:', result);
-        setTemplates(result.templates || []);
-        toast({
-          title: "Templates Created",
-          description: "5 default email templates have been created for you",
-        });
+      if (!token) {
+        console.error('❌ No auth token for seeding templates');
+        return;
       }
+      
+      const response = await apiRequest('POST', '/api/templates/seed-defaults');
+      const result = await response.json();
+      console.log('✅ Seeded default templates:', result);
+      setTemplates(result.templates || []);
+      toast({
+        title: "Templates Created",
+        description: "5 default email templates have been created for you",
+      });
     } catch (err: any) {
       console.error('❌ Failed to seed templates:', err);
     }
@@ -182,22 +167,13 @@ export default function Templates() {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await fetch('/api/templates', {
-        method: 'GET',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = '/';
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!token) {
+        console.error('❌ No auth token for templates');
+        window.location.href = '/';
+        return;
       }
-
+      
+      const response = await apiRequest('GET', '/api/templates');
       const data = await response.json();
       const templatesArray = Array.isArray(data) ? data : [];
       
@@ -219,19 +195,8 @@ export default function Templates() {
 
   const handleCreateTemplate = async () => {
     try {
-      const token = getAuthToken();
-      const response = await fetch('/api/templates', {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await apiRequest('POST', '/api/templates', formData);
+      await response.json();
 
       await fetchTemplates();
       setIsCreateDialogOpen(false);
@@ -253,19 +218,8 @@ export default function Templates() {
     if (!editingTemplate) return;
 
     try {
-      const token = getAuthToken();
-      const response = await fetch(`/api/templates/${editingTemplate.id}`, {
-        method: 'PATCH',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await apiRequest('PATCH', `/api/templates/${editingTemplate.id}`, formData);
+      await response.json();
 
       await fetchTemplates();
       setEditingTemplate(null);
@@ -287,18 +241,8 @@ export default function Templates() {
     if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
 
     try {
-      const token = getAuthToken();
-      const response = await fetch(`/api/templates/${template.id}`, {
-        method: 'DELETE',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await apiRequest('DELETE', `/api/templates/${template.id}`);
+      await response.json();
 
       await fetchTemplates();
       toast({
@@ -316,18 +260,8 @@ export default function Templates() {
 
   const handleSetDefault = async (template: EmailTemplate) => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`/api/templates/${template.id}/set-default`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await apiRequest('POST', `/api/templates/${template.id}/set-default`);
+      await response.json();
 
       await fetchTemplates();
       toast({
@@ -502,20 +436,12 @@ export default function Templates() {
 
     try {
       // Send the email using the template
-      const response = await fetch('/api/templates/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          template: customizedTemplate,
-          bookingId: bookingId
-        })
+      const response = await apiRequest('POST', '/api/templates/send-email', {
+        template: customizedTemplate,
+        bookingId: bookingId
       });
-
-      if (response.ok) {
-        const result = await response.json();
+      
+      const result = await response.json();
         
         // Check if this was a thank you template
         const isThankYouTemplate = previewData.template.name?.toLowerCase().includes('thank you') || 
@@ -541,15 +467,6 @@ export default function Templates() {
             window.location.href = '/bookings'; // Or redirect to bookings
           }, 2000);
         }
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Email Failed",
-          description: error.error || "Failed to send email. Please try again.",
-          variant: "destructive",
-        });
-        console.error('❌ Template email failed:', error);
-      }
     } catch (error) {
       console.error('❌ Template email error:', error);
       toast({
@@ -576,40 +493,23 @@ export default function Templates() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
       
-      const response = await fetch('/api/ai/generate-response', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        signal: controller.signal,
-        body: JSON.stringify({
-          action: action || 'respond',
-          bookingId: bookingId || null,
-          customPrompt: customPrompt || null,
-          tone: aiTone,
-          travelExpense: travelExpense || null
-        })
+      const response = await apiRequest('POST', '/api/ai/generate-response', {
+        action: action || 'respond',
+        bookingId: bookingId || null,
+        customPrompt: customPrompt || null,
+        tone: aiTone,
+        travelExpense: travelExpense || null
       });
       
       clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const result = await response.json();
-        setAiGenerated(result);
-        
-        toast({
-          title: "AI Response Generated",
-          description: "Your personalized response has been created. Review and edit as needed.",
-        });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "AI Generation Failed",
-          description: error.error || "Failed to generate AI response. Please try again.",
-          variant: "destructive",
-        });
-      }
+      
+      const result = await response.json();
+      setAiGenerated(result);
+      
+      toast({
+        title: "AI Response Generated",
+        description: "Your personalized response has been created. Review and edit as needed.",
+      });
     } catch (error) {
       console.error('AI generation error:', error);
       
@@ -740,20 +640,12 @@ export default function Templates() {
       ];
 
       const testId = `UK-Launch-Batch1-${Date.now()}`;
-      const response = await fetch('/api/test/glockapp-delivery', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          testId,
-          templateId: templates[0].id.toString(),
-          seedEmails: seedEmails
-        })
+      const response = await apiRequest('POST', '/api/test/glockapp-delivery', {
+        testId,
+        templateId: templates[0].id.toString(),
+        seedEmails: seedEmails
       });
-
-      if (!response.ok) {
-        throw new Error(`Test failed: ${response.statusText}`);
-      }
-
+      
       const result = await response.json();
       
       toast({

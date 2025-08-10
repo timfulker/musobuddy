@@ -1,38 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
-import { findActiveAuthToken } from "@/utils/authToken";
 
 // Custom hook to fetch and combine static gig types with user's custom gig types
 
 export const useGigTypes = () => {
+  // Use the default queryFn which handles authentication properly
   const { data: settings, isLoading, error } = useQuery({
-    queryKey: ['settings'],
-    queryFn: async () => {
-      const token = findActiveAuthToken();
-      
-      if (!token) {
-        console.error('❌ No auth token found for useGigTypes');
-        throw new Error('No authentication token');
-      }
-      
-      console.log('🔍 useGigTypes - Token found:', !!token);
-      
-      const response = await fetch('/api/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.error('❌ Settings API error in useGigTypes:', response.status, response.statusText);
-        throw new Error('Failed to fetch settings');
-      }
-      
-      const data = await response.json();
-      console.log('✅ useGigTypes settings loaded successfully');
-      return data;
-    },
+    queryKey: ['/api/settings'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // Reduce retries to prevent loops
   });
