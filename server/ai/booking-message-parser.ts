@@ -36,7 +36,7 @@ export async function parseBookingMessage(
 IMPORTANT INSTRUCTIONS:
 - Extract ALL available information from the message
 - Be very liberal with event type detection (weddings, parties, pubs, corporate, festivals, etc.)
-- For dates: Convert relative dates like "next June 16th" to actual dates (assume current year unless context suggests otherwise)
+- For dates: Convert relative dates to actual dates. "Next year" means 2026. "This year" means 2025. "Next [month]" without year means next occurrence of that month.
 - For times: Extract both start and end times if mentioned
 - For venues: Extract venue names AND addresses/locations if mentioned  
 - For fees: Look for budget mentions, fee discussions, or payment terms
@@ -150,8 +150,18 @@ function cleanDate(value: any): string | undefined {
       return dateStr;
     }
     
+    // Handle "next year" scenarios - normalize to proper date
+    let normalizedDateStr = dateStr;
+    if (dateStr.toLowerCase().includes('next year')) {
+      // Replace "next year" with "2026" 
+      normalizedDateStr = dateStr.replace(/next year/gi, '2026');
+    } else if (dateStr.toLowerCase().includes('this year')) {
+      // Replace "this year" with "2025"
+      normalizedDateStr = dateStr.replace(/this year/gi, '2025');
+    }
+    
     // Try parsing natural language dates
-    const parsed = new Date(dateStr);
+    const parsed = new Date(normalizedDateStr);
     if (!isNaN(parsed.getTime()) && parsed > new Date()) {
       return parsed.toISOString().split('T')[0];
     }

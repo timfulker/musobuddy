@@ -28,6 +28,14 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
   - **SECURITY MAINTAINED**: Invoice access security monitoring preserved while allowing legitimate access
   - **R2 STORAGE CONFIRMED**: Both invoices and contracts properly stored on Cloudflare R2 with branded URL redirects
   - **USER EXPERIENCE**: Contract send emails now work properly with personalized theme colors
+- **BOOKING WIDGET DATE BUG FIXED**: Resolved critical year calculation error in AI booking message parser
+  - **BUG**: "October 21 next year" was incorrectly creating bookings for 2024 instead of 2026
+  - **ROOT CAUSE**: AI prompt instructed to "assume current year unless context suggests otherwise"
+  - **FIXES APPLIED**:
+    - Updated AI prompt to explicitly handle "next year" as 2026, "this year" as 2025
+    - Enhanced cleanDate function to normalize "next year" → "2026" before parsing
+    - Added proper relative date handling for booking widget submissions
+  - **RESULT**: Booking widget now correctly calculates years for relative date expressions
 
 ## Previous Updates (11/01/2025)
 - **NAVIGATION STRUCTURE SIMPLIFIED**: Cleaned up navigation structure to reduce menu clutter and improve UX
