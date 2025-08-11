@@ -1,7 +1,6 @@
 // cloud-storage.ts - Fixed uploadInvoiceToCloud function
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 import type { Invoice, Contract, UserSettings } from '@shared/schema';
 
@@ -58,14 +57,15 @@ export async function uploadInvoiceToCloud(
     
     console.log(`✅ Invoice PDF uploaded successfully to R2: ${storageKey}`);
     
-    // SECURITY FIX: Store the key securely, don't expose direct public URL
-    console.log(`🔐 Invoice uploaded securely, access requires signed URL`);
+    // SECURITY: Use random token in URL for security through obscurity
+    const publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${storageKey}`;
+    
+    console.log(`🔗 Public R2 URL with security token: ${publicUrl}`);
     
     return {
       success: true,
-      key: storageKey,
-      // Remove direct public URL - access will be via signed URLs only
-      url: undefined
+      url: publicUrl, // Public URL with random token for security
+      key: storageKey
     };
     
   } catch (error: any) {
