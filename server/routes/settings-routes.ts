@@ -724,7 +724,7 @@ export async function registerSettingsRoutes(app: Express) {
         template.subject,
         template.emailBody,
         senderEmail || '',
-        senderName
+        senderName || undefined
       );
 
       if (!emailSent) {
@@ -826,7 +826,7 @@ export async function registerSettingsRoutes(app: Express) {
         addressLine2: userSettings?.addressLine2 || undefined,
         city: userSettings?.city || undefined,
         postcode: userSettings?.postcode || undefined,
-        country: userSettings?.country || undefined,
+        county: userSettings?.county || undefined,
         website: userSettings?.website || undefined
       } as any; // Use type assertion to resolve the complex type mismatch
 
