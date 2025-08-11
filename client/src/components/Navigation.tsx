@@ -7,8 +7,18 @@ import {
   Calendar, 
   ShieldCheck,
   Music,
-  Crown
+  Crown,
+  Settings as SettingsIcon,
+  ChevronDown,
+  FileType,
+  UserCog
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Navigation = () => {
   const [location] = useLocation();
@@ -19,9 +29,17 @@ const Navigation = () => {
     { path: '/contracts', label: 'Contracts', icon: FileText },
     { path: '/invoices', label: 'Invoices', icon: Receipt },
     { path: '/calendar', label: 'Calendar', icon: Calendar },
-    { path: '/compliance', label: 'Compliance', icon: ShieldCheck },
     { path: '/pricing', label: 'Upgrade', icon: Crown },
   ];
+
+  const settingsItems = [
+    { path: '/settings', label: 'User Settings', icon: UserCog },
+    { path: '/templates', label: 'Templates', icon: FileType },
+    { path: '/compliance', label: 'Compliance', icon: ShieldCheck },
+  ];
+
+  // Check if any settings page is active
+  const isSettingsActive = settingsItems.some(item => location === item.path);
 
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-sm border-b">
@@ -54,6 +72,43 @@ const Navigation = () => {
                 </Link>
               );
             })}
+            
+            {/* Settings Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isSettingsActive
+                      ? 'bg-primary text-white'
+                      : 'text-muted-foreground hover:text-white hover:bg-primary'
+                  }`}
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                  <span>Settings</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {settingsItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.path;
+                  
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link
+                        href={item.path}
+                        className={`flex items-center space-x-2 w-full cursor-pointer ${
+                          isActive ? 'bg-accent' : ''
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile menu button (simplified for now) */}
