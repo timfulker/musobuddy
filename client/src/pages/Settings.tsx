@@ -213,7 +213,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
-  const { currentTheme, setTheme } = useTheme();
+  const { currentTheme, setTheme, customColor, setCustomColor } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument and gig type state
@@ -2157,7 +2157,7 @@ export default function Settings() {
                       <div className="space-y-4">
                         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Themes</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.values(themes).map((theme) => (
+                          {Object.values(themes).filter(theme => theme.id !== 'custom').map((theme) => (
                             <div
                               key={theme.id}
                               onClick={() => {
@@ -2229,6 +2229,122 @@ export default function Settings() {
                               </div>
                             </div>
                           ))}
+                          
+                          {/* Custom Color Theme Option */}
+                          <div
+                            className={`p-4 rounded-lg border-2 transition-all ${
+                              currentTheme === 'custom'
+                                ? 'border-theme-primary bg-theme-primary/10'
+                                : 'border-gray-200 dark:border-gray-600 hover:border-theme-primary/50'
+                            }`}
+                          >
+                            <div 
+                              onClick={() => {
+                                console.log('🎨 User clicked custom theme');
+                                setTheme('custom');
+                                if (customColor) {
+                                  form.setValue('themeAccentColor', customColor);
+                                  console.log('🎨 Updated form themeAccentColor with custom:', customColor);
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div 
+                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                                  style={{ backgroundColor: customColor || '#8b5cf6' }}
+                                />
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm" style={{ 
+                                    color: currentTheme === 'custom' ? (customColor || '#8b5cf6') : 'inherit'
+                                  }}>
+                                    Custom Color
+                                  </h4>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Choose your own custom accent color
+                                  </p>
+                                </div>
+                                {currentTheme === 'custom' && (
+                                  <div className="w-5 h-5 rounded-full bg-theme-primary flex items-center justify-center">
+                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Color Picker - Only show when custom theme is selected */}
+                            {currentTheme === 'custom' && (
+                              <div className="mt-4 space-y-3">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  Pick your custom color:
+                                </label>
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="color"
+                                    value={customColor || '#8b5cf6'}
+                                    onChange={(e) => {
+                                      const newColor = e.target.value;
+                                      console.log('🎨 User picked custom color:', newColor);
+                                      setCustomColor(newColor);
+                                      form.setValue('themeAccentColor', newColor);
+                                      console.log('🎨 Updated form themeAccentColor:', newColor);
+                                    }}
+                                    className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+                                  />
+                                  <div className="flex-1">
+                                    <input
+                                      type="text"
+                                      value={customColor || '#8b5cf6'}
+                                      onChange={(e) => {
+                                        const newColor = e.target.value;
+                                        if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
+                                          setCustomColor(newColor);
+                                          form.setValue('themeAccentColor', newColor);
+                                        }
+                                      }}
+                                      placeholder="#8b5cf6"
+                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Enter a hex color code (e.g., #ff0066)
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Theme Preview - same as other themes */}
+                            <div className="mt-3 p-3 rounded border" style={{ 
+                              backgroundColor: themes.custom.colors.background,
+                              borderColor: (customColor || themes.custom.colors.primary) + '20'
+                            }}>
+                              <div className="flex items-center justify-between">
+                                <div 
+                                  className="text-xs font-medium"
+                                  style={{ 
+                                    color: themes.custom.colors.text,
+                                    fontFamily: themes.custom.fonts.heading
+                                  }}
+                                >
+                                  Sample Dashboard
+                                </div>
+                                <div 
+                                  className="w-3 h-3 rounded"
+                                  style={{ backgroundColor: themes.custom.colors.accent }}
+                                />
+                              </div>
+                              <div className="mt-2 space-y-1">
+                                <div 
+                                  className="h-2 rounded"
+                                  style={{ backgroundColor: customColor || themes.custom.colors.primary, width: '60%' }}
+                                />
+                                <div 
+                                  className="h-2 rounded"
+                                  style={{ backgroundColor: themes.custom.colors.secondary, width: '40%' }}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         
                         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -2238,9 +2354,9 @@ export default function Settings() {
                           <p className="text-xs text-blue-700 dark:text-blue-300">
                             {themes[currentTheme].description}
                           </p>
-                          {currentTheme === 'retro-vinyl' && (
+                          {currentTheme === 'custom' && (
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                              ✨ This theme includes custom fonts and warm vintage colors for a unique musical aesthetic.
+                              ✨ You've selected a custom color theme. Your chosen color will be used throughout the app and in generated documents.
                             </p>
                           )}
                         </div>

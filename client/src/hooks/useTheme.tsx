@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue';
+export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue' | 'custom';
 
 export interface Theme {
   id: ThemeName;
@@ -112,6 +112,24 @@ export const themes: Record<ThemeName, Theme> = {
       heading: 'system-ui, sans-serif',
       body: 'system-ui, sans-serif'
     }
+  },
+  'custom': {
+    id: 'custom',
+    name: 'Custom Color',
+    description: 'Choose your own custom accent color',
+    colors: {
+      primary: '#8b5cf6', // Default purple, will be overridden by user selection
+      secondary: '#a855f7',
+      accent: '#6366f1',
+      background: '#f8fafc',
+      surface: '#ffffff',
+      text: '#1e293b',
+      textSecondary: '#64748b'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
+    }
   }
 };
 
@@ -119,24 +137,40 @@ interface ThemeContextType {
   currentTheme: ThemeName;
   setTheme: (theme: ThemeName) => void;
   theme: Theme;
+  customColor: string | null;
+  setCustomColor: (color: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('purple');
+  const [customColor, setCustomColor] = useState<string | null>(null);
 
   useEffect(() => {
     // Load theme from localStorage
     const savedTheme = localStorage.getItem('musobuddy-theme') as ThemeName;
+    const savedCustomColor = localStorage.getItem('musobuddy-custom-color');
+    
     if (savedTheme && themes[savedTheme]) {
       setCurrentTheme(savedTheme);
+    }
+    if (savedCustomColor) {
+      setCustomColor(savedCustomColor);
     }
   }, []);
 
   useEffect(() => {
     // Apply theme CSS variables
-    const theme = themes[currentTheme];
+    const theme = { ...themes[currentTheme] };
+    
+    // If it's a custom theme and we have a custom color, override the primary color
+    if (currentTheme === 'custom' && customColor) {
+      theme.colors.primary = customColor;
+      // Also adjust secondary color to be a slightly darker version
+      theme.colors.secondary = customColor + '88'; // Add transparency
+    }
+    
     const root = document.documentElement;
     
     // Set CSS custom properties
@@ -188,7 +222,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // Save to localStorage
     localStorage.setItem('musobuddy-theme', currentTheme);
-  }, [currentTheme]);
+  }, [currentTheme, customColor]);
+
+  // Save custom color to localStorage when it changes
+  useEffect(() => {
+    if (customColor) {
+      localStorage.setItem('musobuddy-custom-color', customColor);
+    }
+  }, [customColor]);
 
   const setTheme = (theme: ThemeName) => {
     console.log(`🎨 Theme switching from ${currentTheme} to ${theme}`);
@@ -199,7 +240,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     <ThemeContext.Provider value={{ 
       currentTheme, 
       setTheme, 
-      theme: themes[currentTheme] 
+      theme: currentTheme === 'custom' && customColor ? 
+        { ...themes[currentTheme], colors: { ...themes[currentTheme].colors, primary: customColor } } : 
+        themes[currentTheme],
+      customColor,
+      setCustomColor
     }}>
       {children}
     </ThemeContext.Provider>
