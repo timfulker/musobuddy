@@ -42,7 +42,7 @@ export function registerContractRoutes(app: Express) {
       console.log('🔧 Starting to fix all signing pages with JavaScript errors...');
       
       // Get all contracts that might have buggy signing pages
-      const result = await db.query(`
+      const result = await db.execute(`
         SELECT * FROM contracts 
         WHERE status IN ('sent', 'draft') 
         AND signing_page_url IS NOT NULL
@@ -55,8 +55,9 @@ export function registerContractRoutes(app: Express) {
       let fixed = 0;
       let errors = 0;
       
-      for (const contract of unsignedContracts) {
+      for (const contractRow of unsignedContracts) {
         try {
+          const contract = contractRow as any;
           const userSettings = await storage.getSettings(contract.user_id);
           const { uploadContractSigningPage } = await import('../core/cloud-storage');
           const result = await uploadContractSigningPage(contract, userSettings);
@@ -284,7 +285,7 @@ export function registerContractRoutes(app: Express) {
           }, userId);
           
           console.log(`✅ Generated and redirecting to new cloud URL for contract ${contractId}`);
-          return res.redirect(uploadResult.url);
+          return res.redirect(uploadResult.url!);
         }
       } catch (error) {
         console.error('Failed to generate cloud URL:', error);
@@ -585,7 +586,7 @@ export function registerContractRoutes(app: Express) {
         const emailService = new EmailService();
         
         // Get theme color from settings
-        const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#10b981';
+        const themeColor = userSettings?.themeAccentColor || '#10b981';
         
         const subject = `Contract Signed - ${updateResult.contractNumber}`;
         

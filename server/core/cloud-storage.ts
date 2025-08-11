@@ -245,6 +245,7 @@ export async function uploadContractSigningPage(
 
 // Generate HTML signing page for contracts
 function generateContractSigningPage(contract: Contract, userSettings: UserSettings | null): string {
+  const themeColor = userSettings?.themeAccentColor || '#10b981';
   const businessName = userSettings?.businessName || 'MusoBuddy';
   const templateName = contract.template || 'professional';
   
