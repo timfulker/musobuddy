@@ -214,6 +214,9 @@ export default function Settings() {
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
   const { currentTheme, setTheme, customColor, setCustomColor } = useTheme();
+  
+  // Debug: Log current theme state
+  console.log('🎨 Settings component - current theme:', currentTheme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument and gig type state
@@ -2241,11 +2244,12 @@ export default function Settings() {
                             <div 
                               onClick={() => {
                                 console.log('🎨 User clicked custom theme');
+                                console.log('🎨 Current theme before:', currentTheme);
                                 setTheme('custom');
-                                if (customColor) {
-                                  form.setValue('themeAccentColor', customColor);
-                                  console.log('🎨 Updated form themeAccentColor with custom:', customColor);
-                                }
+                                console.log('🎨 Set theme to custom');
+                                const colorToUse = customColor || '#8b5cf6';
+                                form.setValue('themeAccentColor', colorToUse);
+                                console.log('🎨 Updated form themeAccentColor with:', colorToUse);
                               }}
                               className="cursor-pointer"
                             >
@@ -2274,9 +2278,9 @@ export default function Settings() {
                             
                             {/* Color Picker - Only show when custom theme is selected */}
                             {currentTheme === 'custom' && (
-                              <div className="mt-4 space-y-3">
+                              <div className="mt-4 space-y-3 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-dashed border-gray-300">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  Pick your custom color:
+                                  🎨 Pick your custom color:
                                 </label>
                                 <div className="flex items-center space-x-3">
                                   <input
