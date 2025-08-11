@@ -70,7 +70,7 @@ export function registerContractRoutes(app: Express) {
             errors++;
           }
         } catch (error) {
-          console.error(`❌ Error fixing contract #${contract.id}:`, error);
+          console.error(`❌ Error fixing contract #${contractRow.id}:`, error);
           errors++;
         }
       }

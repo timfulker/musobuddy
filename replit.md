@@ -17,7 +17,19 @@ Email webhook: Mailgun webhook for email routing hardcoded to `https://www.musob
 System reliability: Comprehensive 4-phase fix applied addressing "architectural debt collapse" with enterprise-grade reliability for contract signing, unified authentication middleware, storage audit, and real-time system health monitoring.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
-## Recent Updates (11/01/2025)
+## Recent Updates (11/08/2025)
+- **CONTRACT SEND FUNCTIONALITY FIXED**: Resolved TypeScript errors that broke contract sending after theme personalization update
+  - **ROOT CAUSE**: Theme color property name inconsistencies (themeAccentColor vs theme_accent_color) introduced during theme personalization feature
+  - **FIXES APPLIED**: 
+    - Fixed theme color variable references in contract signing page generation
+    - Corrected database query type casting issues 
+    - Fixed missing variable scope issues in HTML template generation
+    - Cleaned up event date display to show simple format (DD/MM/YYYY) instead of verbose timezone info
+  - **SECURITY MAINTAINED**: Invoice access security monitoring preserved while allowing legitimate access
+  - **R2 STORAGE CONFIRMED**: Both invoices and contracts properly stored on Cloudflare R2 with branded URL redirects
+  - **USER EXPERIENCE**: Contract send emails now work properly with personalized theme colors
+
+## Previous Updates (11/01/2025)
 - **NAVIGATION STRUCTURE SIMPLIFIED**: Cleaned up navigation structure to reduce menu clutter and improve UX
   - **DESKTOP SIDEBAR**: Implemented collapsible Settings section grouping User Settings, Templates, and Compliance
   - **MOBILE NAVIGATION**: Removed Calendar link (integrated in Bookings), added Settings link that highlights when on any settings page

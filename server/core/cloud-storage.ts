@@ -264,7 +264,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
           <div class="info-section">
             <h4>Event Details</h4>
             <p><strong>Client:</strong> ${contract.clientName}</p>
-            <p><strong>Date:</strong> ${contract.eventDate}</p>
+            <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
             <p><strong>Time:</strong> ${contract.eventTime}</p>
             <p><strong>Venue:</strong> ${contract.venue}</p>
           </div>
@@ -331,7 +331,7 @@ ${contract.riderNotes}
         <div class="performance-details">
           <h4>🎪 PERFORMANCE DETAILS</h4>
           <div class="detail-grid">
-            <div><strong>Event Date:</strong> ${contract.eventDate}</div>
+            <div><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</div>
             <div><strong>Start Time:</strong> ${contract.eventTime || 'TBD'}</div>
             <div><strong>End Time:</strong> ${contract.eventEndTime || 'TBD'}</div>
             <div><strong>Venue:</strong> ${contract.venue}</div>
