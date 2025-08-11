@@ -182,7 +182,7 @@ export async function uploadContractSigningPage(
 ): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
   try {
     // Get theme color from settings for dynamic styling
-    const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#10b981';
+    const themeColor = userSettings?.themeAccentColor || '#10b981';
     
     console.log(`☁️ Creating signing page for contract #${contract.id}...`);
     console.log(`📋 Contract data for signing page:`, {
@@ -192,7 +192,7 @@ export async function uploadContractSigningPage(
       venueAddress: contract.venueAddress,
       template: contract.template,
       setlist: contract.specialRequirements?.substring(0, 50) || '',
-      riderNotes: contract.additionalInfo?.substring(0, 50) || ''
+      riderNotes: (contract as any).additionalInfo?.substring(0, 50) || ''
     });
     
     // Generate HTML signing page
