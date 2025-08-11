@@ -584,6 +584,9 @@ export function registerContractRoutes(app: Express) {
         const { EmailService } = await import('../core/services');
         const emailService = new EmailService();
         
+        // Get theme color from settings
+        const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#10b981';
+        
         const subject = `Contract Signed - ${updateResult.contractNumber}`;
         
         // Send to client if they have an email
@@ -609,11 +612,11 @@ export function registerContractRoutes(app: Express) {
             </head>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
               <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #10b981;">✅ Contract Successfully Signed!</h2>
+                <h2 style="color: ${themeColor};">✅ Contract Successfully Signed!</h2>
                 
                 <p>Great news! Your contract has been signed by <strong>${updateResult.clientName}</strong>.</p>
                 
-                <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${themeColor};">
                   <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
                   <p><strong>Contract Number:</strong> ${updateResult.contractNumber}</p>
                   <p><strong>Client:</strong> ${updateResult.clientName}</p>

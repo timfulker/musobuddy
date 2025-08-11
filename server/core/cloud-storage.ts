@@ -181,6 +181,9 @@ export async function uploadContractSigningPage(
   userSettings: UserSettings | null
 ): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
   try {
+    // Get theme color from settings for dynamic styling
+    const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#10b981';
+    
     console.log(`☁️ Creating signing page for contract #${contract.id}...`);
     console.log(`📋 Contract data for signing page:`, {
       id: contract.id,
@@ -507,6 +510,7 @@ ${contract.riderNotes}
     
     <script>
         var contractSigned = false;
+        var themeColor = '${themeColor}'; // Theme color from user settings
         
         // CRITICAL FIX: Detect API URL based on current domain
         function getApiUrl() {
@@ -627,16 +631,16 @@ ${contract.riderNotes}
                     var signatureBox = document.getElementById('signature-box');
                     if (signatureBox) {
                         signatureBox.innerHTML = '✓ Signed by: ' + clientNameValue;
-                        signatureBox.style.color = '#10b981';
+                        signatureBox.style.color = themeColor;
                         signatureBox.style.textAlign = 'center';
                         signatureBox.style.fontWeight = 'bold';
-                        signatureBox.style.border = '2px dashed #10b981';
+                        signatureBox.style.border = '2px dashed ' + themeColor;
                         signatureBox.style.background = '#f0fdf4';
                     }
                     
                     contractSigned = true;
                     submitBtn.textContent = 'Contract Signed ✓';
-                    submitBtn.style.background = '#10b981';
+                    submitBtn.style.background = themeColor;
                     
                     // CRITICAL: Add PDF download button after successful signing
                     console.log('🔍 DEBUG: Checking for PDF button creation. cloudUrl:', result.cloudUrl);
@@ -723,7 +727,7 @@ ${contract.riderNotes}
             requiredFields.forEach(field => {
                 field.addEventListener('blur', function() {
                     if (this.value.trim()) {
-                        this.style.borderColor = '#10b981'; // Green for completed
+                        this.style.borderColor = themeColor; // Green for completed
                         this.style.backgroundColor = '#ecfdf5';
                     } else {
                         this.style.borderColor = '#ef4444'; // Red for missing
@@ -733,7 +737,7 @@ ${contract.riderNotes}
                 
                 field.addEventListener('input', function() {
                     if (this.value.trim()) {
-                        this.style.borderColor = '#10b981';
+                        this.style.borderColor = themeColor;
                         this.style.backgroundColor = '#ecfdf5';
                     } else {
                         this.style.borderColor = '#2563eb'; // Back to blue for required

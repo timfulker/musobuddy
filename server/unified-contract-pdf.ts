@@ -462,7 +462,7 @@ function generateUnifiedContractHTML(
         
         .terms-list li:before {
             content: "✓";
-            color: #10b981;
+            color: \${primaryColor};
             font-weight: bold;
             margin-right: 10px;
         }
@@ -507,7 +507,7 @@ function generateUnifiedContractHTML(
         }
         
         .signed-box {
-            border: 2px solid #10b981;
+            border: 2px solid \${primaryColor};
             background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
         }
         
@@ -812,7 +812,7 @@ function generateUnifiedContractHTML(
                             <div class="signature-line"></div>
                             <div class="signature-name">${signatureName}</div>
                             <div class="signature-date">Digitally signed on ${signedAt.toLocaleDateString('en-GB')}</div>
-                            <div class="signature-status" style="color: #10b981;">✓ Signed at ${signedAt.toLocaleTimeString('en-GB')}</div>
+                            <div class="signature-status" style="color: \${primaryColor};">✓ Signed at ${signedAt.toLocaleTimeString('en-GB')}</div>
                         ` : `
                             <div class="signature-line"></div>
                             <div class="signature-name">${contract.clientName}</div>
