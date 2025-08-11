@@ -28,7 +28,6 @@ const Navigation = () => {
     { path: '/bookings', label: 'Bookings', icon: MessageCircle },
     { path: '/contracts', label: 'Contracts', icon: FileText },
     { path: '/invoices', label: 'Invoices', icon: Receipt },
-    { path: '/pricing', label: 'Upgrade', icon: Crown },
   ];
 
   const settingsItems = [

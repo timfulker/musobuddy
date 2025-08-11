@@ -255,18 +255,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span style={{ color: 'inherit' }}>Invoices</span>
           </Link>
 
-          <Link 
-            href="/pricing" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/pricing")}
-            style={{ 
-              color: isActive("/pricing") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/pricing") ? 'var(--theme-primary)' : 'transparent'
-            }}
-          >
-            <Crown className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Upgrade ⭐</span>
-          </Link>
+
           
           {/* Settings Section with Collapsible Submenu */}
           <div className="space-y-1">

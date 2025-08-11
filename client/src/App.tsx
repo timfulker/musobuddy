@@ -27,7 +27,7 @@ import AddressBook from "@/pages/address-book";
 import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
-import Pricing from "@/pages/pricing";
+
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
@@ -93,7 +93,7 @@ function Router() {
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/widget/:token" component={QuickAddWidget} />
-      <Route path="/pricing" component={Pricing} />
+
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
         fetch('/api/auth/logout', {

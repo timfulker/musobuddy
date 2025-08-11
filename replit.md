@@ -18,6 +18,13 @@ System reliability: Comprehensive 4-phase fix applied addressing "architectural 
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
 ## Recent Updates (11/01/2025)
+- **NAVIGATION STRUCTURE SIMPLIFIED**: Cleaned up navigation structure to reduce menu clutter and improve UX
+  - **DESKTOP SIDEBAR**: Implemented collapsible Settings section grouping User Settings, Templates, and Compliance
+  - **MOBILE NAVIGATION**: Removed Calendar link (integrated in Bookings), added Settings link that highlights when on any settings page
+  - **AUTO-EXPANSION**: Settings section auto-expands when user is on any settings page
+  - **VISUAL HIERARCHY**: Added indented sub-items with proper theme-aware styling
+  - **USER FEEDBACK**: Removed Upgrade/Pricing page as it was not serving a clear purpose
+  - **CONSISTENCY**: Both desktop and mobile now have organized navigation with proper Settings grouping
 - **COMPREHENSIVE FEATURES DOCUMENTATION CREATED**: Complete catalog of all working features
   - **FUNCTIONALITY**: Detailed documentation of 50+ implemented features across all system areas
   - **ORGANIZATION**: Structured by feature category (Business Management, AI Features, UI/Theming, etc.)
