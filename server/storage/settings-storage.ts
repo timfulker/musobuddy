@@ -60,7 +60,7 @@ export class SettingsStorage {
     const result = await db.select().from(emailTemplates)
       .where(and(
         eq(emailTemplates.userId, userId),
-        eq(emailTemplates.name, type)
+        eq(emailTemplates.type, type)
       ));
     return result[0] || null;
   }

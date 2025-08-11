@@ -35,7 +35,7 @@ export class ContractStorage {
     return await db.select().from(contracts).orderBy(desc(contracts.createdAt));
   }
 
-  async createContract(contractData: any): Promise<any> {
+  async createContract(contractData: any) {
     try {
       // FIXED: Align with actual schema fields
       const result = await db.insert(contracts).values({

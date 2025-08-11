@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import ConflictResolutionDialog from "./ConflictResolutionDialog";
+import { ConflictResolutionDialog } from "./ConflictResolutionDialog";
 
 interface Conflict {
   withBookingId: number;
@@ -184,7 +184,8 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
         onClose={() => setShowResolutionModal(false)}
-        conflictingBookings={conflicts?.map(c => ({ id: c.withBookingId, ...c })) || []}
+        selectedBooking={currentBooking}
+        conflicts={conflicts || []}
         onEditBooking={onEditBooking}
       />
     </>

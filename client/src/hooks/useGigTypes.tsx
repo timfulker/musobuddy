@@ -13,7 +13,7 @@ export const useGigTypes = () => {
 
   // Combine static gig types with user's custom gig types
   // Ensure customGigTypes is always an array to prevent iteration errors
-  const customGigTypes = Array.isArray((settings as any)?.customGigTypes) ? (settings as any).customGigTypes : [];
+  const customGigTypes = Array.isArray(settings?.customGigTypes) ? settings.customGigTypes : [];
   
   // Defensive check: ensure COMMON_GIG_TYPES is an array
   const staticGigTypes = Array.isArray(COMMON_GIG_TYPES) ? COMMON_GIG_TYPES : [];
@@ -24,7 +24,7 @@ export const useGigTypes = () => {
   ];
 
   // Remove duplicates and sort alphabetically
-  const uniqueGigTypes = Array.from(new Set(allGigTypes)).sort();
+  const uniqueGigTypes = [...new Set(allGigTypes)].sort();
 
   return {
     gigTypes: uniqueGigTypes,

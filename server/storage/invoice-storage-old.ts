@@ -106,10 +106,10 @@ export class InvoiceStorage {
     return await db.select().from(invoices)
       .where(and(
         eq(invoices.userId, userId),
-        gte(invoices.createdAt, startDate),
-        lte(invoices.createdAt, endDate)
+        gte(invoices.issueDate, startDate),
+        lte(invoices.issueDate, endDate)
       ))
-      .orderBy(desc(invoices.createdAt));
+      .orderBy(desc(invoices.issueDate));
   }
 
   async getOverdueInvoices(userId: string) {
@@ -127,7 +127,7 @@ export class InvoiceStorage {
     const result = await db.update(invoices)
       .set({ 
         status: 'paid', 
-        paidAt: new Date(),
+        paidDate: new Date(),
         updatedAt: new Date()
       })
       .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
