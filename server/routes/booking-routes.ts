@@ -366,9 +366,15 @@ ${messageText.replace(/\n/g, '<br>')}
       
       // Generate widget token for the user
       const jwt = await import('jsonwebtoken');
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+      if (!secret) {
+        console.error('🚨 CRITICAL: No JWT_SECRET environment variable set');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+      
       const token = jwt.default.sign(
         { userId, type: 'widget' },
-        process.env.JWT_SECRET || 'your-secret-key',
+        secret,
         { expiresIn: '30d' }
       );
       

@@ -17,9 +17,15 @@ async function regenerateWidgetTokens() {
       }
       
       // Generate new widget token
+      const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+      if (!secret) {
+        console.log(`❌ No JWT secret configured for token generation`);
+        continue;
+      }
+      
       const token = jwt.sign(
         { userId: user.id, type: 'widget' },
-        process.env.JWT_SECRET || 'your-secret-key',
+        secret,
         { expiresIn: '30d' }
       );
       

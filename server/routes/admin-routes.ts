@@ -49,9 +49,15 @@ export function registerAdminRoutes(app: Express) {
           }
           
           // Generate new widget token
+          const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+          if (!secret) {
+            results.push({ email, error: 'Server configuration error: No JWT secret' });
+            continue;
+          }
+          
           const token = jwt.default.sign(
             { userId: user.id, type: 'widget' },
-            process.env.JWT_SECRET || 'your-secret-key',
+            secret,
             { expiresIn: '30d' }
           );
           

@@ -1,5 +1,6 @@
 import express, { type Request, Response } from "express";
 import multer from 'multer';
+import helmet from 'helmet';
 // Session imports now handled by rebuilt system
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
@@ -384,8 +385,33 @@ app.post('/api/stripe-webhook',
 );
 
 // Essential middleware for all other routes
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// SECURITY FIX: Add basic security headers (simplified for development compatibility)
+app.use((req: Request, res: Response, next) => {
+  // Basic security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Only add HSTS in production
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  
+  next();
+});
+
+// SECURITY FIX: Generic error handling for production
+if (process.env.NODE_ENV === 'production') {
+  app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error('Production error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  });
+}
+
+// SECURITY FIX: Reduced payload limits to prevent DoS attacks
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // JWT-based authentication - no session middleware needed
 console.log('🔧 Setting up JWT-based authentication...');
@@ -501,8 +527,8 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   if (requestOrigin) {
     console.log(`🔍 CORS: Request origin detected: ${requestOrigin}`);
     
-    // Allow all R2 domains (for contract signing pages)
-    if (requestOrigin.includes('.r2.dev')) {
+    // SECURITY FIX: Restrict R2 domains to specific musobuddy buckets only
+    if (requestOrigin.includes('.r2.dev') && requestOrigin.includes('musobuddy')) {
       origin = requestOrigin;
       console.log(`✅ CORS: R2 domain allowed: ${origin}`);
     }
@@ -539,15 +565,31 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   next();
 });
 
-// Configure multer for handling multipart data (attachments)
+// Configure multer for handling multipart data (attachments) - SECURITY FIX: Reduced limits
 const upload = multer({
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit for attachments
-    fieldSize: 10 * 1024 * 1024, // 10MB limit for form fields
-    fields: 100, // Maximum number of non-file fields
-    files: 10 // Maximum number of file fields
+    fileSize: 5 * 1024 * 1024, // SECURITY FIX: 5MB limit (was 50MB)
+    fieldSize: 1 * 1024 * 1024, // SECURITY FIX: 1MB limit for form fields
+    fields: 20, // SECURITY FIX: Reduced from 100 to 20
+    files: 5 // SECURITY FIX: Reduced from 10 to 5
   },
-  storage: multer.memoryStorage() // Store in memory (we don't need to save files)
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    // SECURITY FIX: File type validation
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'text/plain', 'text/csv',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      console.log(`🚫 Blocked file type: ${file.mimetype} (${file.originalname})`);
+      cb(new Error(`File type not allowed: ${file.mimetype}`), false);
+    }
+  }
 });
 
 // Helper function to parse currency values to numeric

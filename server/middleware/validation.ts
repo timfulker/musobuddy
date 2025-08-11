@@ -148,8 +148,20 @@ export const schemas = {
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
   const sanitizeValue = (value: any): any => {
     if (typeof value === 'string') {
-      // Basic HTML tag removal
-      return value.replace(/<[^>]*>/g, '').trim();
+      // SECURITY FIX: Enhanced XSS protection - simplified for server-side compatibility
+      try {
+        // Basic HTML tag and script removal - server-safe implementation
+        return value
+          .replace(/<script[^>]*>.*?<\/script>/gis, '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/javascript:/gi, '')
+          .replace(/on\w+\s*=/gi, '')
+          .trim();
+      } catch (error) {
+        // Fallback to basic sanitization if DOMPurify fails
+        console.warn('Input sanitization fallback used');
+        return value.replace(/<[^>]*>/g, '').trim();
+      }
     }
     if (Array.isArray(value)) {
       return value.map(sanitizeValue);

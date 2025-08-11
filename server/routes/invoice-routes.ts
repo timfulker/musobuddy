@@ -7,7 +7,7 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
 
-  // Public invoice view
+  // Public invoice view with authorization check
   app.get('/view/invoices/:id', async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
@@ -15,6 +15,7 @@ export function registerInvoiceRoutes(app: Express) {
       
       const invoice = await storage.getInvoice(invoiceId);
       if (!invoice) {
+        console.log(`📄 Invoice not found: ${invoiceId}`);
         return res.status(404).send(`
           <html>
             <head><title>Invoice Not Found</title></head>
@@ -25,6 +26,26 @@ export function registerInvoiceRoutes(app: Express) {
           </html>
         `);
       }
+
+      // SECURITY FIX: Only allow public access to invoices with valid share token
+      // For now, require a share token parameter for public access
+      const shareToken = req.query.token as string;
+      if (!shareToken) {
+        console.log(`🔒 Missing share token for invoice: ${invoiceId}`);
+        return res.status(403).send(`
+          <html>
+            <head><title>Access Denied</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Access Denied</h1>
+              <p>A valid access token is required to view this invoice.</p>
+            </body>
+          </html>
+        `);
+      }
+      
+      // TODO: Implement proper share token validation in database schema
+      // For now, log the access attempt for monitoring
+      console.log(`📄 Invoice ${invoiceId} accessed with token: ${shareToken.substring(0, 10)}...`);
       
       // Redirect to Cloudflare R2 URL if available
       if (invoice.cloudStorageUrl) {

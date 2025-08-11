@@ -4,14 +4,17 @@ import { type Request, type Response, type NextFunction } from 'express';
 
 // Centralized JWT configuration
 const JWT_CONFIG = {
-  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'fallback-secret-key',
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || (() => {
+    console.error('🚨 CRITICAL SECURITY ERROR: No JWT_SECRET environment variable set!');
+    throw new Error('JWT_SECRET environment variable is required');
+  })(),
   expiresIn: '7d',
   issuer: 'musobuddy',
   algorithms: ['HS256'] as jwt.Algorithm[]
 };
 
-// Enhanced logging for debugging - TEMPORARILY ENABLED for mobile debug
-const AUTH_DEBUG = true; // process.env.AUTH_DEBUG === 'true';
+// Enhanced logging for debugging - controlled by environment
+const AUTH_DEBUG = process.env.AUTH_DEBUG === 'true' && process.env.NODE_ENV === 'development';
 
 interface AuthToken {
   userId: string;
