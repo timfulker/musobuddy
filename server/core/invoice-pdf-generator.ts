@@ -177,7 +177,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .logo {
           font-size: 24px;
           font-weight: bold;
-          color: #1e3a8a;
+          color: ${primaryColor};
         }
         
         .invoice-details {
@@ -208,7 +208,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .billing-info h3 {
-          color: #1e3a8a;
+          color: ${primaryColor};
           margin-bottom: 10px;
           font-size: 16px;
         }
@@ -233,7 +233,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .items-table th {
-          background-color: #1e3a8a;
+          background-color: ${primaryColor};
           color: white;
           padding: 12px;
           text-align: left;
@@ -269,8 +269,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .total-row.grand-total {
-          border-top: 2px solid #1e3a8a;
-          border-bottom: 2px solid #1e3a8a;
+          border-top: 2px solid ${primaryColor};
+          border-bottom: 2px solid ${primaryColor};
           font-weight: bold;
           font-size: 18px;
           margin-top: 10px;
@@ -291,7 +291,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           padding: 20px;
           border-radius: 8px;
           margin-bottom: 30px;
-          border-left: 4px solid #1e3a8a;
+          border-left: 4px solid ${primaryColor};
         }
         
         .payment-info h3 {
@@ -313,7 +313,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           margin-top: 30px;
           padding: 20px;
           background-color: #f8f9fa;
-          border-left: 4px solid #1e3a8a;
+          border-left: 4px solid ${primaryColor};
         }
         
         .terms-section h3 {

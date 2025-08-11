@@ -144,6 +144,8 @@ export class EmailService {
   }
 
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
+    // Get theme color from settings
+    const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#059669';
     // Helper function to safely format date
     const formatDate = (date: any) => {
       if (!date) return 'TBC';
@@ -177,7 +179,7 @@ export class EmailService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${pdfUrl}" style="background: ${themeColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Download Invoice PDF
           </a>
         </div>
@@ -190,6 +192,9 @@ export class EmailService {
 
   // Send contract email with R2 URL
   async sendContractEmail(contract: any, userSettings: any, subject: string, contractUrl: string, customMessage?: string) {
+    // Get theme color from settings
+    const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
+    
     if (!this.mailgun) {
       console.log('📧 Mailgun not configured, skipping contract email');
       return { success: false, error: 'Email service not configured' };
@@ -205,7 +210,7 @@ export class EmailService {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #1e3a8a;">Contract Ready for Your Signature</h2>
+            <h2 style="color: ${themeColor};">Contract Ready for Your Signature</h2>
             
             <p>Dear ${contract.clientName},</p>
             
@@ -223,7 +228,7 @@ export class EmailService {
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="${contractUrl}" 
-                 style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                 style="background: ${themeColor}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 View & Sign Contract
               </a>
             </div>

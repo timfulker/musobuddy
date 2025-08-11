@@ -46,6 +46,11 @@ export function generateContractSigningPage(
   const businessAddress = escapeHtml(userSettings?.businessAddress || userSettings?.business_address || 'Address not provided');
   const businessEmail = escapeHtml(userSettings?.businessEmail || userSettings?.business_email || '');
   const businessPhone = escapeHtml(userSettings?.phone || 'Phone not provided');
+  
+  // Get theme color from settings, fallback to purple if not set
+  const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#667eea';
+  // Create a darker version for accents
+  const themeDarkColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#764ba2';
 
   // Format dates safely
   const eventDate = new Date(contract.eventDate || contract.event_date);
@@ -88,7 +93,7 @@ export function generateContractSigningPage(
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, ${themeColor} 0%, ${themeDarkColor} 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -114,7 +119,7 @@ export function generateContractSigningPage(
         .logo {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, ${themeColor} 0%, ${themeDarkColor} 100%);
             border-radius: 50%;
             margin: 0 auto 20px;
             display: flex;
@@ -194,7 +199,7 @@ export function generateContractSigningPage(
         }
 
         .contract-header {
-            background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%);
+            background: linear-gradient(135deg, ${themeColor} 0%, ${themeDarkColor} 100%);
             color: white;
             padding: 40px;
             text-align: center;
@@ -254,10 +259,10 @@ export function generateContractSigningPage(
         .section-title {
             font-size: 24px;
             font-weight: 700;
-            color: #191970;
+            color: ${themeColor};
             margin-bottom: 25px;
             padding-bottom: 10px;
-            border-bottom: 3px solid #1e3a8a;
+            border-bottom: 3px solid ${themeColor};
         }
         .parties-section {
             display: grid;
@@ -269,13 +274,13 @@ export function generateContractSigningPage(
             background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
             padding: 25px;
             border-radius: 12px;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid ${themeColor};
             border: 1px solid #e2e8f0;
         }
         .party-title {
             font-size: 18px;
             font-weight: 700;
-            color: #191970;
+            color: ${themeColor};
             margin-bottom: 15px;
         }
         .party-details {
@@ -299,7 +304,7 @@ export function generateContractSigningPage(
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 3px solid #1e3a8a;
+            border-left: 3px solid ${themeColor};
         }
         .financial-summary {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
@@ -406,7 +411,7 @@ export function generateContractSigningPage(
         }
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: ${themeColor};
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .checkbox-group {
@@ -421,7 +426,7 @@ export function generateContractSigningPage(
         }
 
         .sign-button {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            background: linear-gradient(135deg, ${themeColor}, ${themeDarkColor});
             color: white;
             padding: 16px 32px;
             border: none;
@@ -435,7 +440,7 @@ export function generateContractSigningPage(
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         .sign-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            background: linear-gradient(135deg, ${themeDarkColor}, ${themeDarkColor});
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
         }

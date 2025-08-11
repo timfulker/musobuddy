@@ -317,7 +317,7 @@ function generateUnifiedContractHTML(
             background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
             padding: 25px;
             border-radius: 12px;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid \${primaryColor};
             border: 1px solid #e2e8f0;
         }
         
@@ -353,7 +353,7 @@ function generateUnifiedContractHTML(
             background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
             padding: 20px;
             border-radius: 10px;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid \${primaryColor};
             border: 1px solid #e2e8f0;
         }
         
@@ -375,7 +375,7 @@ function generateUnifiedContractHTML(
         /* Payment Section - Updated to remove red and match invoice style */
         .payment-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #1e3a8a;
+            border: 2px solid \${primaryColor};
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 20px;
@@ -455,7 +455,7 @@ function generateUnifiedContractHTML(
             margin-bottom: 10px;
             padding: 15px 20px;
             border-radius: 8px;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid \${primaryColor};
             position: relative;
             color: #4a5568;
         }
@@ -471,7 +471,7 @@ function generateUnifiedContractHTML(
             background: #f9fafb;
             padding: 20px;
             border-radius: 10px;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid \${primaryColor};
             border: 1px solid #e2e8f0;
             color: #4a5568;
             line-height: 1.6;
