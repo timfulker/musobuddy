@@ -80,7 +80,7 @@ export function HealthCheckComponent() {
           details: {
             status: response.status,
             contentType,
-            parseError: parseError.message,
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
             preview: responseText.substring(0, 200) + '...'
           }
         };

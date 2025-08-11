@@ -400,7 +400,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ status: 'confirmed' })
       }).then(() => {
         // Refresh the data to show updated status
@@ -1317,7 +1316,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                   </p>
                 </CardHeader>
                 <CardContent className="p-6 bg-slate-50 rounded-b-lg border-t-0 space-y-4">
-                  {/* Document Type Selection */}
                   <div className="space-y-2">
                     <Label>Document Type</Label>
                     <div className="flex gap-2">
@@ -1348,7 +1346,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     </div>
                   </div>
 
-                  {/* Existing Documents Display */}
                   {(booking?.uploadedContractUrl || booking?.uploadedInvoiceUrl || (booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0)) && (
                     <div className="space-y-2">
                       <Label>Uploaded Documents</Label>
@@ -1383,7 +1380,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                             </Button>
                           </div>
                         )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && 
+                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) ? 
                          (booking.uploadedDocuments as Array<{type?: string, filename?: string, url?: string}>).map((doc, index) => (
                           <div key={index} className="bg-gray-50 p-3 rounded-md">
                             <p className="text-sm text-gray-700 mb-2">
@@ -1398,7 +1395,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               View Document
                             </Button>
                           </div>
-                        ))}
+                        )) : null}
                       </div>
                     </div>
                   )}

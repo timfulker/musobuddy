@@ -127,11 +127,9 @@ export class MiscStorage {
       userId: data.userId,
       bookingIds: JSON.stringify(sortedIds),
       conflictDate: new Date(),
-      resolutionType: data.resolutionType,
       resolvedAt: new Date(),
       resolvedBy: data.resolvedBy,
-      notes: data.notes,
-      createdAt: new Date()
+      notes: data.notes
     }).returning();
     return result[0];
   }

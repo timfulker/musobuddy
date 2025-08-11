@@ -404,10 +404,11 @@ export default function Settings() {
       };
       
       // Use apiRequest which handles authentication properly
-      return await apiRequest('/api/settings', {
+      const response = await apiRequest('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify(processedData),
       });
+      return response.json();
     },
     onSuccess: (data) => {
       
@@ -518,21 +519,21 @@ export default function Settings() {
       
       // Create the form data object with actual values - fix snake_case to camelCase mapping
       const formData = {
-        businessName: settings.business_name || settings.businessName || "",
-        businessEmail: settings.business_email || settings.businessEmail || "",
-        businessAddress: settings.business_address || settings.businessAddress || "",
-        addressLine1: settings.address_line1 || settings.addressLine1 || "",
-        addressLine2: settings.address_line2 || settings.addressLine2 || "",
+        businessName: settings.businessName || "",
+        businessEmail: settings.businessEmail || "",
+        businessAddress: settings.businessAddress || "",
+        addressLine1: settings.addressLine1 || "",
+        addressLine2: settings.addressLine2 || "",
         city: settings.city || "",
         county: settings.county || "",
         postcode: settings.postcode || "",
         phone: settings.phone || "",
         website: settings.website || "",
-        taxNumber: settings.tax_number || settings.taxNumber || "",
-        emailFromName: settings.email_from_name || settings.emailFromName || "",
-        nextInvoiceNumber: settings.next_invoice_number || settings.nextInvoiceNumber || 1,
-        defaultTerms: settings.default_terms || settings.defaultTerms || "",
-        bankDetails: settings.bank_details || settings.bankDetails || "",
+        taxNumber: settings.taxNumber || "",
+        emailFromName: settings.emailFromName || "",
+        nextInvoiceNumber: settings.nextInvoiceNumber || 1,
+        defaultTerms: settings.defaultTerms || "",
+        bankDetails: settings.bankDetails || "",
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
         baseHourlyRate: settings.baseHourlyRate || 130,
