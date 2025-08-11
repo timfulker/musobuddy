@@ -282,17 +282,18 @@ export default function AddressBook() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="md:ml-64">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
+        {/* Mobile header with proper spacing */}
+        <div className="p-6 pt-16 md:pt-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
               <Link href="/">
                 <Button variant="ghost" size="sm" className="p-2 hover:bg-accent">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
-              <Users className="w-8 h-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-foreground ml-12 md:ml-0">Address Book</h1>
+              <Users className="w-8 h-8 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-foreground">Address Book</h1>
                 <p className="text-sm text-muted-foreground">Manage your client contacts</p>
               </div>
             </div>
@@ -305,9 +306,10 @@ export default function AddressBook() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90" onClick={() => setIsCreateOpen(true)}>
+                <Button className="bg-primary hover:bg-primary/90 flex-shrink-0" onClick={() => setIsCreateOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Client
+                  <span className="hidden sm:inline">Add Client</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
