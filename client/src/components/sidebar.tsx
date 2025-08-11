@@ -22,7 +22,12 @@ import {
   Crown,
   Mail,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  UserCog,
+  FileType,
+  Cog
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -38,10 +43,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
   const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+
+  // Check if any settings-related page is active to auto-expand
+  const settingsPages = ['/settings', '/templates', '/compliance'];
+  const isSettingsActive = settingsPages.some(page => location === page);
   
   const handleLogout = () => {
     logout();
   };
+
+  // Auto-expand settings if on a settings page
+  useEffect(() => {
+    if (isSettingsActive) {
+      setSettingsExpanded(true);
+    }
+  }, [isSettingsActive]);
 
   const isActive = (path: string) => {
     return location === path;
@@ -239,19 +256,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
 
           <Link 
-            href="/compliance" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/compliance")}
-            style={{ 
-              color: isActive("/compliance") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent'
-            }}
-          >
-            <Shield className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Compliance</span>
-          </Link>
-          
-          <Link 
             href="/pricing" 
             onClick={() => window.innerWidth < 768 && onClose()} 
             className={getNavLinkClass("/pricing")}
@@ -264,38 +268,78 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span style={{ color: 'inherit' }}>Upgrade ⭐</span>
           </Link>
           
-          <Link 
-            href="/settings" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            {...getNavLinkProps("/settings")}
-          >
-            <Settings 
-              className="w-5 h-5" 
+          {/* Settings Section with Collapsible Submenu */}
+          <div className="space-y-1">
+            <button 
+              onClick={() => setSettingsExpanded(!settingsExpanded)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-3 font-medium transition-all duration-200 rounded-lg text-left",
+                isSettingsActive ? 'text-white' : 'text-slate-700 hover:text-slate-900',
+                isSettingsActive ? 'bg-primary' : 'hover:bg-slate-100'
+              )}
               style={{ 
-                color: isActive("/settings") ? getActiveTextColor() : '#1e293b'
-              }} 
-            />
-            <span 
-              style={{ 
-                color: isActive("/settings") ? getActiveTextColor() : '#1e293b'
+                color: isSettingsActive ? getActiveTextColor() : '#1e293b',
+                backgroundColor: isSettingsActive ? 'var(--theme-primary)' : 'transparent'
               }}
             >
-              Settings
-            </span>
-          </Link>
-          
-          <Link 
-            href="/templates" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/templates")}
-            style={{ 
-              color: isActive("/templates") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent'
-            }}
-          >
-            <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Templates</span>
-          </Link>
+              <div className="flex items-center space-x-3">
+                <Cog className="w-5 h-5" style={{ color: 'inherit' }} />
+                <span style={{ color: 'inherit' }}>Settings</span>
+              </div>
+              {settingsExpanded ? (
+                <ChevronDown className="w-4 h-4" style={{ color: 'inherit' }} />
+              ) : (
+                <ChevronRight className="w-4 h-4" style={{ color: 'inherit' }} />
+              )}
+            </button>
+            
+            {/* Collapsible Settings Submenu */}
+            {settingsExpanded && (
+              <div className="ml-4 space-y-1 border-l-2 border-slate-200 dark:border-slate-600 pl-4">
+                <Link 
+                  href="/settings" 
+                  onClick={() => window.innerWidth < 768 && onClose()} 
+                  className={getNavLinkClass("/settings")}
+                  style={{ 
+                    color: isActive("/settings") ? getActiveTextColor() : '#64748b',
+                    backgroundColor: isActive("/settings") ? 'var(--theme-primary)' : 'transparent',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <UserCog className="w-4 h-4" style={{ color: 'inherit' }} />
+                  <span style={{ color: 'inherit' }}>User Settings</span>
+                </Link>
+                
+                <Link 
+                  href="/templates" 
+                  onClick={() => window.innerWidth < 768 && onClose()} 
+                  className={getNavLinkClass("/templates")}
+                  style={{ 
+                    color: isActive("/templates") ? getActiveTextColor() : '#64748b',
+                    backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <FileType className="w-4 h-4" style={{ color: 'inherit' }} />
+                  <span style={{ color: 'inherit' }}>Templates</span>
+                </Link>
+                
+                <Link 
+                  href="/compliance" 
+                  onClick={() => window.innerWidth < 768 && onClose()} 
+                  className={getNavLinkClass("/compliance")}
+                  style={{ 
+                    color: isActive("/compliance") ? getActiveTextColor() : '#64748b',
+                    backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <Shield className="w-4 h-4" style={{ color: 'inherit' }} />
+                  <span style={{ color: 'inherit' }}>Compliance</span>
+                </Link>
+              </div>
+            )}
+          </div>
           
           <Link 
             href="/unparseable-messages" 
