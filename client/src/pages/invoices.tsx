@@ -976,10 +976,17 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Always use production URL to bypass development gateway and ensure R2 redirect works
-    const productionUrl = `https://musobuddy.replit.app/view/invoices/${invoice.id}`;
-    console.log('🔗 Opening invoice view URL:', productionUrl);
-    window.open(productionUrl, '_blank');
+    // Use direct R2 URL for secure access with random token
+    if (invoice.cloudStorageUrl) {
+      console.log('🔗 Opening direct R2 invoice URL:', invoice.cloudStorageUrl);
+      window.open(invoice.cloudStorageUrl, '_blank');
+    } else {
+      toast({
+        title: "Error",
+        description: "Invoice PDF is not available yet. Please try again in a moment.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
