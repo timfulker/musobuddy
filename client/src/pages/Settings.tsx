@@ -2163,6 +2163,9 @@ export default function Settings() {
                               onClick={() => {
                                 console.log('🎨 User clicked theme:', theme.id);
                                 setTheme(theme.id);
+                                // FIXED: Also update the form field so the theme color gets saved to database
+                                form.setValue('themeAccentColor', theme.colors.primary);
+                                console.log('🎨 Updated form themeAccentColor:', theme.colors.primary);
                               }}
                               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                 currentTheme === theme.id
