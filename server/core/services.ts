@@ -48,6 +48,14 @@ export class EmailService {
         messageData.attachment = emailData.attachments;
       }
 
+      // CRITICAL FIX: Add custom headers support for GlockApps testing
+      if (emailData.headers) {
+        messageData['h:X-Glockapps-Test-ID'] = emailData.headers['X-Glockapps-Test-ID'];
+        messageData['h:X-Campaign-ID'] = emailData.headers['X-Campaign-ID'];
+        messageData['h:X-Test-ID'] = emailData.headers['X-Test-ID'];
+        console.log('📧 Added GlockApps headers:', emailData.headers);
+      }
+
       console.log(`📧 Sending email: ${emailData.subject}`);
       console.log(`📧 From: ${messageData.from}`);  
       console.log(`📧 To: ${messageData.to}`);
