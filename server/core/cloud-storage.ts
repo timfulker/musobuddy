@@ -253,6 +253,3 @@ export function isCloudStorageConfigured(): boolean {
     process.env.R2_BUCKET_NAME
   );
 }
-  
-  // Template-aware contract sections for signing page
-  function generateContractSections(contract: any, userSettings: any) {
