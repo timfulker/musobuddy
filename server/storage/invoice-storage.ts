@@ -29,6 +29,10 @@ export class InvoiceStorage {
   }
 
   async createInvoice(invoiceData: any) {
+    // Generate secure share token for invoice access
+    const { randomBytes } = await import('crypto');
+    const shareToken = randomBytes(32).toString('hex'); // 64-character secure token
+    
     // FIXED: Align with actual schema fields from shared/schema.ts
     const result = await db.insert(invoices).values({
       userId: invoiceData.userId,
@@ -49,6 +53,7 @@ export class InvoiceStorage {
       paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
       cloudStorageUrl: invoiceData.cloudStorageUrl || null,
       cloudStorageKey: invoiceData.cloudStorageKey || null,
+      shareToken: shareToken, // Secure token for public access
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();

@@ -267,6 +267,7 @@ export const invoices = pgTable("invoices", {
   paidAt: timestamp("paid_at"),
   cloudStorageUrl: text("cloud_storage_url"),
   cloudStorageKey: text("cloud_storage_key"),
+  shareToken: varchar("share_token").notNull(), // Secure token for public invoice access
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

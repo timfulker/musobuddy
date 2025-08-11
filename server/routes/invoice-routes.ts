@@ -7,11 +7,27 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
 
-  // Public invoice view with authorization check
+  // Public invoice view with SECURE token-based access
   app.get('/view/invoices/:id', async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      console.log(`📄 Public invoice view request for ID: ${invoiceId}`);
+      const shareToken = req.query.token as string;
+      
+      console.log(`📄 SECURE: Invoice view request for ID: ${invoiceId}, hasToken: ${!!shareToken}`);
+      
+      // CRITICAL SECURITY: Require token for access
+      if (!shareToken) {
+        console.log(`🚨 SECURITY BLOCKED: No token provided for invoice ${invoiceId}`);
+        return res.status(403).send(`
+          <html>
+            <head><title>Access Denied</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Access Denied</h1>
+              <p>A valid access token is required to view this invoice.</p>
+            </body>
+          </html>
+        `);
+      }
       
       const invoice = await storage.getInvoice(invoiceId);
       if (!invoice) {
@@ -27,15 +43,26 @@ export function registerInvoiceRoutes(app: Express) {
         `);
       }
 
-      // SECURITY IMPROVEMENT: Log access attempts for monitoring (but allow public access)
-      // In the future, we can implement proper access control with share tokens
-      const shareToken = req.query.token as string;
+      // CRITICAL SECURITY: Validate share token
+      if (invoice.shareToken !== shareToken) {
+        console.log(`🚨 SECURITY BLOCKED: Invalid token for invoice ${invoiceId}`);
+        return res.status(403).send(`
+          <html>
+            <head><title>Access Denied</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>Access Denied</h1>
+              <p>The provided access token is invalid or expired.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Log successful secure access
       const userAgent = req.headers['user-agent'] || 'Unknown';
       const clientIP = req.ip || req.connection.remoteAddress || 'Unknown';
       
-      console.log(`📄 Invoice ${invoiceId} access attempt:`, {
-        hasToken: !!shareToken,
-        token: shareToken ? shareToken.substring(0, 10) + '...' : 'none',
+      console.log(`✅ SECURE ACCESS GRANTED: Invoice ${invoiceId}`, {
+        token: shareToken.substring(0, 10) + '...',
         userAgent: userAgent.substring(0, 50),
         clientIP,
         timestamp: new Date().toISOString()
@@ -380,8 +407,12 @@ export function registerInvoiceRoutes(app: Express) {
       const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
       
       try {
-        // Generate invoice email HTML using the service method
-        const emailHtml = emailService.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl);
+        // CRITICAL SECURITY FIX: Use secure MusoBuddy URL with token instead of direct R2 URL
+        const secureUrl = `${process.env.APP_SERVER_URL || 'https://www.musobuddy.com'}/view/invoices/${invoice.id}?token=${invoice.shareToken}`;
+        console.log(`🔐 Using secure URL for invoice email: ${secureUrl}`);
+        
+        // Generate invoice email HTML using the service method with secure URL
+        const emailHtml = emailService.generateInvoiceEmailHTML(invoice, userSettings, secureUrl);
         
         // Add custom message if provided
         const finalEmailHtml = customMessage ? 

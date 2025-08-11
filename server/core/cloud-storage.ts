@@ -1,6 +1,7 @@
 // cloud-storage.ts - Fixed uploadInvoiceToCloud function
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { nanoid } from 'nanoid';
 import type { Invoice, Contract, UserSettings } from '@shared/schema';
 
@@ -57,15 +58,14 @@ export async function uploadInvoiceToCloud(
     
     console.log(`✅ Invoice PDF uploaded successfully to R2: ${storageKey}`);
     
-    // Use direct Cloudflare R2 public URL (no expiration)
-    const publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${storageKey}`;
-    
-    console.log(`🔗 Direct R2 public URL: ${publicUrl}`);
+    // SECURITY FIX: Store the key securely, don't expose direct public URL
+    console.log(`🔐 Invoice uploaded securely, access requires signed URL`);
     
     return {
       success: true,
-      url: publicUrl, // Direct public URL that never expires
-      key: storageKey
+      key: storageKey,
+      // Remove direct public URL - access will be via signed URLs only
+      url: undefined
     };
     
   } catch (error: any) {
