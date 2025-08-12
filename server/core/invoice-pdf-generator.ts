@@ -101,7 +101,32 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   const primaryColor = getThemeColor(userSettings);
   const secondaryColor = getSecondaryColor(primaryColor);
   
-  console.log(`🎨 INVOICE PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
+  // Calculate luminance for proper text contrast (same as frontend)
+  const getLuminance = (color: string): number => {
+    const hex = color.replace('#', '');
+    const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    
+    let r = parseInt(fullHex.substring(0, 2), 16) / 255;
+    let g = parseInt(fullHex.substring(2, 4), 16) / 255;
+    let b = parseInt(fullHex.substring(4, 6), 16) / 255;
+    
+    const gammaCorrect = (channel: number) => {
+      return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    };
+    
+    r = gammaCorrect(r);
+    g = gammaCorrect(g);
+    b = gammaCorrect(b);
+    
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  
+  const getContrastTextColor = (backgroundColor: string): 'white' | 'black' => {
+    return getLuminance(backgroundColor) > 0.5 ? 'black' : 'white';
+  };
+  
+  const headerTextColor = getContrastTextColor(primaryColor);
+  console.log(`🎨 INVOICE PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Header text: ${headerTextColor}`);
   // CSS-based animated metronome logo (from your HTML file) - LARGE VERSION
   const cssMetronomeLogo = `
     <div class="logo-invoice" style="display: inline-flex; align-items: center; gap: 20px;">
@@ -243,7 +268,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         
         .items-table th {
           background-color: ${primaryColor};
-          color: white;
+          color: ${headerTextColor};
           padding: 12px;
           text-align: left;
           font-weight: bold;
