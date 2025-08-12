@@ -14,6 +14,7 @@ import { registerHealthRoutes } from "./health-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { registerMapsRoutes } from "./maps-routes";
+import { setupWhat3WordsRoutes } from "./what3words-routes";
 
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
@@ -51,7 +52,8 @@ export async function registerRoutes(app: Express) {
   // Register Google Maps routes
   registerMapsRoutes(app);
   
-
+  // Register what3words routes
+  setupWhat3WordsRoutes(app);
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {

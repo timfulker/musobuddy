@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2, Settings, Navigation } from "lucide-react";
+import { What3WordsInput } from "@/components/What3WordsInput";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
@@ -90,6 +91,7 @@ const bookingDetailsSchema = z.object({
   photoPermission: z.boolean().optional(),
   encoreAllowed: z.boolean().optional(),
   encoreSuggestions: z.string().optional(),
+  what3words: z.string().optional(),
 });
 
 interface BookingDetailsDialogProps {
@@ -1075,6 +1077,28 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                         <FormLabel>Address</FormLabel>
                         <FormControl>
                           <Textarea {...field} rows={2} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="what3words"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>what3words Location (Optional)</FormLabel>
+                        <FormControl>
+                          <What3WordsInput
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            onLocationFound={(coords, address) => {
+                              console.log('what3words location found:', coords, address);
+                            }}
+                            placeholder="///what.three.words"
+                            className="w-full"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

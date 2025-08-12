@@ -18,6 +18,7 @@ import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { What3WordsInput } from "@/components/What3WordsInput";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -72,6 +73,7 @@ const fullBookingSchema = z.object({
   photoPermission: z.boolean().optional(),
   encoreAllowed: z.boolean().optional(),
   encoreSuggestions: z.string().optional(),
+  what3words: z.string().optional(),
 });
 
 type FullBookingFormData = z.infer<typeof fullBookingSchema>;
@@ -398,19 +400,44 @@ export default function NewBookingPage() {
                   <h3 className="text-md font-semibold text-primary-700 mb-3 border-b border-primary-100 pb-1">
                     Billing Address
                   </h3>
-                  <FormField
-                    control={form.control}
-                    name="clientAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">Full Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20 resize-none" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="clientAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">Full Address</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={2} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20 resize-none" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="what3words"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">what3words Location (Optional)</FormLabel>
+                          <FormControl>
+                            <What3WordsInput
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              onLocationFound={(coords, address) => {
+                                // Optionally update the client address field with what3words location
+                                console.log('what3words location found:', coords, address);
+                              }}
+                              placeholder="///what.three.words"
+                              className="w-full"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
