@@ -132,6 +132,7 @@ export default function NewBookingPage() {
     }
 
     setMileageData(prev => ({ ...prev, isCalculating: true, error: null }));
+    console.log('🚗 Mileage state updated - calculating...');
 
     try {
       console.log('🚗 Calculating mileage from:', businessAddress, 'to:', venueAddress);
@@ -205,15 +206,20 @@ export default function NewBookingPage() {
   // Watch venue address changes to calculate mileage
   const watchedVenueAddress = form.watch('venueAddress');
   useEffect(() => {
+    console.log('🚗 Venue address changed:', watchedVenueAddress);
+    console.log('🚗 User settings:', userSettings);
+    
     if (watchedVenueAddress && watchedVenueAddress.length > 10) {
       // Debounce the calculation to avoid too many API calls
       const timeoutId = setTimeout(() => {
+        console.log('🚗 Triggering mileage calculation...');
         calculateMileage(watchedVenueAddress);
       }, 1000);
       
       return () => clearTimeout(timeoutId);
     } else {
       // Clear mileage data when address is too short
+      console.log('🚗 Clearing mileage data - address too short');
       setMileageData({
         distance: null,
         distanceValue: null,
@@ -534,7 +540,12 @@ export default function NewBookingPage() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">Venue Address</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={2} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
+                            <Textarea 
+                              {...field} 
+                              rows={2} 
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" 
+                              placeholder="Enter full venue address (e.g., 123 Main St, London, UK) to calculate mileage"
+                            />
                           </FormControl>
                           {mileageData.isCalculating && (
                             <div className="mt-2 text-sm text-blue-600 flex items-center gap-2">
@@ -543,23 +554,33 @@ export default function NewBookingPage() {
                             </div>
                           )}
                           {mileageData.distance && !mileageData.isCalculating && (
-                            <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300 shadow-sm">
                               <div className="flex items-center gap-2 text-sm">
-                                <MapPin className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-blue-900">Travel Information:</span>
+                                <MapPin className="w-5 h-5 text-blue-600" />
+                                <span className="font-semibold text-blue-900">📍 Travel Distance Calculated:</span>
                               </div>
-                              <div className="mt-1 text-sm text-blue-700">
-                                <span className="font-medium">{mileageData.distance}</span> 
-                                {mileageData.duration && <span> • Approx. {mileageData.duration}</span>}
+                              <div className="mt-2 text-lg font-bold text-blue-800">
+                                {mileageData.distance}
                               </div>
-                              <div className="mt-1 text-xs text-blue-600">
-                                Calculated from your business address to venue
+                              {mileageData.duration && (
+                                <div className="text-sm text-blue-700 mt-1">
+                                  Estimated travel time: <span className="font-medium">{mileageData.duration}</span>
+                                </div>
+                              )}
+                              <div className="mt-2 text-xs text-blue-600 italic">
+                                From your business address to venue • Add travel expense in Pricing section if needed
                               </div>
                             </div>
                           )}
                           {mileageData.error && (
-                            <div className="mt-2 text-sm text-amber-600 bg-amber-50 p-2 rounded-md">
-                              {mileageData.error}
+                            <div className="mt-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-300">
+                              ⚠️ {mileageData.error}
+                            </div>
+                          )}
+                          {/* Debug info - Remove in production */}
+                          {!mileageData.distance && !mileageData.isCalculating && !mileageData.error && watchedVenueAddress && (
+                            <div className="mt-2 text-xs text-gray-500">
+                              💡 Tip: Enter a complete address to calculate travel distance
                             </div>
                           )}
                           <FormMessage />
