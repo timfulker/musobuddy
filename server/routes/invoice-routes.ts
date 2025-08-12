@@ -130,7 +130,30 @@ export function registerInvoiceRoutes(app: Express) {
       }
       
       const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
-      res.json(updatedInvoice);
+      
+      // Regenerate PDF with updated data and upload to cloud
+      try {
+        console.log(`🔄 Regenerating PDF for updated invoice #${invoiceId}...`);
+        const userSettings = await storage.getSettings(userId);
+        const { uploadInvoiceToCloud } = await import('../core/cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(updatedInvoice, userSettings);
+        
+        if (uploadResult.success && uploadResult.url) {
+          const finalInvoice = await storage.updateInvoice(invoiceId, {
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key
+          }, userId);
+          
+          console.log(`✅ Invoice #${invoiceId} PDF regenerated with updated data`);
+          res.json(finalInvoice);
+        } else {
+          console.warn('⚠️ PDF regeneration failed, returning invoice with database updates only:', uploadResult.error);
+          res.json(updatedInvoice);
+        }
+      } catch (pdfError) {
+        console.error('⚠️ PDF regeneration failed:', pdfError);
+        res.json(updatedInvoice);
+      }
       
     } catch (error: any) {
       console.error('❌ Update invoice error:', error);
