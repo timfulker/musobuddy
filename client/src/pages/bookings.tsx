@@ -801,6 +801,23 @@ export default function UnifiedBookings() {
   // Get calendar data for the current view
   const calendarData = generateCalendarData();
 
+  // Show loading state if bookings data is not ready
+  if (bookingsLoading || !bookings) {
+    return (
+      <div className="min-h-screen bg-background layout-consistent">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading bookings...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background layout-consistent">
       {/* Sidebar */}
@@ -876,7 +893,7 @@ export default function UnifiedBookings() {
                             <div>
                               <p className="text-blue-100 text-sm">This Week</p>
                               <p className="text-2xl font-bold">
-                                {bookings.filter((b: any) => {
+                                {(bookings || []).filter((b: any) => {
                                   const eventDate = new Date(b.eventDate);
                                   const oneWeekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
                                   return eventDate <= oneWeekFromNow && b.status !== "completed" && b.status !== "rejected";
@@ -894,7 +911,7 @@ export default function UnifiedBookings() {
                             <div>
                               <p className="text-green-100 text-sm">Confirmed</p>
                               <p className="text-2xl font-bold">
-                                {bookings.filter((b: any) => b.status === "confirmed").length}
+                                {(bookings || []).filter((b: any) => b.status === "confirmed").length}
                               </p>
                             </div>
                             <CheckSquare className="w-8 h-8 text-green-200" />
@@ -908,7 +925,7 @@ export default function UnifiedBookings() {
                             <div>
                               <p className="text-orange-100 text-sm">Pending</p>
                               <p className="text-2xl font-bold">
-                                {bookings.filter((b: any) => b.status === "in_progress" || b.status === "new").length}
+                                {(bookings || []).filter((b: any) => b.status === "in_progress" || b.status === "new").length}
                               </p>
                             </div>
                             <Clock className="w-8 h-8 text-orange-200" />
@@ -922,7 +939,7 @@ export default function UnifiedBookings() {
                             <div>
                               <p className="text-purple-100 text-sm">Total Revenue</p>
                               <p className="text-2xl font-bold">
-                                £{bookings.reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
+                                £{(bookings || []).reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
                               </p>
                             </div>
                             <PoundSterling className="w-8 h-8 text-purple-200" />
