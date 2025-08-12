@@ -235,10 +235,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         const colorToSave = currentTheme === 'custom' && customColor ? customColor : theme.colors.primary;
         
+        // Use JWT token from localStorage for API authentication
+        const token = localStorage.getItem('authToken');
         const response = await fetch('/api/settings', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ 
             themeAccentColor: colorToSave 
           })
