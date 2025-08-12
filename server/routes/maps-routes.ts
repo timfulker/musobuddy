@@ -43,7 +43,7 @@ export function registerMapsRoutes(app: Express) {
             radius: 50000.0
           }
         },
-        includedType: 'establishment',
+
         maxResultCount: 5,
         languageCode: 'en'
       };

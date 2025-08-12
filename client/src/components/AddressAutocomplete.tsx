@@ -175,10 +175,10 @@ export default function AddressAutocomplete({
               }}
             >
               <div className="font-medium text-sm">
-                {suggestion.name || suggestion.structured_formatting?.main_text}
+                {suggestion.name}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {suggestion.formatted_address || suggestion.structured_formatting?.secondary_text}
+                {suggestion.formatted_address}
               </div>
             </div>
           ))}
