@@ -993,11 +993,11 @@ export default function Contracts() {
                             name="performanceDuration"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
-                                <FormLabel className="text-red-600 font-medium">Performance Duration</FormLabel>
+                                <FormLabel className="text-red-600 font-medium">Actual Performance Time</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select performance duration" />
+                                      <SelectValue placeholder="Total time actually performing" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
@@ -1005,15 +1005,16 @@ export default function Contracts() {
                                     <SelectItem value="30 minutes">30 minutes</SelectItem>
                                     <SelectItem value="45 minutes">45 minutes</SelectItem>
                                     <SelectItem value="1 hour">1 hour</SelectItem>
-                                    <SelectItem value="1.5 hours">1.5 hours</SelectItem>
+                                    <SelectItem value="75 minutes">75 minutes (1 hour 15 mins)</SelectItem>
+                                    <SelectItem value="90 minutes">90 minutes (1.5 hours)</SelectItem>
                                     <SelectItem value="2 hours">2 hours</SelectItem>
                                     <SelectItem value="2.5 hours">2.5 hours</SelectItem>
                                     <SelectItem value="3 hours">3 hours</SelectItem>
                                     <SelectItem value="3.5 hours">3.5 hours</SelectItem>
                                     <SelectItem value="4 hours">4 hours</SelectItem>
-                                    <SelectItem value="5 hours">5 hours</SelectItem>
-                                    <SelectItem value="6 hours">6 hours</SelectItem>
-                                    <SelectItem value="All day event">All day event</SelectItem>
+                                    <SelectItem value="2 x 45 min sets">2 x 45 min sets</SelectItem>
+                                    <SelectItem value="2 x 1 hour sets">2 x 1 hour sets</SelectItem>
+                                    <SelectItem value="3 x 45 min sets">3 x 45 min sets</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
