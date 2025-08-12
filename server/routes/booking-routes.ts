@@ -286,6 +286,7 @@ export function registerBookingRoutes(app: Express) {
         clientPhone: clientPhone || null,
         venue: venue || parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
+        venueContact: parsedData.venueContactInfo || null,
         eventDate: eventDate || parsedData.eventDate || null,
         eventTime: parsedData.eventTime || null,
         eventEndTime: parsedData.eventEndTime || null,

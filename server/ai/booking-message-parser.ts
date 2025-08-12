@@ -1,5 +1,82 @@
 import OpenAI from 'openai';
 
+// Helper function to enrich venue data using Google Places API
+async function enrichVenueData(venueName: string): Promise<any> {
+  if (!venueName || !process.env.GOOGLE_MAPS_SERVER_KEY) {
+    return null;
+  }
+
+  try {
+    console.log(`🗺️ Enriching venue data for: ${venueName}`);
+
+    // First, search for the venue
+    const searchUrl = 'https://places.googleapis.com/v1/places:searchText';
+    const searchBody = {
+      textQuery: venueName,
+      locationBias: {
+        circle: {
+          center: { latitude: 51.5074, longitude: -0.1278 },
+          radius: 50000.0
+        }
+      },
+      maxResultCount: 1,
+      languageCode: 'en'
+    };
+
+    const searchResponse = await fetch(searchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress'
+      },
+      body: JSON.stringify(searchBody)
+    });
+
+    const searchData = await searchResponse.json();
+    if (!searchResponse.ok || !searchData.places?.length) {
+      console.log(`❌ No venue found for: ${venueName}`);
+      return null;
+    }
+
+    const place = searchData.places[0];
+    const placeId = place.id;
+
+    // Get detailed place information
+    const detailsUrl = `https://places.googleapis.com/v1/places/${placeId}`;
+    const detailsResponse = await fetch(detailsUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,nationalPhoneNumber,internationalPhoneNumber,websiteUri,regularOpeningHours,rating,userRatingCount'
+      }
+    });
+
+    const detailsData = await detailsResponse.json();
+    if (!detailsResponse.ok) {
+      console.log(`❌ Failed to get venue details for: ${venueName}`);
+      return null;
+    }
+
+    const enrichedData = {
+      name: detailsData.displayName?.text || venueName,
+      formattedAddress: detailsData.formattedAddress || '',
+      phoneNumber: detailsData.nationalPhoneNumber || detailsData.internationalPhoneNumber || '',
+      website: detailsData.websiteUri || '',
+      rating: detailsData.rating || null,
+      openingHours: detailsData.regularOpeningHours?.weekdayDescriptions || []
+    };
+
+    console.log(`✅ Enriched venue data:`, enrichedData);
+    return enrichedData;
+
+  } catch (error) {
+    console.warn(`Failed to enrich venue data for ${venueName}:`, error);
+    return null;
+  }
+}
+
 // Enhanced booking message parser using OpenAI
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({
@@ -15,12 +92,19 @@ interface ParsedBookingData {
   eventEndTime?: string;
   venue?: string;
   venueAddress?: string;
+  venueContactInfo?: string;
   eventType?: string;
   fee?: number;
   deposit?: number;
   message?: string;
   specialRequirements?: string;
   confidence: number;
+  venueDetails?: {
+    phoneNumber?: string;
+    website?: string;
+    rating?: number;
+    openingHours?: string[];
+  };
 }
 
 export async function parseBookingMessage(
@@ -91,6 +175,31 @@ Extract all possible booking details as JSON:`;
       specialRequirements: cleanString(parsed.specialRequirements || parsed.requirements || parsed.notes),
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
+
+    // Enrich venue data with Google Places information
+    if (cleanedData.venue) {
+      try {
+        console.log(`🗺️ Attempting to enrich venue: ${cleanedData.venue}`);
+        const venueData = await enrichVenueData(cleanedData.venue);
+        
+        if (venueData) {
+          // Update venue information with enriched data
+          cleanedData.venue = venueData.name;
+          cleanedData.venueAddress = venueData.formattedAddress;
+          cleanedData.venueContactInfo = venueData.phoneNumber;
+          cleanedData.venueDetails = {
+            phoneNumber: venueData.phoneNumber,
+            website: venueData.website,
+            rating: venueData.rating,
+            openingHours: venueData.openingHours
+          };
+          
+          console.log(`✅ Successfully enriched venue data for: ${cleanedData.venue}`);
+        }
+      } catch (error) {
+        console.warn('Failed to enrich venue data:', error);
+      }
+    }
 
     // Add client contact info if provided but not extracted
     if (clientContact && !cleanedData.clientName && !cleanedData.clientEmail && !cleanedData.clientPhone) {
