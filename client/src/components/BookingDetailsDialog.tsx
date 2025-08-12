@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2, Settings } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2, Settings, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
@@ -64,6 +64,32 @@ const bookingDetailsSchema = z.object({
   equipmentProvided: z.string().optional(),
   whatsIncluded: z.string().optional(),
   notes: z.string().optional(),
+  travelExpense: z.string().optional(),
+  // Collaborative fields
+  venueContact: z.string().optional(),
+  soundTechContact: z.string().optional(),
+  stageSize: z.string().optional(),
+  powerEquipment: z.string().optional(),
+  styleMood: z.string().optional(),
+  mustPlaySongs: z.string().optional(),
+  avoidSongs: z.string().optional(),
+  setOrder: z.string().optional(),
+  firstDanceSong: z.string().optional(),
+  processionalSong: z.string().optional(),
+  signingRegisterSong: z.string().optional(),
+  recessionalSong: z.string().optional(),
+  specialDedications: z.string().optional(),
+  guestAnnouncements: z.string().optional(),
+  loadInInfo: z.string().optional(),
+  weatherContingency: z.string().optional(),
+  parkingPermitRequired: z.boolean().optional(),
+  mealProvided: z.boolean().optional(),
+  dietaryRequirements: z.string().optional(),
+  sharedNotes: z.string().optional(),
+  referenceTracks: z.string().optional(),
+  photoPermission: z.boolean().optional(),
+  encoreAllowed: z.boolean().optional(),
+  encoreSuggestions: z.string().optional(),
 });
 
 interface BookingDetailsDialogProps {
@@ -87,12 +113,25 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const [documentType, setDocumentType] = useState<'contract' | 'invoice' | 'other'>('contract');
   const [extractedData, setExtractedData] = useState<any>(null);
   const [contractParsingResult, setContractParsingResult] = useState<any>(null);
+  const [mileageData, setMileageData] = useState<{
+    distance: string | null;
+    distanceValue: number | null;
+    duration: string | null;
+    isCalculating: boolean;
+    error: string | null;
+  }>({
+    distance: null,
+    distanceValue: null,
+    duration: null,
+    isCalculating: false,
+    error: null
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch user's personalized gig types from settings
   const { data: userSettings } = useQuery({
-    queryKey: ['settings'],
+    queryKey: ['/api/settings'],
     enabled: open // Only fetch when dialog is open
   });
 
@@ -101,6 +140,71 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     queryKey: ['/api/contracts'],
     enabled: open && booking !== null
   });
+
+  // Calculate mileage between user's business address and venue
+  const calculateMileage = async (venueAddress: string) => {
+    if (!venueAddress || !userSettings) return;
+
+    // Always use address line 1 + postcode from business settings (most reliable)
+    const addressLine1 = (userSettings as any)?.addressLine1;
+    const postcode = (userSettings as any)?.postcode;
+    
+    // Simple concatenation of address line 1 and postcode
+    const businessAddress = `${addressLine1 || ''}, ${postcode || ''}`.trim();
+
+    if (!addressLine1 || !postcode) {
+      setMileageData(prev => ({ 
+        ...prev, 
+        error: "Please set your business address in Settings to calculate mileage",
+        isCalculating: false
+      }));
+      return;
+    }
+
+    setMileageData(prev => ({ ...prev, isCalculating: true, error: null }));
+
+    try {
+      const response = await apiRequest('/api/maps/distance', {
+        method: 'POST',
+        body: JSON.stringify({
+          origin: businessAddress,
+          destination: venueAddress
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.distance) {
+        setMileageData({
+          distance: data.distance,
+          distanceValue: data.distanceValue,
+          duration: data.duration,
+          isCalculating: false,
+          error: null
+        });
+        
+        // Auto-fill travel expense if empty and distance calculated
+        const currentExpense = form.getValues('travelExpense');
+        if (!currentExpense && data.distanceValue) {
+          const mileageRate = 0.45; // Standard UK HMRC rate
+          const expense = (data.distanceValue * mileageRate).toFixed(2);
+          form.setValue('travelExpense', `£${expense}`);
+        }
+      } else {
+        throw new Error(data.error || 'Unable to calculate distance');
+      }
+    } catch (error) {
+      console.error('Error calculating mileage:', error);
+      setMileageData(prev => ({ 
+        ...prev, 
+        error: "Unable to calculate distance. Please check the venue address.",
+        isCalculating: false
+      }));
+    }
+  };
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -174,21 +278,52 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         styles: booking.styles || "",
         equipmentProvided: booking.equipmentProvided || "",
         whatsIncluded: booking.whatsIncluded || "",
-        setupTime: "",
-        soundCheckTime: "",
-        packupTime: "",
-        travelTime: "",
-        parkingInfo: "",
-        contactPerson: "",
-        contactPhone: "",
+        setupTime: booking.setupTime || "",
+        soundCheckTime: booking.soundCheckTime || "",
+        packupTime: booking.packupTime || "",
+        travelTime: booking.travelTime || "",
+        parkingInfo: booking.parkingInfo || "",
+        contactPerson: booking.contactPerson || "",
+        contactPhone: booking.contactPhone || "",
         venueAddress: booking.venueAddress || "",
-        venueContactInfo: "",
-        dressCode: "",
+        venueContactInfo: booking.venueContactInfo || "",
+        dressCode: booking.dressCode || "",
         notes: booking.notes || "",
+        travelExpense: booking.travelExpense || "",
+        // Collaborative fields
+        venueContact: booking.venueContact || "",
+        soundTechContact: booking.soundTechContact || "",
+        stageSize: booking.stageSize || "",
+        powerEquipment: booking.powerEquipment || "",
+        styleMood: booking.styleMood || "",
+        mustPlaySongs: booking.mustPlaySongs || "",
+        avoidSongs: booking.avoidSongs || "",
+        setOrder: booking.setOrder || "",
+        firstDanceSong: booking.firstDanceSong || "",
+        processionalSong: booking.processionalSong || "",
+        signingRegisterSong: booking.signingRegisterSong || "",
+        recessionalSong: booking.recessionalSong || "",
+        specialDedications: booking.specialDedications || "",
+        guestAnnouncements: booking.guestAnnouncements || "",
+        loadInInfo: booking.loadInInfo || "",
+        weatherContingency: booking.weatherContingency || "",
+        parkingPermitRequired: booking.parkingPermitRequired || false,
+        mealProvided: booking.mealProvided || false,
+        dietaryRequirements: booking.dietaryRequirements || "",
+        sharedNotes: booking.sharedNotes || "",
+        referenceTracks: booking.referenceTracks || "",
+        photoPermission: booking.photoPermission || false,
+        encoreAllowed: booking.encoreAllowed || false,
+        encoreSuggestions: booking.encoreSuggestions || "",
       };
       
       form.reset(bookingData);
       setInitialData(bookingData);
+      
+      // Automatically calculate mileage if venue address exists and no mileage data yet
+      if (booking.venueAddress && !mileageData.distance) {
+        calculateMileage(booking.venueAddress);
+      }
       setHasChanges(false);
       
       // Initialize custom fields - customFields doesn't exist in schema yet
@@ -803,7 +938,50 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     )}
                   />
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="venueAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Venue Address</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Enter venue address"
+                            onBlur={(e) => {
+                              field.onBlur();
+                              if (e.target.value) {
+                                calculateMileage(e.target.value);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        {mileageData.isCalculating && (
+                          <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Calculating distance...
+                          </div>
+                        )}
+                        {mileageData.distance && !mileageData.isCalculating && (
+                          <div className="text-sm text-green-600 flex items-center gap-2 mt-1">
+                            <Navigation className="h-3 w-3" />
+                            <span className="font-medium">{mileageData.distance}</span>
+                            {mileageData.duration && (
+                              <span className="text-gray-500">• {mileageData.duration}</span>
+                            )}
+                          </div>
+                        )}
+                        {mileageData.error && (
+                          <div className="text-sm text-red-500 mt-1">
+                            {mileageData.error}
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="fee"
@@ -812,6 +990,19 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                           <FormLabel>Fee (£)</FormLabel>
                           <FormControl>
                             <Input {...field} type="number" step="0.01" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="travelExpense"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Travel Expense</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="£0.00" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
