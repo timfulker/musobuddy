@@ -4,6 +4,8 @@ import 'dotenv/config';
 import express, { type Request, Response } from "express";
 import multer from 'multer';
 import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
 // Session imports now handled by rebuilt system
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
@@ -29,6 +31,19 @@ app.get('/health', (req: Request, res: Response) => {
     replit_deployment: process.env.REPLIT_DEPLOYMENT,
     node_env: process.env.NODE_ENV
   });
+});
+
+// Fix for favicon.ico 502 errors in development
+app.get('/favicon.ico', (req: Request, res: Response) => {
+  const faviconPath = ENV.isProduction 
+    ? path.join(process.cwd(), 'dist', 'public', 'favicon.ico')
+    : path.join(process.cwd(), 'client', 'public', 'favicon.ico');
+  
+  if (fs.existsSync(faviconPath)) {
+    res.sendFile(faviconPath);
+  } else {
+    res.status(204).end(); // No Content - favicon not found
+  }
 });
 
 // TEST ENDPOINT: Check recent webhook logs
