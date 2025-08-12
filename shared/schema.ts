@@ -495,6 +495,9 @@ export const userSettings = pgTable("user_settings", {
   // Invoice Settings
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
   
+  // Distance Unit Preference
+  distanceUnits: varchar("distance_units").default("miles"), // "miles" or "km" - user preference for distance display
+  
   // AI Pricing Guide for intelligent quote generation
   aiPricingEnabled: boolean("ai_pricing_enabled").default(true), // Enable AI pricing recommendations
   baseHourlyRate: decimal("base_hourly_rate", { precision: 10, scale: 2 }).default("130.00"), // £130/hour base rate

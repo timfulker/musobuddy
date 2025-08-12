@@ -92,6 +92,7 @@ const settingsFormSchema = z.object({
   customGigTypes: z.array(z.string()).optional().default([]),
   // Performance settings
   bookingDisplayLimit: z.enum(["50", "all"]).default("50"),
+  distanceUnits: z.enum(["miles", "km"]).default("miles"), // Distance unit preference
   // Removed instrument and gig type fields - feature moved to documentation
   // Theme preferences
   themeTemplate: z.string().optional(),
@@ -152,6 +153,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
                      JSON.parse((data.custom_gig_types || data.customGigTypes) || '[]') : []),
     // Performance settings
     bookingDisplayLimit: data.booking_display_limit || data.bookingDisplayLimit || "50",
+    distanceUnits: data.distance_units || data.distanceUnits || "miles",
     // Theme preferences
     themeTemplate: data.theme_template || data.themeTemplate || "classic",
     themeTone: data.theme_tone || data.themeTone || "formal",
@@ -548,6 +550,7 @@ export default function Settings() {
         primaryInstrument: settings.primaryInstrument || "",
         secondaryInstruments: Array.isArray(settings.secondaryInstruments) ? settings.secondaryInstruments : [],
         bookingDisplayLimit: settings.bookingDisplayLimit || "50",
+        distanceUnits: settings.distanceUnits || "miles",
         // Theme settings
         themeTemplate: settings.themeTemplate || "classic",
         themeTone: settings.themeTone || "professional",
@@ -1617,6 +1620,53 @@ export default function Settings() {
                             </FormControl>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               Choose your booking display preference. The recommended setting shows all upcoming gigs plus recent history, ensuring you never miss future bookings.
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {/* Distance Units Preference */}
+                      <FormField
+                        control={form.control}
+                        name="distanceUnits"
+                        render={({ field }) => (
+                          <FormItem className="mt-6">
+                            <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
+                            <FormControl>
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="miles"
+                                    name="distanceUnits"
+                                    value="miles"
+                                    checked={field.value === "miles"}
+                                    onChange={() => field.onChange("miles")}
+                                    className="text-primary"
+                                  />
+                                  <label htmlFor="miles" className="text-sm font-medium cursor-pointer">
+                                    Miles
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="km"
+                                    name="distanceUnits"
+                                    value="km"
+                                    checked={field.value === "km"}
+                                    onChange={() => field.onChange("km")}
+                                    className="text-primary"
+                                  />
+                                  <label htmlFor="km" className="text-sm font-medium cursor-pointer">
+                                    Kilometers
+                                  </label>
+                                </div>
+                              </div>
+                            </FormControl>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Choose how distances are displayed in mileage calculations
                             </div>
                             <FormMessage />
                           </FormItem>

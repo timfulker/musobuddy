@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { requireAuth } from '../middleware/auth';
+import { storage } from '../core/storage';
 
 export function registerMapsRoutes(app: Express) {
   console.log('🗺️ Setting up Google Maps routes...');
@@ -228,6 +229,10 @@ export function registerMapsRoutes(app: Express) {
       if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
         return res.status(500).json({ error: 'Google Maps server key not configured' });
       }
+      
+      // Get user's distance unit preference
+      const userSettings = await storage.getSettings(req.user!.id);
+      const distanceUnits = userSettings?.distanceUnits || 'miles';
 
       // Format origins and destinations for Google API
       const formatLocation = (loc: any) => {
@@ -256,16 +261,29 @@ export function registerMapsRoutes(app: Express) {
         return res.status(502).json({ error: 'No route found', details: element?.status });
       }
 
+      // Convert distance from meters to user's preferred unit
+      const distanceInMeters = element.distance?.value || 0;
+      const distanceInMiles = (distanceInMeters * 0.000621371).toFixed(1);
+      const distanceInKm = (distanceInMeters / 1000).toFixed(1);
+      
+      // Use user's preference for distance display
+      const displayDistance = distanceUnits === 'km' 
+        ? `${distanceInKm} km` 
+        : `${distanceInMiles} miles`;
+      
       const result = {
-        distance: element.distance?.text,
-        distanceValue: element.distance?.value,
+        distance: displayDistance,  // User's preferred unit
+        distanceValue: distanceInMeters,
+        distanceInMiles: parseFloat(distanceInMiles),
+        distanceInKm: parseFloat(distanceInKm),
+        distanceUnits: distanceUnits,  // Include the units for frontend
         duration: element.duration?.text,
         durationValue: element.duration?.value,
         durationInTraffic: element.duration_in_traffic?.text,
         durationInTrafficValue: element.duration_in_traffic?.value
       };
 
-      console.log(`✅ Travel time: ${result.durationInTraffic || result.duration}`);
+      console.log(`✅ Travel time: ${result.durationInTraffic || result.duration}, Distance: ${displayDistance}`);
       res.json(result);
 
     } catch (error) {
