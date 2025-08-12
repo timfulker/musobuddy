@@ -14,6 +14,7 @@ import { registerHealthRoutes } from "./health-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { requireAuth } from '../middleware/auth';
+import { storage } from "../core/storage";
 
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');

@@ -170,8 +170,7 @@ export default function ConflictResolutionDialog({
     mutationFn: async (data: { bookingIds: number[]; conflictDate: string; notes?: string }) => {
       return apiRequest('/api/conflicts/resolve', {
         method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
+        body: data
       });
     },
     onSuccess: () => {
