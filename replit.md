@@ -16,6 +16,7 @@ System reliability: Comprehensive 4-phase fix applied addressing "architectural 
 Theme auto-save: User expects theme changes to automatically save to database when selected in UI, not require manual "Save" button click. Frontend theme updates immediately but database sync needs to happen automatically for PDF generation consistency.
 PDF theming: Invoice PDFs now use proper text contrast calculation (WCAG 2.0 luminance) with dynamic black/white text on colored backgrounds. FROM/BILL TO labels always use black for consistency. MusoBuddy logo maintains consistent dark color for optimal visibility and brand recognition across all themes.
 Logo consistency: MusoBuddy logo now uses consistent midnight blue (#191970) throughout the entire application (main UI and PDFs) regardless of selected theme for optimal brand recognition and professional appearance.
+Contract theming: Contract PDFs now use the same WCAG 2.0 luminance calculation and theming criteria as invoices - dynamic black/white text on colored backgrounds, consistent black section labels, and midnight blue logo branding. Both invoice and contract systems now provide professional, accessible PDFs that match user's selected theme while maintaining optimal readability.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 
 ## System Architecture

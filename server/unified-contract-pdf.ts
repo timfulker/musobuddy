@@ -31,13 +31,39 @@ function getSecondaryColor(primaryColor: string): string {
 
 function getLogoBase64(): string {
   try {
-    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-midnight-blue.png');
     const logoBuffer = readFileSync(logoPath);
     return logoBuffer.toString('base64');
   } catch (error) {
     console.error('Error loading logo:', error);
     return '';
   }
+}
+
+// WCAG 2.0 luminance calculation for proper text contrast (same as invoice system)
+function getLuminance(color: string): number {
+  const hex = color.replace('#', '');
+  const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+  
+  let r = parseInt(fullHex.substring(0, 2), 16) / 255;
+  let g = parseInt(fullHex.substring(2, 4), 16) / 255;
+  let b = parseInt(fullHex.substring(4, 6), 16) / 255;
+  
+  const gammaCorrect = (channel: number) => {
+    return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+  };
+  
+  r = gammaCorrect(r);
+  g = gammaCorrect(g);
+  b = gammaCorrect(b);
+  
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function getContrastTextColor(backgroundColor: string): 'white' | 'black' {
+  const luminance = getLuminance(backgroundColor);
+  // Using same threshold as frontend and invoices: 0.5
+  return luminance > 0.5 ? 'black' : 'white';
 }
 
 function formatBusinessAddress(userSettings: UserSettings | null): string {
@@ -148,7 +174,16 @@ function generateUnifiedContractHTML(
   const primaryColor = getThemeColor(userSettings);
   const secondaryColor = getSecondaryColor(primaryColor);
   
+  // Calculate WCAG 2.0 text contrast (same as invoice system)
+  const headerTextColor = getContrastTextColor(primaryColor);
+  const luminanceValue = getLuminance(primaryColor);
+  
+  // For logo visibility: use midnight blue when theme is too light
+  const logoColor = luminanceValue > 0.7 ? '#191970' : '#191970'; // Always midnight blue for consistency
+  
   console.log(`🎨 CONTRACT PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
+  console.log(`🎨 LUMINANCE: Color ${primaryColor} has luminance ${luminanceValue.toFixed(3)} → Text color: ${headerTextColor}`);
+  console.log(`🎨 LOGO: Using consistent midnight blue logo for branding`);
 
   return `
 <!DOCTYPE html>
@@ -183,7 +218,7 @@ function generateUnifiedContractHTML(
         /* Header */
         .contract-header {
             background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
-            color: white;
+            color: ${headerTextColor};
             padding: 40px;
             text-align: center;
             position: relative;
@@ -234,14 +269,14 @@ function generateUnifiedContractHTML(
             font-size: 42px;
             font-weight: 700;
             letter-spacing: -1px;
-            color: white;
+            color: ${logoColor};
             line-height: 1;
             margin-bottom: 8px;
         }
         
         .tagline {
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.9);
+            color: #64748b;
             font-style: italic;
             font-weight: 500;
         }
@@ -299,7 +334,7 @@ function generateUnifiedContractHTML(
         .section-title {
             font-size: 22px;
             font-weight: 700;
-            color: ${primaryColor};
+            color: #000000;
             margin-bottom: 25px;
             padding-bottom: 10px;
             border-bottom: 3px solid ${secondaryColor};
@@ -324,7 +359,7 @@ function generateUnifiedContractHTML(
         .party-title {
             font-size: 16px;
             font-weight: 700;
-            color: ${primaryColor};
+            color: #000000;
             margin-bottom: 15px;
         }
         
@@ -360,7 +395,7 @@ function generateUnifiedContractHTML(
         .detail-label {
             font-size: 12px;
             font-weight: 600;
-            color: ${primaryColor};
+            color: #000000;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
@@ -384,7 +419,7 @@ function generateUnifiedContractHTML(
         .payment-title {
             font-size: 20px;
             font-weight: 700;
-            color: ${primaryColor};
+            color: #000000;
             text-align: center;
             margin-bottom: 25px;
         }
