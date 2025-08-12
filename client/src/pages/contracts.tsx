@@ -413,6 +413,33 @@ export default function Contracts() {
     },
   });
 
+  // Amendment mutation for sent contracts
+  const amendContractMutation = useMutation({
+    mutationFn: async (contractId: number) => {
+      return apiRequest(`/api/contracts/${contractId}/amend`, {
+        method: "POST",
+      });
+    },
+    onSuccess: (amendedContract) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Contract Amended",
+        description: `Created amended contract: ${amendedContract.contractNumber}`,
+      });
+      // Optionally, open the edit dialog for the new amended contract
+      setEditingContract(amendedContract);
+      setIsDialogOpen(true);
+    },
+    onError: (error) => {
+      console.error('Amendment error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create amended contract",
+        variant: "destructive",
+      });
+    },
+  });
+
   // PHASE 2: Automated reminder system (commented out for manual-only phase 1)
   /*
   const sendReminderMutation = useMutation({
@@ -1320,6 +1347,16 @@ export default function Contracts() {
                                 >
                                   Resend
                                 </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-orange-600 hover:text-orange-700"
+                                  onClick={() => amendContractMutation.mutate(contract.id)}
+                                  disabled={amendContractMutation.isPending}
+                                >
+                                  <Edit className="w-3 h-3 mr-1" />
+                                  {amendContractMutation.isPending ? "Creating..." : "Amend"}
+                                </Button>
                                 {/* PHASE 2: Send Reminder button (commented out for manual-only phase 1)
                                 {isContractUnsigned(contract) && (
                                   <Button 
@@ -1348,6 +1385,16 @@ export default function Contracts() {
                                 >
                                   <Download className="w-3 h-3 mr-1" />
                                   Download
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-orange-600 hover:text-orange-700"
+                                  onClick={() => amendContractMutation.mutate(contract.id)}
+                                  disabled={amendContractMutation.isPending}
+                                >
+                                  <Edit className="w-3 h-3 mr-1" />
+                                  {amendContractMutation.isPending ? "Creating..." : "Amend"}
                                 </Button>
                               </>
                             )}
