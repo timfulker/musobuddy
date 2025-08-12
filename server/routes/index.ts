@@ -13,7 +13,7 @@ import { registerComplianceRoutes } from "./compliance-routes";
 import { registerHealthRoutes } from "./health-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
-import { registerMapsRoutes } from "./maps-routes";
+
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
 
@@ -47,8 +47,7 @@ export async function registerRoutes(app: Express) {
   // Register health monitoring routes
   registerHealthRoutes(app);
   
-  // Register Google Maps routes
-  registerMapsRoutes(app);
+
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {
