@@ -527,8 +527,8 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   if (requestOrigin) {
     console.log(`🔍 CORS: Request origin detected: ${requestOrigin}`);
     
-    // SECURITY FIX: Restrict R2 domains to specific musobuddy buckets only
-    if (requestOrigin.includes('.r2.dev') && requestOrigin.includes('musobuddy')) {
+    // SECURITY FIX: Allow our specific R2 domain for contract signing pages
+    if (requestOrigin.includes('.r2.dev') && requestOrigin.includes('pub-446248abf8164fb99bee2fc3dc3c513c')) {
       origin = requestOrigin;
       console.log(`✅ CORS: R2 domain allowed: ${origin}`);
     }
