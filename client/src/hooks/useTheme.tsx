@@ -234,24 +234,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const saveThemeToDatabase = async () => {
       try {
         const colorToSave = currentTheme === 'custom' && customColor ? customColor : theme.colors.primary;
+        console.log('🎨 Attempting to save theme color to database:', colorToSave);
         
-        // Use JWT token from localStorage for API authentication
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/settings', {
+        // Use the same auth method as other API calls in the app
+        const { apiRequest } = await import('../lib/queryClient');
+        const response = await apiRequest('/api/settings', {
           method: 'PATCH',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ 
+          body: { 
             themeAccentColor: colorToSave 
-          })
+          }
         });
         
         if (response.ok) {
-          console.log('✅ Theme color saved to database:', colorToSave);
+          console.log('✅ Theme color saved to database successfully:', colorToSave);
         } else {
-          console.error('❌ Failed to save theme color to database');
+          const errorText = await response.text();
+          console.error('❌ Failed to save theme color to database:', response.status, errorText);
         }
       } catch (error) {
         console.error('❌ Error saving theme color to database:', error);
