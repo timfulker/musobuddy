@@ -590,7 +590,7 @@ const upload = multer({
       cb(null, true);
     } else {
       console.log(`🚫 Blocked file type: ${file.mimetype} (${file.originalname})`);
-      cb(new Error(`File type not allowed: ${file.mimetype}`), false);
+      cb(new Error(`File type not allowed: ${file.mimetype}`));
     }
   }
 });
@@ -1399,7 +1399,7 @@ async function startServer() {
         console.log('🛠️ Development mode: using Vite dev server');
         
         // Setup port for development
-        const port = process.env.PORT || 5000;
+        const port = process.env.PORT || 3000;
         console.log('🔌 Development port:', port);
         
         // Setup Vite first (before server start)
@@ -1434,7 +1434,7 @@ async function startServer() {
     
     // Production server startup (development uses different startup above)
     if (ENV.isProduction) {
-      const port = process.env.PORT || 5000;
+      const port = process.env.PORT || 3000;
       
       const server = app.listen(Number(port), "0.0.0.0", () => {
         console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
