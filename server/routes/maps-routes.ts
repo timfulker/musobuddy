@@ -1,9 +1,5 @@
-import type { Express } from "express";
-import { geocode } from "../maps/geocode";
-import { travelTime } from "../maps/distance";
-import { staticMapUrl, streetViewUrl } from "../maps/staticMap";
+import type { Express, Request, Response } from "express";
 import { requireAuth } from '../middleware/auth';
-import axios from 'axios';
 
 export function registerMapsRoutes(app: Express) {
   console.log('🗺️ Setting up Google Maps routes...');
@@ -18,66 +14,118 @@ export function registerMapsRoutes(app: Express) {
     });
   });
   
-  // Geocoding endpoint - requires authentication
-  app.post('/api/maps/geocode', requireAuth, geocode);
-  
-  // Travel time endpoint - requires authentication  
-  app.post('/api/maps/travel-time', requireAuth, travelTime);
-  
-  // Static map image endpoint
-  app.get('/api/maps/static-map', requireAuth, async (req, res) => {
+  // Simple geocoding endpoint
+  app.post('/api/maps/geocode', requireAuth, async (req: Request, res: Response) => {
     try {
-      const { lat, lng, label } = req.query;
+      const { address } = req.body;
       
-      if (!lat || !lng) {
-        return res.status(400).json({ error: 'lat and lng parameters required' });
+      if (!address || typeof address !== 'string') {
+        return res.status(400).json({ error: 'Valid address string required' });
       }
-      
+
       if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
-        return res.status(500).json({ error: 'Google Maps not configured' });
+        return res.status(500).json({ error: 'Google Maps server key not configured' });
       }
+
+      console.log(`🗺️ Geocoding: ${address}`);
+
+      // Call Google Geocoding API
+      const googleUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
       
-      const mapUrl = staticMapUrl({ 
-        lat: parseFloat(lat as string), 
-        lng: parseFloat(lng as string), 
-        label: label as string 
-      });
-      
-      const response = await axios.get(mapUrl, { responseType: 'stream' });
-      res.set('Content-Type', 'image/png');
-      response.data.pipe(res);
+      const response = await fetch(googleUrl);
+      const data = await response.json();
+
+      if (data.status !== 'OK' || !data.results?.length) {
+        console.log(`❌ Geocoding failed for: ${address}, status: ${data.status}`);
+        return res.status(404).json({ 
+          error: 'Address not found', 
+          details: data.status 
+        });
+      }
+
+      const result = data.results[0];
+      const location = result.geometry.location;
+
+      const geocodeResult = {
+        formattedAddress: result.formatted_address,
+        lat: location.lat,
+        lng: location.lng,
+        placeId: result.place_id,
+        address: address
+      };
+
+      console.log(`✅ Geocoded: ${address} → ${geocodeResult.formattedAddress}`);
+      res.json(geocodeResult);
+
     } catch (error) {
-      console.error('Static map error:', error);
-      res.status(500).json({ error: 'Failed to generate static map' });
+      console.error('Geocoding error:', error);
+      res.status(500).json({ 
+        error: 'Geocoding failed', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
-  
-  // Street view image endpoint
-  app.get('/api/maps/street-view', requireAuth, async (req, res) => {
+
+  // Travel time endpoint
+  app.post('/api/maps/travel-time', requireAuth, async (req: Request, res: Response) => {
     try {
-      const { lat, lng } = req.query;
+      const { origin, destination, departureTime } = req.body;
       
-      if (!lat || !lng) {
-        return res.status(400).json({ error: 'lat and lng parameters required' });
+      if (!origin || !destination) {
+        return res.status(400).json({ error: 'Origin and destination required' });
       }
-      
+
       if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
-        return res.status(500).json({ error: 'Google Maps not configured' });
+        return res.status(500).json({ error: 'Google Maps server key not configured' });
       }
+
+      // Format origins and destinations for Google API
+      const formatLocation = (loc: any) => {
+        if (typeof loc === 'string') return encodeURIComponent(loc);
+        if (loc.lat && loc.lng) return `${loc.lat},${loc.lng}`;
+        throw new Error('Invalid location format');
+      };
+
+      const origins = formatLocation(origin);
+      const destinations = formatLocation(destination);
+      const departure = departureTime ? `&departure_time=${Math.floor(new Date(departureTime).getTime() / 1000)}` : '&departure_time=now';
+
+      const googleUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&mode=driving&traffic_model=best_guess${departure}&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
       
-      const streetUrl = streetViewUrl({ 
-        lat: parseFloat(lat as string), 
-        lng: parseFloat(lng as string)
-      });
+      console.log(`🚗 Calculating travel time: ${origin} → ${destination}`);
       
-      const response = await axios.get(streetUrl, { responseType: 'stream' });
-      res.set('Content-Type', 'image/jpeg');
-      response.data.pipe(res);
+      const response = await fetch(googleUrl);
+      const data = await response.json();
+
+      if (data.status !== 'OK') {
+        return res.status(502).json({ error: 'Travel time calculation failed', details: data.status });
+      }
+
+      const element = data.rows?.[0]?.elements?.[0];
+      if (!element || element.status !== 'OK') {
+        return res.status(502).json({ error: 'No route found', details: element?.status });
+      }
+
+      const result = {
+        distance: element.distance?.text,
+        distanceValue: element.distance?.value,
+        duration: element.duration?.text,
+        durationValue: element.duration?.value,
+        durationInTraffic: element.duration_in_traffic?.text,
+        durationInTrafficValue: element.duration_in_traffic?.value
+      };
+
+      console.log(`✅ Travel time: ${result.durationInTraffic || result.duration}`);
+      res.json(result);
+
     } catch (error) {
-      console.error('Street view error:', error);
-      res.status(500).json({ error: 'Failed to generate street view' });
+      console.error('Travel time error:', error);
+      res.status(500).json({ 
+        error: 'Travel time calculation failed', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
-  
+
   console.log('✅ Google Maps routes configured');
 }

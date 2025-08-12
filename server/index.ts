@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+import 'dotenv/config';
+
 import express, { type Request, Response } from "express";
 import multer from 'multer';
 import helmet from 'helmet';
