@@ -15,10 +15,10 @@ export function MusoBuddyLogo({
 }: MusoBuddyLogoProps) {
   const { currentTheme } = useTheme();
 
-  // Use CSS theme variables instead of hardcoded colors
+  // Use consistent midnight blue for MusoBuddy logo (brand consistency)
   const colors = {
-    primary: 'var(--theme-primary)',
-    secondary: 'var(--theme-secondary)'
+    primary: '#191970', // Midnight blue - consistent branding
+    secondary: '#1e3a8a' // Darker blue
   };
 
   // Size configurations
