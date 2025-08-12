@@ -14,7 +14,7 @@ if (!stripeKey) {
   throw new Error('Missing required Stripe secret key');
 }
 const stripe = new Stripe(stripeKey, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-07-30.basil",
 });
 
 export function registerInvoiceRoutes(app: Express) {
@@ -618,18 +618,19 @@ export function registerInvoiceRoutes(app: Express) {
             status: 'paid',
             paidAt: new Date(),
             stripeSessionId: session.id,
-          }, parseInt(userId));
+          }, userId);
           
           console.log(`✅ Invoice #${invoiceId} marked as paid via Stripe webhook`);
           
           // Send payment confirmation email
           try {
             const invoice = await storage.getInvoice(parseInt(invoiceId));
-            const userSettings = await storage.getSettings(parseInt(userId));
+            const userSettings = await storage.getSettings(userId);
             
             if (invoice && invoice.clientEmail && userSettings) {
               const emailService = new EmailService();
-              await emailService.sendPaymentConfirmation(invoice, userSettings);
+              // Use existing sendInvoice method with payment confirmation message
+              await emailService.sendInvoice(invoice, userSettings, 'Payment confirmed - thank you for your payment!');
               console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
             }
           } catch (emailError) {
