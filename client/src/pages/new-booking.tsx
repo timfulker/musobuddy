@@ -536,6 +536,32 @@ export default function NewBookingPage() {
                           <FormControl>
                             <Textarea {...field} rows={2} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
                           </FormControl>
+                          {mileageData.isCalculating && (
+                            <div className="mt-2 text-sm text-blue-600 flex items-center gap-2">
+                              <MapPin className="w-4 h-4 animate-pulse" />
+                              Calculating distance from your business address...
+                            </div>
+                          )}
+                          {mileageData.distance && !mileageData.isCalculating && (
+                            <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="w-4 h-4 text-blue-600" />
+                                <span className="font-medium text-blue-900">Travel Information:</span>
+                              </div>
+                              <div className="mt-1 text-sm text-blue-700">
+                                <span className="font-medium">{mileageData.distance}</span> 
+                                {mileageData.duration && <span> • Approx. {mileageData.duration}</span>}
+                              </div>
+                              <div className="mt-1 text-xs text-blue-600">
+                                Calculated from your business address to venue
+                              </div>
+                            </div>
+                          )}
+                          {mileageData.error && (
+                            <div className="mt-2 text-sm text-amber-600 bg-amber-50 p-2 rounded-md">
+                              {mileageData.error}
+                            </div>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
