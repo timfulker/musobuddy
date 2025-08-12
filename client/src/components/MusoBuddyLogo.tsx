@@ -15,43 +15,11 @@ export function MusoBuddyLogo({
 }: MusoBuddyLogoProps) {
   const { currentTheme } = useTheme();
 
-  // Theme-specific colors
-  const getThemeColors = () => {
-    switch (currentTheme) {
-      case 'purple':
-        return {
-          primary: '#8b5cf6',
-          secondary: '#a855f7'
-        };
-      case 'midnight-blue':
-        return {
-          primary: '#191970',
-          secondary: '#1e3a8a'
-        };
-      case 'ocean-blue':
-        return {
-          primary: '#0ea5e9',
-          secondary: '#0284c7'
-        };
-      case 'forest-green':
-        return {
-          primary: '#10b981',
-          secondary: '#34d399'
-        };
-      case 'clean-pro-audio':
-        return {
-          primary: '#f87171',
-          secondary: '#9ca3af'
-        };
-      default:
-        return {
-          primary: '#8b5cf6',
-          secondary: '#a855f7'
-        };
-    }
+  // Use CSS theme variables instead of hardcoded colors
+  const colors = {
+    primary: 'var(--theme-primary)',
+    secondary: 'var(--theme-secondary)'
   };
-
-  const colors = getThemeColors();
 
   // Size configurations
   const sizeConfig = {
