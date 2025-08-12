@@ -107,9 +107,20 @@ export default function AddressAutocomplete({
   if (!isLoaded) {
     return (
       <input
-        disabled
-        placeholder="Loading Google Maps..."
-        className={`${className} bg-gray-100 cursor-not-allowed`}
+        type="text"
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+        className={className}
+        onChange={(e) => {
+          // If Google Maps isn't loaded, just use basic input
+          const value = e.target.value;
+          onSelect({
+            address: value,
+            placeName: value,
+            lat: 0,
+            lng: 0
+          });
+        }}
       />
     );
   }
@@ -123,6 +134,18 @@ export default function AddressAutocomplete({
         defaultValue={defaultValue}
         className={`${className} ${isLoading ? 'bg-gray-50' : ''}`}
         disabled={isLoading}
+        onChange={(e) => {
+          // Fallback: if autocomplete isn't working, capture manual input
+          if (!autocompleteRef.current) {
+            const value = e.target.value;
+            onSelect({
+              address: value,
+              placeName: value,
+              lat: 0,
+              lng: 0
+            });
+          }
+        }}
       />
       
       {isLoading && (

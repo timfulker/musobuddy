@@ -392,9 +392,12 @@ export default function NewBookingPage() {
                             <AddressAutocomplete
                               onSelect={(addressData) => {
                                 // Set venue name to the place name (e.g., "Royal Albert Hall")
-                                field.onChange((addressData as any).placeName || addressData.address);
+                                const venueName = (addressData as any).placeName || addressData.address;
+                                field.onChange(venueName);
                                 // Auto-populate the venue address field below
-                                form.setValue('venueAddress', addressData.address);
+                                if (addressData.address && addressData.address !== venueName) {
+                                  form.setValue('venueAddress', addressData.address);
+                                }
                                 console.log('📍 Venue selected:', addressData);
                               }}
                               placeholder="Start typing venue name... (e.g., Royal Albert Hall)"
