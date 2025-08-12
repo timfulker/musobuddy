@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { getThemeTextColor, getComputedThemeTextColor } from "@/lib/colorUtils";
 import { useTheme } from "@/hooks/useTheme";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
@@ -75,11 +76,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         const href = linkElement.getAttribute('href');
         const isCurrentlyActive = href === location;
         
-        // Determine text color based on theme and active state
-        const shouldUseWhiteText = isCurrentlyActive && 
-          (currentTheme === 'purple' || currentTheme === 'midnight-blue');
+        // Determine text color based on luminance of theme color and active state
+        const shouldUseContrastText = isCurrentlyActive;
+        const themeTextColor = getThemeTextColor(currentTheme);
         
-        const textColor = shouldUseWhiteText ? 'white' : '#1e293b';
+        const textColor = shouldUseContrastText ? 
+          (themeTextColor === 'white' ? 'white' : '#1e293b') : '#1e293b';
         
         // Force color on the link itself with !important
         linkElement.style.setProperty('color', textColor, 'important');
@@ -126,10 +128,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   };
 
-  // Get theme-appropriate text color for active navigation items
+  // Get theme-appropriate text color for active navigation items using luminance calculation
   const getActiveTextColor = () => {
-    const needsWhiteText = (currentTheme === 'purple' || currentTheme === 'midnight-blue');
-    return needsWhiteText ? 'white' : '#1e293b';
+    // Try to get the computed color first, fallback to theme-based calculation
+    try {
+      const textColor = getComputedThemeTextColor();
+      return textColor === 'white' ? 'white' : '#1e293b';
+    } catch {
+      // Fallback if DOM isn't ready
+      const textColor = getThemeTextColor(currentTheme);
+      return textColor === 'white' ? 'white' : '#1e293b';
+    }
   };
 
   // FIXED: Simplified navigation link styling without conflicting CSS classes
@@ -289,6 +298,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href="/settings" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
                   className={getNavLinkClass("/settings")}
+                  data-active={isActive("/settings")}
+                  data-theme={currentTheme}
                   style={{ 
                     color: isActive("/settings") ? getActiveTextColor() : '#64748b',
                     backgroundColor: isActive("/settings") ? 'var(--theme-primary)' : 'transparent',
@@ -303,6 +314,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href="/templates" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
                   className={getNavLinkClass("/templates")}
+                  data-active={isActive("/templates")}
+                  data-theme={currentTheme}
                   style={{ 
                     color: isActive("/templates") ? getActiveTextColor() : '#64748b',
                     backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent',
@@ -317,6 +330,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href="/compliance" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
                   className={getNavLinkClass("/compliance")}
+                  data-active={isActive("/compliance")}
+                  data-theme={currentTheme}
                   style={{ 
                     color: isActive("/compliance") ? getActiveTextColor() : '#64748b',
                     backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent',

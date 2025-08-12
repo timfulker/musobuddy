@@ -61,8 +61,8 @@ const Navigation = () => {
                   href={item.path}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary text-white'
-                      : 'text-muted-foreground hover:text-white hover:bg-primary'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-primary-foreground hover:bg-primary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -77,8 +77,8 @@ const Navigation = () => {
                 <button
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isSettingsActive
-                      ? 'bg-primary text-white'
-                      : 'text-muted-foreground hover:text-white hover:bg-primary'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-primary-foreground hover:bg-primary'
                   }`}
                 >
                   <SettingsIcon className="h-4 w-4" />
