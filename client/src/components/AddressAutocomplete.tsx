@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useLoadScript, Autocomplete } from "@react-google-maps/api";
+import { useLoadScript } from "@react-google-maps/api";
 import { apiRequest } from "@/lib/queryClient";
 
 const libraries: ("places")[] = ["places"];
@@ -52,32 +52,6 @@ export default function AddressAutocomplete({
     );
   }
 
-  const handlePlaceChanged = async () => {
-    setError(null);
-    const autocomplete = (window as any).googleAutocomplete;
-    if (!autocomplete) return;
-    
-    const place = autocomplete.getPlace();
-    if (!place || !place.formatted_address) return;
-    
-    // Use the place data if it has geometry
-    if (place.geometry?.location) {
-      const addressData: AddressData = {
-        address: place.formatted_address,
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-        placeId: place.place_id
-      };
-      
-      console.log("🗺️ Address selected from autocomplete:", addressData);
-      onSelect(addressData);
-      return;
-    }
-    
-    // Fallback to server geocoding
-    await handleServerGeocode(place.formatted_address);
-  };
-
   const handleBlur = async () => {
     const val = inputRef.current?.value?.trim();
     if (!val || val === defaultValue) return;
@@ -118,24 +92,18 @@ export default function AddressAutocomplete({
     }
   };
 
+  // For now, fallback to server-side geocoding only since new Places API requires different implementation
   return (
     <div className="relative">
-      <Autocomplete
-        onLoad={(autocomplete) => {
-          (window as any).googleAutocomplete = autocomplete;
-        }}
-        onPlaceChanged={handlePlaceChanged}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder={placeholder}
-          defaultValue={defaultValue}
-          className={`${className} ${isLoading ? 'bg-gray-50' : ''}`}
-          onBlur={handleBlur}
-          disabled={isLoading}
-        />
-      </Autocomplete>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+        className={`${className} ${isLoading ? 'bg-gray-50' : ''}`}
+        onBlur={handleBlur}
+        disabled={isLoading}
+      />
       
       {isLoading && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
