@@ -682,6 +682,8 @@ export default function Contracts() {
       case "signed": return "bg-green-100 text-green-800";
       case "completed": return "bg-primary/10 text-primary";
       case "unsigned": return "bg-red-100 text-red-800";
+      case "superseded": return "bg-yellow-100 text-yellow-800";
+      case "voided": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -1396,6 +1398,23 @@ export default function Contracts() {
                                   <Edit className="w-3 h-3 mr-1" />
                                   {amendContractMutation.isPending ? "Creating..." : "Amend"}
                                 </Button>
+                              </>
+                            )}
+
+                            {(contract.status === "superseded" || contract.status === "voided") && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
+                                  onClick={() => handleDownloadContract(contract)}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                                <div className="text-xs text-gray-500 italic">
+                                  {contract.status === "voided" ? "Voided by amendment" : "Superseded"}
+                                </div>
                               </>
                             )}
                           </div>

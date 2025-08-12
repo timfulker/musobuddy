@@ -248,6 +248,9 @@ export class Storage {
         throw new Error('Contract is not available for signing');
       }
       
+      // Check if this is an amended contract
+      const isAmendedContract = existingContract.originalContractId;
+      
       // Update contract with signature data
       const updateData = {
         status: 'signed' as const,
@@ -264,6 +267,16 @@ export class Storage {
       
       // Use flexible updateContract without userId for public signing
       const result = await contractStorage.updateContract(contractId, updateData);
+      
+      if (result && isAmendedContract) {
+        // If this is an amended contract being signed, void the original contract
+        console.log('⚖️ LEGAL: Amended contract signed - voiding original contract', existingContract.originalContractId);
+        await contractStorage.updateContract(existingContract.originalContractId, {
+          status: 'voided',
+          updatedAt: new Date()
+        });
+        console.log('✅ LEGAL: Original contract voided due to signed amendment');
+      }
       
       if (result) {
         console.log('✅ STORAGE: Contract successfully signed');
