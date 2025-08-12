@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -388,7 +389,18 @@ export default function NewBookingPage() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
                           <FormControl>
-                            <Input {...field} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            <AddressAutocomplete
+                              onSelect={(addressData) => {
+                                // Set venue name to the place name (e.g., "Royal Albert Hall")
+                                field.onChange(addressData.placeName || addressData.address);
+                                // Auto-populate the venue address field below
+                                form.setValue('venueAddress', addressData.address);
+                                console.log('📍 Venue selected:', addressData);
+                              }}
+                              placeholder="Start typing venue name... (e.g., Royal Albert Hall)"
+                              defaultValue={field.value}
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
