@@ -84,9 +84,23 @@ export default function AddressAutocomplete({
   if (loadError) {
     console.error("Google Maps load error:", loadError);
     return (
-      <div className="text-red-600 text-sm">
-        Google Maps failed to load. Please check your API configuration.
-      </div>
+      <input
+        type="text"
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+        className={className}
+        onChange={(e) => {
+          // Fallback to basic input if Google Maps fails
+          if (e.target.value) {
+            onSelect({
+              address: e.target.value,
+              placeName: e.target.value,
+              lat: 0,
+              lng: 0
+            });
+          }
+        }}
+      />
     );
   }
 
