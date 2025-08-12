@@ -12,6 +12,7 @@ import { registerUnparseableRoutes } from "./unparseable-routes";
 import { registerComplianceRoutes } from "./compliance-routes";
 import { registerHealthRoutes } from "./health-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
+import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { requireAuth } from '../middleware/auth';
 
 export async function registerRoutes(app: Express) {
@@ -36,6 +37,7 @@ export async function registerRoutes(app: Express) {
   registerFeedbackRoutes(app);
   registerUnparseableRoutes(app);
   registerClientPortalRoutes(app);
+  setupCollaborativeFormRoutes(app);
   
   // Register isolated routes for cloud compatibility  
   registerIsolatedRoutes(app);

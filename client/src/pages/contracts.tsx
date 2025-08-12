@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info, Users } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
@@ -486,6 +486,36 @@ export default function Contracts() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete contract",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Collaborative form generation mutation for signed contracts
+  const generateCollaborativeFormMutation = useMutation({
+    mutationFn: async (contractId: number) => {
+      return apiRequest(`/api/collaborative-forms/generate`, {
+        method: "POST",
+        body: JSON.stringify({ contractId }),
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Collaborative Form Generated",
+        description: "The form has been generated and uploaded to cloud storage for client collaboration",
+      });
+      // Show the URL to the user
+      const formUrl = data.publicUrl || data.url;
+      if (formUrl) {
+        // Open the collaborative form in a new tab
+        window.open(formUrl, '_blank');
+      }
+    },
+    onError: (error) => {
+      console.error('Collaborative form generation error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate collaborative form",
         variant: "destructive",
       });
     },
@@ -1498,6 +1528,16 @@ export default function Contracts() {
                                 >
                                   <Download className="w-3 h-3 mr-1" />
                                   Download
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white"
+                                  onClick={() => generateCollaborativeFormMutation.mutate(contract.id)}
+                                  disabled={generateCollaborativeFormMutation.isPending}
+                                  title="Generate a collaborative form for client to fill out additional details"
+                                >
+                                  <Users className="w-3 h-3 mr-1" />
+                                  {generateCollaborativeFormMutation.isPending ? "Generating..." : "Collaborative Form"}
                                 </Button>
                                 {!contract.supersededBy && (
                                   <Button 

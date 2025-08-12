@@ -244,6 +244,51 @@ export async function uploadContractSigningPage(
   }
 }
 
+// Generic function to upload any file to R2
+export async function uploadToCloudflareR2(
+  fileBuffer: Buffer,
+  storageKey: string,
+  contentType: string = 'application/octet-stream',
+  metadata: Record<string, string> = {}
+): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
+  try {
+    console.log(`☁️ Uploading file to cloud storage: ${storageKey}`);
+    
+    const uploadCommand = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
+      Key: storageKey,
+      Body: fileBuffer,
+      ContentType: contentType,
+      Metadata: {
+        'uploaded-at': new Date().toISOString(),
+        ...metadata
+      }
+    });
+    
+    await r2Client.send(uploadCommand);
+    
+    console.log(`✅ File uploaded successfully to R2: ${storageKey}`);
+    
+    // Use direct Cloudflare R2 public URL
+    const publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${storageKey}`;
+    
+    console.log(`🔗 Public R2 URL: ${publicUrl}`);
+    
+    return {
+      success: true,
+      url: publicUrl,
+      key: storageKey
+    };
+    
+  } catch (error: any) {
+    console.error('❌ Failed to upload file to cloud storage:', error);
+    return {
+      success: false,
+      error: error.message || 'Upload failed'
+    };
+  }
+}
+
 // Utility to check if cloud storage is properly configured
 export function isCloudStorageConfigured(): boolean {
   return !!(

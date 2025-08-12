@@ -25,6 +25,7 @@ import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
 
@@ -1598,14 +1599,76 @@ export default function UnifiedBookings() {
                               {day.day}
                             </div>
                             <div className="space-y-1">
-                              {day.events.slice(0, 4).map((event, eventIndex) => (
-                                <div
-                                  key={eventIndex}
-                                  className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
-                                >
-                                  {event.title}
-                                </div>
-                              ))}
+                              {day.events.slice(0, 4).map((event, eventIndex) => {
+                                const validBookings = validateBookingArray(bookings) ? bookings : [];
+                                const booking = validBookings.find((b) => b.id === event.id);
+                                
+                                return (
+                                  <HoverCard key={eventIndex} openDelay={200}>
+                                    <HoverCardTrigger asChild>
+                                      <div
+                                        className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')}`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (booking) {
+                                            setSelectedBookingForDetails(booking);
+                                            setBookingDetailsDialogOpen(true);
+                                          }
+                                        }}
+                                      >
+                                        {event.title}
+                                      </div>
+                                    </HoverCardTrigger>
+                                    {booking && (
+                                      <HoverCardContent className="w-80" align="start">
+                                        <div className="space-y-2">
+                                          <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
+                                          <div className="space-y-1 text-sm">
+                                            <div className="flex items-center gap-2">
+                                              <User className="w-3 h-3 text-gray-500" />
+                                              <span className="font-medium">Client:</span>
+                                              <span>{booking.clientName || 'Unknown'}</span>
+                                            </div>
+                                            {booking.venue && (
+                                              <div className="flex items-center gap-2">
+                                                <MapPin className="w-3 h-3 text-gray-500" />
+                                                <span className="font-medium">Venue:</span>
+                                                <span>{booking.venue}</span>
+                                              </div>
+                                            )}
+                                            {booking.venueAddress && (
+                                              <div className="flex items-start gap-2">
+                                                <MapPin className="w-3 h-3 text-gray-500 mt-1" />
+                                                <span className="font-medium">Address:</span>
+                                                <span className="flex-1">{booking.venueAddress}</span>
+                                              </div>
+                                            )}
+                                            {booking.eventTime && (
+                                              <div className="flex items-center gap-2">
+                                                <Clock className="w-3 h-3 text-gray-500" />
+                                                <span className="font-medium">Time:</span>
+                                                <span>{booking.eventTime}</span>
+                                              </div>
+                                            )}
+                                            {booking.fee && (
+                                              <div className="flex items-center gap-2">
+                                                <PoundSterling className="w-3 h-3 text-gray-500" />
+                                                <span className="font-medium">Fee:</span>
+                                                <span className="text-green-600">£{booking.fee}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="pt-2 border-t">
+                                            <Badge className={getStatusColor(booking.status || 'new')}>
+                                              {booking.status?.replace('_', ' ') || 'New'}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      </HoverCardContent>
+                                    )}
+                                  </HoverCard>
+                                );
+                              })}
                               {day.events.length > 4 && (
                                 <div className="text-xs text-gray-500">
                                   +{day.events.length - 4} more
@@ -1659,14 +1722,76 @@ export default function UnifiedBookings() {
                                 {day.day}
                               </div>
                               <div className="space-y-1 flex-1 overflow-hidden">
-                                {day.events.slice(0, 2).map((event, eventIndex) => (
-                                  <div
-                                    key={eventIndex}
-                                    className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
-                                  >
-                                    {event.title}
-                                  </div>
-                                ))}
+                                {day.events.slice(0, 2).map((event, eventIndex) => {
+                                  const validBookings = validateBookingArray(bookings) ? bookings : [];
+                                  const booking = validBookings.find((b) => b.id === event.id);
+                                  
+                                  return (
+                                    <HoverCard key={eventIndex} openDelay={200}>
+                                      <HoverCardTrigger asChild>
+                                        <div
+                                          className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')}`}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (booking) {
+                                              setSelectedBookingForDetails(booking);
+                                              setBookingDetailsDialogOpen(true);
+                                            }
+                                          }}
+                                        >
+                                          {event.title}
+                                        </div>
+                                      </HoverCardTrigger>
+                                      {booking && (
+                                        <HoverCardContent className="w-80" align="start">
+                                          <div className="space-y-2">
+                                            <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
+                                            <div className="space-y-1 text-sm">
+                                              <div className="flex items-center gap-2">
+                                                <User className="w-3 h-3 text-gray-500" />
+                                                <span className="font-medium">Client:</span>
+                                                <span>{booking.clientName || 'Unknown'}</span>
+                                              </div>
+                                              {booking.venue && (
+                                                <div className="flex items-center gap-2">
+                                                  <MapPin className="w-3 h-3 text-gray-500" />
+                                                  <span className="font-medium">Venue:</span>
+                                                  <span>{booking.venue}</span>
+                                                </div>
+                                              )}
+                                              {booking.venueAddress && (
+                                                <div className="flex items-start gap-2">
+                                                  <MapPin className="w-3 h-3 text-gray-500 mt-1" />
+                                                  <span className="font-medium">Address:</span>
+                                                  <span className="flex-1">{booking.venueAddress}</span>
+                                                </div>
+                                              )}
+                                              {booking.eventTime && (
+                                                <div className="flex items-center gap-2">
+                                                  <Clock className="w-3 h-3 text-gray-500" />
+                                                  <span className="font-medium">Time:</span>
+                                                  <span>{booking.eventTime}</span>
+                                                </div>
+                                              )}
+                                              {booking.fee && (
+                                                <div className="flex items-center gap-2">
+                                                  <PoundSterling className="w-3 h-3 text-gray-500" />
+                                                  <span className="font-medium">Fee:</span>
+                                                  <span className="text-green-600">£{booking.fee}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="pt-2 border-t">
+                                              <Badge className={getStatusColor(booking.status || 'new')}>
+                                                {booking.status?.replace('_', ' ') || 'New'}
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        </HoverCardContent>
+                                      )}
+                                    </HoverCard>
+                                  );
+                                })}
                                 {day.events.length > 2 && (
                                   <div className="text-xs text-gray-500">
                                     +{day.events.length - 2} more

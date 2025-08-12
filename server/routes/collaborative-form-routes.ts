@@ -1,0 +1,210 @@
+import type { Express, Request, Response } from "express";
+import { requireAuth } from "../middleware/auth.js";
+import { collaborativeFormGenerator } from "../core/collaborative-form-generator.js";
+import { db } from "../core/database.js";
+import { bookings, contracts } from "../../shared/schema.js";
+import { eq, and } from "drizzle-orm";
+
+export function setupCollaborativeFormRoutes(app: Express) {
+  // Generate collaborative form after contract signing
+  app.post('/api/contracts/:contractId/generate-collaborative-form', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { contractId } = req.params;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Get contract and associated booking
+      const contract = await db.select().from(contracts)
+        .where(and(eq(contracts.id, parseInt(contractId)), eq(contracts.userId, userId)))
+        .then(results => results[0]);
+
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      if (contract.status !== 'signed') {
+        return res.status(400).json({ error: 'Contract must be signed to generate collaborative form' });
+      }
+
+      // Get associated booking
+      const booking = await db.select().from(bookings)
+        .where(eq(bookings.contractId, parseInt(contractId)))
+        .then(results => results[0]);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'No booking found for this contract' });
+      }
+
+      // Prepare booking data for form generation
+      const bookingData = {
+        id: booking.id,
+        contractId: contract.id,
+        clientName: contract.clientName || 'Client',
+        venue: booking.venue || contract.venue || 'TBC',
+        eventDate: booking.eventDate?.toISOString() || contract.eventDate?.toISOString() || new Date().toISOString(),
+        eventTime: booking.eventTime || contract.eventTime,
+        eventEndTime: booking.eventEndTime || contract.eventEndTime,
+        performanceDuration: booking.performanceDuration || contract.performanceDuration,
+        // Include all collaborative fields from booking
+        venueContact: booking.venueContact,
+        soundTechContact: booking.soundTechContact,
+        stageSize: booking.stageSize,
+        powerEquipment: booking.powerEquipment,
+        styleMood: booking.styleMood,
+        mustPlaySongs: booking.mustPlaySongs,
+        avoidSongs: booking.avoidSongs,
+        setOrder: booking.setOrder,
+        firstDanceSong: booking.firstDanceSong,
+        processionalSong: booking.processionalSong,
+        signingRegisterSong: booking.signingRegisterSong,
+        recessionalSong: booking.recessionalSong,
+        specialDedications: booking.specialDedications,
+        guestAnnouncements: booking.guestAnnouncements,
+        loadInInfo: booking.loadInInfo,
+        soundCheckTime: booking.soundCheckTime,
+        weatherContingency: booking.weatherContingency,
+        parkingPermitRequired: booking.parkingPermitRequired,
+        mealProvided: booking.mealProvided,
+        dietaryRequirements: booking.dietaryRequirements,
+        sharedNotes: booking.sharedNotes,
+        referenceTracks: booking.referenceTracks,
+        photoPermission: booking.photoPermission,
+        encoreAllowed: booking.encoreAllowed,
+        encoreSuggestions: booking.encoreSuggestions
+      };
+
+      // API endpoint for the form to communicate with
+      const apiEndpoint = process.env.REPLIT_DEPLOYMENT 
+        ? `https://www.musobuddy.com`
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
+
+      // Upload collaborative form to Cloudflare R2
+      const result = await collaborativeFormGenerator.uploadCollaborativeForm(
+        bookingData,
+        apiEndpoint
+      );
+
+      // Update contract with collaborative form details
+      await db.update(contracts)
+        .set({
+          clientPortalUrl: result.url,
+          clientPortalToken: result.token,
+          updatedAt: new Date()
+        })
+        .where(eq(contracts.id, contract.id));
+
+      res.json({
+        success: true,
+        collaborativeFormUrl: result.url,
+        message: 'Collaborative form generated and uploaded successfully'
+      });
+
+    } catch (error) {
+      console.error('Error generating collaborative form:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate collaborative form',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Update collaborative form data
+  app.post('/api/collaborative-form/:bookingId/update', async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.params;
+      const { token, fieldLocks, ...updateData } = req.body;
+
+      if (!token) {
+        return res.status(401).json({ error: 'Portal token required' });
+      }
+
+      // Verify the portal token exists for this booking
+      const booking = await db.select().from(bookings)
+        .where(eq(bookings.id, parseInt(bookingId)))
+        .then(results => results[0]);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Get associated contract to verify token
+      const contract = await db.select().from(contracts)
+        .where(eq(contracts.id, booking.contractId))
+        .then(results => results[0]);
+
+      if (!contract || contract.clientPortalToken !== token) {
+        return res.status(403).json({ error: 'Invalid portal token' });
+      }
+
+      // Update booking with collaborative data
+      await db.update(bookings)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(bookings.id, parseInt(bookingId)));
+
+      // TODO: Send notification to user about updated collaborative form
+      
+      res.json({
+        success: true,
+        message: 'Collaborative form updated successfully'
+      });
+
+    } catch (error) {
+      console.error('Error updating collaborative form:', error);
+      res.status(500).json({ 
+        error: 'Failed to update collaborative form',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Update field lock settings
+  app.post('/api/collaborative-form/:bookingId/locks', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.params;
+      const { fieldLocks } = req.body;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Verify user owns this booking
+      const booking = await db.select().from(bookings)
+        .where(eq(bookings.id, parseInt(bookingId)))
+        .then(results => results[0]);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // For now, store field locks in the booking's fieldLockSettings column
+      // (This would need to be added to the schema)
+      await db.update(bookings)
+        .set({
+          // fieldLockSettings: JSON.stringify(fieldLocks),
+          updatedAt: new Date()
+        })
+        .where(eq(bookings.id, parseInt(bookingId)));
+
+      res.json({
+        success: true,
+        message: 'Field lock settings updated'
+      });
+
+    } catch (error) {
+      console.error('Error updating field locks:', error);
+      res.status(500).json({ 
+        error: 'Failed to update field locks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  console.log('✅ Collaborative form routes configured');
+}

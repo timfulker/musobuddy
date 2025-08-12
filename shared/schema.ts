@@ -374,6 +374,48 @@ export const bookings = pgTable("bookings", {
   // General document storage for any booking-related documents
   uploadedDocuments: jsonb("uploaded_documents").default('[]'), // Array of {url, key, filename, type, uploadedAt} objects
   
+  // COLLABORATIVE FIELDS - Fields completed collaboratively with client after contract signing
+  // Technical Details
+  venueContact: text("venue_contact"), // Venue on-day contact phone
+  soundTechContact: text("sound_tech_contact"), // Sound engineer contact
+  stageSize: varchar("stage_size"), // small, medium, large, no-stage
+  powerEquipment: text("power_equipment"), // Power availability and restrictions
+  soundCheckTime: text("sound_check_time"), // Preferred sound check timing
+  loadInInfo: text("load_in_info"), // Load-in access instructions
+  
+  // Music Preferences  
+  styleMood: varchar("style_mood"), // upbeat, jazzy, romantic, background, mixed
+  setOrder: varchar("set_order"), // upbeat-first, slow-first, mixed, no-preference
+  mustPlaySongs: text("must_play_songs"), // Up to 6 favorite songs
+  avoidSongs: text("avoid_songs"), // Songs/genres to avoid
+  referenceTracks: text("reference_tracks"), // YouTube links or examples
+  
+  // Special Moments (Wedding Events)
+  firstDanceSong: text("first_dance_song"), // First dance music
+  processionalSong: text("processional_song"), // Walking down aisle
+  signingRegisterSong: text("signing_register_song"), // Register signing music
+  recessionalSong: text("recessional_song"), // Walking back up aisle
+  specialDedications: text("special_dedications"), // Special song dedications
+  guestAnnouncements: text("guest_announcements"), // Announcements during event
+  
+  // Event Logistics
+  weatherContingency: text("weather_contingency"), // Backup plan for outdoor events
+  parkingPermitRequired: boolean("parking_permit_required").default(false),
+  mealProvided: boolean("meal_provided").default(false),
+  dietaryRequirements: text("dietary_requirements"), // Meal dietary needs
+  sharedNotes: text("shared_notes"), // Additional collaborative planning notes
+  
+  // Extended Features
+  photoPermission: boolean("photo_permission").default(true), // Permission to take photos
+  encoreAllowed: boolean("encore_allowed").default(true), // Encore performance allowed
+  encoreSuggestions: text("encore_suggestions"), // Suggested encore songs
+  
+  // Additional contact fields moved from other sections
+  venueContactInfo: text("venue_contact_info"), // Venue manager contact details
+  parkingInfo: text("parking_info"), // Parking instructions for performer
+  contactPhone: text("contact_phone"), // Alternative contact phone
+  dressCode: text("dress_code"), // Event dress code requirements
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
