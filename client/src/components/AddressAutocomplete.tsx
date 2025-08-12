@@ -33,31 +33,51 @@ export default function AddressAutocomplete({
     libraries,
   });
 
+  // Debug logging
+  useEffect(() => {
+    console.log("🗺️ Google Maps loading state:", { 
+      isLoaded, 
+      loadError: loadError?.message,
+      apiKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ? "Present" : "Missing"
+    });
+  }, [isLoaded, loadError]);
+
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
-      // Initialize Google Places Autocomplete
-      autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-        types: ['establishment'], // Focus on venues/establishments
-        fields: ['name', 'formatted_address', 'geometry.location', 'place_id']
-      });
-
-      // Listen for place selection
-      autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current?.getPlace();
+      try {
+        console.log("🗺️ Initializing Google Places Autocomplete...");
         
-        if (place && place.geometry && place.geometry.location) {
-          const addressData: AddressData = {
-            placeName: place.name || '',
-            address: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            placeId: place.place_id
-          };
+        // Initialize Google Places Autocomplete
+        autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+          types: ['establishment'], // Focus on venues/establishments
+          fields: ['name', 'formatted_address', 'geometry.location', 'place_id']
+        });
+
+        console.log("✅ Google Places Autocomplete initialized");
+
+        // Listen for place selection
+        autocompleteRef.current.addListener('place_changed', () => {
+          const place = autocompleteRef.current?.getPlace();
+          console.log("🔍 Place changed:", place);
           
-          console.log('📍 Place selected:', addressData);
-          onSelect(addressData);
-        }
-      });
+          if (place && place.geometry && place.geometry.location) {
+            const addressData: AddressData = {
+              placeName: place.name || '',
+              address: place.formatted_address || '',
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              placeId: place.place_id
+            };
+            
+            console.log('📍 Place selected:', addressData);
+            onSelect(addressData);
+          } else {
+            console.log("❌ No valid place data received");
+          }
+        });
+      } catch (error) {
+        console.error("❌ Error initializing Google Places:", error);
+      }
     }
   }, [isLoaded, onSelect]);
 
