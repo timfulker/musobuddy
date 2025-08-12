@@ -23,6 +23,7 @@ Contract amendment system: Implemented legally compliant contract amendment syst
 Professional timing flexibility: Added "TBC (To Be Confirmed)" options for contract start and finish times with common time slot selections, enabling immediate contract creation even when timing details are still being coordinated. Added optional "Actual Performance Time" field independent of event timeframe (e.g., "2 x 45 min sets" within a 4-hour event window) with preset options including common set configurations for accurate client expectations about actual music time vs. total event commitment.
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 Intuitive bookings interface: Redesigned bookings page with visual hero section, quick stats cards (This Week/Confirmed/Pending/Total Revenue), and simplified search/filter bar for list view. Calendar view preserved as toggle option. Default changed from calendar to list view for better user experience with data-first presentation instead of filter-heavy layout.
+Google Maps integration: Implemented Places API (New) SearchText method for venue address autocomplete in booking forms. Fixed billing activation, API key restrictions, and migrated from legacy Places API to new SearchText endpoint. Address autocomplete now auto-populates both venue name and venue address fields when suggestions are selected.
 
 ## System Architecture
 
