@@ -95,7 +95,7 @@ export default function AddressAutocomplete({
       const data = await apiRequest('/api/maps/geocode', {
         method: 'POST',
         body: { address }
-      });
+      }) as any;
       
       if (data?.lat && data?.lng) {
         const addressData: AddressData = {
