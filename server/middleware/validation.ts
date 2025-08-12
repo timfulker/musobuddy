@@ -121,14 +121,56 @@ export const schemas = {
     })).optional()
   }),
 
-  // User settings update
+  // User settings update - COMPREHENSIVE SCHEMA TO PREVENT DATA LOSS
   updateSettings: z.object({
+    // Business Details
     businessName: z.string().trim().min(1, 'Business name required').max(100, 'Business name too long').optional(),
-    email: z.string().email('Invalid email format').optional(),
-    phone: z.string().optional(),
-    address: z.string().max(500, 'Address too long').optional(),
+    businessEmail: z.string().email('Invalid email format').optional(),
+    businessAddress: z.string().max(500, 'Address too long').optional(),
+    addressLine1: z.string().max(200, 'Address line too long').optional(),
+    addressLine2: z.string().max(200, 'Address line too long').optional(),
+    city: z.string().max(100, 'City name too long').optional(),
+    county: z.string().max(100, 'County name too long').optional(),
+    postcode: z.string().max(20, 'Postcode too long').optional(),
+    phone: z.string().max(50, 'Phone number too long').optional(),
+    website: z.string().url('Invalid website URL').optional().or(z.literal('')),
+    taxNumber: z.string().max(50, 'Tax number too long').optional(),
+    emailFromName: z.string().max(100, 'From name too long').optional(),
+    
+    // Financial Settings
+    nextInvoiceNumber: z.number().int().min(1, 'Invoice number must be at least 1').optional(),
+    defaultTerms: z.string().max(1000, 'Terms too long').optional(),
+    bankDetails: z.string().max(1000, 'Bank details too long').optional(),
     defaultInvoiceDueDays: z.number().int().min(1, 'Due days must be at least 1').max(365, 'Due days too large').optional(),
-    defaultFee: z.number().positive('Default fee must be positive').optional()
+    
+    // AI Pricing
+    aiPricingEnabled: z.boolean().optional(),
+    baseHourlyRate: z.number().min(0, 'Rate cannot be negative').optional(),
+    minimumBookingHours: z.number().min(0, 'Hours cannot be negative').optional(),
+    additionalHourRate: z.number().min(0, 'Rate cannot be negative').optional(),
+    djServiceRate: z.number().min(0, 'Rate cannot be negative').optional(),
+    pricingNotes: z.string().max(1000, 'Notes too long').optional(),
+    specialOffers: z.string().max(1000, 'Offers text too long').optional(),
+    
+    // Instruments and Performance
+    primaryInstrument: z.string().max(100, 'Instrument name too long').optional(),
+    secondaryInstruments: z.array(z.string().max(100, 'Instrument name too long')).optional(),
+    customGigTypes: z.array(z.string().max(100, 'Gig type name too long')).optional(),
+    bookingDisplayLimit: z.enum(['50', 'all']).optional(),
+    
+    // Theme Settings
+    themeTemplate: z.string().max(50, 'Template name too long').optional(),
+    themeTone: z.string().max(50, 'Tone name too long').optional(),
+    themeFont: z.string().max(50, 'Font name too long').optional(),
+    themeAccentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+    themeLogoUrl: z.string().url('Invalid logo URL').optional().or(z.literal('')),
+    themeSignatureUrl: z.string().url('Invalid signature URL').optional().or(z.literal('')),
+    themeBanner: z.string().max(200, 'Banner text too long').optional(),
+    themeShowSetlist: z.boolean().optional(),
+    themeShowRiderNotes: z.boolean().optional(),
+    themeShowQrCode: z.boolean().optional(),
+    themeShowTerms: z.boolean().optional(),
+    themeCustomTitle: z.string().max(100, 'Custom title too long').optional(),
   }),
 
   // AI template generation
