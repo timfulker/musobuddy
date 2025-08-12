@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getContrastTextColor } from '@/lib/colorUtils';
 
 export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue' | 'custom';
 
@@ -184,6 +185,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
     root.style.setProperty('--theme-font-heading', theme.fonts.heading);
     root.style.setProperty('--theme-font-body', theme.fonts.body);
+    
+    // DYNAMIC TEXT COLOR CALCULATION: Calculate appropriate text color based on luminance
+    const primaryTextColor = getContrastTextColor(theme.colors.primary);
+    root.style.setProperty('--theme-primary-text', primaryTextColor);
+    
+    console.log(`🎨 Dynamic text color: ${primaryTextColor} (for ${theme.colors.primary})`);;
     
     // Force apply background color immediately to body
     document.body.style.backgroundColor = theme.colors.background;

@@ -5,19 +5,32 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Clean, simple contrast system */
-/* Force white text on any element with bg-primary class */
+/* Clean, simple contrast system with dynamic luminance-based text color */
+/* Target buttons with both bg-primary and text-primary-foreground classes specifically */
+button.bg-primary.text-primary-foreground,
+button[class*="bg-primary"][class*="text-primary-foreground"],
+.bg-primary.text-primary-foreground {
+  color: var(--theme-primary-text) !important;
+}
+
+button.bg-primary.text-primary-foreground *,
+button[class*="bg-primary"][class*="text-primary-foreground"] *,
+.bg-primary.text-primary-foreground * {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Force dynamic text color on any element with bg-primary class */
 [class*="bg-primary"] {
-  color: white !important;
+  color: var(--theme-primary-text) !important;
 }
 
 [class*="bg-primary"] * {
-  color: white !important;
+  color: var(--theme-primary-text) !important;
 }
 
-/* Ensure text-primary-foreground always has white text */
+/* Ensure text-primary-foreground always uses the correct contrast */
 [class*="text-primary-foreground"] {
-  color: white !important;
+  color: var(--theme-primary-text) !important;
 }
 
 /* Theme CSS Variables */
@@ -125,6 +138,7 @@
   --theme-secondary-text: white;
   --theme-accent-text: white;
 }
+
 
 /* Apply theme to body and typography */
 body {

@@ -90,3 +90,24 @@ export function getComputedThemeTextColor(): 'white' | 'black' {
   const themeColor = getComputedThemeColor();
   return getContrastTextColor(themeColor);
 }
+
+/**
+ * Update the CSS variables for theme colors and automatically calculate text color
+ * This function should be called whenever a custom color is selected
+ */
+export function updateThemeColors(primaryColor: string) {
+  const root = document.documentElement;
+  
+  // Update the primary color
+  root.style.setProperty('--theme-primary', primaryColor);
+  
+  // Calculate and set the appropriate text color based on luminance
+  const textColor = getContrastTextColor(primaryColor);
+  root.style.setProperty('--theme-primary-text', textColor);
+  
+  console.log('Theme colors updated:', {
+    primaryColor,
+    textColor,
+    luminance: getLuminance(primaryColor).toFixed(4)
+  });
+}
