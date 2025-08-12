@@ -4,7 +4,7 @@ import { Check, Music, Play, Trophy } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white theme-midnight-blue">
       {/* Announcement Bar */}
       <div className="bg-primary text-white text-center py-3 px-4">
         <p className="text-sm font-medium">
