@@ -902,25 +902,150 @@ app.post('/api/webhook/mailgun',
     console.log(`📧 [${requestId}] Currency parsing: fee "${aiResult.fee}" -> ${parsedFee}, estimatedValue "${aiResult.estimatedValue}" -> ${parsedEstimatedValue}`);
     console.log(`📅 [${requestId}] Event date found: ${aiResult.eventDate} - proceeding with booking creation`);
 
-    // Create booking
+    // Enhanced venue data population using Google Maps API
+    let venueAddress = null;
+    let venueContactInfo = null;
+    
+    if (aiResult.venue) {
+      try {
+        console.log(`🗺️ [${requestId}] Looking up venue details for: ${aiResult.venue}`);
+        
+        // Use Google Maps Places Search to get venue details (direct API call to avoid auth issues)
+        if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
+          console.warn(`⚠️ [${requestId}] Google Maps server key not configured - skipping venue lookup`);
+        } else {
+          const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
+          
+          const requestBody = {
+            textQuery: aiResult.venue,
+            locationBias: {
+              circle: {
+                center: {
+                  latitude: 51.5074,  // London center
+                  longitude: -0.1278
+                },
+                radius: 50000.0
+              }
+            },
+            maxResultCount: 1,
+            languageCode: 'en'
+          };
+
+          const searchResponse = await fetch(placesUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+              'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'
+            },
+            body: JSON.stringify(requestBody)
+          });
+        
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            if (searchData.places && searchData.places.length > 0) {
+              const topResult = searchData.places[0];
+              
+              // Extract basic venue information
+              venueAddress = topResult.formattedAddress;
+              console.log(`✅ [${requestId}] Auto-populated venue address: ${venueAddress}`);
+              
+              // Get detailed place information if place ID available
+              if (topResult.id) {
+                try {
+                  const detailsUrl = `https://places.googleapis.com/v1/places/${topResult.id}`;
+                  const detailsResponse = await fetch(detailsUrl, {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+                      'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,nationalPhoneNumber,internationalPhoneNumber'
+                    }
+                  });
+                  
+                  if (detailsResponse.ok) {
+                    const placeDetails = await detailsResponse.json();
+                    venueContactInfo = placeDetails.nationalPhoneNumber || placeDetails.internationalPhoneNumber || null;
+                    
+                    console.log(`✅ [${requestId}] Enhanced venue details retrieved:`, {
+                      venue: aiResult.venue,
+                      address: venueAddress,
+                      phone: venueContactInfo
+                    });
+                  }
+                } catch (detailsError: any) {
+                  console.warn(`⚠️ [${requestId}] Failed to get detailed venue info:`, detailsError.message);
+                }
+              }
+            } else {
+              console.log(`⚠️ [${requestId}] No venue results found for: ${aiResult.venue}`);
+            }
+          } else {
+            const errorData = await searchResponse.json().catch(() => ({}));
+            console.warn(`⚠️ [${requestId}] Google Maps search failed:`, errorData);
+          }
+        }
+      } catch (venueError: any) {
+        console.warn(`⚠️ [${requestId}] Failed to lookup venue details for "${aiResult.venue}":`, venueError.message);
+        // Continue without venue details - booking will still be created
+      }
+    }
+
+    // Create booking with enhanced venue data matching the unified form structure
     const bookingData = {
       userId: userId,
       title: subjectField || "New Enquiry",
       clientName,
       clientEmail,
       clientPhone: aiResult.clientPhone,
+      clientAddress: null, // Will be populated from client details if available
       eventDate: aiResult.eventDate ? new Date(aiResult.eventDate) : null,
       eventTime: aiResult.eventTime,
       eventEndTime: null,
-      performanceDuration: null,
       venue: aiResult.venue,
-      venueAddress: null,
-      clientAddress: null,
+      venueAddress: venueAddress,
+      venueContactInfo: venueContactInfo,
+      contactPerson: null,
+      contactPhone: null,
+      parkingInfo: null,
       eventType: aiResult.eventType,
       gigType: aiResult.gigType,
-      fee: parsedFee,
       equipmentRequirements: null,
       specialRequirements: null,
+      performanceDuration: null,
+      styles: null,
+      equipmentProvided: null,
+      whatsIncluded: null,
+      dressCode: null,
+      fee: parsedFee ? String(parsedFee) : null,
+      travelExpense: null,
+      // Collaborative fields for unified form
+      venueContact: null,
+      soundTechContact: null,
+      stageSize: null,
+      powerEquipment: null,
+      styleMood: null,
+      mustPlaySongs: null,
+      avoidSongs: null,
+      setOrder: null,
+      firstDanceSong: null,
+      processionalSong: null,
+      signingRegisterSong: null,
+      recessionalSong: null,
+      specialDedications: null,
+      guestAnnouncements: null,
+      loadInInfo: null,
+      soundCheckTime: null,
+      weatherContingency: null,
+      parkingPermitRequired: false,
+      mealProvided: false,
+      dietaryRequirements: null,
+      sharedNotes: null,
+      referenceTracks: null,
+      photoPermission: false,
+      encoreAllowed: false,
+      encoreSuggestions: null,
+      // Legacy fields for compatibility
       estimatedValue: parsedEstimatedValue,
       status: "new",
       notes: bodyField,
@@ -938,7 +1063,7 @@ app.post('/api/webhook/mailgun',
     let newBooking;
     try {
       newBooking = await storage.createBooking(bookingData);
-      console.log(`✅ [${requestId}] Created booking #${newBooking.id} - SUCCESS`);
+      console.log(`✅ [${requestId}] Created enhanced booking #${newBooking.id} with venue details - SUCCESS`);
     } catch (dbError: any) {
       console.error(`❌ [${requestId}] Database error creating booking:`, dbError);
       return res.status(500).json({ error: 'Failed to create booking', details: dbError?.message || 'Unknown database error' });
