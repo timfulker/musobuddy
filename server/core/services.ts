@@ -165,10 +165,12 @@ export class EmailService {
       }
     };
 
-    // Helper function to safely format fee
-    const formatFee = (fee: any) => {
-      if (fee === null || fee === undefined || fee === '') return 'TBC';
-      const numFee = typeof fee === 'string' ? parseFloat(fee) : fee;
+    // Helper function to safely format fee (with fallback to amount like PDF does)
+    const formatFee = (fee: any, amount: any) => {
+      // First try fee, then fallback to amount (same logic as PDF)
+      const actualFee = fee || amount;
+      if (actualFee === null || actualFee === undefined || actualFee === '') return 'TBC';
+      const numFee = typeof actualFee === 'string' ? parseFloat(actualFee) : actualFee;
       return isNaN(numFee) ? 'TBC' : numFee.toFixed(2);
     };
 
@@ -182,7 +184,7 @@ export class EmailService {
           <h3>Invoice Details:</h3>
           <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
           <p><strong>Performance Date:</strong> ${formatDate(invoice.eventDate)}</p>
-          <p><strong>Fee:</strong> £${formatFee(invoice.fee)}</p>
+          <p><strong>Fee:</strong> £${formatFee(invoice.fee, invoice.amount)}</p>
           <p><strong>Due Date:</strong> ${formatDate(invoice.dueDate)}</p>
         </div>
         
