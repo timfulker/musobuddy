@@ -168,28 +168,6 @@ export default function NewBookingPage() {
     }
   };
 
-  // Watch venue address changes to calculate mileage
-  const watchedVenueAddress = form.watch('venueAddress');
-  useEffect(() => {
-    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
-      // Debounce the calculation to avoid too many API calls
-      const timeoutId = setTimeout(() => {
-        calculateMileage(watchedVenueAddress);
-      }, 1000);
-      
-      return () => clearTimeout(timeoutId);
-    } else {
-      // Clear mileage data when address is too short
-      setMileageData({
-        distance: null,
-        distanceValue: null,
-        duration: null,
-        isCalculating: false,
-        error: null
-      });
-    }
-  }, [watchedVenueAddress, userSettings]);
-
   const form = useForm<FullBookingFormData>({
     resolver: zodResolver(fullBookingSchema),
     defaultValues: {
@@ -220,6 +198,28 @@ export default function NewBookingPage() {
       travelExpense: "",
     },
   });
+
+  // Watch venue address changes to calculate mileage
+  const watchedVenueAddress = form.watch('venueAddress');
+  useEffect(() => {
+    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
+      // Debounce the calculation to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        calculateMileage(watchedVenueAddress);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Clear mileage data when address is too short
+      setMileageData({
+        distance: null,
+        distanceValue: null,
+        duration: null,
+        isCalculating: false,
+        error: null
+      });
+    }
+  }, [watchedVenueAddress, userSettings]);
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
