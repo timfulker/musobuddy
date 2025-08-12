@@ -2,6 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import { db } from "../core/database";
 import { EmailService } from "../core/services";
+import { contractSigningEmailService } from "../core/contract-signing-email";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -579,26 +580,20 @@ export function registerContractRoutes(app: Express) {
         // Continue - signing is still successful even if PDF fails
       }
 
-      // Step 6: Send confirmation emails with fallback (non-critical)
+      // Step 6: Send confirmation emails with client portal access
       try {
         const userSettings = await storage.getSettings(contract.userId);
         const { EmailService } = await import('../core/services');
         const emailService = new EmailService();
         
-        // Get theme color from settings
-        const themeColor = userSettings?.themeAccentColor || '#10b981';
-        
-        const subject = `Contract Signed - ${updateResult.contractNumber}`;
-        
-        // Send to client if they have an email
+        // Send client portal email with QR code and collaborative access
         if (updateResult.clientEmail) {
-          await emailService.sendContractEmail(
-            updateResult, 
-            userSettings, 
-            subject, 
-            pdfUrl || ''
+          await contractSigningEmailService.sendSigningConfirmation(
+            updateResult,
+            userSettings,
+            emailService
           );
-          console.log(`✉️ [CONTRACT-SIGN] Confirmation email sent to client: ${updateResult.clientEmail}`);
+          console.log(`✉️ [CONTRACT-SIGN] Client portal email sent to: ${updateResult.clientEmail}`);
         }
         
         // ALSO send to performer/business owner

@@ -247,6 +247,11 @@ export const contracts = pgTable("contracts", {
   clientSignature: text("client_signature"), // Client's actual signature data
   clientIpAddress: varchar("client_ip_address"), // IP address when client signed
   
+  // Client portal access (collaborative booking form)
+  clientPortalUrl: text("client_portal_url"), // URL for client to access collaborative booking form
+  clientPortalToken: text("client_portal_token"), // Secure token for client portal access
+  clientPortalQrCode: text("client_portal_qr_code"), // Base64 QR code for client portal
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

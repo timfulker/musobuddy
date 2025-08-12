@@ -68,6 +68,9 @@ export class ContractStorage {
         signingUrlCreatedAt: contractData.signingUrlCreatedAt ? new Date(contractData.signingUrlCreatedAt) : null,
         clientSignature: contractData.clientSignature || null,
         clientIpAddress: contractData.clientIpAddress || null,
+        clientPortalUrl: contractData.clientPortalUrl || null,
+        clientPortalToken: contractData.clientPortalToken || null,
+        clientPortalQrCode: contractData.clientPortalQrCode || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }).returning();
@@ -124,6 +127,9 @@ export class ContractStorage {
     if (updates.signingUrlCreatedAt !== undefined) setData.signingUrlCreatedAt = updates.signingUrlCreatedAt ? new Date(updates.signingUrlCreatedAt) : null;
     if (updates.clientSignature !== undefined) setData.clientSignature = updates.clientSignature;
     if (updates.clientIpAddress !== undefined) setData.clientIpAddress = updates.clientIpAddress;
+    if (updates.clientPortalUrl !== undefined) setData.clientPortalUrl = updates.clientPortalUrl;
+    if (updates.clientPortalToken !== undefined) setData.clientPortalToken = updates.clientPortalToken;
+    if (updates.clientPortalQrCode !== undefined) setData.clientPortalQrCode = updates.clientPortalQrCode;
     if (updates.supersededBy !== undefined) setData.supersededBy = updates.supersededBy;
     if (updates.originalContractId !== undefined) setData.originalContractId = updates.originalContractId;
 
