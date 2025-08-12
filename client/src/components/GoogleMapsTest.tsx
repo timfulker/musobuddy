@@ -86,7 +86,7 @@ export default function GoogleMapsTest() {
           destination: { lat: selectedAddress.lat, lng: selectedAddress.lng },
           departureTimeIso: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour from now
         }
-      });
+      }) as TravelTimeData;
 
       setTravelTime(result);
       console.log('🚗 Travel time calculated:', result);
