@@ -74,9 +74,9 @@ export default function UnifiedBookings() {
     }
   };
 
-  // View mode state
+  // View mode state - Default to list view for better UX
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    return (localStorage.getItem('bookingViewMode') as ViewMode) || 'calendar';
+    return (localStorage.getItem('bookingViewMode') as ViewMode) || 'list';
   });
   
   // Calendar state for calendar view
@@ -829,56 +829,168 @@ export default function UnifiedBookings() {
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Header */}
-              <div className="flex items-center justify-between">
-                <h1 className={`text-3xl font-bold ${isDesktop ? "" : "hidden lg:block"}`}>
-                  Bookings
-                </h1>
-                
-                {/* View Toggle */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => toggleView('list')}
-                      className="rounded-md"
-                    >
-                      <List className="w-4 h-4 mr-2" />
-                      List
-                    </Button>
-                    <Button
-                      variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => toggleView('calendar')}
-                      className="rounded-md"
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Calendar
-                    </Button>
+              {/* Hero Section */}
+              <div className="mb-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Your Bookings</h1>
+                    <p className="text-gray-600 mt-1">Manage your events and client communications</p>
                   </div>
-                  
-                  <Link href="/new-booking">
-                    <Button className="bg-primary hover:bg-primary/90">
-                      <Plus className="w-4 h-4 mr-2" />
-                      New Booking
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleView('list')}
+                        className="rounded-md"
+                      >
+                        <List className="w-4 h-4 mr-2" />
+                        List
+                      </Button>
+                      <Button
+                        variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleView('calendar')}
+                        className="rounded-md"
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Calendar
+                      </Button>
+                    </div>
+                    <Link href="/new-booking">
+                      <Button className="bg-primary hover:bg-primary/90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Booking
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
+
+                {viewMode === 'list' && (
+                  <>
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                      <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-blue-100 text-sm">This Week</p>
+                              <p className="text-2xl font-bold">
+                                {bookings.filter((b: any) => {
+                                  const eventDate = new Date(b.eventDate);
+                                  const oneWeekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                                  return eventDate <= oneWeekFromNow && b.status !== "completed" && b.status !== "rejected";
+                                }).length}
+                              </p>
+                            </div>
+                            <Calendar className="w-8 h-8 text-blue-200" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-green-100 text-sm">Confirmed</p>
+                              <p className="text-2xl font-bold">
+                                {bookings.filter((b: any) => b.status === "confirmed").length}
+                              </p>
+                            </div>
+                            <CheckSquare className="w-8 h-8 text-green-200" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-orange-100 text-sm">Pending</p>
+                              <p className="text-2xl font-bold">
+                                {bookings.filter((b: any) => b.status === "in_progress" || b.status === "new").length}
+                              </p>
+                            </div>
+                            <Clock className="w-8 h-8 text-orange-200" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-purple-100 text-sm">Total Revenue</p>
+                              <p className="text-2xl font-bold">
+                                £{bookings.reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
+                              </p>
+                            </div>
+                            <PoundSterling className="w-8 h-8 text-purple-200" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Enhanced Filters */}
               <div className="space-y-4">
-                {/* Search and Main Filters Row */}
-                <div className="flex flex-wrap gap-4">
-                  <div className="relative flex-1 min-w-64">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search by client, venue, event type, fee, booking ID..."
-                      className="pl-10"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                {/* Search and Filter Bar - Cleaner for List View */}
+                {viewMode === 'list' ? (
+                  <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          placeholder="Search bookings, clients, venues..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="All Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                          setDateFilter("all");
+                        }}
+                        className="px-3"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
+                ) : (
+                  /* Original detailed filters for calendar view */
+                  <div className="flex flex-wrap gap-4">
+                    <div className="relative flex-1 min-w-64">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search by client, venue, event type, fee, booking ID..."
+                        className="pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
                   
                   <Select 
                     value={statusFilter} 
@@ -951,6 +1063,7 @@ export default function UnifiedBookings() {
                     )}
                   </div>
                 </div>
+                )}
 
                 {/* Sort Controls Row - Only show in list view */}
                 {viewMode === 'list' && (
