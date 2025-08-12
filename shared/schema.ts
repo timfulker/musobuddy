@@ -221,9 +221,13 @@ export const contracts = pgTable("contracts", {
   clientFillableFields: text("client_fillable_fields"), // JSON array of field names that client must fill
   
   // Contract management
-  status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
+  status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed, superseded
   template: varchar("template").notNull().default("professional"), // basic, professional
   signedAt: timestamp("signed_at"),
+  
+  // Amendment tracking
+  supersededBy: integer("superseded_by"), // ID of the contract that superseded this one
+  originalContractId: integer("original_contract_id"), // For amended contracts, points to the original
   
   // PHASE 2: Automatic reminder system (commented out for manual-only phase 1)
   // reminderEnabled: boolean("reminder_enabled").default(false),

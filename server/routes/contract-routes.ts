@@ -728,10 +728,30 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
-  // Update contract
+  // Update contract (only allowed for draft contracts)
   app.patch('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      // Get the current contract to check its status
+      const existingContract = await storage.getContract(contractId);
+      if (!existingContract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (existingContract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Prevent editing contracts that have been sent
+      if (existingContract.status !== 'draft') {
+        return res.status(400).json({ 
+          error: 'Cannot edit contract after it has been sent. Use the amendment feature instead.',
+          status: existingContract.status,
+          contractNumber: existingContract.contractNumber
+        });
+      }
       
       // Ensure all fields are properly included in the update
       const updateData = {
@@ -744,15 +764,94 @@ export function registerContractRoutes(app: Express) {
         additionalTerms: req.body.additionalTerms || null
       };
       
-      const updatedContract = await storage.updateContract(contractId, updateData, req.user.userId);
+      const updatedContract = await storage.updateContract(contractId, updateData, userId);
       if (!updatedContract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
-      console.log(`✅ Updated contract #${contractId} with enhanced fields for user ${req.user.userId}`);
+      console.log(`✅ Updated draft contract #${contractId} for user ${userId}`);
       res.json(updatedContract);
     } catch (error) {
       console.error('❌ Failed to update contract:', error);
       res.status(500).json({ error: 'Failed to update contract' });
+    }
+  });
+
+  // Amend contract - creates a new contract with "Amended" suffix
+  app.post('/api/contracts/:id/amend', requireAuth, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      // Get the original contract
+      const originalContract = await storage.getContract(contractId);
+      if (!originalContract) {
+        return res.status(404).json({ error: 'Original contract not found' });
+      }
+      
+      if (originalContract.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Only allow amendment of contracts that have been sent (not drafts)
+      if (originalContract.status === 'draft') {
+        return res.status(400).json({ 
+          error: 'Draft contracts can be edited directly. Amendment is only for sent contracts.',
+          contractNumber: originalContract.contractNumber
+        });
+      }
+      
+      // Create amended contract number
+      const baseContractNumber = originalContract.contractNumber.replace(/ - Amended.*$/, '');
+      const amendedContractNumber = `${baseContractNumber} - Amended`;
+      
+      // Create new contract with amended data
+      const amendedContractData = {
+        userId: userId,
+        enquiryId: originalContract.enquiryId,
+        contractNumber: amendedContractNumber,
+        clientName: originalContract.clientName,
+        clientAddress: originalContract.clientAddress,
+        clientPhone: originalContract.clientPhone,
+        clientEmail: originalContract.clientEmail,
+        venue: originalContract.venue,
+        venueAddress: originalContract.venueAddress,
+        eventDate: originalContract.eventDate,
+        eventTime: originalContract.eventTime,
+        eventEndTime: originalContract.eventEndTime,
+        fee: originalContract.fee,
+        deposit: originalContract.deposit,
+        paymentInstructions: originalContract.paymentInstructions,
+        equipmentRequirements: originalContract.equipmentRequirements,
+        specialRequirements: originalContract.specialRequirements,
+        clientFillableFields: originalContract.clientFillableFields,
+        template: originalContract.template,
+        status: 'draft', // New amended contract starts as draft
+        originalContractId: contractId // Track which contract this amends
+      };
+      
+      const amendedContract = await storage.createContract(amendedContractData);
+      
+      // Mark original contract as superseded
+      await storage.updateContract(contractId, { 
+        status: 'superseded',
+        supersededBy: amendedContract.id 
+      }, userId);
+      
+      console.log(`✅ Created amended contract #${amendedContract.id} (${amendedContractNumber}) for original #${contractId}`);
+      
+      res.json({
+        success: true,
+        originalContract: originalContract,
+        amendedContract: amendedContract,
+        message: `Amended contract ${amendedContractNumber} created. Original contract marked as superseded.`
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create amended contract:', error);
+      res.status(500).json({ 
+        error: 'Failed to create amended contract',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

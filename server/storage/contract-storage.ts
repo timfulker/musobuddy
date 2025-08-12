@@ -122,6 +122,8 @@ export class ContractStorage {
     if (updates.signingUrlCreatedAt !== undefined) setData.signingUrlCreatedAt = updates.signingUrlCreatedAt ? new Date(updates.signingUrlCreatedAt) : null;
     if (updates.clientSignature !== undefined) setData.clientSignature = updates.clientSignature;
     if (updates.clientIpAddress !== undefined) setData.clientIpAddress = updates.clientIpAddress;
+    if (updates.supersededBy !== undefined) setData.supersededBy = updates.supersededBy;
+    if (updates.originalContractId !== undefined) setData.originalContractId = updates.originalContractId;
 
     // Build query conditions based on whether userId is provided
     const conditions = userId
