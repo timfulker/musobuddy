@@ -82,7 +82,8 @@ export default function AddressAutocomplete({
       placeId: suggestion.placeId
     };
     
-    console.log("📍 Selected place:", addressData);
+    console.log("📍 Selected place data:", addressData);
+    console.log("📍 Original suggestion:", suggestion);
     onSelect(addressData);
     setInputValue(suggestion.name || suggestion.formatted_address);
     setShowSuggestions(false);
