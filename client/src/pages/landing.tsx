@@ -4,7 +4,7 @@ import { Check, Music, Play, Trophy } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white theme-midnight-blue">
+    <div className="min-h-screen theme-midnight-blue" style={{backgroundColor: 'var(--theme-background)', color: 'var(--theme-text)'}}>
       {/* Announcement Bar */}
       <div className="bg-primary text-white text-center py-3 px-4">
         <p className="text-sm font-medium">
@@ -13,7 +13,7 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="border-b border-gray-200 sticky top-0 z-50" style={{backgroundColor: 'var(--theme-surface)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
@@ -43,7 +43,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-24 px-4 sm:px-6 lg:px-8" style={{backgroundColor: 'var(--theme-background)'}}>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-12">
             <p className="text-lg md:text-xl text-primary font-medium mb-4 uppercase tracking-wide">
