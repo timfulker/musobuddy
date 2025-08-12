@@ -209,6 +209,7 @@ export const contracts = pgTable("contracts", {
   eventDate: timestamp("event_date").notNull(),
   eventTime: varchar("event_time"), // temporarily optional
   eventEndTime: varchar("event_end_time"), // temporarily optional
+  performanceDuration: varchar("performance_duration"), // Optional performance length (e.g., "2 hours", "90 minutes")
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
   

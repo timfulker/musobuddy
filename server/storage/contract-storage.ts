@@ -51,6 +51,7 @@ export class ContractStorage {
         eventDate: contractData.eventDate ? new Date(contractData.eventDate) : new Date(),
         eventTime: contractData.eventTime || null,
         eventEndTime: contractData.eventEndTime || null,
+        performanceDuration: contractData.performanceDuration || null,
         fee: contractData.fee || "0.00",
         deposit: contractData.deposit || "0.00",
         paymentInstructions: contractData.paymentInstructions || null,
@@ -106,6 +107,7 @@ export class ContractStorage {
     if (updates.eventDate !== undefined) setData.eventDate = updates.eventDate ? new Date(updates.eventDate) : null;
     if (updates.eventTime !== undefined) setData.eventTime = updates.eventTime;
     if (updates.eventEndTime !== undefined) setData.eventEndTime = updates.eventEndTime;
+    if (updates.performanceDuration !== undefined) setData.performanceDuration = updates.performanceDuration;
     if (updates.fee !== undefined) setData.fee = updates.fee;
     if (updates.deposit !== undefined) setData.deposit = updates.deposit;
     if (updates.paymentInstructions !== undefined) setData.paymentInstructions = updates.paymentInstructions;

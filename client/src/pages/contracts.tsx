@@ -38,6 +38,7 @@ const contractFormSchema = z.object({
   venue: z.string().optional(),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
+  performanceDuration: z.string().optional(),
   deposit: z.string().optional(),
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
@@ -103,6 +104,7 @@ export default function Contracts() {
       eventDate: "",
       eventTime: "",
       eventEndTime: "",
+      performanceDuration: "",
       venue: "",
       venueAddress: "",
       fee: "",
@@ -500,6 +502,7 @@ export default function Contracts() {
     form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
     form.setValue('eventTime', contract.eventTime?.split(' - ')[0] || '');
     form.setValue('eventEndTime', contract.eventTime?.split(' - ')[1] || '');
+    form.setValue('performanceDuration', contract.performanceDuration || '');
     form.setValue('venue', contract.venue || '');
     form.setValue('venueAddress', contract.venueAddress || '');
     form.setValue('fee', contract.fee);
@@ -976,6 +979,41 @@ export default function Contracts() {
                                     <SelectItem value="23:00">11:00 PM</SelectItem>
                                     <SelectItem value="23:30">11:30 PM</SelectItem>
                                     <SelectItem value="00:00">Midnight</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="performanceDuration"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Performance Duration</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select performance duration" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="">Not specified</SelectItem>
+                                    <SelectItem value="30 minutes">30 minutes</SelectItem>
+                                    <SelectItem value="45 minutes">45 minutes</SelectItem>
+                                    <SelectItem value="1 hour">1 hour</SelectItem>
+                                    <SelectItem value="1.5 hours">1.5 hours</SelectItem>
+                                    <SelectItem value="2 hours">2 hours</SelectItem>
+                                    <SelectItem value="2.5 hours">2.5 hours</SelectItem>
+                                    <SelectItem value="3 hours">3 hours</SelectItem>
+                                    <SelectItem value="3.5 hours">3.5 hours</SelectItem>
+                                    <SelectItem value="4 hours">4 hours</SelectItem>
+                                    <SelectItem value="5 hours">5 hours</SelectItem>
+                                    <SelectItem value="6 hours">6 hours</SelectItem>
+                                    <SelectItem value="All day event">All day event</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
