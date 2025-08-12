@@ -14,7 +14,7 @@ export function registerMapsRoutes(app: Express) {
     });
   });
 
-  // Places search endpoint using Places API (New)
+  // Places search endpoint with fallback to Geocoding API
   app.post('/api/maps/places-search', requireAuth, async (req: Request, res: Response) => {
     try {
       const { query } = req.body;
@@ -29,56 +29,84 @@ export function registerMapsRoutes(app: Express) {
 
       console.log(`🗺️ Places search: ${query}`);
 
-      // Use Places API (New) - Text Search endpoint
-      const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
-      
-      const requestBody = {
-        textQuery: query,
-        languageCode: 'en',
-        maxResultCount: 5,
-        locationBias: {
-          circle: {
-            center: {
-              latitude: 51.5074, // London coordinates as default bias
-              longitude: -0.1278
-            },
-            radius: 50000 // 50km radius
+      // Try Places API (New) first
+      try {
+        const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
+        
+        const requestBody = {
+          textQuery: query,
+          languageCode: 'en',
+          maxResultCount: 5,
+          locationBias: {
+            circle: {
+              center: {
+                latitude: 51.5074, // London coordinates as default bias
+                longitude: -0.1278
+              },
+              radius: 50000 // 50km radius
+            }
           }
+        };
+
+        const response = await fetch(placesUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+            'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Transform results to match expected format
+          const suggestions = (data.places || []).map((place: any) => ({
+            name: place.displayName?.text || '',
+            formatted_address: place.formattedAddress || '',
+            lat: place.location?.latitude || 0,
+            lng: place.location?.longitude || 0,
+            placeId: place.id || ''
+          }));
+
+          console.log(`✅ Found ${suggestions.length} places using Places API (New): ${query}`);
+          return res.json({ suggestions });
+        } else {
+          console.log(`⚠️ Places API (New) failed: ${response.status}`, data);
         }
-      };
+      } catch (placesError) {
+        console.log(`⚠️ Places API (New) error, falling back to Geocoding API:`, placesError.message);
+      }
 
-      const response = await fetch(placesUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
-          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'
-        },
-        body: JSON.stringify(requestBody)
-      });
+      // Fallback to Geocoding API if Places API (New) fails
+      console.log(`🗺️ Using Geocoding API fallback for: ${query}`);
+      
+      const geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&region=uk&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
+      
+      const geocodingResponse = await fetch(geocodingUrl);
+      const geocodingData = await geocodingResponse.json();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.log(`❌ Places search failed: ${response.status}`, data);
-        return res.status(response.status).json({ 
-          error: 'Places search failed', 
-          details: data.error?.message || 'Unknown error'
+      if (!geocodingResponse.ok || geocodingData.status !== 'OK') {
+        console.log(`❌ Geocoding API also failed:`, geocodingData);
+        return res.status(500).json({ 
+          error: 'Both Places API and Geocoding API failed', 
+          details: geocodingData.error_message || 'No results found'
         });
       }
 
-      // Transform results to match expected format
-      const suggestions = (data.places || []).map((place: any) => ({
-        name: place.displayName?.text || '',
-        formatted_address: place.formattedAddress || '',
-        lat: place.location?.latitude || 0,
-        lng: place.location?.longitude || 0,
-        placeId: place.id || ''
+      // Transform geocoding results to match expected format
+      const suggestions = geocodingData.results.slice(0, 5).map((result: any) => ({
+        name: result.formatted_address.split(',')[0], // Use first part as name
+        formatted_address: result.formatted_address,
+        lat: result.geometry.location.lat,
+        lng: result.geometry.location.lng,
+        placeId: result.place_id || ''
       }));
 
-      console.log(`✅ Found ${suggestions.length} places for: ${query}`);
-
+      console.log(`✅ Found ${suggestions.length} places using Geocoding API fallback: ${query}`);
       res.json({ suggestions });
+
     } catch (error) {
       console.error('Places search error:', error);
       res.status(500).json({ 
