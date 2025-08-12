@@ -306,6 +306,10 @@ export const invoices = pgTable("invoices", {
   cloudStorageUrl: text("cloud_storage_url"),
   cloudStorageKey: text("cloud_storage_key"),
   shareToken: varchar("share_token").notNull(), // Secure token for public invoice access
+  // Stripe payment fields
+  stripePaymentLinkId: text("stripe_payment_link_id"),
+  stripePaymentUrl: text("stripe_payment_url"),
+  stripeSessionId: text("stripe_session_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

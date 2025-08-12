@@ -3,6 +3,14 @@ import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
+import Stripe from 'stripe';
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
 
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
@@ -510,6 +518,126 @@ export function registerInvoiceRoutes(app: Express) {
         error: 'Failed to regenerate invoice PDF',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // Create Stripe payment link for invoice
+  app.post('/api/invoices/:id/create-payment-link', requireAuth, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      if (invoice.status === 'paid') {
+        return res.status(400).json({ error: 'Invoice is already paid' });
+      }
+      
+      // Create Stripe payment link
+      const paymentLink = await stripe.paymentLinks.create({
+        line_items: [
+          {
+            price_data: {
+              currency: 'gbp',
+              product_data: {
+                name: `Invoice ${invoice.invoiceNumber}`,
+                description: `Payment for ${invoice.clientName} - ${invoice.invoiceNumber}`,
+              },
+              unit_amount: Math.round(parseFloat(invoice.amount) * 100), // Convert to pence
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          invoiceId: invoiceId.toString(),
+          userId: userId.toString(),
+          invoiceNumber: invoice.invoiceNumber,
+        },
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+            url: `${process.env.REPLIT_DEV_DOMAIN || 'https://www.musobuddy.com'}/payment-success?invoice=${invoice.invoiceNumber}`,
+          },
+        },
+      });
+      
+      // Update invoice with payment link
+      await storage.updateInvoice(invoiceId, {
+        stripePaymentLinkId: paymentLink.id,
+        stripePaymentUrl: paymentLink.url,
+      }, userId);
+      
+      console.log(`✅ Created Stripe payment link for invoice #${invoiceId}: ${paymentLink.url}`);
+      res.json({ 
+        success: true, 
+        paymentUrl: paymentLink.url,
+        paymentLinkId: paymentLink.id
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create payment link:', error);
+      res.status(500).json({ 
+        error: 'Failed to create payment link',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Stripe webhook to handle payment completion
+  app.post('/api/stripe/webhook', async (req: any, res) => {
+    try {
+      const event = req.body;
+      
+      // Handle payment link completion
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const { invoiceId, userId } = session.metadata || {};
+        
+        if (invoiceId && userId) {
+          await storage.updateInvoice(parseInt(invoiceId), {
+            status: 'paid',
+            paidAt: new Date(),
+            stripeSessionId: session.id,
+          }, parseInt(userId));
+          
+          console.log(`✅ Invoice #${invoiceId} marked as paid via Stripe webhook`);
+          
+          // Send payment confirmation email
+          try {
+            const invoice = await storage.getInvoice(parseInt(invoiceId));
+            const userSettings = await storage.getSettings(parseInt(userId));
+            
+            if (invoice && invoice.clientEmail && userSettings) {
+              const emailService = new EmailService();
+              await emailService.sendPaymentConfirmation(invoice, userSettings);
+              console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
+            }
+          } catch (emailError) {
+            console.error('⚠️ Failed to send payment confirmation email:', emailError);
+          }
+        }
+      }
+      
+      res.json({ received: true });
+      
+    } catch (error: any) {
+      console.error('❌ Stripe webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
     }
   });
 
