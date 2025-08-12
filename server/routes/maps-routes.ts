@@ -14,7 +14,7 @@ export function registerMapsRoutes(app: Express) {
     });
   });
 
-  // Places search endpoint using Places API (New)
+  // Places search endpoint using classic Places Autocomplete API
   app.post('/api/maps/places-search', requireAuth, async (req: Request, res: Response) => {
     try {
       const { query } = req.body;
@@ -27,58 +27,59 @@ export function registerMapsRoutes(app: Express) {
         return res.status(500).json({ error: 'Google Maps server key not configured' });
       }
 
-      console.log(`🗺️ Places search: ${query}`);
+      console.log(`🗺️ Places autocomplete search: ${query}`);
 
-      // Use Places API (New) - Text Search endpoint
-      const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
-      
-      const requestBody = {
-        textQuery: query,
-        languageCode: 'en',
-        pageSize: 5,
-        locationBias: {
-          circle: {
-            center: {
-              latitude: 51.5074, // London coordinates as default bias
-              longitude: -0.1278
-            },
-            radius: 50000 // 50km radius
-          }
-        }
-      };
+      // Use classic Places Autocomplete API
+      const placesUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=establishment|geocode&location=51.5074,-0.1278&radius=50000&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
 
-      const response = await fetch(placesUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
-          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
+      const response = await fetch(placesUrl);
       const data = await response.json();
 
-      if (!response.ok) {
-        console.log(`❌ Places search failed: ${response.status}`, data);
-        return res.status(response.status).json({ 
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        console.log(`❌ Places autocomplete failed: ${data.status}`, data.error_message);
+        return res.status(400).json({ 
           error: 'Places search failed', 
-          details: data.error?.message || 'Unknown error'
+          details: data.error_message || data.status
         });
       }
 
-      // Transform results to match expected format
-      const suggestions = (data.places || []).map((place: any) => ({
-        name: place.displayName?.text || '',
-        formatted_address: place.formattedAddress || '',
-        lat: place.location?.latitude || 0,
-        lng: place.location?.longitude || 0,
-        placeId: place.id || ''
-      }));
+      // Get details for each prediction to get coordinates
+      const suggestions = [];
+      
+      for (const prediction of (data.predictions || []).slice(0, 5)) {
+        // For each prediction, get the full place details including coordinates
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&fields=name,formatted_address,geometry&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
+        
+        try {
+          const detailsResponse = await fetch(detailsUrl);
+          const detailsData = await detailsResponse.json();
+          
+          if (detailsData.status === 'OK' && detailsData.result) {
+            const place = detailsData.result;
+            suggestions.push({
+              name: place.name || prediction.structured_formatting?.main_text || '',
+              formatted_address: place.formatted_address || prediction.description || '',
+              lat: place.geometry?.location?.lat || 0,
+              lng: place.geometry?.location?.lng || 0,
+              placeId: prediction.place_id || ''
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to get details for place ${prediction.place_id}:`, err);
+          // Still add the prediction without coordinates as fallback
+          suggestions.push({
+            name: prediction.structured_formatting?.main_text || '',
+            formatted_address: prediction.description || '',
+            lat: 0,
+            lng: 0,
+            placeId: prediction.place_id || ''
+          });
+        }
+      }
 
       console.log(`✅ Found ${suggestions.length} places for: ${query}`);
-
       res.json({ suggestions });
+
     } catch (error) {
       console.error('Places search error:', error);
       res.status(500).json({ 
