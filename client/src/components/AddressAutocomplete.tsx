@@ -1,8 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { useLoadScript } from "@react-google-maps/api";
 import { apiRequest } from "@/lib/queryClient";
-
-const libraries: ("places")[] = ["places"];
 
 interface AddressData {
   address: string;
@@ -26,129 +23,121 @@ export default function AddressAutocomplete({
   className = "border rounded px-3 py-2 w-full"
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [inputValue, setInputValue] = useState(defaultValue);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY || '',
-    libraries,
-  });
-
-  // Initialize Google Places Autocomplete when loaded
-  useEffect(() => {
-    if (isLoaded && inputRef.current && !autocompleteRef.current && import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY) {
-      try {
-        console.log("🗺️ Initializing Google Places Autocomplete...");
-        
-        autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-          types: ['establishment', 'geocode'],
-          fields: ['name', 'formatted_address', 'geometry.location', 'place_id']
-        });
-
-        autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current?.getPlace();
-          
-          if (place && place.geometry && place.geometry.location) {
-            const addressData: AddressData = {
-              address: place.name || place.formatted_address || '',
-              formattedAddress: place.formatted_address,
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-              placeId: place.place_id
-            };
-            
-            console.log('📍 Google Places selected:', addressData);
-            onSelect(addressData);
-            setError(null);
-          }
-        });
-
-        console.log("✅ Google Places Autocomplete initialized");
-      } catch (error) {
-        console.error("❌ Error initializing Google Places:", error);
-      }
+  // Search for places using our backend API (which can use Places API New)
+  const searchPlaces = async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-  }, [isLoaded, onSelect]);
-
-  // Fallback geocoding when user types and blurs without selecting
-  const handleBlur = async () => {
-    const value = inputRef.current?.value?.trim();
-    if (!value || value === defaultValue) return;
-
-    // Don't geocode if we just selected from autocomplete
-    if (autocompleteRef.current?.getPlace()?.geometry) return;
 
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      console.log("🗺️ Fallback geocoding:", value);
-      
-      const result = await apiRequest('/api/maps/geocode', {
+      console.log("🗺️ Searching places for:", query);
+      const response = await apiRequest('/api/maps/places-search', {
         method: 'POST',
-        body: { address: value }
+        body: JSON.stringify({ query }),
       });
-
-      if (result?.lat && result?.lng) {
-        const addressData: AddressData = {
-          address: value,
-          formattedAddress: result.formattedAddress,
-          lat: result.lat,
-          lng: result.lng,
-          placeId: result.placeId
-        };
-        
-        console.log('✅ Server geocoded:', addressData);
-        onSelect(addressData);
+      
+      if (response.suggestions) {
+        setSuggestions(response.suggestions);
+        setShowSuggestions(true);
       }
-    } catch (err: any) {
-      console.error('Geocoding error:', err);
-      setError(err?.message || 'Address not found');
+    } catch (error) {
+      console.error("❌ Places search error:", error);
+      setError("Failed to search places");
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Show fallback input if Google Maps fails to load
-  if (loadError || !import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY) {
-    return (
-      <div className="relative">
-        <input
-          type="text"
-          placeholder={placeholder}
-          defaultValue={defaultValue}
-          className={className}
-          onBlur={handleBlur}
-          disabled={isLoading}
-        />
-        {isLoading && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          </div>
-        )}
-        {error && (
-          <div className="text-red-600 text-sm mt-1">{error}</div>
-        )}
-        {!import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY && (
-          <div className="text-yellow-600 text-xs mt-1">
-            Google Maps API key not configured - using basic geocoding
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Debounce search requests
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (inputValue) {
+        searchPlaces(inputValue);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [inputValue]);
 
-  if (!isLoaded) {
-    return (
-      <input
-        type="text"
-        placeholder="Loading Google Maps..."
-        className={`${className} bg-gray-100 cursor-not-allowed`}
-        disabled
-      />
-    );
-  }
+  const handleSelectSuggestion = (suggestion: any) => {
+    const addressData: AddressData = {
+      address: suggestion.name || suggestion.formatted_address,
+      formattedAddress: suggestion.formatted_address,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+      placeId: suggestion.placeId
+    };
+    
+    console.log("📍 Selected place:", addressData);
+    onSelect(addressData);
+    setInputValue(suggestion.name || suggestion.formatted_address);
+    setShowSuggestions(false);
+    setError(null);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    if (!value.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Fallback geocoding when user types and blurs without selecting
+  const handleBlur = async () => {
+    // Small delay to allow click on suggestions
+    setTimeout(async () => {
+      if (!inputValue.trim()) return;
+      
+      const query = inputValue.trim();
+      if (query.length < 2) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        console.log("🗺️ Fallback geocoding:", query);
+        
+        const result = await apiRequest('/api/maps/geocode', {
+          method: 'POST',
+          body: JSON.stringify({ address: query })
+        });
+        
+        if (result.lat && result.lng) {
+          const addressData: AddressData = {
+            address: result.address || query,
+            formattedAddress: result.formattedAddress,
+            lat: result.lat,
+            lng: result.lng,
+            placeId: result.placeId
+          };
+          
+          console.log("✅ Fallback geocoding success:", addressData);
+          onSelect(addressData);
+        }
+      } catch (error: any) {
+        console.error("Geocoding error:", error);
+        setError("Could not find location");
+      } finally {
+        setIsLoading(false);
+        setShowSuggestions(false);
+      }
+    }, 150);
+  };
 
   return (
     <div className="relative">
@@ -156,20 +145,45 @@ export default function AddressAutocomplete({
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        defaultValue={defaultValue}
-        className={`${className} ${isLoading ? 'bg-gray-50' : ''}`}
+        value={inputValue}
+        onChange={handleInputChange}
         onBlur={handleBlur}
+        className={`${className} ${isLoading ? 'opacity-50' : ''}`}
         disabled={isLoading}
       />
       
       {isLoading && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+        </div>
+      )}
+      
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent blur from firing
+                handleSelectSuggestion(suggestion);
+              }}
+            >
+              <div className="font-medium text-sm">
+                {suggestion.name || suggestion.structured_formatting?.main_text}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {suggestion.formatted_address || suggestion.structured_formatting?.secondary_text}
+              </div>
+            </div>
+          ))}
         </div>
       )}
       
       {error && (
-        <div className="text-red-600 text-sm mt-1">{error}</div>
+        <div className="text-red-500 text-xs mt-1">
+          {error}
+        </div>
       )}
     </div>
   );
