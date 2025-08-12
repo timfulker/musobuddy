@@ -104,7 +104,7 @@ export default function NewBookingPage() {
 
   // Fetch user's personalized gig types from settings
   const { data: userSettings } = useQuery({
-    queryKey: ['settings']
+    queryKey: ['/api/settings']
   });
 
   // Extract gig types from user settings
