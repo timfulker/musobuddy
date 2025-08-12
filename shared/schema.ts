@@ -247,6 +247,34 @@ export const contracts = pgTable("contracts", {
   clientSignature: text("client_signature"), // Client's actual signature data
   clientIpAddress: varchar("client_ip_address"), // IP address when client signed
   
+  // Collaborative event planning fields
+  venue_contact: text("venue_contact"),
+  sound_tech_contact: text("sound_tech_contact"),
+  stage_size: varchar("stage_size", { length: 50 }),
+  power_equipment: text("power_equipment"),
+  dress_code: varchar("dress_code", { length: 255 }),
+  style_mood: varchar("style_mood", { length: 50 }),
+  must_play_songs: text("must_play_songs"),
+  avoid_songs: text("avoid_songs"),
+  set_order: varchar("set_order", { length: 50 }),
+  first_dance_song: varchar("first_dance_song", { length: 255 }),
+  processional_song: varchar("processional_song", { length: 255 }),
+  signing_register_song: varchar("signing_register_song", { length: 255 }),
+  recessional_song: varchar("recessional_song", { length: 255 }),
+  special_dedications: text("special_dedications"),
+  guest_announcements: text("guest_announcements"),
+  load_in_info: text("load_in_info"),
+  sound_check_time: varchar("sound_check_time", { length: 50 }),
+  weather_contingency: text("weather_contingency"),
+  parking_permit_required: boolean("parking_permit_required").default(false),
+  meal_provided: boolean("meal_provided").default(false),
+  dietary_requirements: text("dietary_requirements"),
+  shared_notes: text("shared_notes"),
+  reference_tracks: text("reference_tracks"),
+  photo_permission: boolean("photo_permission").default(false),
+  encore_allowed: boolean("encore_allowed").default(false),
+  encore_suggestions: varchar("encore_suggestions", { length: 255 }),
+  
   // Client portal access (collaborative booking form)
   clientPortalUrl: text("client_portal_url"), // URL for client to access collaborative booking form
   clientPortalToken: text("client_portal_token"), // Secure token for client portal access

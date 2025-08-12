@@ -27,6 +27,7 @@ import AddressBook from "@/pages/address-book";
 import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
+import ClientPortal from "@/pages/client-portal";
 
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
@@ -129,6 +130,9 @@ function Router() {
       <Route path="/email-setup" component={EmailSetup} />
       <Route path="/mobile-send" component={MobileInvoiceSender} />
       <Route path="/admin" component={Admin} />
+      
+      {/* Client Portal - public route with token */}
+      <Route path="/client-portal/:contractId" component={ClientPortal} />
       
       <Route component={NotFound} />
     </Switch>
