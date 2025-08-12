@@ -831,9 +831,10 @@ export function registerContractRoutes(app: Express) {
       
       const amendedContract = await storage.createContract(amendedContractData);
       
-      // Mark original contract as superseded
+      // LEGAL FIX: Don't change original contract status when amendment is created
+      // Original contract remains legally enforceable until amendment is signed
+      // Only track the relationship for reference
       await storage.updateContract(contractId, { 
-        status: 'superseded',
         supersededBy: amendedContract.id 
       }, userId);
       
@@ -843,7 +844,7 @@ export function registerContractRoutes(app: Express) {
         success: true,
         originalContract: originalContract,
         amendedContract: amendedContract,
-        message: `Amended contract ${amendedContractNumber} created. Original contract marked as superseded.`
+        message: `Amended contract ${amendedContractNumber} created. Original contract remains legally binding until amendment is signed.`
       });
       
     } catch (error: any) {

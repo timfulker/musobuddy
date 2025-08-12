@@ -1268,6 +1268,12 @@ export default function Contracts() {
                                 <Badge className={getStatusColor(getContractDisplayStatus(contract))}>
                                   {getContractDisplayStatus(contract).toUpperCase()}
                                 </Badge>
+                                {/* Show pending amendment indicator */}
+                                {contract.status === "signed" && contract.supersededBy && (
+                                  <Badge className="bg-amber-100 text-amber-800 text-xs">
+                                    AMENDMENT PENDING
+                                  </Badge>
+                                )}
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300">
@@ -1388,20 +1394,27 @@ export default function Contracts() {
                                   <Download className="w-3 h-3 mr-1" />
                                   Download
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="text-xs whitespace-nowrap text-orange-600 hover:text-orange-700"
-                                  onClick={() => amendContractMutation.mutate(contract.id)}
-                                  disabled={amendContractMutation.isPending}
-                                >
-                                  <Edit className="w-3 h-3 mr-1" />
-                                  {amendContractMutation.isPending ? "Creating..." : "Amend"}
-                                </Button>
+                                {!contract.supersededBy && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-xs whitespace-nowrap text-orange-600 hover:text-orange-700"
+                                    onClick={() => amendContractMutation.mutate(contract.id)}
+                                    disabled={amendContractMutation.isPending}
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    {amendContractMutation.isPending ? "Creating..." : "Amend"}
+                                  </Button>
+                                )}
+                                {contract.supersededBy && (
+                                  <div className="text-xs text-amber-600 italic font-medium">
+                                    Still legally binding (amendment pending)
+                                  </div>
+                                )}
                               </>
                             )}
 
-                            {(contract.status === "superseded" || contract.status === "voided") && (
+                            {contract.status === "voided" && (
                               <>
                                 <Button 
                                   size="sm" 
@@ -1412,8 +1425,8 @@ export default function Contracts() {
                                   <Download className="w-3 h-3 mr-1" />
                                   Download
                                 </Button>
-                                <div className="text-xs text-gray-500 italic">
-                                  {contract.status === "voided" ? "Voided by amendment" : "Superseded"}
+                                <div className="text-xs text-red-500 italic font-medium">
+                                  Voided by signed amendment
                                 </div>
                               </>
                             )}
