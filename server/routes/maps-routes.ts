@@ -88,6 +88,81 @@ export function registerMapsRoutes(app: Express) {
       });
     }
   });
+
+  // Place Details endpoint using new Places API
+  app.post('/api/maps/place-details', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { placeId } = req.body;
+      
+      if (!placeId || typeof placeId !== 'string') {
+        return res.status(400).json({ error: 'Valid place ID required' });
+      }
+
+      if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
+        return res.status(500).json({ error: 'Google Maps server key not configured' });
+      }
+
+      console.log(`🗺️ Fetching place details (NEW API): ${placeId}`);
+
+      // Use new Places API Get Place Details
+      const placesUrl = `https://places.googleapis.com/v1/places/${placeId}`;
+
+      const response = await fetch(placesUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,nationalPhoneNumber,internationalPhoneNumber,websiteUri,regularOpeningHours,photos,editorialSummary,rating,userRatingCount'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.log(`❌ Place details failed:`, data);
+        return res.status(400).json({ 
+          error: 'Place details failed', 
+          details: data.error?.message || 'Request failed'
+        });
+      }
+
+      // Transform response for frontend use
+      const placeDetails = {
+        placeId: data.id || placeId,
+        name: data.displayName?.text || '',
+        formattedAddress: data.formattedAddress || '',
+        location: {
+          lat: data.location?.latitude || 0,
+          lng: data.location?.longitude || 0
+        },
+        contactInfo: {
+          phoneNumber: data.nationalPhoneNumber || data.internationalPhoneNumber || '',
+          website: data.websiteUri || ''
+        },
+        businessInfo: {
+          openingHours: data.regularOpeningHours?.weekdayDescriptions || [],
+          rating: data.rating || null,
+          ratingCount: data.userRatingCount || 0,
+          description: data.editorialSummary?.text || ''
+        },
+        photos: (data.photos || []).slice(0, 3).map((photo: any) => ({
+          reference: photo.name,
+          width: photo.widthPx,
+          height: photo.heightPx
+        }))
+      };
+
+      console.log(`✅ Retrieved details for: ${placeDetails.name}`);
+      res.json(placeDetails);
+
+    } catch (error) {
+      console.error('Place details error:', error);
+      res.status(500).json({ 
+        error: 'Place details failed',
+        message: (error as Error).message 
+      });
+    }
+  });
   
   // Simple geocoding endpoint
   app.post('/api/maps/geocode', requireAuth, async (req: Request, res: Response) => {

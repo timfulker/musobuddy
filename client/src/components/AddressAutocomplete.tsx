@@ -7,6 +7,16 @@ interface AddressData {
   lat: number;
   lng: number;
   placeId?: string;
+  contactInfo?: {
+    phoneNumber: string;
+    website: string;
+  };
+  businessInfo?: {
+    openingHours: string[];
+    rating: number | null;
+    ratingCount: number;
+    description: string;
+  };
 }
 
 interface AddressAutocompleteProps {
@@ -28,6 +38,24 @@ export default function AddressAutocomplete({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputValue, setInputValue] = useState(defaultValue);
+
+  // Fetch detailed place information
+  const fetchPlaceDetails = async (placeId: string) => {
+    try {
+      console.log("📍 Fetching place details for:", placeId);
+      const response = await apiRequest('/api/maps/place-details', {
+        method: 'POST',
+        body: JSON.stringify({ placeId }),
+      });
+      
+      const placeDetails = await response.json();
+      console.log("✅ Place details retrieved:", placeDetails);
+      return placeDetails;
+    } catch (error) {
+      console.warn("❌ Failed to fetch place details:", error);
+      return null;
+    }
+  };
 
   // Search for places using our backend API (which can use Places API New)
   const searchPlaces = async (query: string) => {
@@ -73,8 +101,9 @@ export default function AddressAutocomplete({
     return () => clearTimeout(timeoutId);
   }, [inputValue]);
 
-  const handleSelectSuggestion = (suggestion: any) => {
-    const addressData: AddressData = {
+  const handleSelectSuggestion = async (suggestion: any) => {
+    // Start with basic address data
+    const baseAddressData: AddressData = {
       address: suggestion.name || suggestion.formatted_address,
       formattedAddress: suggestion.formatted_address,
       lat: suggestion.lat,
@@ -82,12 +111,39 @@ export default function AddressAutocomplete({
       placeId: suggestion.placeId
     };
     
-    console.log("📍 Selected place data:", addressData);
-    console.log("📍 Original suggestion:", suggestion);
-    onSelect(addressData);
+    console.log("📍 Selected place data:", baseAddressData);
+    
+    // Set loading state while fetching details
+    setIsLoading(true);
     setInputValue(suggestion.name || suggestion.formatted_address);
     setShowSuggestions(false);
     setError(null);
+
+    // Fetch detailed place information if we have a place ID
+    if (suggestion.placeId) {
+      try {
+        const placeDetails = await fetchPlaceDetails(suggestion.placeId);
+        if (placeDetails) {
+          const enrichedAddressData: AddressData = {
+            ...baseAddressData,
+            contactInfo: placeDetails.contactInfo,
+            businessInfo: placeDetails.businessInfo
+          };
+          console.log("📍 Enriched address data with place details:", enrichedAddressData);
+          onSelect(enrichedAddressData);
+        } else {
+          // Fallback to basic data if details fetch failed
+          onSelect(baseAddressData);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch place details, using basic data:", error);
+        onSelect(baseAddressData);
+      }
+    } else {
+      onSelect(baseAddressData);
+    }
+    
+    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

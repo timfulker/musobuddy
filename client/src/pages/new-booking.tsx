@@ -402,6 +402,21 @@ export default function NewBookingPage() {
                                   form.setValue('venueAddress', addressData.formattedAddress);
                                   console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
                                 }
+
+                                // Auto-populate venue contact information if available
+                                if (addressData.contactInfo?.phoneNumber) {
+                                  form.setValue('venueContactInfo', addressData.contactInfo.phoneNumber);
+                                  console.log('✅ Auto-populated venue phone:', addressData.contactInfo.phoneNumber);
+                                }
+
+                                // Show business info in console for now (could be displayed in UI later)
+                                if (addressData.businessInfo) {
+                                  console.log('📍 Venue business info:', {
+                                    rating: addressData.businessInfo.rating,
+                                    hours: addressData.businessInfo.openingHours,
+                                    website: addressData.contactInfo?.website
+                                  });
+                                }
                               }}
                               placeholder="Start typing venue name... (e.g., Royal Albert Hall)"
                               defaultValue={field.value}
