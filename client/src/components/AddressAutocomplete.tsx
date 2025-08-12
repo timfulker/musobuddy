@@ -58,6 +58,16 @@ export default function AddressAutocomplete({
     
     await handleServerGeocode(val);
   };
+
+  const handleKeyPress = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = inputRef.current?.value?.trim();
+      if (val && val !== defaultValue) {
+        await handleServerGeocode(val);
+      }
+    }
+  };
   
   const handleServerGeocode = async (address: string) => {
     setIsLoading(true);
@@ -66,7 +76,11 @@ export default function AddressAutocomplete({
     try {
       console.log("🗺️ Server geocoding:", address);
       
-      const data = await apiRequest('/api/maps/geocode', {
+      // Use test endpoint for maps-test page, production endpoint otherwise
+      const isTestPage = window.location.pathname.includes('maps-test');
+      const endpoint = isTestPage ? '/api/maps/geocode-test' : '/api/maps/geocode';
+      
+      const data = await apiRequest(endpoint, {
         method: 'POST',
         body: { address }
       }) as any;
@@ -102,6 +116,7 @@ export default function AddressAutocomplete({
         defaultValue={defaultValue}
         className={`${className} ${isLoading ? 'bg-gray-50' : ''}`}
         onBlur={handleBlur}
+        onKeyPress={handleKeyPress}
         disabled={isLoading}
       />
       

@@ -17,7 +17,10 @@ export function registerMapsRoutes(app: Express) {
     });
   });
   
-  // Geocoding endpoint - requires authentication
+  // Test geocoding endpoint - no auth required
+  app.post('/api/maps/geocode-test', geocode);
+  
+  // Production geocoding endpoint - requires authentication
   app.post('/api/maps/geocode', requireAuth, geocode);
   
   // Travel time endpoint - requires authentication  
