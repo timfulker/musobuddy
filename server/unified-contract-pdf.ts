@@ -235,14 +235,13 @@ function generateUnifiedContractHTML(
         .metronome-container {
             width: 80px;
             height: 80px;
-            background: rgba(255, 255, 255, 0.15);
+            background: #191970;
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(25, 25, 112, 0.3);
             flex-shrink: 0;
-            backdrop-filter: blur(10px);
         }
         
         .metronome-body {
@@ -260,7 +259,7 @@ function generateUnifiedContractHTML(
             transform: translateX(-50%) rotate(10deg);
             width: 2.5px;
             height: 24px;
-            background: ${primaryColor};
+            background: #191970;
             border-radius: 1px;
             transform-origin: bottom center;
         }
