@@ -695,7 +695,7 @@ function generateUnifiedContractHTML(
                 ${contract.equipmentRequirements ? `
                 <div class="terms-section">
                     <div class="terms-subtitle">Equipment Requirements</div>
-                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid ${primaryColor};">
                         ${contract.equipmentRequirements.replace(/\n/g, '<br>')}
                     </p>
                 </div>
@@ -703,7 +703,7 @@ function generateUnifiedContractHTML(
                 ${contract.specialRequirements ? `
                 <div class="terms-section">
                     <div class="terms-subtitle">Special Requirements</div>
-                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #6366f1;">
+                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid ${primaryColor};">
                         ${contract.specialRequirements.replace(/\n/g, '<br>')}
                     </p>
                 </div>

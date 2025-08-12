@@ -229,6 +229,34 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // Save to localStorage
     localStorage.setItem('musobuddy-theme', currentTheme);
+    
+    // CRITICAL FIX: Also save theme color to database for PDF generation
+    const saveThemeToDatabase = async () => {
+      try {
+        const colorToSave = currentTheme === 'custom' && customColor ? customColor : theme.colors.primary;
+        
+        const response = await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            themeAccentColor: colorToSave 
+          })
+        });
+        
+        if (response.ok) {
+          console.log('✅ Theme color saved to database:', colorToSave);
+        } else {
+          console.error('❌ Failed to save theme color to database');
+        }
+      } catch (error) {
+        console.error('❌ Error saving theme color to database:', error);
+      }
+    };
+    
+    // Save theme color to database (with small delay to avoid rapid API calls)
+    const saveTimer = setTimeout(saveThemeToDatabase, 1000);
+    return () => clearTimeout(saveTimer);
   }, [currentTheme, customColor]);
 
   // Save custom color to localStorage when it changes
