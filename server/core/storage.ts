@@ -467,6 +467,10 @@ export class Storage {
     return miscStorage.deleteConflictResolution(userId, bookingIds);
   }
 
+  async saveConflictResolution(data: any) {
+    return miscStorage.saveConflictResolution(data);
+  }
+
   // ===== UNPARSEABLE MESSAGES METHODS =====
   async createUnparseableMessage(data: any) {
     return miscStorage.createUnparseableMessage(data);

@@ -154,6 +154,25 @@ export class MiscStorage {
       .orderBy(desc(conflictResolutions.resolvedAt));
   }
 
+  async saveConflictResolution(data: {
+    userId: string;
+    bookingIds: string;
+    resolution?: string;
+    notes?: string;
+    resolvedAt: string;
+  }) {
+    const result = await db.insert(conflictResolutions).values({
+      userId: data.userId,
+      bookingIds: data.bookingIds,
+      conflictDate: new Date(),
+      resolvedAt: new Date(data.resolvedAt),
+      resolvedBy: data.userId,
+      notes: data.notes || 'Conflict resolved via UI',
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
   async deleteConflictResolution(userId: string, bookingIds: number[]) {
     const sortedIds = [...bookingIds].sort((a, b) => a - b);
     const sortedIdsString = JSON.stringify(sortedIds);

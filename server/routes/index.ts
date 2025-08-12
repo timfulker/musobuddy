@@ -45,13 +45,76 @@ export async function registerRoutes(app: Express) {
   // Register health monitoring routes
   registerHealthRoutes(app);
   
-  // Add missing endpoints to prevent 404s
-  app.get('/api/conflicts', requireAuth, (req, res) => {
-    res.json([]); // Empty conflicts for now
+  // Conflict management endpoints
+  app.get('/api/conflicts', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get all user's bookings and detect conflicts
+      const bookings = await storage.getBookings(userId);
+      const { ConflictEngine } = await import('../core/conflict-engine');
+      const conflicts = ConflictEngine.detectAllConflicts(bookings);
+      
+      res.json(conflicts);
+    } catch (error) {
+      console.error('Error fetching conflicts:', error);
+      res.status(500).json({ error: 'Failed to fetch conflicts' });
+    }
   });
   
-  app.get('/api/conflicts/resolutions', requireAuth, (req, res) => {
-    res.json([]); // Empty resolutions for now  
+  app.get('/api/conflicts/resolutions', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const resolutions = await storage.getConflictResolutions(userId);
+      res.json(resolutions || []);
+    } catch (error) {
+      console.error('Error fetching conflict resolutions:', error);
+      res.status(500).json({ error: 'Failed to fetch conflict resolutions' });
+    }
+  });
+  
+  // Conflict resolution endpoint
+  app.post('/api/conflicts/resolve/:id', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.userId;
+      const conflictId = parseInt(req.params.id);
+      const { bookingIds, resolution, notes } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length < 2) {
+        return res.status(400).json({ error: 'At least 2 booking IDs are required' });
+      }
+      
+      // Save conflict resolution
+      const resolvedConflict = await storage.saveConflictResolution({
+        userId,
+        bookingIds: JSON.stringify(bookingIds),
+        resolution: resolution || 'resolved',
+        notes: notes || 'Conflict resolved via UI',
+        resolvedAt: new Date().toISOString()
+      });
+      
+      console.log(`✅ Conflict resolved for user ${userId}, bookings: ${bookingIds.join(', ')}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Conflict resolved successfully', 
+        conflict: resolvedConflict 
+      });
+    } catch (error) {
+      console.error('Error resolving conflict:', error);
+      res.status(500).json({ error: 'Failed to resolve conflict' });
+    }
   });
   
   // Compliance routes now handled by registerComplianceRoutes
