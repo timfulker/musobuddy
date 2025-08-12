@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -81,6 +81,19 @@ export default function NewBookingPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { gigTypes } = useGigTypes();
+  const [mileageData, setMileageData] = useState<{
+    distance: string | null;
+    distanceValue: number | null;
+    duration: string | null;
+    isCalculating: boolean;
+    error: string | null;
+  }>({
+    distance: null,
+    distanceValue: null,
+    duration: null,
+    isCalculating: false,
+    error: null
+  });
   
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
@@ -96,6 +109,86 @@ export default function NewBookingPage() {
 
   // Extract gig types from user settings
   const userGigTypes = userSettings && Array.isArray((userSettings as any).gigTypes) ? (userSettings as any).gigTypes : [];
+
+  // Calculate mileage between user's business address and venue
+  const calculateMileage = async (venueAddress: string) => {
+    if (!venueAddress || !userSettings) return;
+
+    // Build user's business address from settings (address line 1 + postcode is most reliable)
+    const businessAddress = [
+      userSettings.addressLine1,
+      userSettings.postcode
+    ].filter(Boolean).join(', ');
+
+    if (!businessAddress || !userSettings.addressLine1 || !userSettings.postcode) {
+      setMileageData(prev => ({ 
+        ...prev, 
+        error: "Please set your Address Line 1 and Postcode in Settings to calculate mileage" 
+      }));
+      return;
+    }
+
+    setMileageData(prev => ({ ...prev, isCalculating: true, error: null }));
+
+    try {
+      console.log('🚗 Calculating mileage from:', businessAddress, 'to:', venueAddress);
+      
+      const response = await apiRequest('/api/maps/travel-time', {
+        method: 'POST',
+        body: JSON.stringify({
+          origin: businessAddress,
+          destination: venueAddress,
+          departureTime: null // Use current time
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.distance && data.duration) {
+        setMileageData({
+          distance: data.distance,
+          distanceValue: data.distanceValue,
+          duration: data.durationInTraffic || data.duration,
+          isCalculating: false,
+          error: null
+        });
+        console.log('✅ Mileage calculated:', data);
+      } else {
+        throw new Error('No route found');
+      }
+    } catch (error: any) {
+      console.error('❌ Mileage calculation failed:', error);
+      setMileageData({
+        distance: null,
+        distanceValue: null,
+        duration: null,
+        isCalculating: false,
+        error: "Could not calculate mileage - check addresses"
+      });
+    }
+  };
+
+  // Watch venue address changes to calculate mileage
+  const watchedVenueAddress = form.watch('venueAddress');
+  useEffect(() => {
+    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
+      // Debounce the calculation to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        calculateMileage(watchedVenueAddress);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Clear mileage data when address is too short
+      setMileageData({
+        distance: null,
+        distanceValue: null,
+        duration: null,
+        isCalculating: false,
+        error: null
+      });
+    }
+  }, [watchedVenueAddress, userSettings]);
 
   const form = useForm<FullBookingFormData>({
     resolver: zodResolver(fullBookingSchema),
@@ -401,6 +494,9 @@ export default function NewBookingPage() {
                                 if (addressData.formattedAddress) {
                                   form.setValue('venueAddress', addressData.formattedAddress);
                                   console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
+                                  
+                                  // Calculate mileage when venue address is set
+                                  calculateMileage(addressData.formattedAddress);
                                 }
 
                                 // Auto-populate venue contact information if available
@@ -441,6 +537,49 @@ export default function NewBookingPage() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Mileage Calculation Display */}
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Travel Information</span>
+                      </div>
+                      
+                      {mileageData.isCalculating && (
+                        <div className="flex items-center gap-2 text-blue-600">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          <span className="text-sm">Calculating distance...</span>
+                        </div>
+                      )}
+                      
+                      {mileageData.distance && mileageData.duration && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Distance:</span>
+                            <span className="font-medium text-blue-800">{mileageData.distance}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Travel time:</span>
+                            <span className="font-medium text-blue-800">{mileageData.duration}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2">
+                            From your business address to venue
+                          </div>
+                        </div>
+                      )}
+                      
+                      {mileageData.error && (
+                        <div className="text-red-600 text-sm">
+                          {mileageData.error}
+                        </div>
+                      )}
+                      
+                      {!mileageData.isCalculating && !mileageData.distance && !mileageData.error && (
+                        <div className="text-gray-500 text-sm">
+                          Enter venue address to calculate distance and travel time
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField

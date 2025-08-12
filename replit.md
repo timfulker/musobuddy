@@ -24,6 +24,7 @@ Professional timing flexibility: Added "TBC (To Be Confirmed)" options for contr
 Stripe integration: Unified signup flow where ALL users (including free trial) must go through Stripe first to register credit cards. 30-day free trial period. Can deploy with TEST keys for testing, switch to LIVE keys for production launch.
 Intuitive bookings interface: Redesigned bookings page with visual hero section, quick stats cards (This Week/Confirmed/Pending/Total Revenue), and simplified search/filter bar for list view. Calendar view preserved as toggle option. Default changed from calendar to list view for better user experience with data-first presentation instead of filter-heavy layout.
 Unified booking forms: Email parsing and manual booking creation now use identical comprehensive form structures. When emails contain venue names, Google Maps API automatically populates venue address and contact details, ensuring consistent data across all booking sources.
+Mileage calculation: Booking form includes automatic mileage calculation based on distance between venue and business address, using address line 1 and postcode for accurate travel expense tracking.
 
 ## System Architecture
 
