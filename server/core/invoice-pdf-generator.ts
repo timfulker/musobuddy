@@ -11,12 +11,21 @@ import type { Invoice, UserSettings } from '@shared/schema';
 
 // Theme color mapping for PDF generation
 function getThemeColor(userSettings: UserSettings | null): string {
+  console.log('🎨 INVOICE PDF DEBUG: userSettings received:', {
+    hasUserSettings: !!userSettings,
+    userId: userSettings?.userId,
+    themeAccentColor: userSettings?.themeAccentColor,
+    businessName: userSettings?.businessName
+  });
+  
   // Use user's selected theme accent color if available
   if (userSettings?.themeAccentColor) {
+    console.log(`🎨 INVOICE PDF: Using user's theme color: ${userSettings.themeAccentColor}`);
     return userSettings.themeAccentColor;
   }
   
   // Default fallback to purple (original theme)
+  console.log('🎨 INVOICE PDF: Using default fallback color: #8b5cf6');
   return '#8b5cf6';
 }
 

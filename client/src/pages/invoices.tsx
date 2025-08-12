@@ -752,12 +752,41 @@ export default function Invoices() {
     },
   });
 
+  // Regenerate PDF with current theme colors mutation
+  const regeneratePdfMutation = useMutation({
+    mutationFn: async (invoice: Invoice) => {
+      const response = await apiRequest(`/api/invoices/${invoice.id}/regenerate`, {
+        method: 'POST',
+        body: {}
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: "Success",
+        description: "Invoice PDF regenerated with current theme colors!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to regenerate PDF",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleMarkAsPaid = (invoice: Invoice) => {
     markPaidMutation.mutate(invoice);
   };
 
   const handleSendReminder = (invoice: Invoice) => {
     sendReminderMutation.mutate(invoice);
+  };
+
+  const handleRegeneratePdf = (invoice: Invoice) => {
+    regeneratePdfMutation.mutate(invoice);
   };
 
   const handleResendInvoice = (invoice: Invoice) => {
@@ -1554,6 +1583,17 @@ export default function Invoices() {
                     View
                   </Button>
 
+                  {/* Regenerate PDF button - available for all statuses to fix theme color issues */}
+                  <Button 
+                    size="sm" 
+                    className="text-xs whitespace-nowrap bg-white hover:bg-gray-50 text-purple-700 border border-gray-300 min-w-[110px]"
+                    onClick={() => handleRegeneratePdf(invoice)}
+                    disabled={regeneratePdfMutation.isPending}
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Regenerate PDF
+                  </Button>
+
                   {invoice.status === "draft" && (
                     <>
                       <Button 
@@ -1752,6 +1792,17 @@ export default function Invoices() {
               >
                 <Eye className="w-3 h-3 mr-1" />
                 View
+              </Button>
+
+              {/* Regenerate PDF button for mobile - fix theme color issues */}
+              <Button 
+                size="sm" 
+                className="text-xs bg-white hover:bg-gray-50 text-purple-700 border border-gray-300"
+                onClick={() => handleRegeneratePdf(invoice)}
+                disabled={regeneratePdfMutation.isPending}
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Regenerate PDF
               </Button>
               
               {invoice.status === "draft" && (

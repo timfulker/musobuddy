@@ -430,5 +430,65 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
+  // Regenerate invoice PDF with current theme settings
+  app.post('/api/invoices/:id/regenerate', requireAuth, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.user.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      console.log(`🔄 Regenerating PDF for invoice #${invoiceId} with current theme settings...`);
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get current user settings (this will have the latest theme colors)
+      const userSettings = await storage.getSettings(userId);
+      console.log(`🎨 Regenerating with theme color: ${userSettings?.themeAccentColor || 'default'}`);
+      
+      // Regenerate PDF and upload to cloud with current theme
+      const { uploadInvoiceToCloud } = await import('../core/cloud-storage');
+      const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
+      
+      if (uploadResult.success && uploadResult.url) {
+        const updatedInvoice = await storage.updateInvoice(invoiceId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key,
+          updatedAt: new Date()
+        }, userId);
+        
+        console.log(`✅ Invoice #${invoiceId} PDF regenerated with current theme colors`);
+        res.json({ 
+          success: true, 
+          message: 'Invoice PDF regenerated with current theme colors',
+          invoice: updatedInvoice,
+          newUrl: uploadResult.url
+        });
+      } else {
+        throw new Error(`PDF regeneration failed: ${uploadResult.error}`);
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Failed to regenerate invoice PDF:', error);
+      res.status(500).json({ 
+        error: 'Failed to regenerate invoice PDF',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   console.log('✅ Invoice routes configured');
 }
