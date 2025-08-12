@@ -405,7 +405,7 @@ export default function NewBookingPage() {
                               }}
                               placeholder="Start typing venue name... (e.g., Royal Albert Hall)"
                               defaultValue={field.value}
-                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 w-full min-w-0"
                             />
                           </FormControl>
                           <FormMessage />

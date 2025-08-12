@@ -20,7 +20,7 @@ export default function AddressAutocomplete({
   onSelect,
   placeholder = "Start typing venue name or address...",
   defaultValue = "",
-  className = "border rounded px-3 py-2 w-full"
+  className = "border rounded px-3 py-2 w-full min-w-0"
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
