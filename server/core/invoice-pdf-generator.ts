@@ -122,11 +122,20 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   };
   
   const getContrastTextColor = (backgroundColor: string): 'white' | 'black' => {
-    return getLuminance(backgroundColor) > 0.5 ? 'black' : 'white';
+    const luminance = getLuminance(backgroundColor);
+    // Using same threshold as frontend: 0.5
+    return luminance > 0.5 ? 'black' : 'white';
   };
   
   const headerTextColor = getContrastTextColor(primaryColor);
-  console.log(`🎨 INVOICE PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}, Header text: ${headerTextColor}`);
+  const luminanceValue = getLuminance(primaryColor);
+  
+  // For logo visibility: use darker version of theme color or default to dark when theme is too light
+  const logoColor = luminanceValue > 0.7 ? '#333333' : primaryColor; // Dark gray for very light themes
+  
+  console.log(`🎨 INVOICE PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
+  console.log(`🎨 LUMINANCE: Color ${primaryColor} has luminance ${luminanceValue.toFixed(3)} → Text color: ${headerTextColor}`);
+  console.log(`🎨 LOGO: Using logo color ${logoColor} (theme too light: ${luminanceValue > 0.7})`);
   // CSS-based animated metronome logo (from your HTML file) - LARGE VERSION
   const cssMetronomeLogo = `
     <div class="logo-invoice" style="display: inline-flex; align-items: center; gap: 20px;">
@@ -136,7 +145,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         </div>
       </div>
       <div class="logo-text" style="text-align: left;">
-        <div class="metronome-text" style="font-size: 48px; font-weight: 700; color: ${primaryColor}; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
+        <div class="metronome-text" style="font-size: 48px; font-weight: 700; color: ${logoColor}; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
         <div class="tagline" style="font-size: 18px; color: #64748b; font-weight: 500; font-style: italic; font-family: 'Arial', sans-serif;">Less admin, more music</div>
       </div>
     </div>
@@ -242,7 +251,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .billing-info h3 {
-          color: ${primaryColor};
+          color: #333;
           margin-bottom: 10px;
           font-size: 16px;
         }
