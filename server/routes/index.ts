@@ -88,10 +88,9 @@ export async function registerRoutes(app: Express) {
   });
   
   // Conflict resolution endpoint
-  app.post('/api/conflicts/resolve/:id', requireAuth, async (req: any, res) => {
+  app.post('/api/conflicts/resolve', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
-      const conflictId = parseInt(req.params.id);
       const { bookingIds, resolution, notes } = req.body;
       
       if (!userId) {
