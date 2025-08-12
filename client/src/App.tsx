@@ -81,6 +81,16 @@ function Router() {
     return null;
   }
 
+  // If user tries to access protected routes without authentication, redirect to login
+  const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/email-setup', '/system-health', '/mobile-invoice-sender'];
+  const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+  
+  if (!isAuthenticated && isProtectedRoute) {
+    console.log('🔒 Redirecting unauthenticated user to login');
+    window.location.href = '/login';
+    return null;
+  }
+
   return (
     <Switch>
       {/* Public routes - always accessible */}
