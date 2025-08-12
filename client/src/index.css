@@ -6,6 +6,21 @@
 @tailwind utilities;
 
 /* Clean, simple contrast system with dynamic luminance-based text color */
+/* MAXIMUM SPECIFICITY - Target sidebar navigation links specifically */
+nav a.bg-primary.text-primary-foreground,
+.sidebar nav a.bg-primary.text-primary-foreground,
+nav a[class*="bg-primary"][class*="text-primary-foreground"],
+.sidebar nav a[class*="bg-primary"][class*="text-primary-foreground"] {
+  color: var(--theme-primary-text) !important;
+}
+
+nav a.bg-primary.text-primary-foreground *,
+.sidebar nav a.bg-primary.text-primary-foreground *,
+nav a[class*="bg-primary"][class*="text-primary-foreground"] *,
+.sidebar nav a[class*="bg-primary"][class*="text-primary-foreground"] * {
+  color: var(--theme-primary-text) !important;
+}
+
 /* Target buttons with both bg-primary and text-primary-foreground classes specifically */
 button.bg-primary.text-primary-foreground,
 button[class*="bg-primary"][class*="text-primary-foreground"],

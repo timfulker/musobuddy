@@ -85,8 +85,18 @@ export function getComputedThemeColor(): string {
 
 /**
  * Get the appropriate text color based on the actual computed theme color
+ * This reads the pre-calculated --theme-primary-text CSS variable
  */
 export function getComputedThemeTextColor(): 'white' | 'black' {
+  const computed = getComputedStyle(document.documentElement);
+  const textColor = computed.getPropertyValue('--theme-primary-text').trim();
+  
+  // Return the computed value if it exists and is valid
+  if (textColor === 'white' || textColor === 'black') {
+    return textColor as 'white' | 'black';
+  }
+  
+  // Fallback: calculate from the theme color
   const themeColor = getComputedThemeColor();
   return getContrastTextColor(themeColor);
 }

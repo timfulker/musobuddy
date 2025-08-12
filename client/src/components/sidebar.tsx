@@ -1,8 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { getThemeTextColor, getComputedThemeTextColor } from "@/lib/colorUtils";
 import { useTheme } from "@/hooks/useTheme";
 import { Link, useLocation } from "wouter";
+import { getThemeTextColor } from "@/lib/colorUtils";
 import { useState, useEffect } from "react";
 import { 
   Home, 
@@ -65,81 +65,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return location === path;
   };
 
-  // Apply theme-aware navigation styles only on theme/location change
-  useEffect(() => {
-    const forceNavigationColors = () => {
-      // Get all navigation links in sidebar
-      const navLinks = document.querySelectorAll('.sidebar nav a');
-      
-      navLinks.forEach((link) => {
-        const linkElement = link as HTMLElement;
-        const href = linkElement.getAttribute('href');
-        const isCurrentlyActive = href === location;
-        
-        // Determine text color based on luminance of theme color and active state
-        const shouldUseContrastText = isCurrentlyActive;
-        const themeTextColor = getThemeTextColor(currentTheme);
-        
-        const textColor = shouldUseContrastText ? 
-          (themeTextColor === 'white' ? 'white' : '#1e293b') : '#1e293b';
-        
-        // Force color on the link itself with !important
-        linkElement.style.setProperty('color', textColor, 'important');
-        
-        // Force color on all child elements
-        const children = linkElement.querySelectorAll('*');
-        children.forEach((child) => {
-          (child as HTMLElement).style.setProperty('color', textColor, 'important');
-        });
-        
-        // Set background color if active
-        if (isCurrentlyActive) {
-          linkElement.style.setProperty('background-color', 'var(--theme-primary)', 'important');
-        } else {
-          linkElement.style.setProperty('background-color', 'transparent', 'important');
-        }
-      });
-    };
-    
-    // Run only once when theme or location changes
-    forceNavigationColors();
-  }, [currentTheme, location]);
+  // REMOVED: JavaScript color forcing - let CSS handle it
 
-  // Helper function to get navigation link props with forced styling
-  const getNavLinkProps = (path: string) => {
-    const isLinkActive = isActive(path);
-    const textColor = isLinkActive ? getActiveTextColor() : '#1e293b';
-    
-    // Create a style object that forces the color through multiple properties
-    const forcedStyle = {
-      color: textColor,
-      backgroundColor: isLinkActive ? 'var(--theme-primary)' : 'transparent',
-      // Additional properties to force color override
-      textDecoration: 'none',
-      transition: 'all 0.2s ease'
-    };
-    
-    return {
-      className: `${getNavLinkClass(path)} nav-link-forced`,
-      'data-active': isLinkActive,
-      'data-theme': currentTheme,
-      'data-force-color': textColor,
-      style: forcedStyle
-    };
-  };
-
-  // Get theme-appropriate text color for active navigation items using luminance calculation
-  const getActiveTextColor = () => {
-    // Try to get the computed color first, fallback to theme-based calculation
-    try {
-      const textColor = getComputedThemeTextColor();
-      return textColor === 'white' ? 'white' : '#1e293b';
-    } catch {
-      // Fallback if DOM isn't ready
-      const textColor = getThemeTextColor(currentTheme);
-      return textColor === 'white' ? 'white' : '#1e293b';
-    }
-  };
+  // REMOVED: All JavaScript color functions - let CSS handle it
 
   // FIXED: Simplified navigation link styling without conflicting CSS classes
   const getNavLinkClass = (path: string) => {
@@ -187,81 +115,62 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto p-4 space-y-1" style={{ paddingBottom: '160px', maxHeight: 'calc(100vh - 180px)' }}>
           <Link 
             href="/dashboard" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            {...getNavLinkProps("/dashboard")}
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/dashboard"),
+              isActive("/dashboard") ? 'bg-primary text-primary-foreground' : ''
+            )}
           >
-            <Home 
-              className="w-5 h-5" 
-              style={{ 
-                color: isActive("/dashboard") ? getActiveTextColor() : '#1e293b'
-              }} 
-            />
-            <span 
-              style={{ 
-                color: isActive("/dashboard") ? getActiveTextColor() : '#1e293b'
-              }}
-            >
-              Dashboard
-            </span>
+            <Home className="w-5 h-5" />
+            <span>Dashboard</span>
           </Link>
           
           <Link 
             href="/bookings" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            {...getNavLinkProps("/bookings")}
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/bookings"),
+              isActive("/bookings") ? 'bg-primary text-primary-foreground' : ''
+            )}
           >
-            <Inbox 
-              className="w-5 h-5" 
-              style={{ 
-                color: isActive("/bookings") ? getActiveTextColor() : '#1e293b'
-              }} 
-            />
-            <span 
-              style={{ 
-                color: isActive("/bookings") ? getActiveTextColor() : '#1e293b'
-              }}
-            >
-              Bookings
-            </span>
+            <Inbox className="w-5 h-5" />
+            <span>Bookings</span>
           </Link>
           
           <Link 
             href="/address-book" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/address-book")}
-            style={{ 
-              color: isActive("/address-book") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/address-book") ? 'var(--theme-primary)' : 'transparent'
-            }}
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/address-book"),
+              isActive("/address-book") ? 'bg-primary text-primary-foreground' : ''
+            )}
           >
-            <Users className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Address Book</span>
+            <Users className="w-5 h-5" />
+            <span>Address Book</span>
           </Link>
           
           <Link 
             href="/contracts" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/contracts")}
-            style={{ 
-              color: isActive("/contracts") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/contracts") ? 'var(--theme-primary)' : 'transparent'
-            }}
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/contracts"),
+              isActive("/contracts") ? 'bg-primary text-primary-foreground' : ''
+            )}
           >
-            <FileText className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Contracts</span>
+            <FileText className="w-5 h-5" />
+            <span>Contracts</span>
           </Link>
           
           <Link 
             href="/invoices" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/invoices")}
-            style={{ 
-              color: isActive("/invoices") ? getActiveTextColor() : '#1e293b',
-              backgroundColor: isActive("/invoices") ? 'var(--theme-primary)' : 'transparent'
-            }}
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/invoices"),
+              isActive("/invoices") ? 'bg-primary text-primary-foreground' : ''
+            )}
           >
-            <PoundSterling className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Invoices</span>
+            <PoundSterling className="w-5 h-5" />
+            <span>Invoices</span>
           </Link>
 
 
@@ -272,22 +181,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => setSettingsExpanded(!settingsExpanded)}
               className={cn(
                 "w-full flex items-center justify-between px-4 py-3 font-medium transition-all duration-200 rounded-lg text-left",
-                isSettingsActive ? 'text-white' : 'text-slate-700 hover:text-slate-900',
-                isSettingsActive ? 'bg-primary' : 'hover:bg-slate-100'
+                isSettingsActive ? 'bg-primary text-primary-foreground' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
               )}
-              style={{ 
-                color: isSettingsActive ? getActiveTextColor() : '#1e293b',
-                backgroundColor: isSettingsActive ? 'var(--theme-primary)' : 'transparent'
-              }}
             >
               <div className="flex items-center space-x-3">
-                <Cog className="w-5 h-5" style={{ color: 'inherit' }} />
-                <span style={{ color: 'inherit' }}>Settings</span>
+                <Cog className="w-5 h-5" />
+                <span>Settings</span>
               </div>
               {settingsExpanded ? (
-                <ChevronDown className="w-4 h-4" style={{ color: 'inherit' }} />
+                <ChevronDown className="w-4 h-4" />
               ) : (
-                <ChevronRight className="w-4 h-4" style={{ color: 'inherit' }} />
+                <ChevronRight className="w-4 h-4" />
               )}
             </button>
             
@@ -353,7 +257,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             className={getNavLinkClass("/unparseable-messages")}
             style={{ 
-              color: isActive("/unparseable-messages") ? getActiveTextColor() : '#1e293b',
+              color: isActive("/unparseable-messages") ? getThemeTextColor(currentTheme) : '#1e293b',
               backgroundColor: isActive("/unparseable-messages") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -366,7 +270,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             className={getNavLinkClass("/user-guide")}
             style={{ 
-              color: isActive("/user-guide") ? getActiveTextColor() : '#1e293b',
+              color: isActive("/user-guide") ? getThemeTextColor(currentTheme) : '#1e293b',
               backgroundColor: isActive("/user-guide") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -381,7 +285,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => window.innerWidth < 768 && onClose()} 
               className={getNavLinkClass("/feedback")}
               style={{ 
-                color: isActive("/feedback") ? getActiveTextColor() : '#1e293b',
+                color: isActive("/feedback") ? getThemeTextColor(currentTheme) : '#1e293b',
                 backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent'
               }}
             >
@@ -397,7 +301,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => window.innerWidth < 768 && onClose()} 
               className={getNavLinkClass("/admin")}
               style={{ 
-                color: isActive("/admin") ? getActiveTextColor() : '#1e293b',
+                color: isActive("/admin") ? getThemeTextColor(currentTheme) : '#1e293b',
                 backgroundColor: isActive("/admin") ? 'var(--theme-primary)' : 'transparent'
               }}
             >
