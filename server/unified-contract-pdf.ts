@@ -452,7 +452,7 @@ function generateUnifiedContractHTML(
         .payment-amount {
             font-size: 26px;
             font-weight: 800;
-            color: ${primaryColor};
+            color: #000000;
         }
         
         .payment-instructions {
@@ -464,7 +464,7 @@ function generateUnifiedContractHTML(
         }
         
         .payment-instructions strong {
-            color: ${primaryColor};
+            color: #000000;
             font-size: 16px;
         }
         
