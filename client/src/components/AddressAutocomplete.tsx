@@ -47,8 +47,10 @@ export default function AddressAutocomplete({
         body: JSON.stringify({ query }),
       });
       
-      if (response.suggestions) {
-        setSuggestions(response.suggestions);
+      const data = await response.json();
+      
+      if (data.suggestions) {
+        setSuggestions(data.suggestions);
         setShowSuggestions(true);
       }
     } catch (error) {
@@ -112,10 +114,12 @@ export default function AddressAutocomplete({
       try {
         console.log("🗺️ Fallback geocoding:", query);
         
-        const result = await apiRequest('/api/maps/geocode', {
+        const response = await apiRequest('/api/maps/geocode', {
           method: 'POST',
           body: JSON.stringify({ address: query })
         });
+        
+        const result = await response.json();
         
         if (result.lat && result.lng) {
           const addressData: AddressData = {
