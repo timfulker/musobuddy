@@ -5,6 +5,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Clean, simple contrast system */
+/* Force white text on any element with bg-primary class */
+[class*="bg-primary"] {
+  color: white !important;
+}
+
+[class*="bg-primary"] * {
+  color: white !important;
+}
+
+/* Ensure text-primary-foreground always has white text */
+[class*="text-primary-foreground"] {
+  color: white !important;
+}
+
 /* Theme CSS Variables */
 :root {
   --radius: 0.5rem;
@@ -96,6 +111,21 @@
   --theme-accent-text: white;
 }
 
+.theme-custom-dark {
+  --theme-primary: #161537;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #4a5568;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white; /* Luminance: 0.0098 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
 /* Apply theme to body and typography */
 body {
   background-color: var(--theme-background) !important;
@@ -125,13 +155,33 @@ body {
   color: var(--theme-text) !important;
 }
 
-/* Force theme colors on buttons and UI elements */
-.bg-primary {
+/* COMPREHENSIVE THEME CONTRAST SYSTEM */
+/* Apply to ANY element that gets theme colored background */
+[class*="bg-primary"],
+[style*="background-color: var(--theme-primary)"],
+[style*="background: var(--theme-primary)"],
+[data-state="selected"],
+[data-state="active"], 
+[aria-selected="true"],
+[data-selected="true"],
+[data-active="true"],
+.selected,
+.active {
   background-color: var(--theme-primary) !important;
   color: var(--theme-primary-text) !important;
 }
 
-.bg-primary * {
+/* Force color on all child elements */
+[class*="bg-primary"] *,
+[style*="background-color: var(--theme-primary)"] *,
+[style*="background: var(--theme-primary)"] *,
+[data-state="selected"] *,
+[data-state="active"] *,
+[aria-selected="true"] *,
+[data-selected="true"] *,
+[data-active="true"] *,
+.selected *,
+.active * {
   color: var(--theme-primary-text) !important;
 }
 
@@ -143,12 +193,20 @@ body {
   border-color: var(--theme-primary) !important;
 }
 
-.bg-secondary {
+button.bg-secondary,
+a.bg-secondary,
+nav .bg-secondary,
+.sidebar .bg-secondary,
+[role="button"].bg-secondary {
   background-color: var(--theme-secondary) !important;
   color: var(--theme-secondary-text) !important;
 }
 
-.bg-secondary * {
+button.bg-secondary *,
+a.bg-secondary *,
+nav .bg-secondary *,
+.sidebar .bg-secondary *,
+[role="button"].bg-secondary * {
   color: var(--theme-secondary-text) !important;
 }
 
@@ -736,185 +794,16 @@ body {
   }
 }
 
-/* NUCLEAR OPTION SIDEBAR TEXT FIX - Replace the existing fix in index.css */
+/* All theme-specific contrast rules moved to theme-contrast.css for universal luminance-based handling */
 
-/* Target the new nav-link-forced class with maximum specificity */
-body.theme-midnight-blue .nav-link-forced[data-active="true"],
-html.theme-midnight-blue .nav-link-forced[data-active="true"],
-body.theme-purple .nav-link-forced[data-active="true"],
-html.theme-purple .nav-link-forced[data-active="true"],
-.theme-midnight-blue .nav-link-forced[data-active="true"],
-.theme-purple .nav-link-forced[data-active="true"] {
-  color: white !important;
-}
+/* 
+   REPLACED WITH DYNAMIC SYSTEM: All color contrast rules have been moved to theme-contrast.css
+   This provides automatic text color selection based on luminance for any theme color.
+*/
 
-/* Force all child elements */
-body.theme-midnight-blue .nav-link-forced[data-active="true"] *,
-html.theme-midnight-blue .nav-link-forced[data-active="true"] *,
-body.theme-purple .nav-link-forced[data-active="true"] *,
-html.theme-purple .nav-link-forced[data-active="true"] *,
-.theme-midnight-blue .nav-link-forced[data-active="true"] *,
-.theme-purple .nav-link-forced[data-active="true"] * {
-  color: white !important;
-}
+/* All button color rules moved to theme-contrast.css for dynamic luminance-based contrast */
 
-/* Target by data-force-color attribute */
-[data-force-color="white"],
-[data-force-color="white"] * {
-  color: white !important;
-}
-
-/* Target by specific theme combinations */
-[data-theme="midnight-blue"][data-active="true"],
-[data-theme="purple"][data-active="true"] {
-  color: white !important;
-}
-
-[data-theme="midnight-blue"][data-active="true"] *,
-[data-theme="purple"][data-active="true"] * {
-  color: white !important;
-}
-
-/* ABSOLUTE NUCLEAR OPTION - Override any existing color rules */
-/* Target all navigation links in sidebar */
-.sidebar .nav-link-forced[data-active="true"] {
-  color: white !important;
-}
-
-.sidebar .nav-link-forced[data-active="true"] * {
-  color: white !important;
-}
-
-/* Theme-specific overrides with maximum specificity */
-body[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
-body[class*="theme-purple"] .sidebar a[data-active="true"],
-html[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
-html[class*="theme-purple"] .sidebar a[data-active="true"] {
-  color: white !important;
-}
-
-body[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
-body[class*="theme-purple"] .sidebar a[data-active="true"] *,
-html[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
-html[class*="theme-purple"] .sidebar a[data-active="true"] * {
-  color: white !important;
-}
-
-/* Final fallback using style attribute detection */
-a[style*="background-color"][data-theme="midnight-blue"],
-a[style*="background-color"][data-theme="purple"],
-a[style*="var(--theme-primary)"][data-theme="midnight-blue"],
-a[style*="var(--theme-primary)"][data-theme="purple"] {
-  color: white !important;
-}
-
-a[style*="background-color"][data-theme="midnight-blue"] *,
-a[style*="background-color"][data-theme="purple"] *,
-a[style*="var(--theme-primary)"][data-theme="midnight-blue"] *,
-a[style*="var(--theme-primary)"][data-theme="purple"] * {
-  color: white !important;
-}
-
-/* CRITICAL FIX: Button text colors for purple and midnight blue themes - ONLY TARGET BUTTONS */
-/* Target ONLY buttons with primary backgrounds to ensure white text */
-body.theme-purple button.bg-primary,
-body.theme-midnight-blue button.bg-primary,
-html.theme-purple button.bg-primary,
-html.theme-midnight-blue button.bg-primary {
-  color: white !important;
-}
-
-/* Force all child elements in primary BUTTONS ONLY to have white text */
-body.theme-purple button.bg-primary *,
-body.theme-midnight-blue button.bg-primary *,
-html.theme-purple button.bg-primary *,
-html.theme-midnight-blue button.bg-primary * {
-  color: white !important;
-}
-
-/* Target ONLY buttons with primary variant class */
-body.theme-purple button[class*="bg-primary"],
-body.theme-midnight-blue button[class*="bg-primary"],
-html.theme-purple button[class*="bg-primary"],
-html.theme-midnight-blue button[class*="bg-primary"] {
-  color: white !important;
-}
-
-body.theme-purple button[class*="bg-primary"] *,
-body.theme-midnight-blue button[class*="bg-primary"] *,
-html.theme-purple button[class*="bg-primary"] *,
-html.theme-midnight-blue button[class*="bg-primary"] * {
-  color: white !important;
-}
-
-/* Target ONLY button elements with text-primary-foreground in these themes */
-body.theme-purple button.text-primary-foreground,
-body.theme-midnight-blue button.text-primary-foreground,
-html.theme-purple button.text-primary-foreground,
-html.theme-midnight-blue button.text-primary-foreground {
-  color: white !important;
-}
-
-/* Additional button targeting by common shadcn button classes - BUTTONS ONLY */
-body.theme-purple button[data-variant="default"],
-body.theme-midnight-blue button[data-variant="default"],
-html.theme-purple button[data-variant="default"],
-html.theme-midnight-blue button[data-variant="default"] {
-  color: white !important;
-}
-
-/* Fix submit buttons and form buttons with gradient backgrounds - BUTTONS ONLY */
-body.theme-purple button[class*="gradient"],
-body.theme-midnight-blue button[class*="gradient"],
-html.theme-purple button[class*="gradient"],
-html.theme-midnight-blue button[class*="gradient"],
-body.theme-purple button[class*="bg-gradient"],
-body.theme-midnight-blue button[class*="bg-gradient"],
-html.theme-purple button[class*="bg-gradient"],
-html.theme-midnight-blue button[class*="bg-gradient"] {
-  color: white !important;
-}
-
-body.theme-purple button[class*="gradient"] *,
-body.theme-midnight-blue button[class*="gradient"] *,
-html.theme-purple button[class*="gradient"] *,
-html.theme-midnight-blue button[class*="gradient"] *,
-body.theme-purple button[class*="bg-gradient"] *,
-body.theme-midnight-blue button[class*="bg-gradient"] *,
-html.theme-purple button[class*="bg-gradient"] *,
-html.theme-midnight-blue button[class*="bg-gradient"] * {
-  color: white !important;
-}
-
-/* OUTLINE BUTTON FIX: Make outline buttons with text-primary behave like primary buttons */
-/* For purple and midnight blue themes, outline buttons should show white text on primary background */
-body.theme-purple button[class*="text-primary"],
-body.theme-midnight-blue button[class*="text-primary"],
-html.theme-purple button[class*="text-primary"],
-html.theme-midnight-blue button[class*="text-primary"] {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-  border-color: var(--theme-primary) !important;
-}
-
-/* Ensure proper hover states for outline buttons in dark themes */
-body.theme-purple button[class*="text-primary"]:hover,
-body.theme-midnight-blue button[class*="text-primary"]:hover,
-html.theme-purple button[class*="text-primary"]:hover,
-html.theme-midnight-blue button[class*="text-primary"]:hover {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-  border-color: var(--theme-primary) !important;
-  opacity: 0.9;
-}
-
-/* Force child elements in outline buttons to inherit white text in dark themes */
-body.theme-purple button[class*="text-primary"] *,
-body.theme-midnight-blue button[class*="text-primary"] *,
-html.theme-purple button[class*="text-primary"] *,
-html.theme-midnight-blue button[class*="text-primary"] * {
-  color: white !important;
-}
+/* All outline button rules moved to theme-contrast.css for dynamic luminance-based contrast */
 
 /* Metronome animation for logo */
 @keyframes metronome-tick {

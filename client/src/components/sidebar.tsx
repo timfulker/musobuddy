@@ -297,49 +297,52 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Link 
                   href="/settings" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={getNavLinkClass("/settings")}
+                  className={cn(
+                    getNavLinkClass("/settings"),
+                    isActive("/settings") ? 'bg-primary text-primary-foreground' : ''
+                  )}
                   data-active={isActive("/settings")}
                   data-theme={currentTheme}
                   style={{ 
-                    color: isActive("/settings") ? getActiveTextColor() : '#64748b',
-                    backgroundColor: isActive("/settings") ? 'var(--theme-primary)' : 'transparent',
                     fontSize: '0.875rem'
                   }}
                 >
-                  <UserCog className="w-4 h-4" style={{ color: 'inherit' }} />
-                  <span style={{ color: 'inherit' }}>User Settings</span>
+                  <UserCog className="w-4 h-4" />
+                  <span>User Settings</span>
                 </Link>
                 
                 <Link 
                   href="/templates" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={getNavLinkClass("/templates")}
+                  className={cn(
+                    getNavLinkClass("/templates"),
+                    isActive("/templates") ? 'bg-primary text-primary-foreground' : ''
+                  )}
                   data-active={isActive("/templates")}
                   data-theme={currentTheme}
                   style={{ 
-                    color: isActive("/templates") ? getActiveTextColor() : '#64748b',
-                    backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent',
                     fontSize: '0.875rem'
                   }}
                 >
-                  <FileType className="w-4 h-4" style={{ color: 'inherit' }} />
-                  <span style={{ color: 'inherit' }}>Templates</span>
+                  <FileType className="w-4 h-4" />
+                  <span>Templates</span>
                 </Link>
                 
                 <Link 
                   href="/compliance" 
                   onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={getNavLinkClass("/compliance")}
+                  className={cn(
+                    getNavLinkClass("/compliance"),
+                    isActive("/compliance") ? 'bg-primary text-primary-foreground' : ''
+                  )}
                   data-active={isActive("/compliance")}
                   data-theme={currentTheme}
                   style={{ 
-                    color: isActive("/compliance") ? getActiveTextColor() : '#64748b',
-                    backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent',
                     fontSize: '0.875rem'
                   }}
                 >
-                  <Shield className="w-4 h-4" style={{ color: 'inherit' }} />
-                  <span style={{ color: 'inherit' }}>Compliance</span>
+                  <Shield className="w-4 h-4" />
+                  <span>Compliance</span>
                 </Link>
               </div>
             )}

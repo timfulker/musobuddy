@@ -58,7 +58,8 @@ export function getThemeColor(theme: string): string {
     'ocean-blue': '#0ea5e9',
     'forest-green': '#16a34a',
     'clean-pro-audio': '#e53935',
-    'midnight-blue': '#191970'
+    'midnight-blue': '#191970',
+    'custom-dark': '#161537'  // Added for testing
   };
   
   return themeColors[theme] || '#8b5cf6'; // Default to purple
