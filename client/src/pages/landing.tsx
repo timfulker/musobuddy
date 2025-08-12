@@ -33,7 +33,7 @@ export default function LandingPage() {
             </nav>
             <div className="flex items-center space-x-4">
               <Link href="/signup">
-                <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-2 font-medium">
+                <Button className="bg-primary hover:bg-primary/90 px-6 py-2 font-medium" style={{backgroundColor: 'var(--theme-primary)', color: 'white'}}>
                   Start Free Trial
                 </Button>
               </Link>
@@ -57,7 +57,7 @@ export default function LandingPage() {
             </p>
             
             <Link href="/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4 text-lg font-medium mb-8">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 px-8 py-4 text-lg font-medium mb-8" style={{backgroundColor: 'var(--theme-primary)', color: 'white'}}>
                 Start Free Trial
               </Button>
             </Link>
