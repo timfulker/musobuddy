@@ -115,12 +115,15 @@ export default function NewBookingPage() {
     if (!venueAddress || !userSettings) return;
 
     // Build user's business address from settings (address line 1 + postcode is most reliable)
+    const addressLine1 = (userSettings as any)?.addressLine1;
+    const postcode = (userSettings as any)?.postcode;
+    
     const businessAddress = [
-      userSettings.addressLine1,
-      userSettings.postcode
+      addressLine1,
+      postcode
     ].filter(Boolean).join(', ');
 
-    if (!businessAddress || !userSettings.addressLine1 || !userSettings.postcode) {
+    if (!businessAddress || !addressLine1 || !postcode) {
       setMileageData(prev => ({ 
         ...prev, 
         error: "Please set your Address Line 1 and Postcode in Settings to calculate mileage" 

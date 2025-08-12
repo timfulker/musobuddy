@@ -895,8 +895,14 @@ export default function UnifiedBookings() {
                               <p className="text-2xl font-bold">
                                 {(bookings || []).filter((b: any) => {
                                   const eventDate = new Date(b.eventDate);
-                                  const oneWeekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-                                  return eventDate <= oneWeekFromNow && b.status !== "completed" && b.status !== "rejected";
+                                  const today = new Date();
+                                  const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                                  const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+                                  
+                                  // Only count confirmed bookings that are happening this week
+                                  return eventDate >= startOfWeek && 
+                                         eventDate <= endOfWeek && 
+                                         b.status === "confirmed";
                                 }).length}
                               </p>
                             </div>
