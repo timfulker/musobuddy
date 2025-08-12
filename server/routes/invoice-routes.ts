@@ -5,10 +5,15 @@ import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+// Use test key in development, live key in production
+const stripeKey = process.env.NODE_ENV === 'production' 
+  ? process.env.STRIPE_SECRET_KEY 
+  : process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+
+if (!stripeKey) {
+  throw new Error('Missing required Stripe secret key');
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(stripeKey, {
   apiVersion: "2023-10-16",
 });
 

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
+import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye, CreditCard } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -806,6 +806,36 @@ export default function Invoices() {
     restoreInvoiceMutation.mutate(invoice);
   };
 
+  // Create Stripe payment link mutation
+  const createPaymentLinkMutation = useMutation({
+    mutationFn: async (invoiceId: number) => {
+      const response = await apiRequest(`/api/invoices/${invoiceId}/create-payment-link`, {
+        method: 'POST',
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      // Open the payment link in a new window
+      window.open(data.paymentUrl, '_blank');
+      toast({
+        title: "Payment Link Created",
+        description: "Payment page opened in new window. Client can use this link to pay the invoice.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create payment link",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreatePaymentLink = (invoice: Invoice) => {
+    createPaymentLinkMutation.mutate(invoice.id);
+  };
+
   // Bulk action handlers
   const handleSelectInvoice = (invoiceId: number, checked: boolean) => {
     if (checked) {
@@ -1581,6 +1611,15 @@ export default function Invoices() {
                     <>
                       <Button 
                         size="sm" 
+                        className="text-xs whitespace-nowrap bg-green-600 hover:bg-green-700 text-white min-w-[90px]" 
+                        onClick={() => handleCreatePaymentLink(invoice)}
+                        disabled={createPaymentLinkMutation.isPending}
+                      >
+                        <CreditCard className="w-3 h-3 mr-1" />
+                        {createPaymentLinkMutation.isPending ? 'Creating...' : 'Pay Invoice'}
+                      </Button>
+                      <Button 
+                        size="sm" 
                         className="text-xs whitespace-nowrap bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 min-w-[85px]" 
                         onClick={() => handleDownloadInvoice(invoice)}
                       >
@@ -1618,6 +1657,15 @@ export default function Invoices() {
                   
                   {invoice.status === "overdue" && (
                     <>
+                      <Button 
+                        size="sm" 
+                        className="text-xs whitespace-nowrap bg-red-600 hover:bg-red-700 text-white min-w-[90px]" 
+                        onClick={() => handleCreatePaymentLink(invoice)}
+                        disabled={createPaymentLinkMutation.isPending}
+                      >
+                        <CreditCard className="w-3 h-3 mr-1" />
+                        {createPaymentLinkMutation.isPending ? 'Creating...' : 'Pay Now'}
+                      </Button>
                       <Button 
                         size="sm" 
                         className="text-xs whitespace-nowrap bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 min-w-[85px]" 
