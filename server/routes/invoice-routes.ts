@@ -5,10 +5,13 @@ import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import Stripe from 'stripe';
 
-// Use test key in development, live key in production
-const stripeKey = process.env.NODE_ENV === 'production' 
+// For Replit development, always use test keys unless explicitly in production
+const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === 'production';
+const stripeKey = isProduction
   ? process.env.STRIPE_SECRET_KEY 
   : process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+
+console.log(`🔧 Stripe mode: ${isProduction ? 'LIVE' : 'TEST'} (NODE_ENV: ${process.env.NODE_ENV}, REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT})`);
 
 if (!stripeKey) {
   throw new Error('Missing required Stripe secret key');
