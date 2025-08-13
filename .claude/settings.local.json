@@ -11,7 +11,10 @@
       "Bash(npm run dev:*)",
       "Bash(kill:*)",
       "Bash(npx tsx:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(true)",
+      "Bash(fuser:*)",
+      "Bash(PORT=5001 npm run dev)"
     ],
     "deny": []
   }

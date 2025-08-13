@@ -90,7 +90,10 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
 
   const completeOnboardingMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/onboarding/complete', data);
+      const response = await apiRequest('/api/onboarding/complete', {
+        method: 'POST',
+        body: data
+      });
       return response.json();
     },
     onSuccess: () => {
