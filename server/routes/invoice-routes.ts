@@ -81,6 +81,8 @@ export function registerInvoiceRoutes(app: Express) {
       }
 
       console.log(`💳 Creating payment with key type: ${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'}`);
+      console.log(`🔧 Full key used: ${stripeKey}`);
+      console.log(`💰 Amount: £${invoice.amount} (${Math.round(parseFloat(invoice.amount) * 100)} pence)`);
       
       // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
