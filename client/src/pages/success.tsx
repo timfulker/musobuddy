@@ -42,27 +42,25 @@ export default function SuccessPage() {
       }
 
       // Store auth token if provided
-      if (data.token && data.email) {
-        storeAuthToken(data.token, data.email);
+      if (data.authToken && data.user?.email) {
+        storeAuthToken(data.authToken, data.user.email);
+        
+        setStatus('success');
+        setMessage('Payment successful! Setting up your account...');
+
+        // Short delay to show success message then redirect
+        setTimeout(() => {
+          if (!data.user.emailPrefix) {
+            // New user - needs email prefix setup
+            setLocation('/email-setup');
+          } else {
+            // Returning user - go straight to dashboard
+            setLocation('/dashboard');
+          }
+        }, 2000);
+      } else {
+        throw new Error('Invalid authentication data received');
       }
-
-      setStatus('success');
-      setMessage('Payment successful! Setting up your account...');
-
-      // Check if user needs email prefix setup
-      const userResponse = await apiRequest('/api/auth/me');
-      const userData = await userResponse.json();
-
-      // Short delay to show success message
-      setTimeout(() => {
-        if (!userData.emailPrefix) {
-          // New user - needs email prefix setup
-          setLocation('/email-setup');
-        } else {
-          // Returning user - go straight to dashboard
-          setLocation('/dashboard');
-        }
-      }, 2000);
 
     } catch (error: any) {
       console.error('Payment verification error:', error);

@@ -27,15 +27,16 @@ export const findActiveAuthToken = (): string | null => {
   console.log(`🔐 findActiveAuthToken - hostname: ${hostname}`);
   console.log(`🔐 findActiveAuthToken - baseKey: ${baseKey}`);
   
-  // MOBILE FIX: Comprehensive token scanning for all auth keys
+  // ENVIRONMENT-SAFE: Only scan for auth keys in current environment
   const allAuthKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.includes('auth')) {
+    // CRITICAL FIX: Only consider tokens from current environment
+    if (key && key.startsWith(baseKey)) {
       const stored = localStorage.getItem(key);
       if (stored) {
         allAuthKeys.push({ key, value: stored });
-        console.log(`🔐 Found auth key: ${key}, hasValue: ${!!stored}`);
+        console.log(`🔐 Found environment auth key: ${key}, hasValue: ${!!stored}`);
       }
     }
   }
@@ -71,8 +72,14 @@ export const findActiveAuthToken = (): string | null => {
     return latestTokenData.token;
   }
   
-  // MOBILE FALLBACK: Try any auth token we can find
+  // MOBILE FALLBACK: Try auth tokens ONLY for current environment
   for (const { key, value } of allAuthKeys) {
+    // CRITICAL FIX: Only use tokens from the current environment
+    if (!key.startsWith(baseKey)) {
+      console.log(`🔐 SKIPPING cross-environment token: ${key} (current baseKey: ${baseKey})`);
+      continue;
+    }
+    
     try {
       const tokenData = JSON.parse(value);
       if (tokenData.token && typeof tokenData.token === 'string') {
@@ -80,7 +87,7 @@ export const findActiveAuthToken = (): string | null => {
         return tokenData.token;
       }
     } catch {
-      // Plain string token
+      // Plain string token - only if from current environment
       if (typeof value === 'string' && value.length > 20) {
         console.log(`🔐 MOBILE FALLBACK: Using plain token from ${key}`);
         return value;
@@ -98,11 +105,12 @@ export const clearAllAuthTokens = (): void => {
     ? 'authToken_dev' 
     : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
-  // Clear all tokens matching the pattern
+  // Clear only tokens from current environment
   const keysToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && (key.startsWith(baseKey) || key.includes('authToken'))) {
+    // CRITICAL FIX: Only clear tokens from current environment, not all authToken keys
+    if (key && key.startsWith(baseKey)) {
       keysToRemove.push(key);
     }
   }
