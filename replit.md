@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, streamlining tasks like bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, enabling musicians to focus more on their craft.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, enabling musicians to focus more on their craft.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -36,6 +36,7 @@ UI consistency achievement: Successfully migrated booking details dialog from ol
 Google Maps parity: Fixed missing Google Maps integration in booking details editing dialog. Both new booking creation and existing booking editing now feature identical AddressAutocomplete functionality - venue name auto-completion, automatic address population, venue contact info lookup, and mileage calculation with travel expense estimation. Complete feature parity achieved across all booking workflows.
 Venue field improvements: Fixed critical venue field display issue where loaded booking data wasn't showing in AddressAutocomplete component. Added controlled input support with proper value syncing, enhanced auto-suggestion hiding logic, and expanded field width (400px minimum) for better venue name visibility. Travel expense calculation bug fixed - was incorrectly using distance in meters instead of miles, causing massive expense figures (£40,533 instead of £25.20). System now auto-corrects obviously wrong values over £1000 and uses proper HMRC mileage rate calculations.
 Widget AI enhancement: Fixed critical booking widget issue where AI parsing wasn't extracting event dates from text when form date field was empty. Widget now properly calls `/api/widget/hybrid-submit` endpoint with correct data structure, and backend prioritizes AI-extracted dates and venues over empty form fields. Users can now submit booking widgets with dates mentioned only in the description text and system will automatically extract and use them.
+Google Calendar production fixes: Fixed production-specific OAuth integration issues including 500 errors on status endpoint and Cross-Origin-Opener-Policy blocking popup window operations. Updated OAuth callback to return HTML pages instead of JSON responses, bypassing browser security restrictions. Added enhanced error logging for production debugging. Integration now works properly in deployed environment without requiring users to stay logged into Google.
 
 ## System Architecture
 
@@ -50,7 +51,7 @@ Widget AI enhancement: Fixed critical booking widget issue where AI parsing wasn
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture (authentication, contracts, invoices, bookings, settings, admin).
-- **Authentication**: Pure JWT-based system with SMS verification (Twilio), email/password login, and phone number verification. Uses a unified authentication middleware.
+- **Authentication**: Pure JWT-based system with SMS verification, email/password login, and phone number verification. Uses a unified authentication middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and enhanced email parsing. Supports CRUD operations for email templates.
 - **PDF Generation**: Isolated Puppeteer engines for invoices and contracts.
@@ -70,15 +71,15 @@ Widget AI enhancement: Fixed critical booking widget issue where AI parsing wasn
 ## External Dependencies
 
 - **Cloud Services**:
-    - Cloudflare R2: PDF storage and delivery.
-    - Mailgun: Email delivery service (Production domain: `enquiries.musobuddy.com`).
-    - Neon Database: PostgreSQL hosting.
-    - Replit: Authentication and hosting.
+    - Cloudflare R2
+    - Mailgun (Production domain: `enquiries.musobuddy.com`)
+    - Neon Database (PostgreSQL)
+    - Replit (Authentication and hosting)
 - **APIs and Services**:
-    - Anthropic Claude Haiku: AI for contract parsing.
-    - OpenAI: AI for email parsing and intelligent template generation.
-    - Puppeteer: PDF generation.
-    - Stripe: Subscription management and payment processing.
-    - Twilio: SMS verification.
-    - Google Maps API: Venue address auto-population and mileage calculation.
-    - what3words API: Precise location identification.
+    - Anthropic Claude Haiku
+    - OpenAI
+    - Puppeteer
+    - Stripe
+    - Twilio
+    - Google Maps API
+    - what3words API

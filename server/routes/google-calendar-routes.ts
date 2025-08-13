@@ -52,14 +52,73 @@ export function registerGoogleCalendarRoutes(app: Express) {
 
       console.log('✅ Google Calendar integration saved for user:', userId);
 
-      res.json({ 
-        success: true, 
-        message: 'Google Calendar connected successfully' 
-      });
+      // Return success page instead of JSON to avoid popup issues
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Google Calendar Connected</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8fafc; }
+              .success { color: #059669; font-size: 24px; margin-bottom: 20px; }
+              .message { color: #64748b; font-size: 16px; margin-bottom: 30px; }
+              .close-btn { background: #059669; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+            </style>
+          </head>
+          <body>
+            <div class="success">✅ Google Calendar Connected!</div>
+            <div class="message">Your calendar is now synced with MusoBuddy</div>
+            <button class="close-btn" onclick="window.close()">Close Window</button>
+            <script>
+              // Try to notify parent window and close
+              setTimeout(() => {
+                try {
+                  if (window.opener) {
+                    window.opener.postMessage({ type: 'GOOGLE_CALENDAR_SUCCESS' }, '*');
+                  }
+                } catch (e) {
+                  console.log('Could not notify parent window');
+                }
+                window.close();
+              }, 2000);
+            </script>
+          </body>
+        </html>
+      `);
 
     } catch (error) {
       console.error('❌ OAuth callback failed:', error);
-      res.status(500).json({ error: 'Failed to connect Google Calendar' });
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Connection Failed</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8fafc; }
+              .error { color: #dc2626; font-size: 24px; margin-bottom: 20px; }
+              .message { color: #64748b; font-size: 16px; margin-bottom: 30px; }
+              .close-btn { background: #dc2626; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+            </style>
+          </head>
+          <body>
+            <div class="error">❌ Connection Failed</div>
+            <div class="message">${error.message}</div>
+            <button class="close-btn" onclick="window.close()">Close Window</button>
+            <script>
+              setTimeout(() => {
+                try {
+                  if (window.opener) {
+                    window.opener.postMessage({ type: 'GOOGLE_CALENDAR_ERROR', message: '${error.message}' }, '*');
+                  }
+                } catch (e) {
+                  console.log('Could not notify parent window');
+                }
+                window.close();
+              }, 3000);
+            </script>
+          </body>
+        </html>
+      `);
     }
   });
 
@@ -67,8 +126,15 @@ export function registerGoogleCalendarRoutes(app: Express) {
   app.get('/api/google-calendar/status', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
+      console.log('🔍 Checking Google Calendar status for user:', userId);
       
+      if (!userId) {
+        console.error('❌ No userId found in request');
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
       const integration = await storage.getGoogleCalendarIntegration(userId);
+      console.log('📊 Integration found:', integration ? 'yes' : 'no');
       
       if (!integration) {
         return res.json({ connected: false });
@@ -85,7 +151,8 @@ export function registerGoogleCalendarRoutes(app: Express) {
 
     } catch (error) {
       console.error('❌ Failed to get integration status:', error);
-      res.status(500).json({ error: 'Failed to get integration status' });
+      console.error('❌ Error details:', error.message, error.stack);
+      res.status(500).json({ error: 'Failed to get integration status', details: error.message });
     }
   });
 
