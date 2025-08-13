@@ -133,8 +133,15 @@ export function registerGoogleCalendarRoutes(app: Express) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
-      const integration = await storage.getGoogleCalendarIntegration(userId);
-      console.log('📊 Integration found:', integration ? 'yes' : 'no');
+      let integration;
+      try {
+        integration = await storage.getGoogleCalendarIntegration(userId);
+        console.log('📊 Integration found:', integration ? 'yes' : 'no');
+      } catch (dbError) {
+        console.error('❌ Database error getting integration:', dbError);
+        // Return as not connected rather than error if DB query fails
+        return res.json({ connected: false });
+      }
       
       if (!integration) {
         return res.json({ connected: false });

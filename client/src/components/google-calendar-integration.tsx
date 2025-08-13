@@ -37,35 +37,57 @@ export default function GoogleCalendarIntegration() {
       const popup = window.open(data.authUrl, 'google-calendar-auth', 'width=500,height=600');
       
       return new Promise((resolve, reject) => {
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            // Check if connection was successful
-            setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
-              resolve(true);
-            }, 1000);
-          }
-        }, 1000);
+        let checkClosed: NodeJS.Timeout | null = null;
+        
+        // Try to check if popup is closed (may be blocked by COOP)
+        try {
+          checkClosed = setInterval(() => {
+            try {
+              // This may throw due to COOP policy
+              if (popup?.closed) {
+                if (checkClosed) clearInterval(checkClosed);
+                // Check if connection was successful
+                setTimeout(() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
+                  resolve(true);
+                }, 1000);
+              }
+            } catch (e) {
+              // COOP policy blocks access, stop checking
+              console.log('⚠️ COOP policy prevents popup monitoring, relying on postMessage');
+              if (checkClosed) clearInterval(checkClosed);
+            }
+          }, 1000);
+        } catch (e) {
+          console.log('⚠️ Cannot monitor popup due to browser policy');
+        }
 
-        // Handle postMessage from popup
+        // Handle postMessage from popup (primary method)
         const handleMessage = (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
           
           if (event.data.type === 'GOOGLE_CALENDAR_SUCCESS') {
-            popup?.close();
-            clearInterval(checkClosed);
+            try { popup?.close(); } catch (e) { /* COOP may block */ }
+            if (checkClosed) clearInterval(checkClosed);
             window.removeEventListener('message', handleMessage);
             resolve(true);
           } else if (event.data.type === 'GOOGLE_CALENDAR_ERROR') {
-            popup?.close();
-            clearInterval(checkClosed);
+            try { popup?.close(); } catch (e) { /* COOP may block */ }
+            if (checkClosed) clearInterval(checkClosed);
             window.removeEventListener('message', handleMessage);
             reject(new Error(event.data.message));
           }
         };
 
         window.addEventListener('message', handleMessage);
+        
+        // Timeout fallback - if no message received after 5 minutes
+        setTimeout(() => {
+          if (checkClosed) clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
+          queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
+          resolve(true); // Assume success and let status check verify
+        }, 300000);
       });
     },
     onSuccess: () => {
