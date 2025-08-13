@@ -37,43 +37,21 @@ export default function GoogleCalendarIntegration() {
       const popup = window.open(data.authUrl, 'google-calendar-auth', 'width=500,height=600');
       
       return new Promise((resolve, reject) => {
-        let checkClosed: NodeJS.Timeout | null = null;
-        
-        // Try to check if popup is closed (may be blocked by COOP)
-        try {
-          checkClosed = setInterval(() => {
-            try {
-              // This may throw due to COOP policy
-              if (popup?.closed) {
-                if (checkClosed) clearInterval(checkClosed);
-                // Check if connection was successful
-                setTimeout(() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
-                  resolve(true);
-                }, 1000);
-              }
-            } catch (e) {
-              // COOP policy blocks access, stop checking
-              console.log('⚠️ COOP policy prevents popup monitoring, relying on postMessage');
-              if (checkClosed) clearInterval(checkClosed);
-            }
-          }, 1000);
-        } catch (e) {
-          console.log('⚠️ Cannot monitor popup due to browser policy');
-        }
+        // Skip popup monitoring entirely to avoid COOP warnings
+        // Rely solely on postMessage for communication
+        console.log('📱 OAuth popup opened, waiting for response via postMessage...');
 
         // Handle postMessage from popup (primary method)
         const handleMessage = (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
           
           if (event.data.type === 'GOOGLE_CALENDAR_SUCCESS') {
-            try { popup?.close(); } catch (e) { /* COOP may block */ }
-            if (checkClosed) clearInterval(checkClosed);
+            console.log('✅ OAuth success message received');
             window.removeEventListener('message', handleMessage);
+            queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
             resolve(true);
           } else if (event.data.type === 'GOOGLE_CALENDAR_ERROR') {
-            try { popup?.close(); } catch (e) { /* COOP may block */ }
-            if (checkClosed) clearInterval(checkClosed);
+            console.log('❌ OAuth error message received:', event.data.message);
             window.removeEventListener('message', handleMessage);
             reject(new Error(event.data.message));
           }
@@ -81,13 +59,31 @@ export default function GoogleCalendarIntegration() {
 
         window.addEventListener('message', handleMessage);
         
-        // Timeout fallback - if no message received after 5 minutes
-        setTimeout(() => {
-          if (checkClosed) clearInterval(checkClosed);
-          window.removeEventListener('message', handleMessage);
+        // User-friendly timeout with periodic status checks
+        const timeoutDuration = 300000; // 5 minutes
+        const checkInterval = 30000; // Check every 30 seconds
+        let elapsed = 0;
+        
+        const statusChecker = setInterval(() => {
+          elapsed += checkInterval;
+          
+          // Silently check if auth succeeded
           queryClient.invalidateQueries({ queryKey: ['/api/google-calendar/status'] });
-          resolve(true); // Assume success and let status check verify
-        }, 300000);
+          
+          if (elapsed >= timeoutDuration) {
+            clearInterval(statusChecker);
+            window.removeEventListener('message', handleMessage);
+            console.log('⏱️ OAuth timeout - checking final status');
+            resolve(true); // Let status check determine actual result
+          }
+        }, checkInterval);
+        
+        // Clean up on resolution
+        const originalResolve = resolve;
+        resolve = (value) => {
+          clearInterval(statusChecker);
+          originalResolve(value);
+        };
       });
     },
     onSuccess: () => {
