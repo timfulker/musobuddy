@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, allowing them more time for their craft. It provides tools for managing bookings, contracts, invoices, and compliance requirements. The platform aims to be user-friendly, reliable, and scalable, offering a centralized solution for common music business challenges with significant market potential. Initial launch is focused on the UK market, with plans for international expansion.
+MusoBuddy is a comprehensive music business management platform for musicians, streamlining tasks like bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, enabling musicians to focus more on their craft.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -39,39 +39,38 @@ Widget AI enhancement: Fixed critical booking widget issue where AI parsing wasn
 ## System Architecture
 
 ### Frontend
-- **Framework**: React 18 with TypeScript, Vite.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI primitives.
+- **Framework**: React 18 (TypeScript, Vite).
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI.
 - **State Management**: React Query.
 - **Routing**: Wouter.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards with left border status indicators, gradient-styled forms, professional action buttons, responsive layouts, consistent sidebar navigation, clear visual cues. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) with theme-aware components and an animated metronome logo. QR code generation, widget URL creation, R2 storage integration, and widget persistence are all functioning. Navigation structure is simplified with a collapsible Settings section on desktop and a unified Settings link on mobile. PDFs automatically match user's chosen theme.
+- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and PDF theming.
 
 ### Backend
-- **Runtime**: Node.js with Express.js.
-- **Language**: TypeScript with ES modules.
-- **Core Structure**: Modular route architecture for authentication, contracts, invoices, bookings, settings, and administration.
-- **Authentication**: Pure JWT-based system with SMS verification (Twilio), email/password login, and phone number verification. No session middleware or cookies; JWT tokens in Authorization headers. Centralized `authToken.ts` utility. Unified authentication middleware supporting 4 token sources.
+- **Runtime**: Node.js with Express.js (TypeScript, ES modules).
+- **Core Structure**: Modular route architecture (authentication, contracts, invoices, bookings, settings, admin).
+- **Authentication**: Pure JWT-based system with SMS verification (Twilio), email/password login, and phone number verification. Uses a unified authentication middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, including enhanced email parsing for availability and pricing queries. Email templates system supports full CRUD operations with automatic seeding of 5 default templates.
+- **Email Service**: Mailgun for transactional emails and enhanced email parsing. Supports CRUD operations for email templates.
 - **PDF Generation**: Isolated Puppeteer engines for invoices and contracts.
 - **AI Integration**: AI for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic.
 - **System Design Choices**:
-    - **User Management**: Simplified two-tier system: Admin Accounts and User Accounts.
-    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget with external R2 hosting. Booking workflow statuses: New, In progress, Client confirms, Confirmed, Completed, Rejected.
-    - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, automated reminders, and guided questionnaire-style creation. Enterprise-grade retry logic.
-    - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring. Invoice security implemented via random 16-character tokens in URLs for R2 file access.
-    - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
-    - **Security**: Robust session validation, comprehensive rate limiting, enhanced database connection pooling, secure password hashing, input validation, input sanitization, and async error handling. Production safety guards.
-    - **System Health Monitoring**: Real-time dashboard (`/system-health`) tracking database, authentication, email, storage services with performance metrics and automated health checks.
+    - **User Management**: Two-tier system (Admin Accounts, User Accounts).
+    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, and a standalone, token-based booking widget.
+    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, and guided creation with enterprise-grade retry logic.
+    - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
+    - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
+    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
+    - **System Health Monitoring**: Real-time dashboard (`/system-health`) for database, authentication, email, and storage services.
     - **Deployment**: Node.js server serving built frontend.
-    - **API Design**: RESTful API endpoints, consistent JSON responses, and comprehensive error handling.
-    - **System Isolation**: Critical components like invoice and contract generation are designed as entirely separate, isolated systems.
+    - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
+    - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
 
 ## External Dependencies
 
 - **Cloud Services**:
     - Cloudflare R2: PDF storage and delivery.
-    - Mailgun: Email delivery service. Production domain: `enquiries.musobuddy.com`.
+    - Mailgun: Email delivery service (Production domain: `enquiries.musobuddy.com`).
     - Neon Database: PostgreSQL hosting.
     - Replit: Authentication and hosting.
 - **APIs and Services**:
@@ -80,3 +79,5 @@ Widget AI enhancement: Fixed critical booking widget issue where AI parsing wasn
     - Puppeteer: PDF generation.
     - Stripe: Subscription management and payment processing.
     - Twilio: SMS verification.
+    - Google Maps API: Venue address auto-population and mileage calculation.
+    - what3words API: Precise location identification.
