@@ -12,6 +12,7 @@ const stripeKey = isProduction
   : process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 
 console.log(`🔧 Stripe mode: ${isProduction ? 'LIVE' : 'TEST'} (NODE_ENV: ${process.env.NODE_ENV}, REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT})`);
+console.log(`🔑 Using Stripe key: ${stripeKey?.substring(0, 12)}... (${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'})`);
 
 if (!stripeKey) {
   throw new Error('Missing required Stripe secret key');
@@ -73,6 +74,8 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(400).json({ error: 'Invoice already paid' });
       }
 
+      console.log(`💳 Creating payment with key type: ${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'}`);
+      
       // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
