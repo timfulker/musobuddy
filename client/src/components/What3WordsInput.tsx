@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { apiRequest } from '@/lib/queryClient';
-import { MapPin, Loader2, X } from 'lucide-react';
+import { MapPin, Loader2, X, Map, Eye, EyeOff } from 'lucide-react';
 
 interface What3WordsInputProps {
   value: string;
@@ -33,6 +36,9 @@ export function What3WordsInput({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationDetails, setLocationDetails] = useState<string>('');
+  const [showMap, setShowMap] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -102,20 +108,27 @@ export function What3WordsInput({
 
   // Convert what3words to coordinates when a valid address is selected
   const convertToCoordinates = async (words: string) => {
-    if (!onLocationFound) return;
-    
     try {
       const response = await apiRequest(`/api/what3words/convert-to-coordinates?words=${encodeURIComponent(words)}`);
       const data = await response.json();
       
       if (data.coordinates) {
-        onLocationFound(
-          { lat: data.coordinates.lat, lng: data.coordinates.lng },
-          `///${data.words}, ${data.nearestPlace}`
-        );
+        const coords = { lat: data.coordinates.lat, lng: data.coordinates.lng };
+        const details = `///${data.words}, ${data.nearestPlace}`;
+        
+        // Store coordinates and details for map display
+        setCoordinates(coords);
+        setLocationDetails(details);
+        setShowMap(true); // Auto-show map when location is found
+        
+        // Call the original callback if provided
+        if (onLocationFound) {
+          onLocationFound(coords, details);
+        }
       }
     } catch (err) {
       console.error('Error converting what3words to coordinates:', err);
+      setError('Unable to find location for this what3words address');
     }
   };
 
@@ -172,6 +185,9 @@ export function What3WordsInput({
     setSuggestions([]);
     setShowSuggestions(false);
     setError(null);
+    setCoordinates(null);
+    setLocationDetails('');
+    setShowMap(false);
     inputRef.current?.focus();
   };
 
@@ -256,6 +272,86 @@ export function What3WordsInput({
       <p className="mt-1 text-xs text-gray-500">
         Enter a 3-word address for precise location (e.g., ///filled.count.soap)
       </p>
+
+      {/* Map Preview */}
+      {coordinates && (
+        <Card className="mt-3 border-blue-200 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Map className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">Location Preview</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMap(!showMap)}
+                className="h-8 px-2 text-xs"
+              >
+                {showMap ? (
+                  <>
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    Hide Map
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3 w-3 mr-1" />
+                    Show Map
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="text-sm text-gray-600 mb-3">
+              <div className="font-medium">{locationDetails}</div>
+              <div className="text-xs mt-1">
+                📍 {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+              </div>
+            </div>
+
+            {showMap && (
+              <div className="relative">
+                <LoadScript 
+                  googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
+                  libraries={['places']}
+                >
+                  <GoogleMap
+                    mapContainerStyle={{
+                      width: '100%',
+                      height: '200px',
+                      borderRadius: '8px'
+                    }}
+                    center={coordinates}
+                    zoom={16}
+                    options={{
+                      zoomControl: true,
+                      streetViewControl: false,
+                      fullscreenControl: false,
+                      mapTypeControl: false,
+                    }}
+                  >
+                    <Marker
+                      position={coordinates}
+                      title={locationDetails}
+                      icon={{
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: '#dc2626',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2,
+                        scale: 8,
+                      }}
+                    />
+                  </GoogleMap>
+                </LoadScript>
+                <div className="mt-2 text-xs text-center text-gray-500">
+                  📍 Precise what3words location
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
