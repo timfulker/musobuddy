@@ -145,11 +145,23 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<ThemeName>('purple');
+  // Default to midnight-blue for unauthenticated/public pages
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>('midnight-blue');
   const [customColor, setCustomColor] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load theme from localStorage
+    // Check if we're on a public page that should always use midnight-blue
+    const publicPaths = ['/', '/login', '/signup', '/start-trial', '/trial-success', '/sign-contract', '/view-contract'];
+    const currentPath = window.location.pathname;
+    const isPublicPage = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
+    
+    if (isPublicPage) {
+      // Force midnight-blue theme for public pages
+      setCurrentTheme('midnight-blue');
+      return;
+    }
+    
+    // Load theme from localStorage only for authenticated pages
     const savedTheme = localStorage.getItem('musobuddy-theme') as ThemeName;
     const savedCustomColor = localStorage.getItem('musobuddy-custom-color');
     

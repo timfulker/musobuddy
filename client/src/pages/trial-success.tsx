@@ -24,16 +24,27 @@ export default function TrialSuccessPage() {
   // Session restoration effect - authenticate new Stripe users
   useEffect(() => {
     const restoreSession = async () => {
-      if (!user && !isLoading) {
+      // Extract session ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      // CRITICAL: If we have a Stripe session ID, we MUST authenticate with it
+      // regardless of existing authentication status to prevent wrong user access
+      if (sessionId && !isLoading) {
         setIsRestoringSession(true);
         
         try {
-          // Extract session ID from URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const sessionId = urlParams.get('session_id');
+          console.log('🔐 Authenticating with Stripe session:', sessionId);
           
-          if (sessionId) {
-            console.log('🔐 Authenticating with Stripe session:', sessionId);
+          // CRITICAL: Clear any existing tokens and theme to prevent wrong user access
+          const { clearAllAuthTokens } = await import('@/utils/authToken');
+          clearAllAuthTokens();
+          
+          // Also clear theme settings to prevent theme leak from previous user
+          localStorage.removeItem('musobuddy-theme');
+          localStorage.removeItem('musobuddy-custom-color');
+          
+          console.log('🔓 Cleared existing auth tokens and theme for new Stripe user');
             
             // Authenticate using Stripe session ID
             const response = await fetch('/api/auth/stripe-login', {
@@ -85,18 +96,6 @@ export default function TrialSuccessPage() {
                 setLocation('/');
               }
             }
-          } else {
-            // No session ID - user might be returning
-            console.error('❌ No session ID found in URL');
-            
-            toast({
-              title: "Session not found",
-              description: "Please complete the signup process.",
-              variant: "destructive",
-            });
-            
-            setLocation('/');
-          }
         } catch (error) {
           console.error('❌ Session restoration error:', error);
           
@@ -110,14 +109,23 @@ export default function TrialSuccessPage() {
         } finally {
           setIsRestoringSession(false);
         }
+      } else if (!user && !isLoading) {
+        // No session ID and no user - shouldn't be on this page
+        console.error('❌ No session ID found and no user authenticated');
+        
+        toast({
+          title: "Session not found",
+          description: "Please complete the signup process.",
+          variant: "destructive",
+        });
+        
+        setLocation('/');
       }
     };
 
-    // Only attempt restoration if we don't have a user
-    if (!isLoading && !user) {
-      restoreSession();
-    }
-  }, [user, isLoading, toast, setLocation]);
+    // Always run to check for Stripe session
+    restoreSession();
+  }, [isLoading, toast, setLocation]);
 
 
 

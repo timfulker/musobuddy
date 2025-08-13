@@ -83,7 +83,12 @@ export function useAuth() {
     try {
       // SECURITY FIX: Clear all auth tokens
       clearAllAuthTokens();
-      console.log('🔓 Logged out - cleared all tokens');
+      
+      // Clear theme settings to prevent leaking to next user
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
+      
+      console.log('🔓 Logged out - cleared all tokens and theme');
       
       // Clear all queries and redirect
       queryClient.clear();
@@ -92,6 +97,8 @@ export function useAuth() {
       console.error('Logout error:', error);
       // Force redirect even if logout fails
       clearAllAuthTokens();
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
       queryClient.clear();
       window.location.href = '/';
     }
