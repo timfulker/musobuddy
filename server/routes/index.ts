@@ -15,6 +15,7 @@ import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { registerMapsRoutes } from "./maps-routes";
 import { setupWhat3WordsRoutes } from "./what3words-routes";
+import { setupAuthRoutes } from "./auth-clean";
 
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
@@ -22,10 +23,12 @@ import { storage } from "../core/storage";
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');
   
-  // REMOVED: Duplicate auth setup - already done in server/index.ts
+  // CRITICAL FIX: Register authentication routes FIRST
+  console.log('🔐 PRIORITY: Registering authentication routes first...');
+  setupAuthRoutes(app);
   
-  // CRITICAL FIX: Register Stripe routes FIRST to prevent conflicts
-  console.log('🔥 PRIORITY: Registering Stripe routes first to avoid conflicts...');
+  // CRITICAL FIX: Register Stripe routes SECOND to prevent conflicts
+  console.log('🔥 PRIORITY: Registering Stripe routes second to avoid conflicts...');
   registerStripeRoutes(app);
   
   // Register all other route modules
