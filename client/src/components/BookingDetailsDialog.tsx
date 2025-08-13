@@ -46,6 +46,7 @@ const bookingDetailsSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
+  what3words: z.string().optional(),
   venueAddress: z.string().optional(),
   eventType: z.string().optional(),
   gigType: z.string().optional(),
@@ -91,7 +92,6 @@ const bookingDetailsSchema = z.object({
   photoPermission: z.boolean().optional(),
   encoreAllowed: z.boolean().optional(),
   encoreSuggestions: z.string().optional(),
-  what3words: z.string().optional(),
 });
 
 interface BookingDetailsDialogProps {
@@ -280,12 +280,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         styles: booking.styles || "",
         equipmentProvided: booking.equipmentProvided || "",
         whatsIncluded: booking.whatsIncluded || "",
-        setupTime: booking.setupTime || "",
         soundCheckTime: booking.soundCheckTime || "",
-        packupTime: booking.packupTime || "",
-        travelTime: booking.travelTime || "",
         parkingInfo: booking.parkingInfo || "",
-        contactPerson: booking.contactPerson || "",
         contactPhone: booking.contactPhone || "",
         venueAddress: booking.venueAddress || "",
         venueContactInfo: booking.venueContactInfo || "",
@@ -317,6 +313,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         photoPermission: booking.photoPermission || false,
         encoreAllowed: booking.encoreAllowed || false,
         encoreSuggestions: booking.encoreSuggestions || "",
+        what3words: booking.what3words || "",
       };
       
       form.reset(bookingData);
@@ -537,7 +534,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       apiRequest(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+
         body: JSON.stringify({ status: 'confirmed' })
       }).then(() => {
         // Refresh the data to show updated status
@@ -1536,30 +1533,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                   <div className="space-y-2">
                     <Label>Document Type</Label>
                     <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={documentType === 'contract' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('contract')}
-                      >
-                        Contract
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'invoice' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('invoice')}
-                      >
-                        Invoice
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'other' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('other')}
-                      >
-                        Other
-                      </Button>
+                      {(['contract', 'invoice', 'other'] as const).map((type) => (
+                        <Button
+                          key={type}
+                          type="button"
+                          variant={documentType === type ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setDocumentType(type)}
+                        >
+                          {type === 'contract' ? 'Contract' : type === 'invoice' ? 'Invoice' : 'Other'}
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
@@ -1598,7 +1582,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                             </Button>
                           </div>
                         )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && 
+                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0 ? 
                          (booking.uploadedDocuments as Array<{type?: string, filename?: string, url?: string}>).map((doc, index) => (
                           <div key={index} className="bg-gray-50 p-3 rounded-md">
                             <p className="text-sm text-gray-700 mb-2">
@@ -1613,7 +1597,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               View Document
                             </Button>
                           </div>
-                        ))}
+                        )) : null}
                       </div>
                     </div>
                   )}
