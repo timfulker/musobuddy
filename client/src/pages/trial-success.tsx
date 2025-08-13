@@ -28,10 +28,16 @@ export default function TrialSuccessPage() {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
       
-      // CRITICAL: If we have a Stripe session ID, we MUST authenticate with it
-      // regardless of existing authentication status to prevent wrong user access
-      if (sessionId && !isLoading) {
+      // Check if we've already processed this session to prevent loops
+      const processedKey = `stripe_session_processed_${sessionId}`;
+      const alreadyProcessed = sessionStorage.getItem(processedKey);
+      
+      // CRITICAL: If we have a Stripe session ID that hasn't been processed yet
+      if (sessionId && !isLoading && !alreadyProcessed) {
         setIsRestoringSession(true);
+        
+        // Mark this session as being processed to prevent loops
+        sessionStorage.setItem(processedKey, 'true');
         
         try {
           console.log('🔐 Authenticating with Stripe session:', sessionId);
@@ -70,7 +76,8 @@ export default function TrialSuccessPage() {
                 description: "Your account has been created successfully.",
               });
 
-              // Trigger auth refresh
+              // Remove session ID from URL and reload
+              window.history.replaceState({}, document.title, '/trial-success');
               window.location.reload();
             } else {
               console.error('❌ Stripe authentication failed:', response.status);

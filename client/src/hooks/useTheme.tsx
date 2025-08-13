@@ -158,6 +158,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (isPublicPage) {
       // Force midnight-blue theme for public pages
       setCurrentTheme('midnight-blue');
+      // Clear any saved theme to prevent it from loading
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
       return;
     }
     
@@ -172,6 +175,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setCustomColor(savedCustomColor);
     }
   }, []);
+
+  // Monitor path changes to enforce theme on navigation
+  useEffect(() => {
+    const checkPathForTheme = () => {
+      const publicPaths = ['/', '/login', '/signup', '/start-trial', '/trial-success', '/sign-contract', '/view-contract'];
+      const currentPath = window.location.pathname;
+      const isPublicPage = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
+      
+      if (isPublicPage && currentTheme !== 'midnight-blue') {
+        console.log('🎨 Enforcing midnight-blue theme for public page:', currentPath);
+        setCurrentTheme('midnight-blue');
+      }
+    };
+
+    // Check on mount and when pathname changes
+    checkPathForTheme();
+    
+    // Listen for navigation changes
+    window.addEventListener('popstate', checkPathForTheme);
+    return () => window.removeEventListener('popstate', checkPathForTheme);
+  }, [currentTheme]);
 
   useEffect(() => {
     // Apply theme CSS variables
@@ -239,11 +263,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       });
     }, 10);
 
-    // Save to localStorage
-    localStorage.setItem('musobuddy-theme', currentTheme);
+    // Only save to localStorage for authenticated pages
+    const publicPaths = ['/', '/login', '/signup', '/start-trial', '/trial-success', '/sign-contract', '/view-contract'];
+    const currentPath = window.location.pathname;
+    const isPublicPage = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
     
-    // CRITICAL FIX: Also save theme color to database for PDF generation
+    if (!isPublicPage) {
+      localStorage.setItem('musobuddy-theme', currentTheme);
+    }
+    
+    // CRITICAL FIX: Also save theme color to database for PDF generation (only for authenticated pages)
     const saveThemeToDatabase = async () => {
+      if (isPublicPage) {
+        console.log('🎨 Skipping theme save for public page');
+        return;
+      }
+      
       try {
         const colorToSave = currentTheme === 'custom' && customColor ? customColor : theme.colors.primary;
         console.log('🎨 Attempting to save theme color to database:', colorToSave);
