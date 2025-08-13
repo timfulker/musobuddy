@@ -43,7 +43,22 @@ export default function SuccessPage() {
 
       // Store auth token if provided
       if (data.authToken && data.user?.email) {
+        console.log('🔐 Storing auth token for user:', data.user.email);
         storeAuthToken(data.authToken, data.user.email);
+        
+        // Verify token was stored correctly
+        const { findActiveAuthToken } = await import('@/utils/authToken');
+        const storedToken = findActiveAuthToken();
+        console.log('🔐 Token verification after storage:', !!storedToken);
+        
+        if (!storedToken) {
+          throw new Error('Failed to store authentication token');
+        }
+        
+        // Clear any previous auth failures to allow fresh login attempt
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('auth_success_flag', 'true');
+        }
         
         setStatus('success');
         setMessage('Payment successful! Setting up your account...');

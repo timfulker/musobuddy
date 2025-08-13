@@ -3,6 +3,55 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { findActiveAuthToken, clearAllAuthTokens } from '@/utils/authToken';
 import { isMobileDevice, findMobileAuthToken, forceMobileAuthRefresh } from '@/utils/mobileAuth';
 
+// Circuit breaker to prevent infinite auth loops
+let authFailureCount = 0;
+let lastAuthFailure = 0;
+const MAX_AUTH_FAILURES = 3;
+const FAILURE_RESET_TIME = 60000; // 1 minute
+
+function shouldSkipAuth(): boolean {
+  const now = Date.now();
+  
+  // Check for auth success flag from Stripe verification
+  if (typeof window !== 'undefined') {
+    const successFlag = window.localStorage.getItem('auth_success_flag');
+    if (successFlag === 'true') {
+      console.log('🟢 Auth success flag detected - resetting circuit breaker');
+      authFailureCount = 0;
+      lastAuthFailure = 0;
+      window.localStorage.removeItem('auth_success_flag');
+      return false;
+    }
+  }
+  
+  // Reset failure count after timeout
+  if (now - lastAuthFailure > FAILURE_RESET_TIME) {
+    authFailureCount = 0;
+  }
+  
+  // Skip if too many failures
+  if (authFailureCount >= MAX_AUTH_FAILURES) {
+    console.log(`🚫 Circuit breaker: Skipping auth after ${authFailureCount} failures`);
+    return true;
+  }
+  
+  return false;
+}
+
+function recordAuthFailure(): void {
+  authFailureCount++;
+  lastAuthFailure = Date.now();
+  console.log(`🔴 Auth failure #${authFailureCount} recorded`);
+}
+
+function resetAuthFailures(): void {
+  if (authFailureCount > 0) {
+    console.log(`🟢 Auth success - resetting ${authFailureCount} previous failures`);
+    authFailureCount = 0;
+    lastAuthFailure = 0;
+  }
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
   
@@ -47,6 +96,7 @@ export function useAuth() {
 
     const userData = await response.json();
     console.log('✅ Auth successful:', userData);
+    resetAuthFailures(); // Reset circuit breaker on success
     return userData;
   };
   
@@ -54,10 +104,18 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: fetchUser,
     retry: (failureCount, error: any) => {
+      // CRITICAL FIX: Never retry when no token exists
+      if (error?.message === 'No auth token') {
+        console.log('🚫 No auth token - stopping retries to prevent infinite loop');
+        recordAuthFailure();
+        return false; // Stop retrying immediately
+      }
+      
       // CRITICAL FIX: Never retry on auth failures to prevent infinite loops
       const status = (error as any)?.status;
       if (status === 401 || status === 404 || status === 403) {
         console.log(`🚫 Auth error ${status} - clearing invalid token and stopping retries`);
+        recordAuthFailure();
         clearAllAuthTokens(); // Clear invalid tokens immediately
         return false; // Stop retrying
       }
@@ -67,7 +125,7 @@ export function useAuth() {
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchInterval: false,
-    enabled: true // Always try to find any valid token
+    enabled: !shouldSkipAuth() // Circuit breaker integration
   });
 
   // Enhanced error handling for authentication failures
@@ -75,15 +133,15 @@ export function useAuth() {
     const status = (error as any)?.status;
     console.log('🔍 Auth error:', status, error?.message);
     
-    // Handle specific authentication errors
-    if (error?.message?.includes('User account no longer exists')) {
+    // CRITICAL FIX: Don't process "No auth token" errors to prevent loops
+    if (error?.message === 'No auth token') {
+      console.log('🔍 No auth token error - skipping cleanup to prevent loops');
+    } else if (error?.message?.includes('User account no longer exists')) {
       console.log('🔄 User account deleted - redirecting to landing page');
       clearAllAuthTokens();
       window.location.href = '/';
-    }
-    
-    // CRITICAL FIX: Clear tokens on persistent auth failures to prevent loops
-    if (status === 401 || status === 404 || status === 403) {
+    } else if (status === 401 || status === 404 || status === 403) {
+      // CRITICAL FIX: Clear tokens on persistent auth failures to prevent loops
       console.log(`🧹 Clearing invalid tokens due to ${status} error`);
       clearAllAuthTokens();
       queryClient.clear(); // Clear React Query cache
