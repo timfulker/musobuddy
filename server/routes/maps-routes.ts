@@ -295,5 +295,80 @@ export function registerMapsRoutes(app: Express) {
     }
   });
 
+  // Distance calculation endpoint (legacy compatibility)
+  app.post('/api/maps/distance', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { origin, destination } = req.body;
+      
+      if (!origin || !destination) {
+        return res.status(400).json({ error: 'Origin and destination required' });
+      }
+
+      if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
+        return res.status(500).json({ error: 'Google Maps server key not configured' });
+      }
+      
+      // Get user's distance unit preference
+      const userSettings = await storage.getSettings(req.user!.id);
+      const distanceUnits = userSettings?.distanceUnits || 'miles';
+
+      // Format locations for Google API
+      const formatLocation = (loc: any) => {
+        if (typeof loc === 'string') return encodeURIComponent(loc);
+        if (loc.lat && loc.lng) return `${loc.lat},${loc.lng}`;
+        throw new Error('Invalid location format');
+      };
+
+      const origins = formatLocation(origin);
+      const destinations = formatLocation(destination);
+
+      const googleUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&mode=driving&key=${process.env.GOOGLE_MAPS_SERVER_KEY}`;
+      
+      console.log(`📏 Calculating distance: ${origin} → ${destination}`);
+      
+      const response = await fetch(googleUrl);
+      const data = await response.json();
+
+      if (data.status !== 'OK') {
+        return res.status(502).json({ error: 'Distance calculation failed', details: data.status });
+      }
+
+      const element = data.rows?.[0]?.elements?.[0];
+      if (!element || element.status !== 'OK') {
+        return res.status(502).json({ error: 'No route found', details: element?.status });
+      }
+
+      // Convert distance from meters to user's preferred unit
+      const distanceInMeters = element.distance?.value || 0;
+      const distanceInMiles = distanceInMeters * 0.000621371;
+      const distanceInKm = distanceInMeters / 1000;
+      
+      // Use user's preference for distance display
+      const displayDistance = distanceUnits === 'km' 
+        ? `${distanceInKm.toFixed(1)} km` 
+        : `${distanceInMiles.toFixed(1)} miles`;
+      
+      const result = {
+        distance: displayDistance,
+        distanceValue: distanceInMeters,
+        distanceInMiles: distanceInMiles,
+        distanceInKm: distanceInKm,
+        distanceUnits: distanceUnits,
+        duration: element.duration?.text,
+        durationValue: element.duration?.value
+      };
+
+      console.log(`✅ Distance calculated: ${displayDistance}`);
+      res.json(result);
+
+    } catch (error) {
+      console.error('Distance calculation error:', error);
+      res.status(500).json({ 
+        error: 'Distance calculation failed', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
   console.log('✅ Google Maps routes configured');
 }

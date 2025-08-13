@@ -65,10 +65,32 @@ export class BookingStorage {
       throw new Error('Booking not found');
     }
 
+    // Sanitize numeric fields - convert empty strings to null
+    const sanitizeNumericFields = (data: any) => {
+      const numericFields = [
+        'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
+        'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm'
+      ];
+      
+      const sanitized = { ...data };
+      numericFields.forEach(field => {
+        if (sanitized[field] === '' || sanitized[field] === undefined) {
+          sanitized[field] = null;
+        } else if (sanitized[field] !== null && !isNaN(Number(sanitized[field]))) {
+          // Convert to proper number type
+          sanitized[field] = Number(sanitized[field]);
+        }
+      });
+      
+      return sanitized;
+    };
+
+    const sanitizedUpdates = sanitizeNumericFields(updates);
+
     const setData = {
-      ...updates,
-      eventDate: updates.eventDate ? new Date(updates.eventDate) : undefined,
-      documents: updates.documents || currentBooking.documents,
+      ...sanitizedUpdates,
+      eventDate: sanitizedUpdates.eventDate ? new Date(sanitizedUpdates.eventDate) : undefined,
+      documents: sanitizedUpdates.documents || currentBooking.documents,
       updatedAt: new Date(),
     };
 
