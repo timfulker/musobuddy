@@ -41,20 +41,14 @@ function shouldSkipAuth(): boolean {
 }
 
 function recordAuthFailure(isNoTokenError: boolean = false): void {
+  // ALL failures count toward circuit breaker to prevent loops
+  authFailureCount++;
+  lastAuthFailure = Date.now();
+  
   if (isNoTokenError) {
     consecutiveNoTokenFailures++;
-    // Only count the first few "no token" errors to avoid circuit breaker on normal pages
-    if (consecutiveNoTokenFailures <= MAX_NO_TOKEN_FAILURES) {
-      authFailureCount++;
-      lastAuthFailure = Date.now();
-      console.log(`🔴 No token failure #${consecutiveNoTokenFailures} recorded (total: ${authFailureCount})`);
-    } else {
-      console.log(`🟡 Additional no token failure ignored (${consecutiveNoTokenFailures})`);
-    }
+    console.log(`🔴 No token failure #${consecutiveNoTokenFailures} recorded (total: ${authFailureCount})`);
   } else {
-    // Real auth failures (401, 404, 403) always count
-    authFailureCount++;
-    lastAuthFailure = Date.now();
     console.log(`🔴 Auth failure #${authFailureCount} recorded`);
   }
 }
