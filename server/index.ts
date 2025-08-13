@@ -664,6 +664,59 @@ app.post('/api/webhook/mailgun',
   
   // CRITICAL: Global error handler to prevent 500 errors to Mailgun
   try {
+    // Helper function to save any email to Review Messages
+    const saveToReviewMessages = async (reason: string, errorDetails?: string) => {
+      try {
+        const { storage } = await import('./core/storage');
+        
+        const fromField = req.body.From || req.body.from || req.body.sender || '';
+        const subjectField = req.body.Subject || req.body.subject || '';
+        const bodyField = req.body['body-plain'] || req.body.text || req.body['stripped-text'] || '';
+        
+        // Extract email and name
+        let clientEmail = '';
+        const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
+        if (emailMatch) clientEmail = emailMatch[0];
+        
+        let clientName = 'Unknown';
+        if (fromField.includes('<')) {
+          const nameMatch = fromField.match(/^([^<]+)/);
+          if (nameMatch) clientName = nameMatch[1].trim();
+        } else if (clientEmail) {
+          clientName = clientEmail.split('@')[0];
+        }
+        
+        await storage.createUnparseableMessage({
+          userId: "43963086", // Default admin user for review
+          source: 'email',
+          fromContact: `${clientName} <${clientEmail}>`,
+          rawMessage: bodyField || 'No message content',
+          clientAddress: null,
+          messageType: 'parsing_failed',
+          parsingErrorDetails: `${reason}${errorDetails ? `: ${errorDetails}` : ''}`
+        });
+        
+        console.log(`📋 [${requestId}] Saved to Review Messages - ${reason}`);
+        
+        return res.json({
+          success: true,
+          savedForReview: true,
+          message: `Email saved for manual review: ${reason}`,
+          requestId: requestId,
+          fromEmail: clientEmail
+        });
+      } catch (storageError: any) {
+        console.error(`❌ [${requestId}] CRITICAL: Failed to save to Review Messages:`, storageError);
+        // Fallback: still return 200 to prevent Mailgun retries
+        return res.status(200).json({
+          success: false,
+          error: 'Failed to save to review messages',
+          requestId: requestId,
+          details: storageError?.message
+        });
+      }
+    };
+    
     // ENHANCED DEBUGGING: Log content type and parsing method
     const contentType = req.headers['content-type'] || '';
     console.log(`📧 [${requestId}] Content-Type: ${contentType}`);
@@ -704,7 +757,7 @@ app.post('/api/webhook/mailgun',
     
     if (!fromField && !subjectField && !bodyField) {
       console.log(`❌ [${requestId}] No email data found`);
-      return res.status(400).json({ error: 'No email data found' });
+      return saveToReviewMessages('No email data found', 'Missing from, subject, and body fields');
     }
     
     // Extract email and name
@@ -754,35 +807,12 @@ app.post('/api/webhook/mailgun',
       
       // Store unparseable message for manual review if completely unparseable
       if (isCompletelyUnparseable) {
-        try {
-          // Import storage methods
-          const { storage } = await import('./core/storage');
-          
-          await storage.createUnparseableMessage({
-            userId: "43963086", // Default admin user for now, will be corrected after user lookup
-            source: 'email',
-            fromContact: `${clientName} <${clientEmail}>`,
-            rawMessage: bodyField || 'No message content',
-            clientAddress: null,
-            messageType: 'vague',
-            parsingErrorDetails: `AI parsing failed: ${aiError?.message || 'Unknown error'}`
-          });
-          
-          console.log(`📋 [${requestId}] Saved unparseable email for manual review from ${fromField}`);
-          
-          // Return success to prevent Mailgun retries
-          return res.json({
-            success: true,
-            savedForReview: true,
-            message: 'Message saved for manual review',
-            requestId: requestId,
-            fromEmail: clientEmail
-          });
-        } catch (storageError: any) {
-          console.error(`❌ [${requestId}] Failed to save unparseable message:`, storageError);
-          // Continue with fallback creation instead
-        }
+        return saveToReviewMessages('AI parsing failed - message too vague', aiError?.message);
       }
+      
+      // For any AI parsing failure, save to review messages
+      console.log(`⚠️ [${requestId}] AI parsing failed - saving to Review Messages`);
+      return saveToReviewMessages('AI parsing failed', aiError?.message);
       
       aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null, messageType: "general", isPriceEnquiry: false };
     }
@@ -816,6 +846,7 @@ app.post('/api/webhook/mailgun',
           }
         } catch (error) {
           console.log(`❌ [${requestId}] FALLBACK: Error looking up user by prefix:`, error);
+          return saveToReviewMessages('User lookup failed', error?.toString());
         }
       }
     }
@@ -883,40 +914,14 @@ app.post('/api/webhook/mailgun',
         });
       } catch (storageError: any) {
         console.error(`❌ [${requestId}] Failed to save price enquiry:`, storageError);
-        // Continue with normal booking creation if storage fails
+        return saveToReviewMessages('Price enquiry storage failed', storageError?.message);
       }
     }
 
     // CRITICAL CHECK: Don't create booking without valid event date
     if (!aiResult.eventDate || aiResult.eventDate === null) {
-      try {
-        // Import storage methods for unparseable message handling
-        const { storage } = await import('./core/storage');
-        
-        await storage.createUnparseableMessage({
-          userId: userId,
-          source: 'email',
-          fromContact: `${clientName} <${clientEmail}>`,
-          rawMessage: bodyField,
-          clientAddress: null,
-          messageType: aiResult.subcategory || 'vague',
-          parsingErrorDetails: `No event date found | Categorized as: ${aiResult.subcategory || 'vague'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
-        });
-        
-        console.log(`📅 [${requestId}] No event date found - saved to review messages instead of creating booking`);
-        
-        return res.json({
-          success: true,
-          savedForReview: true,
-          message: 'No event date found - saved for manual review',
-          requestId: requestId,
-          fromEmail: clientEmail,
-          reason: 'no_date'
-        });
-      } catch (storageError: any) {
-        console.error(`❌ [${requestId}] Failed to save no-date message:`, storageError);
-        return res.status(500).json({ error: 'Failed to process message without date' });
-      }
+      console.log(`📅 [${requestId}] No event date found - saving to Review Messages`);
+      return saveToReviewMessages('No valid event date found', `Message type: ${aiResult.subcategory || aiResult.messageType || 'unknown'}, isPriceEnquiry: ${aiResult.isPriceEnquiry}`);
     }
 
     // Parse currency values for database
@@ -1010,8 +1015,13 @@ app.post('/api/webhook/mailgun',
           }
         }
       } catch (venueError: any) {
-        console.warn(`⚠️ [${requestId}] Failed to lookup venue details for "${aiResult.venue}":`, venueError.message);
-        // Continue without venue details - booking will still be created
+        console.warn(`⚠️ [${requestId}] Google Maps venue lookup failed for "${aiResult.venue}":`, venueError.message);
+        // If Google Maps fails and venue is critical, save to review messages
+        if (venueError.message?.includes('quota') || venueError.message?.includes('API key')) {
+          console.log(`⚠️ [${requestId}] Google Maps API issue - saving to Review Messages for manual venue lookup`);
+          return saveToReviewMessages('Google Maps API failed', `Venue lookup failed for "${aiResult.venue}": ${venueError.message}`);
+        }
+        // Otherwise continue without venue details - booking will still be created
       }
     }
 
@@ -1090,7 +1100,8 @@ app.post('/api/webhook/mailgun',
       console.log(`✅ [${requestId}] Created enhanced booking #${newBooking.id} with venue details - SUCCESS`);
     } catch (dbError: any) {
       console.error(`❌ [${requestId}] Database error creating booking:`, dbError);
-      return res.status(500).json({ error: 'Failed to create booking', details: dbError?.message || 'Unknown database error' });
+      // Save to Review Messages instead of returning error
+      return saveToReviewMessages('Booking creation failed', `Database error: ${dbError?.message || 'Unknown database error'}`);
     }
     
     // Auto-create client in address book from inquiry
@@ -1100,7 +1111,7 @@ app.post('/api/webhook/mailgun',
         console.log(`✅ [${requestId}] Client auto-created/updated in address book: ${clientName}`);
       } catch (clientError) {
         console.error(`⚠️ [${requestId}] Failed to auto-create client:`, clientError);
-        // Don't fail the booking creation if client creation fails
+        // Don't fail the booking creation if client creation fails - just log the error
       }
     }
     
