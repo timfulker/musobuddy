@@ -3,31 +3,8 @@ import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
-import Stripe from 'stripe';
 import { generateInvoicePDF } from '../core/invoice-pdf-generator';
 import { uploadInvoiceToCloud } from '../core/cloud-storage';
-
-// FORCE TEST MODE for now - always use test keys until we're ready for live payments
-const isProduction = false; // Explicitly force test mode
-const stripeKey = process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
-
-console.log(`🔧 FORCED Stripe mode: TEST (Override enabled)`);
-console.log(`🔑 Using Stripe key: ${stripeKey?.substring(0, 12)}... (${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'})`);
-console.log(`🧪 Test key available: ${!!process.env.STRIPE_TEST_SECRET_KEY}, Live key available: ${!!process.env.STRIPE_SECRET_KEY}`);
-
-if (!stripeKey) {
-  throw new Error('Missing required Stripe secret key');
-}
-
-// Verify we're using test key
-if (!stripeKey.startsWith('sk_test')) {
-  console.error('❌ CRITICAL: Not using test key!');
-  throw new Error('STRIPE TEST KEY REQUIRED FOR DEVELOPMENT');
-}
-
-const stripe = new Stripe(stripeKey, {
-  apiVersion: "2025-07-30.basil",
-});
 
 export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
@@ -46,7 +23,7 @@ export function registerInvoiceRoutes(app: Express) {
       // Get user settings for business info
       const userSettings = await storage.getSettings(invoice.userId);
       
-      // Return only necessary public information
+      // Return only necessary public information including bank details
       const publicInvoice = {
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
@@ -56,7 +33,8 @@ export function registerInvoiceRoutes(app: Express) {
         status: invoice.status,
         cloudStorageUrl: invoice.cloudStorageUrl,
         businessName: userSettings?.businessName || 'MusoBuddy User',
-        businessEmail: userSettings?.businessEmail
+        businessEmail: userSettings?.businessEmail,
+        bankDetails: userSettings?.bankDetails ? JSON.parse(userSettings.bankDetails) : null
       };
       
       console.log(`✅ Retrieved public invoice ${invoice.invoiceNumber} for client ${invoice.clientName}`);
@@ -67,183 +45,50 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Public payment endpoint - creates Stripe payment link for clients
-  app.post('/api/public/invoice/:token/pay', async (req: any, res) => {
+  // Manual payment status update endpoint (for bank transfer payments)
+  app.post('/api/invoice/:id/mark-paid', requireAuth, async (req: any, res) => {
     try {
-      const { token } = req.params;
-      console.log(`💳 Creating payment link for invoice token: ${token}`);
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.user.id;
       
-      const invoice = await storage.getInvoiceByToken(token);
-      if (!invoice) {
+      // Verify invoice ownership
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice || invoice.userId !== userId) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
       if (invoice.status === 'paid') {
-        return res.status(400).json({ error: 'Invoice already paid' });
+        return res.status(400).json({ error: 'Invoice already marked as paid' });
       }
 
-      console.log(`💳 Creating payment with key type: ${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'}`);
-      console.log(`🔧 Full key used: ${stripeKey}`);
-      console.log(`💰 Amount: £${invoice.amount} (${Math.round(parseFloat(invoice.amount) * 100)} pence)`);
+      console.log(`✅ Manually marking invoice ${invoice.invoiceNumber} as paid`);
       
-      // Determine correct domain for success URL
-      const baseUrl = process.env.REPLIT_DEPLOYMENT ? 'https://www.musobuddy.com' : req.headers.origin;
-      const successUrl = `${baseUrl}/payment-success?invoice=${invoice.invoiceNumber}&session_id={CHECKOUT_SESSION_ID}`;
-      console.log(`🔗 Success URL: ${successUrl}`);
+      // Mark invoice as paid
+      await storage.updateInvoice(invoiceId, userId, { status: 'paid' });
       
-      // Create Stripe checkout session
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [{
-          price_data: {
-            currency: 'gbp',
-            product_data: {
-              name: `Invoice ${invoice.invoiceNumber}`,
-              description: `Payment for ${invoice.clientName}`,
-            },
-            unit_amount: Math.round(parseFloat(invoice.amount) * 100), // Convert to pence
-          },
-          quantity: 1,
-        }],
-        mode: 'payment',
-        success_url: successUrl,
-        cancel_url: `${req.headers.origin}/invoice/${token}`,
-        metadata: {
-          invoiceId: invoice.id.toString(),
-          invoiceToken: token,
-        },
-      });
-
-      console.log(`✅ Created payment session for invoice ${invoice.invoiceNumber}: ${session.id}`);
-      res.json({ paymentUrl: session.url });
-    } catch (error) {
-      console.error('❌ Failed to create payment link:', error);
-      res.status(500).json({ error: 'Failed to create payment link' });
-    }
-  });
-
-  // Test webhook endpoint to verify webhook functionality
-  app.post('/api/stripe/webhook/test', (req, res) => {
-    console.log('🧪 TEST WEBHOOK HIT - Webhook endpoint is working');
-    res.json({ status: 'test webhook received', timestamp: new Date().toISOString() });
-  });
-
-  // Stripe webhook handler for payment completion
-  app.post('/api/stripe/webhook', async (req: any, res) => {
-    try {
-      const sig = req.headers['stripe-signature'];
-      let event;
-
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || '');
-      } catch (err: any) {
-        console.error('❌ Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
-
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as any;
-        const invoiceId = session.metadata?.invoiceId;
+      // Get user settings for PDF generation
+      const userSettings = await storage.getSettings(userId);
+      if (userSettings) {
+        // Regenerate PDF with PAID status
+        const paidInvoiceData = { ...invoice, status: 'paid', paidAt: new Date() };
         
-        console.log(`🎉 WEBHOOK FIRED: Payment completed for session ${session.id}`);
-        console.log(`📋 Session metadata:`, session.metadata);
+        // Upload updated PDF to cloud storage
+        const uploadResult = await uploadInvoiceToCloud(paidInvoiceData, userSettings);
         
-        if (invoiceId) {
-          console.log(`💰 Payment completed for invoice ID: ${invoiceId}`);
-          
-          // Mark invoice as paid and regenerate PDF
-          const invoice = await storage.getInvoice(parseInt(invoiceId));
-          if (invoice) {
-            // Update invoice status in database
-            const updatedInvoice = await storage.updateInvoice(parseInt(invoiceId), invoice.userId, {
-              status: 'paid',
-              paidAt: new Date(),
-            });
-            
-            console.log(`💳 Regenerating PDF for paid invoice #${invoiceId}`);
-            
-            // Regenerate PDF with PAID status and re-upload to cloud
-            try {
-              const userSettings = await storage.getSettings(invoice.userId);
-              if (userSettings) {
-                const paidInvoiceData = { ...invoice, status: 'paid', paidAt: new Date() };
-                
-                // Generate and upload updated PDF to cloud storage with PAID status
-                const uploadResult = await uploadInvoiceToCloud(paidInvoiceData, userSettings);
-                
-                if (uploadResult.success) {
-                  console.log(`✅ PDF regenerated and uploaded with PAID status: ${uploadResult.url}`);
-                  
-                  // Send payment confirmation emails to both client and user
-                  const emailService = new EmailService();
-                  
-                  // Send to client
-                  if (invoice.clientEmail) {
-                    await emailService.sendInvoice(paidInvoiceData, userSettings, 'Payment confirmed - thank you for your payment!');
-                    console.log(`✅ Payment confirmation email sent to client for invoice #${invoiceId}`);
-                  }
-                  
-                  // Send notification to user/business owner
-                  if (userSettings?.businessEmail) {
-                    const businessSubject = `Payment Received: Invoice ${invoice.invoiceNumber} - ${invoice.clientName}`;
-                    const businessMessage = `Great news! Invoice ${invoice.invoiceNumber} for ${invoice.clientName} has been paid. Amount: £${invoice.amount}`;
-                    
-                    const businessEmailData = {
-                      to: userSettings.businessEmail,
-                      subject: businessSubject,
-                      html: `
-                        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-                          <div style="background: #10b981; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-                            <h2 style="margin: 0;">💰 Payment Received!</h2>
-                          </div>
-                          
-                          <p>Excellent news! You've received a payment for invoice ${invoice.invoiceNumber}.</p>
-                          
-                          <div style="background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981;">
-                            <h3 style="color: #065f46; margin-top: 0;">Payment Details:</h3>
-                            <p><strong>Client:</strong> ${invoice.clientName}</p>
-                            <p><strong>Invoice:</strong> ${invoice.invoiceNumber}</p>
-                            <p><strong>Amount:</strong> £${invoice.amount}</p>
-                            <p><strong>Paid:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
-                          </div>
-                          
-                          <div style="text-align: center; margin: 30px 0;">
-                            <a href="${uploadResult.url}" 
-                               style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                              📋 Download Paid Invoice
-                            </a>
-                          </div>
-                          
-                          <p>The paid invoice with "PAID" status has been generated and is available via the link above.</p>
-                          
-                          <p>Best regards,<br>
-                          MusoBuddy Team</p>
-                        </div>
-                      `
-                    };
-                    
-                    await emailService.sendEmail(businessEmailData);
-                    console.log(`✅ Payment notification email sent to business owner for invoice #${invoiceId}`);
-                  }
-                } else {
-                  console.error('❌ Failed to upload paid invoice PDF:', uploadResult.error);
-                }
-              }
-            } catch (pdfError) {
-              console.error('⚠️ Failed to regenerate PDF or send email:', pdfError);
-            }
-          }
-          
-          console.log(`✅ Invoice ${invoiceId} marked as paid`);
+        if (uploadResult.success) {
+          console.log(`✅ PDF regenerated and uploaded with PAID status: ${uploadResult.url}`);
         }
       }
-
-      res.json({ received: true });
+      
+      console.log(`✅ Invoice ${invoice.invoiceNumber} marked as paid successfully`);
+      res.json({ success: true, message: 'Invoice marked as paid' });
     } catch (error: any) {
-      console.error('❌ Stripe webhook error:', error);
-      res.status(500).json({ error: 'Webhook processing failed' });
+      console.error('❌ Error marking invoice as paid:', error);
+      res.status(500).json({ error: 'Failed to update invoice status' });
     }
   });
+
+
 
   // REMOVED: MusoBuddy invoice view endpoint - files are viewed directly on R2
   // Security is handled through random tokens in the R2 URL paths
@@ -751,82 +596,7 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Create Stripe payment link for invoice
-  app.post('/api/invoices/:id/create-payment-link', requireAuth, async (req: any, res) => {
-    try {
-      const invoiceId = parseInt(req.params.id);
-      const userId = req.user.userId;
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      
-      if (isNaN(invoiceId)) {
-        return res.status(400).json({ error: 'Invalid invoice ID' });
-      }
-      
-      const invoice = await storage.getInvoice(invoiceId);
-      if (!invoice) {
-        return res.status(404).json({ error: 'Invoice not found' });
-      }
-      
-      if (invoice.userId !== userId) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-      
-      if (invoice.status === 'paid') {
-        return res.status(400).json({ error: 'Invoice is already paid' });
-      }
-      
-      // Create Stripe payment link
-      const paymentLink = await stripe.paymentLinks.create({
-        line_items: [
-          {
-            price_data: {
-              currency: 'gbp',
-              product_data: {
-                name: `Invoice ${invoice.invoiceNumber}`,
-                description: `Payment for ${invoice.clientName} - ${invoice.invoiceNumber}`,
-              },
-              unit_amount: Math.round(parseFloat(invoice.amount) * 100), // Convert to pence
-            },
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          invoiceId: invoiceId.toString(),
-          userId: userId.toString(),
-          invoiceNumber: invoice.invoiceNumber,
-        },
-        after_completion: {
-          type: 'redirect',
-          redirect: {
-            url: `${process.env.REPLIT_DEV_DOMAIN || 'https://www.musobuddy.com'}/payment-success?invoice=${invoice.invoiceNumber}`,
-          },
-        },
-      });
-      
-      // Update invoice with payment link
-      await storage.updateInvoice(invoiceId, userId, {
-        stripePaymentLinkId: paymentLink.id,
-        stripePaymentUrl: paymentLink.url,
-      });
-      
-      console.log(`✅ Created Stripe payment link for invoice #${invoiceId}: ${paymentLink.url}`);
-      res.json({ 
-        success: true, 
-        paymentUrl: paymentLink.url,
-        paymentLinkId: paymentLink.id
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Failed to create payment link:', error);
-      res.status(500).json({ 
-        error: 'Failed to create payment link',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
+
 
 
 

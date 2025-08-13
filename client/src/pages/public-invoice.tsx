@@ -15,6 +15,11 @@ interface PublicInvoice {
   cloudStorageUrl: string;
   businessName?: string;
   businessEmail?: string;
+  bankDetails?: {
+    sortCode?: string;
+    accountNumber?: string;
+    accountName?: string;
+  };
 }
 
 export default function PublicInvoice() {
@@ -23,7 +28,6 @@ export default function PublicInvoice() {
   const [invoice, setInvoice] = useState<PublicInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -51,41 +55,15 @@ export default function PublicInvoice() {
     fetchInvoice();
   }, [token]);
 
-  const handlePayment = async () => {
-    if (!invoice) return;
-    
-    setPaymentLoading(true);
-    try {
-      const response = await fetch(`/api/public/invoice/${token}/pay`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Payment setup failed');
-      }
-
-      const { paymentUrl } = await response.json();
-      
-      // Redirect to Stripe payment page
-      window.location.href = paymentUrl;
-      
-    } catch (err: any) {
-      toast({
-        title: "Payment Error",
-        description: err.message || "Failed to set up payment",
-        variant: "destructive",
-      });
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
-  const handleDownload = () => {
+  const handleDownloadInvoice = () => {
     if (invoice?.cloudStorageUrl) {
       window.open(invoice.cloudStorageUrl, '_blank');
+    } else {
+      toast({
+        title: "Download unavailable",
+        description: "Invoice PDF is not available for download",
+        variant: "destructive",
+      });
     }
   };
 
@@ -156,24 +134,13 @@ export default function PublicInvoice() {
           <CardContent>
             <div className="flex gap-3">
               <Button
-                onClick={handleDownload}
+                onClick={handleDownloadInvoice}
                 variant="outline"
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
                 Download PDF
               </Button>
-              
-              {canPay && (
-                <Button
-                  onClick={handlePayment}
-                  disabled={paymentLoading}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  {paymentLoading ? 'Setting up payment...' : 'Pay Now'}
-                </Button>
-              )}
               
               {isPaid && (
                 <div className="flex items-center gap-2 text-green-600 font-medium">
@@ -184,6 +151,51 @@ export default function PublicInvoice() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Instructions */}
+        {!isPaid && invoice.bankDetails && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Instructions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-700 mb-3">
+                  Please transfer payment to the following bank account:
+                </p>
+                <div className="grid gap-2 text-sm">
+                  {invoice.bankDetails.accountName && (
+                    <div>
+                      <span className="font-medium">Account Name:</span> {invoice.bankDetails.accountName}
+                    </div>
+                  )}
+                  {invoice.bankDetails.sortCode && (
+                    <div>
+                      <span className="font-medium">Sort Code:</span> {invoice.bankDetails.sortCode}
+                    </div>
+                  )}
+                  {invoice.bankDetails.accountNumber && (
+                    <div>
+                      <span className="font-medium">Account Number:</span> {invoice.bankDetails.accountNumber}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Reference:</span> Invoice {invoice.invoiceNumber}
+                  </div>
+                  <div>
+                    <span className="font-medium">Amount:</span> £{invoice.amount}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 mt-3">
+                  Please include the invoice number as your payment reference.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* PDF Viewer */}
         <Card>

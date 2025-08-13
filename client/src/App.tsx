@@ -41,7 +41,7 @@ import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
-import PaymentSuccess from "@/pages/payment-success";
+
 
 import { useEffect } from "react";
 
@@ -104,7 +104,7 @@ function Router() {
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/success" component={SuccessPage} />
-      <Route path="/payment-success" component={PaymentSuccess} />
+
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />

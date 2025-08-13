@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Download, FileText, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Invoice {
   id: number;
@@ -22,6 +24,8 @@ export default function ViewInvoice() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [markPaidLoading, setMarkPaidLoading] = useState(false);
+  const { toast } = useToast();
 
   const { data: invoice, isLoading, error } = useQuery<Invoice>({
     queryKey: [`/api/invoices/${id}/view`],
@@ -47,6 +51,32 @@ export default function ViewInvoice() {
       console.error('Download failed:', error);
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const handleMarkPaid = async () => {
+    if (!id) return;
+    
+    setMarkPaidLoading(true);
+    try {
+      await apiRequest('POST', `/api/invoice/${id}/mark-paid`);
+      
+      toast({
+        title: "Invoice Updated",
+        description: "Invoice has been marked as paid successfully.",
+      });
+      
+      // Refresh the invoice data
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Mark paid failed:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark invoice as paid",
+        variant: "destructive",
+      });
+    } finally {
+      setMarkPaidLoading(false);
     }
   };
 
@@ -122,19 +152,39 @@ export default function ViewInvoice() {
                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</label>
                 <p className="text-gray-900 dark:text-gray-100">{new Date(invoice.createdAt).toLocaleDateString()}</p>
               </div>
-              <Button onClick={handleDownload} className="w-full" disabled={pdfLoading}>
-                {pdfLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF
-                  </>
+              <div className="space-y-2">
+                <Button onClick={handleDownload} className="w-full" disabled={pdfLoading}>
+                  {pdfLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </>
+                  )}
+                </Button>
+                
+                {invoice.status !== 'paid' && (
+                  <Button 
+                    onClick={handleMarkPaid} 
+                    variant="outline" 
+                    className="w-full"
+                    disabled={markPaidLoading}
+                  >
+                    {markPaidLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Mark as Paid'
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
             </CardContent>
           </Card>
 
