@@ -10,16 +10,29 @@ export function registerOnboardingRoutes(app: Express) {
       const onboardingData = req.body;
 
       console.log('📋 Completing onboarding for user:', userId);
+      console.log('📋 Onboarding data received:', JSON.stringify(onboardingData, null, 2));
 
       if (!userId) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
-      // Update user profile with onboarding data
+      // Validate required fields
+      if (!onboardingData.businessName || !onboardingData.firstName || !onboardingData.emailPrefix) {
+        return res.status(400).json({ error: 'Missing required fields: businessName, firstName, emailPrefix' });
+      }
+
+      // Check if email prefix is already taken
+      const existingUser = await storage.getUserByEmailPrefix(onboardingData.emailPrefix);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ error: 'Email prefix already taken. Please choose another.' });
+      }
+
+      // Update user profile with onboarding data  
       const updatedUser = await storage.updateUser(userId, {
         firstName: onboardingData.firstName,
         lastName: onboardingData.lastName,
         phoneNumber: onboardingData.phoneNumber,
+        emailPrefix: onboardingData.emailPrefix, // CRITICAL for booking emails
         onboardingCompleted: true
       });
 

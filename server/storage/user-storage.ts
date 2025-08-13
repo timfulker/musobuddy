@@ -219,6 +219,7 @@ export class UserStorage {
     emailPrefix: string;
     stripeCustomerId: string;
     isAdmin: boolean;
+    onboardingCompleted: boolean;
   }>) {
     const updateData: any = { ...data, updatedAt: new Date() };
     

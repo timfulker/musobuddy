@@ -65,6 +65,7 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
     
     // Contact & Location  
     phoneNumber: user?.phoneNumber || '',
+    emailPrefix: '', // CRITICAL: For receiving booking emails
     businessAddress: '',
     city: '',
     postcode: '',
@@ -100,10 +101,23 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
       queryClient.invalidateQueries();
       onComplete();
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
+      console.error('❌ Onboarding failed:', error);
+      
+      // Try to get more specific error from response
+      let errorMessage = "Failed to complete setup. Please try again.";
+      if (error?.response) {
+        try {
+          const errorData = await error.response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If can't parse response, use default message
+        }
+      }
+      
       toast({
-        title: "Setup Error",
-        description: "Failed to complete setup. Please try again.",
+        title: "Setup Error", 
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -122,6 +136,17 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
   };
 
   const handleComplete = () => {
+    // Validate required fields
+    if (!formData.businessName || !formData.firstName || !formData.lastName || !formData.emailPrefix || !formData.phoneNumber) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields marked with *",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('🚀 Submitting onboarding data:', formData);
     completeOnboardingMutation.mutate(formData);
   };
 
@@ -215,12 +240,32 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <MapPin className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Contact & Location Details</h3>
-              <p className="text-gray-600 mt-2">Help clients find and contact you easily</p>
+              <Mail className="w-16 h-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold">Contact & Email Setup</h3>
+              <p className="text-gray-600 mt-2">Set up your professional booking email address</p>
             </div>
 
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="emailPrefix">Email Prefix for Bookings *</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="emailPrefix"
+                    value={formData.emailPrefix}
+                    onChange={(e) => updateFormData('emailPrefix', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                    placeholder="e.g., tim, saxweddings, musicservices"
+                    className="flex-1"
+                  />
+                  <span className="text-gray-500">@enquiries.musobuddy.com</span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Your personalized email for receiving booking requests (e.g., {formData.emailPrefix || 'youremail'}@enquiries.musobuddy.com)
+                </p>
+                <p className="text-xs text-amber-600">
+                  ⚠️ This email prefix must be unique and cannot be changed later
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Phone Number *</Label>
                 <Input
