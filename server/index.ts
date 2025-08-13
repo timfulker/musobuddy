@@ -623,22 +623,46 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
 app.post('/api/webhook/mailgun', 
   // Use multer to handle both form-data (with attachments) and urlencoded (without)
   (req, res, next) => {
-    const contentType = req.headers['content-type'] || '';
-    
-    if (contentType.includes('multipart/form-data')) {
-      // Handle emails with attachments using multer
-      console.log('📎 Handling multipart request (with attachments)');
-      upload.any()(req, res, next);
-    } else {
-      // Handle emails without attachments using urlencoded
-      console.log('📧 Handling urlencoded request (no attachments)');
-      express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    try {
+      const contentType = req.headers['content-type'] || '';
+      
+      if (contentType.includes('multipart/form-data')) {
+        // Handle emails with attachments using multer
+        console.log('📎 Handling multipart request (with attachments)');
+        upload.any()(req, res, (err) => {
+          if (err) {
+            console.error('❌ Multer error processing attachment:', err);
+            // Continue anyway - don't let attachment processing block email processing
+            req.files = []; // Set empty files array
+            next();
+          } else {
+            next();
+          }
+        });
+      } else {
+        // Handle emails without attachments using urlencoded
+        console.log('📧 Handling urlencoded request (no attachments)');
+        express.urlencoded({ extended: true, limit: '10mb' })(req, res, (err) => {
+          if (err) {
+            console.error('❌ URL encoding error:', err);
+            // Continue anyway - don't let parsing block email processing
+            next();
+          } else {
+            next();
+          }
+        });
+      }
+    } catch (middlewareError) {
+      console.error('❌ Middleware setup error:', middlewareError);
+      // Continue to main handler - let it deal with the error properly
+      next();
     }
   },
   async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received - ${new Date().toISOString()}`);
   
+  // CRITICAL: Global error handler to prevent 500 errors to Mailgun
   try {
     // ENHANCED DEBUGGING: Log content type and parsing method
     const contentType = req.headers['content-type'] || '';
@@ -1097,30 +1121,33 @@ app.post('/api/webhook/mailgun',
       fromEmail: req.body.From || req.body.from || 'unknown'
     });
     
-    // SPECIAL HANDLING for problem email addresses - never return 400
+    // ENHANCED: Always return 200 to Mailgun to prevent retries, but log errors
     const fromEmail = req.body.From || req.body.from || '';
     const problemEmails = ['timfulkermusic@gmail.com', 'tim@saxweddings.com'];
     const isProblematicEmail = problemEmails.some(email => fromEmail.includes(email));
     
     if (isProblematicEmail) {
-      console.error(`🔍 [${requestId}] CRITICAL ERROR for problem email ${fromEmail} - returning 200 to avoid Mailgun 400:`, error);
-      
-      // Log webhook event for monitoring
-      logWebhookEvent({
-        type: 'email',
-        status: 'error',
-        error: `${fromEmail} processing failed: ${error?.message || 'Unknown error'}`
-      });
-      
-      // Return 200 to prevent Mailgun retries, but log the error
-      return res.status(200).json({ 
-        success: false,
-        error: 'Processing failed but acknowledged', 
-        requestId: requestId,
-        details: error?.message || 'Unknown error',
-        fromEmail: fromEmail
-      });
+      console.error(`🔍 [${requestId}] CRITICAL ERROR for problem email ${fromEmail} - returning 200 to avoid Mailgun retries:`, error);
+    } else {
+      console.error(`❌ [${requestId}] WEBHOOK ERROR - returning 200 to prevent Mailgun retries:`, error);
     }
+    
+    // Log webhook event for monitoring
+    logWebhookEvent({
+      type: 'email',
+      status: 'error',
+      error: `${fromEmail} processing failed: ${error?.message || 'Unknown error'}`
+    });
+    
+    // CRITICAL FIX: Always return 200 to Mailgun to prevent infinite retries
+    return res.status(200).json({ 
+      success: false,
+      error: 'Processing failed but acknowledged', 
+      requestId: requestId,
+      details: error?.message || 'Unknown error',
+      fromEmail: fromEmail,
+      middleware_error: true
+    });
     
     // Log webhook event for monitoring
     logWebhookEvent({
