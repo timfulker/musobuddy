@@ -34,8 +34,8 @@ export class EmailService {
     }
 
     try {
-      // CRITICAL WORKAROUND: Force correct production domain since ENV is set to sandbox
-      const domain = 'enquiries.musobuddy.com';
+      // Use production domain for live emails, development domain for testing
+      const domain = process.env.NODE_ENV === 'production' ? 'enquiries.musobuddy.com' : (process.env.MAILGUN_DOMAIN || 'enquiries.musobuddy.com');
       
       const messageData: any = {
         from: emailData.from || `MusoBuddy <noreply@${domain}>`,
@@ -59,7 +59,7 @@ export class EmailService {
       console.log(`📧 Sending email: ${emailData.subject}`);
       console.log(`📧 From: ${messageData.from}`);  
       console.log(`📧 To: ${messageData.to}`);
-      console.log(`📧 Domain: ${domain} (FORCED PRODUCTION OVERRIDE)`);
+      console.log(`📧 Domain: ${domain} (${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'})`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
       

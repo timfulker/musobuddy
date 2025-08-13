@@ -311,7 +311,7 @@ export class Storage {
     return invoiceStorage.createInvoice(invoiceData);
   }
 
-  async updateInvoice(id: number, updates: any, userId: string) {
+  async updateInvoice(id: number, userId: string, updates: any) {
     return invoiceStorage.updateInvoice(id, userId, updates);
   }
 

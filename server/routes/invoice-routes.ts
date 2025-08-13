@@ -128,6 +128,19 @@ export function registerInvoiceRoutes(app: Express) {
               status: 'paid',
               paidAt: new Date(),
             });
+            
+            // Send payment confirmation email
+            try {
+              const userSettings = await storage.getSettings(invoice.userId);
+              
+              if (invoice.clientEmail && userSettings) {
+                const emailService = new EmailService();
+                await emailService.sendInvoice(invoice, userSettings, 'Payment confirmed - thank you for your payment!');
+                console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
+              }
+            } catch (emailError) {
+              console.error('⚠️ Failed to send payment confirmation email:', emailError);
+            }
           }
           
           console.log(`✅ Invoice ${invoiceId} marked as paid`);
@@ -216,10 +229,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          const updatedInvoice = await storage.updateInvoice(newInvoice.id, {
+          const updatedInvoice = await storage.updateInvoice(newInvoice.id, userId, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          }, userId);
+          });
           
           res.json(updatedInvoice);
         } else {
@@ -263,7 +276,7 @@ export function registerInvoiceRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
+      const updatedInvoice = await storage.updateInvoice(invoiceId, userId, req.body);
       
       // Regenerate PDF with updated data and upload to cloud
       try {
@@ -273,10 +286,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(updatedInvoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          const finalInvoice = await storage.updateInvoice(invoiceId, {
+          const finalInvoice = await storage.updateInvoice(invoiceId, userId, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          }, userId);
+          });
           
           console.log(`✅ Invoice #${invoiceId} PDF regenerated with updated data`);
           res.json(finalInvoice);
@@ -455,10 +468,10 @@ export function registerInvoiceRoutes(app: Express) {
         const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
         
         if (uploadResult.success && uploadResult.url) {
-          await storage.updateInvoice(parsedInvoiceId, {
+          await storage.updateInvoice(parsedInvoiceId, userId, {
             cloudStorageUrl: uploadResult.url,
             cloudStorageKey: uploadResult.key
-          }, userId);
+          });
           pdfUrl = uploadResult.url;
         } else {
           throw new Error('Failed to upload invoice to cloud storage');
@@ -466,10 +479,10 @@ export function registerInvoiceRoutes(app: Express) {
       }
       
       // Update invoice status to sent
-      await storage.updateInvoice(parsedInvoiceId, {
+      await storage.updateInvoice(parsedInvoiceId, userId, {
         status: 'sent',
         updatedAt: new Date()
-      }, userId);
+      });
       
       // Send email
       const emailService = new EmailService();
@@ -621,11 +634,11 @@ export function registerInvoiceRoutes(app: Express) {
       const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
       
       if (uploadResult.success && uploadResult.url) {
-        const updatedInvoice = await storage.updateInvoice(invoiceId, {
+        const updatedInvoice = await storage.updateInvoice(invoiceId, userId, {
           cloudStorageUrl: uploadResult.url,
           cloudStorageKey: uploadResult.key,
           updatedAt: new Date()
-        }, userId);
+        });
         
         console.log(`✅ Invoice #${invoiceId} PDF regenerated with current theme colors`);
         res.json({ 
@@ -703,10 +716,10 @@ export function registerInvoiceRoutes(app: Express) {
       });
       
       // Update invoice with payment link
-      await storage.updateInvoice(invoiceId, {
+      await storage.updateInvoice(invoiceId, userId, {
         stripePaymentLinkId: paymentLink.id,
         stripePaymentUrl: paymentLink.url,
-      }, userId);
+      });
       
       console.log(`✅ Created Stripe payment link for invoice #${invoiceId}: ${paymentLink.url}`);
       res.json({ 
@@ -724,50 +737,7 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Stripe webhook to handle payment completion
-  app.post('/api/stripe/webhook', async (req: any, res) => {
-    try {
-      const event = req.body;
-      
-      // Handle payment link completion
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const { invoiceId, userId } = session.metadata || {};
-        
-        if (invoiceId && userId) {
-          await storage.updateInvoice(parseInt(invoiceId), {
-            status: 'paid',
-            paidAt: new Date(),
-            stripeSessionId: session.id,
-          }, userId);
-          
-          console.log(`✅ Invoice #${invoiceId} marked as paid via Stripe webhook`);
-          
-          // Send payment confirmation email
-          try {
-            const invoice = await storage.getInvoice(parseInt(invoiceId));
-            const userSettings = await storage.getSettings(userId);
-            
-            if (invoice && invoice.clientEmail && userSettings) {
-              const emailService = new EmailService();
-              // Use existing sendInvoice method with payment confirmation message
-              // Send a basic confirmation email (we'll implement sendInvoice method separately)
-              console.log('📧 Payment confirmation logged - email sending will be implemented separately');
-              console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
-            }
-          } catch (emailError) {
-            console.error('⚠️ Failed to send payment confirmation email:', emailError);
-          }
-        }
-      }
-      
-      res.json({ received: true });
-      
-    } catch (error: any) {
-      console.error('❌ Stripe webhook error:', error);
-      res.status(500).json({ error: 'Webhook processing failed' });
-    }
-  });
+
 
   console.log('✅ Invoice routes configured');
 }
