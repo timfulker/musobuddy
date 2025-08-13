@@ -427,8 +427,8 @@ export default function NewBookingPage() {
             {/* Client & Contact Information */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-primary-50 rounded-t-lg border-b border-primary/10">
-                <CardTitle className="text-xl font-semibold text-primary-800 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-primary/50 to-primary-500 rounded-lg flex items-center justify-center">
+                <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">1</span>
                   </div>
                   Client & Contact Information
