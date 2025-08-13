@@ -568,5 +568,64 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // New endpoint: Authenticate users after Stripe checkout
+  app.post('/api/auth/stripe-login', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      console.log(`🔐 Stripe login attempt with session ID: ${sessionId}`);
+      
+      // Get session details from Stripe
+      const { stripeService } = await import('../core/stripe-service');
+      const session = await stripeService.getSessionDetails(sessionId);
+      
+      if (!session) {
+        return res.status(400).json({ error: 'Invalid session ID' });
+      }
+      
+      const userEmail = session.metadata?.userEmail || session.customer_email;
+      
+      if (!userEmail) {
+        return res.status(400).json({ error: 'No email found in session' });
+      }
+      
+      console.log(`🔐 Looking up user with email: ${userEmail}`);
+      
+      // Find the user created by the webhook
+      const user = await storage.getUserByEmail(userEmail);
+      
+      if (!user) {
+        // User might not exist yet if webhook hasn't processed
+        return res.status(404).json({ error: 'User not found. Please wait a moment and try again.' });
+      }
+      
+      // Generate JWT token for the user
+      const authToken = generateAuthToken(user.id, user.email || '', true);
+      
+      console.log(`✅ Stripe login successful for user: ${user.id} (${user.email})`);
+      
+      res.json({
+        success: true,
+        message: 'Authentication successful',
+        authToken,
+        user: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneVerified: true // Stripe users are considered verified
+        }
+      });
+      
+    } catch (error) {
+      console.error('Stripe login error:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+  
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
 }

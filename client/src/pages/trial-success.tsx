@@ -21,40 +21,77 @@ export default function TrialSuccessPage() {
     console.log('🔍 Loading state:', isLoading);
   }, []);
 
-  // Session restoration effect
+  // Session restoration effect - authenticate new Stripe users
   useEffect(() => {
     const restoreSession = async () => {
       if (!user && !isLoading) {
         setIsRestoringSession(true);
         
         try {
+          // Extract session ID from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const sessionId = urlParams.get('session_id');
           
-          
-          const response = await fetch('/api/auth/restore-session', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            const result = await response.json();
+          if (sessionId) {
+            console.log('🔐 Authenticating with Stripe session:', sessionId);
             
-            
-            toast({
-              title: "Welcome back!",
-              description: "Your session has been restored successfully.",
+            // Authenticate using Stripe session ID
+            const response = await fetch('/api/auth/stripe-login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ sessionId }),
             });
 
-            // Trigger auth refresh
-            window.location.reload();
+            if (response.ok) {
+              const result = await response.json();
+              
+              // Store the auth token for the correct user
+              if (result.authToken && result.user) {
+                const { storeAuthToken } = await import('@/utils/authToken');
+                storeAuthToken(result.authToken, result.user.email);
+                console.log('✅ Stored auth token for user:', result.user.email);
+              }
+              
+              toast({
+                title: "Welcome to MusoBuddy!",
+                description: "Your account has been created successfully.",
+              });
+
+              // Trigger auth refresh
+              window.location.reload();
+            } else {
+              console.error('❌ Stripe authentication failed:', response.status);
+              const error = await response.json();
+              
+              // If user not found, might need to wait for webhook
+              if (response.status === 404) {
+                setTimeout(() => {
+                  window.location.reload();
+                }, 3000);
+                
+                toast({
+                  title: "Setting up your account...",
+                  description: "Please wait a moment while we complete your setup.",
+                });
+              } else {
+                toast({
+                  title: "Authentication failed",
+                  description: error.error || "Please try logging in again.",
+                  variant: "destructive",
+                });
+                
+                setLocation('/');
+              }
+            }
           } else {
-            console.error('❌ Session restoration failed:', response.status);
+            // No session ID - user might be returning
+            console.error('❌ No session ID found in URL');
             
             toast({
-              title: "Session restoration failed",
-              description: "Please try logging in again.",
+              title: "Session not found",
+              description: "Please complete the signup process.",
               variant: "destructive",
             });
             
