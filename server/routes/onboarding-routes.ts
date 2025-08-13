@@ -54,6 +54,9 @@ export function registerOnboardingRoutes(app: Express) {
         country: onboardingData.country || 'United Kingdom',
         instrumentsServices: onboardingData.instrumentsServices || '',
         
+        // Save email prefix for settings page display (in emailFromName for backwards compatibility)
+        emailFromName: onboardingData.emailPrefix,
+        
         // Pricing information
         standardRate: parseFloat(onboardingData.standardRate) || 0,
         weddingRate: parseFloat(onboardingData.weddingRate) || 0,
