@@ -21,7 +21,7 @@ export function registerOnboardingRoutes(app: Express) {
         return res.status(400).json({ error: 'Missing required fields: firstName, emailPrefix' });
       }
 
-      // Check if email prefix is already taken
+      // Check if email prefix is already taken by another user
       const existingUser = await storage.getUserByEmailPrefix(onboardingData.emailPrefix);
       if (existingUser && existingUser.id !== userId) {
         return res.status(400).json({ error: 'Email prefix already taken. Please choose another.' });
