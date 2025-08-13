@@ -1059,6 +1059,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                             <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
                             <FormControl>
                               <AddressAutocomplete
+                                value={field.value} // Pass the form field value to display in input
                                 onSelect={(addressData) => {
                                   console.log('📍 Raw address data received:', addressData);
                                   

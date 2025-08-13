@@ -23,6 +23,7 @@ interface AddressAutocompleteProps {
   onSelect: (data: AddressData) => void;
   placeholder?: string;
   defaultValue?: string;
+  value?: string; // Add controlled value prop
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export default function AddressAutocomplete({
   onSelect,
   placeholder = "Start typing venue name or address...",
   defaultValue = "",
+  value, // Add value prop
   className = "border rounded px-3 py-2 w-full min-w-0"
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +39,14 @@ export default function AddressAutocomplete({
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [inputValue, setInputValue] = useState(defaultValue);
+  const [inputValue, setInputValue] = useState(value || defaultValue);
+  
+  // Sync with external value changes (for controlled input)
+  useEffect(() => {
+    if (value !== undefined && value !== inputValue) {
+      setInputValue(value);
+    }
+  }, [value]);
 
   // Fetch detailed place information
   const fetchPlaceDetails = async (placeId: string) => {
@@ -108,12 +117,6 @@ export default function AddressAutocomplete({
     setSuggestions([]);
     setError(null);
     
-    // Force the suggestions to stay hidden
-    setTimeout(() => {
-      setShowSuggestions(false);
-      setSuggestions([]);
-    }, 10);
-    
     // Start with basic address data
     const baseAddressData: AddressData = {
       address: suggestion.name || suggestion.formatted_address,
@@ -171,46 +174,11 @@ export default function AddressAutocomplete({
 
   // Fallback geocoding when user types and blurs without selecting
   const handleBlur = async () => {
-    // Small delay to allow click on suggestions
-    setTimeout(async () => {
-      if (!inputValue.trim()) return;
-      
-      const query = inputValue.trim();
-      if (query.length < 2) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        console.log("🗺️ Fallback geocoding:", query);
-        
-        const response = await apiRequest('/api/maps/geocode', {
-          method: 'POST',
-          body: JSON.stringify({ address: query })
-        });
-        
-        const result = await response.json();
-        
-        if (result.lat && result.lng) {
-          const addressData: AddressData = {
-            address: result.address || query,
-            formattedAddress: result.formattedAddress,
-            lat: result.lat,
-            lng: result.lng,
-            placeId: result.placeId
-          };
-          
-          console.log("✅ Fallback geocoding success:", addressData);
-          onSelect(addressData);
-        }
-      } catch (error: any) {
-        console.error("Geocoding error:", error);
-        setError("Could not find location");
-      } finally {
-        setIsLoading(false);
-        setShowSuggestions(false);
-      }
-    }, 150);
+    // Hide suggestions immediately on blur
+    setTimeout(() => {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }, 150); // Small delay to allow click events to complete
   };
 
   return (
