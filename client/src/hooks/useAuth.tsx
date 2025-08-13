@@ -6,7 +6,9 @@ import { isMobileDevice, findMobileAuthToken, forceMobileAuthRefresh } from '@/u
 // Circuit breaker to prevent infinite auth loops
 let authFailureCount = 0;
 let lastAuthFailure = 0;
+let consecutiveNoTokenFailures = 0;
 const MAX_AUTH_FAILURES = 3;
+const MAX_NO_TOKEN_FAILURES = 1; // Only count first "no token" as failure
 const FAILURE_RESET_TIME = 60000; // 1 minute
 
 function shouldSkipAuth(): boolean {
@@ -38,17 +40,31 @@ function shouldSkipAuth(): boolean {
   return false;
 }
 
-function recordAuthFailure(): void {
-  authFailureCount++;
-  lastAuthFailure = Date.now();
-  console.log(`🔴 Auth failure #${authFailureCount} recorded`);
+function recordAuthFailure(isNoTokenError: boolean = false): void {
+  if (isNoTokenError) {
+    consecutiveNoTokenFailures++;
+    // Only count the first few "no token" errors to avoid circuit breaker on normal pages
+    if (consecutiveNoTokenFailures <= MAX_NO_TOKEN_FAILURES) {
+      authFailureCount++;
+      lastAuthFailure = Date.now();
+      console.log(`🔴 No token failure #${consecutiveNoTokenFailures} recorded (total: ${authFailureCount})`);
+    } else {
+      console.log(`🟡 Additional no token failure ignored (${consecutiveNoTokenFailures})`);
+    }
+  } else {
+    // Real auth failures (401, 404, 403) always count
+    authFailureCount++;
+    lastAuthFailure = Date.now();
+    console.log(`🔴 Auth failure #${authFailureCount} recorded`);
+  }
 }
 
 function resetAuthFailures(): void {
-  if (authFailureCount > 0) {
-    console.log(`🟢 Auth success - resetting ${authFailureCount} previous failures`);
+  if (authFailureCount > 0 || consecutiveNoTokenFailures > 0) {
+    console.log(`🟢 Auth success - resetting ${authFailureCount} auth failures, ${consecutiveNoTokenFailures} no-token failures`);
     authFailureCount = 0;
     lastAuthFailure = 0;
+    consecutiveNoTokenFailures = 0;
   }
 }
 
@@ -107,7 +123,7 @@ export function useAuth() {
       // CRITICAL FIX: Never retry when no token exists
       if (error?.message === 'No auth token') {
         console.log('🚫 No auth token - stopping retries to prevent infinite loop');
-        recordAuthFailure();
+        recordAuthFailure(true); // Mark as no-token error
         return false; // Stop retrying immediately
       }
       
@@ -115,7 +131,7 @@ export function useAuth() {
       const status = (error as any)?.status;
       if (status === 401 || status === 404 || status === 403) {
         console.log(`🚫 Auth error ${status} - clearing invalid token and stopping retries`);
-        recordAuthFailure();
+        recordAuthFailure(false); // Mark as real auth failure
         clearAllAuthTokens(); // Clear invalid tokens immediately
         return false; // Stop retrying
       }
