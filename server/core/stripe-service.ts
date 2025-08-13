@@ -46,8 +46,8 @@ export class StripeService {
             ...(userId && { userId })
           },
         },
-        success_url: `${ENV.appServerUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${ENV.appServerUrl}/pricing`,
+        success_url: `https://musobuddy.replit.app/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `https://musobuddy.replit.app/pricing`,
         metadata: {
           userEmail: email,
           trial_type: 'core_monthly',
@@ -112,8 +112,8 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${ENV.appServerUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${ENV.appServerUrl}/pricing`,
+        success_url: `https://musobuddy.replit.app/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `https://musobuddy.replit.app/pricing`,
         metadata: {
           userId: userId,
           userEmail: user.email || '',

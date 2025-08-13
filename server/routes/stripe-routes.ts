@@ -14,6 +14,8 @@ export function registerStripeRoutes(app: Express) {
   console.log('🔍 STRIPE ROUTES: Registering /api/create-checkout-session');
   console.log('🔥 PRIORITY STRIPE ROUTE REGISTRATION - These routes will take precedence');
 
+
+
   // Test route to verify auth middleware works
   app.get('/api/subscription/test', requireAuth, async (req, res) => {
     const userId = req.user?.userId;
