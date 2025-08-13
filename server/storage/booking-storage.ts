@@ -299,7 +299,7 @@ export class BookingStorage {
       ...(data.notes !== undefined && { notes: data.notes }),
     };
     
-    const result = await db.insert(bookingConflicts).values(conflictData).returning();
+    const result = await db.insert(bookingConflicts).values([conflictData]).returning();
     return result[0];
   }
 
