@@ -154,6 +154,33 @@ export class EmailService {
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
     // Get theme color from settings
     const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#059669';
+    
+    // Calculate contrast for button text (same logic as PDF generation)
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 0, b: 0 };
+    };
+
+    const getLuminance = (r: number, g: number, b: number) => {
+      const rsRGB = r / 255;
+      const gsRGB = g / 255;
+      const bsRGB = b / 255;
+      
+      const rLinear = rsRGB <= 0.03928 ? rsRGB / 12.92 : Math.pow((rsRGB + 0.055) / 1.055, 2.4);
+      const gLinear = gsRGB <= 0.03928 ? gsRGB / 12.92 : Math.pow((gsRGB + 0.055) / 1.055, 2.4);
+      const bLinear = bsRGB <= 0.03928 ? bsRGB / 12.92 : Math.pow((bsRGB + 0.055) / 1.055, 2.4);
+      
+      return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+    };
+
+    const rgb = hexToRgb(themeColor);
+    const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+    const textColor = luminance > 0.5 ? '#000000' : '#ffffff'; // Black text on light backgrounds, white on dark
+    
     // Helper function to safely format date
     const formatDate = (date: any) => {
       if (!date) return 'TBC';
@@ -189,11 +216,11 @@ export class EmailService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: ${themeColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px;">
+          <a href="${pdfUrl}" style="background: ${themeColor}; color: ${textColor}; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px; font-weight: bold;">
             Download Invoice PDF
           </a>
           ${invoice.shareToken ? `
-            <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" style="background: #047857; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
               Pay Now
             </a>
           ` : ''}
