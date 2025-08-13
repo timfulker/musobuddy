@@ -14,7 +14,11 @@
       "Bash(npm run build:*)",
       "Bash(true)",
       "Bash(fuser:*)",
-      "Bash(PORT=5001 npm run dev)"
+      "Bash(PORT=5001 npm run dev)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

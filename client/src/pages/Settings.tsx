@@ -669,10 +669,6 @@ export default function Settings() {
         <div className="p-6 space-y-6 pb-24 md:pb-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Add a debug div to see if form is working */}
-              <div className="hidden">
-                Form status: {JSON.stringify({ hasChanges, isPending: saveSettings.isPending })}
-              </div>
               
               {/* Business Information */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
