@@ -30,6 +30,7 @@ import {
 interface OnboardingWizardProps {
   isOpen: boolean;
   onComplete: () => void;
+  onDismiss?: () => void;
   user: any;
 }
 
@@ -49,7 +50,7 @@ const THEME_OPTIONS = [
   { value: 'midnight-blue', label: 'Midnight Blue', color: '#191970' }
 ];
 
-export default function OnboardingWizard({ isOpen, onComplete, user }: OnboardingWizardProps) {
+export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -497,10 +498,25 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss?.()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Welcome to MusoBuddy!</DialogTitle>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl">Welcome to MusoBuddy!</DialogTitle>
+              <p className="text-sm text-gray-500 mt-1">Optional setup wizard to help configure your account</p>
+            </div>
+            {onDismiss && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onDismiss}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Skip Setup
+              </Button>
+            )}
+          </div>
           <div className="space-y-2">
             <Progress value={progress} className="w-full" />
             <div className="flex justify-between items-center text-sm text-gray-500">
