@@ -174,11 +174,56 @@ export function registerInvoiceRoutes(app: Express) {
                 if (uploadResult.success) {
                   console.log(`✅ PDF regenerated and uploaded with PAID status: ${uploadResult.url}`);
                   
-                  // Send payment confirmation email with link to paid invoice
+                  // Send payment confirmation emails to both client and user
+                  const emailService = new EmailService();
+                  
+                  // Send to client
                   if (invoice.clientEmail) {
-                    const emailService = new EmailService();
                     await emailService.sendInvoice(paidInvoiceData, userSettings, 'Payment confirmed - thank you for your payment!');
-                    console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
+                    console.log(`✅ Payment confirmation email sent to client for invoice #${invoiceId}`);
+                  }
+                  
+                  // Send notification to user/business owner
+                  if (userSettings?.businessEmail) {
+                    const businessSubject = `Payment Received: Invoice ${invoice.invoiceNumber} - ${invoice.clientName}`;
+                    const businessMessage = `Great news! Invoice ${invoice.invoiceNumber} for ${invoice.clientName} has been paid. Amount: £${invoice.amount}`;
+                    
+                    const businessEmailData = {
+                      to: userSettings.businessEmail,
+                      subject: businessSubject,
+                      html: `
+                        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+                          <div style="background: #10b981; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0;">💰 Payment Received!</h2>
+                          </div>
+                          
+                          <p>Excellent news! You've received a payment for invoice ${invoice.invoiceNumber}.</p>
+                          
+                          <div style="background: #f0fdf4; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #10b981;">
+                            <h3 style="color: #065f46; margin-top: 0;">Payment Details:</h3>
+                            <p><strong>Client:</strong> ${invoice.clientName}</p>
+                            <p><strong>Invoice:</strong> ${invoice.invoiceNumber}</p>
+                            <p><strong>Amount:</strong> £${invoice.amount}</p>
+                            <p><strong>Paid:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
+                          </div>
+                          
+                          <div style="text-align: center; margin: 30px 0;">
+                            <a href="${uploadResult.url}" 
+                               style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                              📋 Download Paid Invoice
+                            </a>
+                          </div>
+                          
+                          <p>The paid invoice with "PAID" status has been generated and is available via the link above.</p>
+                          
+                          <p>Best regards,<br>
+                          MusoBuddy Team</p>
+                        </div>
+                      `
+                    };
+                    
+                    await emailService.sendEmail(businessEmailData);
+                    console.log(`✅ Payment notification email sent to business owner for invoice #${invoiceId}`);
                   }
                 } else {
                   console.error('❌ Failed to upload paid invoice PDF:', uploadResult.error);

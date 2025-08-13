@@ -10,7 +10,8 @@
       "Bash(env)",
       "Bash(npm run dev:*)",
       "Bash(kill:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
