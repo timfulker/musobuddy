@@ -4,6 +4,8 @@ import { EmailService } from "../core/services";
 import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import Stripe from 'stripe';
+import { generateInvoicePDF } from '../core/invoice-pdf-generator';
+import { uploadInvoiceToCloud } from '../core/cloud-storage';
 
 // FORCE TEST MODE for now - always use test keys until we're ready for live payments
 const isProduction = false; // Explicitly force test mode
@@ -99,7 +101,7 @@ export function registerInvoiceRoutes(app: Express) {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${req.headers.origin}/payment-success?invoice=${invoice.invoiceNumber}`,
+        success_url: `${req.headers.origin}/payment-success?invoice=${invoice.invoiceNumber}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/invoice/${token}`,
         metadata: {
           invoiceId: invoice.id.toString(),
@@ -135,25 +137,41 @@ export function registerInvoiceRoutes(app: Express) {
         if (invoiceId) {
           console.log(`💰 Payment completed for invoice ID: ${invoiceId}`);
           
-          // Mark invoice as paid - use proper updateInvoice signature
+          // Mark invoice as paid and regenerate PDF
           const invoice = await storage.getInvoice(parseInt(invoiceId));
           if (invoice) {
-            await storage.updateInvoice(parseInt(invoiceId), invoice.userId, {
+            // Update invoice status in database
+            const updatedInvoice = await storage.updateInvoice(parseInt(invoiceId), invoice.userId, {
               status: 'paid',
               paidAt: new Date(),
             });
             
-            // Send payment confirmation email
+            console.log(`💳 Regenerating PDF for paid invoice #${invoiceId}`);
+            
+            // Regenerate PDF with PAID status and re-upload to cloud
             try {
               const userSettings = await storage.getSettings(invoice.userId);
-              
-              if (invoice.clientEmail && userSettings) {
-                const emailService = new EmailService();
-                await emailService.sendInvoice(invoice, userSettings, 'Payment confirmed - thank you for your payment!');
-                console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
+              if (userSettings) {
+                const paidInvoiceData = { ...invoice, status: 'paid', paidAt: new Date() };
+                
+                // Generate and upload updated PDF to cloud storage with PAID status
+                const uploadResult = await uploadInvoiceToCloud(paidInvoiceData, userSettings);
+                
+                if (uploadResult.success) {
+                  console.log(`✅ PDF regenerated and uploaded with PAID status: ${uploadResult.url}`);
+                  
+                  // Send payment confirmation email with link to paid invoice
+                  if (invoice.clientEmail) {
+                    const emailService = new EmailService();
+                    await emailService.sendInvoice(paidInvoiceData, userSettings, 'Payment confirmed - thank you for your payment!');
+                    console.log(`✅ Payment confirmation email sent for invoice #${invoiceId}`);
+                  }
+                } else {
+                  console.error('❌ Failed to upload paid invoice PDF:', uploadResult.error);
+                }
               }
-            } catch (emailError) {
-              console.error('⚠️ Failed to send payment confirmation email:', emailError);
+            } catch (pdfError) {
+              console.error('⚠️ Failed to regenerate PDF or send email:', pdfError);
             }
           }
           
