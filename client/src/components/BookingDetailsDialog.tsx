@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 import type { Booking } from "@shared/schema";
 
 // Note: Custom auth functions removed - now using standard apiRequest for JWT authentication
@@ -1048,7 +1049,41 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                           <FormItem>
                             <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
                             <FormControl>
-                              <Input {...field} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                              <AddressAutocomplete
+                                onSelect={(addressData) => {
+                                  console.log('📍 Raw address data received:', addressData);
+                                  
+                                  // Set venue name to the display name from Places API
+                                  const venueName = addressData.address;
+                                  field.onChange(venueName);
+                                  
+                                  // Auto-populate the venue address field with the formatted address
+                                  if (addressData.formattedAddress) {
+                                    form.setValue('venueAddress', addressData.formattedAddress);
+                                    console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
+                                    
+                                    // Calculate mileage when venue address is set
+                                    calculateMileage(addressData.formattedAddress);
+                                  }
+
+                                  // Auto-populate venue contact information if available
+                                  if (addressData.contactInfo?.phoneNumber) {
+                                    form.setValue('venueContactInfo', addressData.contactInfo.phoneNumber);
+                                    console.log('✅ Auto-populated venue phone:', addressData.contactInfo.phoneNumber);
+                                  }
+
+                                  // Show business info in console for now (could be displayed in UI later)
+                                  if (addressData.businessInfo) {
+                                    console.log('📍 Venue business info:', {
+                                      rating: addressData.businessInfo.rating,
+                                      hours: addressData.businessInfo.openingHours,
+                                      website: addressData.contactInfo?.website
+                                    });
+                                  }
+                                }}
+                                placeholder="Start typing venue name..."
+                                className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
