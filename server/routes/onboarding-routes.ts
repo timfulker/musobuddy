@@ -73,7 +73,7 @@ export function registerOnboardingRoutes(app: Express) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
-      const user = await storage.getUser(userId);
+      const user = await storage.getUserById(userId);
       
       if (!user) {
         return res.status(404).json({ error: 'User not found' });

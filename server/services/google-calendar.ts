@@ -30,7 +30,7 @@ export class GoogleCalendarService {
   }
 
   // Get authorization URL for OAuth flow
-  getAuthUrl(): string {
+  getAuthUrl(userId?: string): string {
     const scopes = [
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
@@ -40,13 +40,19 @@ export class GoogleCalendarService {
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent', // Force consent to get refresh token
+      state: userId, // Pass userId as state to retrieve in callback
     });
   }
 
   // Exchange authorization code for tokens
-  async getTokens(code: string) {
+  async exchangeCodeForTokens(code: string) {
     const { tokens } = await this.oauth2Client.getToken(code);
     return tokens;
+  }
+  
+  // Alias for backward compatibility
+  async getTokens(code: string) {
+    return this.exchangeCodeForTokens(code);
   }
 
   // Create event in Google Calendar from MusoBuddy booking
