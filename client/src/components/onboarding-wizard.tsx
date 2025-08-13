@@ -134,7 +134,7 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
 
   const handleComplete = () => {
     // Validate required fields
-    if (!formData.firstName || !formData.lastName || !formData.emailPrefix || !formData.phoneNumber) {
+    if (!formData.addressLine1 || !formData.city || !formData.postcode || !formData.emailPrefix || !formData.businessEmail) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields marked with *",
@@ -151,104 +151,18 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
     const step = STEPS[currentStep];
     
     switch (step.id) {
-      case 'business':
+      case 'address':
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <Music className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Tell us about your music business</h3>
-              <p className="text-gray-600 mt-2">This helps us customize MusoBuddy for your specific needs</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => updateFormData('firstName', e.target.value)}
-                  placeholder="Your first name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => updateFormData('lastName', e.target.value)}
-                  placeholder="Your last name"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name (optional)</Label>
-              <Input
-                id="businessName"
-                value={formData.businessName}
-                onChange={(e) => updateFormData('businessName', e.target.value)}
-                placeholder="e.g., Smith Music Services (leave blank to use your name)"
-              />
-              <p className="text-xs text-gray-500">Most musicians trade under their own name as sole traders</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="instrumentsServices">Instruments & Services</Label>
-              <Textarea
-                id="instrumentsServices"
-                value={formData.instrumentsServices}
-                onChange={(e) => updateFormData('instrumentsServices', e.target.value)}
-                placeholder="e.g., Saxophone, DJ, Piano, Vocals, Sound System, Lighting..."
-                rows={3}
-              />
-              <p className="text-xs text-gray-500">These will appear on your settings page for contract templates</p>
-            </div>
-          </div>
-        );
-
-      case 'contact':
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <Mail className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Contact & Email Setup</h3>
-              <p className="text-gray-600 mt-2">Set up your professional booking email address</p>
+              <MapPin className="w-16 h-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold">Business Address</h3>
+              <p className="text-gray-600 mt-2">This will appear on your contracts and invoices</p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="emailPrefix">Email Prefix for Bookings *</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="emailPrefix"
-                    value={formData.emailPrefix}
-                    onChange={(e) => updateFormData('emailPrefix', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                    placeholder="e.g., tim, saxweddings, musicservices"
-                    className="flex-1"
-                  />
-                  <span className="text-gray-500">@enquiries.musobuddy.com</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Your personalized email for receiving booking requests (e.g., {formData.emailPrefix || 'youremail'}@enquiries.musobuddy.com)
-                </p>
-                <p className="text-xs text-amber-600">
-                  ⚠️ This email prefix must be unique and cannot be changed later
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number *</Label>
-                <Input
-                  id="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={(e) => updateFormData('phoneNumber', e.target.value)}
-                  placeholder="e.g., 07123 456789"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressLine1">Address Line 1</Label>
+                <Label htmlFor="addressLine1">Address Line 1 *</Label>
                 <Input
                   id="addressLine1"
                   value={formData.addressLine1}
@@ -263,13 +177,13 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
                   id="addressLine2"
                   value={formData.addressLine2}
                   onChange={(e) => updateFormData('addressLine2', e.target.value)}
-                  placeholder="Apartment, suite, unit, building, floor, etc."
+                  placeholder="Apartment, suite, etc."
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Input
                     id="city"
                     value={formData.city}
@@ -279,7 +193,7 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="postcode">Postcode</Label>
+                  <Label htmlFor="postcode">Postcode *</Label>
                   <Input
                     id="postcode"
                     value={formData.postcode}
@@ -302,161 +216,132 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
           </div>
         );
 
-      case 'rates':
+      case 'email':
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <PoundSterling className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Set Your Rates & Pricing</h3>
-              <p className="text-gray-600 mt-2">Configure your standard rates for different types of bookings</p>
+              <Mail className="w-16 h-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold">Email Setup</h3>
+              <p className="text-gray-600 mt-2">Set up your professional booking email</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Event Rates (per hour)</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="standardRate">Standard Rate</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
-                      <Input
-                        id="standardRate"
-                        type="number"
-                        value={formData.standardRate}
-                        onChange={(e) => updateFormData('standardRate', e.target.value)}
-                        placeholder="0.00"
-                        className="pl-8"
-                      />
-                    </div>
-                  </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessEmail">Business Email *</Label>
+                <Input
+                  id="businessEmail"
+                  value={formData.businessEmail}
+                  onChange={(e) => updateFormData('businessEmail', e.target.value)}
+                  placeholder="your@email.com"
+                  type="email"
+                />
+                <p className="text-xs text-gray-500">Your main business email address</p>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="weddingRate">Wedding Rate</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
-                      <Input
-                        id="weddingRate"
-                        type="number"
-                        value={formData.weddingRate}
-                        onChange={(e) => updateFormData('weddingRate', e.target.value)}
-                        placeholder="0.00"
-                        className="pl-8"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="corporateRate">Corporate Rate</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
-                      <Input
-                        id="corporateRate"
-                        type="number"
-                        value={formData.corporateRate}
-                        onChange={(e) => updateFormData('corporateRate', e.target.value)}
-                        placeholder="0.00"
-                        className="pl-8"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Booking Policies</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="minimumBookingFee">Minimum Booking Fee</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
-                      <Input
-                        id="minimumBookingFee"
-                        type="number"
-                        value={formData.minimumBookingFee}
-                        onChange={(e) => updateFormData('minimumBookingFee', e.target.value)}
-                        placeholder="0.00"
-                        className="pl-8"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="depositPercentage">Deposit Percentage</Label>
-                    <div className="relative">
-                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
-                      <Input
-                        id="depositPercentage"
-                        type="number"
-                        value={formData.depositPercentage}
-                        onChange={(e) => updateFormData('depositPercentage', e.target.value)}
-                        placeholder="25"
-                        className="pr-8"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="travelRate">Travel Rate (per mile)</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
-                      <Input
-                        id="travelRate"
-                        type="number"
-                        step="0.01"
-                        value={formData.travelRate}
-                        onChange={(e) => updateFormData('travelRate', e.target.value)}
-                        className="pl-8"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">HMRC rate: £0.25/mile</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-2">
+                <Label htmlFor="emailPrefix">Booking Email Prefix *</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="emailPrefix"
+                    value={formData.emailPrefix}
+                    onChange={(e) => updateFormData('emailPrefix', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                    placeholder="e.g., tim, saxweddings"
+                    className="flex-1"
+                  />
+                  <span className="text-gray-500">@enquiries.musobuddy.com</span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Your personalized email for receiving booking requests
+                </p>
+                <p className="text-xs text-amber-600">
+                  ⚠️ This prefix must be unique and cannot be changed later
+                </p>
+              </div>
             </div>
           </div>
         );
 
-      case 'branding':
+      case 'bank':
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <Palette className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Choose Your Theme</h3>
-              <p className="text-gray-600 mt-2">Select a theme color for your professional documents and dashboard</p>
+              <CreditCard className="w-16 h-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold">Bank Details</h3>
+              <p className="text-gray-600 mt-2">For receiving payments and invoicing</p>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <Label>Choose Your Theme Color</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {THEME_OPTIONS.map((theme) => (
-                    <Card 
-                      key={theme.value}
-                      className={`cursor-pointer transition-all ${
-                        formData.selectedTheme === theme.value 
-                          ? 'ring-2 ring-primary shadow-md' 
-                          : 'hover:shadow-sm'
-                      }`}
-                      onClick={() => updateFormData('selectedTheme', theme.value)}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <div 
-                          className="w-12 h-12 rounded-full mx-auto mb-2"
-                          style={{ backgroundColor: theme.color }}
-                        />
-                        <p className="font-medium">{theme.label}</p>
-                        {formData.selectedTheme === theme.value && (
-                          <Badge className="mt-2">Selected</Badge>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bankName">Bank Name</Label>
+                <Input
+                  id="bankName"
+                  value={formData.bankName}
+                  onChange={(e) => updateFormData('bankName', e.target.value)}
+                  placeholder="e.g., Lloyds Bank"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="accountName">Account Name</Label>
+                <Input
+                  id="accountName"
+                  value={formData.accountName}
+                  onChange={(e) => updateFormData('accountName', e.target.value)}
+                  placeholder="Name on the account"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={(e) => updateFormData('accountNumber', e.target.value)}
+                    placeholder="12345678"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="sortCode">Sort Code</Label>
+                  <Input
+                    id="sortCode"
+                    value={formData.sortCode}
+                    onChange={(e) => updateFormData('sortCode', e.target.value)}
+                    placeholder="12-34-56"
+                  />
                 </div>
               </div>
+            </div>
+          </div>
+        );
+
+      case 'widget':
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <Music className="w-16 h-16 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold">Booking Widget & QR Code</h3>
+              <p className="text-gray-600 mt-2">Generate your personalized booking link and QR code</p>
+            </div>
+
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Your booking widget will be automatically generated when you complete setup. 
+                    This will create a unique QR code and booking link for your business.
+                  </p>
+                  <div className="bg-gray-100 rounded-lg p-4">
+                    <p className="font-mono text-sm">
+                      🔗 Your booking link will be generated after setup
+                    </p>
+                    <p className="font-mono text-sm mt-2">
+                      📱 QR code will be created for easy sharing
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
@@ -473,13 +358,13 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
             </div>
             
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 max-w-md mx-auto">
-              <h4 className="font-semibold text-green-900 mb-3">What's Next?</h4>
+              <h4 className="font-semibold text-green-900 mb-3">Setup Complete!</h4>
               <ul className="text-sm text-green-800 space-y-2 text-left">
-                <li>• Create your first booking</li>
-                <li>• Set up your email integration</li>
-                <li>• Explore Google Calendar sync</li>
-                <li>• Generate your booking widget</li>
-                <li>• Create professional contracts & invoices</li>
+                <li>✓ Business address configured</li>
+                <li>✓ Email prefix reserved</li>
+                <li>✓ Bank details added</li>
+                <li>✓ Booking widget ready</li>
+                <li>✓ Ready to receive bookings!</li>
               </ul>
             </div>
           </div>
