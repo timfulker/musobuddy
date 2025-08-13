@@ -874,16 +874,21 @@ app.post('/api/webhook/mailgun',
       bodyField.toLowerCase().includes('availability')
     );
     
-    // FIXED: AI returns isPriceEnquiry: true but messageType: "general", so prioritize isPriceEnquiry flag
-    const isPriceEnquiry = aiResult.isPriceEnquiry === true || 
+    // CRITICAL FIX: Prioritize complete booking info over keyword detection
+    // If AI found a valid event date, this is a booking - not just a price enquiry
+    const hasValidBookingInfo = aiResult.eventDate && aiResult.eventDate !== null;
+    const isPriceEnquiry = !hasValidBookingInfo && (
+                          aiResult.isPriceEnquiry === true || 
                           aiResult.messageType === 'price_enquiry' ||
-                          containsPricingKeywords;
+                          containsPricingKeywords
+                        );
     
-    console.log('🔍 Price enquiry check:', {
+    console.log('🔍 Email classification:', {
+      hasValidEventDate: hasValidBookingInfo,
       aiDetection: aiResult.isPriceEnquiry,
       messageType: aiResult.messageType,
       keywordDetection: containsPricingKeywords,
-      finalDecision: isPriceEnquiry
+      finalDecision: isPriceEnquiry ? 'PRICE_ENQUIRY' : 'BOOKING'
     });
     
     if (isPriceEnquiry) {
