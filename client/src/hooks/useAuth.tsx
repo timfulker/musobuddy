@@ -54,8 +54,15 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: fetchUser,
     retry: (failureCount, error: any) => {
-      // Only retry for network errors, not auth failures
-      return failureCount < 2 && !(error as any)?.status;
+      // CRITICAL FIX: Never retry on auth failures to prevent infinite loops
+      const status = (error as any)?.status;
+      if (status === 401 || status === 404 || status === 403) {
+        console.log(`🚫 Auth error ${status} - clearing invalid token and stopping retries`);
+        clearAllAuthTokens(); // Clear invalid tokens immediately
+        return false; // Stop retrying
+      }
+      // Only retry for network errors (no status code)
+      return failureCount < 2 && !status;
     },
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
@@ -65,17 +72,21 @@ export function useAuth() {
 
   // Enhanced error handling for authentication failures
   if (error) {
-    console.log('🔍 Auth error:', (error as any)?.status, error?.message);
+    const status = (error as any)?.status;
+    console.log('🔍 Auth error:', status, error?.message);
     
     // Handle specific authentication errors
     if (error?.message?.includes('User account no longer exists')) {
       console.log('🔄 User account deleted - redirecting to landing page');
+      clearAllAuthTokens();
       window.location.href = '/';
     }
     
-    // Don't redirect on initial 401 - user might just not be logged in
-    if ((error as any)?.status === 401) {
-      console.log('🔍 User not authenticated - staying on current page');
+    // CRITICAL FIX: Clear tokens on persistent auth failures to prevent loops
+    if (status === 401 || status === 404 || status === 403) {
+      console.log(`🧹 Clearing invalid tokens due to ${status} error`);
+      clearAllAuthTokens();
+      queryClient.clear(); // Clear React Query cache
     }
   }
 
