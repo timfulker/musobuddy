@@ -149,7 +149,7 @@ export function registerStripeRoutes(app: Express) {
       res.json({
         success: true,
         message: 'Payment verified and subscription activated',
-        token: authToken,
+        authToken: authToken,
         user: {
           userId: user.id,
           email: user.email,

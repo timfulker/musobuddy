@@ -53,7 +53,7 @@ export default function TrialSuccessPage() {
           console.log('🔓 Cleared existing auth tokens and theme for new Stripe user');
             
             // Authenticate using Stripe session ID
-            const response = await fetch('/api/auth/stripe-login', {
+            const response = await fetch('/api/stripe/verify-session', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
