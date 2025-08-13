@@ -99,9 +99,8 @@ export function registerOnboardingRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // Check Stripe verification status (assuming verified if user has been active)
-      const stripeVerified = user.createdAt && 
-        new Date(user.createdAt).getTime() < Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      // Check Stripe verification status (show onboarding for any authenticated user)
+      const stripeVerified = true; // Allow onboarding for all authenticated users
 
       res.json({
         onboardingCompleted: user.onboardingCompleted || false,
