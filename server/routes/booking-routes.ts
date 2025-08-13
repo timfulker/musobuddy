@@ -280,7 +280,7 @@ export function registerBookingRoutes(app: Express) {
         }
       }
       
-      // Create booking with combined data (form data takes precedence over AI parsed data)
+      // Create booking with combined data (AI parsed data takes precedence for dates/venues when form is empty)
       const bookingData = {
         userId: user.id,
         title: clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request',
@@ -290,7 +290,7 @@ export function registerBookingRoutes(app: Express) {
         venue: venue || parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
         venueContact: parsedData.venueContactInfo || null,
-        eventDate: eventDate || parsedData.eventDate || null,
+        eventDate: parsedData.eventDate || eventDate || null, // FIXED: AI date takes precedence
         eventTime: parsedData.eventTime || null,
         eventEndTime: parsedData.eventEndTime || null,
         fee: parsedData.fee || null,

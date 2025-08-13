@@ -71,14 +71,21 @@ export default function QuickAddWidget() {
     mutationFn: async (data: WidgetFormData) => {
       setIsParsing(true);
       
+      // Extract client name from contact info
+      const clientName = data.clientContact.includes('@') 
+        ? data.clientContact.split('@')[0] 
+        : data.clientContact.split(' ')[0] || data.clientContact;
+      
       const parseData = {
-        emailContent: data.messageText,
-        fromEmail: data.clientContact,
-        clientAddress: data.clientAddress || null,
+        messageText: data.messageText,
+        clientName: clientName,
+        clientContact: data.clientContact,
+        eventDate: null, // Let AI extract from messageText
+        venue: null, // Let AI extract from messageText
         token: token
       };
       
-      const response = await apiRequest('/api/widget/create-booking', {
+      const response = await apiRequest('/api/widget/hybrid-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parseData)
