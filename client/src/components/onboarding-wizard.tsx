@@ -35,10 +35,10 @@ interface OnboardingWizardProps {
 }
 
 const STEPS = [
-  { id: 'business', title: 'Business Info', icon: User },
-  { id: 'contact', title: 'Contact & Location', icon: MapPin },
-  { id: 'rates', title: 'Pricing & Services', icon: PoundSterling },
-  { id: 'branding', title: 'Branding & Theme', icon: Palette },
+  { id: 'address', title: 'Business Address', icon: MapPin },
+  { id: 'email', title: 'Email Setup', icon: Mail },
+  { id: 'bank', title: 'Bank Details', icon: CreditCard },
+  { id: 'widget', title: 'Booking Widget', icon: Music },
   { id: 'complete', title: 'All Set!', icon: CheckCircle }
 ];
 
@@ -56,31 +56,26 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    // Business Info
-    businessName: '', // Optional now
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    instrumentsServices: '', // Keep for settings page population
-    
-    // Contact & Location  
-    phoneNumber: user?.phoneNumber || '',
-    emailPrefix: '', // CRITICAL: For receiving booking emails
+    // Business Address
     addressLine1: '',
     addressLine2: '',
     city: '',
     postcode: '',
     country: 'United Kingdom',
     
-    // Rates & Services
-    standardRate: '',
-    weddingRate: '',
-    corporateRate: '',
-    travelRate: '0.25', // HMRC rate
-    minimumBookingFee: '',
-    depositPercentage: '25',
+    // Email Setup
+    businessEmail: user?.email || '',
+    emailPrefix: '', // CRITICAL: For receiving booking emails
     
-    // Branding
-    selectedTheme: 'midnight-blue'
+    // Bank Details
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    sortCode: '',
+    
+    // Widget Setup
+    widgetToken: '',
+    qrCodeGenerated: false
   });
 
   const updateFormData = (field: string, value: string) => {
