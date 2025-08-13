@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, googleCalendarIntegration, eventSyncMapping } from "../../shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
 export class MiscStorage {
@@ -237,6 +237,113 @@ export class MiscStorage {
       .where(eq(unparseableMessages.id, id))
       .returning();
     return result[0];
+  }
+
+  // ===== GOOGLE CALENDAR INTEGRATION METHODS =====
+
+  async saveGoogleCalendarIntegration(userId: string, data: {
+    googleRefreshToken: string;
+    googleCalendarId?: string;
+    syncEnabled?: boolean;
+    autoSyncBookings?: boolean;
+    autoImportEvents?: boolean;
+    syncDirection?: string;
+  }) {
+    const result = await db.insert(googleCalendarIntegration).values({
+      userId,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+
+  async getGoogleCalendarIntegration(userId: string) {
+    const result = await db.select().from(googleCalendarIntegration)
+      .where(eq(googleCalendarIntegration.userId, userId));
+    return result[0] || null;
+  }
+
+  async getGoogleCalendarIntegrationByChannelId(channelId: string) {
+    const result = await db.select().from(googleCalendarIntegration)
+      .where(eq(googleCalendarIntegration.webhookChannelId, channelId));
+    return result[0] || null;
+  }
+
+  async updateGoogleCalendarIntegration(userId: string, updates: {
+    syncEnabled?: boolean;
+    lastSyncAt?: Date;
+    syncToken?: string;
+    webhookChannelId?: string;
+    webhookExpiration?: Date;
+    autoSyncBookings?: boolean;
+    autoImportEvents?: boolean;
+    syncDirection?: string;
+  }) {
+    const result = await db.update(googleCalendarIntegration)
+      .set({ 
+        ...updates, 
+        updatedAt: new Date() 
+      })
+      .where(eq(googleCalendarIntegration.userId, userId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteGoogleCalendarIntegration(userId: string) {
+    const result = await db.delete(googleCalendarIntegration)
+      .where(eq(googleCalendarIntegration.userId, userId))
+      .returning();
+    return result[0];
+  }
+
+  async saveEventSyncMapping(userId: string, data: {
+    musobuddyId: number;
+    musobuddyType: string;
+    googleEventId: string;
+    googleCalendarId?: string;
+    syncDirection: string;
+  }) {
+    const result = await db.insert(eventSyncMapping).values({
+      userId,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+
+  async getEventSyncMapping(userId: string, musobuddyId: number, musobuddyType: string) {
+    const result = await db.select().from(eventSyncMapping)
+      .where(and(
+        eq(eventSyncMapping.userId, userId),
+        eq(eventSyncMapping.musobuddyId, musobuddyId),
+        eq(eventSyncMapping.musobuddyType, musobuddyType)
+      ));
+    return result[0] || null;
+  }
+
+  async getEventSyncMappingByGoogleId(userId: string, googleEventId: string) {
+    const result = await db.select().from(eventSyncMapping)
+      .where(and(
+        eq(eventSyncMapping.userId, userId),
+        eq(eventSyncMapping.googleEventId, googleEventId)
+      ));
+    return result[0] || null;
+  }
+
+  async deleteEventSyncMapping(id: number) {
+    const result = await db.delete(eventSyncMapping)
+      .where(eq(eventSyncMapping.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteEventSyncMappings(userId: string) {
+    const result = await db.delete(eventSyncMapping)
+      .where(eq(eventSyncMapping.userId, userId))
+      .returning();
+    return result;
   }
 }
 

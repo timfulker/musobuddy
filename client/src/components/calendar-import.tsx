@@ -1,18 +1,28 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Upload, CheckCircle, AlertCircle, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import GoogleCalendarIntegration from "./google-calendar-integration";
 
 interface CalendarImportProps {
   onImportComplete?: () => void;
 }
 
 export default function CalendarImport({ onImportComplete }: CalendarImportProps) {
+  // Check Google Calendar status to show appropriate tab
+  const { data: calendarStatus } = useQuery({
+    queryKey: ['/api/google-calendar/status'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/google-calendar/status');
+      return response.json();
+    },
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importStep, setImportStep] = useState<'select' | 'importing' | 'complete'>('select');
@@ -90,19 +100,44 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Upload className="w-4 h-4 mr-2" />
-          Import Calendar
+          <Calendar className="w-4 h-4 mr-2" />
+          Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Import Calendar Events</DialogTitle>
+          <DialogTitle>Calendar Integration</DialogTitle>
           <DialogDescription>
-            Import your existing bookings from a .ics calendar file (Google Calendar, Apple Calendar, Outlook, etc.)
+            Sync your bookings with your calendar using Google Calendar integration or import from .ics files
           </DialogDescription>
         </DialogHeader>
 
-        {importStep === 'select' && (
+        <Tabs defaultValue={calendarStatus?.connected ? "google" : "import"} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="google" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Google Calendar
+            </TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Import File
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="google" className="mt-6">
+            <GoogleCalendarIntegration />
+          </TabsContent>
+          
+          <TabsContent value="import" className="mt-6">
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-medium mb-2">Import Calendar File (.ics)</h3>
+                <p className="text-muted-foreground">
+                  Import your existing bookings from Apple Calendar, Outlook, or other calendar apps
+                </p>
+              </div>
+
+              {importStep === 'select' && (
           <div className="space-y-4">
             <div>
               <Label htmlFor="file-upload">Calendar File (.ics)</Label>
@@ -130,21 +165,21 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={executeFileImport} disabled={!selectedFile}>
-                Import Events
-              </Button>
+                <Button onClick={executeFileImport} disabled={!selectedFile}>
+                  Import Events
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {importStep === 'importing' && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Importing calendar events...</p>
-          </div>
-        )}
+          {importStep === 'importing' && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Importing calendar events...</p>
+            </div>
+          )}
 
-        {importStep === 'complete' && importResult && (
+          {importStep === 'complete' && importResult && (
           <div className="space-y-4">
             <div className="flex items-center text-green-600">
               <CheckCircle className="w-5 h-5 mr-2" />
@@ -177,8 +212,9 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
                 Refresh Calendar
               </Button>
             </div>
-          </div>
-        )}
+          )}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

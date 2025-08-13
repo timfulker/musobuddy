@@ -524,6 +524,47 @@ export class Storage {
 
     return { users, bookings, contracts, invoices };
   }
+
+  // ===== GOOGLE CALENDAR INTEGRATION METHODS =====
+  async saveGoogleCalendarIntegration(userId: string, data: any) {
+    return miscStorage.saveGoogleCalendarIntegration(userId, data);
+  }
+
+  async getGoogleCalendarIntegration(userId: string) {
+    return miscStorage.getGoogleCalendarIntegration(userId);
+  }
+
+  async getGoogleCalendarIntegrationByChannelId(channelId: string) {
+    return miscStorage.getGoogleCalendarIntegrationByChannelId(channelId);
+  }
+
+  async updateGoogleCalendarIntegration(userId: string, updates: any) {
+    return miscStorage.updateGoogleCalendarIntegration(userId, updates);
+  }
+
+  async deleteGoogleCalendarIntegration(userId: string) {
+    return miscStorage.deleteGoogleCalendarIntegration(userId);
+  }
+
+  async saveEventSyncMapping(userId: string, data: any) {
+    return miscStorage.saveEventSyncMapping(userId, data);
+  }
+
+  async getEventSyncMapping(userId: string, musobuddyId: number, musobuddyType: string) {
+    return miscStorage.getEventSyncMapping(userId, musobuddyId, musobuddyType);
+  }
+
+  async getEventSyncMappingByGoogleId(userId: string, googleEventId: string) {
+    return miscStorage.getEventSyncMappingByGoogleId(userId, googleEventId);
+  }
+
+  async deleteEventSyncMapping(id: number) {
+    return miscStorage.deleteEventSyncMapping(id);
+  }
+
+  async deleteEventSyncMappings(userId: string) {
+    return miscStorage.deleteEventSyncMappings(userId);
+  }
 }
 
 export const storage = new Storage();

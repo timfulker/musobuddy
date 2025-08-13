@@ -516,6 +516,39 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Google Calendar Integration
+export const googleCalendarIntegration = pgTable("google_calendar_integration", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().unique(),
+  googleRefreshToken: text("google_refresh_token").notNull(),
+  googleCalendarId: varchar("google_calendar_id").default("primary"),
+  syncEnabled: boolean("sync_enabled").default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncToken: text("sync_token"), // For incremental sync
+  webhookChannelId: varchar("webhook_channel_id"), // For real-time updates
+  webhookExpiration: timestamp("webhook_expiration"),
+  autoSyncBookings: boolean("auto_sync_bookings").default(true), // Sync MusoBuddy → Google
+  autoImportEvents: boolean("auto_import_events").default(false), // Sync Google → MusoBuddy
+  syncDirection: varchar("sync_direction").default("bidirectional"), // bidirectional, export_only, import_only
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Event Sync Mapping (tracks which events are synced between systems)
+export const eventSyncMapping = pgTable("event_sync_mapping", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  musobuddyId: integer("musobuddy_id"), // MusoBuddy booking ID
+  musobuddyType: varchar("musobuddy_type").notNull(), // 'booking', 'contract', etc.
+  googleEventId: varchar("google_event_id").notNull(),
+  googleCalendarId: varchar("google_calendar_id").default("primary"),
+  lastSyncedAt: timestamp("last_synced_at").defaultNow(),
+  syncDirection: varchar("sync_direction").notNull(), // 'musoBuddy_to_google', 'google_to_musoBuddy', 'bidirectional'
+  conflictStatus: varchar("conflict_status"), // null, 'resolved', 'pending'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Email templates table for custom responses
 export const emailTemplates = pgTable("email_templates", {
   id: serial("id").primaryKey(),

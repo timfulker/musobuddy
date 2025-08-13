@@ -41,6 +41,7 @@ import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
+import GoogleCalendarCallback from "@/pages/google-calendar-callback";
 
 
 import { useEffect } from "react";
@@ -145,6 +146,7 @@ function Router() {
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />
       <Route path="/mobile-send" component={MobileInvoiceSender} />
+      <Route path="/google-calendar-callback" component={GoogleCalendarCallback} />
       {/* <Route path="/maps-test" component={GoogleMapsTest} /> */}
 
       <Route path="/admin" component={Admin} />
