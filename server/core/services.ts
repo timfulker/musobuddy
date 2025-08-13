@@ -336,24 +336,10 @@ export class EmailService {
             box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             letter-spacing: 0.025em;
-            margin-right: 12px;
+
           }
           
-          .pay-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            color: white;
-            padding: 16px 32px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            letter-spacing: 0.025em;
-          }
-          
-          .download-btn:hover, .pay-btn:hover {
+          .download-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.15);
           }
@@ -404,10 +390,10 @@ export class EmailService {
               gap: 4px;
             }
             
-            .download-btn, .pay-btn {
+            .download-btn {
               padding: 14px 28px;
               font-size: 15px;
-              margin: 6px;
+              margin: 6px auto;
               display: block;
               width: calc(100% - 12px);
             }
@@ -456,11 +442,6 @@ export class EmailService {
               <a href="${pdfUrl}" class="download-btn">
                 📄 Download Invoice PDF
               </a>
-              ${invoice.shareToken ? `
-                <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" class="pay-btn">
-                  💳 Pay Now
-                </a>
-              ` : ''}
             </div>
           </div>
           
