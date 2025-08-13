@@ -1533,17 +1533,30 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                   <div className="space-y-2">
                     <Label>Document Type</Label>
                     <div className="flex gap-2">
-                      {(['contract', 'invoice', 'other'] as const).map((type) => (
-                        <Button
-                          key={type}
-                          type="button"
-                          variant={documentType === type ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setDocumentType(type)}
-                        >
-                          {type === 'contract' ? 'Contract' : type === 'invoice' ? 'Invoice' : 'Other'}
-                        </Button>
-                      ))}
+                      <Button
+                        type="button"
+                        variant={documentType === 'contract' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('contract')}
+                      >
+                        Contract
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={documentType === 'invoice' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('invoice')}
+                      >
+                        Invoice
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={documentType === 'other' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('other')}
+                      >
+                        Other
+                      </Button>
                     </div>
                   </div>
 

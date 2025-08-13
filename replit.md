@@ -25,6 +25,7 @@ Stripe integration: Unified signup flow where ALL users (including free trial) m
 Intuitive bookings interface: Redesigned bookings page with visual hero section, quick stats cards (This Week/Confirmed/Pending/Total Revenue), and simplified search/filter bar for list view. Calendar view preserved as toggle option. Default changed from calendar to list view for better user experience with data-first presentation instead of filter-heavy layout.
 Unified booking forms: Email parsing and manual booking creation now use identical comprehensive form structures. When emails contain venue names, Google Maps API automatically populates venue address and contact details, ensuring consistent data across all booking sources.
 Mileage calculation: Booking form includes automatic mileage calculation based on distance between venue and business address, using address line 1 and postcode for accurate travel expense tracking. Distances displayed in miles by default with user preference option in Settings for miles/kilometers selection.
+what3words integration: Fully integrated what3words API for precise location identification. Users can type what3words addresses (///what.three.words) in booking forms with auto-complete suggestions, nearest place information, and distance calculations. Available in both new booking creation and editing existing bookings in client billing address section.
 
 ## System Architecture
 
