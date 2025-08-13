@@ -16,9 +16,10 @@ export function registerOnboardingRoutes(app: Express) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
-      // Validate required fields (businessName is now optional)
-      if (!onboardingData.firstName || !onboardingData.emailPrefix) {
-        return res.status(400).json({ error: 'Missing required fields: firstName, emailPrefix' });
+      // Validate required fields for simplified onboarding
+      if (!onboardingData.addressLine1 || !onboardingData.city || !onboardingData.postcode || 
+          !onboardingData.emailPrefix || !onboardingData.businessEmail) {
+        return res.status(400).json({ error: 'Missing required fields: address, city, postcode, emailPrefix, businessEmail' });
       }
 
       // Check if email prefix is already taken by another user
@@ -37,36 +38,33 @@ export function registerOnboardingRoutes(app: Express) {
 
       // Update user profile with onboarding data  
       const updatedUser = await storage.updateUser(userId, {
-        firstName: onboardingData.firstName,
-        lastName: onboardingData.lastName,
-        phoneNumber: onboardingData.phoneNumber,
+        email: onboardingData.businessEmail, // Update business email
         emailPrefix: onboardingData.emailPrefix, // CRITICAL for booking emails
         onboardingCompleted: true
       });
 
-      // Create user settings with business information
+      // Create user settings with essential business information
       await storage.updateSettings(userId, {
-        businessName: onboardingData.businessName || `${onboardingData.firstName} ${onboardingData.lastName}`,
-        addressLine1: onboardingData.addressLine1 || '',
+        // Address information
+        addressLine1: onboardingData.addressLine1,
         addressLine2: onboardingData.addressLine2 || '',
-        city: onboardingData.city || '',
-        postcode: onboardingData.postcode || '',
-        country: onboardingData.country || 'United Kingdom',
-        instrumentsServices: onboardingData.instrumentsServices || '',
+        city: onboardingData.city,
+        postcode: onboardingData.postcode,
         
-        // Save email prefix for settings page display (in emailFromName for backwards compatibility)
-        emailFromName: onboardingData.emailPrefix,
+        // Email setup
+        businessEmail: onboardingData.businessEmail,
+        emailFromName: onboardingData.emailPrefix, // For backwards compatibility
         
-        // Pricing information
-        standardRate: parseFloat(onboardingData.standardRate) || 0,
-        weddingRate: parseFloat(onboardingData.weddingRate) || 0,
-        corporateRate: parseFloat(onboardingData.corporateRate) || 0,
-        travelRate: parseFloat(onboardingData.travelRate) || 0.25,
-        minimumBookingFee: parseFloat(onboardingData.minimumBookingFee) || 0,
-        depositPercentage: parseInt(onboardingData.depositPercentage) || 25,
+        // Bank details as JSON
+        bankDetails: JSON.stringify({
+          bankName: onboardingData.bankName || '',
+          accountName: onboardingData.accountName || '',
+          accountNumber: onboardingData.accountNumber || '',
+          sortCode: onboardingData.sortCode || ''
+        }),
         
-        // Branding - use themeAccentColor to match the settings page
-        themeAccentColor: onboardingData.selectedTheme || 'midnight-blue'
+        // Default theme
+        themeAccentColor: 'midnight-blue'
       });
 
       console.log('✅ Onboarding completed successfully for user:', userId);
