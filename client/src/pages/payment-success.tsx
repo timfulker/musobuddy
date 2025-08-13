@@ -12,6 +12,10 @@ export default function PaymentSuccess() {
     // Extract invoice number from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const invoice = urlParams.get('invoice');
+    const sessionId = urlParams.get('session_id');
+    
+    console.log('🎯 Payment Success Page - URL params:', { invoice, sessionId });
+    
     if (invoice) {
       setInvoiceNumber(invoice);
     }

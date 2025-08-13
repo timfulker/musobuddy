@@ -86,6 +86,11 @@ export function registerInvoiceRoutes(app: Express) {
       console.log(`🔧 Full key used: ${stripeKey}`);
       console.log(`💰 Amount: £${invoice.amount} (${Math.round(parseFloat(invoice.amount) * 100)} pence)`);
       
+      // Determine correct domain for success URL
+      const baseUrl = process.env.REPLIT_DEPLOYMENT ? 'https://www.musobuddy.com' : req.headers.origin;
+      const successUrl = `${baseUrl}/payment-success?invoice=${invoice.invoiceNumber}&session_id={CHECKOUT_SESSION_ID}`;
+      console.log(`🔗 Success URL: ${successUrl}`);
+      
       // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -101,7 +106,7 @@ export function registerInvoiceRoutes(app: Express) {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${req.headers.origin}/payment-success?invoice=${invoice.invoiceNumber}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: successUrl,
         cancel_url: `${req.headers.origin}/invoice/${token}`,
         metadata: {
           invoiceId: invoice.id.toString(),
@@ -115,6 +120,12 @@ export function registerInvoiceRoutes(app: Express) {
       console.error('❌ Failed to create payment link:', error);
       res.status(500).json({ error: 'Failed to create payment link' });
     }
+  });
+
+  // Test webhook endpoint to verify webhook functionality
+  app.post('/api/stripe/webhook/test', (req, res) => {
+    console.log('🧪 TEST WEBHOOK HIT - Webhook endpoint is working');
+    res.json({ status: 'test webhook received', timestamp: new Date().toISOString() });
   });
 
   // Stripe webhook handler for payment completion
@@ -133,6 +144,9 @@ export function registerInvoiceRoutes(app: Express) {
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as any;
         const invoiceId = session.metadata?.invoiceId;
+        
+        console.log(`🎉 WEBHOOK FIRED: Payment completed for session ${session.id}`);
+        console.log(`📋 Session metadata:`, session.metadata);
         
         if (invoiceId) {
           console.log(`💰 Payment completed for invoice ID: ${invoiceId}`);
