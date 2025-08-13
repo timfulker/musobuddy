@@ -1092,7 +1092,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                                   }
                                 }}
                                 placeholder="Start typing venue name..."
-                                className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                                className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 w-full min-w-[400px]"
                               />
                             </FormControl>
                             <FormMessage />
