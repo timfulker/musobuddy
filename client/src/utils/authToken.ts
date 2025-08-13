@@ -113,8 +113,39 @@ export const clearAllAuthTokens = (): void => {
 export const storeAuthToken = (token: string, userEmail: string): void => {
   const tokenKey = getAuthTokenKey(userEmail);
   
-  // Clear any conflicting tokens first to prevent cross-contamination
-  clearAllAuthTokens();
+  // SECURITY FIX: Only clear tokens for this specific user, not all users
+  const hostname = window.location.hostname;
+  const baseKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
+    ? 'authToken_dev' 
+    : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  
+  // Find and remove only this user's tokens
+  const userSpecificKeys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(baseKey)) {
+      try {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const tokenData = JSON.parse(stored);
+          if (tokenData.userEmail === userEmail) {
+            userSpecificKeys.push(key);
+          }
+        }
+      } catch {
+        // Handle old format tokens - only clear generic ones, not user-specific
+        if (key === baseKey) {
+          userSpecificKeys.push(key);
+        }
+      }
+    }
+  }
+  
+  // Clear only this user's existing tokens
+  userSpecificKeys.forEach(key => {
+    localStorage.removeItem(key);
+    console.log(`🔐 Cleared old token: ${key}`);
+  });
   
   // Store the new token with timestamp for proper selection
   const tokenData = {
@@ -124,7 +155,7 @@ export const storeAuthToken = (token: string, userEmail: string): void => {
   };
   localStorage.setItem(tokenKey, JSON.stringify(tokenData));
   
-  console.log(`🔐 Stored auth token for user: ${userEmail}`);
+  console.log(`🔐 Stored auth token for user: ${userEmail} in key: ${tokenKey}`);
 };
 
 // Alias for compatibility with existing code

@@ -172,25 +172,36 @@ export default function TrialSuccessPage() {
                 Welcome to MusoBuddy, <span className="font-semibold">{user.firstName}</span>!
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                You're one step away from accessing all MusoBuddy features. Start your 14-day free trial now:
+                Your account setup is complete and your free trial has started!
               </p>
             </div>
 
-            {/* Single Action: Start Trial */}
+            {/* Success message and continue to dashboard */}
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 mb-4">
+              <div className="flex items-center text-green-700 dark:text-green-300">
+                <CheckCircle className="h-5 w-5 mr-2" />
+                <p className="font-medium">Your 30-day free trial is now active!</p>
+              </div>
+              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                You have full access to all MusoBuddy features.
+              </p>
+            </div>
+
+            {/* Action: Go to Dashboard */}
             <Button
-              onClick={() => setLocation('/pricing')}
+              onClick={() => setLocation('/dashboard')}
               className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
               size="lg"
             >
-              <Crown className="h-5 w-5 mr-2" />
-              Start Your Free Trial
+              <LayoutDashboard className="h-5 w-5 mr-2" />
+              Enter Your Dashboard
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
 
             {/* Info text */}
             <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Start your 14-day free trial to access all MusoBuddy features. Credit card required.
+                Your trial expires in 30 days. You can cancel anytime from Settings.
               </p>
             </div>
           </CardContent>

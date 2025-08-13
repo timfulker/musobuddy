@@ -46,7 +46,7 @@ export class StripeService {
             ...(userId && { userId })
           },
         },
-        success_url: `${ENV.appServerUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${ENV.appServerUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${ENV.appServerUrl}/pricing`,
         metadata: {
           userEmail: email,
@@ -112,7 +112,7 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${ENV.appServerUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${ENV.appServerUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${ENV.appServerUrl}/pricing`,
         metadata: {
           userId: userId,

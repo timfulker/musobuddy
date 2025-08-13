@@ -77,8 +77,9 @@ function Router() {
   // Exception: Don't redirect if user is on trial-success page or coming from Stripe
   const hasStripeSession = window.location.search.includes('stripe_session');
   const isPaymentReturn = window.location.search.includes('session_id') || window.location.pathname === '/payment-success';
+  const isTrialSuccess = window.location.pathname === '/trial-success';
   
-  if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn) {
+  if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
     console.log('🔄 Redirecting authenticated user to dashboard');
     window.location.href = '/dashboard';
     return null;
