@@ -187,14 +187,25 @@ export function useAuth() {
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
   const isRegularUserAuthenticated = !!user && !error && (user as any)?.phoneVerified;
   
-  // More robust loading state - consider both initial load and refetching
-  const isAuthLoading = isLoading || isFetching;
+  // Check if we're in circuit breaker mode or initial auth attempts
+  const isInAuthFlow = (() => {
+    // Circuit breaker is active
+    if (authFailureCount >= MAX_AUTH_FAILURES) return true;
+    
+    // We're in initial auth attempts (< 3 failures) and have "No auth token" error
+    if (error?.message === 'No auth token' && authFailureCount < MAX_AUTH_FAILURES) return true;
+    
+    return false;
+  })();
+  
+  // More robust loading state - show loading during auth flow or actual loading
+  const isAuthLoading = isLoading || isFetching || isInAuthFlow;
   
   // Enhanced authentication status with clear state differentiation
   const authenticationStatus = (() => {
     if (isAuthLoading) return 'loading';
     if ((error as any)?.status === 401) return 'unauthenticated';
-    if (error && (error as any)?.status !== 401) return 'error';
+    if (error && (error as any)?.status !== 401 && !isInAuthFlow) return 'error';
     if (isAdminAuthenticated) return 'admin';
     if (isRegularUserAuthenticated) return 'authenticated'; 
     if (user && !(user as any)?.phoneVerified) return 'needs_verification';
@@ -205,7 +216,7 @@ export function useAuth() {
     user,
     isAuthenticated: isAdminAuthenticated || isRegularUserAuthenticated,
     isLoading: isAuthLoading,
-    error,
+    error: isInAuthFlow ? null : error, // Suppress error during auth flow
     isAdmin: (user as any)?.isAdmin === true,
     needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin,
     authenticationStatus, // New: explicit status for debugging
