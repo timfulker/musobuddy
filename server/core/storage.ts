@@ -347,6 +347,10 @@ export class Storage {
     return invoiceStorage.getUnpaidInvoicesByContract(contractId, userId);
   }
 
+  async getInvoiceByToken(token: string) {
+    return invoiceStorage.getInvoiceByToken(token);
+  }
+
   // ===== SETTINGS METHODS =====
   async getSettings(userId: string) {
     return settingsStorage.getSettings(userId);

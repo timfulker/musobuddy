@@ -28,6 +28,12 @@ export class InvoiceStorage {
     return await db.select().from(invoices).orderBy(desc(invoices.createdAt));
   }
 
+  async getInvoiceByToken(token: string) {
+    const result = await db.select().from(invoices)
+      .where(eq(invoices.shareToken, token));
+    return result[0] || null;
+  }
+
   async createInvoice(invoiceData: any) {
     // Generate secure share token for invoice access
     const { randomBytes } = await import('crypto');

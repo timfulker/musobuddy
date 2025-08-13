@@ -189,9 +189,14 @@ export class EmailService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: ${themeColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${pdfUrl}" style="background: ${themeColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px;">
             Download Invoice PDF
           </a>
+          ${invoice.shareToken ? `
+            <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Pay Now
+            </a>
+          ` : ''}
         </div>
         
         <p>Best regards,<br>
@@ -442,6 +447,42 @@ export class EmailService {
     
     const result = await this.sendEmail(emailData);
     return result.success;
+  }
+
+  // Send invoice email with payment link
+  async sendInvoice(invoice: any, userSettings: any, customMessage?: string) {
+    if (!invoice.clientEmail) {
+      console.log('📧 No client email provided, skipping invoice email');
+      return { success: false, error: 'No client email provided' };
+    }
+
+    try {
+      const subject = `Invoice ${invoice.invoiceNumber} - ${userSettings?.businessName || 'MusoBuddy'}`;
+      const invoiceHtml = this.generateInvoiceEmailHTML(invoice, userSettings, invoice.cloudStorageUrl);
+      
+      const emailData = {
+        to: invoice.clientEmail,
+        subject: subject,
+        html: customMessage ? `<p>${customMessage}</p>${invoiceHtml}` : invoiceHtml,
+        from: userSettings?.businessEmail ? 
+          `${userSettings.businessName || 'MusoBuddy'} <${userSettings.businessEmail}>` : 
+          undefined
+      };
+
+      console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.clientEmail}`);
+      const result = await this.sendEmail(emailData);
+      
+      if (result.success) {
+        console.log(`✅ Invoice email sent successfully for ${invoice.invoiceNumber}`);
+      } else {
+        console.error(`❌ Failed to send invoice email for ${invoice.invoiceNumber}:`, result.error);
+      }
+      
+      return result;
+    } catch (error: any) {
+      console.error('❌ Error sending invoice email:', error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

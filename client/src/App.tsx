@@ -21,6 +21,7 @@ import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
 
 import ViewInvoice from "@/pages/view-invoice";
+import PublicInvoice from "@/pages/public-invoice";
 import QuickAddWidget from "@/pages/quick-add-widget";
 import NewBooking from "@/pages/new-booking";
 import AddressBook from "@/pages/address-book";
@@ -148,6 +149,9 @@ function Router() {
       
       {/* Client Portal - public route with token */}
       <Route path="/client-portal/:contractId" component={ClientPortal} />
+      
+      {/* Public Invoice - for clients to view and pay invoices */}
+      <Route path="/invoice/:token" component={PublicInvoice} />
       
       <Route component={NotFound} />
     </Switch>
