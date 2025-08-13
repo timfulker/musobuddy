@@ -96,6 +96,7 @@ export default function UnifiedBookings() {
   // Dialog states
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
+  const [createBookingDialogOpen, setCreateBookingDialogOpen] = useState(false);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
@@ -874,12 +875,13 @@ export default function UnifiedBookings() {
                         Calendar
                       </Button>
                     </div>
-                    <Link href="/new-booking">
-                      <Button className="bg-primary hover:bg-primary/90">
-                        <Plus className="w-4 h-4 mr-2" />
-                        New Booking
-                      </Button>
-                    </Link>
+                    <Button 
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={() => setCreateBookingDialogOpen(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Booking
+                    </Button>
                   </div>
                 </div>
 
@@ -2002,6 +2004,17 @@ export default function UnifiedBookings() {
         open={bookingDetailsDialogOpen}
         onOpenChange={setBookingDetailsDialogOpen}
         booking={selectedBookingForDetails}
+        onBookingUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        }}
+      />
+
+      {/* Create Booking Dialog */}
+      <BookingDetailsDialog
+        open={createBookingDialogOpen}
+        onOpenChange={setCreateBookingDialogOpen}
+        booking={null}
+        mode="create"
         onBookingUpdate={() => {
           queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
         }}
