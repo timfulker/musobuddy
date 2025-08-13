@@ -189,13 +189,16 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           error: null
         });
         
-        // Auto-fill travel expense if empty and distance calculated
+        // Auto-fill travel expense if empty OR if current value seems wrong (over £1000)
         const currentExpense = form.getValues('travelExpense');
-        if (!currentExpense && data.distanceInMiles) {
+        const currentValue = parseFloat(currentExpense?.replace(/[£,]/g, '') || '0');
+        const shouldRecalculate = !currentExpense || currentValue > 1000; // Fix obviously wrong values
+        
+        if (shouldRecalculate && data.distanceInMiles) {
           const mileageRate = 0.45; // Standard UK HMRC rate (per mile)
           const expense = (data.distanceInMiles * mileageRate).toFixed(2);
           form.setValue('travelExpense', `£${expense}`);
-          console.log(`💰 Auto-calculated travel expense: ${data.distanceInMiles} miles × £${mileageRate} = £${expense}`);
+          console.log(`💰 ${currentExpense ? 'Fixed incorrect' : 'Auto-calculated'} travel expense: ${data.distanceInMiles} miles × £${mileageRate} = £${expense}`);
         }
       } else {
         throw new Error(data.error || 'Unable to calculate distance');
