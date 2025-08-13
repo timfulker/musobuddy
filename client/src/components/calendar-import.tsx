@@ -129,15 +129,14 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           </TabsContent>
           
           <TabsContent value="import" className="mt-6">
-            <div className="space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">Import Calendar File (.ics)</h3>
-                <p className="text-muted-foreground">
-                  Import your existing bookings from Apple Calendar, Outlook, or other calendar apps
-                </p>
-              </div>
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-medium mb-2">Import Calendar File (.ics)</h3>
+              <p className="text-muted-foreground">
+                Import your existing bookings from Apple Calendar, Outlook, or other calendar apps
+              </p>
+            </div>
 
-              {importStep === 'select' && (
+            {importStep === 'select' && (
           <div className="space-y-4">
             <div>
               <Label htmlFor="file-upload">Calendar File (.ics)</Label>
@@ -180,37 +179,38 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           )}
 
           {importStep === 'complete' && importResult && (
-          <div className="space-y-4">
-            <div className="flex items-center text-green-600">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              <span className="font-medium">Import Complete!</span>
-            </div>
-            
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <p><strong>Created:</strong> {importResult.created} new bookings</p>
-              <p><strong>Skipped:</strong> {importResult.skipped} duplicate events</p>
-              {importResult.errors && importResult.errors.length > 0 && (
-                <div className="flex items-start text-amber-600">
-                  <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Warnings:</p>
-                    <ul className="text-sm mt-1">
-                      {importResult.errors.slice(0, 3).map((error: string, index: number) => (
-                        <li key={index}>• {error}</li>
-                      ))}
-                    </ul>
+            <div className="space-y-4">
+              <div className="flex items-center text-green-600">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                <span className="font-medium">Import Complete!</span>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <p><strong>Created:</strong> {importResult.created} new bookings</p>
+                <p><strong>Skipped:</strong> {importResult.skipped} duplicate events</p>
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="flex items-start text-amber-600">
+                    <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">Warnings:</p>
+                      <ul className="text-sm mt-1">
+                        {importResult.errors.slice(0, 3).map((error: string, index: number) => (
+                          <li key={index}>• {error}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={handleDialogClose}>
-                Close
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Calendar
-              </Button>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleDialogClose}>
+                  Close
+                </Button>
+                <Button onClick={() => window.location.reload()}>
+                  Refresh Calendar
+                </Button>
+              </div>
             </div>
           )}
           </TabsContent>
