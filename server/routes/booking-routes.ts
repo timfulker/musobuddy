@@ -88,6 +88,9 @@ export function registerBookingRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
+      // Debug log the incoming data to track currency symbols
+      console.log(`🔍 Update booking ${bookingId} - Raw request body:`, JSON.stringify(req.body, null, 2));
+      
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
       if (!existingBooking || existingBooking.userId !== userId) {

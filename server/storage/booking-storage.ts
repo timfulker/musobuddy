@@ -49,8 +49,41 @@ export class BookingStorage {
       cleanData.title = 'Booking Request';
     }
 
+    // Apply the same sanitization to create operations
+    const sanitizeNumericFields = (data: any) => {
+      const numericFields = [
+        'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
+        'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
+        'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
+      ];
+      
+      const sanitized = { ...data };
+      numericFields.forEach(field => {
+        if (sanitized[field] === '' || sanitized[field] === undefined) {
+          sanitized[field] = null;
+        } else if (sanitized[field] !== null) {
+          const originalValue = sanitized[field];
+          // Strip all currency symbols, commas, and extra whitespace
+          const cleanValue = String(sanitized[field])
+            .replace(/[£$€¥₹₽¢₦₨₩₪₡₴₵₸₺₻₼₽₾₿]/g, '') // Currency symbols
+            .replace(/[,\s]/g, '') // Commas and whitespace
+            .trim();
+          
+          if (cleanValue && !isNaN(Number(cleanValue))) {
+            sanitized[field] = Number(cleanValue);
+          } else if (!cleanValue) {
+            sanitized[field] = null;
+          }
+        }
+      });
+      
+      return sanitized;
+    };
+
+    const sanitizedData = sanitizeNumericFields(cleanData);
+
     const result = await db.insert(bookings).values({
-      ...cleanData,
+      ...sanitizedData,
       eventDate: data.eventDate ? new Date(data.eventDate) : undefined,
     }).returning();
     return result[0];
@@ -67,7 +100,8 @@ export class BookingStorage {
     const sanitizeNumericFields = (data: any) => {
       const numericFields = [
         'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
-        'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm'
+        'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
+        'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
       ];
       
       const sanitized = { ...data };
@@ -75,11 +109,21 @@ export class BookingStorage {
         if (sanitized[field] === '' || sanitized[field] === undefined) {
           sanitized[field] = null;
         } else if (sanitized[field] !== null) {
-          // Strip currency symbols and convert to number
-          const cleanValue = String(sanitized[field]).replace(/[£$€,]/g, '').trim();
+          const originalValue = sanitized[field];
+          // Strip all currency symbols, commas, and extra whitespace
+          const cleanValue = String(sanitized[field])
+            .replace(/[£$€¥₹₽¢₦₨₩₪₡₴₵₸₺₻₼₽₾₿]/g, '') // Currency symbols
+            .replace(/[,\s]/g, '') // Commas and whitespace
+            .trim();
+          
+          console.log(`🔧 Sanitizing ${field}: "${originalValue}" → "${cleanValue}"`);
+          
           if (cleanValue && !isNaN(Number(cleanValue))) {
             sanitized[field] = Number(cleanValue);
           } else if (!cleanValue) {
+            sanitized[field] = null;
+          } else {
+            console.warn(`⚠️ Could not sanitize ${field}: "${originalValue}"`);
             sanitized[field] = null;
           }
         }
@@ -242,18 +286,20 @@ export class BookingStorage {
     timeGap?: number;
     notes?: string;
   }) {
-    const result = await db.insert(bookingConflicts).values({
+    const conflictData = {
       userId: data.userId,
       enquiryId: data.enquiryId,
       conflictingId: data.conflictingId,
       conflictType: data.conflictType,
       conflictDate: data.conflictDate,
       severity: data.severity,
-      travelTime: data.travelTime,
-      distance: data.distance,
-      timeGap: data.timeGap,
-      notes: data.notes,
-    }).returning();
+      ...(data.travelTime !== undefined && { travelTime: data.travelTime }),
+      ...(data.distance !== undefined && { distance: data.distance }),
+      ...(data.timeGap !== undefined && { timeGap: data.timeGap }),
+      ...(data.notes !== undefined && { notes: data.notes }),
+    };
+    
+    const result = await db.insert(bookingConflicts).values(conflictData).returning();
     return result[0];
   }
 

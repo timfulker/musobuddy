@@ -102,10 +102,17 @@ export default function AddressAutocomplete({
   }, [inputValue]);
 
   const handleSelectSuggestion = async (suggestion: any) => {
+    console.log("🔍 handleSelectSuggestion called");
     // Immediately hide suggestions and clear them to prevent UI issues
     setShowSuggestions(false);
     setSuggestions([]);
     setError(null);
+    
+    // Force the suggestions to stay hidden
+    setTimeout(() => {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }, 10);
     
     // Start with basic address data
     const baseAddressData: AddressData = {
@@ -151,11 +158,14 @@ export default function AddressAutocomplete({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log("🔍 Input changed to:", value);
     setInputValue(value);
     
     if (!value.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
+    } else {
+      setShowSuggestions(true); // Show suggestions when typing
     }
   };
 
@@ -228,8 +238,10 @@ export default function AddressAutocomplete({
             <div
               key={index}
               className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent blur from firing
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🔍 Suggestion clicked, hiding suggestions");
                 handleSelectSuggestion(suggestion);
               }}
             >

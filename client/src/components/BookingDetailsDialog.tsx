@@ -319,8 +319,15 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         what3words: booking.what3words || "",
       };
       
+      console.log("🔍 Form reset with venue data:", bookingData.venue);
       form.reset(bookingData);
       setInitialData(bookingData);
+      
+      // Debug: Check form values after reset
+      setTimeout(() => {
+        const formVenue = form.getValues("venue");
+        console.log("🔍 Form venue value after reset:", formVenue);
+      }, 100);
       
       // Automatically calculate mileage if venue address exists and no mileage data yet
       if (booking.venueAddress && !mileageData.distance) {
