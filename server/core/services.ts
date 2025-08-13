@@ -202,33 +202,278 @@ export class EmailService {
     };
 
     return `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <h2>Invoice ${invoice.invoiceNumber}</h2>
-        <p>Dear ${invoice.clientName},</p>
-        <p>Please find your invoice attached.</p>
-        
-        <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
-          <h3>Invoice Details:</h3>
-          <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
-          <p><strong>Performance Date:</strong> ${formatDate(invoice.eventDate)}</p>
-          <p><strong>Fee:</strong> £${formatFee(invoice.fee, invoice.amount)}</p>
-          <p><strong>Due Date:</strong> ${formatDate(invoice.dueDate)}</p>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Invoice ${invoice.invoiceNumber}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f9fafb;
+          }
+          
+          .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%);
+            color: ${textColor};
+            padding: 30px;
+            text-align: center;
+          }
+          
+          .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+          }
+          
+          .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
+          }
+          
+          .content {
+            padding: 40px 30px;
+          }
+          
+          .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 20px;
+          }
+          
+          .message {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.7;
+          }
+          
+          .invoice-details {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+          }
+          
+          .invoice-details h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid ${themeColor};
+            display: inline-block;
+          }
+          
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          
+          .detail-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 17px;
+            color: #111827;
+          }
+          
+          .detail-label {
+            font-weight: 500;
+            color: #6b7280;
+          }
+          
+          .detail-value {
+            font-weight: 600;
+            color: #111827;
+          }
+          
+          .amount-highlight {
+            color: ${themeColor};
+            font-size: 18px;
+          }
+          
+          .cta-section {
+            text-align: center;
+            margin: 40px 0;
+          }
+          
+          .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}cc 100%);
+            color: ${textColor};
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            letter-spacing: 0.025em;
+            margin-right: 12px;
+          }
+          
+          .pay-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            letter-spacing: 0.025em;
+          }
+          
+          .download-btn:hover, .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.15);
+          }
+          
+          .footer {
+            background: #f8fafc;
+            padding: 30px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+          }
+          
+          .signature {
+            font-size: 16px;
+            color: #374151;
+            margin-bottom: 10px;
+          }
+          
+          .business-name {
+            font-weight: 600;
+            color: #111827;
+            font-size: 17px;
+          }
+          
+          .help-text {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-top: 20px;
+            line-height: 1.5;
+          }
+          
+          @media (max-width: 600px) {
+            .email-container {
+              margin: 20px;
+              border-radius: 8px;
+            }
+            
+            .header, .content, .footer {
+              padding: 20px;
+            }
+            
+            .header h1 {
+              font-size: 24px;
+            }
+            
+            .detail-row {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 4px;
+            }
+            
+            .download-btn, .pay-btn {
+              padding: 14px 28px;
+              font-size: 15px;
+              margin: 6px;
+              display: block;
+              width: calc(100% - 12px);
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <h1>Invoice ${invoice.invoiceNumber}</h1>
+            <p>Payment Due</p>
+          </div>
+          
+          <div class="content">
+            <div class="greeting">Dear ${invoice.clientName},</div>
+            
+            <div class="message">
+              Thank you for choosing our services. Please find your invoice details below and download the PDF for your records.
+            </div>
+            
+            <div class="invoice-details">
+              <h3>Invoice Details</h3>
+              
+              <div class="detail-row">
+                <span class="detail-label">Invoice Number</span>
+                <span class="detail-value">${invoice.invoiceNumber}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Performance Date</span>
+                <span class="detail-value">${formatDate(invoice.eventDate)}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Due Date</span>
+                <span class="detail-value">${formatDate(invoice.dueDate)}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Total Amount</span>
+                <span class="detail-value amount-highlight">£${formatFee(invoice.fee, invoice.amount)}</span>
+              </div>
+            </div>
+            
+            <div class="cta-section">
+              <a href="${pdfUrl}" class="download-btn">
+                📄 Download Invoice PDF
+              </a>
+              ${invoice.shareToken ? `
+                <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" class="pay-btn">
+                  💳 Pay Now
+                </a>
+              ` : ''}
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="signature">Best regards,</div>
+            <div class="business-name">${userSettings?.businessName || 'MusoBuddy'}</div>
+            <div class="help-text">
+              If you have any questions about this invoice, please don't hesitate to contact us.
+            </div>
+          </div>
         </div>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: ${themeColor}; color: ${textColor}; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px; font-weight: bold;">
-            Download Invoice PDF
-          </a>
-          ${invoice.shareToken ? `
-            <a href="${process.env.NODE_ENV === 'production' ? 'https://www.musobuddy.com' : 'http://localhost:5000'}/invoice/${invoice.shareToken}" style="background: #047857; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-              Pay Now
-            </a>
-          ` : ''}
-        </div>
-        
-        <p>Best regards,<br>
-        ${userSettings?.businessName || 'MusoBuddy'}</p>
-      </div>
+      </body>
+      </html>
     `;
   }
 
