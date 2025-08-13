@@ -8,58 +8,43 @@ export default function GoogleCalendarCallback() {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
+    // This component should not handle the OAuth callback
+    // The callback is handled by the server route at /api/google-calendar/callback
+    // This page should only be reached if something went wrong
+    
+    const handleCallback = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+      const code = urlParams.get('code');
 
-        if (error) {
-          // Handle OAuth error
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'GOOGLE_CALENDAR_ERROR',
-              message: 'Authorization was cancelled or failed'
-            }, window.location.origin);
-          }
-          window.close();
-          return;
-        }
-
-        if (code) {
-          // Exchange code for tokens
-          const response = await apiRequest('/api/google-calendar/callback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code }),
-          });
-
-          if (response.ok) {
-            // Success - notify parent window
-            if (window.opener) {
-              window.opener.postMessage({
-                type: 'GOOGLE_CALENDAR_SUCCESS'
-              }, window.location.origin);
-            }
-            window.close();
-          } else {
-            throw new Error('Failed to connect Google Calendar');
-          }
-        }
-      } catch (error) {
-        console.error('OAuth callback error:', error);
-        
+      if (error) {
+        // Handle OAuth error
         if (window.opener) {
           window.opener.postMessage({
             type: 'GOOGLE_CALENDAR_ERROR',
-            message: error.message || 'Failed to connect Google Calendar'
+            message: 'Authorization was cancelled or failed'
           }, window.location.origin);
         }
-        
-        setTimeout(() => {
-          window.close();
-        }, 3000);
+        setTimeout(() => window.close(), 2000);
+        return;
       }
+
+      if (code) {
+        // If we get here with a code, redirect to the server callback
+        // which will handle the token exchange and show the success page
+        const userId = urlParams.get('state');
+        window.location.href = `/api/google-calendar/callback?code=${code}&state=${userId}`;
+        return;
+      }
+
+      // If we're here without code or error, something went wrong
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'GOOGLE_CALENDAR_ERROR',
+          message: 'Invalid callback - missing authorization code'
+        }, window.location.origin);
+      }
+      setTimeout(() => window.close(), 2000);
     };
 
     handleCallback();
