@@ -83,6 +83,11 @@ export default function NewBookingPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { gigTypes } = useGigTypes();
+  
+  // Check if we're editing an existing booking
+  const urlParams = new URLSearchParams(window.location.search);
+  const editBookingId = urlParams.get('edit');
+  const isEditMode = !!editBookingId;
   const [mileageData, setMileageData] = useState<{
     distance: string | null;
     distanceValue: number | null;
@@ -100,6 +105,18 @@ export default function NewBookingPage() {
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
+  });
+  
+  // Fetch specific booking if in edit mode
+  const { data: editingBooking, isLoading: isLoadingBooking } = useQuery({
+    queryKey: ['/api/bookings', editBookingId],
+    queryFn: async () => {
+      if (!editBookingId) return null;
+      const allBookings = await apiRequest('/api/bookings');
+      const bookingsData = await allBookings.json();
+      return bookingsData.find((b: any) => b.id === parseInt(editBookingId));
+    },
+    enabled: isEditMode
   });
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
@@ -285,8 +302,95 @@ export default function NewBookingPage() {
     },
   });
 
+  // Update booking mutation for edit mode
+  const updateBookingMutation = useMutation({
+    mutationFn: async (data: FullBookingFormData) => {
+      if (!editBookingId) throw new Error('No booking ID');
+      
+      const bookingData = {
+        clientName: data.clientName,
+        clientEmail: data.clientEmail || null,
+        clientPhone: data.clientPhone || null,
+        clientAddress: data.clientAddress || null,
+        eventDate: new Date(data.eventDate),
+        eventTime: data.eventTime || null,
+        eventEndTime: data.eventEndTime || null,
+        venue: data.venue,
+        venueAddress: data.venueAddress || null,
+        venueContactInfo: data.venueContactInfo || null,
+        fee: data.fee ? parseFloat(data.fee) : null,
+        eventType: data.eventType || null,
+        gigType: data.gigType || null,
+        equipmentRequirements: data.equipmentRequirements || null,
+        specialRequirements: data.specialRequirements || null,
+        performanceDuration: data.performanceDuration || null,
+        styles: data.styles || null,
+        equipmentProvided: data.equipmentProvided || null,
+        whatsIncluded: data.whatsIncluded || null,
+        dressCode: data.dressCode || null,
+        contactPerson: data.contactPerson || null,
+        contactPhone: data.contactPhone || null,
+        parkingInfo: data.parkingInfo || null,
+        notes: data.notes || null,
+        travelExpense: data.travelExpense ? parseFloat(data.travelExpense) : null,
+        // Collaborative fields
+        venueContact: data.venueContact || null,
+        soundTechContact: data.soundTechContact || null,
+        stageSize: data.stageSize || null,
+        powerEquipment: data.powerEquipment || null,
+        styleMood: data.styleMood || null,
+        mustPlaySongs: data.mustPlaySongs || null,
+        avoidSongs: data.avoidSongs || null,
+        setOrder: data.setOrder || null,
+        firstDanceSong: data.firstDanceSong || null,
+        processionalSong: data.processionalSong || null,
+        signingRegisterSong: data.signingRegisterSong || null,
+        recessionalSong: data.recessionalSong || null,
+        specialDedications: data.specialDedications || null,
+        guestAnnouncements: data.guestAnnouncements || null,
+        loadInInfo: data.loadInInfo || null,
+        soundCheckTime: data.soundCheckTime || null,
+        weatherContingency: data.weatherContingency || null,
+        parkingPermitRequired: data.parkingPermitRequired || false,
+        mealProvided: data.mealProvided || false,
+        dietaryRequirements: data.dietaryRequirements || null,
+        sharedNotes: data.sharedNotes || null,
+        referenceTracks: data.referenceTracks || null,
+        photoPermission: data.photoPermission !== undefined ? data.photoPermission : true,
+        encoreAllowed: data.encoreAllowed !== undefined ? data.encoreAllowed : true,
+        encoreSuggestions: data.encoreSuggestions || null,
+        what3words: data.what3words || null,
+      };
+      
+      const response = await apiRequest(`/api/bookings/${editBookingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(bookingData),
+      });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success!",
+        description: "Booking updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      navigate('/bookings');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update booking",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: FullBookingFormData) => {
-    createBookingMutation.mutate(data);
+    if (isEditMode) {
+      updateBookingMutation.mutate(data);
+    } else {
+      createBookingMutation.mutate(data);
+    }
   };
 
   return (
@@ -306,9 +410,9 @@ export default function NewBookingPage() {
                 </Link>
                 <div>
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
-                    New Booking
+                    {isEditMode ? 'Edit Booking' : 'New Booking'}
                   </h1>
-                  <p className="text-gray-600 mt-1">Create a new performance booking</p>
+                  <p className="text-gray-600 mt-1">{isEditMode ? 'Update booking details' : 'Create a new performance booking'}</p>
                 </div>
               </div>
               <div className="hidden md:flex items-center space-x-2 text-primary">
@@ -1288,16 +1392,16 @@ export default function NewBookingPage() {
                     <Button 
                       type="submit" 
                       className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                      disabled={createBookingMutation.isPending}
+                      disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      {createBookingMutation.isPending ? (
+                      {(createBookingMutation.isPending || updateBookingMutation.isPending) ? (
                         <>
                           <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"></div>
-                          Creating...
+                          {isEditMode ? "Updating..." : "Creating..."}
                         </>
                       ) : (
-                        "Create Booking"
+                        isEditMode ? "Update Booking" : "Create Booking"
                       )}
                     </Button>
                   </div>

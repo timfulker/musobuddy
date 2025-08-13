@@ -13,12 +13,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings } from "lucide-react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, useNavigate } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useAuth } from "@/hooks/useAuth";
-import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
+// BookingDetailsDialog removed - using new-booking page for all editing
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
 import BookingActionMenu from "@/components/booking-action-menu";
@@ -42,6 +42,7 @@ interface CalendarEvent {
 
 export default function UnifiedBookings() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Month names for display
   const monthNames = [
@@ -94,8 +95,8 @@ export default function UnifiedBookings() {
   const [conflictFilter, setConflictFilter] = useState<boolean>(false);
   
   // Dialog states
-  const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
-  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
+  // BookingDetailsDialog state removed - using new-booking page for all editing
+  // selectedBookingForDetails removed - using new-booking page for all editing
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
@@ -166,10 +167,9 @@ export default function UnifiedBookings() {
         setViewMode('calendar');
         localStorage.setItem('bookingViewMode', 'calendar');
         
-        // Open booking details dialog after a short delay
+        // Navigate to edit booking after a short delay
         setTimeout(() => {
-          setSelectedBookingForDetails(targetBooking);
-          setBookingDetailsDialogOpen(true);
+          navigate(`/new-booking?edit=${targetBooking.id}`);
         }, 300);
         
         // Clean up URL parameter
@@ -774,28 +774,26 @@ export default function UnifiedBookings() {
       const validBookings = validateBookingArray(bookings) ? bookings : [];
       const booking = validBookings.find((b) => b.id === firstEvent.id);
       if (booking) {
-        setSelectedBookingForDetails(booking);
-        setBookingDetailsDialogOpen(true);
+        navigate(`/new-booking?edit=${booking.id}`);
       }
     }
   };
 
   const handleBookingClick = (booking: any) => {
-    setSelectedBookingForDetails(booking);
-    setBookingDetailsDialogOpen(true);
+    // Navigate to new-booking page with booking ID for editing
+    navigate(`/new-booking?edit=${booking.id}`);
   };
 
   // Handler for editing booking from conflict resolution dialog
   const handleEditBookingFromConflict = (booking: any) => {
     console.log('handleEditBookingFromConflict called with booking:', booking);
-    setSelectedBookingForDetails(booking);
-    setBookingDetailsDialogOpen(true);
+    // Navigate to new-booking page with booking ID for editing
+    navigate(`/new-booking?edit=${booking.id}`);
   };
 
   // Handler for editing booking from action menu
   const handleEditBooking = (booking: any) => {
-    setSelectedBookingForDetails(booking);
-    setBookingDetailsDialogOpen(true);
+    navigate(`/new-booking?edit=${booking.id}`);
   };
 
   // Get calendar data for the current view
@@ -1681,8 +1679,7 @@ export default function UnifiedBookings() {
                                       className={`p-3 border rounded-lg cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(event.status || 'new')}`}
                                       onClick={() => {
                                         if (booking) {
-                                          setSelectedBookingForDetails(booking);
-                                          setBookingDetailsDialogOpen(true);
+                                          navigate(`/new-booking?edit=${booking.id}`);
                                         }
                                       }}
                                     >
@@ -1747,8 +1744,7 @@ export default function UnifiedBookings() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (booking) {
-                                            setSelectedBookingForDetails(booking);
-                                            setBookingDetailsDialogOpen(true);
+                                            navigate(`/new-booking?edit=${booking.id}`);
                                           }
                                         }}
                                       >
@@ -1870,8 +1866,7 @@ export default function UnifiedBookings() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (booking) {
-                                              setSelectedBookingForDetails(booking);
-                                              setBookingDetailsDialogOpen(true);
+                                              navigate(`/new-booking?edit=${booking.id}`);
                                             }
                                           }}
                                         >
@@ -1998,14 +1993,7 @@ export default function UnifiedBookings() {
       </div>
 
       {/* Dialogs */}
-      <BookingDetailsDialog
-        open={bookingDetailsDialogOpen}
-        onOpenChange={setBookingDetailsDialogOpen}
-        booking={selectedBookingForDetails}
-        onBookingUpdate={() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-        }}
-      />
+      {/* BookingDetailsDialog removed - using new-booking page for all editing */}
       
       <BookingStatusDialog
         open={bookingStatusDialogOpen}
