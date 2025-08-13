@@ -76,8 +76,9 @@ function Router() {
   // Simple redirect without useEffect to prevent loops
   // Exception: Don't redirect if user is on trial-success page or coming from Stripe
   const hasStripeSession = window.location.search.includes('stripe_session');
+  const isPaymentReturn = window.location.search.includes('session_id') || window.location.pathname === '/payment-success';
   
-  if (isAuthenticated && currentPath === '/' && !hasStripeSession) {
+  if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn) {
     console.log('🔄 Redirecting authenticated user to dashboard');
     window.location.href = '/dashboard';
     return null;
