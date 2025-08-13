@@ -23,7 +23,15 @@ export function registerOnboardingRoutes(app: Express) {
 
       // Check if email prefix is already taken by another user
       const existingUser = await storage.getUserByEmailPrefix(onboardingData.emailPrefix);
+      console.log('🔍 Email prefix check:', {
+        emailPrefix: onboardingData.emailPrefix,
+        existingUser: existingUser ? { id: existingUser.id, email: existingUser.email } : null,
+        currentUserId: userId,
+        idsMatch: existingUser ? (existingUser.id === userId) : 'no existing user'
+      });
+      
       if (existingUser && existingUser.id !== userId) {
+        console.log('❌ Email prefix conflict detected');
         return res.status(400).json({ error: 'Email prefix already taken. Please choose another.' });
       }
 
