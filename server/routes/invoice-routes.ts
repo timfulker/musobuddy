@@ -5,18 +5,24 @@ import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import Stripe from 'stripe';
 
-// For Replit development, always use test keys unless explicitly in production
-const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === 'production';
-const stripeKey = isProduction
-  ? process.env.STRIPE_SECRET_KEY 
-  : process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+// FORCE TEST MODE for now - always use test keys until we're ready for live payments
+const isProduction = false; // Explicitly force test mode
+const stripeKey = process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 
-console.log(`🔧 Stripe mode: ${isProduction ? 'LIVE' : 'TEST'} (NODE_ENV: ${process.env.NODE_ENV}, REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT})`);
+console.log(`🔧 FORCED Stripe mode: TEST (Override enabled)`);
 console.log(`🔑 Using Stripe key: ${stripeKey?.substring(0, 12)}... (${stripeKey?.startsWith('sk_test') ? 'TEST' : 'LIVE'})`);
+console.log(`🧪 Test key available: ${!!process.env.STRIPE_TEST_SECRET_KEY}, Live key available: ${!!process.env.STRIPE_SECRET_KEY}`);
 
 if (!stripeKey) {
   throw new Error('Missing required Stripe secret key');
 }
+
+// Verify we're using test key
+if (!stripeKey.startsWith('sk_test')) {
+  console.error('❌ CRITICAL: Not using test key!');
+  throw new Error('STRIPE TEST KEY REQUIRED FOR DEVELOPMENT');
+}
+
 const stripe = new Stripe(stripeKey, {
   apiVersion: "2025-07-30.basil",
 });
