@@ -37,31 +37,35 @@ import type { Booking } from "@shared/schema";
 
 // Note: Custom auth functions removed - now using standard apiRequest for JWT authentication
 
-// Enhanced schema for full booking editing (matches new-booking.tsx)
-const fullBookingSchema = z.object({
+const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().email().optional().or(z.literal("")),
-  clientPhone: z.string().optional(),
-  clientAddress: z.string().optional(),
   eventDate: z.string().min(1, "Event date is required"),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
-  venue: z.string().min(1, "Venue is required"),
-  venueAddress: z.string().optional(),
-  venueContactInfo: z.string().optional(),
+  venue: z.string().optional(),
   fee: z.string().optional(),
+  clientEmail: z.string().email().optional().or(z.literal("")),
+  clientPhone: z.string().optional(),
+  clientAddress: z.string().optional(),
+  what3words: z.string().optional(),
+  venueAddress: z.string().optional(),
   eventType: z.string().optional(),
   gigType: z.string().optional(),
   equipmentRequirements: z.string().optional(),
   specialRequirements: z.string().optional(),
-  performanceDuration: z.string().optional(),
-  styles: z.string().optional(),
-  equipmentProvided: z.string().optional(),
-  whatsIncluded: z.string().optional(),
-  dressCode: z.string().optional(),
+  setupTime: z.string().optional(),
+  soundCheckTime: z.string().optional(),
+  packupTime: z.string().optional(),
+  travelTime: z.string().optional(),
+  parkingInfo: z.string().optional(),
   contactPerson: z.string().optional(),
   contactPhone: z.string().optional(),
-  parkingInfo: z.string().optional(),
+  venueContactInfo: z.string().optional(),
+  dressCode: z.string().optional(),
+  styles: z.string().optional(),
+  performanceDuration: z.string().optional(),
+  equipmentProvided: z.string().optional(),
+  whatsIncluded: z.string().optional(),
   notes: z.string().optional(),
   travelExpense: z.string().optional(),
   // Collaborative fields
@@ -96,10 +100,9 @@ interface BookingDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   booking: Booking | null;
   onBookingUpdate?: () => void;
-  mode?: 'edit' | 'create';
 }
 
-export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate, mode = 'edit' }: BookingDetailsDialogProps) {
+export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
   const { gigTypes } = useGigTypes();
   const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
   const [newFieldName, setNewFieldName] = useState("");
@@ -210,8 +213,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     }
   };
 
-  const form = useForm<z.infer<typeof fullBookingSchema>>({
-    resolver: zodResolver(fullBookingSchema),
+  const form = useForm<z.infer<typeof bookingDetailsSchema>>({
+    resolver: zodResolver(bookingDetailsSchema),
     defaultValues: {
       clientName: "",
       eventDate: "",
@@ -244,9 +247,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     },
   });
 
-  // Initialize form when booking changes or create mode
+  // Initialize form when booking changes
   useEffect(() => {
-    if (booking && mode === 'edit') {
+    if (booking) {
       // Reduced logging for production
       
       // Parse time values - handle time ranges like "13:30 - 15:30"
@@ -338,71 +341,13 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       
       // Initialize custom fields - customFields doesn't exist in schema yet
       setCustomFields([]);
-    } else if (mode === 'create') {
-      // Reset form for new booking creation
-      form.reset({
-        clientName: "",
-        eventDate: "",
-        eventTime: "",
-        eventEndTime: "",
-        venue: "",
-        fee: "",
-        clientEmail: "",
-        clientPhone: "",
-        clientAddress: "",
-        eventType: "",
-        gigType: "",
-        equipmentRequirements: "",
-        specialRequirements: "",
-        performanceDuration: "",
-        styles: "",
-        equipmentProvided: "",
-        whatsIncluded: "",
-        dressCode: "",
-        contactPerson: "",
-        contactPhone: "",
-        parkingInfo: "",
-        notes: "",
-        travelExpense: "",
-        venueAddress: "",
-        venueContactInfo: "",
-        what3words: "",
-        // Collaborative fields with default empty values
-        venueContact: "",
-        soundTechContact: "",
-        stageSize: "",
-        powerEquipment: "",
-        styleMood: "",
-        mustPlaySongs: "",
-        avoidSongs: "",
-        setOrder: "",
-        firstDanceSong: "",
-        processionalSong: "",
-        signingRegisterSong: "",
-        recessionalSong: "",
-        specialDedications: "",
-        guestAnnouncements: "",
-        loadInInfo: "",
-        weatherContingency: "",
-        parkingPermitRequired: false,
-        mealProvided: false,
-        dietaryRequirements: "",
-        sharedNotes: "",
-        referenceTracks: "",
-        photoPermission: false,
-        encoreAllowed: false,
-        encoreSuggestions: ""
-      });
-      setInitialData(null);
-      setCustomFields([]);
-      setHasChanges(false);
     } else {
       // Reset form when no booking is provided
       form.reset();
       setInitialData(null);
       setCustomFields([]);
     }
-  }, [booking, form, mode]);
+  }, [booking, form]);
 
   // Watch for form changes
   useEffect(() => {
@@ -425,26 +370,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         }
       });
 
-      if (mode === 'create') {
-        // Create new booking
-        const response = await apiRequest('/api/bookings', {
-          method: 'POST',
-          body: JSON.stringify(sanitizedData),
-        });
-        return response.json();
-      } else {
-        // Update existing booking
-        if (!booking?.id) {
-          throw new Error('Booking ID is required');
-        }
-        
-        const response = await apiRequest(`/api/bookings/${booking.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(sanitizedData),
-        });
-        
-        return response.json();
+      if (!booking?.id) {
+        throw new Error('Booking ID is required');
       }
+      
+      // Use apiRequest for proper JWT authentication
+      const response = await apiRequest(`/api/bookings/${booking.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(sanitizedData),
+      });
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -452,23 +388,23 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       // Cache invalidation handled by main /api/bookings
       toast({
         title: "Success",
-        description: mode === 'create' ? "Booking created successfully" : "Booking details updated successfully",
+        description: "Booking details updated successfully",
       });
       setHasChanges(false);
-      onOpenChange(false); // Close dialog after successful save
+      // Keep dialog open after saving - removed onOpenChange(false)
     },
     onError: (error) => {
-      console.error(mode === 'create' ? 'Error creating booking:' : 'Error updating booking:', error);
+      console.error('Error updating booking:', error);
       toast({
         title: "Error",
-        description: mode === 'create' ? "Failed to create booking" : "Failed to update booking details",
+        description: "Failed to update booking details",
         variant: "destructive",
       });
     },
   });
 
-  // Early return if no booking is provided and not in create mode (after ALL hooks)
-  if (!booking && mode !== 'create') {
+  // Early return if no booking is provided (after ALL hooks)
+  if (!booking) {
     return null;
   }
 
@@ -844,7 +780,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     }
   };
 
-  const onSubmit = async (data: z.infer<typeof fullBookingSchema>) => {
+  const onSubmit = async (data: z.infer<typeof bookingDetailsSchema>) => {
     try {
       // Clear all parsing caches immediately when save is clicked
       setExtractedData(null);
@@ -859,7 +795,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   };
 
   const handleSave = () => {
-    if (mode === 'edit' && !booking?.id) {
+    if (!booking?.id) {
       toast({
         title: "Error",
         description: "No booking selected",
@@ -868,7 +804,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       return;
     }
     
-    if (mode === 'edit' && !hasChanges) {
+    if (!hasChanges) {
       toast({
         title: "Info",
         description: "No changes detected to save",
@@ -901,10 +837,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
-              {mode === 'create' ? 'Create New Booking' : `Booking Details - ${booking?.clientName}`}
+              Booking Details - {booking.clientName}
             </DialogTitle>
             <DialogDescription id="booking-details-description">
-              {mode === 'create' ? 'Create a new performance booking' : `Edit and manage booking information for ${booking?.clientName}`}
+              Edit and manage booking information for {booking.clientName}
             </DialogDescription>
           </DialogHeader>
           
@@ -912,10 +848,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           <div className="flex justify-end gap-2 mt-4 pr-4">
             <Button
               onClick={handleSave}
-              disabled={(mode === 'edit' && !hasChanges) || updateBookingMutation.isPending}
-              className={`${(mode === 'create' || hasChanges) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
+              disabled={!hasChanges || updateBookingMutation.isPending}
+              className={`${hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
             >
-              {updateBookingMutation.isPending ? (mode === 'create' ? 'Creating...' : 'Saving...') : (mode === 'create' ? 'Create Booking' : 'Save')}
+              {updateBookingMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
             <Button
               variant="outline"

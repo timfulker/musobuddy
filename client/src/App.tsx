@@ -23,6 +23,7 @@ import ViewContract from "@/pages/view-contract";
 import ViewInvoice from "@/pages/view-invoice";
 import PublicInvoice from "@/pages/public-invoice";
 import QuickAddWidget from "@/pages/quick-add-widget";
+import NewBooking from "@/pages/new-booking";
 import AddressBook from "@/pages/address-book";
 import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
@@ -128,6 +129,8 @@ function Router() {
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/bookings" component={Bookings} />
+      <Route path="/new-booking" component={NewBooking} />
+
       <Route path="/address-book" component={AddressBook} />
       <Route path="/contracts" component={Contracts} />
       <Route path="/invoices" component={Invoices} />
