@@ -294,7 +294,7 @@ export class BookingStorage {
       conflictDate: data.conflictDate,
       severity: data.severity,
       ...(data.travelTime !== undefined && { travelTime: data.travelTime }),
-      ...(data.distance !== undefined && { distance: data.distance }),
+      ...(data.distance !== undefined && { distance: data.distance.toString() }),
       ...(data.timeGap !== undefined && { timeGap: data.timeGap }),
       ...(data.notes !== undefined && { notes: data.notes }),
     };
