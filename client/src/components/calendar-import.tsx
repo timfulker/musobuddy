@@ -107,7 +107,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Calendar Integration</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-700 dark:text-gray-300">
             Sync your bookings with your calendar using Google Calendar integration or import from .ics files
           </DialogDescription>
         </DialogHeader>
