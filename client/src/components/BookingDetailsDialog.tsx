@@ -853,889 +853,439 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           <div className="space-y-6">
           <Form {...form}>
             <form className="space-y-6">
-              {/* Section 1: Basic Information - Purple Theme */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">1</span>
+              {/* Client & Contact Information */}
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-primary-50 rounded-t-lg border-b border-primary/10">
+                  <CardTitle className="text-xl font-semibold text-primary-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-primary/50 to-primary-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">1</span>
                     </div>
-                    <Calendar className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Basic Information</span>
+                    Client & Contact Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="clientName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Date</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="eventTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Start Time</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventEndTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Finish Time</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="time" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="venue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="venueAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue Address</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Enter venue address"
-                            onBlur={(e) => {
-                              field.onBlur();
-                              if (e.target.value) {
-                                calculateMileage(e.target.value);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        {mileageData.isCalculating && (
-                          <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Calculating distance...
-                          </div>
+                <CardContent className="p-6 space-y-6">
+                  {/* Primary Contact */}
+                  <div>
+                    <h3 className="text-md font-semibold text-primary-700 mb-3 border-b border-primary-100 pb-1">
+                      Primary Contact
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="clientName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Client Name *</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                        {mileageData.distance && !mileageData.isCalculating && (
-                          <div className="text-sm text-green-600 flex items-center gap-2 mt-1">
-                            <Navigation className="h-3 w-3" />
-                            <span className="font-medium">{mileageData.distance}</span>
-                            {mileageData.duration && (
-                              <span className="text-gray-500">• {mileageData.duration}</span>
-                            )}
-                          </div>
-                        )}
-                        {mileageData.error && (
-                          <div className="text-sm text-red-500 mt-1">
-                            {mileageData.error}
-                          </div>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="fee"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Fee (£)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" step="0.01" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="travelExpense"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Travel Expense</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="£0.00" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="space-y-2">
-                      <Label className="text-gray-400">Status (edit via status buttons)</Label>
-                      <div className="p-2 bg-gray-100 rounded-md opacity-60">
-                        <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                          {booking.status}
-                        </Badge>
-                        {booking.previousStatus && booking.status === 'completed' && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            <span className="font-medium">Previous:</span> {booking.previousStatus}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Section 2: Client Contact Information - Blue Theme */}
-              <Card className="border-blue-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">2</span>
-                    </div>
-                    <User className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Client Contact Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-blue-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="clientEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="clientPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="clientAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="what3words"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>what3words Location (Optional)</FormLabel>
-                        <FormControl>
-                          <What3WordsInput
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            onLocationFound={(coords, address) => {
-                              console.log('what3words location found:', coords, address);
-                            }}
-                            placeholder="///what.three.words"
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 3: Event Details - Green Theme */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">3</span>
-                    </div>
-                    <Music className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Event Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0 grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="eventType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Type</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="Wedding, Corporate, etc." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gigType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gig Type</FormLabel>
-                          <div className="space-y-2">
-                            <Select onValueChange={(value) => {
-                              if (value !== 'custom') {
-                                field.onChange(value);
-                              }
-                            }} value={gigTypes.includes(field.value as string) ? field.value : 'custom'}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select or type custom gig type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
-                                  <SelectItem key={index} value={gigType}>
-                                    {gigType}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="custom">Custom - Type your own</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            
-                            {(!gigTypes.includes(field.value as string) || field.value === '') && (
-                              <FormControl>
-                                <Input 
-                                  placeholder="Type custom gig type"
-                                  value={gigTypes.includes(field.value as string) ? '' : field.value}
-                                  onChange={(e) => field.onChange(e.target.value)}
-                                />
-                              </FormControl>
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="dressCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dress Code</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="Black tie, casual, etc." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="styles"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Styles Requested <span className="text-blue-600">[Styles]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Musical styles requested for this booking: jazz, classical, pop, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 4: Venue Information - Orange Theme */}
-              <Card className="border-orange-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">4</span>
-                    </div>
-                    <MapPin className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Venue Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-orange-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="venueAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="venueContactInfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue Contact Information</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="contactPerson"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Day-of Contact Person</FormLabel>
-                          <FormControl>
-                            <Input {...field}  />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="contactPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Contact Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field}  />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="parkingInfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Parking Information</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 5: Timing & Setup - Indigo Theme */}
-              <Card className="border-yellow-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">5</span>
-                    </div>
-                    <Clock className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Timing & Setup</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-yellow-50 rounded-b-lg border-t-0 grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="setupTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Setup Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 30 minutes before" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="soundCheckTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sound Check Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 15 minutes before start" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="packupTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pack-up Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 15 minutes after finish" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="travelTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Travel Time</FormLabel>
-                          <FormControl>
-                            <Input {...field}  placeholder="e.g., 1 hour each way" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Section 6: Equipment & Special Requests - Pink Theme */}
-              <Card className="border-pink-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">6</span>
-                    </div>
-                    <Settings className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Equipment & Special Requests</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-pink-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="equipmentRequirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipment Needed</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={2} placeholder="PA system, microphones, stands, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="specialRequirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Special Requests</FormLabel>
-                        <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Special songs, timing requests, etc." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 7: Performance Details - TEMPLATE VARIABLES - Teal Theme */}
-              <Card className="border-teal-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">7</span>
-                    </div>
-                    <Music className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Performance Details</span>
-                    <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full ml-2">📧 Template Variables</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-teal-50 rounded-b-lg border-t-0 grid gap-4">
-                  <FormField
-                    control={form.control}
-                    name="performanceDuration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Performance Duration <span className="text-blue-600">[Performance Duration]</span></FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., 2 hours, 3 x 45 minute sets" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="equipmentProvided"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipment Provided <span className="text-blue-600">[Equipment Provided]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} placeholder="What equipment/instruments you'll bring" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="whatsIncluded"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>What's Included <span className="text-blue-600">[What's Included]</span></FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} placeholder="What's included in your service/package" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Section 8: Custom Fields - Gray Theme */}
-              <Card className="border-gray-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">8</span>
-                    </div>
-                    <Edit3 className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Custom Fields</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-gray-50 rounded-b-lg border-t-0 space-y-4">
-                  {customFields.map((field) => (
-                    <div key={field.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <Label className="text-sm font-medium">{field.name}</Label>
-                        <p className="text-sm text-gray-600">{field.value}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeCustomField(field.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Field name"
-                      value={newFieldName}
-                      onChange={(e) => setNewFieldName(e.target.value)}
-                    />
-                    <Input
-                      placeholder="Field value"
-                      value={newFieldValue}
-                      onChange={(e) => setNewFieldValue(e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addCustomField}
-                      disabled={!newFieldName.trim() || !newFieldValue.trim()}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Section 9: Comprehensive Document Management - Violet Theme */}
-              <Card className="border-black shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-900 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-3">
-                    <div className="bg-white/20 p-2 rounded-full">
-                      <span className="text-white font-bold text-lg">9</span>
-                    </div>
-                    <FileText className="h-6 w-6" />
-                    <span className="text-xl font-semibold">Booking Documents</span>
-                  </CardTitle>
-                  <p className="text-white/90 text-sm mt-2">
-                    Upload contracts, invoices, and other booking-related documents. Use AI parsing to extract and populate booking details.
-                  </p>
-                </CardHeader>
-                <CardContent className="p-6 bg-slate-50 rounded-b-lg border-t-0 space-y-4">
-                  {/* Document Type Selection */}
-                  <div className="space-y-2">
-                    <Label>Document Type</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={documentType === 'contract' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('contract')}
-                      >
-                        Contract
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'invoice' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('invoice')}
-                      >
-                        Invoice
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={documentType === 'other' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setDocumentType('other')}
-                      >
-                        Other
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Existing Documents Display */}
-                  {(booking?.uploadedContractUrl || booking?.uploadedInvoiceUrl || (booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0)) && (
-                    <div className="space-y-2">
-                      <Label>Uploaded Documents</Label>
-                      <div className="space-y-2">
-                        {booking?.uploadedContractUrl && (
-                          <div className="bg-blue-50 p-3 rounded-md">
-                            <p className="text-sm text-blue-700 mb-2">
-                              📄 Contract: {String(booking.uploadedContractFilename || 'Unknown')}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(booking.uploadedContractUrl!, '_blank')}
-                            >
-                              View Contract
-                            </Button>
-                          </div>
-                        )}
-                        {booking?.uploadedInvoiceUrl && (
-                          <div className="bg-green-50 p-3 rounded-md">
-                            <p className="text-sm text-green-700 mb-2">
-                              💰 Invoice: {String(booking.uploadedInvoiceFilename || 'Unknown')}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(booking.uploadedInvoiceUrl!, '_blank')}
-                            >
-                              View Invoice
-                            </Button>
-                          </div>
-                        )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0 ? 
-                         (booking.uploadedDocuments as Array<{type?: string, filename?: string, url?: string}>).map((doc, index) => (
-                          <div key={index} className="bg-gray-50 p-3 rounded-md">
-                            <p className="text-sm text-gray-700 mb-2">
-                              📎 {doc.type || 'Document'}: {doc.filename || 'Unknown'}
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => doc.url && window.open(doc.url, '_blank')}
-                            >
-                              View Document
-                            </Button>
-                          </div>
-                        )) : null}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Upload New Document */}
-                  {(
-                    (documentType === 'contract' && !booking?.uploadedContractUrl) ||
-                    (documentType === 'invoice' && !booking?.uploadedInvoiceUrl) ||
-                    documentType === 'other'
-                  ) ? (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="document-upload">Upload {documentType === 'contract' ? 'Contract' : documentType === 'invoice' ? 'Invoice' : 'Document'} PDF</Label>
-                        <Input
-                          id="document-upload"
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setContractFile(e.target.files?.[0] || null)}
-                        />
-                      </div>
+                      />
                       
-                      {contractFile && (
-                        <div className="space-y-3">
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              onClick={handleUploadContract}
-                              disabled={isParsingContract}
-                              className="flex items-center gap-2"
-                            >
-                              {isParsingContract ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Uploading...
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="h-4 w-4" />
-                                  Store Document
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleParseContract}
-                              disabled={isParsingContract}
-                              className="flex items-center gap-2"
-                            >
-                              {isParsingContract ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Parsing...
-                                </>
-                              ) : (
-                                <>
-                                  <FileText className="h-4 w-4" />
-                                  Parse & Fill Form
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setContractFile(null)}
-                            >
-                              Clear
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Choose "Store Document" to simply save the PDF, or "Parse & Fill Form" to extract data and populate booking fields
-                          </p>
-                        </div>
-                      )}
+                      <FormField
+                        control={form.control}
+                        name="clientEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
-                      {parseResult && (
-                        <div className="bg-green-50 p-3 rounded-md">
-                          <p className="text-sm text-green-700">
-                            Document parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
-                            Confidence: {parseResult.confidence || 0}%
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="bg-gray-50 p-3 rounded-md text-center">
-                      <p className="text-sm text-gray-600">
-                        {documentType === 'contract' ? 'Contract already uploaded' : 
-                         documentType === 'invoice' ? 'Invoice already uploaded' : 
-                         'Select a different document type to upload more files'}
-                      </p>
+                      <FormField
+                        control={form.control}
+                        name="clientPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="contactPerson"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">On-Day Contact Person</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="If different from client" className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  )}
+                  </div>
                   
-                  {uploadStatus && (
-                    <div className={`p-3 rounded-md ${uploadStatus.type === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
-                      <p className={`text-sm ${uploadStatus.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
-                        {uploadStatus.message}
-                      </p>
+                  {/* Address */}
+                  <div>
+                    <h3 className="text-md font-semibold text-primary-700 mb-3 border-b border-primary-100 pb-1">
+                      Billing Address
+                    </h3>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="clientAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Full Address</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={2} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20 resize-none" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="what3words"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">what3words Location (Optional)</FormLabel>
+                            <FormControl>
+                              <What3WordsInput
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                onLocationFound={(coords, address) => {
+                                  console.log('what3words location found:', coords, address);
+                                }}
+                                placeholder="///what.three.words"
+                                className="w-full"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Notes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notes</CardTitle>
+              {/* Event Date & Venue */}
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-blue-100">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-lg border-b border-blue-100">
+                  <CardTitle className="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">2</span>
+                    </div>
+                    Event Date & Venue
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Textarea {...field}  rows={4} placeholder="Additional notes..." />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <CardContent className="p-6 space-y-6">
+                  {/* Date & Time */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      When
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="eventDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Event Date *</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="date" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="eventTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Start Time</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="time" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="eventEndTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">End Time</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="time" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Venue Information */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      Where
+                    </h3>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="venue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="venueAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Venue Address</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={2}
+                                placeholder="Enter venue address"
+                                className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none"
+                                onBlur={(e) => {
+                                  field.onBlur();
+                                  if (e.target.value) {
+                                    calculateMileage(e.target.value);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            {mileageData.isCalculating && (
+                              <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Calculating distance...
+                              </div>
+                            )}
+                            {mileageData.distance && !mileageData.isCalculating && (
+                              <div className="text-sm text-green-600 flex items-center gap-2 mt-1">
+                                <Navigation className="h-3 w-3" />
+                                <span className="font-medium">{mileageData.distance}</span>
+                                {mileageData.duration && (
+                                  <span className="text-gray-500">• {mileageData.duration}</span>
+                                )}
+                              </div>
+                            )}
+                            {mileageData.error && (
+                              <div className="text-sm text-red-500 mt-1">
+                                {mileageData.error}
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="venueContactInfo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Venue Contact Information</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Contact person, phone, or email" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="parkingInfo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Parking Information</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Parking instructions, restrictions, or costs" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Performance & Requirements */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      Performance Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="eventType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Event Type</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Wedding, Corporate, etc." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="gigType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Gig Type</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Solo, duo, band, etc." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="mt-4">
+                      <FormField
+                        control={form.control}
+                        name="styles"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Music Styles</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={2} placeholder="Jazz, classical, pop, etc." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Equipment & Special Requirements */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      Equipment & Requirements
+                    </h3>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="equipmentRequirements"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Equipment Needed</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={2} placeholder="PA system, microphones, stands, etc." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="specialRequirements"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Special Requests</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={2} placeholder="Special songs, timing requests, etc." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fees & Status */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      Fees & Status
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="fee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Fee (£)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" step="0.01" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="travelExpense"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Travel Expense</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="£0.00" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-500">Status (edit via status buttons)</Label>
+                        <div className="p-3 bg-gray-50 rounded-md border">
+                          <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'} className="mb-1">
+                            {booking.status}
+                          </Badge>
+                          {booking.previousStatus && booking.status === 'completed' && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              <span className="font-medium">Previous:</span> {booking.previousStatus}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">
+                      Notes
+                    </h3>
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Additional notes..." className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
-              
 
             </form>
           </Form>
