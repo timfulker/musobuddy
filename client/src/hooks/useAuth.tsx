@@ -21,14 +21,27 @@ function shouldSkipAuth(): boolean {
       console.log('🟢 Auth success flag detected - resetting circuit breaker');
       authFailureCount = 0;
       lastAuthFailure = 0;
+      consecutiveNoTokenFailures = 0;
       window.localStorage.removeItem('auth_success_flag');
       return false;
+    }
+    
+    // Reset circuit breaker on login/public pages for fresh start
+    const currentPath = window.location.pathname;
+    if (currentPath === '/login' || currentPath === '/' || currentPath.includes('/signup')) {
+      if (authFailureCount > 0) {
+        console.log('🔄 Resetting circuit breaker for public page visit');
+        authFailureCount = 0;
+        lastAuthFailure = 0;
+        consecutiveNoTokenFailures = 0;
+      }
     }
   }
   
   // Reset failure count after timeout
   if (now - lastAuthFailure > FAILURE_RESET_TIME) {
     authFailureCount = 0;
+    consecutiveNoTokenFailures = 0;
   }
   
   // Skip if too many failures
@@ -187,25 +200,17 @@ export function useAuth() {
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
   const isRegularUserAuthenticated = !!user && !error && (user as any)?.phoneVerified;
   
-  // Check if we're in circuit breaker mode or initial auth attempts
-  const isInAuthFlow = (() => {
-    // Circuit breaker is active
-    if (authFailureCount >= MAX_AUTH_FAILURES) return true;
-    
-    // We're in initial auth attempts (< 3 failures) and have "No auth token" error
-    if (error?.message === 'No auth token' && authFailureCount < MAX_AUTH_FAILURES) return true;
-    
-    return false;
-  })();
+  // Check if we're in circuit breaker mode (only during active failures)
+  const isCircuitBreakerActive = authFailureCount >= MAX_AUTH_FAILURES;
   
-  // More robust loading state - show loading during auth flow or actual loading
-  const isAuthLoading = isLoading || isFetching || isInAuthFlow;
+  // More robust loading state - show loading during actual loading or circuit breaker
+  const isAuthLoading = isLoading || isFetching;
   
   // Enhanced authentication status with clear state differentiation
   const authenticationStatus = (() => {
     if (isAuthLoading) return 'loading';
     if ((error as any)?.status === 401) return 'unauthenticated';
-    if (error && (error as any)?.status !== 401 && !isInAuthFlow) return 'error';
+    if (error && (error as any)?.status !== 401) return 'error';
     if (isAdminAuthenticated) return 'admin';
     if (isRegularUserAuthenticated) return 'authenticated'; 
     if (user && !(user as any)?.phoneVerified) return 'needs_verification';
@@ -216,7 +221,7 @@ export function useAuth() {
     user,
     isAuthenticated: isAdminAuthenticated || isRegularUserAuthenticated,
     isLoading: isAuthLoading,
-    error: isInAuthFlow ? null : error, // Suppress error during auth flow
+    error, // Show actual errors
     isAdmin: (user as any)?.isAdmin === true,
     needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin,
     authenticationStatus, // New: explicit status for debugging
