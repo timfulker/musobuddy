@@ -832,8 +832,8 @@ app.post('/api/webhook/mailgun',
       
       // Check for system addresses
       if (emailPrefix === 'noreply' || emailPrefix === 'admin') {
-        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using admin user`);
-        userId = "43963086"; // Admin user for system emails
+        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using primary user`);
+        userId = "1754488522516"; // Primary user for system emails
       } else {
         // FALLBACK PROTECTION: Look up user using authentication-independent method
         try {
@@ -851,10 +851,10 @@ app.post('/api/webhook/mailgun',
       }
     }
     
-    // Fallback to default user if no match found
+    // Fallback to primary user if no match found
     if (!userId) {
-      userId = "43963086"; // Default admin user
-      console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
+      userId = "1754488522516"; // Primary user for this instance
+      console.log(`📧 [${requestId}] No user match found, using primary user:`, userId);
     }
 
     // CHECK: Handle price enquiries after user lookup - Enhanced detection
