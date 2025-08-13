@@ -102,6 +102,11 @@ export default function AddressAutocomplete({
   }, [inputValue]);
 
   const handleSelectSuggestion = async (suggestion: any) => {
+    // Immediately hide suggestions and clear them to prevent UI issues
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setError(null);
+    
     // Start with basic address data
     const baseAddressData: AddressData = {
       address: suggestion.name || suggestion.formatted_address,
@@ -116,8 +121,6 @@ export default function AddressAutocomplete({
     // Set loading state while fetching details
     setIsLoading(true);
     setInputValue(suggestion.name || suggestion.formatted_address);
-    setShowSuggestions(false);
-    setError(null);
 
     // Fetch detailed place information if we have a place ID
     if (suggestion.placeId) {

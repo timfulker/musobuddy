@@ -51,9 +51,7 @@ export class BookingStorage {
 
     const result = await db.insert(bookings).values({
       ...cleanData,
-      eventDate: data.eventDate ? new Date(data.eventDate) : new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      eventDate: data.eventDate ? new Date(data.eventDate) : undefined,
     }).returning();
     return result[0];
   }
@@ -65,7 +63,7 @@ export class BookingStorage {
       throw new Error('Booking not found');
     }
 
-    // Sanitize numeric fields - convert empty strings to null
+    // Sanitize numeric fields - convert empty strings to null and strip currency symbols
     const sanitizeNumericFields = (data: any) => {
       const numericFields = [
         'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
@@ -76,9 +74,14 @@ export class BookingStorage {
       numericFields.forEach(field => {
         if (sanitized[field] === '' || sanitized[field] === undefined) {
           sanitized[field] = null;
-        } else if (sanitized[field] !== null && !isNaN(Number(sanitized[field]))) {
-          // Convert to proper number type
-          sanitized[field] = Number(sanitized[field]);
+        } else if (sanitized[field] !== null) {
+          // Strip currency symbols and convert to number
+          const cleanValue = String(sanitized[field]).replace(/[£$€,]/g, '').trim();
+          if (cleanValue && !isNaN(Number(cleanValue))) {
+            sanitized[field] = Number(cleanValue);
+          } else if (!cleanValue) {
+            sanitized[field] = null;
+          }
         }
       });
       
@@ -90,7 +93,6 @@ export class BookingStorage {
     const setData = {
       ...sanitizedUpdates,
       eventDate: sanitizedUpdates.eventDate ? new Date(sanitizedUpdates.eventDate) : undefined,
-      documents: sanitizedUpdates.documents || currentBooking.documents,
       updatedAt: new Date(),
     };
 
@@ -241,8 +243,16 @@ export class BookingStorage {
     notes?: string;
   }) {
     const result = await db.insert(bookingConflicts).values({
-      ...data,
-      createdAt: new Date()
+      userId: data.userId,
+      enquiryId: data.enquiryId,
+      conflictingId: data.conflictingId,
+      conflictType: data.conflictType,
+      conflictDate: data.conflictDate,
+      severity: data.severity,
+      travelTime: data.travelTime,
+      distance: data.distance,
+      timeGap: data.timeGap,
+      notes: data.notes,
     }).returning();
     return result[0];
   }

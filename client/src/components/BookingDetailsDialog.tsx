@@ -263,6 +263,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         return timeRange.length > 1 ? timeRange[1].trim() : "";
       };
 
+      console.log("🔍 Loading booking data for form - venue field:", booking.venue);
+      
       const bookingData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
