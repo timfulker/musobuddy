@@ -16,6 +16,7 @@ import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { registerMapsRoutes } from "./maps-routes";
 import { setupWhat3WordsRoutes } from "./what3words-routes";
 import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
+import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
 
 import { requireAuth } from '../middleware/auth';
@@ -61,6 +62,9 @@ export async function registerRoutes(app: Express) {
 
   // Register Google Calendar routes
   registerGoogleCalendarRoutes(app);
+  
+  // Register onboarding routes  
+  registerOnboardingRoutes(app);
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {

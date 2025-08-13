@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { storage } from "../core/storage";
 import { requireAuth } from "../middleware/auth";
 
-export async function registerOnboardingRoutes(app: Express) {
+export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding
   app.post('/api/onboarding/complete', requireAuth, async (req: any, res) => {
     try {

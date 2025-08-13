@@ -42,6 +42,7 @@ import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
 import GoogleCalendarCallback from "@/pages/google-calendar-callback";
+import OnboardingWrapper from "@/components/onboarding-wrapper";
 
 
 import { useEffect } from "react";
@@ -169,9 +170,11 @@ function App() {
         <ThemeProvider defaultTheme="light">
           <AppThemeProvider>
             <TooltipProvider>
-              <Toaster />
-              <Router />
-              <SupportChat />
+              <OnboardingWrapper>
+                <Toaster />
+                <Router />
+                <SupportChat />
+              </OnboardingWrapper>
             </TooltipProvider>
           </AppThemeProvider>
         </ThemeProvider>

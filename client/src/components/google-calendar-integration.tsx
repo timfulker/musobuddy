@@ -205,7 +205,7 @@ export default function GoogleCalendarIntegration() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-gray-900">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </CardTitle>
@@ -213,6 +213,7 @@ export default function GoogleCalendarIntegration() {
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="ml-4 text-gray-700">Loading Google Calendar status...</p>
           </div>
         </CardContent>
       </Card>
@@ -223,7 +224,7 @@ export default function GoogleCalendarIntegration() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-gray-900">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </CardTitle>
@@ -273,7 +274,7 @@ export default function GoogleCalendarIntegration() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-gray-900">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </div>
@@ -301,7 +302,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Manual Sync Controls */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">Manual Sync</Label>
+          <Label className="text-base font-medium text-gray-900">Manual Sync</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Button 
               variant="outline" 
@@ -341,7 +342,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Sync Settings */}
         <div className="space-y-4">
-          <Label className="text-base font-medium">Sync Settings</Label>
+          <Label className="text-base font-medium text-gray-900">Sync Settings</Label>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -412,7 +413,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Disconnect */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">Disconnect</Label>
+          <Label className="text-base font-medium text-gray-900">Disconnect</Label>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
