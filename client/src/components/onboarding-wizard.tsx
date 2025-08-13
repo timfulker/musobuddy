@@ -56,20 +56,19 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
 
   const [formData, setFormData] = useState({
     // Business Info
-    businessName: '',
+    businessName: '', // Optional now
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    musicGenre: '',
-    instrumentsServices: '',
-    yearsExperience: '',
+    instrumentsServices: '', // Keep for settings page population
     
     // Contact & Location  
     phoneNumber: user?.phoneNumber || '',
     emailPrefix: '', // CRITICAL: For receiving booking emails
-    businessAddress: '',
+    addressLine1: '',
+    addressLine2: '',
     city: '',
     postcode: '',
-    serviceAreas: '',
+    country: 'United Kingdom',
     
     // Rates & Services
     standardRate: '',
@@ -80,8 +79,7 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
     depositPercentage: '25',
     
     // Branding
-    selectedTheme: 'midnight-blue',
-    businessDescription: ''
+    selectedTheme: 'midnight-blue'
   });
 
   const updateFormData = (field: string, value: string) => {
@@ -140,7 +138,7 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
 
   const handleComplete = () => {
     // Validate required fields
-    if (!formData.businessName || !formData.firstName || !formData.lastName || !formData.emailPrefix || !formData.phoneNumber) {
+    if (!formData.firstName || !formData.lastName || !formData.emailPrefix || !formData.phoneNumber) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields marked with *",
@@ -168,28 +166,6 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="businessName">Business Name *</Label>
-                <Input
-                  id="businessName"
-                  value={formData.businessName}
-                  onChange={(e) => updateFormData('businessName', e.target.value)}
-                  placeholder="e.g., Smith Music Services"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="musicGenre">Primary Genre/Style</Label>
-                <Input
-                  id="musicGenre"
-                  value={formData.musicGenre}
-                  onChange={(e) => updateFormData('musicGenre', e.target.value)}
-                  placeholder="e.g., Jazz, Classical, Wedding Music"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
                 <Label htmlFor="firstName">First Name *</Label>
                 <Input
                   id="firstName"
@@ -211,30 +187,26 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="businessName">Business Name (optional)</Label>
+              <Input
+                id="businessName"
+                value={formData.businessName}
+                onChange={(e) => updateFormData('businessName', e.target.value)}
+                placeholder="e.g., Smith Music Services (leave blank to use your name)"
+              />
+              <p className="text-xs text-gray-500">Most musicians trade under their own name as sole traders</p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="instrumentsServices">Instruments & Services</Label>
               <Textarea
                 id="instrumentsServices"
                 value={formData.instrumentsServices}
                 onChange={(e) => updateFormData('instrumentsServices', e.target.value)}
-                placeholder="e.g., Piano, Vocals, DJ Services, Sound System, Lighting..."
+                placeholder="e.g., Saxophone, DJ, Piano, Vocals, Sound System, Lighting..."
                 rows={3}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="yearsExperience">Years of Experience</Label>
-              <Select value={formData.yearsExperience} onValueChange={(value) => updateFormData('yearsExperience', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select experience level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0-1">New to the industry</SelectItem>
-                  <SelectItem value="2-5">2-5 years</SelectItem>
-                  <SelectItem value="6-10">6-10 years</SelectItem>
-                  <SelectItem value="11-20">11-20 years</SelectItem>
-                  <SelectItem value="20+">20+ years</SelectItem>
-                </SelectContent>
-              </Select>
+              <p className="text-xs text-gray-500">These will appear on your settings page for contract templates</p>
             </div>
           </div>
         );
@@ -280,18 +252,28 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="businessAddress">Business Address</Label>
+                <Label htmlFor="addressLine1">Address Line 1</Label>
                 <Input
-                  id="businessAddress"
-                  value={formData.businessAddress}
-                  onChange={(e) => updateFormData('businessAddress', e.target.value)}
-                  placeholder="Street address or area"
+                  id="addressLine1"
+                  value={formData.addressLine1}
+                  onChange={(e) => updateFormData('addressLine1', e.target.value)}
+                  placeholder="Street address"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="addressLine2">Address Line 2</Label>
+                <Input
+                  id="addressLine2"
+                  value={formData.addressLine2}
+                  onChange={(e) => updateFormData('addressLine2', e.target.value)}
+                  placeholder="Apartment, suite, unit, building, floor, etc."
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City/Town *</Label>
+                  <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
                     value={formData.city}
@@ -301,7 +283,7 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="postcode">Postcode *</Label>
+                  <Label htmlFor="postcode">Postcode</Label>
                   <Input
                     id="postcode"
                     value={formData.postcode}
@@ -312,13 +294,12 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="serviceAreas">Service Areas</Label>
-                <Textarea
-                  id="serviceAreas"
-                  value={formData.serviceAreas}
-                  onChange={(e) => updateFormData('serviceAreas', e.target.value)}
-                  placeholder="e.g., Greater Manchester, Lancashire, Cheshire (within 50 miles)"
-                  rows={2}
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => updateFormData('country', e.target.value)}
+                  placeholder="United Kingdom"
                 />
               </div>
             </div>
@@ -448,8 +429,8 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
           <div className="space-y-6">
             <div className="text-center mb-6">
               <Palette className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Brand Your Experience</h3>
-              <p className="text-gray-600 mt-2">Choose colors and describe your business for professional documents</p>
+              <h3 className="text-xl font-semibold">Choose Your Theme</h3>
+              <p className="text-gray-600 mt-2">Select a theme color for your professional documents and dashboard</p>
             </div>
 
             <div className="space-y-6">
@@ -479,18 +460,6 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
                     </Card>
                   ))}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessDescription">Business Description</Label>
-                <Textarea
-                  id="businessDescription"
-                  value={formData.businessDescription}
-                  onChange={(e) => updateFormData('businessDescription', e.target.value)}
-                  placeholder="Briefly describe your music business and what makes you unique. This will appear on contracts and invoices."
-                  rows={4}
-                />
-                <p className="text-xs text-gray-500">This appears on your professional documents</p>
               </div>
             </div>
           </div>
@@ -577,7 +546,7 @@ export default function OnboardingWizard({ isOpen, onComplete, user }: Onboardin
             <Button 
               onClick={handleComplete}
               disabled={completeOnboardingMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               {completeOnboardingMutation.isPending ? 'Setting up...' : 'Complete Setup'}
             </Button>

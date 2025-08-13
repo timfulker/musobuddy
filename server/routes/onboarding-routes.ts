@@ -16,9 +16,9 @@ export function registerOnboardingRoutes(app: Express) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
-      // Validate required fields
-      if (!onboardingData.businessName || !onboardingData.firstName || !onboardingData.emailPrefix) {
-        return res.status(400).json({ error: 'Missing required fields: businessName, firstName, emailPrefix' });
+      // Validate required fields (businessName is now optional)
+      if (!onboardingData.firstName || !onboardingData.emailPrefix) {
+        return res.status(400).json({ error: 'Missing required fields: firstName, emailPrefix' });
       }
 
       // Check if email prefix is already taken
@@ -37,15 +37,14 @@ export function registerOnboardingRoutes(app: Express) {
       });
 
       // Create user settings with business information
-      await storage.updateUserSettings(userId, {
-        businessName: onboardingData.businessName,
-        businessAddress: onboardingData.businessAddress,
-        city: onboardingData.city,
-        postcode: onboardingData.postcode,
-        musicGenre: onboardingData.musicGenre,
-        instrumentsServices: onboardingData.instrumentsServices,
-        yearsExperience: onboardingData.yearsExperience,
-        serviceAreas: onboardingData.serviceAreas,
+      await storage.updateSettings(userId, {
+        businessName: onboardingData.businessName || `${onboardingData.firstName} ${onboardingData.lastName}`,
+        addressLine1: onboardingData.addressLine1 || '',
+        addressLine2: onboardingData.addressLine2 || '',
+        city: onboardingData.city || '',
+        postcode: onboardingData.postcode || '',
+        country: onboardingData.country || 'United Kingdom',
+        instrumentsServices: onboardingData.instrumentsServices || '',
         
         // Pricing information
         standardRate: parseFloat(onboardingData.standardRate) || 0,
@@ -55,9 +54,8 @@ export function registerOnboardingRoutes(app: Express) {
         minimumBookingFee: parseFloat(onboardingData.minimumBookingFee) || 0,
         depositPercentage: parseInt(onboardingData.depositPercentage) || 25,
         
-        // Branding
-        themeColor: onboardingData.selectedTheme || 'midnight-blue',
-        businessDescription: onboardingData.businessDescription || ''
+        // Branding - use themeAccentColor to match the settings page
+        themeAccentColor: onboardingData.selectedTheme || 'midnight-blue'
       });
 
       console.log('✅ Onboarding completed successfully for user:', userId);
