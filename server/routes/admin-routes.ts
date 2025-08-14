@@ -62,28 +62,40 @@ export function registerAdminRoutes(app: Express) {
         const totalContracts = await storage.getTotalContractCount();
         const totalInvoices = await storage.getTotalInvoiceCount();
 
-        // Estimate monthly API costs based on activity
+        // Estimate monthly API costs based on realistic user activity
         const estimates = {
           mailgun: {
-            monthly_emails: Math.ceil((totalBookings + totalContracts + totalInvoices) * 2.5), // Average emails per booking/contract/invoice
-            estimated_cost: Math.ceil((totalBookings + totalContracts + totalInvoices) * 2.5 * 0.0008), // $0.0008 per email
+            monthly_emails: totalUsers * 10 * 30, // 10 emails per user per day * 30 days
+            estimated_cost: parseFloat((totalUsers * 10 * 30 * 0.0004).toFixed(2)), // $0.0004 per email (Mailgun flex pricing)
           },
           openai: {
-            monthly_tokens: totalUsers * 5000, // Estimated tokens per user per month
-            estimated_cost: (totalUsers * 5000 * 0.000002), // $0.002 per 1K tokens
+            monthly_tokens: totalUsers * 2000, // More realistic: ~2K tokens per user per month
+            estimated_cost: parseFloat((totalUsers * 2000 * 0.000002).toFixed(2)), // $0.002 per 1K tokens
           },
           cloudflareR2: {
-            monthly_storage_gb: totalInvoices + totalContracts, // Roughly 1GB per document
-            monthly_requests: (totalBookings + totalContracts + totalInvoices) * 10,
-            estimated_cost: ((totalInvoices + totalContracts) * 0.015) + ((totalBookings + totalContracts + totalInvoices) * 10 * 0.0000036),
+            monthly_storage_gb: Math.ceil((totalInvoices + totalContracts) * 0.001), // ~1MB per document
+            monthly_requests: totalUsers * 50, // ~50 requests per user per month
+            estimated_cost: parseFloat((((totalInvoices + totalContracts) * 0.001 * 0.015) + (totalUsers * 50 * 0.0000036)).toFixed(2)),
           },
           googleMaps: {
-            monthly_requests: totalBookings * 2, // Geocoding + distance matrix per booking
-            estimated_cost: totalBookings * 2 * 0.005, // $0.005 per request
+            monthly_requests: totalUsers * 5, // ~5 map requests per user per month (realistic usage)
+            estimated_cost: parseFloat((totalUsers * 5 * 0.005).toFixed(2)), // $0.005 per request
           },
           twilio: {
-            monthly_sms: totalUsers * 0.1, // Most users verify once
-            estimated_cost: totalUsers * 0.1 * 0.05, // $0.05 per SMS
+            monthly_sms: Math.ceil(totalUsers * 0.2), // Some users may need re-verification
+            estimated_cost: parseFloat((totalUsers * 0.2 * 0.0075).toFixed(2)), // $0.0075 per SMS (updated pricing)
+          },
+          stripe: {
+            monthly_transactions: Math.ceil(totalUsers * 0.1), // Most users pay monthly, some yearly
+            estimated_cost: parseFloat((totalUsers * 0.1 * 0.30).toFixed(2)), // $0.30 per transaction
+          },
+          anthropic: {
+            monthly_tokens: totalUsers * 500, // Conservative estimate for AI usage
+            estimated_cost: parseFloat((totalUsers * 500 * 0.000008).toFixed(2)), // Claude Haiku pricing
+          },
+          what3words: {
+            monthly_requests: totalUsers * 1, // ~1 what3words request per user per month
+            estimated_cost: parseFloat((totalUsers * 1 * 0.002).toFixed(2)), // $0.002 per request
           }
         };
 
@@ -95,12 +107,16 @@ export function registerAdminRoutes(app: Express) {
           data: {
             api_status: apiStatus,
             usage_estimates: estimates,
-            total_estimated_monthly_cost: 
+            total_estimated_monthly_cost: parseFloat((
               estimates.mailgun.estimated_cost + 
               estimates.openai.estimated_cost + 
               estimates.cloudflareR2.estimated_cost + 
               estimates.googleMaps.estimated_cost + 
-              estimates.twilio.estimated_cost,
+              estimates.twilio.estimated_cost +
+              estimates.stripe.estimated_cost +
+              estimates.anthropic.estimated_cost +
+              estimates.what3words.estimated_cost
+            ).toFixed(2)),
             user_metrics: {
               total_users: totalUsers,
               total_bookings: totalBookings,

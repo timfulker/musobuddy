@@ -34,12 +34,12 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: var(--theme-primary-text) !important;
 }
 
-/* Force dynamic text color on any element with bg-primary class */
-[class*="bg-primary"] {
+/* Force dynamic text color ONLY on full bg-primary class, not opacity variants */
+.bg-primary {
   color: var(--theme-primary-text) !important;
 }
 
-[class*="bg-primary"] * {
+.bg-primary * {
   color: var(--theme-primary-text) !important;
 }
 
@@ -185,8 +185,8 @@ body {
 }
 
 /* COMPREHENSIVE THEME CONTRAST SYSTEM */
-/* Apply to ANY element that gets theme colored background */
-[class*="bg-primary"],
+/* Apply ONLY to elements with full primary background, not opacity variants */
+.bg-primary,
 [style*="background-color: var(--theme-primary)"],
 [style*="background: var(--theme-primary)"],
 [data-state="selected"],
@@ -201,7 +201,7 @@ body {
 }
 
 /* Force color on all child elements */
-[class*="bg-primary"] *,
+.bg-primary *,
 [style*="background-color: var(--theme-primary)"] *,
 [style*="background: var(--theme-primary)"] *,
 [data-state="selected"] *,
@@ -521,20 +521,20 @@ body {
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
   --muted: #1a1a1a;
   --muted-foreground: #a0a0a0;
   --popover: #1a1a1a;
-  --popover-foreground: #ffffff;
+  --popover-foreground: #e5e5e5;
   --card: #1a1a1a;
-  --card-foreground: #ffffff;
+  --card-foreground: #e5e5e5;
   --border: #333333;
   --input: #333333;
   --primary: #ffd700;
   --primary-foreground: #000000;
   --secondary: #1a1a1a;
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #e5e5e5;
   --accent: #ffd700;
   --accent-foreground: #000000;
   --destructive: #dc3545;
@@ -546,14 +546,18 @@ body {
   --chart-3: #ffffff;
   --chart-4: #a0a0a0;
   --chart-5: #333333;
-  --sidebar-background: #000000;
-  --sidebar-foreground: #ffffff;
+  --sidebar-background: #0a0a0a;
+  --sidebar-foreground: #e5e5e5;
   --sidebar-primary: #ffd700;
   --sidebar-primary-foreground: #000000;
   --sidebar-accent: #ffd700;
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #333333;
   --sidebar-ring: #ffd700;
+  
+  /* Theme text colors for dark mode */
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
 }
 
 /* Purple Theme Dark Mode */
@@ -591,6 +595,10 @@ body {
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
   --sidebar-border: hsl(215, 27.9%, 16.9%);
   --sidebar-ring: hsl(263, 70%, 65%);
+  
+  /* Theme text colors for purple dark mode */
+  --theme-text: hsl(210, 20%, 98%);
+  --theme-text-secondary: hsl(215, 20.2%, 65.1%);
 }
 
 @layer base {
@@ -602,6 +610,38 @@ body {
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* EMERGENCY FIX FOR ADMIN PANEL WHITE TEXT ISSUE */
+/* Target only the main admin panel content, exclude sidebar */
+.admin-panel main .text-foreground,
+.admin-panel main h1,
+.admin-panel main div,
+.admin-panel main span,
+.admin-panel main p {
+  color: #1e293b !important;
+}
+
+/* Force dark text on ALL text elements in admin panel main content */
+.admin-panel main * {
+  color: #1e293b !important;
+}
+
+/* Specific overrides for common patterns */
+.admin-panel main .text-muted-foreground {
+  color: #64748b !important;
+}
+
+/* FORCE ADMIN PANEL TABS TO HAVE CORRECT STYLING */
+.admin-panel [role="tablist"] button[data-state="inactive"] {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+.admin-panel [role="tablist"] button[data-state="active"] {
+  background-color: var(--theme-primary) !important;
+  color: var(--theme-primary-text) !important;
+}
+
 
 @layer utilities {
   /* Purple theme scrollbars */

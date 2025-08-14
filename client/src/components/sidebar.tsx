@@ -299,14 +299,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Link 
               href="/admin" 
               onClick={() => window.innerWidth < 768 && onClose()} 
-              className={getNavLinkClass("/admin")}
-              style={{ 
-                color: isActive("/admin") ? getThemeTextColor(currentTheme) : '#1e293b',
-                backgroundColor: isActive("/admin") ? 'var(--theme-primary)' : 'transparent'
-              }}
+              className={cn(
+                getNavLinkClass("/admin"),
+                isActive("/admin") ? 'bg-primary text-primary-foreground' : ''
+              )}
             >
-              <Crown className="w-5 h-5" style={{ color: 'inherit' }} />
-              <span style={{ color: 'inherit' }}>Admin</span>
+              <Crown className="w-5 h-5" />
+              <span>Admin</span>
             </Link>
           )}
         </nav>
