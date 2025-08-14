@@ -666,7 +666,7 @@ export function generateCollaborativeForm(
 
   const apiEndpoint = process.env.NODE_ENV === 'production' 
     ? 'https://musobuddy.replit.app' 
-    : 'http://localhost:5000';
+    : 'http://0.0.0.0:5000';
 
   return collaborativeFormGenerator.generateStandaloneForm(
     formData,
