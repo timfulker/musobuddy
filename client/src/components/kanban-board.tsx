@@ -1,19 +1,47 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 import { findActiveAuthToken } from '@/utils/authToken';
 
 export default function ActionableEnquiries() {
   const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   
+  // Mutation for rejecting bookings
+  const rejectBookingMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'rejected' }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Booking Rejected",
+        description: "The booking has been rejected and removed from your dashboard",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject booking",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
@@ -203,16 +231,32 @@ export default function ActionableEnquiries() {
                       {getDisplayStatus(enquiry.status)}
                     </Badge>
                     
-                    <Link href={`/bookings?id=${enquiry.id}`}>
+                    <div className="flex items-center space-x-1">
+                      <Link href={`/bookings?id=${enquiry.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+                      </Link>
+                      
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          rejectBookingMutation.mutate(enquiry.id);
+                        }}
+                        disabled={rejectBookingMutation.isPending}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        title="Reject booking"
                       >
-                        <Eye className="w-3 h-3 mr-1" />
-                        View
+                        <X className="w-3 h-3" />
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 </div>
               </div>
