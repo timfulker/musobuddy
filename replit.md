@@ -34,7 +34,7 @@ External integration deployment requirement: All external integrations (Stripe p
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, email parsing, and email template management. Professional email styling for invoices includes responsive design, Google Fonts, gradient headers, and branding.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: AI for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic.
+- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic (switched from OpenAI for ~50% cost savings).
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields.

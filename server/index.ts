@@ -1264,12 +1264,13 @@ function hasVaguePatterns(emailText: string): boolean {
   return hasVaguePattern;
 }
 
-// AI email parsing function
+// AI email parsing function - now using Claude Haiku for better cost efficiency
 export async function parseEmailWithAI(emailBody: string, subject: string): Promise<any> {
-  const openai = process.env.OPENAI_EMAIL_PARSING_KEY ? 
-    new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
+  const anthropic = process.env.ANTHROPIC_API_KEY ? 
+    new (await import('@anthropic-ai/sdk')).default({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
     
-  if (!openai) {
+  if (!anthropic) {
+    console.warn('⚠️ ANTHROPIC_API_KEY not configured - falling back to manual processing');
     return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
   }
 
@@ -1379,21 +1380,24 @@ Extract in JSON format:
   "requiresPersonalResponse": true/false
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    const response = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 500,
+      temperature: 0.1,
+      system: "You are a booking information extractor. Only extract eventDate if the email explicitly includes either: (a) a specific day-of-month + month (year optional), or (b) a weekday with a modifier (e.g., 'next Friday', 'this Wednesday'). Month-only, year-only, or season-only phrases (e.g., 'next April', 'April 2026', 'this summer', 'next year') must result in eventDate: null. Never default to today. When unsure, return eventDate: null. Additionally return: eventDate_text (exact snippet used) and eventDate_exactness ('exact'|'relative-day'|'partial'|'none'). Always respond with valid JSON format.",
       messages: [
         { 
-          role: "system", 
-          content: "You are a booking information extractor. Only extract eventDate if the email explicitly includes either: (a) a specific day-of-month + month (year optional), or (b) a weekday with a modifier (e.g., 'next Friday', 'this Wednesday'). Month-only, year-only, or season-only phrases (e.g., 'next April', 'April 2026', 'this summer', 'next year') must result in eventDate: null. Never default to today. When unsure, return eventDate: null. Additionally return: eventDate_text (exact snippet used) and eventDate_exactness ('exact'|'relative-day'|'partial'|'none')."
-        },
-        { role: "user", content: prompt }
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 500,
-      temperature: 0.1
+          role: "user", 
+          content: `${prompt}\n\nPlease respond with a valid JSON object only.` 
+        }
+      ]
     });
 
-    const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+    const aiResult = JSON.parse(response.content[0]?.text || '{}');
+    
+    // Track cost savings: Claude Haiku vs OpenAI GPT-3.5-turbo
+    // Estimated 50% cost reduction by switching to Claude Haiku
+    console.log('💰 COST OPTIMIZATION: Using Claude Haiku instead of OpenAI (~50% cost savings)');
     
     // ROBUST VALIDATION: Enhanced date validation with exactness checking
     const validationResult = shouldCreateBooking(aiResult, emailBody);

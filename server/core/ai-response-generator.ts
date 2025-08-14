@@ -1,21 +1,21 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-// Initialize OpenAI client with better error handling
-const initializeOpenAI = () => {
-  const apiKey = process.env.OPENAI_API_KEY;
+// Initialize Anthropic client with better error handling
+const initializeAnthropic = () => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   
   if (!apiKey) {
-    console.error('❌ OPENAI_API_KEY environment variable is not set');
-    throw new Error('OpenAI API key is not configured');
+    console.error('❌ ANTHROPIC_API_KEY environment variable is not set');
+    throw new Error('Anthropic API key is not configured');
   }
   
   if (apiKey.length < 10) {
-    console.error('❌ OPENAI_API_KEY appears to be invalid (too short)');
-    throw new Error('OpenAI API key appears to be invalid');
+    console.error('❌ ANTHROPIC_API_KEY appears to be invalid (too short)');
+    throw new Error('Anthropic API key appears to be invalid');
   }
   
-  console.log('✅ OpenAI API key found and appears valid');
-  return new OpenAI({ 
+  console.log('✅ Anthropic API key found and appears valid - using Claude for cost efficiency');
+  return new Anthropic({ 
     apiKey,
     timeout: 30000, // 30 second timeout at client level
     maxRetries: 1 // Reduced from 2 to limit cost exposure
@@ -70,13 +70,13 @@ interface AIResponseRequest {
 }
 
 export class AIResponseGenerator {
-  private openai: OpenAI | null = null;
+  private anthropic: Anthropic | null = null;
   
-  private getOpenAIClient(): OpenAI {
-    if (!this.openai) {
-      this.openai = initializeOpenAI();
+  private getAnthropicClient(): Anthropic {
+    if (!this.anthropic) {
+      this.anthropic = initializeAnthropic();
     }
-    return this.openai;
+    return this.anthropic;
   }
   
   async generateEmailResponse(request: AIResponseRequest): Promise<{
@@ -97,7 +97,7 @@ export class AIResponseGenerator {
     });
     
     try {
-      const openai = this.getOpenAIClient();
+      const anthropic = this.getAnthropicClient();
       
       const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo);
@@ -105,25 +105,24 @@ export class AIResponseGenerator {
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
       
-      console.log('🤖 Making OpenAI API call...');
+      console.log('🤖 Making Claude API call for cost efficiency...');
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        response_format: { type: "json_object" },
+      const response = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1500,
         temperature: 0.7,
-        max_tokens: 1500
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: `${userPrompt}\n\nPlease respond with valid JSON format only.` }
+        ]
       });
 
-      console.log('✅ OpenAI API response received');
+      console.log('✅ Claude API response received');
       console.log('🤖 Response usage:', response.usage);
       
-      const content = response.choices[0]?.message?.content;
+      const content = response.content[0]?.text;
       if (!content) {
-        throw new Error('No content received from OpenAI API');
+        throw new Error('No content received from Claude API');
       }
       
       console.log('🤖 Raw response content length:', content.length);
@@ -132,7 +131,7 @@ export class AIResponseGenerator {
       try {
         result = JSON.parse(content);
       } catch (parseError) {
-        console.error('❌ Failed to parse OpenAI response as JSON:', content);
+        console.error('❌ Failed to parse Claude response as JSON:', content);
         throw new Error('Invalid JSON response from AI service');
       }
       
@@ -501,7 +500,7 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     body: string;
   }>> {
     try {
-      const openai = this.getOpenAIClient();
+      const anthropic = this.getAnthropicClient();
       
       const systemPrompt = `You are an expert at creating professional email template variations. Create ${count} variations of the provided template with different tones and approaches while maintaining the core message.
 
@@ -528,22 +527,23 @@ Guidelines:
 Template Name: ${templateName}
 Template Body: ${templateBody}
 
-Generate variations with different approaches while keeping the essential message and template variables intact.`;
+Generate variations with different approaches while keeping the essential message and template variables intact.
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        response_format: { type: "json_object" },
+Please respond with valid JSON format only.`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1500,
         temperature: 0.8,
-        max_tokens: 1500
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: userPrompt }
+        ]
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.content[0]?.text;
       if (!content) {
-        throw new Error('No content received from OpenAI API');
+        throw new Error('No content received from Claude API');
       }
 
       const result = JSON.parse(content);

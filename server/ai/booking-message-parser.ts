@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Helper function to enrich venue data using Google Places API
 async function enrichVenueData(venueName: string): Promise<any> {
@@ -77,10 +77,9 @@ async function enrichVenueData(venueName: string): Promise<any> {
   }
 }
 
-// Enhanced booking message parser using OpenAI
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Enhanced booking message parser using Claude Haiku for cost efficiency
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 interface ParsedBookingData {
@@ -113,7 +112,7 @@ export async function parseBookingMessage(
   clientAddress?: string
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 OpenAI: Parsing booking message with enhanced AI...');
+    console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -138,23 +137,22 @@ ${clientAddress ? `LOCATION: "${clientAddress}"` : ''}
 
 Extract all possible booking details as JSON:`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
       max_tokens: 1000,
+      temperature: 0.3,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: `${userPrompt}\n\nPlease respond with valid JSON only.` }
+      ]
     });
 
-    const rawContent = response.choices[0].message.content;
+    const rawContent = response.content[0]?.text;
     if (!rawContent) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from Claude');
     }
 
-    console.log('🤖 OpenAI raw response:', rawContent);
+    console.log('🤖 Claude raw response:', rawContent);
     
     const parsed = JSON.parse(rawContent);
     
