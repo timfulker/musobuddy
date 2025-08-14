@@ -315,7 +315,7 @@ function extractEncoreApplyLink(messageText: string): string | null {
     }
   }
   
-  // Pattern 2: AWS tracking URLs that redirect to encoremusicians.com (like in your screenshot)
+  // Pattern 2: AWS tracking URLs - extract and decode the actual Encore URL
   const trackingPatterns = [
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi
@@ -324,7 +324,21 @@ function extractEncoreApplyLink(messageText: string): string | null {
   for (const pattern of trackingPatterns) {
     const match = messageText.match(pattern);
     if (match) {
-      return match[0];
+      const trackingUrl = match[0];
+      console.log(`🔍 Found AWS tracking URL: ${trackingUrl}`);
+      
+      // Extract the encoded Encore URL from the tracking wrapper
+      const encoreUrlMatch = trackingUrl.match(/https:%2F%2Fencoremusicians\.com[^\/\s]*/);
+      if (encoreUrlMatch) {
+        // Decode the URL-encoded Encore link
+        const encodedUrl = encoreUrlMatch[0];
+        const decodedUrl = decodeURIComponent(encodedUrl);
+        console.log(`🎵 Decoded Encore URL: ${decodedUrl}`);
+        return decodedUrl;
+      }
+      
+      // Fallback: return the tracking URL if decoding fails
+      return trackingUrl;
     }
   }
   
@@ -333,7 +347,15 @@ function extractEncoreApplyLink(messageText: string): string | null {
   let hrefMatch;
   while ((hrefMatch = hrefPattern.exec(messageText)) !== null) {
     const url = hrefMatch[1];
-    if (url.includes('encoremusicians.com') || (url.includes('awstrack.me') && url.includes('encoremusicians'))) {
+    if (url.includes('encoremusicians.com')) {
+      return url;
+    }
+    if (url.includes('awstrack.me') && url.includes('encoremusicians')) {
+      // Try to decode tracking URL
+      const encoreUrlMatch = url.match(/https:%2F%2Fencoremusicians\.com[^&]*/);
+      if (encoreUrlMatch) {
+        return decodeURIComponent(encoreUrlMatch[0]);
+      }
       return url;
     }
   }
