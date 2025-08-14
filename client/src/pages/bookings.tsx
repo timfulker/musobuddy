@@ -146,10 +146,15 @@ export default function UnifiedBookings() {
 
   // Backend conflicts loaded
 
+  // Highlight state for calendar navigation
+  const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
+  
   // Handle URL parameters for booking navigation from dashboard
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const bookingId = urlParams.get('id');
+    const highlightId = urlParams.get('highlight');
+    const viewParam = urlParams.get('view');
     
     if (bookingId && bookings.length > 0) {
       // Find the booking by ID
@@ -175,7 +180,35 @@ export default function UnifiedBookings() {
         window.history.replaceState({}, '', newUrl);
       }
     }
-  }, [bookings]); // Depend on bookings data
+    
+    // Handle highlight parameter (from dashboard card click)
+    if (highlightId && bookings.length > 0) {
+      const validBookings = validateBookingArray(bookings) ? bookings : [];
+      const targetBooking = validBookings.find((b) => b.id.toString() === highlightId);
+      
+      if (targetBooking && targetBooking.eventDate) {
+        // Navigate calendar to booking's month
+        const bookingDate = new Date(targetBooking.eventDate);
+        setCurrentDate(bookingDate);
+        
+        // Switch to calendar view if specified
+        if (viewParam === 'calendar') {
+          setViewMode('calendar');
+          localStorage.setItem('bookingViewMode', 'calendar');
+        }
+        
+        // Set highlighting state
+        setHighlightedBookingId(highlightId);
+        
+        // Clean up URL parameter and highlighting after a short delay
+        setTimeout(() => {
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+          setHighlightedBookingId(null);
+        }, 3000); // Keep highlight visible for 3 seconds
+      }
+    }
+  }, [bookings, navigate]); // Depend on bookings data and navigate
 
   // OPTIMIZED: Memoized conflict detection with conflict groups to prevent excessive re-computation
   const { conflictsByBookingId, conflictGroups } = React.useMemo(() => {
@@ -1774,7 +1807,9 @@ export default function UnifiedBookings() {
                                   <HoverCard key={eventIndex} openDelay={200}>
                                     <HoverCardTrigger asChild>
                                       <div
-                                        className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')}`}
+                                        className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
+                                          highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
+                                        }`}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (booking) {
@@ -1896,7 +1931,9 @@ export default function UnifiedBookings() {
                                     <HoverCard key={eventIndex} openDelay={200}>
                                       <HoverCardTrigger asChild>
                                         <div
-                                          className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')}`}
+                                          className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
+                                            highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
+                                          }`}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (booking) {
