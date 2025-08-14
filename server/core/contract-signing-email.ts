@@ -75,6 +75,13 @@ export class ContractSigningEmailService {
               </ul>
             </div>
             
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${contract.cloudStorageUrl}" 
+                 style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 15px;">
+                📄 View Signed Contract
+              </a>
+            </div>
+            
             <p>We're excited to perform at your event and look forward to working with you to make it perfect!</p>
             
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
