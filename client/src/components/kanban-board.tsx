@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
@@ -12,6 +12,8 @@ import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 import { findActiveAuthToken } from '@/utils/authToken';
 
 export default function ActionableEnquiries() {
+  const [location, setLocation] = useLocation();
+  
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
@@ -113,7 +115,11 @@ export default function ActionableEnquiries() {
     };
     
     return (
-      <Card key={enquiry.id} className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()}`}>
+      <Card 
+        key={enquiry.id} 
+        className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer`}
+        onClick={() => setLocation(`/bookings?highlight=${enquiry.id}`)}
+      >
         <CardContent className="p-4">
           <div className="flex items-start space-x-4">
             {/* Date Box */}
@@ -189,7 +195,11 @@ export default function ActionableEnquiries() {
                     </Badge>
                     
                     <Link href={`/bookings?id=${enquiry.id}`}>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Eye className="w-3 h-3 mr-1" />
                         View
                       </Button>
