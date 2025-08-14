@@ -115,10 +115,10 @@ export function registerAdminRoutes(app: Express) {
           subscriptions: {
             services: [
               { name: 'Replit Core', monthly_cost: 20.00 },
-              { name: 'Neon Database Pro', monthly_cost: 19.00 },
+              { name: 'Neon Database (Free)', monthly_cost: 0.00 },
               { name: 'Cloudflare Pro', monthly_cost: 20.00 }
             ],
-            estimated_cost: 59.00 // Total subscription fees
+            estimated_cost: 40.00 // Total subscription fees
           }
         };
 
