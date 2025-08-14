@@ -181,11 +181,19 @@ export default function ActionableEnquiries() {
                 </div>
                 
                 <div className="flex flex-col items-end space-y-2 ml-2">
-                  {(enquiry.fee || enquiry.feeRange) && (
+                  {enquiry.fee && (
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900">
-                        {enquiry.feeRange ? enquiry.feeRange : 
-                         enquiry.fee === "TBC" ? "£TBC" : `£${enquiry.fee}`}
+                        {(() => {
+                          // Extract and display fee range for Encore bookings
+                          if (enquiry.applyNowLink && enquiry.title) {
+                            const feeRangeMatch = enquiry.title.match(/£(\d+)-(?:£)?(\d+)/);
+                            if (feeRangeMatch) {
+                              return `£${feeRangeMatch[1]}-${feeRangeMatch[2]}`;
+                            }
+                          }
+                          return enquiry.fee === "TBC" ? "£TBC" : `£${enquiry.fee}`;
+                        })()}
                       </div>
                     </div>
                   )}

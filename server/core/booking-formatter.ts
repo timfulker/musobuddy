@@ -111,7 +111,6 @@ export interface FormattedBooking {
   uploadedInvoiceKey?: string;
   uploadedInvoiceFilename?: string;
   uploadedDocuments?: any[];
-  feeRange?: string; // For storing fee ranges like "£260-450"
 }
 
 /**
@@ -140,14 +139,7 @@ export function formatBooking(rawBooking: any): FormattedBooking {
       return rawTitle;
     })(),
     clientName: rawBooking.clientName || 'Unknown Client',
-    status: rawBooking.status || 'new',
-    // Extract fee range for Encore bookings
-    feeRange: (() => {
-      if (rawBooking.applyNowLink || (rawBooking.title && rawBooking.title.toLowerCase().includes('encore'))) {
-        return extractFeeRange(rawBooking.title || rawBooking.notes || '');
-      }
-      return rawBooking.feeRange || null;
-    })()
+    status: rawBooking.status || 'new'
   };
   
   // MIGRATION LOGIC: Handle both old and new field names
