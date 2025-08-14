@@ -1,4 +1,5 @@
 import { randomBytes, createHash } from 'crypto';
+import QRCode from 'qrcode';
 
 class ClientPortalService {
   // Generate a secure portal token
@@ -33,39 +34,48 @@ class ClientPortalService {
     qrCode: string;
   }> {
     const token = this.generatePortalToken();
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://musobuddy.replit.app'
-      : 'http://localhost:5000';
+    // Always use production URL for external links - this ensures client portals work correctly
+    const baseUrl = 'https://musobuddy.replit.app';
     
     const portalUrl = this.generatePortalUrl(contractId, token, baseUrl);
     
-    // Generate proper QR code SVG for the portal URL
-    const qrCode = `data:image/svg+xml;base64,${Buffer.from(`
-      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="white"/>
-        <rect x="10" y="10" width="20" height="20" fill="black"/>
-        <rect x="40" y="10" width="20" height="20" fill="black"/>
-        <rect x="70" y="10" width="20" height="20" fill="black"/>
-        <rect x="10" y="40" width="20" height="20" fill="black"/>
-        <rect x="40" y="40" width="20" height="20" fill="white"/>
-        <rect x="70" y="40" width="20" height="20" fill="black"/>
-        <rect x="10" y="70" width="20" height="20" fill="black"/>
-        <rect x="40" y="70" width="20" height="20" fill="black"/>
-        <rect x="70" y="70" width="20" height="20" fill="black"/>
-        <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="14" fill="black">
-          Client Portal QR
-        </text>
-        <text x="100" y="140" text-anchor="middle" font-family="Arial" font-size="12" fill="gray">
-          ${portalUrl.slice(-20)}
-        </text>
-      </svg>
-    `).toString('base64')}`;
-
-    return {
-      portalToken: token,
-      portalUrl,
-      qrCode
-    };
+    // Generate proper QR code for the portal URL
+    try {
+      const qrCodeDataUrl = await QRCode.toDataURL(portalUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+      
+      return {
+        portalToken: token,
+        portalUrl,
+        qrCode: qrCodeDataUrl
+      };
+    } catch (error) {
+      console.error('❌ Error generating QR code:', error);
+      // Fallback to a minimal QR-style pattern if generation fails
+      const fallbackQr = `data:image/svg+xml;base64,${Buffer.from(`
+        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="white"/>
+          <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="12" fill="black">
+            QR Code Error
+          </text>
+          <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="10" fill="gray">
+            Use portal link instead
+          </text>
+        </svg>
+      `).toString('base64')}`;
+      
+      return {
+        portalToken: token,
+        portalUrl,
+        qrCode: fallbackQr
+      };
+    }
   }
 }
 
