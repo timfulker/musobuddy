@@ -27,21 +27,51 @@ class ClientPortalService {
     return `${baseUrl}/api/portal/${contractId}?token=${token}`;
   }
 
-  // Setup client portal for contract
+  // Setup client portal for contract using R2-hosted collaborative forms
   async setupClientPortal(contractId: number): Promise<{
     portalToken: string;
     portalUrl: string;
     qrCode: string;
   }> {
-    const token = this.generatePortalToken();
-    // Always use production URL for external links - this ensures client portals work correctly
-    const baseUrl = 'https://musobuddy.replit.app';
-    
-    const portalUrl = this.generatePortalUrl(contractId, token, baseUrl);
-    
-    // Generate proper QR code for the portal URL
     try {
-      const qrCodeDataUrl = await QRCode.toDataURL(portalUrl, {
+      // Import required modules
+      const { storage } = await import('../core/storage');
+      const { collaborativeFormGenerator } = await import('./collaborative-form-generator');
+
+      // Get contract data
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        throw new Error(`Contract ${contractId} not found`);
+      }
+
+      // Get associated booking data if it exists
+      let bookingData = null;
+      if (contract.enquiryId) {
+        bookingData = await storage.getBooking(contract.enquiryId);
+      }
+
+      // Convert contract to booking data format
+      const formData = {
+        id: contract.enquiryId || contract.id,
+        contractId: contract.id,
+        clientName: contract.clientName,
+        venue: contract.venue,
+        eventDate: contract.eventDate,
+        eventTime: contract.eventTime,
+        eventEndTime: contract.eventEndTime,
+        performanceDuration: contract.performanceDuration,
+        // Include existing booking data if available
+        ...bookingData
+      };
+
+      // Upload collaborative form to R2 (bypasses routing issues)
+      const result = await collaborativeFormGenerator.uploadCollaborativeForm(
+        formData,
+        'https://musobuddy.replit.app' // API endpoint for form submissions
+      );
+
+      // Generate proper QR code for the R2-hosted form
+      const qrCodeDataUrl = await QRCode.toDataURL(result.url, {
         width: 200,
         margin: 2,
         color: {
@@ -49,30 +79,36 @@ class ClientPortalService {
           light: '#ffffff'
         }
       });
+
+      console.log(`✅ [CLIENT-PORTAL] Generated R2-hosted collaborative form: ${result.url}`);
       
       return {
-        portalToken: token,
-        portalUrl,
+        portalToken: result.token,
+        portalUrl: result.url,
         qrCode: qrCodeDataUrl
       };
     } catch (error) {
-      console.error('❌ Error generating QR code:', error);
-      // Fallback to a minimal QR-style pattern if generation fails
+      console.error('❌ Error setting up client portal:', error);
+      
+      // Fallback to a basic portal if collaborative form generation fails
+      const token = this.generatePortalToken();
+      const fallbackUrl = `https://musobuddy.replit.app/client-error?contract=${contractId}`;
+      
       const fallbackQr = `data:image/svg+xml;base64,${Buffer.from(`
         <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
           <rect width="200" height="200" fill="white"/>
           <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="12" fill="black">
-            QR Code Error
+            Portal Error
           </text>
           <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="10" fill="gray">
-            Use portal link instead
+            Contact performer
           </text>
         </svg>
       `).toString('base64')}`;
       
       return {
         portalToken: token,
-        portalUrl,
+        portalUrl: fallbackUrl,
         qrCode: fallbackQr
       };
     }
