@@ -35,6 +35,7 @@ import {
   DollarSign
 } from "lucide-react";
 import APICostMonitor from "@/components/api-cost-monitor";
+import { ApiUsageManager } from "@/components/api-usage-manager";
 
 interface AdminOverview {
   totalUsers: number;
@@ -402,12 +403,16 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-auto">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="api-costs" className="text-xs sm:text-sm flex items-center gap-1">
                 <DollarSign className="h-3 w-3" />
                 API Costs
+              </TabsTrigger>
+              <TabsTrigger value="api-usage" className="text-xs sm:text-sm flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                API Usage
               </TabsTrigger>
               <TabsTrigger value="beta" className="text-xs sm:text-sm">Beta Testers</TabsTrigger>
               <TabsTrigger value="system" className="text-xs sm:text-sm">System</TabsTrigger>
@@ -1087,6 +1092,14 @@ export default function AdminPanel() {
 
             <TabsContent value="api-costs" className="space-y-6">
               <APICostMonitor />
+            </TabsContent>
+
+            <TabsContent value="api-usage" className="space-y-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-foreground">API Usage & Limits Management</h2>
+                <p className="text-muted-foreground">Monitor and manage individual user API usage limits to prevent abuse and control costs.</p>
+              </div>
+              <ApiUsageManager />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-6">

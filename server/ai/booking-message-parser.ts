@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { trackApiUsage } from '../middleware/api-usage-tracker';
 
 // Helper function to enrich venue data using Google Places API
 async function enrichVenueData(venueName: string): Promise<any> {

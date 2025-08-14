@@ -5,6 +5,10 @@ import { EmailService } from "../core/services";
 import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth, requireAdmin } from '../middleware/auth';
+import { db } from "../core/database";
+import { users, apiUsageTracking, apiUsageLimits } from '../../shared/schema';
+import { eq, and, desc, sql, gte } from 'drizzle-orm';
+import { DEFAULT_LIMITS } from '../middleware/api-usage-tracker';
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
@@ -625,6 +629,267 @@ export function registerAdminRoutes(app: Express) {
       res.status(500).json({ error: 'Failed to delete user' });
     }
   }));
+
+  // API Usage Statistics endpoint
+  app.get('/api/admin/api-usage-stats', requireAdmin, async (req: any, res) => {
+    try {
+      // Get usage statistics from the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const totalStats = await db
+        .select({
+          totalRequests: sql<number>`count(*)`,
+          totalCost: sql<number>`sum(estimated_cost)`,
+        })
+        .from(apiUsageTracking)
+        .where(gte(apiUsageTracking.createdAt, thirtyDaysAgo));
+
+      // Service breakdown
+      const serviceStats = await db
+        .select({
+          apiService: apiUsageTracking.apiService,
+          requests: sql<number>`count(*)`,
+          totalCost: sql<number>`sum(estimated_cost)`,
+          avgResponseTime: sql<number>`avg(response_time)`,
+        })
+        .from(apiUsageTracking)
+        .where(gte(apiUsageTracking.createdAt, thirtyDaysAgo))
+        .groupBy(apiUsageTracking.apiService);
+
+      // Top users by usage
+      const topUsers = await db
+        .select({
+          userId: apiUsageTracking.userId,
+          requests: sql<number>`count(*)`,
+          cost: sql<number>`sum(estimated_cost)`,
+        })
+        .from(apiUsageTracking)
+        .where(gte(apiUsageTracking.createdAt, thirtyDaysAgo))
+        .groupBy(apiUsageTracking.userId)
+        .orderBy(desc(sql`count(*)`))
+        .limit(10);
+
+      // Get user names
+      const userIds = topUsers.map(user => user.userId);
+      const usersData = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+        .from(users)
+        .where(sql`${users.id} = ANY(${userIds})`);
+
+      const usersMap = usersData.reduce((acc, user) => {
+        acc[user.id] = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+        return acc;
+      }, {} as Record<string, string>);
+
+      const topUsersWithNames = topUsers.map(user => ({
+        ...user,
+        userName: usersMap[user.userId] || 'Unknown User'
+      }));
+
+      const serviceBreakdown = serviceStats.reduce((acc, service) => {
+        acc[service.apiService] = {
+          requests: service.requests,
+          cost: service.totalCost,
+          avgResponseTime: Math.round(service.avgResponseTime || 0)
+        };
+        return acc;
+      }, {} as Record<string, any>);
+
+      res.json({
+        totalRequests: totalStats[0]?.totalRequests || 0,
+        totalCost: totalStats[0]?.totalCost || 0,
+        topUsers: topUsersWithNames,
+        serviceBreakdown
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching API usage stats:', error);
+      res.status(500).json({ error: 'Failed to fetch API usage statistics' });
+    }
+  });
+
+  // User API Usage Data endpoint
+  app.get('/api/admin/api-usage-data', requireAdmin, async (req: any, res) => {
+    try {
+      // Get all users with their API limits
+      const allUsers = await db.select().from(users);
+      const allLimits = await db.select().from(apiUsageLimits);
+      
+      // Get usage data for the last 30 days for cost calculation
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentUsage = await db
+        .select({
+          userId: apiUsageTracking.userId,
+          apiService: apiUsageTracking.apiService,
+          totalCost: sql<number>`sum(estimated_cost)`,
+          lastActivity: sql<Date>`max(created_at)`
+        })
+        .from(apiUsageTracking)
+        .where(gte(apiUsageTracking.createdAt, thirtyDaysAgo))
+        .groupBy(apiUsageTracking.userId, apiUsageTracking.apiService);
+
+      const usageData = allUsers.reduce((acc, user) => {
+        const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+        const userLimits = allLimits.filter(limit => limit.userId === user.id);
+        const userUsage = recentUsage.filter(usage => usage.userId === user.id);
+
+        const services = userLimits.reduce((serviceAcc, limit) => {
+          const usage = userUsage.find(u => u.apiService === limit.apiService);
+          serviceAcc[limit.apiService] = {
+            dailyUsage: limit.dailyUsage,
+            dailyLimit: limit.dailyLimit,
+            monthlyUsage: limit.monthlyUsage,
+            monthlyLimit: limit.monthlyLimit,
+            isBlocked: limit.isBlocked,
+            blockReason: limit.blockReason,
+            totalCost: usage?.totalCost || 0,
+            lastActivity: usage?.lastActivity || null
+          };
+          return serviceAcc;
+        }, {} as Record<string, any>);
+
+        // Add services with default limits if not found
+        Object.keys(DEFAULT_LIMITS).forEach(service => {
+          if (!services[service]) {
+            const usage = userUsage.find(u => u.apiService === service);
+            services[service] = {
+              dailyUsage: 0,
+              dailyLimit: DEFAULT_LIMITS[service as keyof typeof DEFAULT_LIMITS].daily,
+              monthlyUsage: 0,
+              monthlyLimit: DEFAULT_LIMITS[service as keyof typeof DEFAULT_LIMITS].monthly,
+              isBlocked: false,
+              totalCost: usage?.totalCost || 0,
+              lastActivity: usage?.lastActivity || null
+            };
+          }
+        });
+
+        acc[user.id] = {
+          userId: user.id,
+          userName,
+          services
+        };
+        return acc;
+      }, {} as Record<string, any>);
+
+      res.json(usageData);
+
+    } catch (error) {
+      console.error('❌ Error fetching API usage data:', error);
+      res.status(500).json({ error: 'Failed to fetch API usage data' });
+    }
+  });
+
+  // Update user API limits
+  app.post('/api/admin/update-api-limits', requireAdmin, async (req: any, res) => {
+    try {
+      const { userId, service, dailyLimit, monthlyLimit } = req.body;
+
+      if (!userId || !service || !dailyLimit || !monthlyLimit) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Update or create limits
+      await db
+        .insert(apiUsageLimits)
+        .values({
+          userId,
+          apiService: service,
+          dailyLimit: Number(dailyLimit),
+          monthlyLimit: Number(monthlyLimit),
+          dailyUsage: 0,
+          monthlyUsage: 0,
+          lastResetDaily: new Date(),
+          lastResetMonthly: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [apiUsageLimits.userId, apiUsageLimits.apiService],
+          set: {
+            dailyLimit: Number(dailyLimit),
+            monthlyLimit: Number(monthlyLimit),
+            updatedAt: new Date(),
+          }
+        });
+
+      console.log(`✅ Updated API limits for user ${userId}, service ${service}: ${dailyLimit}/day, ${monthlyLimit}/month`);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error('❌ Error updating API limits:', error);
+      res.status(500).json({ error: 'Failed to update API limits' });
+    }
+  });
+
+  // Block/unblock user API access
+  app.post('/api/admin/block-user-api', requireAdmin, async (req: any, res) => {
+    try {
+      const { userId, service, isBlocked, blockReason } = req.body;
+
+      if (!userId || !service) {
+        return res.status(400).json({ error: 'Missing userId or service' });
+      }
+
+      await db
+        .update(apiUsageLimits)
+        .set({
+          isBlocked: Boolean(isBlocked),
+          blockReason: blockReason || null,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(apiUsageLimits.userId, userId),
+          eq(apiUsageLimits.apiService, service)
+        ));
+
+      console.log(`✅ ${isBlocked ? 'Blocked' : 'Unblocked'} user ${userId} for service ${service}${isBlocked ? `: ${blockReason}` : ''}`);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error('❌ Error blocking/unblocking user:', error);
+      res.status(500).json({ error: 'Failed to update user block status' });
+    }
+  });
+
+  // Reset usage counters
+  app.post('/api/admin/reset-api-usage', requireAdmin, async (req: any, res) => {
+    try {
+      const { userId, service, resetDaily, resetMonthly } = req.body;
+
+      if (!userId || !service) {
+        return res.status(400).json({ error: 'Missing userId or service' });
+      }
+
+      const updates: any = { updatedAt: new Date() };
+      
+      if (resetDaily) {
+        updates.dailyUsage = 0;
+        updates.lastResetDaily = new Date();
+      }
+      
+      if (resetMonthly) {
+        updates.monthlyUsage = 0;
+        updates.lastResetMonthly = new Date();
+      }
+
+      await db
+        .update(apiUsageLimits)
+        .set(updates)
+        .where(and(
+          eq(apiUsageLimits.userId, userId),
+          eq(apiUsageLimits.apiService, service)
+        ));
+
+      console.log(`✅ Reset ${resetDaily ? 'daily' : ''}${resetDaily && resetMonthly ? ' and ' : ''}${resetMonthly ? 'monthly' : ''} usage for user ${userId}, service ${service}`);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error('❌ Error resetting usage counters:', error);
+      res.status(500).json({ error: 'Failed to reset usage counters' });
+    }
+  });
 
   console.log('✅ Admin routes configured');
 }
