@@ -621,8 +621,9 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
 
 // Queue status endpoint
 app.get('/api/email-queue/status', (req, res) => {
-  import('./core/email-queue').then(({ emailQueue }) => {
-    res.json(emailQueue.getStatus());
+  import('./core/email-queue-enhanced').then(({ enhancedEmailQueue }) => {
+    const status = enhancedEmailQueue.getStatus();
+    res.json(status);
   }).catch(error => {
     res.status(500).json({ error: 'Failed to get queue status' });
   });
@@ -673,8 +674,8 @@ app.post('/api/webhook/mailgun',
   
   // QUEUE SYSTEM: Add email to processing queue to prevent race conditions
   try {
-    const { emailQueue } = await import('./core/email-queue');
-    const { jobId, queuePosition } = await emailQueue.addEmail(req.body);
+    const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
+    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail(req.body);
     
     console.log(`📧 [${requestId}] Email added to processing queue as job ${jobId} (position: ${queuePosition})`);
     
