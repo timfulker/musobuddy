@@ -10,7 +10,7 @@ export function NotificationBadge({ count, maxDisplay = 99 }: NotificationBadgeP
   const displayCount = count > maxDisplay ? `${maxDisplay}+` : count.toString();
 
   return (
-    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
+    <span className="absolute top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
       {displayCount}
     </span>
   );
