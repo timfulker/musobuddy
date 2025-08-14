@@ -71,9 +71,10 @@ export function registerAdminRoutes(app: Express) {
               if (monthlyEmails <= 50000) {
                 return 35.00; // $35 minimum plan for up to 50k emails
               } else {
-                // Over 50k emails: $35 base + overage charges
+                // Over 50k emails: $35 base + $1.30 per 1,000 additional emails
                 const overageEmails = monthlyEmails - 50000;
-                return parseFloat((35 + (overageEmails * 0.0008)).toFixed(2));
+                const overageThousands = Math.ceil(overageEmails / 1000);
+                return parseFloat((35 + (overageThousands * 1.30)).toFixed(2));
               }
             })(),
           },
@@ -105,6 +106,15 @@ export function registerAdminRoutes(app: Express) {
           what3words: {
             monthly_requests: totalUsers * 1, // ~1 what3words request per user per month
             estimated_cost: parseFloat((totalUsers * 1 * 0.002).toFixed(2)), // $0.002 per request
+          },
+          // Subscription fees for services
+          subscriptions: {
+            services: [
+              { name: 'Replit Core', monthly_cost: 20.00 },
+              { name: 'Neon Database Pro', monthly_cost: 19.00 },
+              { name: 'Cloudflare Pro', monthly_cost: 20.00 }
+            ],
+            estimated_cost: 59.00 // Total subscription fees
           }
         };
 
@@ -124,7 +134,8 @@ export function registerAdminRoutes(app: Express) {
               estimates.twilio.estimated_cost +
               estimates.stripe.estimated_cost +
               estimates.anthropic.estimated_cost +
-              estimates.what3words.estimated_cost
+              estimates.what3words.estimated_cost +
+              estimates.subscriptions.estimated_cost
             ).toFixed(2)),
             user_metrics: {
               total_users: totalUsers,

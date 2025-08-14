@@ -78,6 +78,7 @@ const ServiceIcon = ({ service }: { service: string }) => {
     twilio: Smartphone,
     what3words: MapPin,
     anthropic: Brain,
+    subscriptions: CreditCard,
   };
   
   const Icon = iconMap[service] || Activity;
@@ -92,7 +93,8 @@ const ServiceLinks = {
   googleMaps: "https://console.cloud.google.com/google/maps-apis/metrics",
   twilio: "https://console.twilio.com/us1/monitor/usage",
   what3words: "https://developer.what3words.com/",
-  anthropic: "https://console.anthropic.com/workbench/"
+  anthropic: "https://console.anthropic.com/workbench/",
+  subscriptions: "https://replit.com/account"
 };
 
 export default function APICostMonitor() {
@@ -232,6 +234,7 @@ export default function APICostMonitor() {
 
       {/* API Services Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Regular API Services */}
         {Object.entries(data.api_status).map(([service, status]) => {
           const estimate = data.usage_estimates[service as keyof typeof data.usage_estimates];
           const serviceUrl = ServiceLinks[service as keyof typeof ServiceLinks];
@@ -245,7 +248,10 @@ export default function APICostMonitor() {
                     {service === 'cloudflareR2' ? 'Cloudflare R2' : 
                      service === 'googleMaps' ? 'Google Maps' : 
                      service === 'what3words' ? 'what3words' : 
-                     service === 'openai' ? 'OpenAI' : service}
+                     service === 'openai' ? 'OpenAI' :
+                     service === 'anthropic' ? 'Anthropic Claude' :
+                     service === 'mailgun' ? 'Mailgun' :
+                     service}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     {status.configured ? (
@@ -338,6 +344,56 @@ export default function APICostMonitor() {
             </Card>
           );
         })}
+        
+        {/* Subscription Services Card */}
+        {data.usage_estimates.subscriptions && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 capitalize text-base">
+                  <ServiceIcon service="subscriptions" />
+                  Service Subscriptions
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <Button asChild variant="ghost" size="sm">
+                    <a href={ServiceLinks.subscriptions} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Status:</span>
+                  <Badge variant="default">Active</Badge>
+                </div>
+                
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Est. Monthly Cost:</span>
+                    <span className="font-semibold text-green-600">
+                      {formatCurrency(data.usage_estimates.subscriptions.estimated_cost)}
+                    </span>
+                  </div>
+                  
+                  {data.usage_estimates.subscriptions.services && (
+                    <div className="mt-2 space-y-1">
+                      {data.usage_estimates.subscriptions.services.map((sub: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center text-xs text-muted-foreground">
+                          <span>{sub.name}:</span>
+                          <span>{formatCurrency(sub.monthly_cost)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Footer */}
