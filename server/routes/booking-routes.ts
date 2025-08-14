@@ -334,27 +334,29 @@ export function registerBookingRoutes(app: Express) {
         clientEmail = clientContact;
       }
       
-      // CRITICAL FIX: Check for price enquiries first - like email processing does
-      // Price enquiries should go to review messages regardless of confidence
-      const isPriceEnquiry = parsedData.isPriceEnquiry === true || 
-                             parsedData.messageType === 'price_enquiry' ||
-                             (!parsedData.eventDate && (
+      // PRIMARY CHECK: No valid event date = review messages (simplified rule)
+      // This is the main gatekeeper - no bookings without clear dates
+      if (!parsedData.eventDate || parsedData.eventDate === null) {
+        console.log(`📅 No event date found - routing to review messages`);
+        
+        // Determine message type for better categorization
+        const isPriceEnquiry = parsedData.isPriceEnquiry === true || 
+                               parsedData.messageType === 'price_enquiry' ||
                                messageText.toLowerCase().includes('price') ||
                                messageText.toLowerCase().includes('pricing') ||
                                messageText.toLowerCase().includes('quote') ||
                                messageText.toLowerCase().includes('cost') ||
                                messageText.toLowerCase().includes('how much') ||
-                               messageText.toLowerCase().includes('rate')
-                             ));
-      
-      if (isPriceEnquiry) {
-        console.log(`💰 Price enquiry detected - routing to review messages for manual response`);
+                               messageText.toLowerCase().includes('rate');
+        
+        const messageType = isPriceEnquiry ? 'price_enquiry' : 'incomplete_booking';
+        const reasonText = isPriceEnquiry ? 'Price enquiry detected' : 'No valid event date found';
         
         // Send to unparseable messages for manual review
         const { storage: miscStorage } = await import('../storage/misc-storage');
         await miscStorage.createUnparseableMessage({
           userId: user.id,
-          messageType: 'price_enquiry',
+          messageType: messageType,
           content: messageText,
           senderName: clientName,
           senderEmail: clientEmail,
@@ -363,42 +365,15 @@ export function registerBookingRoutes(app: Express) {
           parsedDate: parsedData.eventDate,
           parsedEventType: parsedData.eventType,
           aiConfidence: parsedData.confidence,
-          parsingErrorDetails: `Price enquiry detected - requires personal response`
-        });
-        
-        return res.json({ 
-          success: true, 
-          requiresReview: true,
-          isPriceEnquiry: true,
-          message: 'Price enquiry received and will be reviewed manually'
-        });
-      }
-      
-      // SECOND CHECK: No valid event date means incomplete booking
-      if (!parsedData.eventDate || parsedData.eventDate === null) {
-        console.log(`📅 No event date found - routing to review messages`);
-        
-        // Send to unparseable messages for manual review
-        const { storage: miscStorage } = await import('../storage/misc-storage');
-        await miscStorage.createUnparseableMessage({
-          userId: user.id,
-          messageType: 'incomplete_booking',
-          content: messageText,
-          senderName: clientName,
-          senderEmail: clientEmail,
-          senderPhone: clientPhone,
-          parsedVenue: parsedData.venue,
-          parsedDate: parsedData.eventDate,
-          parsedEventType: parsedData.eventType,
-          aiConfidence: parsedData.confidence,
-          parsingErrorDetails: `No valid event date found - requires clarification`
+          parsingErrorDetails: `${reasonText} - requires manual review`
         });
         
         return res.json({ 
           success: true, 
           requiresReview: true,
           reason: 'no_date',
-          message: 'Booking request received and will be reviewed manually'
+          isPriceEnquiry: isPriceEnquiry,
+          message: 'Message received and will be reviewed manually'
         });
       }
       
