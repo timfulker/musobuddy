@@ -121,12 +121,14 @@ export async function parseBookingMessage(
 CRITICAL INSTRUCTIONS:
 - Extract ALL available information from the message text
 - For dates: "June 23rd next year" = "2026-06-23", "June 23rd" = "2025-06-23", "next [month]" = next occurrence
+- IMPORTANT: If message says "don't have the date", "no date yet", "next year" without specifics, or "TBC" = return null for eventDate
 - For venues: Extract venue names exactly as mentioned (e.g., "Buckingham Palace")
 - For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.
 - Extract client names, emails, phone numbers from the message or context
 - Return HIGH confidence (0.8-1.0) if you extract date + venue + event type
 - Return MEDIUM confidence (0.5-0.7) if you extract 2+ key details
 - Return LOW confidence (0.1-0.4) for vague or minimal information
+- Return VERY LOW confidence (0.1-0.2) if no specific date is provided
 
 REQUIRED JSON FORMAT:
 {
@@ -294,20 +296,35 @@ function cleanDate(value: any): string | undefined {
   
   try {
     // Handle various date formats
-    const dateStr = String(value).trim();
+    const dateStr = String(value).trim().toLowerCase();
+    
+    // CRITICAL: Check for vague date patterns first - return null if no specific date
+    const vaguePatterns = [
+      'next year',
+      'no date',
+      'don\'t have the date',
+      'tbc',
+      'to be confirmed',
+      'not sure',
+      'uncertain'
+    ];
+    
+    if (vaguePatterns.some(pattern => dateStr.includes(pattern))) {
+      console.log(`📅 Vague date pattern detected: "${dateStr}" - returning null`);
+      return undefined;
+    }
     
     // Try parsing as ISO date first
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return dateStr;
     }
     
-    // Handle "next year" scenarios - normalize to proper date
+    // Handle specific "next year" scenarios with actual dates
     let normalizedDateStr = dateStr;
-    if (dateStr.toLowerCase().includes('next year')) {
-      // Replace "next year" with "2026" 
+    if (dateStr.includes('next year') && dateStr.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2})/)) {
+      // Only convert if there's a specific month/day mentioned
       normalizedDateStr = dateStr.replace(/next year/gi, '2026');
-    } else if (dateStr.toLowerCase().includes('this year')) {
-      // Replace "this year" with "2025"
+    } else if (dateStr.includes('this year')) {
       normalizedDateStr = dateStr.replace(/this year/gi, '2025');
     }
     
