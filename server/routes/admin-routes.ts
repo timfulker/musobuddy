@@ -679,7 +679,7 @@ export function registerAdminRoutes(app: Express) {
         usersData = await db
           .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
           .from(users)
-          .where(sql`${users.id} = ANY(${userIds})`);
+          .where(inArray(users.id, userIds));
 
         usersMap = usersData.reduce((acc, user) => {
           acc[user.id] = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
