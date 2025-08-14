@@ -279,9 +279,21 @@ class EnhancedEmailQueue {
     
     try {
       console.log(`🤖 [${requestId}] AI PARSING: Taking time to carefully parse email for user ${user.id}`);
+      console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Email body hash:`, 
+        Buffer.from(bodyField.substring(0, 200)).toString('base64').substring(0, 20));
+      console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: From field:`, fromField?.substring(0, 100));
+      console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Subject:`, subjectField?.substring(0, 100));
+      
       const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
       
       console.log(`✅ [${requestId}] AI PARSING: Completed parsing with 5-second delay for accuracy`);
+      console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Parsed data from AI:`, {
+        venue: parsedData.venue,
+        eventDate: parsedData.eventDate,
+        eventType: parsedData.eventType,
+        clientName: parsedData.clientName,
+        confidence: parsedData.confidence
+      });
       console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
         hasEventDate: !!parsedData.eventDate,
         hasVenue: !!parsedData.venue,
