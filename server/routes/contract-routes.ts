@@ -598,6 +598,7 @@ export function registerContractRoutes(app: Express) {
         
         // ALSO send to performer/business owner
         if (userSettings?.businessEmail) {
+          const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
           const performerSubject = `✅ Contract Signed by ${updateResult.clientName} - ${updateResult.contractNumber}`;
           const performerHtml = `
             <!DOCTYPE html>
