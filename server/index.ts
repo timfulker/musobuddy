@@ -1011,12 +1011,24 @@ async function startServer() {
     
     // Register all API routes
     await registerRoutes(app);
-              'Content-Type': 'application/json',
-              'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
-              'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'
-            },
-            body: JSON.stringify(requestBody)
-          });
+    
+    console.log('✅ All routes registered');
+    
+    // Development or Production server setup
+    if (process.env.NODE_ENV !== 'production') {
+      // Development mode with Vite
+      console.log('🛠️ Development mode: using Vite dev server');
+      
+      const port = 5000;
+      const { setupVite } = await import('./vite');
+      const { createServer } = await import('http');
+      const server = createServer(app);
+      
+      await setupVite(app, server);
+      
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
+      });
         
           if (searchResponse.ok) {
             const searchData = await searchResponse.json();

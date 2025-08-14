@@ -124,7 +124,8 @@ CRITICAL INSTRUCTIONS:
 - Extract ALL available information from the message text ONLY
 - Each message must be parsed independently - do not use any external context or previous messages
 - For dates: "June 23rd next year" = "2026-06-23", "June 23rd" = "2025-06-23", "next [month]" = next occurrence
-- IMPORTANT: If message says "don't have the date", "no date yet", "next year" without specifics, or "TBC" = return null for eventDate
+- IMPORTANT: If message says "don't have the date", "no date yet", "TBC", or just "next year" without month/day = return null for eventDate
+- SPECIFIC DATES: "June 17th next year" = "2026-06-17", "March 15th 2026" = "2026-03-15" - these ARE valid dates
 - For venues: Extract venue names exactly as mentioned (e.g., "Buckingham Palace")
 - IGNORE company signatures, footers, and "sent from" addresses - only extract EVENT information
 - For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.

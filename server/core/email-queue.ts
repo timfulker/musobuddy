@@ -221,8 +221,13 @@ class EmailQueue {
                               subjectField.toLowerCase().includes('encore') ||
                               bodyField.includes('apply now');
 
-      if (!parsedData.eventDate && !(isEncoreMessage && parsedData.venue && parsedData.eventType)) {
-        await saveToReviewMessages('No valid event date found', 'Message requires manual review');
+      // More lenient validation - allow bookings with venue/type even without exact dates
+      const hasMinimumInfo = parsedData.eventDate || 
+                            (parsedData.venue && parsedData.eventType) ||
+                            (isEncoreMessage && parsedData.venue);
+      
+      if (!hasMinimumInfo) {
+        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no date, venue, or event type found');
         return;
       }
 
