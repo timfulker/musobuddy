@@ -14,6 +14,8 @@ import { findActiveAuthToken } from '@/utils/authToken';
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
+    refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
+    staleTime: 30000, // Consider data stale after 30 seconds
     queryFn: async () => {
       const token = findActiveAuthToken();
       

@@ -13,6 +13,8 @@ interface DashboardStats {
 export default function StatsCards() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 
   if (isLoading) {
