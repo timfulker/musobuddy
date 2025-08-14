@@ -245,6 +245,13 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       }
     }
 
+    // Extract Encore apply-now links
+    const encoreUrlMatch = messageText.match(/https?:\/\/[^\s]*encoremusicians\.com[^\s]*/i);
+    if (encoreUrlMatch) {
+      cleanedData.applyNowLink = encoreUrlMatch[0];
+      console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+    }
+
     // Add client contact info if provided but not extracted
     if (clientContact && !cleanedData.clientName && !cleanedData.clientEmail && !cleanedData.clientPhone) {
       if (clientContact.includes('@')) {

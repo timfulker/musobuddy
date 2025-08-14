@@ -152,6 +152,25 @@ export default function ActionableEnquiries() {
                         {enquiry.eventEndTime && ` - ${enquiry.eventEndTime}`}
                       </div>
                     )}
+                    
+                    {enquiry.applyNowLink && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                          🎵 ENCORE
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(enquiry.applyNowLink, '_blank');
+                          }}
+                          className="text-xs bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                        >
+                          Apply on Encore
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 

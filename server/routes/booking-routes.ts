@@ -353,7 +353,7 @@ export function registerBookingRoutes(app: Express) {
         } else {
           console.log(`📅 No event date found - routing to review messages`);
         
-        // Determine message type for better categorization
+          // Determine message type for better categorization
         const isPriceEnquiry = parsedData.isPriceEnquiry === true || 
                                parsedData.messageType === 'price_enquiry' ||
                                messageText.toLowerCase().includes('price') ||
@@ -382,13 +382,14 @@ export function registerBookingRoutes(app: Express) {
           parsingErrorDetails: `${reasonText} - requires manual review`
         });
         
-        return res.json({ 
-          success: true, 
-          requiresReview: true,
-          reason: 'no_date',
-          isPriceEnquiry: isPriceEnquiry,
-          message: 'Message received and will be reviewed manually'
-        });
+          return res.json({ 
+            success: true, 
+            requiresReview: true,
+            reason: 'no_date',
+            isPriceEnquiry: isPriceEnquiry,
+            message: 'Message received and will be reviewed manually'
+          });
+        }
       }
       
       // THIRD CHECK: Determine if parsing was successful enough to create booking

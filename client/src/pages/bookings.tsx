@@ -1431,6 +1431,11 @@ export default function UnifiedBookings() {
                                                       {groupBooking.fee}
                                                     </span>
                                                   )}
+                                                  {groupBooking.applyNowLink && (
+                                                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                                                      🎵 ENCORE
+                                                    </Badge>
+                                                  )}
                                                 </div>
                                                 <p className="text-gray-500">
                                                   {new Date(groupBooking.eventDate).toLocaleDateString('en-GB', {
@@ -1444,7 +1449,20 @@ export default function UnifiedBookings() {
                                             </div>
                                           </div>
                                         </div>
-                                          <div className="flex items-center justify-end mt-4">
+                                          <div className="flex items-center justify-end gap-3 mt-4">
+                                            {groupBooking.applyNowLink && (
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  window.open(groupBooking.applyNowLink, '_blank');
+                                                }}
+                                                className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                              >
+                                                🎵 Apply on Encore
+                                              </Button>
+                                            )}
                                             <BookingActionMenu
                                               booking={groupBooking}
                                               onEditBooking={handleEditBooking}
@@ -1527,6 +1545,11 @@ export default function UnifiedBookings() {
                                         £{booking.fee}
                                       </span>
                                     )}
+                                    {booking.applyNowLink && (
+                                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                                        🎵 ENCORE
+                                      </Badge>
+                                    )}
                                   </div>
                                   {booking.venue && (
                                     <div className="text-gray-500">
@@ -1536,7 +1559,20 @@ export default function UnifiedBookings() {
                                 </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-3">
+                                {booking.applyNowLink && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(booking.applyNowLink, '_blank');
+                                    }}
+                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                  >
+                                    🎵 Apply on Encore
+                                  </Button>
+                                )}
                                 <BookingActionMenu
                                   booking={booking}
                                   onEditBooking={handleEditBooking}
