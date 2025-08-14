@@ -1865,19 +1865,10 @@ export default function UnifiedBookings() {
                                             </Badge>
                                             
                                             <div className="flex items-center gap-2">
-                                              {/* Respond Button - only show for new bookings */}
-                                              {booking.status === 'new' && (
-                                                <Button 
-                                                  size="sm" 
-                                                  variant="outline"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/templates?bookingId=${booking.id}&action=respond`);
-                                                  }}
-                                                >
-                                                  Respond
-                                                </Button>
-                                              )}
+                                              {/* Respond Menu - show for all bookings */}
+                                              <div onClick={(e) => e.stopPropagation()}>
+                                                <BookingActionMenu booking={booking} />
+                                              </div>
                                               
                                               {/* Apply on Encore Button - only show for Encore bookings */}
                                               {booking.applyNowLink && (
@@ -2020,19 +2011,10 @@ export default function UnifiedBookings() {
                                               </Badge>
                                               
                                               <div className="flex items-center gap-2">
-                                                {/* Respond Button - only show for new bookings */}
-                                                {booking.status === 'new' && (
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      navigate(`/templates?bookingId=${booking.id}&action=respond`);
-                                                    }}
-                                                  >
-                                                    Respond
-                                                  </Button>
-                                                )}
+                                                {/* Respond Menu - show for all bookings */}
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                  <BookingActionMenu booking={booking} />
+                                                </div>
                                                 
                                                 {/* Apply on Encore Button - only show for Encore bookings */}
                                                 {booking.applyNowLink && (
