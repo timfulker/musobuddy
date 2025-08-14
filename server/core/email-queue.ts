@@ -203,7 +203,13 @@ class EmailQueue {
     const { cleanEncoreTitle } = await import('./booking-formatter');
     
     try {
+      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: Starting parseBookingMessage for user ${user.id}`);
       const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
+      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
+        hasEventDate: !!parsedData.eventDate,
+        hasVenue: !!parsedData.venue,
+        eventType: parsedData.eventType
+      });
       
       // Apply title cleanup
       const cleanedSubject = cleanEncoreTitle(subjectField);
@@ -241,11 +247,24 @@ class EmailQueue {
         applyNowLink: parsedData.applyNowLink || null
       };
 
+      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: Creating booking with data:`, {
+        title: bookingData.title,
+        clientEmail: bookingData.clientEmail,
+        eventDate: bookingData.eventDate,
+        userId: user.id
+      });
+
       const newBooking = await storage.createBooking(bookingData);
-      console.log(`✅ [${requestId}] Email booking created: #${newBooking.id} for user ${user.id}`);
+      console.log(`✅ [${requestId}] RACE CONDITION DEBUG: Email booking created successfully: #${newBooking.id} for user ${user.id}`);
 
     } catch (parseError: any) {
-      console.error(`❌ [${requestId}] Parsing failed:`, parseError);
+      console.error(`❌ [${requestId}] RACE CONDITION DEBUG: Email processing failed:`, {
+        error: parseError.message,
+        stack: parseError.stack,
+        fromField: fromField?.substring(0, 100),
+        subjectField: subjectField?.substring(0, 100),
+        bodyLength: bodyField?.length || 0
+      });
       await saveToReviewMessages('Email parsing failed', parseError.message);
     }
   }
