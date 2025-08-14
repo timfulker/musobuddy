@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { trackApiUsage } from '../middleware/api-usage-tracker';
+import { trackApiCall } from '../middleware/api-usage-tracker';
 
 // Helper function to enrich venue data using Google Places API
 async function enrichVenueData(venueName: string): Promise<any> {
@@ -110,7 +110,8 @@ interface ParsedBookingData {
 export async function parseBookingMessage(
   messageText: string,
   clientContact?: string,
-  clientAddress?: string
+  clientAddress?: string,
+  userId?: string
 ): Promise<ParsedBookingData> {
   try {
     console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
@@ -138,6 +139,15 @@ ${clientAddress ? `LOCATION: "${clientAddress}"` : ''}
 
 Extract all possible booking details as JSON:`;
 
+    // Track API usage if userId is provided
+    if (userId) {
+      const canProceed = await trackApiCall(userId, 'claude', 'booking-message-parser');
+      if (!canProceed) {
+        throw new Error('API usage limit exceeded for Claude service');
+      }
+    }
+
+    const startTime = Date.now();
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 1000,
@@ -147,6 +157,8 @@ Extract all possible booking details as JSON:`;
         { role: 'user', content: `${userPrompt}\n\nPlease respond with valid JSON only.` }
       ]
     });
+    
+    const responseTime = Date.now() - startTime;
 
     const rawContent = response.content[0]?.text;
     if (!rawContent) {

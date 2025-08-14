@@ -672,15 +672,20 @@ export function registerAdminRoutes(app: Express) {
 
       // Get user names
       const userIds = topUsers.map(user => user.userId);
-      const usersData = await db
-        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
-        .from(users)
-        .where(sql`${users.id} = ANY(${userIds})`);
+      let usersData = [];
+      let usersMap = {};
+      
+      if (userIds.length > 0) {
+        usersData = await db
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+          .from(users)
+          .where(sql`${users.id} = ANY(${userIds})`);
 
-      const usersMap = usersData.reduce((acc, user) => {
-        acc[user.id] = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-        return acc;
-      }, {} as Record<string, string>);
+        usersMap = usersData.reduce((acc, user) => {
+          acc[user.id] = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+          return acc;
+        }, {} as Record<string, string>);
+      }
 
       const topUsersWithNames = topUsers.map(user => ({
         ...user,

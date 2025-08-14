@@ -13,14 +13,14 @@ const API_COSTS = {
   openai: 0.001, // Legacy fallback cost
 } as const;
 
-// Default fair usage limits per service
+// Default fair usage limits per service (based on recommended fair usage)
 export const DEFAULT_LIMITS = {
-  claude: { daily: 50, monthly: 1500 }, // AI email parsing
-  googlemaps: { daily: 100, monthly: 3000 }, // Address lookups
-  mailgun: { daily: 50, monthly: 1500 }, // Email sending
-  stripe: { daily: 20, monthly: 500 }, // Payment processing
-  twilio: { daily: 10, monthly: 300 }, // SMS verification
-  openai: { daily: 25, monthly: 750 }, // Legacy AI requests
+  claude: { daily: 10, monthly: 250 }, // AI email parsing: 150-300 recommended, using 250 as middle ground
+  googlemaps: { daily: 7, monthly: 150 }, // Address lookups: 100-200 recommended, using 150 as conservative start
+  mailgun: { daily: 15, monthly: 400 }, // Email sending: 300-500 sending + 200-300 receiving = ~800 total, using 400 as starting point
+  stripe: { daily: 20, monthly: 500 }, // Payment processing - keeping existing reasonable limits
+  twilio: { daily: 10, monthly: 300 }, // SMS verification - keeping existing reasonable limits
+  openai: { daily: 7, monthly: 150 }, // Legacy AI requests: 100-200 recommended, using 150 as conservative start
 } as const;
 
 export type ApiService = keyof typeof API_COSTS;
@@ -325,5 +325,51 @@ export async function getUserUsageStats(userId: string, service: ApiService) {
   } catch (error) {
     console.error('🚨 Error getting usage stats:', error);
     return null;
+  }
+}
+
+/**
+ * Direct function to track API usage (for use in service files)
+ */
+export async function trackApiCall(
+  userId: string,
+  service: ApiService,
+  endpoint?: string,
+  tokensUsed?: number,
+  responseTime?: number,
+  skipLimitsCheck: boolean = false
+): Promise<boolean> {
+  try {
+    // Check usage limits first
+    if (!skipLimitsCheck) {
+      const canProceed = await checkUsageLimits(userId, service);
+      if (!canProceed) {
+        console.log(`🚫 API usage limit exceeded for user ${userId}, service ${service}`);
+        return false;
+      }
+    }
+
+    // Record the API usage
+    const estimatedCost = API_COSTS[service] || 0;
+
+    await db.insert(apiUsageTracking).values({
+      userId,
+      apiService: service,
+      endpoint: endpoint || 'unknown',
+      responseTime: responseTime || null,
+      tokensUsed: tokensUsed || null,
+      estimatedCost: estimatedCost.toString(),
+      createdAt: new Date(),
+    });
+
+    // Update usage counters
+    await incrementUsageCounters(userId, service);
+
+    console.log(`✅ Tracked API usage: user=${userId}, service=${service}, cost=$${estimatedCost.toFixed(4)}`);
+    return true;
+
+  } catch (error) {
+    console.error('🚨 Failed to track API usage:', error);
+    return true; // Don't block the request if tracking fails
   }
 }
