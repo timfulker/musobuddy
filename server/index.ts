@@ -619,7 +619,16 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
   return isNaN(parsed) ? null : parsed;
 }
 
-// ENHANCED Mailgun webhook handler with attachment support
+// Queue status endpoint
+app.get('/api/email-queue/status', (req, res) => {
+  import('./core/email-queue').then(({ emailQueue }) => {
+    res.json(emailQueue.getStatus());
+  }).catch(error => {
+    res.status(500).json({ error: 'Failed to get queue status' });
+  });
+});
+
+// ENHANCED Mailgun webhook handler with queuing system to prevent race conditions
 app.post('/api/webhook/mailgun', 
   // Use multer to handle both form-data (with attachments) and urlencoded (without)
   (req, res, next) => {
@@ -662,6 +671,32 @@ app.post('/api/webhook/mailgun',
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received - ${new Date().toISOString()}`);
   
+  // QUEUE SYSTEM: Add email to processing queue to prevent race conditions
+  try {
+    const { emailQueue } = await import('./core/email-queue');
+    const { jobId, queuePosition } = await emailQueue.addEmail(req.body);
+    
+    console.log(`📧 [${requestId}] Email added to processing queue as job ${jobId} (position: ${queuePosition})`);
+    
+    // Return immediate success to Mailgun to prevent retries
+    res.json({
+      success: true,
+      message: 'Email received and queued for processing',
+      requestId: requestId,
+      jobId: jobId,
+      queuePosition: queuePosition
+    });
+    
+  } catch (queueError: any) {
+    console.error(`❌ [${requestId}] Queue error, falling back to immediate processing:`, queueError);
+    
+    // Fallback to immediate processing if queue fails
+    await processEmailImmediate(req, res, requestId);
+  }
+});
+
+// Fallback immediate processing function (original logic)
+async function processEmailImmediate(req: Request, res: Response, requestId: string) {
   // CRITICAL: Global error handler to prevent 500 errors to Mailgun
   try {
     // Helper function to save any email to Review Messages
@@ -1178,7 +1213,7 @@ app.post('/api/webhook/mailgun',
       details: error?.message || 'Unknown error' 
     });
   }
-});
+}
 
 // Robust TypeScript validator for date extraction
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/i;

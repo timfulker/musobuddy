@@ -25,6 +25,8 @@ Invoice overdue detection fix (Jan 2025): Fixed critical bug where overdue invoi
 
 Encore integration (Aug 2025): Successfully implemented Encore Musicians platform integration with apply-now link extraction from forwarded emails. System detects AWS tracking URLs (awstrack.me) that redirect to Encore jobs, extracts job IDs from email subjects for reference, and displays purple "🎵 ENCORE" badges with "Apply on Encore" buttons on booking cards. Integration works in both list view and kanban dashboard. Correct URL format: `https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow` (note: /jobs/ plural). Note: Forwarded emails lose HTML/clickable URLs, so tracking URLs should be copied from "Apply now" button hover text before forwarding for best results. Job alert links may expire after a few days.
 
+Email processing queue (Aug 2025): Implemented comprehensive email processing queue system to eliminate race conditions when multiple emails arrive within seconds. The queue processes emails sequentially with 500ms delays between jobs, preventing concurrent processing conflicts that caused missing emails. System includes retry logic (3 attempts), queue status monitoring via `/api/email-queue/status`, and fallback to immediate processing if queue fails. All emails now properly route through `server/core/email-queue.ts` with proper error handling and title cleanup integration.
+
 ## System Architecture
 
 ### Frontend

@@ -21,7 +21,7 @@ function extractFeeRange(text: string): string | null {
 /**
  * Clean up Encore booking titles by removing email formatting prefixes
  */
-function cleanEncoreTitle(rawTitle: string): string {
+export function cleanEncoreTitle(rawTitle: string): string {
   if (!rawTitle) return rawTitle;
   
   let cleaned = rawTitle;

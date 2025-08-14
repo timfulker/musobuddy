@@ -5,6 +5,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
+import { cleanEncoreTitle } from '../core/booking-formatter';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
@@ -40,11 +41,14 @@ export function registerBookingRoutes(app: Express) {
       }
       
       // Generate a meaningful title if none provided
-      const title = req.body.title || 
+      let title = req.body.title || 
         (req.body.clientName ? `Booking for ${req.body.clientName}` : 
          req.body.venue ? `Event at ${req.body.venue}` :
          req.body.eventDate ? `Event on ${req.body.eventDate}` :
          'New Booking');
+         
+      // Clean up Encore titles by removing forwarding prefixes
+      title = cleanEncoreTitle(title);
 
       const bookingData = {
         userId,
@@ -427,7 +431,7 @@ export function registerBookingRoutes(app: Express) {
       // Priority: 1) Form fields (if filled), 2) AI-parsed from message text, 3) Defaults
       const bookingData = {
         userId: user.id,
-        title: clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request',
+        title: cleanEncoreTitle(clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request'),
         clientName: clientName || parsedData.clientName || 'Unknown Client',
         clientEmail: clientEmail || null, // Ensure widget email is captured
         clientPhone: clientPhone || null,
