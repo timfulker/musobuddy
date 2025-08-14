@@ -16,6 +16,7 @@ Theme auto-save: User expects theme changes to automatically save to database wh
 Onboarding wizard: Should be a helpful optional tool rather than mandatory, appearing immediately for new authenticated users, and always allow users to dismiss/abort the wizard. It's designed to be helpful rather than something users must complete. Focuses on 5 essential setup items: business address, email prefix, business email, bank details, and booking widget generation.
 Invoice data integrity: When invoices are edited, the PDF automatically regenerates with updated data and uploads to replace the old version, ensuring clients always see accurate information.
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
+Recent fixes (Jan 2025): Fixed booking edit form issue where existing booking data wasn't loading into form fields. Added missing useEffect to populate form on edit mode. Also fixed "Back to Bookings" button luminance awareness by adding text-primary-foreground class for proper theme contrast.
 
 ## System Architecture
 
