@@ -273,40 +273,20 @@ class EnhancedEmailQueue {
 
     console.log(`📧 [${requestId}] Found user: ${user.id} (${user.email})`);
 
-    // Process the email using ISOLATED parser to prevent context bleeding
-    const { parseBookingMessageIsolated } = await import('../ai/booking-message-parser-isolated');
+    // Process the email using existing widget logic
+    const { parseBookingMessage } = await import('../ai/booking-message-parser');
     const { cleanEncoreTitle } = await import('./booking-formatter');
     
     try {
-      console.log(`🤖 [${requestId}] AI PARSING: Using ISOLATED parser to prevent context contamination`);
-      console.log(`🔒 [${requestId}] Creating fresh AI context for user ${user.id}`);
+      console.log(`🤖 [${requestId}] AI PARSING: Taking time to carefully parse email for user ${user.id}`);
+      const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
       
-      // Use isolated parser with unique session
-      const parsedData = await parseBookingMessageIsolated(bodyField, fromField, null, user.id);
-      
-      console.log(`✅ [${requestId}] AI PARSING: Completed isolated parsing with 5-second delay`);
-      console.log(`📧 [${requestId}] ISOLATED PARSE DEBUG:`, {
-        sessionId: parsedData.parseMetadata?.sessionId,
-        messageHash: parsedData.parseMetadata?.messageHash,
-        eventDate: parsedData.eventDate,
-        venue: parsedData.venue,
-        venueAddress: parsedData.venueAddress,
-        eventType: parsedData.eventType,
-        eventTime: parsedData.eventTime,
-        fee: parsedData.fee,
-        confidence: parsedData.confidence
+      console.log(`✅ [${requestId}] AI PARSING: Completed parsing with 5-second delay for accuracy`);
+      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
+        hasEventDate: !!parsedData.eventDate,
+        hasVenue: !!parsedData.venue,
+        eventType: parsedData.eventType
       });
-      
-      // VALIDATION: Check for potential cross-contamination
-      if (parsedData.parseMetadata) {
-        const messagePreview = bodyField.substring(0, 100).toLowerCase();
-        const extractedVenue = parsedData.venue?.toLowerCase() || '';
-        
-        // Warning if venue doesn't appear in message (possible contamination)
-        if (extractedVenue && !messagePreview.includes(extractedVenue.substring(0, 20))) {
-          console.warn(`⚠️ [${requestId}] CONTAMINATION CHECK: Venue "${parsedData.venue}" may not be from this message`);
-        }
-      }
       
       // Apply title cleanup
       const cleanedSubject = cleanEncoreTitle(subjectField);
