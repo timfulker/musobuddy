@@ -20,6 +20,7 @@
       "Bash(awk:*)",
       "Bash(python3:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

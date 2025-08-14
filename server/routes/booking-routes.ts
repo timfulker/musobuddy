@@ -292,6 +292,16 @@ export function registerBookingRoutes(app: Express) {
     try {
       const { messageText, clientName, clientContact, eventDate, venue, token } = req.body;
       
+      // Debug logging to trace the issue
+      console.log('📝 Widget submission received:', {
+        messageText: messageText?.substring(0, 100) + '...',
+        clientName,
+        clientContact,
+        eventDate,
+        venue,
+        hasToken: !!token
+      });
+      
       if (!messageText || !clientName || !clientContact || !token) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
@@ -355,27 +365,41 @@ export function registerBookingRoutes(app: Express) {
         });
       }
       
-      // Create booking with combined data (AI parsed data takes precedence for dates/venues when form is empty)
+      // Create booking with combined data
+      // Priority: 1) Form fields (if filled), 2) AI-parsed from message text, 3) Defaults
       const bookingData = {
         userId: user.id,
         title: clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request',
         clientName: clientName || parsedData.clientName || 'Unknown Client',
-        clientEmail: clientEmail || null, // FIXED: Ensure widget email is captured
+        clientEmail: clientEmail || null, // Ensure widget email is captured
         clientPhone: clientPhone || null,
+        // Use form venue if provided, otherwise use AI-extracted venue from message
         venue: venue || parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
         venueContact: parsedData.venueContactInfo || null,
-        eventDate: parsedData.eventDate || eventDate || null, // FIXED: AI date takes precedence
+        // Use form date if provided, otherwise use AI-extracted date from message
+        eventDate: eventDate || parsedData.eventDate || null,
         eventTime: parsedData.eventTime || null,
         eventEndTime: parsedData.eventEndTime || null,
         fee: parsedData.fee || null,
         deposit: parsedData.deposit || null,
         status: 'new',
-        notes: messageText, // FIXED: Original message text is now properly saved in notes
+        notes: messageText, // Store original message text in notes
         gigType: parsedData.eventType || null,
         equipmentRequirements: null,
         specialRequirements: parsedData.specialRequirements || null
       };
+      
+      // Debug log the final booking data
+      console.log('📊 Creating booking with data:', {
+        clientName: bookingData.clientName,
+        clientEmail: bookingData.clientEmail,
+        clientPhone: bookingData.clientPhone,
+        venue: bookingData.venue,
+        eventDate: bookingData.eventDate,
+        eventType: bookingData.gigType,
+        aiConfidence: parsedData.confidence
+      });
       
       const newBooking = await storage.createBooking(bookingData);
       console.log(`✅ Widget created booking #${newBooking.id} for user ${user.id} (AI confidence: ${Math.round(parsedData.confidence * 100)}%)`);
