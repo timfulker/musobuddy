@@ -78,7 +78,7 @@ async function enrichVenueData(venueName: string): Promise<any> {
   }
 }
 
-// Enhanced booking message parser using Claude Haiku - investigating contamination
+// Enhanced booking message parser using Claude Haiku for cost efficiency
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -114,13 +114,9 @@ export async function parseBookingMessage(
   userId?: string
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 Claude: Parsing booking message - CONTAMINATION INVESTIGATION...');
+    console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
     console.log('🤖 Claude: Message length:', messageText?.length || 0);
     console.log('🤖 Claude: First 200 chars:', messageText?.substring(0, 200) || 'No content');
-    
-    // Generate unique request ID for contamination tracking
-    const requestId = `parse_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Starting Claude API call`);
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -191,11 +187,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       throw new Error('No response from Claude');
     }
 
-    console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Claude raw response:`, rawContent);
-    
-    // Log the exact prompt sent to Claude for contamination analysis
-    console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Prompt hash:`, 
-      Buffer.from(userPrompt).toString('base64').substring(0, 20));
+    console.log('🤖 Claude raw response:', rawContent);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
@@ -296,19 +288,9 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       }
     }
 
-    console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Raw parsed JSON before cleaning:`, {
-      venue: parsed.venue,
-      eventDate: parsed.eventDate,
-      eventType: parsed.eventType,
-      clientName: parsed.clientName
-    });
-    
-    console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Final cleaned data:`, {
-      venue: cleanedData.venue,
-      eventDate: cleanedData.eventDate,
-      eventType: cleanedData.eventType,
-      clientName: cleanedData.clientName,
-      confidence: cleanedData.confidence
+    console.log('🎯 Claude: Parsed booking data:', {
+      ...cleanedData,
+      message: `${messageText.substring(0, 100)}...`
     });
 
     return cleanedData;

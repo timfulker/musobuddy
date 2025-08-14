@@ -621,11 +621,16 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
 
 // Queue status endpoint
 app.get('/api/email-queue/status', (req, res) => {
+  // Try enhanced queue first, fall back to original if not available
   import('./core/email-queue-enhanced').then(({ enhancedEmailQueue }) => {
-    const status = enhancedEmailQueue.getStatus();
-    res.json(status);
-  }).catch(error => {
-    res.status(500).json({ error: 'Failed to get queue status' });
+    res.json(enhancedEmailQueue.getStatus());
+  }).catch(() => {
+    // Fallback to original queue
+    import('./core/email-queue').then(({ emailQueue }) => {
+      res.json(emailQueue.getStatus());
+    }).catch(error => {
+      res.status(500).json({ error: 'Failed to get queue status' });
+    });
   });
 });
 
@@ -674,10 +679,22 @@ app.post('/api/webhook/mailgun',
   
   // QUEUE SYSTEM: Add email to processing queue to prevent race conditions
   try {
+    // Use enhanced queue with mutex locking
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail(req.body);
+    const { jobId, queuePosition, isDuplicate } = await enhancedEmailQueue.addEmail(req.body);
     
-    console.log(`📧 [${requestId}] Email added to processing queue as job ${jobId} (position: ${queuePosition})`);
+    if (isDuplicate) {
+      console.log(`📧 [${requestId}] Duplicate email detected and blocked`);
+      res.json({
+        success: true,
+        message: 'Duplicate email detected and ignored',
+        requestId: requestId,
+        isDuplicate: true
+      });
+      return;
+    }
+    
+    console.log(`📧 [${requestId}] Email added to enhanced processing queue as job ${jobId} (position: ${queuePosition})`);
     
     // Return immediate success to Mailgun to prevent retries
     res.json({
