@@ -643,3 +643,34 @@ class CollaborativeFormGenerator {
 }
 
 export const collaborativeFormGenerator = new CollaborativeFormGenerator();
+
+// Export standalone function for direct use
+export function generateCollaborativeForm(
+  contract: any,
+  bookingData: any = null,
+  portalToken: string
+): string {
+  // Convert contract to booking data format
+  const formData = {
+    id: contract.enquiryId || contract.id,
+    contractId: contract.id,
+    clientName: contract.clientName,
+    venue: contract.venue,
+    eventDate: contract.eventDate,
+    eventTime: contract.eventTime,
+    eventEndTime: contract.eventEndTime,
+    performanceDuration: contract.performanceDuration,
+    // Include existing booking data if available
+    ...bookingData
+  };
+
+  const apiEndpoint = process.env.NODE_ENV === 'production' 
+    ? 'https://musobuddy.replit.app' 
+    : 'http://localhost:5000';
+
+  return collaborativeFormGenerator.generateStandaloneForm(
+    formData,
+    apiEndpoint,
+    portalToken
+  );
+}
