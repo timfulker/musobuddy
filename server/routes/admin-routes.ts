@@ -68,13 +68,17 @@ export function registerAdminRoutes(app: Express) {
             monthly_emails: totalUsers * 10 * 30, // 10 emails per user per day * 30 days
             estimated_cost: (() => {
               const monthlyEmails = totalUsers * 10 * 30;
+              console.log(`🔍 Mailgun calculation: ${totalUsers} users × 10 × 30 = ${monthlyEmails} emails`);
               if (monthlyEmails <= 50000) {
+                console.log(`✅ Mailgun: ${monthlyEmails} emails <= 50k, cost = $35.00`);
                 return 35.00; // $35 minimum plan for up to 50k emails
               } else {
                 // Over 50k emails: $35 base + $1.30 per 1,000 additional emails
                 const overageEmails = monthlyEmails - 50000;
                 const overageThousands = Math.ceil(overageEmails / 1000);
-                return parseFloat((35 + (overageThousands * 1.30)).toFixed(2));
+                const cost = parseFloat((35 + (overageThousands * 1.30)).toFixed(2));
+                console.log(`📧 Mailgun: ${monthlyEmails} emails > 50k, overage = ${overageEmails}, cost = $${cost}`);
+                return cost;
               }
             })(),
           },
