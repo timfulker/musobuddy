@@ -245,11 +245,32 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       }
     }
 
-    // Extract Encore apply-now links
-    const encoreUrlMatch = messageText.match(/https?:\/\/[^\s]*encoremusicians\.com[^\s]*/i);
-    if (encoreUrlMatch) {
-      cleanedData.applyNowLink = encoreUrlMatch[0];
+    // Enhanced Encore apply-now link extraction (handles tracking URLs)
+    const applyNowLink = extractEncoreApplyLink(messageText);
+    if (applyNowLink) {
+      cleanedData.applyNowLink = applyNowLink;
       console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+    }
+    
+    // Detect Encore emails even without clickable links
+    const isEncoreEmail = messageText.toLowerCase().includes('encore musicians') || 
+                         messageText.includes('notification@encoremusicians.com') ||
+                         messageText.includes('encoremusicians.com');
+    
+    if (isEncoreEmail && !applyNowLink) {
+      console.log('🎵 Encore email detected but no clickable apply-now link found (likely forwarded email)');
+      
+      // Extract job ID if present for manual URL construction
+      const jobIdMatch = messageText.match(/\[([a-zA-Z0-9]+)\]$/m);
+      if (jobIdMatch) {
+        const jobId = jobIdMatch[1];
+        console.log(`🎵 Encore job ID extracted: ${jobId}`);
+        // Add a note to the special requirements about the Encore job
+        const encoreNote = `Encore Musicians job [${jobId}] - Apply-now URL not available in forwarded email`;
+        cleanedData.specialRequirements = cleanedData.specialRequirements 
+          ? `${cleanedData.specialRequirements}. ${encoreNote}`
+          : encoreNote;
+      }
     }
 
     // Add client contact info if provided but not extracted
@@ -277,6 +298,47 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     console.log('🔄 Falling back to simple text analysis...');
     return simpleTextParse(messageText, clientContact, clientAddress);
   }
+}
+
+// Extract Encore apply-now links from both plain text and HTML tracking URLs
+function extractEncoreApplyLink(messageText: string): string | null {
+  // Pattern 1: Direct encoremusicians.com URLs
+  const directPatterns = [
+    /https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
+    /https:\/\/[^\/\s]*\.encoremusicians\.com\/[^\s<>"']+/gi
+  ];
+  
+  for (const pattern of directPatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      return match[0];
+    }
+  }
+  
+  // Pattern 2: AWS tracking URLs that redirect to encoremusicians.com (like in your screenshot)
+  const trackingPatterns = [
+    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
+    /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi
+  ];
+  
+  for (const pattern of trackingPatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      return match[0];
+    }
+  }
+  
+  // Pattern 3: Look for href attributes in HTML containing Encore URLs
+  const hrefPattern = /href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi;
+  let hrefMatch;
+  while ((hrefMatch = hrefPattern.exec(messageText)) !== null) {
+    const url = hrefMatch[1];
+    if (url.includes('encoremusicians.com') || (url.includes('awstrack.me') && url.includes('encoremusicians'))) {
+      return url;
+    }
+  }
+  
+  return null;
 }
 
 // Helper functions for data cleaning
