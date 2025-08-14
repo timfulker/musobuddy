@@ -422,14 +422,14 @@ export default function Contracts() {
         method: "POST",
       });
     },
-    onSuccess: (amendedContract) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Contract Amended",
-        description: `Created amended contract: ${amendedContract.contractNumber}`,
+        description: `Created amended contract: ${response.amendedContract.contractNumber}`,
       });
       // Optionally, open the edit dialog for the new amended contract
-      setEditingContract(amendedContract);
+      setEditingContract(response.amendedContract);
       setIsDialogOpen(true);
     },
     onError: (error) => {
