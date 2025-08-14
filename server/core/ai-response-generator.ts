@@ -18,7 +18,7 @@ const initializeOpenAI = () => {
   return new OpenAI({ 
     apiKey,
     timeout: 30000, // 30 second timeout at client level
-    maxRetries: 2
+    maxRetries: 1 // Reduced from 2 to limit cost exposure
   });
 };
 
