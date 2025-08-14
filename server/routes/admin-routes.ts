@@ -125,8 +125,13 @@ export function registerAdminRoutes(app: Express) {
         apiStatus.mailgun.estimated_monthly_emails = estimates.mailgun.monthly_emails;
         apiStatus.openai.estimated_monthly_tokens = estimates.openai.monthly_tokens;
         
-        console.log(`🔍 SUBSCRIPTION DEBUG: Replit=$20, Database=$0, Cloudflare=$20`);
-        console.log(`🔍 SUBSCRIPTION TOTAL: ${estimates.subscriptions.estimated_cost}`);
+        // Calculate costs for 500 users as well for planning
+        const mailgun500 = 500 * 10 * 30; // 150,000 emails
+        const mailgunCost500 = mailgun500 <= 50000 ? 35 : 35 + Math.ceil((mailgun500 - 50000) / 1000) * 1.30;
+        const totalCost500 = mailgunCost500 + (500 * 0.002 * 0.008) + (500 * 50 * 0.0000036) + (500 * 5 * 0.005) + (500 * 0.2 * 0.0075) + (500 * 0.1 * 0.30) + (500 * 500 * 0.000008) + (500 * 1 * 0.002) + 40;
+        
+        console.log(`🔍 SCALING PROJECTION: With 500 users, monthly API costs would be ~$${totalCost500.toFixed(2)} (Mailgun alone: $${mailgunCost500})`);
+        console.log(`🔍 CURRENT USERS: ${totalUsers}, SUBSCRIPTION TOTAL: $${estimates.subscriptions.estimated_cost}`);
 
         res.json({
           success: true,
