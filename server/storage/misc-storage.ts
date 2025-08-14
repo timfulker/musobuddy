@@ -349,14 +349,19 @@ export class MiscStorage {
   // ===== NOTIFICATION COUNT METHODS =====
   
   async getUnparseableMessagesCount(userId: string) {
-    // Count unparseable messages that haven't been resolved
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(unparseableMessages)
-      .where(and(
-        eq(unparseableMessages.userId, userId),
-        eq(unparseableMessages.isResolved, false)
-      ));
-    return result[0]?.count || 0;
+    try {
+      // Count unparseable messages that are pending review
+      const result = await db.select({ count: sql<number>`count(*)` })
+        .from(unparseableMessages)
+        .where(and(
+          eq(unparseableMessages.userId, userId),
+          eq(unparseableMessages.status, 'pending')
+        ));
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('🔥 SQL Error in getUnparseableMessagesCount:', error);
+      return 0; // Return 0 if query fails
+    }
   }
 
   async getExpiringDocumentsCount(userId: string) {
@@ -370,6 +375,16 @@ export class MiscStorage {
         gte(complianceDocuments.expiryDate, new Date()) // Not already expired
       ));
     return result[0]?.count || 0;
+  }
+
+  async getNewBookingsCount(userId: string) {
+    // For now, return 0 - this would need proper implementation based on business logic
+    return 0;
+  }
+
+  async getOverdueInvoicesCount(userId: string) {
+    // For now, return 0 - this would need proper implementation based on business logic  
+    return 0;
   }
 }
 
