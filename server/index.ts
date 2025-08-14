@@ -695,314 +695,322 @@ app.post('/api/webhook/mailgun',
   }
 });
 
-// Fallback immediate processing function (original logic)
+// Fallback immediate processing function - uses same logic as email queue
 async function processEmailImmediate(req: Request, res: Response, requestId: string) {
-  // CRITICAL: Global error handler to prevent 500 errors to Mailgun
+  console.log(`📧 [${requestId}] Using fallback immediate processing`);
+  
   try {
-    // Helper function to save any email to Review Messages
-    const saveToReviewMessages = async (reason: string, errorDetails?: string) => {
-      try {
-        const { storage } = await import('./core/storage');
-        
-        const fromField = req.body.From || req.body.from || req.body.sender || '';
-        const subjectField = req.body.Subject || req.body.subject || '';
-        const bodyField = req.body['body-plain'] || req.body.text || req.body['stripped-text'] || '';
-        
-        // Extract email and name
-        let clientEmail = '';
-        const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
-        if (emailMatch) clientEmail = emailMatch[0];
-        
-        let clientName = 'Unknown';
-        if (fromField.includes('<')) {
-          const nameMatch = fromField.match(/^([^<]+)/);
-          if (nameMatch) clientName = nameMatch[1].trim();
-        } else if (clientEmail) {
-          clientName = clientEmail.split('@')[0];
-        }
-        
-        await storage.createUnparseableMessage({
-          userId: "43963086", // Default admin user for review
-          source: 'email',
-          fromContact: `${clientName} <${clientEmail}>`,
-          rawMessage: bodyField || 'No message content',
-          clientAddress: null,
-          messageType: 'parsing_failed',
-          parsingErrorDetails: `${reason}${errorDetails ? `: ${errorDetails}` : ''}`
-        });
-        
-        console.log(`📋 [${requestId}] Saved to Review Messages - ${reason}`);
-        
-        return res.json({
-          success: true,
-          savedForReview: true,
-          message: `Email saved for manual review: ${reason}`,
-          requestId: requestId,
-          fromEmail: clientEmail
-        });
-      } catch (storageError: any) {
-        console.error(`❌ [${requestId}] CRITICAL: Failed to save to Review Messages:`, storageError);
-        // Fallback: still return 200 to prevent Mailgun retries
-        return res.status(200).json({
-          success: false,
-          error: 'Failed to save to review messages',
-          requestId: requestId,
-          details: storageError?.message
-        });
-      }
-    };
+    // Use the same email processing logic as the queue system
+    const { processEmailDirect } = await import('./core/email-queue');
+    await processEmailDirect(req.body, requestId);
     
-    // ENHANCED DEBUGGING: Log content type and parsing method
-    const contentType = req.headers['content-type'] || '';
-    console.log(`📧 [${requestId}] Content-Type: ${contentType}`);
-    console.log(`📧 [${requestId}] Body keys:`, Object.keys(req.body || {}));
-    
-    // Handle attachment metadata from multer
-    const files = Array.isArray(req.files) ? req.files : [];
-    if (files.length > 0) {
-      console.log(`📎 [${requestId}] Received ${files.length} attachment(s):`);
-      files.forEach((file: any, index: number) => {
-        console.log(`📎 [${requestId}] Attachment ${index + 1}: ${file.originalname} (${file.size} bytes, ${file.mimetype})`);
-      });
-    }
-    
-    // Extract email fields (same logic as before)
-    const fromField = req.body.From || req.body.from || req.body.sender || '';
-    const subjectField = req.body.Subject || req.body.subject || '';
-    const bodyField = req.body['body-plain'] || req.body.text || req.body['stripped-text'] || '';
-    const recipientField = req.body.To || req.body.recipient || '';
-    
-    console.log(`📧 [${requestId}] Email data:`, {
-      from: fromField,
-      subject: subjectField,
-      to: recipientField,
-      bodyLength: bodyField?.length || 0,
-      hasAttachments: files.length > 0
+    return res.json({
+      success: true,
+      message: 'Email processed successfully via fallback',
+      requestId: requestId,
+      processingMethod: 'immediate_fallback'
     });
     
-    // SPECIAL LOGGING for previously problematic emails
-    const problemEmails = ['timfulkermusic@gmail.com', 'tim@saxweddings.com'];
-    const isProblematicEmail = problemEmails.some(email => fromField.includes(email));
+  } catch (fallbackError: any) {
+    console.error(`❌ [${requestId}] Fallback processing failed:`, fallbackError);
     
-    if (isProblematicEmail) {
-      console.log(`🔍 [${requestId}] SPECIAL DEBUG - Previously problematic email: ${fromField}`);
-      console.log(`🔍 [${requestId}] Content-Type: ${contentType}`);
-      console.log(`🔍 [${requestId}] Attachment count: ${files.length}`);
-    }
-    
-    if (!fromField && !subjectField && !bodyField) {
-      console.log(`❌ [${requestId}] No email data found`);
-      return saveToReviewMessages('No email data found', 'Missing from, subject, and body fields');
-    }
-    
-    // Extract email and name
-    let clientEmail = '';
-    const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
-    if (emailMatch) clientEmail = emailMatch[0];
-    
-    let clientName = 'Unknown';
-    if (fromField.includes('<')) {
-      const nameMatch = fromField.match(/^([^<]+)/);
-      if (nameMatch) clientName = nameMatch[1].trim();
-    } else if (clientEmail) {
-      clientName = clientEmail.split('@')[0];
-    }
-    
-    // AI parsing with enhanced error handling
-    let aiResult;
+    // Final fallback: save to review messages
     try {
-      if (isProblematicEmail) {
-        console.log(`🔍 [${requestId}] Running AI parsing for problem email: ${fromField}`);
+      const { storage } = await import('./core/storage');
+      
+      const fromField = req.body.From || req.body.from || req.body.sender || '';
+      const subjectField = req.body.Subject || req.body.subject || '';
+      const bodyField = req.body['body-plain'] || req.body.text || req.body['stripped-text'] || '';
+      
+      let clientEmail = '';
+      const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
+      if (emailMatch) clientEmail = emailMatch[0];
+      
+      let clientName = 'Unknown';
+      if (fromField.includes('<')) {
+        const nameMatch = fromField.match(/^([^<]+)/);
+        if (nameMatch) clientName = nameMatch[1].trim();
+      } else if (clientEmail) {
+        clientName = clientEmail.split('@')[0];
       }
       
-      aiResult = await parseEmailWithAI(bodyField, subjectField);
-      console.log(`🤖 [${requestId}] AI parsing successful:`, aiResult);
-      
-      if (isProblematicEmail) {
-        console.log(`🔍 [${requestId}] AI parsing completed for ${fromField} - result:`, JSON.stringify(aiResult, null, 2));
-      }
-      
-      // MOVED: Price enquiry check will happen after user lookup below
-    } catch (aiError: any) {
-      console.error(`❌ [${requestId}] AI parsing failed:`, {
-        message: aiError?.message,
-        stack: aiError?.stack,
-        fromEmail: fromField
+      await storage.createUnparseableMessage({
+        userId: "43963086", // Default admin user for review
+        source: 'email',
+        fromContact: `${clientName} <${clientEmail}>`,
+        rawMessage: bodyField || 'No message content',
+        clientAddress: null,
+        messageType: 'parsing_failed',
+        parsingErrorDetails: `Fallback processing failed: ${fallbackError.message}`
       });
       
-      if (isProblematicEmail) {
-        console.log(`🔍 [${requestId}] AI parsing failed for ${fromField} - using fallback data`);
-      }
+      console.log(`📋 [${requestId}] Final fallback: saved to Review Messages`);
       
-      // Check if message is too vague or completely unparseable
-      const isCompletelyUnparseable = !bodyField || 
-                                    !bodyField.includes(' ') || 
-                                    bodyField.length < 20 || 
-                                    /^(hi|hello|test|.{1,10})$/i.test(bodyField.trim());
+      return res.json({
+        success: true,
+        savedForReview: true,
+        message: 'Email saved for manual review after processing failure',
+        requestId: requestId
+      });
       
-      // Store unparseable message for manual review if completely unparseable
-      if (isCompletelyUnparseable) {
-        return saveToReviewMessages('AI parsing failed - message too vague', aiError?.message);
-      }
-      
-      // For any AI parsing failure, save to review messages
-      console.log(`⚠️ [${requestId}] AI parsing failed - saving to Review Messages`);
-      return saveToReviewMessages('AI parsing failed', aiError?.message);
-      
-      aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null, messageType: "general", isPriceEnquiry: false };
+    } catch (finalError: any) {
+      console.error(`❌ [${requestId}] CRITICAL: Final fallback failed:`, finalError);
+      return res.status(200).json({
+        success: false,
+        error: 'All processing methods failed',
+        requestId: requestId,
+        details: finalError.message
+      });
+    }
+  }
+}
+
+// Helper function to parse currency values to numeric
+function parseCurrencyToNumber(value: string | null | undefined): number | null {
+  if (!value) return null;
+  // Remove currency symbols and commas, parse as float
+  const numericString = value.toString().replace(/[£$€,]/g, '').trim();
+  const parsed = parseFloat(numericString);
+  return isNaN(parsed) ? null : parsed;
+}
+
+// Helper function to check if text contains a weekday word
+function containsWeekdayWord(text: string): boolean {
+  const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  return weekdays.some(day => text.toLowerCase().includes(day));
+}
+
+// Helper function to check if text contains a day of month
+function containsDayOfMonth(text: string): boolean {
+  return /\b(\d{1,2})(?:st|nd|rd|th)?\b/.test(text);
+}
+
+// Safety net regex - check for vague patterns before AI processing
+function hasVaguePatterns(emailText: string): boolean {
+  const text = emailText.toLowerCase();
+  
+  // First check if there's a specific date mentioned (day + month)
+  // This includes formats like "17th June", "June 17", "17 June", etc.
+  const hasSpecificDate = /\b(\d{1,2}(?:st|nd|rd|th)?)\s+(?:of\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i.test(text) ||
+                          /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b/i.test(text) ||
+                          /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/.test(text) || // Date formats like 12/25/2025
+                          /\b\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}\b/.test(text);   // Date formats like 2025-12-25
+  
+  // If there's a specific date, it's not vague regardless of other patterns
+  if (hasSpecificDate) {
+    console.log(`✅ Specific date found in: "${emailText.substring(0, 100)}..." - NOT vague`);
+    return false;
+  }
+  
+  // Only consider it vague if there's no specific date AND it has vague time references
+  const vague = [
+    // Match "next March", "this April", etc. - month without specific day
+    /\b(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i,
+    // Match "next year", "this summer", etc. ONLY if no specific date exists
+    /\b(next|this)\s+(year|month|summer|winter|spring|autumn|fall)\b/i,
+    // Match "sometime next month", etc.
+    /\bsometime\s+(next|this)\s+(year|month)\b/i,
+    // Additional patterns for availability checks without dates
+    /\b(available|availability).*?(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i
+  ];
+  
+  const hasVaguePattern = vague.some(pattern => pattern.test(text));
+  
+  if (hasVaguePattern) {
+    console.log(`🚨 VAGUE PATTERN DETECTED (no specific date) in: "${emailText.substring(0, 100)}..."`);
+  }
+  
+  return hasVaguePattern;
+}
+
+// AI email parsing function - now using Claude Haiku for better cost efficiency
+export async function parseEmailWithAI(emailBody: string, subject: string): Promise<any> {
+  const anthropic = process.env.ANTHROPIC_API_KEY ? 
+    new (await import('@anthropic-ai/sdk')).default({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+    
+  if (!anthropic) {
+    console.warn('⚠️ ANTHROPIC_API_KEY not configured - falling back to manual processing');
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
+  }
+
+  try {
+    // CRITICAL SAFETY NET: Check for vague patterns before AI processing
+    if (hasVaguePatterns(emailBody)) {
+      console.log(`⚠️ Pre-AI safety net detected vague date patterns - forcing to Review Message`);
+      // Return immediately for vague patterns like "next March", "next April"
+      return { 
+        eventDate: null, 
+        eventDate_text: null,
+        eventDate_exactness: 'none',
+        eventTime: null, 
+        venue: null, 
+        eventType: null, 
+        gigType: null, 
+        clientPhone: null, 
+        fee: null, 
+        budget: null, 
+        estimatedValue: null, 
+        applyNowLink: null,
+        messageType: 'availability_check',
+        isPriceEnquiry: true,
+        subcategory: 'availability_check',
+        urgencyLevel: 'medium',
+        requiresPersonalResponse: true
+      };
     }
     
-    console.log(`📧 [${requestId}] Recipient field:`, recipientField);
+    // CRITICAL FIX: DO NOT preprocess "next year" - let AI handle it naturally
+    // Previous bug: replacing "next year" with "2025" made AI think there was a specific date
+    const processedBody = emailBody; // No preprocessing needed
     
-    // FALLBACK PROTECTION: Import webhook fallbacks
-    const { getUserByEmailPrefix } = await import('./core/webhook-auth-fallbacks');
+    const prompt = `Extract booking details from this email. IMPORTANT: Only extract dates that are explicitly mentioned in the email content. Do NOT assume or default to today's date. "Next year" without a specific date should result in eventDate: null.
+
+Email Subject: ${subject}
+Email Content: ${processedBody}
+
+Return JSON format with these fields:
+{
+  "eventDate": "YYYY-MM-DD format or null",
+  "eventTime": "HH:MM format or null", 
+  "venue": "venue name or null",
+  "eventType": "wedding/corporate/party/etc or null",
+  "clientPhone": "phone number or null",
+  "fee": "quoted fee or null",
+  "estimatedValue": "estimated value or null"
+}`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const content = response.content[0]?.text || '{}';
     
-    let userId = null;
-    
-    // Parse email format: customprefix@enquiries.musobuddy.com
-    if (recipientField.includes('@enquiries.musobuddy.com')) {
-      // Extract prefix from before @ sign
-      const emailPrefix = recipientField.split('@')[0].trim();
-      console.log(`📧 [${requestId}] Extracted email prefix:`, emailPrefix);
-      
-      // Check for system addresses
-      if (emailPrefix === 'noreply' || emailPrefix === 'admin') {
-        console.log(`📧 [${requestId}] System address ${emailPrefix}@, using primary user`);
-        userId = "1754488522516"; // Primary user for system emails
-      } else {
-        // FALLBACK PROTECTION: Look up user using authentication-independent method
-        try {
-          const user = await getUserByEmailPrefix(emailPrefix);
-          if (user) {
-            userId = user.id;
-            console.log(`📧 [${requestId}] FALLBACK: Found user for prefix "${emailPrefix}":`, userId);
-          } else {
-            console.log(`📧 [${requestId}] FALLBACK: No user found for prefix "${emailPrefix}"`);
-          }
-        } catch (error) {
-          console.log(`❌ [${requestId}] FALLBACK: Error looking up user by prefix:`, error);
-          return saveToReviewMessages('User lookup failed', error?.toString());
-        }
-      }
-    }
-    
-    // Fallback to primary user if no match found
-    if (!userId) {
-      userId = "1754488522516"; // Primary user for this instance
-      console.log(`📧 [${requestId}] No user match found, using primary user:`, userId);
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        eventDate: parsed.eventDate,
+        eventTime: parsed.eventTime,
+        venue: parsed.venue,
+        eventType: parsed.eventType,
+        gigType: parsed.eventType,
+        clientPhone: parsed.clientPhone,
+        fee: parsed.fee,
+        budget: parsed.estimatedValue,
+        estimatedValue: parsed.estimatedValue,
+        applyNowLink: null,
+        messageType: 'booking',
+        isPriceEnquiry: false
+      };
+    } catch (jsonError) {
+      console.error('Failed to parse AI response as JSON:', content);
+      return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
     }
 
-    // CHECK: Handle price enquiries after user lookup - Enhanced detection
-    const containsPricingKeywords = bodyField && (
-      bodyField.toLowerCase().includes('pricing') ||
-      bodyField.toLowerCase().includes('prices please') ||
-      bodyField.toLowerCase().includes('some prices') ||
-      bodyField.toLowerCase().includes('idea of cost') ||
-      bodyField.toLowerCase().includes('idea of pricing') ||
-      bodyField.toLowerCase().includes('how much') ||
-      bodyField.toLowerCase().includes('what do you charge') ||
-      bodyField.toLowerCase().includes('quote') ||
-      bodyField.toLowerCase().includes('cost') ||
-      bodyField.toLowerCase().includes('rate') ||
-      bodyField.toLowerCase().includes('fee') ||
-      bodyField.toLowerCase().includes('are you available') ||
-      bodyField.toLowerCase().includes('availability')
-    );
+  } catch (error: any) {
+    console.error('AI parsing failed:', error);
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
+  }
+}
+
+// Start server (Vite handles development, Express handles production)
+try {
+  const { default: sirv } = await import('sirv');
+  const { default: vite, createServer } = await import('vite');
+  const { readFile, access } = await import('fs/promises');
+  const { dirname, resolve, join } = await import('path');
+  const { fileURLToPath } = await import('url');
+
+  // Get __dirname equivalent for ES modules
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Routes should be accessible in both development and production
+  console.log(`📧 Email webhook available at: /api/webhook/mailgun`);
+  
+  if (!isProduction) {
+    // Development: Run with Vite
+    console.log('🔧 Starting development server with Vite...');
+    const viteServer = await createServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+      root: resolve(__dirname, '../client'),
+    });
+    app.use(viteServer.ssrMiddleware);
     
-    // CRITICAL FIX: Prioritize complete booking info over keyword detection
-    // If AI found a valid event date, this is a booking - not just a price enquiry
-    const hasValidBookingInfo = aiResult.eventDate && aiResult.eventDate !== null;
-    const isPriceEnquiry = !hasValidBookingInfo && (
-                          aiResult.isPriceEnquiry === true || 
-                          aiResult.messageType === 'price_enquiry' ||
-                          containsPricingKeywords
-                        );
-    
-    console.log('🔍 Email classification:', {
-      hasValidEventDate: hasValidBookingInfo,
-      aiDetection: aiResult.isPriceEnquiry,
-      messageType: aiResult.messageType,
-      keywordDetection: containsPricingKeywords,
-      finalDecision: isPriceEnquiry ? 'PRICE_ENQUIRY' : 'BOOKING'
+    const server = app.listen(5000, "0.0.0.0", () => {
+      console.log(`🚀 Development server running on http://0.0.0.0:5000`);
+      console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
+      console.log(`📁 Serving from: development with Vite`);
+    });
+    return; // Exit early since server.listen is called above
+  }
+} catch (error: any) {
+  console.error('❌ Static serving setup failed:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+}
+
+// Production server startup (development uses different startup above)
+if (process.env.NODE_ENV === 'production') {
+  const port = process.env.PORT || 3000;
+  
+  const server = app.listen(Number(port), "0.0.0.0", () => {
+    console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
+    console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`📁 Serving from: dist/public`);
+  });
+}
+
+// Wrapper function to handle async server startup
+async function startServer() {
+  try {
+    // CRITICAL FIX: REMOVE DUPLICATE AUTHENTICATION SYSTEM  
+    // Authentication will be handled by registerRoutes() below with proper session middleware order
+    console.log('🔧 Skipping duplicate authentication setup - will be handled by registerRoutes()');
+
+    // CRITICAL: Stripe payment success handler - renamed to avoid frontend route conflict
+    app.get('/payment-success', async (req: any, res) => {
+      try {
+        const sessionId = req.query.session_id;
+        
+        if (!sessionId) {
+          console.log('❌ No session_id in payment success redirect');
+          return res.redirect('/?error=no_session_id');
+        }
+        
+        console.log('🔄 Server-side session restoration for sessionId:', sessionId);
+
+        // Import StripeService to get session details
+        const { StripeService } = await import('./core/stripe-service');
+        const stripeService = new StripeService();
+        
+        // Get session details from Stripe
+        const sessionDetails = await stripeService.getSessionDetails(sessionId);
+        const userId = sessionDetails.metadata?.userId;
+        
+        if (!userId) {
+          console.log('❌ No userId in session metadata');
+          return res.redirect('/?error=no_user_id');
+        }
+        
+        // Log the user in
+        req.session.userId = userId;
+        console.log('✅ User logged in via Stripe payment success:', userId);
+        
+        // Redirect to dashboard
+        return res.redirect('/?payment=success');
+        
+      } catch (error: any) {
+        console.error('❌ Payment success handler error:', error);
+        return res.redirect('/?error=payment_handler_failed');
+      }
     });
     
-    if (isPriceEnquiry) {
-      try {
-        // Import storage methods for price enquiry handling
-        const { storage } = await import('./core/storage');
-        
-        await storage.createUnparseableMessage({
-          userId: userId, // Now using the correct user ID
-          source: 'email',
-          fromContact: `${clientName} <${clientEmail}>`,
-          rawMessage: bodyField,
-          clientAddress: null,
-          messageType: aiResult.subcategory || 'price_enquiry',
-          parsingErrorDetails: `Categorized as: ${aiResult.subcategory || 'price_enquiry'} | Priority: ${aiResult.urgencyLevel || 'medium'} | Personal response needed: ${aiResult.requiresPersonalResponse || true}`
-        });
-        
-        console.log(`💰 [${requestId}] Saved price enquiry for user ${userId} from ${fromField}`);
-        
-        // Return success and stop processing - don't create a booking
-        return res.json({
-          success: true,
-          savedForPricing: true,
-          message: 'Price enquiry saved for custom response',
-          requestId: requestId,
-          fromEmail: clientEmail,
-          userId: userId
-        });
-      } catch (storageError: any) {
-        console.error(`❌ [${requestId}] Failed to save price enquiry:`, storageError);
-        return saveToReviewMessages('Price enquiry storage failed', storageError?.message);
-      }
-    }
-
-    // CRITICAL CHECK: Don't create booking without valid event date
-    if (!aiResult.eventDate || aiResult.eventDate === null) {
-      console.log(`📅 [${requestId}] No event date found - saving to Review Messages`);
-      return saveToReviewMessages('No valid event date found', `Message type: ${aiResult.subcategory || aiResult.messageType || 'unknown'}, isPriceEnquiry: ${aiResult.isPriceEnquiry}`);
-    }
-
-    // Parse currency values for database
-    const parsedFee = parseCurrencyToNumber(aiResult.fee) || parseCurrencyToNumber(aiResult.estimatedValue) || null;
-    const parsedEstimatedValue = parseCurrencyToNumber(aiResult.estimatedValue);
-    
-    console.log(`📧 [${requestId}] Currency parsing: fee "${aiResult.fee}" -> ${parsedFee}, estimatedValue "${aiResult.estimatedValue}" -> ${parsedEstimatedValue}`);
-    console.log(`📅 [${requestId}] Event date found: ${aiResult.eventDate} - proceeding with booking creation`);
-
-    // Enhanced venue data population using Google Maps API
-    let venueAddress = null;
-    let venueContactInfo = null;
-    
-    if (aiResult.venue) {
-      try {
-        console.log(`🗺️ [${requestId}] Looking up venue details for: ${aiResult.venue}`);
-        
-        // Use Google Maps Places Search to get venue details (direct API call to avoid auth issues)
-        if (!process.env.GOOGLE_MAPS_SERVER_KEY) {
-          console.warn(`⚠️ [${requestId}] Google Maps server key not configured - skipping venue lookup`);
-        } else {
-          const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
-          
-          const requestBody = {
-            textQuery: aiResult.venue,
-            locationBias: {
-              circle: {
-                center: {
-                  latitude: 51.5074,  // London center
-                  longitude: -0.1278
-                },
-                radius: 50000.0
-              }
-            },
-            maxResultCount: 1,
-            languageCode: 'en'
-          };
-
-          const searchResponse = await fetch(placesUrl, {
-            method: 'POST',
-            headers: {
+    // Register all API routes
+    await registerRoutes(app);
               'Content-Type': 'application/json',
               'X-Goog-Api-Key': process.env.GOOGLE_MAPS_SERVER_KEY,
               'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.id'

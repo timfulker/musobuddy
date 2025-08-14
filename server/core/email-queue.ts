@@ -286,3 +286,9 @@ class EmailQueue {
 
 // Export singleton instance
 export const emailQueue = new EmailQueue();
+
+// Export direct processing function for fallback use
+export async function processEmailDirect(requestData: any, requestId: string): Promise<void> {
+  const queue = new EmailQueue();
+  await queue.processEmail(requestData, requestId);
+}
