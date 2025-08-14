@@ -43,7 +43,18 @@ export function generateContractSigningPage(
   const specialRequirements = escapeHtml(contract.specialRequirements || contract.special_requirements || 'None specified');
 
   const businessName = escapeHtml(userSettings?.businessName || userSettings?.business_name || 'MusoBuddy');
-  const businessAddress = escapeHtml(userSettings?.businessAddress || userSettings?.business_address || 'Address not provided');
+  // Build complete business address from multiple fields
+  const addressParts: string[] = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.addressLine2) addressParts.push(userSettings.addressLine2);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  
+  // Fall back to legacy businessAddress if no individual fields
+  const businessAddress = addressParts.length > 0 
+    ? escapeHtml(addressParts.join(', '))
+    : escapeHtml(userSettings?.businessAddress || userSettings?.business_address || 'Address not provided');
   const businessEmail = escapeHtml(userSettings?.businessEmail || userSettings?.business_email || '');
   const businessPhone = escapeHtml(userSettings?.phone || 'Phone not provided');
   
@@ -554,7 +565,7 @@ export function generateContractSigningPage(
                         <div class="section-title">Parties to this Agreement</div>
                         <div class="parties-section">
                             <div class="party-box">
-                                <div class="party-title">Service Provider</div>
+                                <div class="party-title">Performer</div>
                                 <div class="party-details">
                                     <strong>${businessName}</strong><br>
                                     <strong>Address:</strong> ${businessAddress}<br>
