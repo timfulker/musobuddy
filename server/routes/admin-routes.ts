@@ -7,7 +7,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { db } from "../core/database";
 import { users, apiUsageTracking, apiUsageLimits } from '../../shared/schema';
-import { eq, and, desc, sql, gte } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, inArray } from 'drizzle-orm';
 import { DEFAULT_LIMITS } from '../middleware/api-usage-tracker';
 
 export function registerAdminRoutes(app: Express) {
