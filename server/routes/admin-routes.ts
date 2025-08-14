@@ -66,7 +66,16 @@ export function registerAdminRoutes(app: Express) {
         const estimates = {
           mailgun: {
             monthly_emails: totalUsers * 10 * 30, // 10 emails per user per day * 30 days
-            estimated_cost: parseFloat((totalUsers * 10 * 30 * 0.0004).toFixed(2)), // $0.0004 per email (Mailgun flex pricing)
+            estimated_cost: (() => {
+              const monthlyEmails = totalUsers * 10 * 30;
+              if (monthlyEmails <= 50000) {
+                return 35.00; // $35 minimum plan for up to 50k emails
+              } else {
+                // Over 50k emails: $35 base + overage charges
+                const overageEmails = monthlyEmails - 50000;
+                return parseFloat((35 + (overageEmails * 0.0008)).toFixed(2));
+              }
+            })(),
           },
           openai: {
             monthly_tokens: totalUsers * 2000, // More realistic: ~2K tokens per user per month
