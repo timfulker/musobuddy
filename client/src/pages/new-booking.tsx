@@ -247,6 +247,88 @@ export default function NewBookingPage() {
     }
   }, [watchedVenueAddress, userSettings]);
 
+  // Populate form with existing booking data when editing
+  useEffect(() => {
+    if (editingBooking && isEditMode) {
+      console.log('📝 Populating form with booking data:', editingBooking);
+      
+      const formatDate = (date: any) => {
+        if (!date) return '';
+        try {
+          return new Date(date).toISOString().split('T')[0];
+        } catch {
+          return '';
+        }
+      };
+
+      const formatTime = (time: any) => {
+        if (!time) return '';
+        // Handle time format (HH:MM)
+        if (typeof time === 'string' && time.includes(':')) {
+          return time;
+        }
+        return '';
+      };
+
+      form.reset({
+        clientName: editingBooking.clientName || '',
+        clientEmail: editingBooking.clientEmail || '',
+        clientPhone: editingBooking.clientPhone || '',
+        clientAddress: editingBooking.clientAddress || '',
+        eventDate: formatDate(editingBooking.eventDate),
+        eventTime: formatTime(editingBooking.eventTime),
+        eventEndTime: formatTime(editingBooking.eventEndTime),
+        venue: editingBooking.venue || '',
+        venueAddress: editingBooking.venueAddress || '',
+        venueContactInfo: editingBooking.venueContactInfo || '',
+        fee: editingBooking.fee ? editingBooking.fee.toString() : '',
+        eventType: editingBooking.eventType || '',
+        gigType: editingBooking.gigType || '',
+        equipmentRequirements: editingBooking.equipmentRequirements || '',
+        specialRequirements: editingBooking.specialRequirements || '',
+        performanceDuration: editingBooking.performanceDuration || '',
+        styles: editingBooking.styles || '',
+        equipmentProvided: editingBooking.equipmentProvided || '',
+        whatsIncluded: editingBooking.whatsIncluded || '',
+        dressCode: editingBooking.dressCode || '',
+        contactPerson: editingBooking.contactPerson || '',
+        contactPhone: editingBooking.contactPhone || '',
+        parkingInfo: editingBooking.parkingInfo || '',
+        notes: editingBooking.notes || '',
+        travelExpense: editingBooking.travelExpense ? editingBooking.travelExpense.toString() : '',
+        // Collaborative fields
+        venueContact: editingBooking.venueContact || '',
+        soundTechContact: editingBooking.soundTechContact || '',
+        stageSize: editingBooking.stageSize || '',
+        powerEquipment: editingBooking.powerEquipment || '',
+        styleMood: editingBooking.styleMood || '',
+        mustPlaySongs: editingBooking.mustPlaySongs || '',
+        avoidSongs: editingBooking.avoidSongs || '',
+        setOrder: editingBooking.setOrder || '',
+        firstDanceSong: editingBooking.firstDanceSong || '',
+        processionalSong: editingBooking.processionalSong || '',
+        signingRegisterSong: editingBooking.signingRegisterSong || '',
+        recessionalSong: editingBooking.recessionalSong || '',
+        specialDedications: editingBooking.specialDedications || '',
+        guestAnnouncements: editingBooking.guestAnnouncements || '',
+        loadInInfo: editingBooking.loadInInfo || '',
+        soundCheckTime: editingBooking.soundCheckTime || '',
+        weatherContingency: editingBooking.weatherContingency || '',
+        parkingPermitRequired: editingBooking.parkingPermitRequired || false,
+        mealProvided: editingBooking.mealProvided || false,
+        dietaryRequirements: editingBooking.dietaryRequirements || '',
+        sharedNotes: editingBooking.sharedNotes || '',
+        referenceTracks: editingBooking.referenceTracks || '',
+        photoPermission: editingBooking.photoPermission !== undefined ? editingBooking.photoPermission : true,
+        encoreAllowed: editingBooking.encoreAllowed !== undefined ? editingBooking.encoreAllowed : true,
+        encoreSuggestions: editingBooking.encoreSuggestions || '',
+        what3words: editingBooking.what3words || '',
+      });
+      
+      console.log('✅ Form populated with booking data');
+    }
+  }, [editingBooking, isEditMode, form]);
+
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
       const bookingData = {
