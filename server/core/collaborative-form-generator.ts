@@ -455,24 +455,57 @@ class CollaborativeFormGenerator {
             updateSaveStatus('Saving changes...');
             
             try {
-                const formData = {};
+                // Use traditional form submission to bypass CORS
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = \`\${API_BASE}/api/collaborative-form/\${BOOKING_ID}/update\`;
+                form.target = 'save-frame';
+                form.style.display = 'none';
+                
+                // Add token
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = 'token';
+                tokenInput.value = PORTAL_TOKEN;
+                form.appendChild(tokenInput);
+                
+                // Add form data
                 document.querySelectorAll('input, textarea, select').forEach(field => {
                     if (field.name && field.value) {
-                        formData[field.name] = field.value;
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = field.name;
+                        input.value = field.value;
+                        form.appendChild(input);
                     }
                 });
                 
-                const response = await fetch(\`\${API_BASE}/api/collaborative-form/\${BOOKING_ID}/update\`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: PORTAL_TOKEN,
-                        ...formData,
-                        fieldLocks: fieldLocks
-                    })
-                });
+                // Add field locks
+                const locksInput = document.createElement('input');
+                locksInput.type = 'hidden';
+                locksInput.name = 'fieldLocks';
+                locksInput.value = JSON.stringify(fieldLocks);
+                form.appendChild(locksInput);
+                
+                document.body.appendChild(form);
+                
+                // Create hidden iframe for response
+                let iframe = document.getElementById('save-frame');
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = 'save-frame';
+                    iframe.name = 'save-frame';
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                }
+                
+                // Submit form
+                form.submit();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(form);
+                }, 1000);
                 
                 if (!response.ok) {
                     throw new Error('Failed to save changes');
