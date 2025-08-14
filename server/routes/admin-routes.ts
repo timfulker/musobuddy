@@ -118,12 +118,15 @@ export function registerAdminRoutes(app: Express) {
               { name: 'Replit Database (included)', monthly_cost: 0.00 },
               { name: 'Cloudflare Pro', monthly_cost: 20.00 }
             ],
-            estimated_cost: 40.00 // Total subscription fees
+            estimated_cost: 40.00 // Total subscription fees: $20 + $0 + $20
           }
         };
 
         apiStatus.mailgun.estimated_monthly_emails = estimates.mailgun.monthly_emails;
         apiStatus.openai.estimated_monthly_tokens = estimates.openai.monthly_tokens;
+        
+        console.log(`🔍 SUBSCRIPTION DEBUG: Replit=$20, Database=$0, Cloudflare=$20`);
+        console.log(`🔍 SUBSCRIPTION TOTAL: ${estimates.subscriptions.estimated_cost}`);
 
         res.json({
           success: true,

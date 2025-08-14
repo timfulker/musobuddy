@@ -101,6 +101,8 @@ export default function APICostMonitor() {
   const { data: costData, isLoading, error, refetch } = useQuery<{ success: boolean; data: APICostData }>({
     queryKey: ["/api/admin/api-costs"],
     refetchInterval: 60000, // Refetch every minute
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache for debugging
   });
 
   const data = costData?.data;
@@ -177,9 +179,14 @@ export default function APICostMonitor() {
       {/* Total Cost Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Monthly Cost Estimate
+          <CardTitle className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Monthly Cost Estimate
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-3 w-3" />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
