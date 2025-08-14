@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { complianceDocuments, clients, conflictResolutions, unparseableMessages, googleCalendarIntegration, eventSyncMapping } from "../../shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, lte, gte } from "drizzle-orm";
 
 export class MiscStorage {
   private db = db;

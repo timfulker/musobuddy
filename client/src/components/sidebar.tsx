@@ -275,7 +275,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <AlertTriangle className="w-5 h-5" style={{ color: 'inherit' }} />
             <span style={{ color: 'inherit' }}>Review Messages</span>
-            <NotificationBadge count={counts.pendingReviews} />
+            <NotificationBadge count={counts.unparseableMessages} />
           </Link>
           
           <Link 
