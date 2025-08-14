@@ -334,10 +334,24 @@ export function registerBookingRoutes(app: Express) {
         clientEmail = clientContact;
       }
       
+      // ENCORE SPECIAL HANDLING: Recognize Encore booking platform messages
+      const isEncoreMessage = messageText.toLowerCase().includes('encore') || 
+                              clientName?.toLowerCase().includes('encore') ||
+                              messageText.includes('apply now') ||
+                              messageText.includes('we don\'t have the date yet') ||
+                              messageText.includes('prizes from you');
+      
       // PRIMARY CHECK: No valid event date = review messages (simplified rule)
-      // This is the main gatekeeper - no bookings without clear dates
+      // Exception: Encore messages with clear venue/event type can become bookings despite vague dates
       if (!parsedData.eventDate || parsedData.eventDate === null) {
-        console.log(`📅 No event date found - routing to review messages`);
+        // ENCORE EXCEPTION: Allow Encore messages to become bookings if they have venue + event type
+        if (isEncoreMessage && parsedData.venue && parsedData.eventType) {
+          console.log(`🎵 Encore message detected with venue (${parsedData.venue}) and event type (${parsedData.eventType}) - creating booking despite vague date`);
+          // Set a placeholder date for Encore bookings without specific dates
+          parsedData.eventDate = new Date(new Date().getFullYear() + 1, 0, 1).toISOString().split('T')[0]; // January 1st next year
+          parsedData.confidence = Math.max(0.6, parsedData.confidence); // Boost confidence for Encore messages
+        } else {
+          console.log(`📅 No event date found - routing to review messages`);
         
         // Determine message type for better categorization
         const isPriceEnquiry = parsedData.isPriceEnquiry === true || 
