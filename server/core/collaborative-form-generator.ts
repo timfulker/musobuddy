@@ -652,14 +652,14 @@ export function generateCollaborativeForm(
 ): string {
   // Convert contract to booking data format
   const formData = {
-    id: contract.enquiryId || contract.id,
+    id: contract.enquiry_id || contract.id,
     contractId: contract.id,
-    clientName: contract.clientName,
+    clientName: contract.client_name,
     venue: contract.venue,
-    eventDate: contract.eventDate,
-    eventTime: contract.eventTime,
-    eventEndTime: contract.eventEndTime,
-    performanceDuration: contract.performanceDuration,
+    eventDate: contract.event_date,
+    eventTime: contract.event_time,
+    eventEndTime: contract.event_end_time,
+    performanceDuration: contract.performance_duration,
     // Include existing booking data if available
     ...bookingData
   };

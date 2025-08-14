@@ -23,7 +23,7 @@ export function registerClientRoutes(app: Express) {
       }
 
       // Verify the portal token matches
-      if (contract.clientPortalToken !== token) {
+      if (contract.client_portal_token !== token) {
         return res.status(403).json({ error: 'Invalid portal access token' });
       }
 
@@ -32,8 +32,8 @@ export function registerClientRoutes(app: Express) {
       
       // Get associated booking data if it exists
       let bookingData = null;
-      if (contract.enquiryId) {
-        bookingData = await storage.getBooking(contract.enquiryId);
+      if (contract.enquiry_id) {
+        bookingData = await storage.getBooking(contract.enquiry_id);
       }
       
       const portalHtml = generateCollaborativeForm(contract, bookingData, token as string);
