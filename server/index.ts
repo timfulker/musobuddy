@@ -1,6 +1,9 @@
 import express from 'express';
 import session from 'express-session';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 
 const app = express();
 
