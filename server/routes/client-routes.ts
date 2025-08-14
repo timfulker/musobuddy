@@ -7,11 +7,13 @@ export function registerClientRoutes(app: Express) {
 
   // Client portal access route (public - no auth required)
   app.get('/client-portal/:contractId', async (req, res) => {
+    console.log('🚀 CLIENT PORTAL ACCESS - Contract:', req.params.contractId, 'Token:', req.query.token);
     try {
       const { contractId } = req.params;
       const { token } = req.query;
 
       if (!token) {
+        console.log('❌ No token provided');
         return res.status(403).json({ error: 'Portal access token required' });
       }
 
@@ -22,8 +24,17 @@ export function registerClientRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // Verify the portal token matches
-      if (contract.client_portal_token !== token) {
+      // Simple token verification - they should be equal strings
+      console.log('🔍 Portal token debug:', {
+        provided: token,
+        stored: contract.client_portal_token,
+        match: token === contract.client_portal_token,
+        providedType: typeof token,
+        storedType: typeof contract.client_portal_token
+      });
+      
+      // Verify the portal token (simple string comparison)
+      if (!contract.client_portal_token || contract.client_portal_token !== token) {
         return res.status(403).json({ error: 'Invalid portal access token' });
       }
 
