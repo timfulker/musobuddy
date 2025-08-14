@@ -1003,7 +1003,7 @@ export default function Contracts() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="">Not specified</SelectItem>
+                                    <SelectItem value="not_specified">Not specified</SelectItem>
                                     <SelectItem value="30 minutes">30 minutes</SelectItem>
                                     <SelectItem value="45 minutes">45 minutes</SelectItem>
                                     <SelectItem value="1 hour">1 hour</SelectItem>
