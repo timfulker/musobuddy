@@ -1278,22 +1278,37 @@ function shouldCreateBooking(ai: any, rawEmailText: string): { ok: boolean; reas
 
 // Safety net regex - check for vague patterns before AI processing
 function hasVaguePatterns(emailText: string): boolean {
+  const text = emailText.toLowerCase();
+  
+  // First check if there's a specific date mentioned (day + month)
+  // This includes formats like "17th June", "June 17", "17 June", etc.
+  const hasSpecificDate = /\b(\d{1,2}(?:st|nd|rd|th)?)\s+(?:of\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i.test(text) ||
+                          /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b/i.test(text) ||
+                          /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/.test(text) || // Date formats like 12/25/2025
+                          /\b\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}\b/.test(text);   // Date formats like 2025-12-25
+  
+  // If there's a specific date, it's not vague regardless of other patterns
+  if (hasSpecificDate) {
+    console.log(`✅ Specific date found in: "${emailText.substring(0, 100)}..." - NOT vague`);
+    return false;
+  }
+  
+  // Only consider it vague if there's no specific date AND it has vague time references
   const vague = [
     // Match "next March", "this April", etc. - month without specific day
     /\b(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i,
-    // Match "next year", "this summer", etc.
+    // Match "next year", "this summer", etc. ONLY if no specific date exists
     /\b(next|this)\s+(year|month|summer|winter|spring|autumn|fall)\b/i,
     // Match "sometime next month", etc.
     /\bsometime\s+(next|this)\s+(year|month)\b/i,
-    // Additional patterns for availability checks
+    // Additional patterns for availability checks without dates
     /\b(available|availability).*?(next|this)\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i
   ];
   
-  const text = emailText.toLowerCase();
   const hasVaguePattern = vague.some(pattern => pattern.test(text));
   
   if (hasVaguePattern) {
-    console.log(`🚨 VAGUE PATTERN DETECTED in: "${emailText.substring(0, 100)}..."`);
+    console.log(`🚨 VAGUE PATTERN DETECTED (no specific date) in: "${emailText.substring(0, 100)}..."`);
   }
   
   return hasVaguePattern;

@@ -189,14 +189,15 @@ class EmailQueue {
 
     // Find user by email prefix
     const { storage } = await import('./storage');
-    const user = await storage.getUserByEmailPrefix(emailPrefix);
+    let user = await storage.getUserByEmailPrefix(emailPrefix);
     
     if (!user) {
-      await saveToReviewMessages('User not found', `No user found for email prefix: ${emailPrefix}`);
-      return;
+      // Fall back to admin user if no matching email prefix found
+      console.log(`📧 [${requestId}] No user found for prefix "${emailPrefix}", using admin user`);
+      user = { id: "43963086", email: "admin@musobuddy.com" }; // Admin/primary user fallback
+    } else {
+      console.log(`📧 [${requestId}] Found user: ${user.id} (${user.email})`);
     }
-
-    console.log(`📧 [${requestId}] Found user: ${user.id} (${user.email})`);
 
     // Process the email using existing widget logic
     const { parseBookingMessage } = await import('../ai/booking-message-parser');
