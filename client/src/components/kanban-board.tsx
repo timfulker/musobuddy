@@ -181,10 +181,11 @@ export default function ActionableEnquiries() {
                 </div>
                 
                 <div className="flex flex-col items-end space-y-2 ml-2">
-                  {enquiry.fee && (
+                  {(enquiry.fee || enquiry.feeRange) && (
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900">
-                        {enquiry.fee === "TBC" ? "£TBC" : `£${enquiry.fee}`}
+                        {enquiry.feeRange ? enquiry.feeRange : 
+                         enquiry.fee === "TBC" ? "£TBC" : `£${enquiry.fee}`}
                       </div>
                     </div>
                   )}

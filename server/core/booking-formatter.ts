@@ -3,6 +3,62 @@
  * Handles database field migration and ensures consistent frontend format
  */
 
+/**
+ * Extract fee range from Encore email titles
+ */
+function extractFeeRange(text: string): string | null {
+  if (!text) return null;
+  
+  // Look for patterns like "£260-450" or "£260-£450"
+  const feeRangeMatch = text.match(/£(\d+)-(?:£)?(\d+)/);
+  if (feeRangeMatch) {
+    return `£${feeRangeMatch[1]}-${feeRangeMatch[2]}`;
+  }
+  
+  return null;
+}
+
+/**
+ * Clean up Encore booking titles by removing email formatting prefixes
+ */
+function cleanEncoreTitle(rawTitle: string): string {
+  if (!rawTitle) return rawTitle;
+  
+  let cleaned = rawTitle;
+  
+  // Remove common email forwarding prefixes
+  cleaned = cleaned.replace(/^(Fwd:\s*|RE:\s*|Re:\s*)/i, '');
+  
+  // Remove "Job Alert:" prefix and fee range from Encore emails
+  cleaned = cleaned.replace(/^Job Alert:\s*£\d+-\d+,\s*/i, '');
+  
+  // Remove just "Job Alert:" if no fee
+  cleaned = cleaned.replace(/^Job Alert:\s*/i, '');
+  
+  // Clean up the title to extract just the event description
+  // Look for patterns like "Saxophonist needed for birthday party in Hale"
+  const eventMatch = cleaned.match(/(?:Urgent:\s*)?(.+?\s+needed for\s+.+?)(?:\s+in\s+.+?)?(?:\s+\[.+?\])?$/i);
+  if (eventMatch) {
+    let eventDescription = eventMatch[1];
+    
+    // Convert "Saxophonist needed for birthday party" to "Birthday Party"
+    const needForMatch = eventDescription.match(/\w+\s+needed for\s+(.+)/i);
+    if (needForMatch) {
+      // Capitalize first letter of each word
+      return needForMatch[1]
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+  }
+  
+  // Fallback: just remove common patterns and return cleaned title
+  cleaned = cleaned.replace(/\s+\[.+?\]$/, ''); // Remove reference codes like [1Q4qx]
+  cleaned = cleaned.trim();
+  
+  return cleaned || rawTitle;
+}
+
 export interface FormattedBooking {
   id: number;
   userId: string;
@@ -55,6 +111,7 @@ export interface FormattedBooking {
   uploadedInvoiceKey?: string;
   uploadedInvoiceFilename?: string;
   uploadedDocuments?: any[];
+  feeRange?: string; // For storing fee ranges like "£260-450"
 }
 
 /**
@@ -72,9 +129,25 @@ export function formatBooking(rawBooking: any): FormattedBooking {
     // CRITICAL: Ensure eventTime/eventEndTime are always strings
     eventTime: '',
     eventEndTime: '',
-    title: rawBooking.title || rawBooking.eventType || 'Untitled Event',
+    title: (() => {
+      const rawTitle = rawBooking.title || rawBooking.eventType || 'Untitled Event';
+      
+      // Clean Encore titles if this is an Encore booking
+      if (rawBooking.applyNowLink || (rawTitle && rawTitle.toLowerCase().includes('encore'))) {
+        return cleanEncoreTitle(rawTitle);
+      }
+      
+      return rawTitle;
+    })(),
     clientName: rawBooking.clientName || 'Unknown Client',
-    status: rawBooking.status || 'new'
+    status: rawBooking.status || 'new',
+    // Extract fee range for Encore bookings
+    feeRange: (() => {
+      if (rawBooking.applyNowLink || (rawBooking.title && rawBooking.title.toLowerCase().includes('encore'))) {
+        return extractFeeRange(rawBooking.title || rawBooking.notes || '');
+      }
+      return rawBooking.feeRange || null;
+    })()
   };
   
   // MIGRATION LOGIC: Handle both old and new field names

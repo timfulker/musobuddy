@@ -374,6 +374,7 @@ export const bookings = pgTable("bookings", {
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   fee: decimal("fee", { precision: 10, scale: 2 }),
+  feeRange: varchar("fee_range"), // For storing fee ranges like "£260-450" from Encore
   equipmentRequirements: text("equipment_requirements"),
   specialRequirements: text("special_requirements"),
   styles: text("styles"), // Musical styles requested for this booking
