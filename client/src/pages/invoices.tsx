@@ -996,7 +996,15 @@ export default function Invoices() {
       invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+    // Calculate if invoice is actually overdue
+    const isActuallyOverdue = invoice.status === 'sent' && 
+      new Date(invoice.dueDate) < new Date() && 
+      !invoice.paidAt;
+    
+    // Handle status filtering with dynamic overdue calculation
+    const matchesStatus = statusFilter === "all" || 
+      invoice.status === statusFilter ||
+      (statusFilter === "overdue" && isActuallyOverdue);
     
     return matchesSearch && matchesStatus;
   });
@@ -1492,12 +1500,17 @@ export default function Invoices() {
   const isSelected = selectedInvoices.includes(invoice.id);
   const isOverdue = invoice.status === 'overdue';
   
+  // Calculate if invoice is actually overdue (sent, past due date, not paid)
+  const isActuallyOverdue = invoice.status === 'sent' && 
+    new Date(invoice.dueDate) < new Date() && 
+    !invoice.paidAt;
+  
   const getCardBackground = () => {
     if (isSelected) {
       return 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20';
     }
-    if (isOverdue) {
-      console.log(`Overdue invoice detected: ${invoice.invoiceNumber} with status: ${invoice.status}`);
+    if (isActuallyOverdue) {
+      console.log(`Overdue invoice detected: ${invoice.invoiceNumber} - Due: ${invoice.dueDate}, Status: ${invoice.status}`);
       return 'bg-gradient-to-r from-red-100 to-red-200/80 dark:from-red-950/60 dark:to-red-900/50 border-red-300 dark:border-red-700/60';
     }
     return '';
@@ -1518,8 +1531,8 @@ export default function Invoices() {
             <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
               Invoice #{invoice.invoiceNumber}
             </h3>
-            <Badge className={getStatusColor(invoice.status)}>
-              {invoice.status}
+            <Badge className={getStatusColor(isActuallyOverdue ? 'overdue' : invoice.status)}>
+              {isActuallyOverdue ? 'overdue' : invoice.status}
             </Badge>
           </div>
           
