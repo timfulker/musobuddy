@@ -22,13 +22,13 @@ class EnhancedEmailQueue {
   private queue: EmailJob[] = [];
   private processing = false;
   private readonly maxRetries = 3;
-  private readonly processingDelay = 1000; // 1 second between jobs to prevent conflicts
+  private readonly processingDelay = 5000; // 5 seconds between jobs for AI accuracy
   private readonly mutex = new Mutex(); // Ensures only one job processes at a time
   private processedEmails = new Map<string, Date>(); // Track recently processed emails
-  private readonly duplicateWindowMs = 5000; // 5 second window for duplicate detection
+  private readonly duplicateWindowMs = 10000; // 10 second window for duplicate detection
 
   constructor() {
-    console.log('📧 Enhanced Email processing queue initialized with mutex locking');
+    console.log('📧 Enhanced Email processing queue initialized with 5-second AI processing delays for accuracy');
     
     // Clean up old processed emails every minute
     setInterval(() => this.cleanupProcessedEmails(), 60000);
@@ -278,8 +278,9 @@ class EnhancedEmailQueue {
     const { cleanEncoreTitle } = await import('./booking-formatter');
     
     try {
-      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: Starting parseBookingMessage for user ${user.id}`);
+      console.log(`🤖 [${requestId}] AI PARSING: Taking time to carefully parse email for user ${user.id}`);
       const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
+      console.log(`✅ [${requestId}] AI PARSING: Completed parsing with 5-second delay for accuracy`);
       console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
         eventDate: parsedData.eventDate,
         venue: parsedData.venue,
