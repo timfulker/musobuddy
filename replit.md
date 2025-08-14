@@ -23,6 +23,8 @@ Real-time notification system (Jan 2025): Implemented comprehensive notification
 
 Invoice overdue detection fix (Jan 2025): Fixed critical bug where overdue invoice filter showed no results despite notification badges correctly showing overdue count. Issue was database stored "sent" status while frontend looked for "overdue" status. Implemented dynamic overdue calculation in frontend (sent + past due date + not paid) with red gradient backgrounds for visual identification. Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 
+Encore integration (Aug 2025): Successfully implemented Encore Musicians platform integration with apply-now link extraction from forwarded emails. System detects AWS tracking URLs (awstrack.me) that redirect to Encore jobs, extracts job IDs from email subjects for reference, and displays purple "🎵 ENCORE" badges with "Apply on Encore" buttons on booking cards. Integration works in both list view and kanban dashboard. Note: Forwarded emails lose HTML/clickable URLs, so tracking URLs should be copied from "Apply now" button hover text before forwarding for best results. Job alert links may expire after a few days.
+
 ## System Architecture
 
 ### Frontend
