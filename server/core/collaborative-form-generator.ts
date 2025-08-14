@@ -654,12 +654,12 @@ export function generateCollaborativeForm(
   const formData = {
     id: contract.enquiry_id || contract.id,
     contractId: contract.id,
-    clientName: contract.client_name,
+    clientName: contract.client_name || contract.clientName,
     venue: contract.venue,
-    eventDate: contract.event_date,
-    eventTime: contract.event_time,
-    eventEndTime: contract.event_end_time,
-    performanceDuration: contract.performance_duration,
+    eventDate: contract.event_date || contract.eventDate,
+    eventTime: contract.event_time || contract.eventTime,
+    eventEndTime: contract.event_end_time || contract.eventEndTime,
+    performanceDuration: contract.performance_duration || contract.performanceDuration,
     // Include existing booking data if available
     ...bookingData
   };

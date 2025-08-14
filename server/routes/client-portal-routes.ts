@@ -23,14 +23,14 @@ export function registerClientPortalRoutes(app: Express) {
       }
 
       // Verify portal token
-      if (!contract.clientPortalToken || !clientPortalService.verifyPortalToken(token, contract.clientPortalToken)) {
+      if (!contract.client_portal_token || !clientPortalService.verifyPortalToken(token, contract.client_portal_token)) {
         return res.status(403).json({ error: 'Invalid access token' });
       }
 
       // Get associated booking data for collaborative fields
       let bookingData = null;
-      if (contract.enquiryId) {
-        const booking = await storage.getBooking(contract.enquiryId);
+      if (contract.enquiry_id) {
+        const booking = await storage.getBooking(contract.enquiry_id);
         if (booking) {
           bookingData = {
             venueContact: booking.venue_contact,
@@ -67,13 +67,13 @@ export function registerClientPortalRoutes(app: Express) {
       res.json({
         contract: {
           id: contract.id,
-          contractNumber: contract.contractNumber,
-          clientName: contract.clientName,
+          contractNumber: contract.contract_number,
+          clientName: contract.client_name,
           venue: contract.venue,
-          eventDate: contract.eventDate,
-          eventTime: contract.eventTime,
-          eventEndTime: contract.eventEndTime,
-          performanceDuration: contract.performanceDuration,
+          eventDate: contract.event_date,
+          eventTime: contract.event_time,
+          eventEndTime: contract.event_end_time,
+          performanceDuration: contract.performance_duration,
           status: contract.status
         },
         clientData: bookingData
@@ -101,7 +101,7 @@ export function registerClientPortalRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      if (!contract.clientPortalToken || !clientPortalService.verifyPortalToken(token, contract.clientPortalToken)) {
+      if (!contract.client_portal_token || !clientPortalService.verifyPortalToken(token, contract.client_portal_token)) {
         return res.status(403).json({ error: 'Invalid access token' });
       }
 
