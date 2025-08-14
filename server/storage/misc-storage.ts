@@ -377,15 +377,7 @@ export class MiscStorage {
     return result[0]?.count || 0;
   }
 
-  async getNewBookingsCount(userId: string) {
-    // For now, return 0 - this would need proper implementation based on business logic
-    return 0;
-  }
 
-  async getOverdueInvoicesCount(userId: string) {
-    // For now, return 0 - this would need proper implementation based on business logic  
-    return 0;
-  }
 }
 
 export const miscStorage = new MiscStorage();

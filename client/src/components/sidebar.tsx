@@ -127,7 +127,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
-            <NotificationBadge count={counts.expiringDocuments} />
+            <NotificationBadge count={counts.newBookings} />
           </Link>
           
           <Link 
