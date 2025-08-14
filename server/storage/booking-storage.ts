@@ -335,6 +335,10 @@ export class BookingStorage {
     const result = await db.select({ count: sql<number>`count(*)` }).from(bookings);
     return result[0]?.count || 0;
   }
+
+  async getTotalBookingCount() {
+    return this.getAllBookingsCount();
+  }
 }
 
 export const bookingStorage = new BookingStorage();

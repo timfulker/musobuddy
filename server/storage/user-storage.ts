@@ -259,6 +259,10 @@ export class UserStorage {
     return result[0]?.count || 0;
   }
 
+  async getTotalUserCount() {
+    return this.getAllUsersCount();
+  }
+
   // ===== SESSION METHODS =====
   
   async createSession(sid: string, sessionData: any) {

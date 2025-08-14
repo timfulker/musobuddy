@@ -31,8 +31,10 @@ import {
   Trash2,
   Edit,
   Mail,
-  RotateCcw
+  RotateCcw,
+  DollarSign
 } from "lucide-react";
+import APICostMonitor from "@/components/api-cost-monitor";
 
 interface AdminOverview {
   totalUsers: number;
@@ -400,9 +402,13 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+              <TabsTrigger value="api-costs" className="text-xs sm:text-sm flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                API Costs
+              </TabsTrigger>
               <TabsTrigger value="beta" className="text-xs sm:text-sm">Beta Testers</TabsTrigger>
               <TabsTrigger value="system" className="text-xs sm:text-sm">System</TabsTrigger>
             </TabsList>
@@ -1077,6 +1083,10 @@ export default function AdminPanel() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="api-costs" className="space-y-6">
+              <APICostMonitor />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-6">

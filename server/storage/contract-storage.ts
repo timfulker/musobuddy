@@ -250,6 +250,10 @@ export class ContractStorage {
     const result = await db.select({ count: sql<number>`count(*)` }).from(contracts);
     return result[0]?.count || 0;
   }
+
+  async getTotalContractCount() {
+    return this.getAllContractsCount();
+  }
 }
 
 export const contractStorage = new ContractStorage();

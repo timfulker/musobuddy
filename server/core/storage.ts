@@ -94,6 +94,22 @@ export class Storage {
     return userStorage.getAllUsers();
   }
 
+  async getTotalUserCount() {
+    return userStorage.getTotalUserCount();
+  }
+
+  async getTotalBookingCount() {
+    return bookingStorage.getTotalBookingCount();
+  }
+
+  async getTotalContractCount() {
+    return contractStorage.getTotalContractCount();
+  }
+
+  async getTotalInvoiceCount() {
+    return invoiceStorage.getTotalInvoiceCount();
+  }
+
   // ===== BOOKING METHODS =====
   async getBookings(userId: string) {
     return bookingStorage.getBookingsByUser(userId);

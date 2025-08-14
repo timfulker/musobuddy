@@ -9,6 +9,133 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
 
+  // API Cost Monitoring endpoint
+  app.get('/api/admin/api-costs', requireAdmin, async (req: any, res) => {
+    try {
+      console.log('📊 Fetching API cost monitoring data...');
+      
+      // Get API configurations and status
+      const apiStatus = {
+        mailgun: {
+          configured: !!(process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN),
+          domain: process.env.MAILGUN_DOMAIN || 'enquiries.musobuddy.com',
+          keyPresent: !!process.env.MAILGUN_API_KEY,
+          estimated_monthly_emails: 0, // Will be calculated based on user activity
+        },
+        openai: {
+          configured: !!process.env.OPENAI_API_KEY,
+          keyPresent: !!process.env.OPENAI_API_KEY,
+          estimated_monthly_tokens: 0, // Will be calculated based on AI usage
+        },
+        stripe: {
+          configured: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PUBLISHABLE_KEY),
+          keyPresent: !!process.env.STRIPE_SECRET_KEY,
+          webhook_configured: !!process.env.STRIPE_WEBHOOK_SECRET,
+        },
+        cloudflareR2: {
+          configured: !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY),
+          bucket: process.env.R2_BUCKET_NAME || 'musobuddy-docs',
+          keyPresent: !!process.env.R2_ACCESS_KEY_ID,
+        },
+        googleMaps: {
+          configured: !!process.env.GOOGLE_MAPS_API_KEY,
+          keyPresent: !!process.env.GOOGLE_MAPS_API_KEY,
+        },
+        twilio: {
+          configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
+          keyPresent: !!process.env.TWILIO_ACCOUNT_SID,
+        },
+        what3words: {
+          configured: !!process.env.WHAT3WORDS_API_KEY,
+          keyPresent: !!process.env.WHAT3WORDS_API_KEY,
+        },
+        anthropic: {
+          configured: !!process.env.ANTHROPIC_API_KEY,
+          keyPresent: !!process.env.ANTHROPIC_API_KEY,
+        }
+      };
+
+      // Get usage estimates from database
+      try {
+        const totalUsers = await storage.getTotalUserCount();
+        const totalBookings = await storage.getTotalBookingCount();
+        const totalContracts = await storage.getTotalContractCount();
+        const totalInvoices = await storage.getTotalInvoiceCount();
+
+        // Estimate monthly API costs based on activity
+        const estimates = {
+          mailgun: {
+            monthly_emails: Math.ceil((totalBookings + totalContracts + totalInvoices) * 2.5), // Average emails per booking/contract/invoice
+            estimated_cost: Math.ceil((totalBookings + totalContracts + totalInvoices) * 2.5 * 0.0008), // $0.0008 per email
+          },
+          openai: {
+            monthly_tokens: totalUsers * 5000, // Estimated tokens per user per month
+            estimated_cost: (totalUsers * 5000 * 0.000002), // $0.002 per 1K tokens
+          },
+          cloudflareR2: {
+            monthly_storage_gb: totalInvoices + totalContracts, // Roughly 1GB per document
+            monthly_requests: (totalBookings + totalContracts + totalInvoices) * 10,
+            estimated_cost: ((totalInvoices + totalContracts) * 0.015) + ((totalBookings + totalContracts + totalInvoices) * 10 * 0.0000036),
+          },
+          googleMaps: {
+            monthly_requests: totalBookings * 2, // Geocoding + distance matrix per booking
+            estimated_cost: totalBookings * 2 * 0.005, // $0.005 per request
+          },
+          twilio: {
+            monthly_sms: totalUsers * 0.1, // Most users verify once
+            estimated_cost: totalUsers * 0.1 * 0.05, // $0.05 per SMS
+          }
+        };
+
+        apiStatus.mailgun.estimated_monthly_emails = estimates.mailgun.monthly_emails;
+        apiStatus.openai.estimated_monthly_tokens = estimates.openai.monthly_tokens;
+
+        res.json({
+          success: true,
+          data: {
+            api_status: apiStatus,
+            usage_estimates: estimates,
+            total_estimated_monthly_cost: 
+              estimates.mailgun.estimated_cost + 
+              estimates.openai.estimated_cost + 
+              estimates.cloudflareR2.estimated_cost + 
+              estimates.googleMaps.estimated_cost + 
+              estimates.twilio.estimated_cost,
+            user_metrics: {
+              total_users: totalUsers,
+              total_bookings: totalBookings,
+              total_contracts: totalContracts,
+              total_invoices: totalInvoices
+            },
+            last_updated: new Date().toISOString()
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ Error calculating usage estimates:', error);
+        res.json({
+          success: true,
+          data: {
+            api_status: apiStatus,
+            usage_estimates: {},
+            total_estimated_monthly_cost: 0,
+            user_metrics: {},
+            last_updated: new Date().toISOString(),
+            error: 'Could not calculate usage estimates'
+          }
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Failed to fetch API cost data:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch API cost monitoring data',
+        details: error.message 
+      });
+    }
+  });
+
   // Temporary diagnostic endpoint for R2 configuration (no auth required for debugging)
   app.get('/api/debug/r2-status', async (req: any, res) => {
     const requiredEnvVars = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME'];

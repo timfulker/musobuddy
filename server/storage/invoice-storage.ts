@@ -203,6 +203,10 @@ export class InvoiceStorage {
     const result = await db.select({ count: sql<number>`count(*)` }).from(invoices);
     return result[0]?.count || 0;
   }
+
+  async getTotalInvoiceCount() {
+    return this.getAllInvoicesCount();
+  }
 }
 
 export const invoiceStorage = new InvoiceStorage();
