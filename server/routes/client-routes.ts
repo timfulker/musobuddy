@@ -5,13 +5,16 @@ import { storage } from "../core/storage";
 export function registerClientRoutes(app: Express) {
   console.log('👥 Setting up client routes...');
 
-  // Client portal access route (public - no auth required)
-  app.get('/client-portal/:contractId', async (req, res) => {
+  // Client portal access route (public - no auth required) - using /api/portal/ to avoid Vite conflicts
+  app.get('/api/portal/:contractId', async (req, res) => {
+    console.log(`🎵 [CLIENT-PORTAL] Accessed for contract ${req.params.contractId} with token: ${req.query.token?.toString().slice(0, 10)}...`);
+    
     try {
       const { contractId } = req.params;
       const { token } = req.query;
 
       if (!token) {
+        console.log('❌ [CLIENT-PORTAL] No token provided');
         return res.status(403).json({ error: 'Portal access token required' });
       }
 
@@ -19,11 +22,15 @@ export function registerClientRoutes(app: Express) {
       const contract = await storage.getContract(parseInt(contractId), undefined); // No user ID needed for portal access
       
       if (!contract) {
+        console.log(`❌ [CLIENT-PORTAL] Contract ${contractId} not found`);
         return res.status(404).json({ error: 'Contract not found' });
       }
 
+      console.log(`🔍 [CLIENT-PORTAL] Contract found - Portal token: ${contract.clientPortalToken?.slice(0, 10)}..., Provided token: ${token.toString().slice(0, 10)}...`);
+
       // Verify the portal token matches
       if (contract.clientPortalToken !== token) {
+        console.log(`❌ [CLIENT-PORTAL] Token mismatch for contract ${contractId}`);
         return res.status(403).json({ error: 'Invalid portal access token' });
       }
 

@@ -24,7 +24,7 @@ class ClientPortalService {
 
   // Generate client portal URL
   generatePortalUrl(contractId: number, token: string, baseUrl: string): string {
-    return `${baseUrl}/client-portal/${contractId}?token=${token}`;
+    return `${baseUrl}/api/portal/${contractId}?token=${token}`;
   }
 
   // Setup client portal for contract

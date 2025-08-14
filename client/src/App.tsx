@@ -152,8 +152,7 @@ function Router() {
 
       <Route path="/admin" component={Admin} />
       
-      {/* Client Portal - public route with token */}
-      <Route path="/client-portal/:contractId" component={ClientPortal} />
+      {/* Client Portal - handled by backend HTML route, removed from frontend to prevent conflicts */}
       
       {/* Public Invoice - for clients to view and pay invoices */}
       <Route path="/invoice/:token" component={PublicInvoice} />
