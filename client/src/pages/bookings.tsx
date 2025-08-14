@@ -1867,7 +1867,11 @@ export default function UnifiedBookings() {
                                             <div className="flex items-center gap-2">
                                               {/* Respond Menu - show for all bookings */}
                                               <div onClick={(e) => e.stopPropagation()}>
-                                                <BookingActionMenu booking={booking} />
+                                                <BookingActionMenu 
+                                                  booking={booking}
+                                                  onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
+                                                  onSendCompliance={openComplianceDialog}
+                                                />
                                               </div>
                                               
                                               {/* Apply on Encore Button - only show for Encore bookings */}
@@ -2013,7 +2017,11 @@ export default function UnifiedBookings() {
                                               <div className="flex items-center gap-2">
                                                 {/* Respond Menu - show for all bookings */}
                                                 <div onClick={(e) => e.stopPropagation()}>
-                                                  <BookingActionMenu booking={booking} />
+                                                  <BookingActionMenu 
+                                                    booking={booking}
+                                                    onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
+                                                    onSendCompliance={openComplianceDialog}
+                                                  />
                                                 </div>
                                                 
                                                 {/* Apply on Encore Button - only show for Encore bookings */}
