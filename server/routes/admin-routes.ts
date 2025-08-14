@@ -15,6 +15,11 @@ export function registerAdminRoutes(app: Express) {
       console.log('📊 Fetching API cost monitoring data...');
       
       // Get API configurations and status
+      console.log('🔍 GOOGLE_MAPS_SERVER_KEY status:', {
+        exists: !!process.env.GOOGLE_MAPS_SERVER_KEY,
+        keyLength: process.env.GOOGLE_MAPS_SERVER_KEY?.length || 0
+      });
+      
       const apiStatus = {
         mailgun: {
           configured: !!(process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN),
