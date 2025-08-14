@@ -281,9 +281,13 @@ class EnhancedEmailQueue {
       console.log(`📧 [${requestId}] RACE CONDITION DEBUG: Starting parseBookingMessage for user ${user.id}`);
       const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
       console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
-        hasEventDate: !!parsedData.eventDate,
-        hasVenue: !!parsedData.venue,
-        eventType: parsedData.eventType
+        eventDate: parsedData.eventDate,
+        venue: parsedData.venue,
+        venueAddress: parsedData.venueAddress,
+        eventType: parsedData.eventType,
+        eventTime: parsedData.eventTime,
+        fee: parsedData.fee,
+        confidence: parsedData.confidence
       });
       
       // Apply title cleanup

@@ -115,14 +115,18 @@ export async function parseBookingMessage(
 ): Promise<ParsedBookingData> {
   try {
     console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
+    console.log('🤖 Claude: Message length:', messageText?.length || 0);
+    console.log('🤖 Claude: First 200 chars:', messageText?.substring(0, 200) || 'No content');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
 CRITICAL INSTRUCTIONS:
-- Extract ALL available information from the message text
+- Extract ALL available information from the message text ONLY
+- Each message must be parsed independently - do not use any external context or previous messages
 - For dates: "June 23rd next year" = "2026-06-23", "June 23rd" = "2025-06-23", "next [month]" = next occurrence
 - IMPORTANT: If message says "don't have the date", "no date yet", "next year" without specifics, or "TBC" = return null for eventDate
 - For venues: Extract venue names exactly as mentioned (e.g., "Buckingham Palace")
+- IGNORE company signatures, footers, and "sent from" addresses - only extract EVENT information
 - For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.
 - Extract client names, emails, phone numbers from the message or context
 - Return HIGH confidence (0.8-1.0) if you extract date + venue + event type
