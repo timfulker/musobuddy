@@ -581,6 +581,23 @@ export class Storage {
   async deleteEventSyncMappings(userId: string) {
     return miscStorage.deleteEventSyncMappings(userId);
   }
+
+  // ===== NOTIFICATION COUNT METHODS =====
+  async getNewBookingsCount(userId: string) {
+    return bookingStorage.getNewBookingsCount(userId);
+  }
+
+  async getUnparseableMessagesCount(userId: string) {
+    return miscStorage.getUnparseableMessagesCount(userId);
+  }
+
+  async getOverdueInvoicesCount(userId: string) {
+    return invoiceStorage.getOverdueInvoicesCount(userId);
+  }
+
+  async getExpiringDocumentsCount(userId: string) {
+    return miscStorage.getExpiringDocumentsCount(userId);
+  }
 }
 
 export const storage = new Storage();

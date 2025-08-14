@@ -18,6 +18,7 @@ import { setupWhat3WordsRoutes } from "./what3words-routes";
 import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
 import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
+import { registerNotificationRoutes } from "./notification-routes";
 
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
@@ -65,6 +66,9 @@ export async function registerRoutes(app: Express) {
   
   // Register onboarding routes  
   registerOnboardingRoutes(app);
+  
+  // Register notification routes
+  registerNotificationRoutes(app);
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {

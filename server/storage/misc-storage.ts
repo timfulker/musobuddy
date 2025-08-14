@@ -345,6 +345,32 @@ export class MiscStorage {
       .returning();
     return result;
   }
+
+  // ===== NOTIFICATION COUNT METHODS =====
+  
+  async getUnparseableMessagesCount(userId: string) {
+    // Count unparseable messages that haven't been resolved
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(unparseableMessages)
+      .where(and(
+        eq(unparseableMessages.userId, userId),
+        eq(unparseableMessages.isResolved, false)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  async getExpiringDocumentsCount(userId: string) {
+    // Count compliance documents expiring in next 30 days
+    const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(complianceDocuments)
+      .where(and(
+        eq(complianceDocuments.userId, userId),
+        lte(complianceDocuments.expiryDate, thirtyDaysFromNow),
+        gte(complianceDocuments.expiryDate, new Date()) // Not already expired
+      ));
+    return result[0]?.count || 0;
+  }
 }
 
 export const miscStorage = new MiscStorage();

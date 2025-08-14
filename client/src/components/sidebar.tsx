@@ -4,6 +4,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Link, useLocation } from "wouter";
 import { getThemeTextColor } from "@/lib/colorUtils";
 import { useState, useEffect } from "react";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationBadge } from "@/components/NotificationBadge";
 import { 
   Home, 
   Inbox, 
@@ -45,6 +47,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isDesktop } = useResponsive();
   const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
   const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const { counts } = useNotifications();
 
   // Check if any settings-related page is active to auto-expand
   const settingsPages = ['/settings', '/templates', '/compliance'];
@@ -118,11 +121,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()}
             className={cn(
               getNavLinkClass("/dashboard"),
-              isActive("/dashboard") ? 'bg-primary text-primary-foreground' : ''
+              isActive("/dashboard") ? 'bg-primary text-primary-foreground' : '',
+              'relative'
             )}
           >
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
+            <NotificationBadge count={counts.expiringDocuments} />
           </Link>
           
           <Link 
@@ -130,11 +135,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()}
             className={cn(
               getNavLinkClass("/bookings"),
-              isActive("/bookings") ? 'bg-primary text-primary-foreground' : ''
+              isActive("/bookings") ? 'bg-primary text-primary-foreground' : '',
+              'relative'
             )}
           >
             <Inbox className="w-5 h-5" />
             <span>Bookings</span>
+            <NotificationBadge count={counts.newBookings} />
           </Link>
           
           <Link 
@@ -166,11 +173,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()}
             className={cn(
               getNavLinkClass("/invoices"),
-              isActive("/invoices") ? 'bg-primary text-primary-foreground' : ''
+              isActive("/invoices") ? 'bg-primary text-primary-foreground' : '',
+              'relative'
             )}
           >
             <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
+            <NotificationBadge count={counts.overdueInvoices} />
           </Link>
 
 
@@ -255,7 +264,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link 
             href="/unparseable-messages" 
             onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/unparseable-messages")}
+            className={cn(
+              getNavLinkClass("/unparseable-messages"),
+              'relative'
+            )}
             style={{ 
               color: isActive("/unparseable-messages") ? getThemeTextColor(currentTheme) : '#1e293b',
               backgroundColor: isActive("/unparseable-messages") ? 'var(--theme-primary)' : 'transparent'
@@ -263,6 +275,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <AlertTriangle className="w-5 h-5" style={{ color: 'inherit' }} />
             <span style={{ color: 'inherit' }}>Review Messages</span>
+            <NotificationBadge count={counts.pendingReviews} />
           </Link>
           
           <Link 

@@ -207,6 +207,22 @@ export class InvoiceStorage {
   async getTotalInvoiceCount() {
     return this.getAllInvoicesCount();
   }
+
+  // ===== NOTIFICATION COUNT METHODS =====
+  
+  async getOverdueInvoicesCount(userId: string) {
+    // Count invoices that are overdue and not paid
+    const today = new Date();
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(invoices)
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.status, 'sent'), // Only sent invoices can be overdue
+        lte(invoices.dueDate, today), // Due date has passed
+        sql`${invoices.paidAt} IS NULL` // Not paid yet
+      ));
+    return result[0]?.count || 0;
+  }
 }
 
 export const invoiceStorage = new InvoiceStorage();

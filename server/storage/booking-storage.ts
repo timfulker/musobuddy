@@ -339,6 +339,21 @@ export class BookingStorage {
   async getTotalBookingCount() {
     return this.getAllBookingsCount();
   }
+
+  // ===== NOTIFICATION COUNT METHODS =====
+  
+  async getNewBookingsCount(userId: string) {
+    // Count bookings created in last 24 hours with status 'new'
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        eq(bookings.status, 'new'),
+        gte(bookings.createdAt, oneDayAgo)
+      ));
+    return result[0]?.count || 0;
+  }
 }
 
 export const bookingStorage = new BookingStorage();

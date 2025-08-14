@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed.
+SMS notifications: Premium feature only due to Twilio costs - Core plan users get email notifications, Premium users can enable SMS notifications for critical alerts (new bookings, overdue payments).
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 Authentication system: DO NOT rebuild authentication system from scratch - causes more problems than it solves by creating conflicting duplicate systems. Make minimal surgical fixes only.
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com`.
@@ -17,6 +18,8 @@ Onboarding wizard: Should be a helpful optional tool rather than mandatory, appe
 Invoice data integrity: When invoices are edited, the PDF automatically regenerates with updated data and uploads to replace the old version, ensuring clients always see accurate information.
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
 Recent fixes (Jan 2025): Fixed booking edit form issue where existing booking data wasn't loading into form fields. Added missing useEffect to populate form on edit mode. Also fixed "Back to Bookings" button luminance awareness by adding text-primary-foreground class for proper theme contrast. CRITICAL: Fixed booking widget routing bug - messages without clear dates now properly route to review messages instead of creating fake bookings. Simple rule: no date = review messages, regardless of other content.
+
+Real-time notification system (Jan 2025): Implemented comprehensive notification badges with 30-second polling for new bookings, unparseable messages, overdue invoices, and expiring documents. Cost implications: ~2,880 API calls/day per active user for notification updates, but queries are optimized and lightweight. SMS notifications for premium users only due to Twilio costs (~$0.0075 per SMS).
 
 ## System Architecture
 
