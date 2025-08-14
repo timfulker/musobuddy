@@ -21,6 +21,8 @@ Recent fixes (Jan 2025): Fixed booking edit form issue where existing booking da
 
 Real-time notification system (Jan 2025): Implemented comprehensive notification badges with 30-second polling for new bookings, unparseable messages, overdue invoices, and expiring documents. Cost implications: ~2,880 API calls/day per active user for notification updates, but queries are optimized and lightweight. SMS notifications postponed - UK costs £3/month per 100 messages make it expensive even for premium plans. TypeScript errors fixed - notification badges now handle undefined values gracefully.
 
+Invoice overdue detection fix (Jan 2025): Fixed critical bug where overdue invoice filter showed no results despite notification badges correctly showing overdue count. Issue was database stored "sent" status while frontend looked for "overdue" status. Implemented dynamic overdue calculation in frontend (sent + past due date + not paid) with red gradient backgrounds for visual identification. Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
+
 ## System Architecture
 
 ### Frontend
