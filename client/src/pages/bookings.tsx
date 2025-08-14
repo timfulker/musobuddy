@@ -1859,10 +1859,41 @@ export default function UnifiedBookings() {
                                               </div>
                                             )}
                                           </div>
-                                          <div className="pt-2 border-t">
+                                          <div className="pt-2 border-t space-y-2">
                                             <Badge className={getStatusColor(booking.status || 'new')}>
                                               {booking.status?.replace('_', ' ') || 'New'}
                                             </Badge>
+                                            
+                                            <div className="flex items-center gap-2">
+                                              {/* Respond Button - only show for new bookings */}
+                                              {booking.status === 'new' && (
+                                                <Button 
+                                                  size="sm" 
+                                                  variant="outline"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                                                  }}
+                                                >
+                                                  Respond
+                                                </Button>
+                                              )}
+                                              
+                                              {/* Apply on Encore Button - only show for Encore bookings */}
+                                              {booking.applyNowLink && (
+                                                <Button 
+                                                  size="sm" 
+                                                  variant="outline"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(booking.applyNowLink, '_blank');
+                                                  }}
+                                                  className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                                >
+                                                  Apply on Encore
+                                                </Button>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
                                       </HoverCardContent>
@@ -1983,10 +2014,41 @@ export default function UnifiedBookings() {
                                                 </div>
                                               )}
                                             </div>
-                                            <div className="pt-2 border-t">
+                                            <div className="pt-2 border-t space-y-2">
                                               <Badge className={getStatusColor(booking.status || 'new')}>
                                                 {booking.status?.replace('_', ' ') || 'New'}
                                               </Badge>
+                                              
+                                              <div className="flex items-center gap-2">
+                                                {/* Respond Button - only show for new bookings */}
+                                                {booking.status === 'new' && (
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                                                    }}
+                                                  >
+                                                    Respond
+                                                  </Button>
+                                                )}
+                                                
+                                                {/* Apply on Encore Button - only show for Encore bookings */}
+                                                {booking.applyNowLink && (
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      window.open(booking.applyNowLink, '_blank');
+                                                    }}
+                                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                                  >
+                                                    Apply on Encore
+                                                  </Button>
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
                                         </HoverCardContent>
