@@ -360,6 +360,16 @@ function extractEncoreApplyLink(messageText: string): string | null {
     }
   }
   
+  // Pattern 4: Extract job ID from email subject and construct proper URL
+  // Look for patterns like [IQ4qx] in subject or message text
+  const jobIdPattern = /\[([A-Za-z0-9]{4,6})\]/;
+  const jobIdMatch = messageText.match(jobIdPattern);
+  if (jobIdMatch) {
+    const jobId = jobIdMatch[1];
+    console.log(`🎵 Found Encore job ID: ${jobId}`);
+    return `https://encoremusicians.com/jobs/${jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow`;
+  }
+
   return null;
 }
 
