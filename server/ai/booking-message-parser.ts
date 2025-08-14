@@ -118,26 +118,42 @@ export async function parseBookingMessage(
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
-IMPORTANT INSTRUCTIONS:
-- Extract ALL available information from the message
-- Be very liberal with event type detection (weddings, parties, pubs, corporate, festivals, etc.)
-- For dates: Convert relative dates to actual dates. "Next year" means 2026. "This year" means 2025. "Next [month]" without year means next occurrence of that month.
-- For times: Extract both start and end times if mentioned
-- For venues: Extract venue names AND addresses/locations if mentioned  
-- For fees: Look for budget mentions, fee discussions, or payment terms
-- Return HIGH confidence (0.8-1.0) if you find date + basic event info
-- Return MEDIUM confidence (0.5-0.7) for partial information
-- Return LOW confidence (0.1-0.4) for vague inquiries
+CRITICAL INSTRUCTIONS:
+- Extract ALL available information from the message text
+- For dates: "June 23rd next year" = "2026-06-23", "June 23rd" = "2025-06-23", "next [month]" = next occurrence
+- For venues: Extract venue names exactly as mentioned (e.g., "Buckingham Palace")
+- For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.
+- Extract client names, emails, phone numbers from the message or context
+- Return HIGH confidence (0.8-1.0) if you extract date + venue + event type
+- Return MEDIUM confidence (0.5-0.7) if you extract 2+ key details
+- Return LOW confidence (0.1-0.4) for vague or minimal information
 
-OUTPUT FORMAT: Valid JSON only, no explanations.`;
+REQUIRED JSON FORMAT:
+{
+  "clientName": "string or null",
+  "clientEmail": "string or null", 
+  "clientPhone": "string or null",
+  "eventDate": "YYYY-MM-DD or null",
+  "eventTime": "HH:MM or null",
+  "eventEndTime": "HH:MM or null",
+  "venue": "string or null",
+  "venueAddress": "string or null",
+  "eventType": "string or null",
+  "fee": number or null,
+  "deposit": number or null,
+  "specialRequirements": "string or null",
+  "confidence": number between 0.1 and 1.0
+}
 
-    const userPrompt = `Parse this booking message and extract information:
+RESPOND WITH VALID JSON ONLY - NO EXPLANATIONS OR MARKDOWN.`;
+
+    const userPrompt = `Parse this booking message and extract all available information:
 
 MESSAGE: "${messageText}"
-${clientContact ? `FROM: "${clientContact}"` : ''}
-${clientAddress ? `LOCATION: "${clientAddress}"` : ''}
+${clientContact ? `CONTACT: "${clientContact}"` : ''}
+${clientAddress ? `VENUE/LOCATION: "${clientAddress}"` : ''}
 
-Extract all possible booking details as JSON:`;
+Analyze and extract ALL booking details. Return valid JSON only:`;
 
     // Track API usage if userId is provided
     if (userId) {
@@ -150,11 +166,11 @@ Extract all possible booking details as JSON:`;
     const startTime = Date.now();
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 1000,
-      temperature: 0.3,
+      max_tokens: 800,
+      temperature: 0.1,
       system: systemPrompt,
       messages: [
-        { role: 'user', content: `${userPrompt}\n\nPlease respond with valid JSON only.` }
+        { role: 'user', content: userPrompt }
       ]
     });
     
@@ -167,7 +183,22 @@ Extract all possible booking details as JSON:`;
 
     console.log('🤖 Claude raw response:', rawContent);
     
-    const parsed = JSON.parse(rawContent);
+    // Clean JSON response (remove markdown code blocks if present)
+    let jsonContent = rawContent.trim();
+    if (jsonContent.startsWith('```json')) {
+      jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/, '');
+    } else if (jsonContent.startsWith('```')) {
+      jsonContent = jsonContent.replace(/```\s*/g, '').replace(/```\s*$/, '');
+    }
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonContent);
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      console.error('Raw content:', rawContent);
+      throw new Error('Invalid JSON response from Claude');
+    }
     
     // Clean and validate the parsed data
     const cleanedData: ParsedBookingData = {
@@ -223,7 +254,7 @@ Extract all possible booking details as JSON:`;
       }
     }
 
-    console.log('🎯 OpenAI: Parsed booking data:', {
+    console.log('🎯 Claude: Parsed booking data:', {
       ...cleanedData,
       message: `${messageText.substring(0, 100)}...`
     });
@@ -231,7 +262,7 @@ Extract all possible booking details as JSON:`;
     return cleanedData;
 
   } catch (error: any) {
-    console.error('❌ OpenAI booking parse error:', error);
+    console.error('❌ Claude booking parse error:', error);
     
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
@@ -337,9 +368,9 @@ function cleanNumber(value: any): number | undefined {
   return !isNaN(parsed) && parsed > 0 ? parsed : undefined;
 }
 
-// Simple fallback parser for when OpenAI fails
+// Simple fallback parser for when Claude fails
 function simpleTextParse(messageText: string, clientContact?: string, clientAddress?: string): ParsedBookingData {
-  console.log('🔍 Using simple text parsing fallback...');
+  console.log('🔍 Using enhanced fallback text parsing...');
   
   const text = messageText.toLowerCase();
   const data: ParsedBookingData = {
@@ -347,11 +378,60 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     confidence: 0.3
   };
 
-  // Extract basic event types
-  const eventTypes = ['wedding', 'party', 'corporate', 'pub', 'restaurant', 'festival'];
+  // Extract basic event types with higher confidence
+  const eventTypes = ['wedding', 'party', 'corporate', 'pub', 'restaurant', 'festival', 'birthday', 'anniversary'];
   for (const type of eventTypes) {
     if (text.includes(type)) {
       data.eventType = type;
+      data.confidence = Math.min(0.6, data.confidence + 0.3); // Boost confidence
+      break;
+    }
+  }
+
+  // Extract venue/location from message
+  const venuePatterns = [
+    /at (.+?)(?:\.|,|$)/,
+    /venue (.+?)(?:\.|,|$)/,
+    /reception (.+?)(?:\.|,|$)/,
+    /location (.+?)(?:\.|,|$)/
+  ];
+  
+  for (const pattern of venuePatterns) {
+    const venueMatch = messageText.match(pattern);
+    if (venueMatch && venueMatch[1].trim().length > 2) {
+      data.venue = venueMatch[1].trim();
+      data.confidence = Math.min(0.7, data.confidence + 0.2);
+      break;
+    }
+  }
+
+  // Enhanced date extraction
+  const datePatterns = [
+    /(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+next year|\s+2026|\s+2025)?)/i,
+    /(\d{1,2}\/\d{1,2}\/\d{4})/,
+    /(\d{4}-\d{2}-\d{2})/
+  ];
+  
+  for (const pattern of datePatterns) {
+    const dateMatch = messageText.match(pattern);
+    if (dateMatch) {
+      let dateStr = dateMatch[1].toLowerCase();
+      // Handle "next year" conversion
+      if (dateStr.includes('next year')) {
+        dateStr = dateStr.replace('next year', '2026');
+      } else if (dateStr.match(/\w+\s+\d{1,2}/) && !dateStr.match(/20\d{2}/)) {
+        dateStr += ' 2025'; // Default to this year if no year specified
+      }
+      
+      try {
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime()) && parsedDate > new Date()) {
+          data.eventDate = parsedDate.toISOString().split('T')[0];
+          data.confidence = Math.min(0.8, data.confidence + 0.3);
+        }
+      } catch (e) {
+        // Date parsing failed, continue
+      }
       break;
     }
   }
@@ -360,12 +440,14 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
   const emailMatch = messageText.match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
   if (emailMatch) {
     data.clientEmail = emailMatch[0].toLowerCase();
+    data.confidence = Math.min(0.7, data.confidence + 0.2);
   }
 
   // Extract phone if present
   const phoneMatch = messageText.match(/\d{10,}/);
   if (phoneMatch) {
     data.clientPhone = phoneMatch[0];
+    data.confidence = Math.min(0.7, data.confidence + 0.2);
   }
 
   // Add provided contact info

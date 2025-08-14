@@ -304,19 +304,55 @@ export function registerBookingRoutes(app: Express) {
       
       // Parse the message using AI to extract additional details
       const { parseBookingMessage } = await import('../ai/booking-message-parser');
-      const parsedData = await parseBookingMessage(messageText, clientContact, venue);
+      const parsedData = await parseBookingMessage(messageText, clientContact, venue, user.id);
       
-      // Determine contact details (email vs phone)
+      // Determine contact details (email vs phone) - FIXED: Ensure widget form data is captured
       let clientEmail = parsedData.clientEmail;
       let clientPhone = parsedData.clientPhone;
       
+      // CRITICAL FIX: Always capture email from widget form if not parsed
       if (!clientEmail && !clientPhone) {
-        // Determine from clientContact field
         if (clientContact.includes('@')) {
           clientEmail = clientContact;
         } else if (/\d{10,}/.test(clientContact)) {
           clientPhone = clientContact;
         }
+      }
+
+      // FIXED: If AI didn't extract email but widget form provided it, use widget form email
+      if (!clientEmail && clientContact.includes('@')) {
+        clientEmail = clientContact;
+      }
+      
+      // Determine if parsing was successful enough to create booking or send to reviews
+      const hasMinimumData = parsedData.eventDate || parsedData.venue || parsedData.eventType || 
+                             (parsedData.confidence && parsedData.confidence >= 0.5);
+      
+      if (!hasMinimumData || parsedData.confidence < 0.4) {
+        console.log(`📧 Low confidence booking (${Math.round(parsedData.confidence * 100)}%) - routing to unparseable messages`);
+        
+        // Send to unparseable messages for manual review
+        const { storage: miscStorage } = await import('../storage/misc-storage');
+        await miscStorage.createUnparseableMessage({
+          userId: user.id,
+          messageType: 'booking_widget',
+          content: messageText,
+          senderName: clientName,
+          senderEmail: clientEmail,
+          senderPhone: clientPhone,
+          parsedVenue: parsedData.venue,
+          parsedDate: parsedData.eventDate,
+          parsedEventType: parsedData.eventType,
+          aiConfidence: parsedData.confidence,
+          parsingErrorDetails: `Low confidence AI parsing (${Math.round(parsedData.confidence * 100)}%) - requires manual review`
+        });
+        
+        return res.json({ 
+          success: true, 
+          requiresReview: true,
+          confidence: parsedData.confidence,
+          message: 'Booking request received and will be reviewed manually'
+        });
       }
       
       // Create booking with combined data (AI parsed data takes precedence for dates/venues when form is empty)
@@ -324,7 +360,7 @@ export function registerBookingRoutes(app: Express) {
         userId: user.id,
         title: clientName ? `Widget Booking - ${clientName}` : 'Widget Booking Request',
         clientName: clientName || parsedData.clientName || 'Unknown Client',
-        clientEmail: clientEmail || null,
+        clientEmail: clientEmail || null, // FIXED: Ensure widget email is captured
         clientPhone: clientPhone || null,
         venue: venue || parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
@@ -335,14 +371,14 @@ export function registerBookingRoutes(app: Express) {
         fee: parsedData.fee || null,
         deposit: parsedData.deposit || null,
         status: 'new',
-        notes: messageText,
+        notes: messageText, // FIXED: Original message text is now properly saved in notes
         gigType: parsedData.eventType || null,
         equipmentRequirements: null,
         specialRequirements: parsedData.specialRequirements || null
       };
       
       const newBooking = await storage.createBooking(bookingData);
-      console.log(`✅ Widget created booking #${newBooking.id} for user ${user.id} (AI confidence: ${parsedData.confidence})`);
+      console.log(`✅ Widget created booking #${newBooking.id} for user ${user.id} (AI confidence: ${Math.round(parsedData.confidence * 100)}%)`);
       
       // Send notification email to the musician if they have settings
       try {
