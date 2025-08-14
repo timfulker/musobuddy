@@ -1804,7 +1804,7 @@ export default function UnifiedBookings() {
                                 const booking = validBookings.find((b) => b.id === event.id);
                                 
                                 return (
-                                  <HoverCard key={eventIndex} openDelay={200} closeDelay={500}>
+                                  <HoverCard key={eventIndex} openDelay={200}>
                                     <HoverCardTrigger asChild>
                                       <div
                                         className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
@@ -1821,7 +1821,7 @@ export default function UnifiedBookings() {
                                       </div>
                                     </HoverCardTrigger>
                                     {booking && (
-                                      <HoverCardContent className="w-80" align="start" side="right">
+                                      <HoverCardContent className="w-80" align="start">
                                         <div className="space-y-2">
                                           <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
                                           <div className="space-y-1 text-sm">
@@ -1859,40 +1859,10 @@ export default function UnifiedBookings() {
                                               </div>
                                             )}
                                           </div>
-                                          <div className="pt-2 border-t space-y-2">
+                                          <div className="pt-2 border-t">
                                             <Badge className={getStatusColor(booking.status || 'new')}>
                                               {booking.status?.replace('_', ' ') || 'New'}
                                             </Badge>
-                                            
-                                            <div className="flex items-center gap-2">
-                                              {/* Respond Menu - show for all bookings */}
-                                              <div 
-                                                onClick={(e) => e.stopPropagation()}
-                                                onMouseEnter={(e) => e.stopPropagation()}
-                                                onMouseLeave={(e) => e.stopPropagation()}
-                                              >
-                                                <BookingActionMenu 
-                                                  booking={booking}
-                                                  onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
-                                                  onSendCompliance={openComplianceDialog}
-                                                />
-                                              </div>
-                                              
-                                              {/* Apply on Encore Button - only show for Encore bookings */}
-                                              {booking.applyNowLink && (
-                                                <Button 
-                                                  size="sm" 
-                                                  variant="outline"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(booking.applyNowLink, '_blank');
-                                                  }}
-                                                  className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                                >
-                                                  Apply on Encore
-                                                </Button>
-                                              )}
-                                            </div>
                                           </div>
                                         </div>
                                       </HoverCardContent>
@@ -1958,7 +1928,7 @@ export default function UnifiedBookings() {
                                   const booking = validBookings.find((b) => b.id === event.id);
                                   
                                   return (
-                                    <HoverCard key={eventIndex} openDelay={200} closeDelay={500}>
+                                    <HoverCard key={eventIndex} openDelay={200}>
                                       <HoverCardTrigger asChild>
                                         <div
                                           className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
@@ -1975,7 +1945,7 @@ export default function UnifiedBookings() {
                                         </div>
                                       </HoverCardTrigger>
                                       {booking && (
-                                        <HoverCardContent className="w-80" align="start" side="right">
+                                        <HoverCardContent className="w-80" align="start">
                                           <div className="space-y-2">
                                             <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
                                             <div className="space-y-1 text-sm">
@@ -2013,40 +1983,10 @@ export default function UnifiedBookings() {
                                                 </div>
                                               )}
                                             </div>
-                                            <div className="pt-2 border-t space-y-2">
+                                            <div className="pt-2 border-t">
                                               <Badge className={getStatusColor(booking.status || 'new')}>
                                                 {booking.status?.replace('_', ' ') || 'New'}
                                               </Badge>
-                                              
-                                              <div className="flex items-center gap-2">
-                                                {/* Respond Menu - show for all bookings */}
-                                                <div 
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  onMouseEnter={(e) => e.stopPropagation()}
-                                                  onMouseLeave={(e) => e.stopPropagation()}
-                                                >
-                                                  <BookingActionMenu 
-                                                    booking={booking}
-                                                    onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
-                                                    onSendCompliance={openComplianceDialog}
-                                                  />
-                                                </div>
-                                                
-                                                {/* Apply on Encore Button - only show for Encore bookings */}
-                                                {booking.applyNowLink && (
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      window.open(booking.applyNowLink, '_blank');
-                                                    }}
-                                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                                  >
-                                                    Apply on Encore
-                                                  </Button>
-                                                )}
-                                              </div>
                                             </div>
                                           </div>
                                         </HoverCardContent>
