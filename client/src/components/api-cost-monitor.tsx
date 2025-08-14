@@ -118,7 +118,7 @@ export default function APICostMonitor() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 text-foreground">
         <RefreshCw className="h-6 w-6 animate-spin mr-2" />
         Loading API cost data...
       </div>
@@ -129,7 +129,7 @@ export default function APICostMonitor() {
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Failed to Load API Cost Data</h3>
+        <h3 className="text-lg font-semibold mb-2 text-foreground">Failed to Load API Cost Data</h3>
         <p className="text-muted-foreground text-center mb-4">
           Unable to retrieve API usage and cost estimates
         </p>

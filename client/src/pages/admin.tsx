@@ -394,7 +394,7 @@ export default function AdminPanel() {
 
         <main className="p-3 sm:p-6 max-w-full overflow-x-hidden">
           <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-foreground">
               <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
               Admin Panel
             </h1>
@@ -417,11 +417,11 @@ export default function AdminPanel() {
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                    <CardTitle className="text-sm font-medium text-foreground">Total Users</CardTitle>
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-foreground">
                       {overviewLoading ? "..." : overview?.totalUsers || 0}
                     </div>
                   </CardContent>
@@ -429,11 +429,11 @@ export default function AdminPanel() {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                    <CardTitle className="text-sm font-medium text-foreground">Total Bookings</CardTitle>
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-foreground">
                       {overviewLoading ? "..." : overview?.totalBookings || 0}
                     </div>
                   </CardContent>
@@ -441,11 +441,11 @@ export default function AdminPanel() {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Contracts</CardTitle>
+                    <CardTitle className="text-sm font-medium text-foreground">Total Contracts</CardTitle>
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-foreground">
                       {overviewLoading ? "..." : overview?.totalContracts || 0}
                     </div>
                   </CardContent>
@@ -453,11 +453,11 @@ export default function AdminPanel() {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+                    <CardTitle className="text-sm font-medium text-foreground">Total Invoices</CardTitle>
                     <PoundSterling className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-foreground">
                       {overviewLoading ? "..." : overview?.totalInvoices || 0}
                     </div>
                   </CardContent>
@@ -467,24 +467,24 @@ export default function AdminPanel() {
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Platform Health</CardTitle>
-                    <CardDescription>Current system status</CardDescription>
+                    <CardTitle className="text-foreground">Platform Health</CardTitle>
+                    <CardDescription className="text-muted-foreground">Current system status</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">System Status</span>
+                        <span className="text-sm text-foreground">System Status</span>
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm font-medium">Operational</span>
+                          <span className="text-sm font-medium text-foreground">Operational</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Database</span>
+                        <span className="text-sm text-foreground">Database</span>
                         <Badge variant="default">Connected</Badge>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Authentication</span>
+                        <span className="text-sm text-foreground">Authentication</span>
                         <Badge variant="default">Active</Badge>
                       </div>
                     </div>
@@ -493,22 +493,22 @@ export default function AdminPanel() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Common administrative tasks</CardDescription>
+                    <CardTitle className="text-foreground">Quick Actions</CardTitle>
+                    <CardDescription className="text-muted-foreground">Common administrative tasks</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-blue-500" />
-                        <span>Monitor user growth</span>
+                        <span className="text-foreground">Monitor user growth</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-green-500" />
-                        <span>Review system security</span>
+                        <span className="text-foreground">Review system security</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Database className="h-4 w-4 text-primary/50" />
-                        <span>Database maintenance</span>
+                        <span className="text-foreground">Database maintenance</span>
                       </div>
                     </div>
                   </CardContent>
@@ -521,8 +521,8 @@ export default function AdminPanel() {
                 <CardHeader>
                   <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
-                      <CardTitle>User Management</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-foreground">User Management</CardTitle>
+                      <CardDescription className="text-muted-foreground">
                         Showing {filteredUsers.length} of {users?.length || 0} users
                       </CardDescription>
                     </div>
