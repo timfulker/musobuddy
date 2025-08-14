@@ -1497,7 +1497,8 @@ export default function Invoices() {
       return 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20';
     }
     if (isOverdue) {
-      return 'bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/30 dark:to-red-900/20 border-red-200/50 dark:border-red-800/30';
+      console.log(`Overdue invoice detected: ${invoice.invoiceNumber} with status: ${invoice.status}`);
+      return 'bg-gradient-to-r from-red-100 to-red-200/80 dark:from-red-950/60 dark:to-red-900/50 border-red-300 dark:border-red-700/60';
     }
     return '';
   };
