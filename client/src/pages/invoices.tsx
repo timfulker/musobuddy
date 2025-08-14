@@ -1490,8 +1490,20 @@ export default function Invoices() {
               
 {filteredInvoices.map((invoice: Invoice) => {
   const isSelected = selectedInvoices.includes(invoice.id);
+  const isOverdue = invoice.status === 'overdue';
+  
+  const getCardBackground = () => {
+    if (isSelected) {
+      return 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20';
+    }
+    if (isOverdue) {
+      return 'bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/30 dark:to-red-900/20 border-red-200/50 dark:border-red-800/30';
+    }
+    return '';
+  };
+  
   return (
-    <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+    <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${getCardBackground()}`}>
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header with title, status, and checkbox */}
