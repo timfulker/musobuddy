@@ -38,8 +38,8 @@ export function registerAdminRoutes(app: Express) {
           keyPresent: !!process.env.R2_ACCESS_KEY_ID,
         },
         googleMaps: {
-          configured: !!process.env.GOOGLE_MAPS_API_KEY,
-          keyPresent: !!process.env.GOOGLE_MAPS_API_KEY,
+          configured: !!process.env.GOOGLE_MAPS_SERVER_KEY,
+          keyPresent: !!process.env.GOOGLE_MAPS_SERVER_KEY,
         },
         twilio: {
           configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
