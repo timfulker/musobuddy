@@ -19,80 +19,26 @@ app.use(session({
   }
 }));
 
-// Initialize storage and AI
+// Initialize storage and services
 const { storage } = await import('./core/storage');
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Simple AI parsing function
-async function parseEmailForBooking(emailText: string) {
-  try {
-    const prompt = `Extract booking information from this email. Return JSON only:
-
-Email: ${emailText}
-
-Return this exact JSON format:
-{
-  "eventDate": "YYYY-MM-DD or null",
-  "eventTime": "HH:MM or null", 
-  "venue": "venue name or null",
-  "eventType": "wedding/corporate/party/etc or null",
-  "clientName": "client name or null",
-  "fee": "quoted fee or null"
-}`;
-
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const content = response.content[0]?.text || '{}';
-    return JSON.parse(content);
-  } catch (error) {
-    console.error('AI parsing failed:', error);
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, clientName: null, fee: null };
-  }
-}
-
-// Email webhook endpoint
+// Original Mailgun webhook handler - restored to working version
 app.post('/api/webhook/mailgun', async (req, res) => {
   try {
     const bodyText = req.body['body-plain'] || req.body.text || '';
     const fromEmail = req.body.From || req.body.from || '';
     const subject = req.body.Subject || req.body.subject || '';
     
-    console.log('📧 Processing email:', { from: fromEmail, subject });
+    console.log('📧 Processing email webhook:', { from: fromEmail, subject });
     
-    // Parse email with AI
-    const parsed = await parseEmailForBooking(bodyText);
-    console.log('🤖 AI parsed:', parsed);
+    // Use the enhanced email queue for processing
+    const { processEmailInQueue } = await import('./core/email-queue');
+    await processEmailInQueue(fromEmail, subject, bodyText);
     
-    // Create booking if we have minimum info
-    if (parsed.eventDate && parsed.venue) {
-      const bookingData = {
-        userId: "43963086", // Default admin user
-        title: subject || `Booking from ${fromEmail}`,
-        clientName: parsed.clientName || fromEmail.split('@')[0] || 'Unknown',
-        clientEmail: fromEmail,
-        venue: parsed.venue,
-        eventDate: new Date(parsed.eventDate),
-        eventTime: parsed.eventTime,
-        eventType: parsed.eventType,
-        fee: parsed.fee,
-        status: 'new',
-        notes: bodyText
-      };
-      
-      const booking = await storage.createBooking(bookingData);
-      console.log('✅ Created booking:', booking.id);
-      
-      res.json({ success: true, bookingId: booking.id });
-    } else {
-      console.log('❌ Insufficient data - missing date or venue');
-      res.json({ success: false, reason: 'Missing date or venue' });
-    }
+    res.status(200).json({ success: true, message: 'Email processed' });
     
   } catch (error: any) {
     console.error('❌ Webhook error:', error);
@@ -100,7 +46,40 @@ app.post('/api/webhook/mailgun', async (req, res) => {
   }
 });
 
-// Register other routes
+// Stripe success/cancel handlers
+app.get('/payment/success', async (req: any, res) => {
+  try {
+    const sessionId = req.query.session_id;
+    if (!sessionId) {
+      return res.redirect('/?error=no_session_id');
+    }
+
+    const { StripeService } = await import('./core/stripe-service');
+    const stripeService = new StripeService();
+    
+    const sessionDetails = await stripeService.getSessionDetails(sessionId);
+    const userId = sessionDetails.metadata?.userId;
+    
+    if (!userId) {
+      return res.redirect('/?error=no_user_id');
+    }
+    
+    req.session.userId = userId;
+    console.log('✅ User logged in via Stripe payment success:', userId);
+    
+    return res.redirect('/?payment=success');
+    
+  } catch (error: any) {
+    console.error('❌ Payment success handler error:', error);
+    return res.redirect('/?error=payment_handler_failed');
+  }
+});
+
+app.get('/payment/cancel', (req, res) => {
+  res.redirect('/?payment=cancelled');
+});
+
+// Register all API routes
 const { registerRoutes } = await import('./routes');
 await registerRoutes(app);
 
@@ -109,6 +88,7 @@ const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 5000) 
 
 if (process.env.NODE_ENV !== 'production') {
   // Development with Vite
+  console.log('🛠️ Development mode: using Vite dev server');
   const { setupVite } = await import('./vite');
   const { createServer } = await import('http');
   const server = createServer(app);
@@ -120,6 +100,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 } else {
   // Production
+  console.log('🏭 Production mode: serving static files');
   const { serveStaticFixed } = await import('./core/serve-static');
   serveStaticFixed(app);
   
