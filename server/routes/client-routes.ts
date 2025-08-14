@@ -7,13 +7,11 @@ export function registerClientRoutes(app: Express) {
 
   // Client portal access route (public - no auth required)
   app.get('/client-portal/:contractId', async (req, res) => {
-    console.log('🚀 CLIENT PORTAL ACCESS - Contract:', req.params.contractId, 'Token:', req.query.token);
     try {
       const { contractId } = req.params;
       const { token } = req.query;
 
       if (!token) {
-        console.log('❌ No token provided');
         return res.status(403).json({ error: 'Portal access token required' });
       }
 
@@ -24,17 +22,8 @@ export function registerClientRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // Simple token verification - they should be equal strings
-      console.log('🔍 Portal token debug:', {
-        provided: token,
-        stored: contract.client_portal_token,
-        match: token === contract.client_portal_token,
-        providedType: typeof token,
-        storedType: typeof contract.client_portal_token
-      });
-      
-      // Verify the portal token (simple string comparison)
-      if (!contract.client_portal_token || contract.client_portal_token !== token) {
+      // Verify the portal token matches
+      if (contract.clientPortalToken !== token) {
         return res.status(403).json({ error: 'Invalid portal access token' });
       }
 
@@ -43,8 +32,8 @@ export function registerClientRoutes(app: Express) {
       
       // Get associated booking data if it exists
       let bookingData = null;
-      if (contract.enquiry_id) {
-        bookingData = await storage.getBooking(contract.enquiry_id);
+      if (contract.enquiryId) {
+        bookingData = await storage.getBooking(contract.enquiryId);
       }
       
       const portalHtml = generateCollaborativeForm(contract, bookingData, token as string);

@@ -652,21 +652,21 @@ export function generateCollaborativeForm(
 ): string {
   // Convert contract to booking data format
   const formData = {
-    id: contract.enquiry_id || contract.id,
+    id: contract.enquiryId || contract.id,
     contractId: contract.id,
-    clientName: contract.client_name || contract.clientName,
+    clientName: contract.clientName,
     venue: contract.venue,
-    eventDate: contract.event_date || contract.eventDate,
-    eventTime: contract.event_time || contract.eventTime,
-    eventEndTime: contract.event_end_time || contract.eventEndTime,
-    performanceDuration: contract.performance_duration || contract.performanceDuration,
+    eventDate: contract.eventDate,
+    eventTime: contract.eventTime,
+    eventEndTime: contract.eventEndTime,
+    performanceDuration: contract.performanceDuration,
     // Include existing booking data if available
     ...bookingData
   };
 
   const apiEndpoint = process.env.NODE_ENV === 'production' 
     ? 'https://musobuddy.replit.app' 
-    : 'http://0.0.0.0:5000';
+    : 'http://localhost:5000';
 
   return collaborativeFormGenerator.generateStandaloneForm(
     formData,
