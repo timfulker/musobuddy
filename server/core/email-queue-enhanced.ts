@@ -1,7 +1,7 @@
 /**
- * Enhanced Email Processing Queue System with Mutex Locking
- * Prevents race conditions when multiple emails arrive simultaneously
- * Uses database-level locking to ensure truly sequential processing
+ * Enhanced Per-User Email Processing Queue System
+ * Each user gets their own queue to prevent delays between users
+ * Scales efficiently with multiple users and concurrent emails
  */
 
 import { Mutex } from 'async-mutex';
@@ -14,24 +14,64 @@ interface EmailJob {
   retries: number;
   maxRetries: number;
   error?: string;
-  userId?: string;
+  userId: string;
   duplicateCheckHash?: string;
 }
 
+interface UserQueue {
+  jobs: EmailJob[];
+  processing: boolean;
+  mutex: Mutex;
+  lastProcessed: number;
+}
+
 class EnhancedEmailQueue {
-  private queue: EmailJob[] = [];
-  private processing = false;
+  private userQueues = new Map<string, UserQueue>(); // Per-user queues
   private readonly maxRetries = 3;
-  private readonly processingDelay = 5000; // 5 seconds between jobs for AI accuracy
-  private readonly mutex = new Mutex(); // Ensures only one job processes at a time
+  private readonly processingDelay = 5000; // 5 seconds between jobs for AI accuracy PER USER
   private processedEmails = new Map<string, Date>(); // Track recently processed emails
   private readonly duplicateWindowMs = 10000; // 10 second window for duplicate detection
 
   constructor() {
-    console.log('📧 Enhanced Email processing queue initialized with 5-second AI processing delays for accuracy');
+    console.log('📧 Enhanced Per-User Email Queue initialized - each user processes independently');
     
-    // Clean up old processed emails every minute
-    setInterval(() => this.cleanupProcessedEmails(), 60000);
+    // Clean up old processed emails and inactive user queues every minute
+    setInterval(() => {
+      this.cleanupProcessedEmails();
+      this.cleanupInactiveUserQueues();
+    }, 60000);
+  }
+
+  /**
+   * Get or create user queue
+   */
+  private getUserQueue(userId: string): UserQueue {
+    if (!this.userQueues.has(userId)) {
+      this.userQueues.set(userId, {
+        jobs: [],
+        processing: false,
+        mutex: new Mutex(),
+        lastProcessed: 0
+      });
+      console.log(`📧 [USER:${userId}] Created new processing queue`);
+    }
+    return this.userQueues.get(userId)!;
+  }
+
+  /**
+   * Clean up user queues that haven't been used recently
+   */
+  private cleanupInactiveUserQueues() {
+    const now = Date.now();
+    const inactiveThreshold = 30 * 60 * 1000; // 30 minutes
+    
+    for (const [userId, queue] of this.userQueues.entries()) {
+      if (!queue.processing && queue.jobs.length === 0 && 
+          (now - queue.lastProcessed) > inactiveThreshold) {
+        this.userQueues.delete(userId);
+        console.log(`📧 [USER:${userId}] Cleaned up inactive queue`);
+      }
+    }
   }
 
   /**
@@ -68,15 +108,15 @@ class EnhancedEmailQueue {
   }
 
   /**
-   * Add email to processing queue with duplicate detection
+   * Add email to per-user processing queue with duplicate detection
    */
-  async addEmail(requestData: any): Promise<{ jobId: string; queuePosition: number; isDuplicate?: boolean }> {
+  async addEmail(requestData: any): Promise<{ jobId: string; queuePosition: number; isDuplicate?: boolean; userId?: string }> {
     const jobId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const duplicateHash = this.generateDuplicateHash(requestData);
     
     // Check for duplicate
     if (this.isDuplicateEmail(duplicateHash)) {
-      console.log(`📧 [QUEUE] Duplicate email detected (hash: ${duplicateHash}), skipping`);
+      console.log(`📧 [GLOBAL] Duplicate email detected (hash: ${duplicateHash}), skipping`);
       return {
         jobId,
         queuePosition: -1,
@@ -87,7 +127,15 @@ class EnhancedEmailQueue {
     // Extract user ID from recipient email
     const recipientField = requestData.To || requestData.recipient || '';
     const recipientMatch = recipientField.match(/([^@]+)@/);
-    const emailPrefix = recipientMatch ? recipientMatch[1] : null;
+    const emailPrefix = recipientMatch ? recipientMatch[1] : 'unknown';
+    
+    if (!emailPrefix || emailPrefix === 'unknown') {
+      console.error(`📧 [GLOBAL] Cannot determine user from recipient: ${recipientField}`);
+      throw new Error(`Invalid recipient format: ${recipientField}`);
+    }
+    
+    // Get or create user queue
+    const userQueue = this.getUserQueue(emailPrefix);
     
     const job: EmailJob = {
       id: jobId,
@@ -96,43 +144,49 @@ class EnhancedEmailQueue {
       status: 'pending',
       retries: 0,
       maxRetries: this.maxRetries,
-      userId: emailPrefix || undefined,
+      userId: emailPrefix,
       duplicateCheckHash: duplicateHash
     };
 
-    this.queue.push(job);
-    console.log(`📧 [QUEUE] Added email job ${jobId} to queue (position: ${this.queue.length}, user: ${emailPrefix || 'unknown'})`);
+    userQueue.jobs.push(job);
+    console.log(`📧 [USER:${emailPrefix}] Added email job ${jobId} to user queue (position: ${userQueue.jobs.length})`);
 
-    // Start processing if not already running
-    if (!this.processing) {
-      this.startProcessing();
+    // Start processing for this user if not already running
+    if (!userQueue.processing) {
+      this.startUserProcessing(emailPrefix);
     }
 
     return {
       jobId,
-      queuePosition: this.queue.length,
-      isDuplicate: false
+      queuePosition: userQueue.jobs.length,
+      isDuplicate: false,
+      userId: emailPrefix
     };
   }
 
   /**
-   * Start processing queue with mutex protection
+   * Start processing for a specific user queue
    */
-  private async startProcessing() {
-    if (this.processing) return;
+  private async startUserProcessing(userId: string) {
+    const userQueue = this.getUserQueue(userId);
+    
+    if (userQueue.processing) {
+      console.log(`📧 [USER:${userId}] Already processing, skipping`);
+      return;
+    }
 
-    this.processing = true;
-    console.log('📧 [QUEUE] Starting enhanced email processing with mutex locking...');
+    userQueue.processing = true;
+    console.log(`📧 [USER:${userId}] Starting email processing (${userQueue.jobs.length} jobs queued)`);
 
-    while (this.queue.length > 0) {
-      const job = this.queue.shift();
+    while (userQueue.jobs.length > 0) {
+      const job = userQueue.jobs.shift();
       if (!job) continue;
 
-      // Acquire mutex lock before processing
-      const release = await this.mutex.acquire();
+      // Acquire user-specific mutex lock before processing
+      const release = await userQueue.mutex.acquire();
       
       try {
-        console.log(`📧 [QUEUE] Processing job ${job.id} with mutex lock...`);
+        console.log(`📧 [USER:${userId}] Processing job ${job.id} with user mutex lock...`);
         job.status = 'processing';
 
         // Process the email with database-level locking
@@ -144,35 +198,36 @@ class EnhancedEmailQueue {
         }
         
         job.status = 'completed';
-        console.log(`📧 [QUEUE] ✅ Job ${job.id} completed successfully`);
+        userQueue.lastProcessed = Date.now();
+        console.log(`✅ [USER:${userId}] Job ${job.id} completed successfully`);
 
       } catch (error: any) {
-        console.error(`📧 [QUEUE] ❌ Job ${job.id} failed:`, error.message);
-        
-        job.retries++;
+        console.error(`❌ [USER:${userId}] Job ${job.id} failed:`, error.message);
         job.error = error.message;
+        job.retries++;
 
         if (job.retries < job.maxRetries) {
-          console.log(`📧 [QUEUE] Retrying job ${job.id} (attempt ${job.retries + 1}/${job.maxRetries})`);
+          console.log(`📧 [USER:${userId}] Retrying job ${job.id} (attempt ${job.retries + 1}/${job.maxRetries})`);
           job.status = 'pending';
-          this.queue.push(job); // Re-add to end of queue
+          userQueue.jobs.push(job); // Re-add to end of user queue
         } else {
           job.status = 'failed';
-          console.error(`📧 [QUEUE] Job ${job.id} failed after ${job.maxRetries} attempts`);
+          console.error(`📧 [USER:${userId}] Job ${job.id} failed after ${job.maxRetries} attempts`);
         }
       } finally {
-        // Always release the mutex
+        // Always release the user mutex
         release();
       }
 
-      // Add delay between processing jobs to prevent race conditions
-      if (this.queue.length > 0) {
+      // Add delay between processing jobs for AI accuracy (per user)
+      if (userQueue.jobs.length > 0) {
+        console.log(`📧 [USER:${userId}] Waiting ${this.processingDelay}ms before next email for AI accuracy...`);
         await new Promise(resolve => setTimeout(resolve, this.processingDelay));
       }
     }
 
-    this.processing = false;
-    console.log('📧 [QUEUE] Email processing completed');
+    userQueue.processing = false;
+    console.log(`📧 [USER:${userId}] Email processing completed`);
   }
 
   /**
@@ -400,38 +455,80 @@ class EnhancedEmailQueue {
   }
 
   /**
-   * Get queue status with enhanced information
+   * Get per-user queue status with enhanced information
    */
   getStatus() {
-    const userJobCounts = new Map<string, number>();
+    const userQueueStatus = new Map<string, any>();
+    let totalJobs = 0;
+    let totalProcessing = 0;
+    let totalPending = 0;
+    let totalFailed = 0;
     
-    // Count jobs per user
-    this.queue.forEach(job => {
-      const userId = job.userId || 'unknown';
-      userJobCounts.set(userId, (userJobCounts.get(userId) || 0) + 1);
+    // Aggregate status from all user queues
+    this.userQueues.forEach((queue, userId) => {
+      const pending = queue.jobs.filter(j => j.status === 'pending').length;
+      const processing = queue.jobs.filter(j => j.status === 'processing').length;
+      const failed = queue.jobs.filter(j => j.status === 'failed').length;
+      
+      userQueueStatus.set(userId, {
+        totalJobs: queue.jobs.length,
+        pendingJobs: pending,
+        processingJobs: processing,
+        failedJobs: failed,
+        isProcessing: queue.processing,
+        mutexLocked: queue.mutex.isLocked(),
+        lastProcessed: queue.lastProcessed ? new Date(queue.lastProcessed).toISOString() : null
+      });
+      
+      totalJobs += queue.jobs.length;
+      totalPending += pending;
+      totalProcessing += processing;
+      totalFailed += failed;
     });
     
     return {
-      queueLength: this.queue.length,
-      processing: this.processing,
-      pendingJobs: this.queue.filter(j => j.status === 'pending').length,
-      processingJobs: this.queue.filter(j => j.status === 'processing').length,
-      failedJobs: this.queue.filter(j => j.status === 'failed').length,
-      mutexLocked: this.mutex.isLocked(),
+      systemType: 'per-user-queues',
+      totalActiveUsers: this.userQueues.size,
+      totalJobs,
+      totalPending,
+      totalProcessing,
+      totalFailed,
       recentDuplicatesBlocked: this.processedEmails.size,
-      jobsByUser: Object.fromEntries(userJobCounts),
       processingDelay: this.processingDelay,
-      duplicateWindowMs: this.duplicateWindowMs
+      duplicateWindowMs: this.duplicateWindowMs,
+      userQueues: Object.fromEntries(userQueueStatus)
     };
   }
 
   /**
-   * Clear the queue (for testing/emergency use)
+   * Clear all queues (for testing/emergency use)
    */
   clearQueue() {
-    this.queue = [];
+    this.userQueues.clear();
     this.processedEmails.clear();
-    console.log('📧 [QUEUE] Queue cleared');
+    console.log('📧 [GLOBAL] All user queues cleared');
+  }
+
+  /**
+   * Get status for specific user
+   */
+  getUserStatus(userId: string) {
+    const queue = this.userQueues.get(userId);
+    if (!queue) {
+      return { exists: false, message: `No queue found for user ${userId}` };
+    }
+    
+    return {
+      exists: true,
+      userId,
+      totalJobs: queue.jobs.length,
+      pendingJobs: queue.jobs.filter(j => j.status === 'pending').length,
+      processingJobs: queue.jobs.filter(j => j.status === 'processing').length,
+      failedJobs: queue.jobs.filter(j => j.status === 'failed').length,
+      isProcessing: queue.processing,
+      mutexLocked: queue.mutex.isLocked(),
+      lastProcessed: queue.lastProcessed ? new Date(queue.lastProcessed).toISOString() : null
+    };
   }
 }
 
