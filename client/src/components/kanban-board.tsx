@@ -83,6 +83,27 @@ export default function ActionableEnquiries() {
     return { dayName, dayNum, monthYear };
   };
 
+  const formatReceivedTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 60) {
+      return diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else {
+      return date.toLocaleDateString("en-GB", { 
+        day: "numeric", 
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+  };
+
   const needsResponse = (enquiry: Enquiry) => {
     // Only truly new enquiries need responses
     return enquiry.status === "new";
@@ -184,6 +205,13 @@ export default function ActionableEnquiries() {
                       <div className="text-xs text-gray-500">
                         Time: {enquiry.eventTime}
                         {enquiry.eventEndTime && ` - ${enquiry.eventEndTime}`}
+                      </div>
+                    )}
+                    
+                    {enquiry.createdAt && (
+                      <div className="flex items-center text-xs text-gray-400">
+                        <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                        Received {formatReceivedTime(enquiry.createdAt)}
                       </div>
                     )}
                     

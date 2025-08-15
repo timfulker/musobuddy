@@ -673,6 +673,27 @@ export default function UnifiedBookings() {
     }
   };
 
+  const formatReceivedTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 60) {
+      return diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else {
+      return date.toLocaleDateString("en-GB", { 
+        day: "numeric", 
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+  };
+
 
 
   // Generate calendar data based on view type
@@ -1474,6 +1495,13 @@ export default function UnifiedBookings() {
                                                     </Badge>
                                                   )}
                                                 </div>
+                                                {groupBooking.createdAt && (
+                                                  <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    Received {formatReceivedTime(groupBooking.createdAt)}
+                                                  </div>
+                                                )}
+                                              </div>
                                                 <p className="text-gray-500">
                                                   {new Date(groupBooking.eventDate).toLocaleDateString('en-GB', {
                                                     weekday: 'long',
@@ -1485,7 +1513,6 @@ export default function UnifiedBookings() {
                                               </div>
                                             </div>
                                           </div>
-                                        </div>
                                           <div className="flex items-center justify-end gap-3 mt-4">
                                             {groupBooking.applyNowLink && (
                                               <Button
@@ -1591,6 +1618,12 @@ export default function UnifiedBookings() {
                                   {booking.venue && (
                                     <div className="text-gray-500">
                                       {booking.venue}
+                                    </div>
+                                  )}
+                                  {booking.createdAt && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                                      <Clock className="w-3 h-3" />
+                                      Received {formatReceivedTime(booking.createdAt)}
                                     </div>
                                   )}
                                 </div>

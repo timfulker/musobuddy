@@ -112,6 +112,27 @@ export default function UnparseableMessages() {
     }
   };
 
+  const formatReceivedTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 60) {
+      return diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else {
+      return date.toLocaleDateString("en-GB", { 
+        day: "numeric", 
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -185,7 +206,7 @@ export default function UnparseableMessages() {
                 </div>
                 <div className="flex items-center text-sm text-gray-500 gap-2">
                   <Calendar className="w-4 h-4" />
-                  {new Date(message.createdAt).toLocaleDateString()}
+                  Received {formatReceivedTime(message.createdAt)}
                   {message.clientAddress && (
                     <span className="ml-2">• {message.clientAddress}</span>
                   )}
