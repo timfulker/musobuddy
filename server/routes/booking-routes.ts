@@ -567,5 +567,130 @@ ${messageText.replace(/\n/g, '<br>')}
     }
   });
 
+  // Send compliance documents for a booking
+  app.post('/api/bookings/:id/send-compliance', 
+    requireAuth,
+    requireSubscriptionOrAdmin,
+    generalApiRateLimit,
+    asyncHandler(async (req: any, res: any) => {
+      try {
+        const userId = req.user?.userId;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const bookingId = parseInt(req.params.id);
+        const { documentIds, recipientEmail, customMessage } = req.body;
+
+        if (!bookingId || !documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+          return res.status(400).json({ error: 'Booking ID and document IDs are required' });
+        }
+
+        if (!recipientEmail) {
+          return res.status(400).json({ error: 'Recipient email is required' });
+        }
+
+        console.log(`📧 Sending compliance documents for booking ${bookingId} to ${recipientEmail}`);
+
+        // Verify booking ownership
+        const booking = await storage.getBooking(bookingId, userId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        // Get compliance documents and verify ownership
+        const complianceDocuments = await storage.getComplianceDocuments(userId);
+        const documentsToSend = complianceDocuments.filter((doc: any) => 
+          documentIds.includes(doc.id) && doc.status === 'valid'
+        );
+
+        if (documentsToSend.length === 0) {
+          return res.status(400).json({ error: 'No valid documents found to send' });
+        }
+
+        // Send email with compliance documents
+        const { EmailService } = await import('../core/services');
+        const emailService = new EmailService();
+        
+        // Get user settings for business info
+        const userSettings = await storage.getSettings(userId);
+        const businessName = userSettings?.businessName || 'MusoBuddy User';
+        
+        // Create email content
+        const subject = `Compliance Documents - ${booking.eventType || 'Event'} at ${booking.venue || 'Your Venue'}`;
+        
+        let emailBody = `
+<h2>Compliance Documents</h2>
+<p>Dear ${booking.clientName || 'Client'},</p>
+
+<p>Please find attached the compliance documents for your upcoming event:</p>
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+  <strong>Event Details:</strong><br>
+  ${booking.eventType || 'Event'}<br>
+  ${booking.venue ? `Venue: ${booking.venue}<br>` : ''}
+  ${booking.eventDate ? `Date: ${new Date(booking.eventDate).toLocaleDateString()}<br>` : ''}
+  ${booking.eventTime ? `Time: ${booking.eventTime}` : ''}
+</div>
+
+<p><strong>Attached Documents:</strong></p>
+<ul>
+`;
+
+        documentsToSend.forEach((doc: any) => {
+          const typeLabel = doc.type === 'public_liability' ? 'Public Liability Insurance' :
+                           doc.type === 'pat_testing' ? 'PAT Testing Certificate' :
+                           doc.type === 'music_license' ? 'Music License' : doc.type;
+          emailBody += `<li>${typeLabel} - ${doc.name}</li>`;
+        });
+
+        emailBody += `</ul>`;
+
+        if (customMessage && customMessage.trim()) {
+          emailBody += `
+<div style="border-left: 4px solid #667eea; padding-left: 16px; margin: 20px 0;">
+  <p><strong>Additional Message:</strong></p>
+  <p>${customMessage.replace(/\n/g, '<br>')}</p>
+</div>`;
+        }
+
+        emailBody += `
+<p>If you have any questions about these documents, please don't hesitate to contact me.</p>
+
+<p>Best regards,<br>
+${businessName}</p>
+`;
+
+        // Create attachments array
+        const attachments = documentsToSend.map((doc: any) => ({
+          url: doc.documentUrl,
+          filename: doc.name
+        }));
+
+        await emailService.sendEmail({
+          to: recipientEmail,
+          subject: subject,
+          html: emailBody,
+          attachments: attachments
+        });
+
+        console.log(`✅ Compliance documents sent for booking ${bookingId} to ${recipientEmail}`);
+        
+        res.json({ 
+          success: true, 
+          message: `Compliance documents sent to ${recipientEmail}`,
+          documentCount: documentsToSend.length
+        });
+
+      } catch (error: any) {
+        console.error('❌ Failed to send compliance documents:', error);
+        res.status(500).json({ 
+          error: 'Failed to send compliance documents',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
   console.log('✅ Booking routes configured');
 }
