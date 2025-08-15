@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -29,6 +29,62 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   const [importResult, setImportResult] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Force text visibility in dialog with aggressive approach
+  useEffect(() => {
+    if (isDialogOpen) {
+      const timer = setTimeout(() => {
+        const dialogContent = document.querySelector('[data-radix-dialog-content]');
+        if (dialogContent) {
+          // Force dialog background
+          (dialogContent as HTMLElement).style.setProperty('background-color', 'white', 'important');
+          (dialogContent as HTMLElement).style.setProperty('color', 'black', 'important');
+          
+          // Force all text elements to be visible with multiple selectors
+          const selectors = [
+            '*', 'p', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+            'label', 'button', 'a', 'li', 'td', 'th', 'input', 'textarea'
+          ];
+          
+          selectors.forEach(selector => {
+            const elements = dialogContent.querySelectorAll(selector);
+            elements.forEach((element) => {
+              const htmlElement = element as HTMLElement;
+              htmlElement.style.setProperty('color', 'black', 'important');
+              htmlElement.style.setProperty('background-color', 'inherit', 'important');
+              
+              // Force specific text classes
+              if (htmlElement.classList.contains('text-gray-600') || 
+                  htmlElement.classList.contains('text-muted-foreground')) {
+                htmlElement.style.setProperty('color', '#4b5563', 'important');
+              }
+            });
+          });
+          
+          console.log('Applied text visibility fixes to dialog');
+        }
+      }, 50);
+      
+      // Apply fixes multiple times to ensure they stick
+      const timer2 = setTimeout(() => {
+        const dialogContent = document.querySelector('[data-radix-dialog-content]');
+        if (dialogContent) {
+          const allElements = dialogContent.querySelectorAll('*');
+          allElements.forEach((element) => {
+            const htmlElement = element as HTMLElement;
+            if (htmlElement.style.color === '' || htmlElement.style.color === 'white') {
+              htmlElement.style.setProperty('color', 'black', 'important');
+            }
+          });
+        }
+      }, 200);
+      
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(timer2);
+      };
+    }
+  }, [isDialogOpen]);
 
   // Local Calendar File Import
   const fileImportMutation = useMutation({
