@@ -31,6 +31,11 @@ export default function DocumentUploadDialog({ booking, open, onClose }: Documen
   }, [open, booking]);
 
   const fetchDocuments = async () => {
+    if (!booking?.id) {
+      console.error('Booking or booking ID not available for document fetch');
+      return;
+    }
+    
     setLoadingDocuments(true);
     try {
       const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
@@ -62,6 +67,15 @@ export default function DocumentUploadDialog({ booking, open, onClose }: Documen
       toast({
         title: "No file selected",
         description: "Please select a PDF file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!booking?.id) {
+      toast({
+        title: "Error",
+        description: "Booking information not available",
         variant: "destructive",
       });
       return;
