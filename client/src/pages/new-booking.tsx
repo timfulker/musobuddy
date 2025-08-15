@@ -269,52 +269,20 @@ export default function NewBookingPage() {
   const watchedVenueAddress = form.watch('venueAddress');
   const [formInitialized, setFormInitialized] = useState(false);
   
+  // Load existing mileage data when editing
   useEffect(() => {
-    // Always skip calculation if we're in edit mode and already have existing mileage data
-    if (isEditMode && editingBooking) {
-      if (editingBooking.distance || editingBooking.duration) {
-        console.log('🚗 Skipping mileage calculation - existing booking already has mileage data');
-        setMileageCalculated(true);
-        return;
-      }
+    if (isEditMode && editingBooking && (editingBooking.distance || editingBooking.duration)) {
+      setMileageData({
+        distance: editingBooking.distance || null,
+        distanceValue: editingBooking.distanceValue || null,
+        duration: editingBooking.duration || null,
+        isCalculating: false,
+        error: null
+      });
+      setMileageCalculated(true);
+      console.log('✅ Loaded existing mileage data for editing booking');
     }
-    
-    // Skip if mileage has already been calculated for this session
-    if (mileageCalculated || mileageData.distance) {
-      console.log('🚗 Skipping mileage calculation - already calculated for this booking');
-      return;
-    }
-    
-    // Skip calculation during initial form population
-    if (isEditMode && !formInitialized) {
-      console.log('🚗 Skipping mileage calculation - form still initializing');
-      return;
-    }
-    
-    console.log('🚗 Venue address changed:', watchedVenueAddress);
-    
-    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
-      // Debounce the calculation to avoid too many API calls
-      const timeoutId = setTimeout(() => {
-        console.log('🚗 Triggering mileage calculation...');
-        calculateMileage(watchedVenueAddress);
-      }, 1000);
-      
-      return () => clearTimeout(timeoutId);
-    } else {
-      // Clear mileage data when address is too short (only for new bookings)
-      if (!isEditMode || !editingBooking) {
-        console.log('🚗 Clearing mileage data - address too short');
-        setMileageData({
-          distance: null,
-          distanceValue: null,
-          duration: null,
-          isCalculating: false,
-          error: null
-        });
-      }
-    }
-  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking, formInitialized, mileageCalculated, mileageData.distance]);
+  }, [isEditMode, editingBooking]);
 
   // Populate form with existing booking data when editing
   useEffect(() => {
