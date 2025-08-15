@@ -18,6 +18,8 @@ Onboarding wizard: Should be a helpful optional tool rather than mandatory, appe
 Invoice data integrity: When invoices are edited, the PDF automatically regenerates with updated data and uploads to replace the old version, ensuring clients always see accurate information.
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
+Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
+Launch timeline: Few days for bug fixes → next week for landing page → beta testing with 4-5 users (2-3 weeks starting ~22nd/23rd) → full launch mid-to-end September. Primary concern: scalability during beta testing phase.
 
 ## System Architecture
 
