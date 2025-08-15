@@ -108,7 +108,7 @@ export default function DocumentUploadDialog({ booking, open, onClose }: Documen
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       
       // Also invalidate the specific booking query to refresh the form (matching the exact query key pattern)
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings", bookingId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings", booking.id.toString()] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] }); // This will refresh the form data
       
       // Auto-close dialog after successful upload
