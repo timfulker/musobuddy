@@ -27,6 +27,7 @@ import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
+import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
@@ -1471,6 +1472,15 @@ export default function UnifiedBookings() {
                                                     openDocumentManagerDialog(groupBooking);
                                                   }}
                                                 />
+                                                {/* Compliance indicator - shows available compliance documents */}
+                                                <ComplianceIndicator 
+                                                  bookingId={groupBooking.id}
+                                                  booking={groupBooking}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openComplianceDialog(groupBooking);
+                                                  }}
+                                                />
                                                 {/* Conflict badge - matching dashboard style */}
                                                 {detectConflicts(groupBooking).length > 0 && (
                                                   <Badge 
@@ -1601,6 +1611,15 @@ export default function UnifiedBookings() {
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       openDocumentManagerDialog(booking);
+                                    }}
+                                  />
+                                  {/* Compliance indicator - shows available compliance documents */}
+                                  <ComplianceIndicator 
+                                    bookingId={booking.id}
+                                    booking={booking}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openComplianceDialog(booking);
                                     }}
                                   />
                                   {/* Conflict badge - matching dashboard style */}
@@ -1944,6 +1963,15 @@ export default function UnifiedBookings() {
                                                 openDocumentManagerDialog(booking);
                                               }}
                                             />
+                                            {/* Compliance indicator - shows available compliance documents */}
+                                            <ComplianceIndicator 
+                                              bookingId={booking.id}
+                                              booking={booking}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                openComplianceDialog(booking);
+                                              }}
+                                            />
                                             
                                             <div className="flex items-center gap-2">
                                               {/* Respond Menu - show for all bookings */}
@@ -2123,6 +2151,15 @@ export default function UnifiedBookings() {
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   openDocumentManagerDialog(booking);
+                                                }}
+                                              />
+                                              {/* Compliance indicator - shows available compliance documents */}
+                                              <ComplianceIndicator 
+                                                bookingId={booking.id}
+                                                booking={booking}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  openComplianceDialog(booking);
                                                 }}
                                               />
                                               
