@@ -496,6 +496,10 @@ export default function NewBookingPage() {
         encoreAllowed: data.encoreAllowed !== undefined ? data.encoreAllowed : true,
         encoreSuggestions: data.encoreSuggestions || null,
         what3words: data.what3words || null,
+        // Include mileage data if calculated
+        distance: mileageData.distance || null,
+        distanceValue: mileageData.distanceValue || null,
+        duration: mileageData.duration || null,
       };
       
       const response = await apiRequest(`/api/bookings/${editBookingId}`, {
