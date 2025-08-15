@@ -96,6 +96,29 @@ export function setupAdminDatabaseRoutes(app: Express) {
       
       let query = db.select().from(tableSchema);
       
+      // Order results to show meaningful data first
+      if (tableName === 'contracts') {
+        query = query.orderBy(sql`
+          CASE 
+            WHEN client_name IS NOT NULL AND client_name != '' THEN 0
+            ELSE 1
+          END,
+          id DESC
+        `);
+      } else if (tableName === 'bookings') {
+        query = query.orderBy(sql`id DESC`);
+      } else if (tableName === 'invoices') {
+        query = query.orderBy(sql`
+          CASE 
+            WHEN client_name IS NOT NULL AND client_name != '' THEN 0
+            ELSE 1
+          END,
+          id DESC
+        `);
+      } else {
+        query = query.orderBy(sql`id DESC`);
+      }
+      
       // Apply search filtering using raw SQL for better compatibility
       if (search && typeof search === 'string' && search.trim()) {
         const searchTerm = search.trim();
