@@ -509,6 +509,7 @@ export default function NewBookingPage() {
       return await response.json();
     },
     onSuccess: () => {
+      console.log('✅ Booking update successful!');
       toast({
         title: "Success!",
         description: "Booking updated successfully",
@@ -517,6 +518,7 @@ export default function NewBookingPage() {
       navigate('/bookings');
     },
     onError: (error: any) => {
+      console.error('❌ Booking update failed:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update booking",
@@ -526,9 +528,12 @@ export default function NewBookingPage() {
   });
 
   const onSubmit = (data: FullBookingFormData) => {
+    console.log('🚀 Form submission triggered:', { isEditMode, mileageData });
     if (isEditMode) {
+      console.log('📝 Updating booking with data:', { ...data, mileageData });
       updateBookingMutation.mutate(data);
     } else {
+      console.log('➕ Creating new booking with data:', { ...data, mileageData });
       createBookingMutation.mutate(data);
     }
   };
