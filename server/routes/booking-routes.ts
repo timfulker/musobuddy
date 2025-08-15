@@ -19,6 +19,14 @@ export function registerBookingRoutes(app: Express) {
       }
       const bookings = await storage.getBookings(userId);
       console.log(`✅ Retrieved ${bookings.length} bookings for user ${userId}`);
+      
+      // Debug: Check uploadedDocuments for booking #7264
+      const booking7264 = bookings.find(b => b.id === 7264);
+      if (booking7264) {
+        console.log(`📄 Booking #7264 uploadedDocuments:`, booking7264.uploadedDocuments);
+        console.log(`📄 Booking #7264 uploadedDocuments type:`, typeof booking7264.uploadedDocuments);
+      }
+      
       res.json(bookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
