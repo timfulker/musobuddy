@@ -1546,8 +1546,8 @@ export default function NewBookingPage() {
             </Card>
 
 
-            {/* Document Management Section - Only show in edit mode */}
-            {isEditMode && editingBooking && (
+            {/* Document Management Section - Show for any existing booking */}
+            {editingBooking && (
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
                 <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
                   <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
@@ -1695,7 +1695,7 @@ export default function NewBookingPage() {
         </Form>
         
         {/* Documents Manager Dialog */}
-        {isEditMode && editingBooking && (
+        {editingBooking && (
           <BookingDocumentsManager
             booking={editingBooking}
             isOpen={documentsManagerOpen}
