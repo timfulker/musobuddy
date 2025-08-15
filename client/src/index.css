@@ -823,10 +823,31 @@ body {
   @apply bg-muted bg-opacity-50;
 }
 
-/* CRITICAL FIX: Google Calendar Dialog Text Visibility */
+/* GLOBAL LUMINANCE-AWARE STYLING SYSTEM */
+/* Automatically adjusts text contrast based on background luminance */
+
+/* CSS Custom Properties for luminance-aware theming */
+:root {
+  --luminance-threshold: 0.5;
+  --light-text-primary: #000000;
+  --light-text-muted: #4b5563;
+  --dark-text-primary: #ffffff;
+  --dark-text-muted: #a1a1aa;
+}
+
+/* Global luminance-aware utility classes */
+.luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+.luminance-aware-muted {
+  color: var(--optimal-muted-color, var(--light-text-muted)) !important;
+}
+
+/* Dialog system luminance awareness */
 [data-radix-dialog-content] {
-  background: white !important;
-  color: black !important;
+  background: var(--background, white) !important;
+  color: var(--optimal-text-color, #000000) !important;
 }
 
 [data-radix-dialog-content] *,
@@ -838,13 +859,33 @@ body {
 [data-radix-dialog-content] span,
 [data-radix-dialog-content] div,
 [data-radix-dialog-content] label {
-  color: black !important;
+  color: inherit !important;
 }
 
 [data-radix-dialog-content] .text-gray-600,
 [data-radix-dialog-content] .text-gray-700,
 [data-radix-dialog-content] .text-muted-foreground {
-  color: #4b5563 !important;
+  color: var(--optimal-muted-color, #4b5563) !important;
+}
+
+/* Card system luminance awareness */
+.card-luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+.card-luminance-aware .text-muted-foreground {
+  color: var(--optimal-muted-color, var(--light-text-muted)) !important;
+}
+
+/* Button system luminance awareness */
+.btn-luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+/* Auto-apply luminance awareness to theme-colored backgrounds */
+[style*="background-color"],
+[class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-inherit"]) {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
 /* Loading states */

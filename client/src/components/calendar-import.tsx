@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { Upload, CheckCircle, AlertCircle, Calendar, RefreshCw } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import GoogleCalendarIntegration from "./google-calendar-integration";
+import { useDialogLuminanceAware } from "@/hooks/use-luminance-aware";
 
 interface CalendarImportProps {
   onImportComplete?: () => void;
@@ -30,61 +31,8 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Force text visibility in dialog with aggressive approach
-  useEffect(() => {
-    if (isDialogOpen) {
-      const timer = setTimeout(() => {
-        const dialogContent = document.querySelector('[data-radix-dialog-content]');
-        if (dialogContent) {
-          // Force dialog background
-          (dialogContent as HTMLElement).style.setProperty('background-color', 'white', 'important');
-          (dialogContent as HTMLElement).style.setProperty('color', 'black', 'important');
-          
-          // Force all text elements to be visible with multiple selectors
-          const selectors = [
-            '*', 'p', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-            'label', 'button', 'a', 'li', 'td', 'th', 'input', 'textarea'
-          ];
-          
-          selectors.forEach(selector => {
-            const elements = dialogContent.querySelectorAll(selector);
-            elements.forEach((element) => {
-              const htmlElement = element as HTMLElement;
-              htmlElement.style.setProperty('color', 'black', 'important');
-              htmlElement.style.setProperty('background-color', 'inherit', 'important');
-              
-              // Force specific text classes
-              if (htmlElement.classList.contains('text-gray-600') || 
-                  htmlElement.classList.contains('text-muted-foreground')) {
-                htmlElement.style.setProperty('color', '#4b5563', 'important');
-              }
-            });
-          });
-          
-          console.log('Applied text visibility fixes to dialog');
-        }
-      }, 50);
-      
-      // Apply fixes multiple times to ensure they stick
-      const timer2 = setTimeout(() => {
-        const dialogContent = document.querySelector('[data-radix-dialog-content]');
-        if (dialogContent) {
-          const allElements = dialogContent.querySelectorAll('*');
-          allElements.forEach((element) => {
-            const htmlElement = element as HTMLElement;
-            if (htmlElement.style.color === '' || htmlElement.style.color === 'white') {
-              htmlElement.style.setProperty('color', 'black', 'important');
-            }
-          });
-        }
-      }, 200);
-      
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(timer2);
-      };
-    }
-  }, [isDialogOpen]);
+  // Apply global luminance-aware styling to dialogs
+  useDialogLuminanceAware();
 
   // Local Calendar File Import
   const fileImportMutation = useMutation({
@@ -160,10 +108,10 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] bg-white text-black [&_*]:text-black [&_.text-gray-600]:text-gray-600 [&_.text-gray-700]:text-gray-700 [&_.text-muted-foreground]:text-gray-600" style={{ background: 'white', color: 'black' }}>
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle className="text-black" style={{ color: 'black' }}>Calendar Integration</DialogTitle>
-          <DialogDescription className="text-gray-700" style={{ color: '#374151' }}>
+          <DialogTitle>Calendar Integration</DialogTitle>
+          <DialogDescription>
             Sync your bookings with your calendar using Google Calendar integration or import from .ics files
           </DialogDescription>
         </DialogHeader>
