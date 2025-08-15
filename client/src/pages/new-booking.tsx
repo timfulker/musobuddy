@@ -1514,6 +1514,7 @@ export default function NewBookingPage() {
                     <div>Booking ID: {editBookingId || 'None'}</div>
                     <div>Has Booking Data: {editingBooking ? 'Yes' : 'No'}</div>
                     <div>Documents: {editingBooking?.uploadedDocuments ? JSON.stringify(editingBooking.uploadedDocuments) : 'None'}</div>
+                    <div>Raw Booking Data: {editingBooking ? JSON.stringify(Object.keys(editingBooking)) : 'No booking'}</div>
                   </div>
                 </CardContent>
               </Card>
