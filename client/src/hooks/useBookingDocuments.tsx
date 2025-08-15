@@ -25,6 +25,9 @@ export function useBookingDocuments(bookingId: number, booking?: any): UseBookin
       try {
         // Get new multi-document count
         const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         const data = await response.json();
         let newDocCount = data.documents?.length || 0;
         
@@ -41,6 +44,7 @@ export function useBookingDocuments(bookingId: number, booking?: any): UseBookin
           setDocumentCount(totalCount);
         }
       } catch (err: any) {
+        console.error('📄 Error fetching documents for booking', bookingId, ':', err.message);
         if (mounted) {
           // If API fails, still check for legacy document
           let legacyDocCount = 0;
@@ -49,7 +53,7 @@ export function useBookingDocuments(bookingId: number, booking?: any): UseBookin
           }
           
           setDocumentCount(legacyDocCount);
-          setError(null); // Don't surface this error to UI
+          setError(err.message);
         }
       } finally {
         if (mounted) {
