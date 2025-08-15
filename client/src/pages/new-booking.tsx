@@ -113,7 +113,9 @@ export default function NewBookingPage() {
     queryKey: ['/api/bookings', editBookingId],
     queryFn: async () => {
       if (!editBookingId) return null;
+      console.log(`🔍 Fetching booking ${editBookingId} from API...`);
       const response = await apiRequest(`/api/bookings/${editBookingId}`);
+      console.log(`📄 Retrieved booking data:`, response);
       return response;
     },
     enabled: isEditMode
@@ -276,7 +278,8 @@ export default function NewBookingPage() {
 
   // Populate form with existing booking data when editing
   useEffect(() => {
-    if (editingBooking && isEditMode) {
+    console.log('📝 Form population useEffect triggered - editingBooking:', !!editingBooking, 'isEditMode:', isEditMode, 'isLoadingBooking:', isLoadingBooking);
+    if (editingBooking && isEditMode && !isLoadingBooking) {
       console.log('📝 Populating form with booking data:', editingBooking);
       
       const formatDate = (date: any) => {
