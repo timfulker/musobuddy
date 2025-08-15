@@ -68,7 +68,7 @@ export default function AddressAutocomplete({
 
   // Search for places using our backend API (which can use Places API New)
   const searchPlaces = async (query: string) => {
-    if (!query.trim() || query.length < 2) {
+    if (!query.trim() || query.length < 3) { // Require at least 3 characters
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -99,13 +99,13 @@ export default function AddressAutocomplete({
     }
   };
 
-  // Debounce search requests
+  // Debounce search requests with longer delay to prevent interrupting typing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (inputValue) {
+      if (inputValue && inputValue.length >= 3) { // Only search after 3+ characters
         searchPlaces(inputValue);
       }
-    }, 300);
+    }, 800); // Longer delay to allow more typing
     
     return () => clearTimeout(timeoutId);
   }, [inputValue]);

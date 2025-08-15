@@ -371,6 +371,7 @@ export default function NewBookingPage() {
           isCalculating: false,
           error: null
         });
+        setMileageCalculated(true);
         console.log('✅ Loaded existing mileage data:', {
           distance: editingBooking.distance,
           duration: editingBooking.duration
@@ -755,40 +756,10 @@ export default function NewBookingPage() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
                           <FormControl>
-                            <AddressAutocomplete
-                              onSelect={(addressData) => {
-                                console.log('📍 Raw address data received:', addressData);
-                                
-                                // Set venue name to the display name from Places API
-                                const venueName = addressData.address;
-                                field.onChange(venueName);
-                                
-                                // Auto-populate the venue address field with the formatted address
-                                if (addressData.formattedAddress) {
-                                  form.setValue('venueAddress', addressData.formattedAddress);
-                                  console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
-                                  
-                                  // No automatic calculation - user will use button if needed
-                                }
-
-                                // Auto-populate venue contact information if available
-                                if (addressData.contactInfo?.phoneNumber) {
-                                  form.setValue('venueContactInfo', addressData.contactInfo.phoneNumber);
-                                  console.log('✅ Auto-populated venue phone:', addressData.contactInfo.phoneNumber);
-                                }
-
-                                // Show business info in console for now (could be displayed in UI later)
-                                if (addressData.businessInfo) {
-                                  console.log('📍 Venue business info:', {
-                                    rating: addressData.businessInfo.rating,
-                                    hours: addressData.businessInfo.openingHours,
-                                    website: addressData.contactInfo?.website
-                                  });
-                                }
-                              }}
-                              placeholder="Start typing venue name... (e.g., Royal Albert Hall)"
-                              defaultValue={field.value}
-                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 w-full min-w-0"
+                            <Input
+                              {...field}
+                              placeholder="Enter venue name... (e.g., Royal Albert Hall)"
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
                             />
                           </FormControl>
                           <FormMessage />
