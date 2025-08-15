@@ -50,8 +50,38 @@ export class EmailService {
         console.log(`📧 CC: ${messageData.cc}`);
       }
 
-      if (emailData.attachments) {
-        messageData.attachment = emailData.attachments;
+      // Handle attachments - download from URLs if necessary
+      if (emailData.attachments && emailData.attachments.length > 0) {
+        const processedAttachments = [];
+        
+        for (const attachment of emailData.attachments) {
+          if (attachment.url) {
+            try {
+              // Download file from URL
+              const response = await fetch(attachment.url);
+              if (response.ok) {
+                const buffer = await response.arrayBuffer();
+                processedAttachments.push({
+                  filename: attachment.filename || 'document.pdf',
+                  data: Buffer.from(buffer)
+                });
+                console.log(`📎 Downloaded attachment: ${attachment.filename}`);
+              } else {
+                console.error(`❌ Failed to download attachment from ${attachment.url}`);
+              }
+            } catch (error) {
+              console.error(`❌ Error downloading attachment:`, error);
+            }
+          } else if (attachment.data || attachment.filename) {
+            // Direct attachment data
+            processedAttachments.push(attachment);
+          }
+        }
+        
+        if (processedAttachments.length > 0) {
+          messageData.attachment = processedAttachments;
+          console.log(`📎 Added ${processedAttachments.length} attachments to email`);
+        }
       }
 
       // CRITICAL FIX: Add custom headers support for GlockApps testing
