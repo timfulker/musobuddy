@@ -7,18 +7,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function serveStaticFixed(app: Express) {
-  // Get the project root directory (two levels up from server/core)
-  const projectRoot = join(__dirname, '..', '..');
-  const clientDistPath = join(projectRoot, 'dist');
+  // Use absolute path to workspace
+  const clientDistPath = '/home/runner/workspace/dist/public';
   
   console.log('🏭 Static serving setup:', {
-    projectRoot,
     clientDistPath,
     distExists: existsSync(clientDistPath)
   });
   
   if (existsSync(clientDistPath)) {
-    // Serve static files from dist directory
+    // Serve static files from dist/public directory
     app.use(express.static(clientDistPath));
     
     // Catch-all handler for client-side routing

@@ -41,11 +41,22 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get('/', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    // In production, this will be handled by the static serving below
-    return;
+app.get('/', (req, res, next) => {
+  // If it's an explicit API health check or a curl/health check request
+  if (req.headers['user-agent']?.includes('GoogleHC') || 
+      req.headers['accept']?.includes('application/json')) {
+    return res.status(200).json({ 
+      status: 'MusoBuddy API', 
+      mode: process.env.NODE_ENV,
+      timestamp: new Date().toISOString() 
+    });
   }
+  
+  if (process.env.NODE_ENV === 'production') {
+    // In production, let the static serving middleware handle it
+    return next();
+  }
+  
   res.status(200).json({ 
     status: 'MusoBuddy API', 
     mode: process.env.NODE_ENV,
@@ -118,7 +129,8 @@ const { registerRoutes } = await import('./routes');
 await registerRoutes(app);
 
 // Start server
-const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 5000) : 5000;
+// Replit provides PORT env variable, default to 5000
+const port = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
   // Development with Vite
