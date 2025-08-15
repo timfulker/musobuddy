@@ -117,26 +117,36 @@ export function setupCollaborativeFormRoutes(app: Express) {
       const { bookingId } = req.params;
       const { token, fieldLocks, ...updateData } = req.body;
 
+      console.log(`📝 [COLLABORATIVE-FORM] Update request for booking ${bookingId} with token ${token?.substring(0, 8)}...`);
+
       if (!token) {
         return res.status(401).json({ error: 'Portal token required' });
       }
 
-      // Verify the portal token exists for this booking
+      // First, try to find contract with this token
+      const contract = await db.select().from(contracts)
+        .where(eq(contracts.clientPortalToken, token))
+        .then(results => results[0]);
+
+      if (!contract) {
+        console.log(`❌ [COLLABORATIVE-FORM] No contract found with token ${token?.substring(0, 8)}...`);
+        return res.status(403).json({ error: 'Invalid portal token' });
+      }
+
+      console.log(`✅ [COLLABORATIVE-FORM] Found contract ${contract.id} with enquiryId ${contract.enquiryId}`);
+
+      // For contracts created from bookings, use the enquiryId
+      // For standalone contracts, the bookingId parameter should match the contract ID
+      const targetBookingId = contract.enquiryId || parseInt(bookingId);
+      
+      // Verify the booking exists
       const booking = await db.select().from(bookings)
-        .where(eq(bookings.id, parseInt(bookingId)))
+        .where(eq(bookings.id, targetBookingId))
         .then(results => results[0]);
 
       if (!booking) {
-        return res.status(404).json({ error: 'Booking not found' });
-      }
-
-      // Get associated contract to verify token
-      const contract = await db.select().from(contracts)
-        .where(eq(contracts.id, booking.contractId))
-        .then(results => results[0]);
-
-      if (!contract || contract.clientPortalToken !== token) {
-        return res.status(403).json({ error: 'Invalid portal token' });
+        console.log(`❌ [COLLABORATIVE-FORM] No booking found with ID ${targetBookingId}`);
+        return res.status(404).json({ error: 'Associated booking not found' });
       }
 
       // Update booking with collaborative data
@@ -145,7 +155,9 @@ export function setupCollaborativeFormRoutes(app: Express) {
           ...updateData,
           updatedAt: new Date()
         })
-        .where(eq(bookings.id, parseInt(bookingId)));
+        .where(eq(bookings.id, targetBookingId));
+
+      console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);
 
       // TODO: Send notification to user about updated collaborative form
       
