@@ -461,6 +461,10 @@ export const bookings = pgTable("bookings", {
   contactPhone: text("contact_phone"), // Alternative contact phone
   dressCode: text("dress_code"), // Event dress code requirements
   
+  // Email processing duplicate prevention
+  emailHash: varchar("email_hash").unique(), // Unique hash to prevent duplicate email processing
+  processedAt: timestamp("processed_at"), // When email was processed into booking
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

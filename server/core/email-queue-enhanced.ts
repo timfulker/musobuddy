@@ -28,18 +28,78 @@ interface UserQueue {
 class EnhancedEmailQueue {
   private userQueues = new Map<string, UserQueue>(); // Per-user queues
   private readonly maxRetries = 3;
-  private readonly processingDelay = 5000; // 5 seconds between jobs for AI accuracy PER USER
+  private processingDelay = 1000; // Dynamic delay based on system load (API can handle 300+ RPM)
   private processedEmails = new Map<string, Date>(); // Track recently processed emails
   private readonly duplicateWindowMs = 10000; // 10 second window for duplicate detection
-
+  private apiCallCount = 0; // Track API calls per minute
+  private lastMinuteReset = Date.now();
+  
   constructor() {
-    console.log('📧 Enhanced Per-User Email Queue initialized - each user processes independently');
+    console.log('📧 Enhanced Per-User Email Queue initialized with dynamic AI rate limiting');
     
     // Clean up old processed emails and inactive user queues every minute
     setInterval(() => {
       this.cleanupProcessedEmails();
       this.cleanupInactiveUserQueues();
+      this.resetApiCallCounter();
     }, 60000);
+  }
+
+  /**
+   * Reset API call counter and adjust processing delay based on load
+   */
+  private resetApiCallCounter() {
+    console.log(`📈 [API-STATS] Processed ${this.apiCallCount} API calls in the last minute`);
+    
+    // Adjust processing delay based on API usage
+    if (this.apiCallCount > 200) {
+      this.processingDelay = 2000; // Slow down if approaching limits
+      console.log('📧 [QUEUE] High API usage detected, increasing delay to 2 seconds');
+    } else if (this.apiCallCount > 100) {
+      this.processingDelay = 1500; // Moderate slowdown
+      console.log('📧 [QUEUE] Moderate API usage, delay set to 1.5 seconds');
+    } else {
+      this.processingDelay = 500; // Fast processing for low usage
+      console.log('📧 [QUEUE] Low API usage, optimizing delay to 0.5 seconds');
+    }
+    
+    this.apiCallCount = 0;
+    this.lastMinuteReset = Date.now();
+  }
+
+  /**
+   * Track API calls for dynamic rate limiting
+   */
+  private recordApiCall() {
+    this.apiCallCount++;
+  }
+
+  /**
+   * Get performance insights for the current system
+   */
+  private getPerformanceInsights() {
+    const minutesElapsed = Math.ceil((Date.now() - this.lastMinuteReset) / 60000);
+    const estimatedRpm = this.apiCallCount * minutesElapsed;
+    
+    let status = 'optimal';
+    let recommendation = 'System running efficiently';
+    
+    if (this.apiCallCount > 200) {
+      status = 'high-load';
+      recommendation = 'Consider distributing load or requesting API limit increase';
+    } else if (this.apiCallCount > 100) {
+      status = 'moderate-load';
+      recommendation = 'Monitor for potential rate limits';
+    }
+    
+    return {
+      currentRpm: estimatedRpm,
+      targetLimit: '300 RPM (paid OpenAI)',
+      utilizationPercent: Math.round((estimatedRpm / 300) * 100),
+      status,
+      recommendation,
+      delayOptimization: this.processingDelay < 1000 ? 'Optimized for speed' : 'Conservative for stability'
+    };
   }
 
   /**
@@ -219,9 +279,9 @@ class EnhancedEmailQueue {
         release();
       }
 
-      // Add delay between processing jobs for AI accuracy (per user)
+      // Add delay between processing jobs for AI rate limiting (per user)
       if (userQueue.jobs.length > 0) {
-        console.log(`📧 [USER:${userId}] Waiting ${this.processingDelay}ms before next email for AI accuracy...`);
+        console.log(`📧 [USER:${userId}] Waiting ${this.processingDelay}ms before next email (API rate limiting)...`);
         await new Promise(resolve => setTimeout(resolve, this.processingDelay));
       }
     }
@@ -333,15 +393,18 @@ class EnhancedEmailQueue {
     const { cleanEncoreTitle } = await import('./booking-formatter');
     
     try {
-      console.log(`🤖 [${requestId}] AI PARSING: Taking time to carefully parse email for user ${user.id}`);
+      console.log(`🤖 [${requestId}] AI PARSING: Processing email for user ${user.id}`);
       console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Email body hash:`, 
         Buffer.from(bodyField.substring(0, 200)).toString('base64').substring(0, 20));
       console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: From field:`, fromField?.substring(0, 100));
       console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Subject:`, subjectField?.substring(0, 100));
       
+      // Track this API call for dynamic rate limiting
+      this.recordApiCall();
+      
       const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
       
-      console.log(`✅ [${requestId}] AI PARSING: Completed parsing with 5-second delay for accuracy`);
+      console.log(`✅ [${requestId}] AI PARSING: Completed parsing (API call #${this.apiCallCount} this minute)`);
       console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Parsed data from AI:`, {
         venue: parsedData.venue,
         eventDate: parsedData.eventDate,
@@ -419,39 +482,80 @@ class EnhancedEmailQueue {
   }
 
   /**
-   * Create booking with database-level locking to prevent duplicates
+   * Create booking with database-level duplicate prevention using unique constraints
    */
   private async createBookingWithLocking(bookingData: any): Promise<any> {
     const { storage } = await import('./storage');
     
-    // Check for recent duplicate based on email hash
-    if (bookingData.emailHash) {
-      // This would ideally check the database for recent bookings with same hash
-      // For now, we'll rely on our in-memory duplicate detection
-    }
+    console.log(`🔒 [BOOKING-LOCK] Creating booking with emailHash: ${bookingData.emailHash?.substring(0, 16)}...`);
     
-    // Create the booking with retry logic
-    let retries = 0;
-    const maxRetries = 3;
-    
-    while (retries < maxRetries) {
-      try {
-        const newBooking = await storage.createBooking(bookingData);
-        return newBooking;
-      } catch (error: any) {
-        retries++;
-        console.error(`⚠️ Booking creation attempt ${retries} failed:`, error.message);
+    // Create the booking with proper error handling for duplicate constraints
+    try {
+      const newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ [BOOKING-LOCK] Successfully created booking #${newBooking.id}`);
+      return newBooking;
+    } catch (error: any) {
+      // Check if this is a unique constraint violation (duplicate email hash)
+      if (error.message.includes('unique constraint') || 
+          error.message.includes('duplicate key') ||
+          error.code === '23505') { // PostgreSQL unique violation code
         
-        if (retries >= maxRetries) {
-          throw error;
+        console.log(`📧 [DUPLICATE-PREVENT] Email hash ${bookingData.emailHash?.substring(0, 16)}... already processed, skipping duplicate`);
+        
+        // Find and return the existing booking instead
+        try {
+          const existingBookings = await storage.getBookingsByUser(bookingData.userId);
+          const duplicateBooking = existingBookings.find(b => 
+            b.emailHash === bookingData.emailHash || 
+            (b.clientEmail === bookingData.clientEmail && 
+             b.eventDate?.toISOString() === bookingData.eventDate?.toISOString())
+          );
+          
+          if (duplicateBooking) {
+            console.log(`🔄 [DUPLICATE-PREVENT] Found existing booking #${duplicateBooking.id}, returning it instead`);
+            return duplicateBooking;
+          }
+        } catch (findError) {
+          console.error(`⚠️ [DUPLICATE-PREVENT] Could not find duplicate booking:`, findError.message);
         }
         
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 500 * retries));
+        // If we can't find the duplicate, throw a descriptive error
+        throw new Error('Duplicate email already processed - booking may have been created by concurrent request');
       }
+      
+      // For any other error, implement retry logic with exponential backoff
+      console.error(`❌ [BOOKING-LOCK] Database error during booking creation:`, {
+        message: error.message,
+        code: error.code,
+        emailHash: bookingData.emailHash?.substring(0, 16)
+      });
+      
+      // Retry for transient database errors (connection issues, deadlocks, etc.)
+      if (error.message.includes('connection') || error.message.includes('timeout') || error.code === '40001') {
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+          retries++;
+          console.log(`🔄 [BOOKING-RETRY] Attempt ${retries}/${maxRetries} after ${500 * retries}ms delay...`);
+          
+          await new Promise(resolve => setTimeout(resolve, 500 * retries));
+          
+          try {
+            const retryBooking = await storage.createBooking(bookingData);
+            console.log(`✅ [BOOKING-RETRY] Successfully created booking #${retryBooking.id} on retry ${retries}`);
+            return retryBooking;
+          } catch (retryError: any) {
+            if (retries >= maxRetries) {
+              throw retryError;
+            }
+          }
+        }
+      }
+      
+      // Re-throw the original error if not a duplicate or retryable error
+      throw error;
     }
-    
-    throw new Error('Failed to create booking after multiple attempts');
   }
 
   /**
@@ -487,15 +591,17 @@ class EnhancedEmailQueue {
     });
     
     return {
-      systemType: 'per-user-queues',
+      systemType: 'per-user-queues-with-dynamic-ai-limiting',
       totalActiveUsers: this.userQueues.size,
       totalJobs,
       totalPending,
       totalProcessing,
       totalFailed,
       recentDuplicatesBlocked: this.processedEmails.size,
-      processingDelay: this.processingDelay,
+      currentProcessingDelay: this.processingDelay,
+      apiCallsThisMinute: this.apiCallCount,
       duplicateWindowMs: this.duplicateWindowMs,
+      performanceInsights: this.getPerformanceInsights(),
       userQueues: Object.fromEntries(userQueueStatus)
     };
   }
