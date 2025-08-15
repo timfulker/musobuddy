@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown, MapPin, FileText, Download, Upload } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -113,37 +113,12 @@ export default function NewBookingPage() {
     queryKey: ['/api/bookings', editBookingId],
     queryFn: async () => {
       if (!editBookingId) return null;
-      console.log(`🔍 Fetching booking ${editBookingId} from API...`);
-      const response = await apiRequest(`/api/bookings/${editBookingId}`);
-      console.log(`📄 Retrieved booking data:`, response);
-      return response;
+      const allBookings = await apiRequest('/api/bookings');
+      const bookingsData = await allBookings.json();
+      return bookingsData.find((b: any) => b.id === parseInt(editBookingId));
     },
     enabled: isEditMode
   });
-
-  // Fetch documents for the booking
-  const { data: bookingDocuments = [], isLoading: isLoadingDocuments } = useQuery({
-    queryKey: ['/api/bookings', editBookingId, 'documents'],
-    queryFn: async () => {
-      if (!editBookingId) return [];
-      const response = await apiRequest(`/api/bookings/${editBookingId}/documents`);
-      return response.documents || [];
-    },
-    enabled: isEditMode && !!editBookingId
-  });
-
-  // Debug documents
-  React.useEffect(() => {
-    if (isEditMode && editingBooking) {
-      console.log('📄 BOOKING FORM DEBUG:', {
-        editMode: isEditMode,
-        bookingId: editingBooking.id,
-        hasBookingData: !!editingBooking,
-        documents: bookingDocuments.length > 0 ? bookingDocuments : 'None',
-        rawBookingData: editingBooking.uploadedDocuments ? JSON.parse(JSON.stringify(editingBooking.uploadedDocuments)) : []
-      });
-    }
-  }, [isEditMode, editingBooking, bookingDocuments]);
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
@@ -243,33 +218,6 @@ export default function NewBookingPage() {
       parkingInfo: "",
       notes: "",
       travelExpense: "",
-      // Collaborative fields
-      venueContact: "",
-      soundTechContact: "",
-      stageSize: "",
-      powerEquipment: "",
-      styleMood: "",
-      mustPlaySongs: "",
-      avoidSongs: "",
-      setOrder: "",
-      firstDanceSong: "",
-      processionalSong: "",
-      signingRegisterSong: "",
-      recessionalSong: "",
-      specialDedications: "",
-      guestAnnouncements: "",
-      loadInInfo: "",
-      soundCheckTime: "",
-      weatherContingency: "",
-      parkingPermitRequired: false,
-      mealProvided: false,
-      dietaryRequirements: "",
-      sharedNotes: "",
-      referenceTracks: "",
-      photoPermission: false,
-      encoreAllowed: false,
-      encoreSuggestions: "",
-      what3words: "",
     },
   });
 
@@ -302,15 +250,8 @@ export default function NewBookingPage() {
 
   // Populate form with existing booking data when editing
   useEffect(() => {
-    console.log('📝 FORM POPULATION DEBUG:', {
-      hasEditingBooking: !!editingBooking,
-      isEditMode,
-      isLoadingBooking,
-      editingBookingData: editingBooking
-    });
-    
-    if (editingBooking && isEditMode && !isLoadingBooking) {
-      console.log('📝 POPULATING FORM NOW with:', editingBooking);
+    if (editingBooking && isEditMode) {
+      console.log('📝 Populating form with booking data:', editingBooking);
       
       const formatDate = (date: any) => {
         if (!date) return '';
@@ -1537,81 +1478,6 @@ export default function NewBookingPage() {
               </CardContent>
             </Card>
 
-            {/* Debug Info - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <Card className="bg-yellow-50 border-yellow-200">
-                <CardContent className="p-4">
-                  <div className="text-sm">
-                    <div><strong>Debug Info:</strong></div>
-                    <div>Edit Mode: {isEditMode ? 'Yes' : 'No'}</div>
-                    <div>Booking ID: {editBookingId || 'None'}</div>
-                    <div>Has Booking Data: {editingBooking ? 'Yes' : 'No'}</div>
-                    <div>Documents: {editingBooking?.uploadedDocuments ? JSON.stringify(editingBooking.uploadedDocuments) : 'None'}</div>
-                    <div>Raw Booking Data: {editingBooking ? JSON.stringify(Object.keys(editingBooking)) : 'No booking'}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Uploaded Documents Section */}
-            {isEditMode && editingBooking && (() => {
-              console.log('🔍 Checking uploaded documents:', editingBooking.uploadedDocuments);
-              const uploadedDocs = editingBooking.uploadedDocuments || [];
-              let parsedDocs = [];
-              
-              try {
-                parsedDocs = typeof uploadedDocs === 'string' ? JSON.parse(uploadedDocs) : uploadedDocs;
-              } catch (error) {
-                console.warn('Failed to parse uploadedDocuments:', error);
-                parsedDocs = [];
-              }
-              
-              console.log('📄 Parsed documents:', parsedDocs);
-              
-              return parsedDocs.length > 0 && (
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
-                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
-                    <CardTitle className="text-xl font-semibold text-green-800 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">📎</span>
-                      </div>
-                      Uploaded Documents
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      {parsedDocs.map((doc: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-green-50/30 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                              <span className="text-green-600 font-bold text-sm">PDF</span>
-                            </div>
-                            <div>
-                              <div className="font-medium text-green-800">{doc.filename}</div>
-                              <div className="text-sm text-green-600">
-                                {doc.type === 'contract' ? 'Contract' : doc.type === 'invoice' ? 'Invoice' : 'Document'}
-                                {doc.uploadedAt && <span className="ml-2">• Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}</span>}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => window.open(doc.url, '_blank')}
-                              className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-                            >
-                              View
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
             {/* Field Lock Management - Only show in edit mode */}
             {isEditMode && editingBooking && (
               <FieldLockManager 
@@ -1621,61 +1487,6 @@ export default function NewBookingPage() {
                   console.log('🔒 Field locks updated:', newFieldLocks);
                 }}
               />
-            )}
-
-            {/* Documents Section - Only show in edit mode when there are documents */}
-            {isEditMode && editingBooking && (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-emerald-100">
-                <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-lg border-b border-emerald-100">
-                  <CardTitle className="text-xl font-semibold text-emerald-800 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-white" />
-                    </div>
-                    Uploaded Documents
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {isLoadingDocuments ? (
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-emerald-500 rounded-full"></div>
-                      Loading documents...
-                    </div>
-                  ) : bookingDocuments.length > 0 ? (
-                    <div className="space-y-3">
-                      {bookingDocuments.map((doc: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-lg border border-emerald-200">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                              <FileText className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{doc.filename}</div>
-                              <div className="text-sm text-gray-500 capitalize">
-                                {doc.type} Document • Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => window.open(doc.url, '_blank')}
-                            className="bg-white/50 hover:bg-emerald-50"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            View
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">No documents uploaded yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Documents will appear here once uploaded</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             )}
 
             {/* Enhanced Action Buttons */}

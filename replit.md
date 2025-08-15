@@ -23,7 +23,6 @@ Invoice reminders remain manual-only by user preference - automatic reminder sys
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
 Launch timeline: Few days for bug fixes → next week for landing page → beta testing with 4-5 users (2-3 weeks starting ~22nd/23rd) → full launch mid-to-end September. Primary concern: scalability during beta testing phase.
 Admin database access: Read-only database administration panel added as submenu in admin section (August 2025). Includes table browsing, filtering, search, and CSV export with strict admin-only access controls. Enhanced frontend security protection prevents non-admin users from accessing admin panel even in development cross-session scenarios. Fixed table name mapping for underscore database tables (compliance_documents, email_templates, etc.) and enhanced search functionality across all database tables.
-Document upload system: Basic document upload functionality implemented with Cloudflare R2 storage and database persistence. Backend works correctly but has minor frontend form synchronization issues. User decided not to prioritize this feature further as it's not essential for launch (August 2025).
 
 ## System Architecture
 

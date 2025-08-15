@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield, Upload } from "lucide-react";
+import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -16,10 +16,9 @@ interface BookingActionMenuProps {
   booking: any;
   onEditBooking?: (booking: any) => void;
   onSendCompliance?: (booking: any) => void;
-  onUploadDocument?: (booking: any) => void;
 }
 
-export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance, onUploadDocument }: BookingActionMenuProps) {
+export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -92,17 +91,10 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
           navigate(`/compliance?bookingId=${booking.id}&action=send`);
         }
         return;
-      case 'upload_document':
-        // Open document upload dialog
-        if (onUploadDocument) {
-          onUploadDocument(booking);
-        }
-        return;
       case 'reject':
         newStatus = 'rejected';
         message = "Booking rejected";
         break;
-
     }
 
     // Update status if it changed, then provide user feedback
@@ -163,14 +155,6 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
           <DollarSign className="w-4 h-4 mr-2" />
           Issue Invoice
         </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => handleAction('upload_document')}
-          disabled={statusUpdateMutation.isPending}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Upload Document
-        </DropdownMenuItem>
-
         <DropdownMenuItem 
           onClick={() => handleAction('send_thankyou')}
           disabled={statusUpdateMutation.isPending}

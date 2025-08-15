@@ -24,24 +24,6 @@ export class BookingStorage {
     return null;
   }
 
-  async getBookingByIdAndUser(id: number, userId: string) {
-    const result = await db.select().from(bookings)
-      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
-    const booking = result[0] || null;
-    
-    if (booking) {
-      // Convert date strings to Date objects for timestamp fields
-      return {
-        ...booking,
-        eventDate: booking.eventDate ? new Date(booking.eventDate) : null,
-        createdAt: booking.createdAt ? new Date(booking.createdAt) : null,
-        updatedAt: booking.updatedAt ? new Date(booking.updatedAt) : null,
-      };
-    }
-    
-    return null;
-  }
-
   async getBookingsByUser(userId: string) {
     const results = await db.select().from(bookings)
       .where(eq(bookings.userId, userId))

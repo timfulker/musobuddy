@@ -25,7 +25,6 @@ import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
-import DocumentUploadDialog from "@/components/DocumentUploadDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
@@ -104,10 +103,6 @@ export default function UnifiedBookings() {
   // Conflict resolution dialog states
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
   const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
-  
-  // Document upload dialog states
-  const [documentUploadDialogOpen, setDocumentUploadDialogOpen] = useState(false);
-  const [selectedBookingForDocument, setSelectedBookingForDocument] = useState<any>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -856,12 +851,6 @@ export default function UnifiedBookings() {
   const handleEditBooking = (booking: any) => {
     navigate(`/new-booking?edit=${booking.id}`);
   };
-  
-  // Handler for opening document upload dialog
-  const handleUploadDocument = (booking: any) => {
-    setSelectedBookingForDocument(booking);
-    setDocumentUploadDialogOpen(true);
-  };
 
   // Get calendar data for the current view
   const calendarData = generateCalendarData();
@@ -1542,7 +1531,6 @@ export default function UnifiedBookings() {
                                               booking={groupBooking}
                                               onEditBooking={handleEditBooking}
                                               onSendCompliance={openComplianceDialog}
-                                              onUploadDocument={handleUploadDocument}
                                             />
                                           </div>
                                         </CardContent>
@@ -1659,7 +1647,6 @@ export default function UnifiedBookings() {
                                   booking={booking}
                                   onEditBooking={handleEditBooking}
                                   onSendCompliance={openComplianceDialog}
-                                  onUploadDocument={handleUploadDocument}
                                 />
                               </div>
                             </div>
@@ -1927,7 +1914,6 @@ export default function UnifiedBookings() {
                                                   booking={booking}
                                                   onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
                                                   onSendCompliance={openComplianceDialog}
-                                                  onUploadDocument={handleUploadDocument}
                                                 />
                                               </div>
                                               
@@ -2084,7 +2070,6 @@ export default function UnifiedBookings() {
                                                     booking={booking}
                                                     onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
                                                     onSendCompliance={openComplianceDialog}
-                                                    onUploadDocument={handleUploadDocument}
                                                   />
                                                 </div>
                                                 
@@ -2215,18 +2200,6 @@ export default function UnifiedBookings() {
           setConflictResolutionDialogOpen(false);
         }}
       />
-      
-      {/* Document Upload Dialog */}
-      {selectedBookingForDocument && (
-        <DocumentUploadDialog
-          booking={selectedBookingForDocument}
-          open={documentUploadDialogOpen}
-          onClose={() => {
-            setDocumentUploadDialogOpen(false);
-            setSelectedBookingForDocument(null);
-          }}
-        />
-      )}
 
       {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
