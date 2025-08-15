@@ -520,7 +520,7 @@ export default function AddressBook() {
                                 <Calendar className="w-4 h-4 text-gray-500" />
                                 <span className="text-sm font-medium">Booking #{bookingId}</span>
                               </div>
-                              <Link href={`/bookings`}>
+                              <Link href={`/bookings?view=calendar&highlight=${bookingId}`}>
                                 <Button variant="ghost" size="sm">
                                   View Details
                                 </Button>
