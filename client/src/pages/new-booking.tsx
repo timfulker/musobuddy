@@ -302,9 +302,15 @@ export default function NewBookingPage() {
 
   // Populate form with existing booking data when editing
   useEffect(() => {
-    console.log('📝 Form population useEffect triggered - editingBooking:', !!editingBooking, 'isEditMode:', isEditMode, 'isLoadingBooking:', isLoadingBooking);
+    console.log('📝 FORM POPULATION DEBUG:', {
+      hasEditingBooking: !!editingBooking,
+      isEditMode,
+      isLoadingBooking,
+      editingBookingData: editingBooking
+    });
+    
     if (editingBooking && isEditMode && !isLoadingBooking) {
-      console.log('📝 Populating form with booking data:', editingBooking);
+      console.log('📝 POPULATING FORM NOW with:', editingBooking);
       
       const formatDate = (date: any) => {
         if (!date) return '';
