@@ -1805,7 +1805,7 @@ export default function UnifiedBookings() {
                                 const booking = validBookings.find((b) => b.id === event.id);
                                 
                                 return (
-                                  <HoverCard key={eventIndex} openDelay={200} closeDelay={500}>
+                                  <HoverCard key={eventIndex} openDelay={200} closeDelay={2000}>
                                     <HoverCardTrigger asChild>
                                       <div
                                         className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
@@ -1959,7 +1959,7 @@ export default function UnifiedBookings() {
                                   const booking = validBookings.find((b) => b.id === event.id);
                                   
                                   return (
-                                    <HoverCard key={eventIndex} openDelay={200} closeDelay={500}>
+                                    <HoverCard key={eventIndex} openDelay={200} closeDelay={2000}>
                                       <HoverCardTrigger asChild>
                                         <div
                                           className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
