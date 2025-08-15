@@ -99,8 +99,20 @@ app.post('/api/webhook/mailgun', async (req, res) => {
           throw new Error(`Failed to fetch from Mailgun storage: ${response.status}`);
         }
         
-        emailData = await response.json();
-        console.log('✅ Fetched email content from storage');
+        const responseText = await response.text();
+        console.log('📧 Raw storage response:', responseText.substring(0, 500));
+        
+        try {
+          emailData = JSON.parse(responseText);
+          console.log('✅ Fetched email content from storage');
+          console.log('📧 Email data keys:', Object.keys(emailData));
+        } catch (parseError) {
+          console.error('❌ Failed to parse storage response as JSON:', parseError);
+          // Try form-encoded response
+          const urlParams = new URLSearchParams(responseText);
+          emailData = Object.fromEntries(urlParams);
+          console.log('📧 Parsed as form data, keys:', Object.keys(emailData));
+        }
       } catch (error) {
         console.error('❌ Failed to fetch from storage:', error);
         console.error('Storage URL:', storageUrl);
