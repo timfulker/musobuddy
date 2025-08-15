@@ -92,15 +92,16 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing fields' });
     }
     
-    // Process with simple system
-    const { SimpleEmailProcessor } = await import('./core/simple-email-processor');
-    const result = await SimpleEmailProcessor.processEmail({
+    // Use the enhanced email queue for processing
+    const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
+    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
       from: fromEmail,
       subject,
-      body: bodyText,
-      recipient,
-      timestamp: new Date()
+      'body-plain': bodyText,
+      recipient
     });
+    
+    const result = { success: true, message: 'Email processed', jobId, queuePosition };
     
     console.log('✅ Email processed:', result);
     res.status(200).json(result);
