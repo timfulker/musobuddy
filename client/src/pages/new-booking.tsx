@@ -107,6 +107,9 @@ export default function NewBookingPage() {
   // Document management dialog state
   const [documentsManagerOpen, setDocumentsManagerOpen] = useState(false);
   
+  // Track if mileage has been calculated to prevent re-calculation
+  const [mileageCalculated, setMileageCalculated] = useState(false);
+  
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
@@ -187,6 +190,7 @@ export default function NewBookingPage() {
           isCalculating: false,
           error: null
         });
+        setMileageCalculated(true); // Mark as calculated to prevent re-calculation
         console.log('✅ Mileage calculated:', data);
       } else {
         throw new Error('No route found');
@@ -269,12 +273,16 @@ export default function NewBookingPage() {
     // Always skip calculation if we're in edit mode and already have existing mileage data
     if (isEditMode && editingBooking) {
       if (editingBooking.distance || editingBooking.duration) {
-        console.log('🚗 Skipping mileage calculation - existing booking already has mileage data:', {
-          distance: editingBooking.distance,
-          duration: editingBooking.duration
-        });
+        console.log('🚗 Skipping mileage calculation - existing booking already has mileage data');
+        setMileageCalculated(true);
         return;
       }
+    }
+    
+    // Skip if mileage has already been calculated for this session
+    if (mileageCalculated || mileageData.distance) {
+      console.log('🚗 Skipping mileage calculation - already calculated for this booking');
+      return;
     }
     
     // Skip calculation during initial form population
@@ -306,7 +314,7 @@ export default function NewBookingPage() {
         });
       }
     }
-  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking, formInitialized]);
+  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking, formInitialized, mileageCalculated, mileageData.distance]);
 
   // Populate form with existing booking data when editing
   useEffect(() => {
