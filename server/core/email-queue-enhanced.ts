@@ -307,9 +307,13 @@ class EnhancedEmailQueue {
       const isEncoreMessage = bodyField.toLowerCase().includes('encore') || 
                               fromField.toLowerCase().includes('encore') ||
                               subjectField.toLowerCase().includes('encore') ||
-                              bodyField.includes('apply now');
+                              subjectField.toLowerCase().includes('job alert') ||
+                              bodyField.includes('encoremusicians.com');
 
-      if (!parsedData.eventDate && !(isEncoreMessage && parsedData.venue && parsedData.eventType)) {
+      // For Encore emails, create booking even without complete data
+      if (isEncoreMessage) {
+        console.log(`🎵 [${requestId}] Encore email detected - creating booking regardless of missing data`);
+      } else if (!parsedData.eventDate) {
         await saveToReviewMessages('No valid event date found', 'Message requires manual review');
         return;
       }
