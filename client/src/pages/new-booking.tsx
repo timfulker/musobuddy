@@ -113,7 +113,7 @@ export default function NewBookingPage() {
   });
   
   // Get documents for the booking being edited
-  const { data: documentsResponse } = useQuery({
+  const { data: documentsResponse, isLoading: documentsLoading } = useQuery({
     queryKey: [`/api/bookings/${editBookingId}/documents`],
     enabled: isEditMode && !!editBookingId,
     retry: false,
@@ -1546,7 +1546,7 @@ export default function NewBookingPage() {
             </Card>
 
 
-            {/* Document Management Section - Show for any existing booking */}
+            {/* Document Management Section - Always show for existing bookings */}
             {editingBooking && (
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
                 <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
@@ -1558,7 +1558,12 @@ export default function NewBookingPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  {bookingDocuments.length > 0 ? (
+                  {documentsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                      <span className="ml-2 text-gray-600">Loading documents...</span>
+                    </div>
+                  ) : bookingDocuments.length > 0 ? (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-600">

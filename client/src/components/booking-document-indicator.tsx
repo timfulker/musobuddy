@@ -10,29 +10,6 @@ interface BookingDocumentIndicatorProps {
 }
 
 export function BookingDocumentIndicator({ bookingId, booking, onClick }: BookingDocumentIndicatorProps) {
-  const { documentCount, hasDocuments, loading } = useBookingDocuments(bookingId, booking);
-
-  // Don't show anything if loading
-  if (loading) {
-    return null;
-  }
-  
-  // Show if we have documents, OR if we have a legacy document URL (fallback)
-  const shouldShow = hasDocuments || (booking?.documentUrl && booking.documentUrl.trim());
-  
-  if (!shouldShow) {
-    return null;
-  }
-
-  return (
-    <Badge 
-      variant="outline" 
-      className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
-      onClick={onClick}
-      title="Click to manage documents"
-    >
-      <Paperclip className="h-3 w-3 mr-1" />
-      Documents ({documentCount > 0 ? documentCount : (booking?.documentUrl ? 1 : '?')})
-    </Badge>
-  );
+  // Always return null - document count indicator removed per user request
+  return null;
 }
