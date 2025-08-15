@@ -231,15 +231,50 @@ export default function NewBookingPage() {
       parkingInfo: "",
       notes: "",
       travelExpense: "",
+      // Collaborative fields - provide default empty values to prevent uncontrolled->controlled warnings
+      venueContact: "",
+      soundTechContact: "",
+      stageSize: "",
+      powerEquipment: "",
+      styleMood: "",
+      mustPlaySongs: "",
+      avoidSongs: "",
+      setOrder: "",
+      firstDanceSong: "",
+      processionalSong: "",
+      signingRegisterSong: "",
+      recessionalSong: "",
+      specialDedications: "",
+      guestAnnouncements: "",
+      loadInInfo: "",
+      soundCheckTime: "",
+      weatherContingency: "",
+      parkingPermitRequired: false,
+      mealProvided: false,
+      dietaryRequirements: "",
+      sharedNotes: "",
+      referenceTracks: "",
+      photoPermission: true,
+      encoreAllowed: true,
+      encoreSuggestions: "",
+      what3words: "",
     },
   });
 
   // Watch venue address changes to calculate mileage (only for new bookings or when user manually changes address)
   const watchedVenueAddress = form.watch('venueAddress');
+  const [formInitialized, setFormInitialized] = useState(false);
+  
   useEffect(() => {
     // Skip calculation if we're in edit mode and already have existing mileage data
     if (isEditMode && editingBooking && (editingBooking.distance || editingBooking.duration)) {
       console.log('🚗 Skipping mileage calculation - existing booking already has mileage data');
+      return;
+    }
+    
+    // Skip calculation during initial form population
+    if (isEditMode && !formInitialized) {
+      console.log('🚗 Skipping mileage calculation - form still initializing');
       return;
     }
     
@@ -264,7 +299,7 @@ export default function NewBookingPage() {
         error: null
       });
     }
-  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking]);
+  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking, formInitialized]);
 
   // Populate form with existing booking data when editing
   useEffect(() => {
@@ -360,6 +395,7 @@ export default function NewBookingPage() {
       }
       
       console.log('✅ Form populated with booking data');
+      setFormInitialized(true);
     }
   }, [editingBooking, isEditMode, form]);
 
