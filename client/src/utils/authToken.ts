@@ -24,8 +24,6 @@ export const findActiveAuthToken = (): string | null => {
     ? 'authToken_dev' 
     : `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
-  console.log(`🔐 findActiveAuthToken - hostname: ${hostname}`);
-  console.log(`🔐 findActiveAuthToken - baseKey: ${baseKey}`);
   
   // ENVIRONMENT-SAFE: Only scan for auth keys in current environment
   const allAuthKeys = [];
@@ -36,7 +34,6 @@ export const findActiveAuthToken = (): string | null => {
       const stored = localStorage.getItem(key);
       if (stored) {
         allAuthKeys.push({ key, value: stored });
-        console.log(`🔐 Found environment auth key: ${key}, hasValue: ${!!stored}`);
       }
     }
   }
@@ -68,7 +65,6 @@ export const findActiveAuthToken = (): string | null => {
   }
   
   if (latestTokenData) {
-    console.log(`🔐 SUCCESS: Using auth token for user: ${latestTokenData.userEmail} from key: ${latestKey}`);
     return latestTokenData.token;
   }
   
@@ -76,26 +72,22 @@ export const findActiveAuthToken = (): string | null => {
   for (const { key, value } of allAuthKeys) {
     // CRITICAL FIX: Only use tokens from the current environment
     if (!key.startsWith(baseKey)) {
-      console.log(`🔐 SKIPPING cross-environment token: ${key} (current baseKey: ${baseKey})`);
       continue;
     }
     
     try {
       const tokenData = JSON.parse(value);
       if (tokenData.token && typeof tokenData.token === 'string') {
-        console.log(`🔐 MOBILE FALLBACK: Using token from ${key}`);
         return tokenData.token;
       }
     } catch {
       // Plain string token - only if from current environment
       if (typeof value === 'string' && value.length > 20) {
-        console.log(`🔐 MOBILE FALLBACK: Using plain token from ${key}`);
         return value;
       }
     }
   }
   
-  console.log('🔐 NO TOKEN FOUND in localStorage');
   return null;
 };
 
@@ -152,7 +144,6 @@ export const storeAuthToken = (token: string, userEmail: string): void => {
   // Clear only this user's existing tokens
   userSpecificKeys.forEach(key => {
     localStorage.removeItem(key);
-    console.log(`🔐 Cleared old token: ${key}`);
   });
   
   // Store the new token with timestamp for proper selection
@@ -163,7 +154,6 @@ export const storeAuthToken = (token: string, userEmail: string): void => {
   };
   localStorage.setItem(tokenKey, JSON.stringify(tokenData));
   
-  console.log(`🔐 Stored auth token for user: ${userEmail} in key: ${tokenKey}`);
 };
 
 // Alias for compatibility with existing code

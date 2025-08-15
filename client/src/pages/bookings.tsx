@@ -26,6 +26,7 @@ import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import BookingDocumentsManager from "@/components/booking-documents-manager";
+import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
@@ -1461,21 +1462,15 @@ export default function UnifiedBookings() {
                                                 <Badge className={getStatusColor(groupBooking.status)}>
                                                   {groupBooking.status?.replace('_', ' ') || 'New'}
                                                 </Badge>
-                                                {/* Document indicator */}
-                                                {groupBooking.documentUrl && (
-                                                  <Badge 
-                                                    variant="outline" 
-                                                    className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      window.open(groupBooking.documentUrl, '_blank');
-                                                    }}
-                                                    title="Click to view document"
-                                                  >
-                                                    <Paperclip className="h-3 w-3 mr-1" />
-                                                    Document
-                                                  </Badge>
-                                                )}
+                                                {/* Document indicator - includes both new and legacy documents */}
+                                                <BookingDocumentIndicator 
+                                                  bookingId={groupBooking.id}
+                                                  booking={groupBooking}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openDocumentManagerDialog(groupBooking);
+                                                  }}
+                                                />
                                                 {/* Conflict badge - matching dashboard style */}
                                                 {detectConflicts(groupBooking).length > 0 && (
                                                   <Badge 
@@ -1599,21 +1594,15 @@ export default function UnifiedBookings() {
                                   <Badge className={getStatusColor(booking.status)}>
                                     {booking.status?.replace('_', ' ') || 'New'}
                                   </Badge>
-                                  {/* Document indicator */}
-                                  {booking.documentUrl && (
-                                    <Badge 
-                                      variant="outline" 
-                                      className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(booking.documentUrl, '_blank');
-                                      }}
-                                      title="Click to view document"
-                                    >
-                                      <Paperclip className="h-3 w-3 mr-1" />
-                                      Document
-                                    </Badge>
-                                  )}
+                                  {/* Document indicator - includes both new and legacy documents */}
+                                  <BookingDocumentIndicator 
+                                    bookingId={booking.id}
+                                    booking={booking}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openDocumentManagerDialog(booking);
+                                    }}
+                                  />
                                   {/* Conflict badge - matching dashboard style */}
                                   {detectConflicts(booking).length > 0 && (
                                     <Badge 
@@ -1946,21 +1935,15 @@ export default function UnifiedBookings() {
                                             <Badge className={getStatusColor(booking.status || 'new')}>
                                               {booking.status?.replace('_', ' ') || 'New'}
                                             </Badge>
-                                            {/* Document indicator */}
-                                            {booking.documentUrl && (
-                                              <Badge 
-                                                variant="outline" 
-                                                className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  window.open(booking.documentUrl, '_blank');
-                                                }}
-                                                title="Click to view document"
-                                              >
-                                                <Paperclip className="h-3 w-3 mr-1" />
-                                                Document
-                                              </Badge>
-                                            )}
+                                            {/* Document indicator - includes both new and legacy documents */}
+                                            <BookingDocumentIndicator 
+                                              bookingId={booking.id}
+                                              booking={booking}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                openDocumentManagerDialog(booking);
+                                              }}
+                                            />
                                             
                                             <div className="flex items-center gap-2">
                                               {/* Respond Menu - show for all bookings */}
@@ -2118,21 +2101,30 @@ export default function UnifiedBookings() {
                                               <Badge className={getStatusColor(booking.status || 'new')}>
                                                 {booking.status?.replace('_', ' ') || 'New'}
                                               </Badge>
-                                              {/* Document indicator */}
-                                              {booking.documentUrl && (
+                                              {/* Document indicator - legacy single document */}
+                                              {booking.documentUrl && booking.documentUrl.trim() && (
                                                 <Badge 
                                                   variant="outline" 
                                                   className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
-                                                    window.open(booking.documentUrl, '_blank');
+                                                    openManageDocuments(booking);
                                                   }}
-                                                  title="Click to view document"
+                                                  title="Click to manage documents"
                                                 >
                                                   <Paperclip className="h-3 w-3 mr-1" />
-                                                  Document
+                                                  Document (Legacy)
                                                 </Badge>
                                               )}
+                                              {/* Document indicator - includes both new and legacy documents */}
+                                              <BookingDocumentIndicator 
+                                                bookingId={booking.id}
+                                                booking={booking}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  openDocumentManagerDialog(booking);
+                                                }}
+                                              />
                                               
                                               <div className="flex items-center gap-2">
                                                 {/* Respond Menu - show for all bookings */}
