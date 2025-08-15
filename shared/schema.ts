@@ -470,6 +470,11 @@ export const bookings = pgTable("bookings", {
   contactPhone: text("contact_phone"), // Alternative contact phone
   dressCode: text("dress_code"), // Event dress code requirements
   
+  // Mileage calculation fields
+  distance: text("distance"), // Human-readable distance (e.g., "56.0 miles")
+  distanceValue: integer("distance_value"), // Numeric distance in meters for sorting/calculations
+  duration: text("duration"), // Human-readable duration (e.g., "1 hour 8 mins")
+  
   // Email processing duplicate prevention
   emailHash: varchar("email_hash").unique(), // Unique hash to prevent duplicate email processing
   processedAt: timestamp("processed_at"), // When email was processed into booking
