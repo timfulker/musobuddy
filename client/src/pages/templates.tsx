@@ -79,8 +79,8 @@ export default function Templates() {
   useEffect(() => {
     if (bookingId && (action === 'respond' || action === 'thankyou')) {
       fetchBookingData();
-    } else if (messageId && action === 'respond') {
-      // Create mock booking data for message replies
+    } else if ((messageId && action === 'respond') || (action === 'compose' && clientEmail)) {
+      // Create mock booking data for message replies or compose from address book
       setMessageData({
         clientName: decodeURIComponent(clientName || 'Client'),
         clientEmail: decodeURIComponent(clientEmail || ''),
@@ -781,6 +781,12 @@ export default function Templates() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 {bookingId && action === 'respond' 
                   ? `Select a template to respond to booking #${bookingId}`
+                  : bookingId && action === 'thankyou'
+                  ? `Select a thank you template for booking #${bookingId}`
+                  : action === 'compose' && clientEmail
+                  ? `Select a template to send to ${clientName || 'your client'}`
+                  : messageId && action === 'respond'
+                  ? `Select a template to respond to the message`
                   : 'Manage your automated response templates for enquiries'
                 }
               </p>
@@ -864,20 +870,20 @@ export default function Templates() {
             </Card>
           )}
 
-          {/* Message Context */}
-          {messageId && action === 'respond' && (
+          {/* Message or Compose Context */}
+          {((messageId && action === 'respond') || (action === 'compose' && clientEmail)) && (
             <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 shadow-lg">
               <CardContent className="pt-6">
                 <div className="text-center">
                   <h3 className="text-xl font-bold text-blue-800 mb-2">
-                    📧 Send Response Email
+                    📧 {action === 'compose' ? 'Compose Email' : 'Send Response Email'}
                   </h3>
                   <p className="text-blue-700 mb-4 text-lg">
-                    👇 Click "📧 Select & Send" on any template below to send a customized response
+                    👇 Click "📧 Select & Send" on any template below to send a customized {action === 'compose' ? 'email' : 'response'}
                   </p>
                   {messageData && (
                     <div className="text-left bg-white p-4 rounded-lg mb-4">
-                      <h4 className="font-semibold text-blue-800 mb-2">Message Details:</h4>
+                      <h4 className="font-semibold text-blue-800 mb-2">{action === 'compose' ? 'Client Details:' : 'Message Details:'}</h4>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <span><strong>Client:</strong> {messageData.clientName}</span>
                         <span><strong>Email:</strong> {messageData.clientEmail}</span>
@@ -889,7 +895,7 @@ export default function Templates() {
                     onClick={() => window.history.back()}
                     className="border-blue-300 text-blue-700 hover:bg-blue-100"
                   >
-                    ← Back to Messages
+                    ← Back to {action === 'compose' ? 'Address Book' : 'Messages'}
                   </Button>
                 </div>
               </CardContent>
@@ -908,11 +914,11 @@ export default function Templates() {
             <Card 
               key={template.id} 
               className={`h-fit transition-all duration-300 ${
-                ((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond'))
+                ((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond') || (action === 'compose' && clientEmail))
                   ? 'hover:shadow-xl hover:border-green-300 hover:bg-green-50/30 cursor-pointer border-2 border-gray-200 hover:border-green-400'
                   : ''
               }`}
-              onClick={((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) 
+              onClick={((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond') || (action === 'compose' && clientEmail)) 
                 ? () => handleUseTemplate(template)
                 : undefined
               }
@@ -922,7 +928,7 @@ export default function Templates() {
                   <div>
                     <CardTitle className="text-lg flex items-center gap-2">
                       {template.name}
-                      {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) && (
+                      {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond') || (action === 'compose' && clientEmail)) && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">👆 Click to use</span>
                       )}
                     </CardTitle>
@@ -949,7 +955,7 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
-                    {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) && (
+                    {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond') || (action === 'compose' && clientEmail)) && (
                       <Button
                         variant="default"
                         size="sm"
