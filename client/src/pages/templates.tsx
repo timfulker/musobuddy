@@ -62,21 +62,32 @@ export default function Templates() {
   
   const { toast } = useToast();
   
-  // Check if we're responding to a specific booking
+  // Check if we're responding to a specific booking or message
   const urlParams = new URLSearchParams(window.location.search);
   const bookingId = urlParams.get('bookingId');
+  const messageId = urlParams.get('messageId');
   const action = urlParams.get('action');
+  const clientEmail = urlParams.get('clientEmail');
+  const clientName = urlParams.get('clientName');
   
-  // Fetch booking data if responding to a specific booking
+  // Fetch booking data if responding to a specific booking or message
   const [bookingData, setBookingData] = useState<any>(null);
+  const [messageData, setMessageData] = useState<any>(null);
   const [userSettings, setUserSettings] = useState<any>(null);
   
   useEffect(() => {
     if (bookingId && (action === 'respond' || action === 'thankyou')) {
       fetchBookingData();
+    } else if (messageId && action === 'respond') {
+      // Create mock booking data for message replies
+      setMessageData({
+        clientName: decodeURIComponent(clientName || 'Client'),
+        clientEmail: decodeURIComponent(clientEmail || ''),
+        messageId: messageId
+      });
     }
     fetchUserSettings();
-  }, [bookingId, action]);
+  }, [bookingId, messageId, action, clientName, clientEmail]);
   
   // Use centralized auth token system
   const getAuthToken = () => {
@@ -401,18 +412,19 @@ export default function Templates() {
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
-    if (!bookingData) {
+    const targetData = bookingData || messageData;
+    if (!targetData) {
       toast({
         title: "Error",
-        description: "Booking data not loaded yet. Please try again.",
+        description: "Contact data not loaded yet. Please try again.",
         variant: "destructive",
       });
       return;
     }
 
-    // Replace template variables with actual booking data
-    const customizedSubject = replaceTemplateVariables(template.subject, bookingData, userSettings);
-    const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData, userSettings);
+    // Replace template variables with actual booking/message data
+    const customizedSubject = replaceTemplateVariables(template.subject, targetData, userSettings);
+    const customizedEmailBody = replaceTemplateVariables(template.emailBody, targetData, userSettings);
 
     // Show preview dialog first
     setPreviewData({
@@ -424,12 +436,13 @@ export default function Templates() {
   };
 
   const handleSendEmail = async () => {
-    if (!previewData || !bookingData) return;
+    const targetData = bookingData || messageData;
+    if (!previewData || !targetData) return;
 
     const customizedTemplate = {
       subject: previewData.subject,
       emailBody: previewData.emailBody,
-      smsBody: previewData.template.smsBody ? replaceTemplateVariables(previewData.template.smsBody, bookingData) : ''
+      smsBody: previewData.template.smsBody ? replaceTemplateVariables(previewData.template.smsBody, targetData) : ''
     };
 
     try {
@@ -438,7 +451,10 @@ export default function Templates() {
         method: 'POST',
         body: {
           template: customizedTemplate,
-          bookingId: bookingId
+          bookingId: bookingId,
+          messageId: messageId,
+          clientEmail: targetData.clientEmail,
+          clientName: targetData.clientName
         }
       });
       
@@ -450,8 +466,8 @@ export default function Templates() {
                                  previewData.template.emailBody?.toLowerCase().includes('thank you for');
         
         const message = isThankYouTemplate 
-          ? `Thank you email sent to ${bookingData.clientName}. Booking marked as completed.`
-          : `Your message has been sent to ${bookingData.clientName}. Replies will go to your business email.`;
+          ? `Thank you email sent to ${targetData.clientName}. ${bookingId ? 'Booking marked as completed.' : ''}`
+          : `Your message has been sent to ${targetData.clientName}. Replies will go to your business email.`;
           
         toast({
           title: "Email Sent Successfully",
@@ -467,6 +483,11 @@ export default function Templates() {
             window.close(); // Close if opened in new tab
             window.location.href = '/bookings'; // Or redirect to bookings
           }, 2000);
+        } else if (messageId) {
+          // For message replies, redirect back to unparseable messages
+          setTimeout(() => {
+            window.location.href = '/unparseable-messages';
+          }, 2000);
         }
     } catch (error) {
       console.error('❌ Template email error:', error);
@@ -480,7 +501,8 @@ export default function Templates() {
 
   // AI Generation Functions
   const handleGenerateAIResponse = async () => {
-    if (!bookingData && !customPrompt) {
+    const targetData = bookingData || messageData;
+    if (!targetData && !customPrompt) {
       toast({
         title: "Missing Information",
         description: "Please provide either booking context or a custom prompt for AI generation.",
@@ -796,7 +818,7 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
-                    {bookingId && (action === 'respond' || action === 'thankyou') && (
+                    {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) && (
                       <Button
                         variant="default"
                         size="sm"
@@ -1003,7 +1025,7 @@ export default function Templates() {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Email Preview</DialogTitle>
             <DialogDescription>
-              Review your email before sending to {bookingData?.clientName}. This preview shows exactly how your email will appear to the recipient.
+              Review your email before sending to {(bookingData || messageData)?.clientName}. This preview shows exactly how your email will appear to the recipient.
             </DialogDescription>
           </DialogHeader>
           
@@ -1013,7 +1035,7 @@ export default function Templates() {
               <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                 {/* Email Header Info */}
                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <div><strong>To:</strong> {bookingData?.clientEmail}</div>
+                  <div><strong>To:</strong> {(bookingData || messageData)?.clientEmail}</div>
                   <div><strong>Subject:</strong> {previewData.subject}</div>
                   <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
                 </div>

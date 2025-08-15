@@ -235,8 +235,8 @@ export default function UnparseableMessages() {
                           // Extract client email from fromContact (format: "Name <email>")
                           const emailMatch = message.fromContact.match(/<(.+)>/);
                           const clientEmail = emailMatch ? emailMatch[1] : message.fromContact;
-                          // Navigate to templates page with prefilled client info
-                          navigate(`/templates?clientEmail=${encodeURIComponent(clientEmail)}&context=reply&messageId=${message.id}`);
+                          // Navigate to templates page with message data for direct reply
+                          navigate(`/templates?action=respond&messageId=${message.id}&clientEmail=${encodeURIComponent(clientEmail)}&clientName=${encodeURIComponent(message.fromContact.replace(/<[^>]*>/g, '').trim())}`);
                         }}
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
                       >

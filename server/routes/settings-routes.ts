@@ -686,7 +686,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { template, bookingId } = req.body;
+      const { template, bookingId, messageId, clientEmail, clientName } = req.body;
       
       if (!template || !template.subject || !template.emailBody) {
         return res.status(400).json({ error: 'Invalid template data' });
@@ -703,6 +703,10 @@ export async function registerSettingsRoutes(app: Express) {
           recipientEmail = booking.clientEmail;
           recipientName = booking.clientName;
         }
+      } else if (messageId && clientEmail) {
+        // Handle message reply - use provided client info
+        recipientEmail = clientEmail;
+        recipientName = clientName || clientEmail;
       }
 
       if (!recipientEmail) {
