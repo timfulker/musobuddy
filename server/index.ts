@@ -36,6 +36,23 @@ app.use(session({
   }
 }));
 
+// Health check endpoints for deployment
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+app.get('/', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, this will be handled by the static serving below
+    return;
+  }
+  res.status(200).json({ 
+    status: 'MusoBuddy API', 
+    mode: process.env.NODE_ENV,
+    timestamp: new Date().toISOString() 
+  });
+});
+
 // Initialize storage and services
 const { storage } = await import('./core/storage');
 const anthropic = new Anthropic({
