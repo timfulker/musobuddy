@@ -1811,7 +1811,7 @@ export default function UnifiedBookings() {
                                   <HoverCard 
                                     key={eventIndex} 
                                     openDelay={200} 
-                                    closeDelay={1000}
+                                    closeDelay={3000}
                                   >
                                     <HoverCardTrigger asChild>
                                       <div
@@ -1967,7 +1967,7 @@ export default function UnifiedBookings() {
                                     <HoverCard 
                                       key={eventIndex} 
                                       openDelay={200} 
-                                      closeDelay={1000}
+                                      closeDelay={3000}
                                     >
                                       <HoverCardTrigger asChild>
                                         <div
