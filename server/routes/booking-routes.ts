@@ -648,7 +648,21 @@ ${messageText.replace(/\n/g, '<br>')}
             updateData.uploadedInvoiceFilename = file.originalname;
           } else {
             // For general documents, append to uploadedDocuments array
-            const currentDocs = booking.uploadedDocuments || [];
+            let currentDocs = [];
+            try {
+              // Parse existing uploadedDocuments if it exists and is a string
+              if (booking.uploadedDocuments) {
+                if (typeof booking.uploadedDocuments === 'string') {
+                  currentDocs = JSON.parse(booking.uploadedDocuments);
+                } else if (Array.isArray(booking.uploadedDocuments)) {
+                  currentDocs = booking.uploadedDocuments;
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to parse existing uploadedDocuments, starting fresh:', error);
+              currentDocs = [];
+            }
+            
             currentDocs.push({
               url: uploadResult.url,
               key: uploadResult.key,
@@ -663,6 +677,7 @@ ${messageText.replace(/\n/g, '<br>')}
           await storage.updateBooking(bookingId, userId, updateData);
           
           console.log(`✅ ${documentType} document uploaded successfully for booking #${bookingId}`);
+          console.log('📄 Updated booking data:', updateData);
           
           res.json({
             success: true,

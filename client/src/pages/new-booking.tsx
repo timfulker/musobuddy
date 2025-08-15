@@ -1507,8 +1507,18 @@ export default function NewBookingPage() {
 
             {/* Uploaded Documents Section */}
             {isEditMode && editingBooking && (() => {
+              console.log('🔍 Checking uploaded documents:', editingBooking.uploadedDocuments);
               const uploadedDocs = editingBooking.uploadedDocuments || [];
-              const parsedDocs = typeof uploadedDocs === 'string' ? JSON.parse(uploadedDocs) : uploadedDocs;
+              let parsedDocs = [];
+              
+              try {
+                parsedDocs = typeof uploadedDocs === 'string' ? JSON.parse(uploadedDocs) : uploadedDocs;
+              } catch (error) {
+                console.warn('Failed to parse uploadedDocuments:', error);
+                parsedDocs = [];
+              }
+              
+              console.log('📄 Parsed documents:', parsedDocs);
               
               return parsedDocs.length > 0 && (
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
