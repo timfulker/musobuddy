@@ -73,34 +73,22 @@ class CollaborativeFormGenerator {
         .locked-field {
             background-color: #fef3c7 !important;
             border-color: #f59e0b !important;
-            position: relative;
+            color: #92400e !important;
+            cursor: not-allowed !important;
+            opacity: 0.8 !important;
         }
-        .locked-field:after {
-            content: "🔒";
+        .locked-field:hover {
+            background-color: #fde68a !important;
+        }
+        .lock-indicator {
             position: absolute;
             right: 8px;
             top: 50%;
             transform: translateY(-50%);
             color: #f59e0b;
-        }
-        .field-lock-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 20px;
-            height: 20px;
-            background: #6366f1;
-            color: white;
-            border-radius: 50%;
-            border: none;
-            font-size: 10px;
-            cursor: pointer;
-        }
-        .field-lock-btn.locked {
-            background: #f59e0b;
-        }
-        .form-field-wrapper {
-            position: relative;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10;
         }
     </style>
 </head>
@@ -372,58 +360,37 @@ class CollaborativeFormGenerator {
         }
 
         function initializeFieldLocks() {
-            // Add lock buttons to all form fields
+            // Apply lock styling to locked fields (client view only)
             document.querySelectorAll('input, textarea, select').forEach(field => {
-                if (field.name) {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'form-field-wrapper';
-                    field.parentNode.insertBefore(wrapper, field);
-                    wrapper.appendChild(field);
+                if (field.name && fieldLocks[field.name]?.locked) {
+                    // Add lock styling and make field read-only
+                    field.classList.add('locked-field');
+                    field.disabled = true;
+                    field.style.cursor = 'not-allowed';
+                    field.title = 'This field has been pre-filled by the performer and cannot be edited';
                     
-                    const lockBtn = document.createElement('button');
-                    lockBtn.className = 'field-lock-btn';
-                    lockBtn.type = 'button';
-                    lockBtn.innerHTML = fieldLocks[field.name]?.locked ? '🔒' : '🔓';
-                    lockBtn.title = fieldLocks[field.name]?.locked ? 'Unlock field' : 'Lock field';
-                    
-                    if (fieldLocks[field.name]?.locked) {
-                        lockBtn.classList.add('locked');
-                        field.classList.add('locked-field');
-                        field.disabled = true;
+                    // Add visual lock icon
+                    const wrapper = field.parentNode;
+                    if (wrapper && !wrapper.querySelector('.lock-indicator')) {
+                        const lockIcon = document.createElement('div');
+                        lockIcon.className = 'lock-indicator absolute right-2 top-2 text-amber-600';
+                        lockIcon.innerHTML = '🔒';
+                        lockIcon.title = 'This field is locked by the performer';
+                        lockIcon.style.cssText = 'position: absolute; right: 8px; top: 8px; z-index: 10; pointer-events: none;';
+                        
+                        // Make wrapper relative if it's not already
+                        if (window.getComputedStyle(wrapper).position === 'static') {
+                            wrapper.style.position = 'relative';
+                        }
+                        
+                        wrapper.appendChild(lockIcon);
                     }
-                    
-                    lockBtn.addEventListener('click', () => toggleFieldLock(field.name, lockBtn));
-                    wrapper.appendChild(lockBtn);
                 }
             });
         }
 
-        function toggleFieldLock(fieldName, lockBtn) {
-            const isLocked = fieldLocks[fieldName]?.locked || false;
-            const field = document.querySelector(\`[name="\${fieldName}"]\`);
-            
-            fieldLocks[fieldName] = {
-                locked: !isLocked,
-                lockedBy: 'user' // Always locked by user in this interface
-            };
-            
-            if (fieldLocks[fieldName].locked) {
-                lockBtn.innerHTML = '🔒';
-                lockBtn.classList.add('locked');
-                lockBtn.title = 'Unlock field';
-                field.classList.add('locked-field');
-                field.disabled = true;
-            } else {
-                lockBtn.innerHTML = '🔓';
-                lockBtn.classList.remove('locked');
-                lockBtn.title = 'Lock field';
-                field.classList.remove('locked-field');
-                field.disabled = false;
-            }
-            
-            // Save lock state immediately
-            saveLockSettings();
-        }
+        // Field locks are controlled by the performer only
+        // This form respects locked fields as read-only
 
         function initializeAutoSave() {
             let saveTimeout;

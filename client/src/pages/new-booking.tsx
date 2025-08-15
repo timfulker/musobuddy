@@ -19,6 +19,7 @@ import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
+import FieldLockManager from "@/components/field-lock-manager";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -1476,6 +1477,17 @@ export default function NewBookingPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Field Lock Management - Only show in edit mode */}
+            {isEditMode && editingBooking && (
+              <FieldLockManager 
+                bookingId={editingBooking.id}
+                initialFieldLocks={editingBooking.fieldLocks || {}}
+                onFieldLocksUpdated={(newFieldLocks) => {
+                  console.log('🔒 Field locks updated:', newFieldLocks);
+                }}
+              />
+            )}
 
             {/* Enhanced Action Buttons */}
             <div className="relative">

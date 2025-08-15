@@ -455,6 +455,9 @@ export const bookings = pgTable("bookings", {
   encoreAllowed: boolean("encore_allowed").default(true), // Encore performance allowed
   encoreSuggestions: text("encore_suggestions"), // Suggested encore songs
   
+  // Field Lock Settings for collaborative forms
+  fieldLocks: jsonb("field_locks").default('{}'), // Field lock settings: {fieldName: {locked: boolean, lockedBy: 'user'|'client'}}
+  
   // Additional contact fields moved from other sections
   venueContactInfo: text("venue_contact_info"), // Venue manager contact details
   parkingInfo: text("parking_info"), // Parking instructions for performer

@@ -81,10 +81,14 @@ export function setupCollaborativeFormRoutes(app: Express) {
         ? `https://www.musobuddy.com`
         : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
 
+      // Get field locks from booking
+      const fieldLocks = booking.fieldLocks || {};
+
       // Upload collaborative form to Cloudflare R2
       const result = await collaborativeFormGenerator.uploadCollaborativeForm(
         bookingData,
-        apiEndpoint
+        apiEndpoint,
+        fieldLocks
       );
 
       // Update contract with collaborative form details
@@ -195,14 +199,15 @@ export function setupCollaborativeFormRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
 
-      // For now, store field locks in the booking's fieldLockSettings column
-      // (This would need to be added to the schema)
+      // Store field locks in the booking's fieldLocks column
       await db.update(bookings)
         .set({
-          // fieldLockSettings: JSON.stringify(fieldLocks),
+          fieldLocks: fieldLocks,
           updatedAt: new Date()
         })
         .where(eq(bookings.id, parseInt(bookingId)));
+
+      console.log(`🔒 [FIELD-LOCKS] Updated field locks for booking ${bookingId}:`, fieldLocks);
 
       res.json({
         success: true,
