@@ -213,22 +213,20 @@ class EmailQueue {
     
     let user = null;
     
-    // First try to find user by the mapped email
-    if (prefixMapping[emailPrefix]) {
+    // Try exact prefix match first (most reliable)
+    user = await storage.getUserByEmailPrefix(emailPrefix);
+    if (user) {
+      console.log(`📧 [${requestId}] Found user by email prefix: ${user.id} (${user.email})`);
+    }
+    
+    // If no direct match, try mapped email lookup
+    if (!user && prefixMapping[emailPrefix]) {
       const targetEmail = prefixMapping[emailPrefix];
       console.log(`📧 [${requestId}] Mapped prefix "${emailPrefix}" to email: ${targetEmail}`);
       const users = await storage.getAllUsers();
       user = users.find(u => u.email === targetEmail);
       if (user) {
         console.log(`📧 [${requestId}] Found user by mapped email: ${user.id} (${user.email})`);
-      }
-    }
-    
-    // If no mapping found, try exact prefix match
-    if (!user) {
-      user = await storage.getUserByEmailPrefix(emailPrefix);
-      if (user) {
-        console.log(`📧 [${requestId}] Found user by email prefix: ${user.id} (${user.email})`);
       }
     }
     
