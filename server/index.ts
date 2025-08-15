@@ -64,81 +64,49 @@ async function initializeServer() {
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-// Enhanced Mailgun webhook handler with detailed logging
+// Simple Mailgun webhook handler
 app.post('/api/webhook/mailgun', async (req, res) => {
   try {
-    // Log all incoming webhook data for debugging
-    console.log('🔍 WEBHOOK DEBUG: Full request received at', new Date().toISOString());
-    console.log('🔍 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
-    console.log('🔍 Method:', req.method);
-    console.log('🔍 URL:', req.url);
-    console.log('🔍 Query:', JSON.stringify(req.query, null, 2));
-    console.log('🔍 Raw body type:', typeof req.body);
-    console.log('🔍 Body keys:', Object.keys(req.body || {}));
+    console.log('📧 Mailgun webhook received:', new Date().toISOString());
     
-    // Handle different Mailgun webhook formats
-    let bodyText = '';
-    let fromEmail = '';
-    let subject = '';
-    let recipient = '';
-    
-    // Check if this is an event webhook (delivery status, failed, etc.)
+    // Handle event webhooks (delivery status, etc.)
     if (req.body.event) {
-      console.log(`📧 Mailgun event webhook: ${req.body.event} - acknowledging without processing`);
-      return res.status(200).json({ success: true, message: 'Event webhook acknowledged', event: req.body.event });
+      console.log(`📧 Event webhook: ${req.body.event} - acknowledged`);
+      return res.status(200).json({ success: true, event: req.body.event });
     }
     
-    // Check if this is a message storage webhook (attachments, large emails)
-    if (req.body.storage && req.body.storage.url) {
-      console.log('📧 Storage webhook detected - email content stored externally');
-      return res.status(200).json({ success: true, message: 'Storage webhook acknowledged - content in external storage' });
+    // Handle storage webhooks (large emails/attachments)
+    if (req.body.storage) {
+      console.log('📧 Storage webhook - acknowledged');
+      return res.status(200).json({ success: true, message: 'Storage webhook' });
     }
     
-    // Standard direct webhook format
-    bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body['body-html'] || '';
-    fromEmail = req.body.from || req.body.From || req.body.sender || '';
-    subject = req.body.subject || req.body.Subject || '';
-    recipient = req.body.recipient || req.body.To || req.body.to || '';
+    // Process actual email content
+    const bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || '';
+    const fromEmail = req.body.from || req.body.sender || '';
+    const subject = req.body.subject || '';
+    const recipient = req.body.recipient || req.body.to || '';
     
-    console.log('📧 Processing direct email webhook:', { 
-      from: fromEmail, 
-      subject, 
-      to: recipient,
-      bodyLength: bodyText?.length || 0,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Validate required fields for direct webhooks
-    if (!fromEmail || !bodyText) {
-      console.log('❌ Missing required email fields:', { hasFrom: !!fromEmail, hasBody: !!bodyText });
-      return res.status(400).json({ success: false, error: 'Missing required email fields' });
+    if (!fromEmail || !bodyText || !recipient) {
+      console.log('❌ Missing email fields');
+      return res.status(400).json({ success: false, error: 'Missing fields' });
     }
     
-    // Use the enhanced email queue for processing - pass all data
-    const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
-      // Include all variations to ensure compatibility
-      From: fromEmail,
+    // Process with simple system
+    const { SimpleEmailProcessor } = await import('./core/simple-email-processor');
+    const result = await SimpleEmailProcessor.processEmail({
       from: fromEmail,
-      Subject: subject,
-      subject: subject,
-      'body-plain': bodyText,
-      'stripped-text': bodyText,
-      text: bodyText,
-      To: recipient,
-      to: recipient,
-      recipient: recipient,
-      // Pass through the original body for debugging
-      originalBody: req.body
+      subject,
+      body: bodyText,
+      recipient,
+      timestamp: new Date()
     });
     
-    console.log(`✅ Email successfully queued for processing - Job ${jobId} (position: ${queuePosition})`);
-    res.status(200).json({ success: true, message: 'Email processed', jobId, queuePosition });
+    console.log('✅ Email processed:', result);
+    res.status(200).json(result);
     
   } catch (error: any) {
     console.error('❌ Webhook error:', error);
-    console.error('❌ Error stack:', error.stack);
     res.status(200).json({ success: false, error: error.message });
   }
 });
