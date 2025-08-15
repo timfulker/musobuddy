@@ -95,6 +95,7 @@ export function setupAdminDatabaseRoutes(app: Express) {
   app.get('/api/admin/database/data', requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
       const { table, page = '1', limit = '50', search, filterColumn } = req.query;
+      console.log(`📊 Backend: Request received for table: ${table}, page: ${page}, search: ${search}`);
       
       if (!table || typeof table !== 'string' || !(table in AVAILABLE_TABLES)) {
         return res.status(400).json({ error: 'Invalid table name' });

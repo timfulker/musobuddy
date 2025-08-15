@@ -38,10 +38,12 @@ export default function DatabaseAdmin() {
   });
 
   // Fetch table data
-  const { data: tableData, isLoading: dataLoading } = useQuery({
+  const { data: tableData, isLoading: dataLoading, error: dataError } = useQuery({
     queryKey: ['/api/admin/database/data', selectedTable, searchQuery, filterColumn, currentPage],
     queryFn: async () => {
       if (!selectedTable) return { rows: [], totalCount: 0 };
+      
+      console.log(`📊 Frontend: Fetching data for table: ${selectedTable}`);
       
       const params = new URLSearchParams({
         table: selectedTable,
@@ -51,8 +53,14 @@ export default function DatabaseAdmin() {
         ...(filterColumn !== 'all' && { filterColumn })
       });
       
+      console.log(`📊 Frontend: API URL: /api/admin/database/data?${params}`);
+      
       const response = await apiRequest(`/api/admin/database/data?${params}`);
-      return await response.json();
+      const data = await response.json();
+      
+      console.log(`📊 Frontend: Received data:`, data);
+      
+      return data;
     },
     enabled: !!selectedTable
   });
@@ -243,6 +251,10 @@ export default function DatabaseAdmin() {
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 <p className="mt-2 text-muted-foreground">Loading data...</p>
+              </div>
+            ) : dataError ? (
+              <div className="text-center py-8 text-red-600">
+                Error loading data: {dataError.message}
               </div>
             ) : tableData?.rows.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
