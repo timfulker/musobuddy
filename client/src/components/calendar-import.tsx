@@ -104,9 +104,9 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[700px] text-gray-900 dark:text-gray-100">
         <DialogHeader>
-          <DialogTitle>Calendar Integration</DialogTitle>
+          <DialogTitle className="text-gray-900 dark:text-gray-100">Calendar Integration</DialogTitle>
           <DialogDescription className="text-gray-700 dark:text-gray-300">
             Sync your bookings with your calendar using Google Calendar integration or import from .ics files
           </DialogDescription>
@@ -125,7 +125,9 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           </TabsList>
           
           <TabsContent value="google" className="mt-6">
-            <GoogleCalendarIntegration />
+            <div className="text-gray-900 dark:text-gray-100 [&_*]:text-gray-900 [&_*]:dark:text-gray-100 [&_.text-gray-600]:text-gray-600 [&_.text-gray-600]:dark:text-gray-400 [&_.text-gray-700]:text-gray-700 [&_.text-gray-700]:dark:text-gray-300">
+              <GoogleCalendarIntegration />
+            </div>
           </TabsContent>
           
           <TabsContent value="import" className="mt-6">
