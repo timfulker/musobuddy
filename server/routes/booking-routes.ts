@@ -581,7 +581,7 @@ ${messageText.replace(/\n/g, '<br>')}
         }
         
         // Check if booking exists and belongs to user
-        const booking = await storage.getBookingById(bookingId, userId);
+        const booking = await storage.getBookingByIdAndUser(bookingId, userId);
         if (!booking) {
           return res.status(404).json({ error: 'Booking not found' });
         }
@@ -696,7 +696,7 @@ ${messageText.replace(/\n/g, '<br>')}
         }
         
         // Check if booking exists and belongs to user
-        const booking = await storage.getBookingById(bookingId, userId);
+        const booking = await storage.getBookingByIdAndUser(bookingId, userId);
         if (!booking) {
           return res.status(404).json({ error: 'Booking not found' });
         }
