@@ -46,14 +46,16 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
   const [uploading, setUploading] = useState(false);
 
   // Query to get all documents for this booking
-  const { data: documentsResponse, isLoading: loadingDocuments } = useQuery<{
-    success: boolean;
-    documents: BookingDocument[];
-  }>({
+  const { data: documentsResponse, isLoading: loadingDocuments, refetch } = useQuery({
     queryKey: [`/api/bookings/${booking?.id}/documents`],
-    queryFn: () => booking?.id ? apiRequest(`/api/bookings/${booking.id}/documents`) : null,
+    queryFn: async () => {
+      if (!booking?.id) return { success: false, documents: [] };
+      const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
+      return response.json();
+    },
     enabled: !!booking?.id && isOpen,
     retry: false,
+    refetchOnWindowFocus: true,
   });
 
   const documents = documentsResponse?.documents || [];
@@ -110,12 +112,15 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (documentId: number) => {
-      return apiRequest(`/api/documents/${documentId}`, {
+      const response = await apiRequest(`/api/documents/${documentId}`, {
         method: 'DELETE',
       });
+      return response.json();
     },
     onSuccess: () => {
+      // Force immediate cache refresh
       queryClient.invalidateQueries({ queryKey: [`/api/bookings/${booking.id}/documents`] });
+      queryClient.refetchQueries({ queryKey: [`/api/bookings/${booking.id}/documents`] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       toast({
         title: "Success",
