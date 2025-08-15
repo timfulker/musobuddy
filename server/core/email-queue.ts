@@ -221,13 +221,32 @@ class EmailQueue {
                               subjectField.toLowerCase().includes('encore') ||
                               bodyField.includes('apply now');
 
-      // More lenient validation - allow bookings with venue/type even without exact dates
-      const hasMinimumInfo = parsedData.eventDate || 
-                            (parsedData.venue && parsedData.eventType) ||
-                            (isEncoreMessage && parsedData.venue);
+      // Very lenient validation - create booking if we have ANY substantive booking information
+      const hasDate = !!parsedData.eventDate;
+      const hasVenue = !!parsedData.venue;
+      const hasEventType = !!parsedData.eventType;
+      const hasFee = !!parsedData.fee;
+      const hasSubstantialContent = bodyField.length > 50; // More than just a greeting
+      
+      // Create booking if we have:
+      // 1. Date + any other info, OR
+      // 2. Venue + event type, OR  
+      // 3. Venue + fee, OR
+      // 4. Event type + fee + substantial content, OR
+      // 5. Encore email with venue
+      const hasMinimumInfo = hasDate || 
+                            (hasVenue && hasEventType) ||
+                            (hasVenue && hasFee) ||
+                            (hasEventType && hasFee && hasSubstantialContent) ||
+                            (isEncoreMessage && hasVenue);
+      
+      console.log(`📧 [${requestId}] Validation check:`, {
+        hasDate, hasVenue, hasEventType, hasFee, hasSubstantialContent, isEncoreMessage,
+        hasMinimumInfo, confidence: parsedData.confidence
+      });
       
       if (!hasMinimumInfo) {
-        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no date, venue, or event type found', user.id);
+        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no clear booking details found', user.id);
         return;
       }
 
