@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import APICostMonitor from "@/components/api-cost-monitor";
 import { ApiUsageManager } from "@/components/api-usage-manager";
+import DatabaseAdmin from "@/components/database-admin";
 
 interface AdminOverview {
   totalUsers: number;
@@ -403,7 +404,7 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 h-auto">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="api-costs" className="text-xs sm:text-sm flex items-center gap-1">
@@ -413,6 +414,10 @@ export default function AdminPanel() {
               <TabsTrigger value="api-usage" className="text-xs sm:text-sm flex items-center gap-1">
                 <Shield className="h-3 w-3" />
                 API Usage
+              </TabsTrigger>
+              <TabsTrigger value="database" className="text-xs sm:text-sm flex items-center gap-1">
+                <Database className="h-3 w-3" />
+                Database
               </TabsTrigger>
               <TabsTrigger value="beta" className="text-xs sm:text-sm">Beta Testers</TabsTrigger>
               <TabsTrigger value="system" className="text-xs sm:text-sm">System</TabsTrigger>
@@ -1100,6 +1105,10 @@ export default function AdminPanel() {
                 <p className="text-muted-foreground">Monitor and manage individual user API usage limits to prevent abuse and control costs.</p>
               </div>
               <ApiUsageManager />
+            </TabsContent>
+
+            <TabsContent value="database" className="space-y-6">
+              <DatabaseAdmin />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-6">
