@@ -16,8 +16,9 @@ export function ComplianceIndicator({ bookingId, booking, onClick }: ComplianceI
     queryKey: ['compliance-documents'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('/api/compliance/documents');
-        return await response.json();
+        const response = await apiRequest('/api/compliance');
+        const documents = await response.json();
+        return { documents };
       } catch (error) {
         console.error('📋 Error fetching compliance documents:', error);
         return { documents: [] };
