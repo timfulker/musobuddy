@@ -685,11 +685,10 @@ ${businessName}</p>
 
         // Log that compliance documents were sent for this booking
         const { db } = await import('../core/database');
-        await db.query(
-          `INSERT INTO compliance_sent_log (booking_id, user_id, recipient_email, document_ids, sent_at) 
-           VALUES ($1, $2, $3, $4, $5)`,
-          [bookingId, userId, recipientEmail, JSON.stringify(documentIds), new Date()]
-        );
+        await db.execute(`
+          INSERT INTO compliance_sent_log (booking_id, user_id, recipient_email, document_ids, sent_at) 
+          VALUES (${bookingId}, '${userId}', '${recipientEmail.replace(/'/g, "''")}', '${JSON.stringify(documentIds).replace(/'/g, "''")}', NOW())
+        `);
 
         console.log(`✅ Compliance documents sent for booking ${bookingId} to ${recipientEmail}`);
         
@@ -728,25 +727,25 @@ ${businessName}</p>
           return res.status(404).json({ error: 'Booking not found' });
         }
 
-        // Check if compliance has been sent for this booking
+        // Check if compliance has been sent for this booking - use raw SQL query
         const { db } = await import('../core/database');
-        const result = await db.query(
-          `SELECT cs.*, array_agg(cd.type) as document_types 
-           FROM compliance_sent_log cs
-           LEFT JOIN compliance_documents cd ON cd.id = ANY(string_to_array(cs.document_ids::text, ',')::int[])
-           WHERE cs.booking_id = $1 AND cs.user_id = $2
-           GROUP BY cs.id
-           ORDER BY cs.sent_at DESC 
-           LIMIT 1`,
-          [bookingId, userId]
-        );
+        const result = await db.execute(`
+          SELECT cs.*, 
+                 COALESCE(array_agg(cd.type) FILTER (WHERE cd.type IS NOT NULL), ARRAY[]::text[]) as document_types 
+          FROM compliance_sent_log cs
+          LEFT JOIN compliance_documents cd ON cd.id::text = ANY(string_to_array(cs.document_ids, ','))
+          WHERE cs.booking_id = ${bookingId} AND cs.user_id = '${userId}'
+          GROUP BY cs.id, cs.booking_id, cs.user_id, cs.recipient_email, cs.document_ids, cs.sent_at
+          ORDER BY cs.sent_at DESC 
+          LIMIT 1
+        `);
 
-        if (result.rows.length === 0) {
+        if (!result || result.length === 0) {
           return res.json({ sent: false, documents: [] });
         }
 
-        const sentLog = result.rows[0];
-        const documentTypes = sentLog.document_types.filter(Boolean);
+        const sentLog = result[0];
+        const documentTypes = sentLog.document_types ? sentLog.document_types.filter(Boolean) : [];
         
         res.json({ 
           sent: true,

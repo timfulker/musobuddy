@@ -168,6 +168,7 @@ export default function ActionableEnquiries() {
         key={enquiry.id} 
         className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer`}
         onClick={() => setLocation(`/bookings?view=calendar&highlight=${enquiry.id}`)}
+        onDoubleClick={() => setLocation(`/new-booking?edit=${enquiry.id}`)}
       >
         <CardContent className="p-4">
           <div className="flex items-start space-x-4">

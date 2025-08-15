@@ -139,8 +139,18 @@ export default function CalendarWidget() {
           {upcomingGigs.map((gig: any) => {
             const dateInfo = formatDate(gig.eventDate);
             return (
-              <Link key={gig.id} href={`/bookings?id=${gig.id}`}>
-                <div className={`flex items-center gap-3 p-4 sm:p-6 rounded-lg ${getStatusColor(gig.status)} hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-current`}>
+              <div 
+                key={gig.id}
+                className={`flex items-center gap-3 p-4 sm:p-6 rounded-lg ${getStatusColor(gig.status)} hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-current`}
+                onClick={() => {
+                  // Single click - go to calendar with highlight
+                  window.location.href = `/bookings?view=calendar&highlight=${gig.id}`;
+                }}
+                onDoubleClick={() => {
+                  // Double click - go to booking form
+                  window.location.href = `/new-booking?edit=${gig.id}`;
+                }}
+              >
                   {/* Responsive date box */}
                   <div className="text-center flex-shrink-0 w-16 sm:w-20">
                     <div className={`text-xs sm:text-sm font-semibold ${getStatusBadgeColor(gig.status)} uppercase tracking-wide`}>
@@ -170,7 +180,6 @@ export default function CalendarWidget() {
                     </div>
                   </div>
                 </div>
-              </Link>
             );
           })}
         </div>
