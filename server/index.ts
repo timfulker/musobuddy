@@ -57,27 +57,31 @@ app.get('/', (req, res, next) => {
   return next();
 });
 
-// Initialize storage and services
-const { storage } = await import('./core/storage');
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Initialize storage and services in async wrapper
+async function initializeServer() {
+  const { storage } = await import('./core/storage');
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
 
 // Enhanced Mailgun webhook handler with detailed logging
 app.post('/api/webhook/mailgun', async (req, res) => {
   try {
     // Log all incoming webhook data for debugging
-    console.log('🔍 WEBHOOK DEBUG: Full request received');
+    console.log('🔍 WEBHOOK DEBUG: Full request received at', new Date().toISOString());
     console.log('🔍 Headers:', JSON.stringify(req.headers, null, 2));
     console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
     console.log('🔍 Method:', req.method);
     console.log('🔍 URL:', req.url);
     console.log('🔍 Query:', JSON.stringify(req.query, null, 2));
+    console.log('🔍 Raw body type:', typeof req.body);
+    console.log('🔍 Body keys:', Object.keys(req.body || {}));
     
-    const bodyText = req.body['body-plain'] || req.body.text || '';
-    const fromEmail = req.body.From || req.body.from || '';
-    const subject = req.body.Subject || req.body.subject || '';
-    const recipient = req.body.To || req.body.recipient || '';
+    // Mailgun sends fields in lowercase, handle both cases
+    const bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body['body-html'] || '';
+    const fromEmail = req.body.from || req.body.From || req.body.sender || '';
+    const subject = req.body.subject || req.body.Subject || '';
+    const recipient = req.body.recipient || req.body.To || req.body.to || '';
     
     console.log('📧 Processing email webhook:', { 
       from: fromEmail, 
@@ -93,20 +97,26 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required email fields' });
     }
     
-    // Use the enhanced email queue for processing
-    const { emailQueue } = await import('./core/email-queue');
-    await emailQueue.addEmail({
+    // Use the enhanced email queue for processing - pass all data
+    const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
+    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
+      // Include all variations to ensure compatibility
       From: fromEmail,
-      Subject: subject,
-      'body-plain': bodyText,
-      To: recipient,
       from: fromEmail,
+      Subject: subject,
       subject: subject,
-      text: bodyText
+      'body-plain': bodyText,
+      'stripped-text': bodyText,
+      text: bodyText,
+      To: recipient,
+      to: recipient,
+      recipient: recipient,
+      // Pass through the original body for debugging
+      originalBody: req.body
     });
     
-    console.log('✅ Email successfully queued for processing');
-    res.status(200).json({ success: true, message: 'Email processed' });
+    console.log(`✅ Email successfully queued for processing - Job ${jobId} (position: ${queuePosition})`);
+    res.status(200).json({ success: true, message: 'Email processed', jobId, queuePosition });
     
   } catch (error: any) {
     console.error('❌ Webhook error:', error);
@@ -159,33 +169,40 @@ app.get('/api/email-queue/status', async (req, res) => {
   }
 });
 
-// Register all API routes
-const { registerRoutes } = await import('./routes');
-await registerRoutes(app);
+  // Register all API routes
+  const { registerRoutes } = await import('./routes');
+  await registerRoutes(app);
 
-// Start server
-// Replit provides PORT env variable, default to 5000
-const port = process.env.PORT || 5000;
+  // Start server
+  // Replit provides PORT env variable, default to 5000
+  const port = parseInt(process.env.PORT || '5000', 10);
 
-if (process.env.NODE_ENV !== 'production') {
-  // Development with Vite
-  console.log('🛠️ Development mode: using Vite dev server');
-  const { setupVite } = await import('./vite');
-  const { createServer } = await import('http');
-  const server = createServer(app);
-  
-  await setupVite(app, server);
-  
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
-  });
-} else {
-  // Production
-  console.log('🏭 Production mode: serving static files');
-  const { serveStaticFixed } = await import('./core/serve-static');
-  serveStaticFixed(app);
-  
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Production server running on port ${port}`);
-  });
+  if (process.env.NODE_ENV !== 'production') {
+    // Development with Vite
+    console.log('🛠️ Development mode: using Vite dev server');
+    const { setupVite } = await import('./vite');
+    const { createServer } = await import('http');
+    const server = createServer(app);
+    
+    await setupVite(app, server);
+    
+    server.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
+    });
+  } else {
+    // Production
+    console.log('🏭 Production mode: serving static files');
+    const { serveStaticFixed } = await import('./core/serve-static');
+    serveStaticFixed(app);
+    
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 Production server running on port ${port}`);
+    });
+  }
 }
+
+// Start the server
+initializeServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});

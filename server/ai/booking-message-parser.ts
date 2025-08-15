@@ -511,12 +511,13 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     }
   }
 
-  // Extract venue/location from message
+  // Extract venue/location from message (improved patterns)
   const venuePatterns = [
-    /at (.+?)(?:\.|,|$)/,
-    /venue (.+?)(?:\.|,|$)/,
-    /reception (.+?)(?:\.|,|$)/,
-    /location (.+?)(?:\.|,|$)/
+    /at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i, // "at Brighton Church" (stop at fee)
+    /venue:\s*([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
+    /reception at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
+    /location:\s*([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
+    /held at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i
   ];
   
   for (const pattern of venuePatterns) {
@@ -528,9 +529,10 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     }
   }
 
-  // Enhanced date extraction
+  // Enhanced date extraction with better patterns
   const datePatterns = [
-    /(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+next year|\s+2026|\s+2025)?)/i,
+    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4})/i, // "March 15th 2026"
+    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+next year)?)/i, // "March 15th next year"
     /(\d{1,2}\/\d{1,2}\/\d{4})/,
     /(\d{4}-\d{2}-\d{2})/
   ];
@@ -538,22 +540,28 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
   for (const pattern of datePatterns) {
     const dateMatch = messageText.match(pattern);
     if (dateMatch) {
-      let dateStr = dateMatch[1].toLowerCase();
+      let dateStr = dateMatch[1].toLowerCase().trim();
+      console.log(`📅 Found potential date: "${dateStr}"`);
+      
       // Handle "next year" conversion
       if (dateStr.includes('next year')) {
         dateStr = dateStr.replace('next year', '2026');
       } else if (dateStr.match(/\w+\s+\d{1,2}/) && !dateStr.match(/20\d{2}/)) {
-        dateStr += ' 2025'; // Default to this year if no year specified
+        // If it's just "March 15th" without year, default to next occurrence
+        const currentYear = new Date().getFullYear();
+        dateStr += ` ${currentYear + 1}`;
       }
       
       try {
+        console.log(`📅 Attempting to parse: "${dateStr}"`);
         const parsedDate = new Date(dateStr);
         if (!isNaN(parsedDate.getTime()) && parsedDate > new Date()) {
           data.eventDate = parsedDate.toISOString().split('T')[0];
           data.confidence = Math.min(0.8, data.confidence + 0.3);
+          console.log(`✅ Successfully parsed date: ${data.eventDate}`);
         }
       } catch (e) {
-        // Date parsing failed, continue
+        console.log(`❌ Date parsing failed for: "${dateStr}"`);
       }
       break;
     }

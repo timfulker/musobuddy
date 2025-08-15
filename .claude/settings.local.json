@@ -19,7 +19,10 @@
       "Bash(sed:*)",
       "Bash(awk:*)",
       "Bash(python3:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(journalctl:*)",
+      "Bash(npx kill-port:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

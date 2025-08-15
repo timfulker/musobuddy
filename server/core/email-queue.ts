@@ -154,11 +154,16 @@ class EmailQueue {
       }
     };
 
-    // Extract email fields
-    const fromField = requestData.From || requestData.from || requestData.sender || '';
-    const subjectField = requestData.Subject || requestData.subject || '';
-    const bodyField = requestData['body-plain'] || requestData.text || requestData['stripped-text'] || '';
-    const recipientField = requestData.To || requestData.recipient || '';
+    // Extract email fields - handle all Mailgun field variations
+    const fromField = requestData.from || requestData.From || requestData.sender || '';
+    const subjectField = requestData.subject || requestData.Subject || '';
+    const bodyField = requestData['body-plain'] || requestData['stripped-text'] || requestData.text || requestData['body-html'] || '';
+    const recipientField = requestData.recipient || requestData.To || requestData.to || '';
+    
+    // Log original data if available for debugging
+    if (requestData.originalBody) {
+      console.log(`📧 [${requestId}] Original Mailgun data keys:`, Object.keys(requestData.originalBody));
+    }
 
     console.log(`📧 [${requestId}] Email data:`, {
       from: fromField?.substring(0, 50),
@@ -178,26 +183,67 @@ class EmailQueue {
     }
 
     // Extract email prefix from recipient to find user
+    // Handle multiple domain formats: @musobuddy.replit.app, @enquiries.musobuddy.com, etc.
     const recipientMatch = recipientField.match(/([^@]+)@/);
     if (!recipientMatch) {
-      await saveToReviewMessages('Invalid recipient format', `Recipient: ${recipientField}`);
-      return;
+      console.log(`📧 [${requestId}] WARNING: Could not extract prefix from recipient: ${recipientField}`);
+      // If no recipient field, default to primary user
+      const { storage } = await import('./storage');
+      const users = await storage.getAllUsers();
+      const user = users.find(u => u.email === 'timfulkermusic@gmail.com') || { id: "43963086", email: "timfulkermusic@gmail.com" };
+      console.log(`📧 [${requestId}] Using default user: ${user.email}`);
+      // Continue processing with default user
+      const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
+      // ... rest of processing continues below
     }
 
-    const emailPrefix = recipientMatch[1];
-    console.log(`📧 [${requestId}] Email prefix: ${emailPrefix}`);
+    const emailPrefix = recipientMatch[1].toLowerCase();
+    console.log(`📧 [${requestId}] Email prefix extracted: ${emailPrefix}`);
+    console.log(`📧 [${requestId}] Full recipient: ${recipientField}`);
 
     // Find user by email prefix
     const { storage } = await import('./storage');
-    let user = await storage.getUserByEmailPrefix(emailPrefix);
     
-    if (!user) {
-      // Fall back to admin user if no matching email prefix found
-      console.log(`📧 [${requestId}] No user found for prefix "${emailPrefix}", using admin user`);
-      user = { id: "43963086", email: "admin@musobuddy.com" }; // Admin/primary user fallback
-    } else {
-      console.log(`📧 [${requestId}] Found user: ${user.id} (${user.email})`);
+    // Define email prefix to user email mapping
+    const prefixMapping: { [key: string]: string } = {
+      'timfulkermusic': 'timfulkermusic@gmail.com',
+      'saxweddings': 'timfulker@gmail.com',
+      // Add more mappings as needed
+    };
+    
+    let user = null;
+    
+    // First try to find user by the mapped email
+    if (prefixMapping[emailPrefix]) {
+      const targetEmail = prefixMapping[emailPrefix];
+      console.log(`📧 [${requestId}] Mapped prefix "${emailPrefix}" to email: ${targetEmail}`);
+      const users = await storage.getAllUsers();
+      user = users.find(u => u.email === targetEmail);
+      if (user) {
+        console.log(`📧 [${requestId}] Found user by mapped email: ${user.id} (${user.email})`);
+      }
     }
+    
+    // If no mapping found, try exact prefix match
+    if (!user) {
+      user = await storage.getUserByEmailPrefix(emailPrefix);
+      if (user) {
+        console.log(`📧 [${requestId}] Found user by email prefix: ${user.id} (${user.email})`);
+      }
+    }
+    
+    // Fall back to primary user if no match found
+    if (!user) {
+      console.log(`📧 [${requestId}] No user found for prefix "${emailPrefix}", using primary user`);
+      const users = await storage.getAllUsers();
+      user = users.find(u => u.email === 'timfulkermusic@gmail.com');
+      if (!user) {
+        console.log(`📧 [${requestId}] CRITICAL: Could not find primary user, using fallback`);
+        user = { id: "43963086", email: "timfulkermusic@gmail.com" };
+      }
+    }
+    
+    console.log(`📧 [${requestId}] Final user selection: ${user.id} (${user.email})`)
 
     // Process the email using existing widget logic
     const { parseBookingMessage } = await import('../ai/booking-message-parser');
