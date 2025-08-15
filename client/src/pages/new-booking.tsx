@@ -234,11 +234,16 @@ export default function NewBookingPage() {
     },
   });
 
-  // Watch venue address changes to calculate mileage
+  // Watch venue address changes to calculate mileage (only for new bookings or when user manually changes address)
   const watchedVenueAddress = form.watch('venueAddress');
   useEffect(() => {
+    // Skip calculation if we're in edit mode and already have existing mileage data
+    if (isEditMode && editingBooking && (editingBooking.distance || editingBooking.duration)) {
+      console.log('🚗 Skipping mileage calculation - existing booking already has mileage data');
+      return;
+    }
+    
     console.log('🚗 Venue address changed:', watchedVenueAddress);
-    console.log('🚗 User settings:', userSettings);
     
     if (watchedVenueAddress && watchedVenueAddress.length > 10) {
       // Debounce the calculation to avoid too many API calls
@@ -259,7 +264,7 @@ export default function NewBookingPage() {
         error: null
       });
     }
-  }, [watchedVenueAddress, userSettings]);
+  }, [watchedVenueAddress, userSettings, isEditMode, editingBooking]);
 
   // Populate form with existing booking data when editing
   useEffect(() => {
@@ -338,6 +343,21 @@ export default function NewBookingPage() {
         encoreSuggestions: editingBooking.encoreSuggestions || '',
         what3words: editingBooking.what3words || '',
       });
+      
+      // Set existing mileage data if available
+      if (editingBooking.distance || editingBooking.duration) {
+        setMileageData({
+          distance: editingBooking.distance || null,
+          distanceValue: editingBooking.distanceValue || null,
+          duration: editingBooking.duration || null,
+          isCalculating: false,
+          error: null
+        });
+        console.log('✅ Loaded existing mileage data:', {
+          distance: editingBooking.distance,
+          duration: editingBooking.duration
+        });
+      }
       
       console.log('✅ Form populated with booking data');
     }
@@ -729,8 +749,10 @@ export default function NewBookingPage() {
                                   form.setValue('venueAddress', addressData.formattedAddress);
                                   console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
                                   
-                                  // Calculate mileage when venue address is set
-                                  calculateMileage(addressData.formattedAddress);
+                                  // Calculate mileage when venue address is set (only for new bookings)
+                                  if (!isEditMode) {
+                                    calculateMileage(addressData.formattedAddress);
+                                  }
                                 }
 
                                 // Auto-populate venue contact information if available
