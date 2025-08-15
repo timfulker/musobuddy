@@ -1,0 +1,22 @@
+{
+  "critical_dependencies": {
+    "multer": "Required for multipart/form-data parsing from Mailgun webhooks with attachments",
+    "@types/multer": "TypeScript definitions for multer",
+    "express": "Core web framework",
+    "node-fetch": "For Mailgun storage API calls"
+  },
+  "environment_variables": {
+    "MAILGUN_API_KEY": "Required for authenticating storage webhook fetches",
+    "MAILGUN_DOMAIN": "enquiries.musobuddy.com",
+    "DATABASE_URL": "Production database connection"
+  },
+  "install_command": "npm install multer @types/multer",
+  "emergency_restore_steps": [
+    "1. Copy backup/webhook-handler-working-backup.js logic to server/index.ts",
+    "2. Run: npm install multer @types/multer", 
+    "3. Verify MAILGUN_API_KEY environment variable exists",
+    "4. Deploy immediately to production",
+    "5. Test with signature image email from timfulkermusic@gmail.com",
+    "6. Check /api/webhook/logs for confirmation"
+  ]
+}
