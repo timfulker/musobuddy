@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,6 +38,7 @@ import {
 import APICostMonitor from "@/components/api-cost-monitor";
 import { ApiUsageManager } from "@/components/api-usage-manager";
 import DatabaseAdmin from "@/components/database-admin";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AdminOverview {
   totalUsers: number;
@@ -62,6 +64,8 @@ interface AdminUser {
 }
 
 export default function AdminPanel() {
+  const { user, isLoading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newUserOpen, setNewUserOpen] = useState(false);
   const [editUserOpen, setEditUserOpen] = useState(false);
@@ -101,6 +105,14 @@ export default function AdminPanel() {
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Admin protection - redirect non-admin users
+  useEffect(() => {
+    if (!authLoading && (!user || !user.isAdmin)) {
+      console.log('🚨 SECURITY: Non-admin user attempted to access admin panel:', user?.email);
+      navigate('/dashboard');
+    }
+  }, [user, authLoading, navigate]);
 
   const { data: overview, isLoading: overviewLoading } = useQuery<AdminOverview>({
     queryKey: ["/api/admin/overview"],
@@ -380,6 +392,23 @@ export default function AdminPanel() {
     };
     return colors[tier as keyof typeof colors] || colors.free;
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not admin (will be redirected)
+  if (!user || !user.isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background admin-panel">

@@ -46,7 +46,7 @@ export function setupAdminDatabaseRoutes(app: Express) {
           const rowCount = countResult[0]?.count || 0;
           
           // Get column names from schema
-          const columns = Object.keys((tableSchema as any)._.columns);
+          const columns = Object.keys(tableSchema);
           
           tables.push({
             name: tableName,

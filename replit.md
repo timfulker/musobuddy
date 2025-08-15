@@ -22,6 +22,7 @@ External integration deployment requirement: All external integrations (Stripe p
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
 Launch timeline: Few days for bug fixes → next week for landing page → beta testing with 4-5 users (2-3 weeks starting ~22nd/23rd) → full launch mid-to-end September. Primary concern: scalability during beta testing phase.
+Admin database access: Read-only database administration panel added as submenu in admin section (August 2025). Includes table browsing, filtering, search, and CSV export with strict admin-only access controls. Enhanced frontend security protection prevents non-admin users from accessing admin panel even in development cross-session scenarios.
 
 ## System Architecture
 
