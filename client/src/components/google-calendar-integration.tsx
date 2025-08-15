@@ -299,7 +299,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Manual Sync Controls */}
         <div className="space-y-3">
-          <Label className="text-base font-medium" style={{ color: '#111827' }}>Manual Sync</Label>
+          <Label className="text-base font-medium text-gray-900">Manual Sync</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Button 
               variant="outline" 
@@ -342,84 +342,83 @@ export default function GoogleCalendarIntegration() {
 
         {/* Sync Settings */}
         <div className="space-y-4">
-          <Label className="text-base font-medium" style={{ color: '#111827' }}>Sync Settings</Label>
+          <Label className="text-base font-medium text-gray-900">Sync Settings</Label>
           
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}>
-              <div className="space-y-1 flex-1">
-                <Label htmlFor="sync-enabled" className="text-sm font-medium" style={{ color: '#111827' }}>Enable Sync</Label>
-                <p className="text-sm" style={{ color: '#374151' }}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="sync-enabled" className="text-gray-900">Enable Sync</Label>
+                <p className="text-sm text-gray-600">
                   Enable automatic synchronization between MusoBuddy and Google Calendar
                 </p>
               </div>
-              <div className="ml-4">
-                <Switch
-                  id="sync-enabled"
-                  checked={calendarStatus.syncEnabled}
-                  onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
-                  style={{
-                    backgroundColor: calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db'
-                  }}
-                />
-              </div>
+              <Switch
+                id="sync-enabled"
+                checked={calendarStatus.syncEnabled}
+                onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
+                style={{
+                  '--switch-bg-checked': '#2563eb',
+                  '--switch-bg-unchecked': '#d1d5db',
+                  backgroundColor: calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db'
+                } as any}
+                className="!bg-current border-none shadow-sm"
+              />
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}>
-              <div className="space-y-1 flex-1">
-                <Label htmlFor="auto-sync-bookings" className="text-sm font-medium" style={{ color: '#111827' }}>Export Bookings</Label>
-                <p className="text-sm" style={{ color: '#374151' }}>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="auto-sync-bookings" className="text-gray-900">Export Bookings</Label>
+                <p className="text-sm text-gray-600">
                   Automatically create Google Calendar events for new MusoBuddy bookings
                 </p>
               </div>
-              <div className="ml-4">
-                <Switch
-                  id="auto-sync-bookings"
-                  checked={calendarStatus.autoSyncBookings}
-                  onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
-                  disabled={!calendarStatus.syncEnabled}
-                  style={{
-                    backgroundColor: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db',
-                    opacity: !calendarStatus.syncEnabled ? 0.5 : 1
-                  }}
-                />
-              </div>
+              <Switch
+                id="auto-sync-bookings"
+                checked={calendarStatus.autoSyncBookings}
+                onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
+                disabled={!calendarStatus.syncEnabled}
+                style={{
+                  backgroundColor: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db',
+                  opacity: !calendarStatus.syncEnabled ? 0.5 : 1
+                } as any}
+                className="!bg-current border-none shadow-sm"
+              />
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}>
-              <div className="space-y-1 flex-1">
-                <Label htmlFor="auto-import-events" className="text-sm font-medium" style={{ color: '#111827' }}>Import Events</Label>
-                <p className="text-sm" style={{ color: '#374151' }}>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="auto-import-events" className="text-gray-900">Import Events</Label>
+                <p className="text-sm text-gray-600">
                   Automatically import Google Calendar events as MusoBuddy bookings
                 </p>
               </div>
-              <div className="ml-4">
-                <Switch
-                  id="auto-import-events"
-                  checked={calendarStatus.autoImportEvents}
-                  onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
-                  disabled={!calendarStatus.syncEnabled}
-                  style={{
-                    backgroundColor: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db',
-                    opacity: !calendarStatus.syncEnabled ? 0.5 : 1
-                  }}
-                />
-              </div>
+              <Switch
+                id="auto-import-events"
+                checked={calendarStatus.autoImportEvents}
+                onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
+                disabled={!calendarStatus.syncEnabled}
+                style={{
+                  backgroundColor: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db',
+                  opacity: !calendarStatus.syncEnabled ? 0.5 : 1
+                } as any}
+                className="!bg-current border-none shadow-sm"
+              />
             </div>
 
-            <div className="space-y-3 p-4 rounded-lg" style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}>
-              <Label htmlFor="sync-direction" className="text-sm font-medium" style={{ color: '#111827' }}>Sync Direction</Label>
+            <div className="space-y-2">
+              <Label htmlFor="sync-direction" className="text-gray-900">Sync Direction</Label>
               <Select
                 value={calendarStatus.syncDirection}
                 onValueChange={(value) => updateSetting('syncDirection', value)}
                 disabled={!calendarStatus.syncEnabled}
               >
-                <SelectTrigger style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db', color: '#111827' }}>
+                <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}>
-                  <SelectItem value="bidirectional" style={{ color: '#111827' }}>Two-way sync</SelectItem>
-                  <SelectItem value="export_only" style={{ color: '#111827' }}>Export only (MusoBuddy → Google)</SelectItem>
-                  <SelectItem value="import_only" style={{ color: '#111827' }}>Import only (Google → MusoBuddy)</SelectItem>
+                <SelectContent className="bg-white border border-gray-300">
+                  <SelectItem value="bidirectional" className="text-gray-900 hover:bg-gray-100">Two-way sync</SelectItem>
+                  <SelectItem value="export_only" className="text-gray-900 hover:bg-gray-100">Export only (MusoBuddy → Google)</SelectItem>
+                  <SelectItem value="import_only" className="text-gray-900 hover:bg-gray-100">Import only (Google → MusoBuddy)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
