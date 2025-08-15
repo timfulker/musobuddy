@@ -65,29 +65,52 @@ async function initializeServer() {
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
+// Webhook activity log for monitoring
+const webhookLogs: any[] = [];
+const MAX_LOGS = 50;
+
+function logWebhookActivity(message: string, data?: any) {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    message,
+    data: data ? JSON.stringify(data).substring(0, 200) : undefined
+  };
+  webhookLogs.push(logEntry);
+  if (webhookLogs.length > MAX_LOGS) {
+    webhookLogs.shift();
+  }
+  console.log('📧 WEBHOOK:', message, data ? JSON.stringify(data).substring(0, 100) : '');
+}
+
+// Endpoint to view webhook logs
+app.get('/api/webhook/logs', (req, res) => {
+  res.json({
+    logs: webhookLogs.slice(-20), // Last 20 logs
+    total: webhookLogs.length
+  });
+});
+
 // Enhanced Mailgun webhook handler
 app.post('/api/webhook/mailgun', async (req, res) => {
-  console.log('📧 WEBHOOK: Received Mailgun webhook');
-  console.log('📧 WEBHOOK: Headers:', req.headers);
-  console.log('📧 WEBHOOK: Body keys:', Object.keys(req.body || {}));
+  logWebhookActivity('Received Mailgun webhook', { keys: Object.keys(req.body || {}) });
   
   try {
     const webhookData = req.body;
     
     // Log what type of webhook this is
     if (webhookData['body-plain'] || webhookData['body-html'] || webhookData['stripped-text']) {
-      console.log('📧 WEBHOOK: Direct email content detected');
+      logWebhookActivity('Direct email content detected');
     } else if (webhookData['message-url']) {
-      console.log('📧 WEBHOOK: Storage webhook detected (message-url)');
+      logWebhookActivity('Storage webhook detected (message-url)');
     } else if (webhookData.storage?.url) {
-      console.log('📧 WEBHOOK: Storage webhook detected (storage.url)');
+      logWebhookActivity('Storage webhook detected (storage.url)');
     } else {
-      console.log('📧 WEBHOOK: Unknown format - available keys:', Object.keys(webhookData));
+      logWebhookActivity('Unknown format', { availableKeys: Object.keys(webhookData) });
     }
     
     // Check if this is an event webhook (not an email)
     if (webhookData.event) {
-      console.log('📧 WEBHOOK: Event webhook received:', webhookData.event);
+      logWebhookActivity('Event webhook received', { event: webhookData.event });
       // Event webhooks should just be acknowledged
       return res.status(200).json({ status: 'ok', type: 'event' });
     }
@@ -102,7 +125,7 @@ app.post('/api/webhook/mailgun', async (req, res) => {
                        webhookData.storage?.url;
       
       if (storageUrl) {
-        console.log('📧 WEBHOOK: Fetching from storage URL:', storageUrl);
+        logWebhookActivity('Fetching from storage URL', { url: storageUrl.substring(0, 50) });
         
         try {
           const response = await fetch(storageUrl, {
@@ -111,18 +134,18 @@ app.post('/api/webhook/mailgun', async (req, res) => {
             }
           });
           
-          console.log('📧 WEBHOOK: Storage fetch status:', response.status);
+          logWebhookActivity('Storage fetch response', { status: response.status });
           
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('📧 WEBHOOK: Storage fetch failed:', errorText);
+            logWebhookActivity('Storage fetch failed', { status: response.status, error: errorText.substring(0, 100) });
             throw new Error(`Storage fetch failed: ${response.status}`);
           }
           
           emailData = await response.json();
-          console.log('📧 WEBHOOK: Fetched email data keys:', Object.keys(emailData));
+          logWebhookActivity('Fetched email data successfully', { keys: Object.keys(emailData).slice(0, 10) });
         } catch (fetchError) {
-          console.error('📧 WEBHOOK: Storage fetch error:', fetchError);
+          logWebhookActivity('Storage fetch error', { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
           throw fetchError;
         }
       }
