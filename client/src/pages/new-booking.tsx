@@ -768,10 +768,7 @@ export default function NewBookingPage() {
                                   form.setValue('venueAddress', addressData.formattedAddress);
                                   console.log('✅ Auto-populated venue address:', addressData.formattedAddress);
                                   
-                                  // Calculate mileage when venue address is set (only for new bookings)
-                                  if (!isEditMode) {
-                                    calculateMileage(addressData.formattedAddress);
-                                  }
+                                  // No automatic calculation - user will use button if needed
                                 }
 
                                 // Auto-populate venue contact information if available
@@ -813,6 +810,22 @@ export default function NewBookingPage() {
                               placeholder="Enter full venue address (e.g., 123 Main St, London, UK) to calculate mileage"
                             />
                           </FormControl>
+                          {/* Manual mileage calculation button */}
+                          {watchedVenueAddress && watchedVenueAddress.length > 10 && !mileageData.distance && !mileageData.isCalculating && (
+                            <div className="mt-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => calculateMileage(watchedVenueAddress)}
+                                className="h-8 px-3 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                              >
+                                <MapPin className="w-3 h-3 mr-1" />
+                                Calculate Mileage
+                              </Button>
+                            </div>
+                          )}
+                          
                           {mileageData.isCalculating && (
                             <div className="mt-2 text-sm text-blue-600 flex items-center gap-2">
                               <MapPin className="w-4 h-4 animate-pulse" />
