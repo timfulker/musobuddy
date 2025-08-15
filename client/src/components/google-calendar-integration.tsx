@@ -199,106 +199,111 @@ export default function GoogleCalendarIntegration() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900">
-            <Calendar className="w-5 h-5" />
-            Google Calendar Integration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="ml-4 text-gray-700">Loading Google Calendar status...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-gray-900 dark:text-gray-100" style={{ color: '#1f2937' }}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2" style={{ color: '#1f2937' }}>
+              <Calendar className="w-5 h-5" />
+              Google Calendar Integration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="ml-4" style={{ color: '#374151' }}>Loading Google Calendar status...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (!calendarStatus?.connected) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900">
-            <Calendar className="w-5 h-5" />
-            Google Calendar Integration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center py-6">
-            <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Connect Your Google Calendar</h3>
-            <p className="text-gray-600 mb-6">
-              Sync your MusoBuddy bookings with Google Calendar for automatic two-way updates
-            </p>
-            
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">What happens when you connect:</h4>
-              <ul className="text-sm space-y-1 text-gray-700 text-left">
-                <li>• Your bookings automatically appear in Google Calendar</li>
-                <li>• Changes in Google Calendar sync back to MusoBuddy</li>
-                <li>• Real-time updates when events are created or modified</li>
-                <li>• Keep your existing calendar import for Apple Calendar</li>
-              </ul>
-            </div>
+      <div className="text-gray-900 dark:text-gray-100" style={{ color: '#1f2937' }}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2" style={{ color: '#1f2937' }}>
+              <Calendar className="w-5 h-5" />
+              Google Calendar Integration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center py-6">
+              <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2" style={{ color: '#1f2937' }}>Connect Your Google Calendar</h3>
+              <p className="mb-6" style={{ color: '#4b5563' }}>
+                Sync your MusoBuddy bookings with Google Calendar for automatic two-way updates
+              </p>
+              
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <h4 className="font-medium mb-2" style={{ color: '#1f2937' }}>What happens when you connect:</h4>
+                <ul className="text-sm space-y-1 text-left" style={{ color: '#374151' }}>
+                  <li>• Your bookings automatically appear in Google Calendar</li>
+                  <li>• Changes in Google Calendar sync back to MusoBuddy</li>
+                  <li>• Real-time updates when events are created or modified</li>
+                  <li>• Keep your existing calendar import for Apple Calendar</li>
+                </ul>
+              </div>
 
-            <Button 
-              onClick={handleConnect} 
-              disabled={isConnecting || connectMutation.isPending}
-              size="lg"
-            >
-              {(isConnecting || connectMutation.isPending) ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Connect Google Calendar
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Button 
+                onClick={handleConnect} 
+                disabled={isConnecting || connectMutation.isPending}
+                size="lg"
+              >
+                {(isConnecting || connectMutation.isPending) ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Connect Google Calendar
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-900">
-            <Calendar className="w-5 h-5" />
-            Google Calendar Integration
-          </div>
-          <Badge variant="outline" className="text-green-700 border-green-700">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Connected
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Sync Status */}
-        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="font-medium text-green-900">Google Calendar Connected</p>
-              <p className="text-sm text-green-700">
-                Last sync: {calendarStatus.lastSyncAt 
-                  ? new Date(calendarStatus.lastSyncAt).toLocaleString() 
-                  : 'Never'}
-              </p>
+    <div className="text-gray-900 dark:text-gray-100" style={{ color: '#1f2937' }}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2" style={{ color: '#1f2937' }}>
+              <Calendar className="w-5 h-5" />
+              Google Calendar Integration
+            </div>
+            <Badge variant="outline" className="text-green-700 border-green-700">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Connected
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Sync Status */}
+          <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <div>
+                <p className="font-medium text-green-900" style={{ color: '#14532d' }}>Google Calendar Connected</p>
+                <p className="text-sm text-green-700" style={{ color: '#15803d' }}>
+                  Last sync: {calendarStatus.lastSyncAt 
+                    ? new Date(calendarStatus.lastSyncAt).toLocaleString() 
+                    : 'Never'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Manual Sync Controls */}
-        <div className="space-y-3">
-          <Label className="text-base font-medium text-gray-900">Manual Sync</Label>
+          {/* Manual Sync Controls */}
+          <div className="space-y-3">
+            <Label className="text-base font-medium" style={{ color: '#1f2937' }}>Manual Sync</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Button 
               variant="outline" 
@@ -336,108 +341,109 @@ export default function GoogleCalendarIntegration() {
 
         <Separator />
 
-        {/* Sync Settings */}
-        <div className="space-y-4">
-          <Label className="text-base font-medium text-gray-900">Sync Settings</Label>
-          
+          {/* Sync Settings */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="sync-enabled">Enable Sync</Label>
-                <p className="text-sm text-gray-600">
-                  Enable automatic synchronization between MusoBuddy and Google Calendar
-                </p>
+            <Label className="text-base font-medium" style={{ color: '#1f2937' }}>Sync Settings</Label>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="sync-enabled" style={{ color: '#1f2937' }}>Enable Sync</Label>
+                  <p className="text-sm" style={{ color: '#4b5563' }}>
+                    Enable automatic synchronization between MusoBuddy and Google Calendar
+                  </p>
+                </div>
+                <Switch
+                  id="sync-enabled"
+                  checked={calendarStatus.syncEnabled}
+                  onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
+                />
               </div>
-              <Switch
-                id="sync-enabled"
-                checked={calendarStatus.syncEnabled}
-                onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
-              />
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-sync-bookings">Export Bookings</Label>
-                <p className="text-sm text-gray-600">
-                  Automatically create Google Calendar events for new MusoBuddy bookings
-                </p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-sync-bookings" style={{ color: '#1f2937' }}>Export Bookings</Label>
+                  <p className="text-sm" style={{ color: '#4b5563' }}>
+                    Automatically create Google Calendar events for new MusoBuddy bookings
+                  </p>
+                </div>
+                <Switch
+                  id="auto-sync-bookings"
+                  checked={calendarStatus.autoSyncBookings}
+                  onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
+                  disabled={!calendarStatus.syncEnabled}
+                />
               </div>
-              <Switch
-                id="auto-sync-bookings"
-                checked={calendarStatus.autoSyncBookings}
-                onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
-                disabled={!calendarStatus.syncEnabled}
-              />
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-import-events">Import Events</Label>
-                <p className="text-sm text-gray-600">
-                  Automatically import Google Calendar events as MusoBuddy bookings
-                </p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-import-events" style={{ color: '#1f2937' }}>Import Events</Label>
+                  <p className="text-sm" style={{ color: '#4b5563' }}>
+                    Automatically import Google Calendar events as MusoBuddy bookings
+                  </p>
+                </div>
+                <Switch
+                  id="auto-import-events"
+                  checked={calendarStatus.autoImportEvents}
+                  onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
+                  disabled={!calendarStatus.syncEnabled}
+                />
               </div>
-              <Switch
-                id="auto-import-events"
-                checked={calendarStatus.autoImportEvents}
-                onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
-                disabled={!calendarStatus.syncEnabled}
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sync-direction">Sync Direction</Label>
-              <Select
-                value={calendarStatus.syncDirection}
-                onValueChange={(value) => updateSetting('syncDirection', value)}
-                disabled={!calendarStatus.syncEnabled}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bidirectional">Two-way sync</SelectItem>
-                  <SelectItem value="export_only">Export only (MusoBuddy → Google)</SelectItem>
-                  <SelectItem value="import_only">Import only (Google → MusoBuddy)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="sync-direction" style={{ color: '#1f2937' }}>Sync Direction</Label>
+                <Select
+                  value={calendarStatus.syncDirection}
+                  onValueChange={(value) => updateSetting('syncDirection', value)}
+                  disabled={!calendarStatus.syncEnabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bidirectional">Two-way sync</SelectItem>
+                    <SelectItem value="export_only">Export only (MusoBuddy → Google)</SelectItem>
+                    <SelectItem value="import_only">Import only (Google → MusoBuddy)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* Disconnect */}
-        <div className="space-y-3">
-          <Label className="text-base font-medium text-gray-900">Disconnect</Label>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Unlink className="w-4 h-4 mr-2" />
-                Disconnect Google Calendar
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Disconnect Google Calendar?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will stop syncing your MusoBuddy bookings with Google Calendar. 
-                  Existing events will remain in both calendars, but future changes won't sync.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => disconnectMutation.mutate()}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Disconnect
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Disconnect */}
+          <div className="space-y-3">
+            <Label className="text-base font-medium" style={{ color: '#1f2937' }}>Disconnect</Label>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Unlink className="w-4 h-4 mr-2" />
+                  Disconnect Google Calendar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Disconnect Google Calendar?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will stop syncing your MusoBuddy bookings with Google Calendar. 
+                    Existing events will remain in both calendars, but future changes won't sync.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => disconnectMutation.mutate()}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Disconnect
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
