@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClientSchema, type InsertClient, type Client } from "@shared/schema";
+import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, UserPlus, Download, Edit2, Eye } from "lucide-react";
@@ -25,6 +26,7 @@ export default function AddressBook() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
+
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<'name' | 'bookings' | 'revenue' | 'created'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -34,6 +36,8 @@ export default function AddressBook() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+
   
 
 
@@ -545,14 +549,16 @@ export default function AddressBook() {
                         Edit Client
                       </Button>
                       {viewingClient.email && (
-                        <Button 
-                          variant="outline" 
-                          onClick={() => window.open(`mailto:${viewingClient.email}`, '_blank')}
-                          className="flex-1"
-                        >
-                          <Mail className="w-4 h-4 mr-2" />
-                          Send Email
-                        </Button>
+                        <Link href={`/templates?clientEmail=${encodeURIComponent(viewingClient.email)}&clientName=${encodeURIComponent(viewingClient.name)}&action=compose`}>
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 w-full"
+                            onClick={() => setViewingClient(null)}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Email
+                          </Button>
+                        </Link>
                       )}
                     </div>
                   </div>
