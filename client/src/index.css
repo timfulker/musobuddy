@@ -48,26 +48,70 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: var(--theme-primary-text) !important;
 }
 
-/* Dialog Content Text Visibility Fix */
-[data-radix-dialog-content] {
+/* Google Calendar Dialog ONLY - Targeted Fix */
+.calendar-integration-dialog {
   background: white !important;
   color: #1f2937 !important;
 }
 
-[data-radix-dialog-content] * {
+.calendar-integration-dialog h1,
+.calendar-integration-dialog h2,
+.calendar-integration-dialog h3,
+.calendar-integration-dialog h4,
+.calendar-integration-dialog p:not(button *),
+.calendar-integration-dialog span:not(button *):not([class*="bg-"]),
+.calendar-integration-dialog label:not(button *),
+.calendar-integration-dialog li:not(button *),
+.calendar-integration-dialog ul:not(button *),
+.calendar-integration-dialog strong:not(button *) {
   color: #1f2937 !important;
 }
 
-[data-radix-dialog-content] .text-muted-foreground {
+.calendar-integration-dialog .text-muted-foreground,
+.calendar-integration-dialog .text-gray-600,
+.calendar-integration-dialog .text-gray-700 {
   color: #6b7280 !important;
 }
 
-[data-radix-dialog-content] .text-gray-600 {
-  color: #4b5563 !important;
+.calendar-integration-dialog .card {
+  background: white !important;
+  color: #1f2937 !important;
 }
 
-[data-radix-dialog-content] .text-gray-700 {
-  color: #374151 !important;
+.calendar-integration-dialog .card h1,
+.calendar-integration-dialog .card h2,
+.calendar-integration-dialog .card h3,
+.calendar-integration-dialog .card h4,
+.calendar-integration-dialog .card p:not(button *),
+.calendar-integration-dialog .card span:not(button *):not([class*="bg-"]),
+.calendar-integration-dialog .card label:not(button *),
+.calendar-integration-dialog .card li:not(button *) {
+  color: #1f2937 !important;
+}
+
+/* Calendar integration dialog specific titles and descriptions */
+.calendar-integration-dialog [data-radix-dialog-title] {
+  color: #1f2937 !important;
+}
+
+.calendar-integration-dialog [data-radix-dialog-description] {
+  color: #6b7280 !important;
+}
+
+/* Fix outline buttons in calendar dialog to use theme color text */
+/* Target buttons that have border and light background (outline variant) */
+.calendar-integration-dialog button.border,
+.calendar-integration-dialog button.bg-background,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive) {
+  color: var(--theme-primary) !important;
+  background-color: transparent !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.calendar-integration-dialog button.border *,
+.calendar-integration-dialog button.bg-background *,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive) * {
+  color: var(--theme-primary) !important;
 }
 
 /* Theme CSS Variables */
@@ -269,6 +313,8 @@ nav .bg-secondary *,
 .text-primary-foreground {
   color: var(--theme-primary-text) !important;
 }
+
+/* Moved this rule to after the luminance-aware rules for higher specificity */
 
 .text-secondary-foreground {
   color: var(--theme-secondary-text) !important;
@@ -882,9 +928,9 @@ body {
   color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
-/* Auto-apply luminance awareness to theme-colored backgrounds */
-[style*="background-color"],
-[class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-inherit"]) {
+/* Auto-apply luminance awareness to theme-colored backgrounds - BUT NOT BUTTONS */
+[style*="background-color"]:not(button):not([role="button"]):not([type="button"]):not([type="submit"]),
+[class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-inherit"]):not(button):not([role="button"]):not([type="button"]):not([type="submit"]) {
   color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
@@ -965,4 +1011,93 @@ body {
 @keyframes metronome-tick {
   0% { transform: rotate(-18deg); }
   100% { transform: rotate(18deg); }
+}
+
+/* FINAL OVERRIDE: Ensure buttons with primary background always have white text */
+/* This comes last to override any previous rules including luminance-aware system */
+button.bg-primary,
+[role="button"].bg-primary,
+a.bg-primary,
+.bg-primary[type="button"],
+.bg-primary[type="submit"],
+button[class*="bg-primary"],
+[role="button"][class*="bg-primary"] {
+  color: white !important;
+}
+
+button.bg-primary *,
+[role="button"].bg-primary *,
+a.bg-primary *,
+.bg-primary[type="button"] *,
+.bg-primary[type="submit"] *,
+button[class*="bg-primary"] *,
+[role="button"][class*="bg-primary"] * {
+  color: white !important;
+}
+
+/* CALENDAR DIALOG OUTLINE BUTTONS - Final override using actual button classes */
+.calendar-integration-dialog button.border.border-input.bg-background,
+.calendar-integration-dialog button.border.bg-background {
+  color: var(--theme-primary) !important;
+  background-color: transparent !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.calendar-integration-dialog button.border.border-input.bg-background *,
+.calendar-integration-dialog button.border.bg-background * {
+  color: var(--theme-primary) !important;
+}
+
+/* FIXED STYLING: Manual sync buttons always white background with dark text */
+.calendar-integration-dialog button.border,
+.calendar-integration-dialog button[class*="border"],
+.calendar-integration-dialog button[class*="bg-background"] {
+  background: white !important;
+  color: #1f2937 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.calendar-integration-dialog button.border:hover,
+.calendar-integration-dialog button[class*="border"]:hover,
+.calendar-integration-dialog button[class*="bg-background"]:hover {
+  background: #f9fafb !important;
+  color: #1f2937 !important;
+  border-color: #9ca3af !important;
+}
+
+.calendar-integration-dialog button.border *,
+.calendar-integration-dialog button[class*="border"] *,
+.calendar-integration-dialog button[class*="bg-background"] * {
+  color: #1f2937 !important;
+}
+
+/* MAXIMUM SPECIFICITY: Force dark text on manual sync buttons regardless of any other rules */
+html body .calendar-integration-dialog button.border,
+html body .calendar-integration-dialog button[class*="border"],
+html body .calendar-integration-dialog button[class*="bg-background"] {
+  color: #1f2937 !important;
+}
+
+html body .calendar-integration-dialog button.border *,
+html body .calendar-integration-dialog button[class*="border"] *,
+html body .calendar-integration-dialog button[class*="bg-background"] *,
+html body .calendar-integration-dialog button.border svg,
+html body .calendar-integration-dialog button[class*="border"] svg,
+html body .calendar-integration-dialog button[class*="bg-background"] svg {
+  color: #1f2937 !important;
+}
+
+/* NUCLEAR OPTION: Override absolutely everything for these specific buttons */
+.calendar-integration-dialog div:nth-child(2) div:nth-child(2) div button,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary) {
+  background: white !important;
+  color: #1f2937 !important;
+  border: 1px solid #d1d5db !important;
+  --theme-primary: #1f2937 !important;
+  --theme-primary-text: #1f2937 !important;
+}
+
+.calendar-integration-dialog div:nth-child(2) div:nth-child(2) div button *,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary) * {
+  color: #1f2937 !important;
 }

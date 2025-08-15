@@ -22,7 +22,8 @@
       "Bash(chmod:*)",
       "Bash(pm2 logs:*)",
       "Bash(journalctl:*)",
-      "Bash(npx kill-port:*)"
+      "Bash(npx kill-port:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

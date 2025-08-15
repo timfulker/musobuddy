@@ -201,7 +201,7 @@ export default function GoogleCalendarIntegration() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-black" style={{ color: 'black' }}>
+          <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </CardTitle>
@@ -209,7 +209,7 @@ export default function GoogleCalendarIntegration() {
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="ml-4 text-black" style={{ color: 'black' }}>Loading Google Calendar status...</p>
+            <p className="ml-4">Loading Google Calendar status...</p>
           </div>
         </CardContent>
       </Card>
@@ -220,7 +220,7 @@ export default function GoogleCalendarIntegration() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-black" style={{ color: 'black' }}>
+          <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </CardTitle>
@@ -228,14 +228,14 @@ export default function GoogleCalendarIntegration() {
         <CardContent className="space-y-4">
           <div className="text-center py-6">
             <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2 text-black" style={{ color: 'black' }}>Connect Your Google Calendar</h3>
-            <p className="mb-6 text-gray-600" style={{ color: '#4b5563' }}>
+            <h3 className="text-lg font-medium mb-2">Connect Your Google Calendar</h3>
+            <p className="mb-6 text-gray-600">
               Sync your MusoBuddy bookings with Google Calendar for automatic two-way updates
             </p>
             
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h4 className="font-medium mb-2 text-black" style={{ color: 'black' }}>What happens when you connect:</h4>
-              <ul className="text-sm space-y-1 text-left text-gray-700" style={{ color: '#374151' }}>
+              <h4 className="font-medium mb-2">What happens when you connect:</h4>
+              <ul className="text-sm space-y-1 text-left text-gray-700">
                 <li>• Your bookings automatically appear in Google Calendar</li>
                 <li>• Changes in Google Calendar sync back to MusoBuddy</li>
                 <li>• Real-time updates when events are created or modified</li>
@@ -271,7 +271,7 @@ export default function GoogleCalendarIntegration() {
       <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-black" style={{ color: 'black' }}>
+          <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </div>
@@ -287,8 +287,8 @@ export default function GoogleCalendarIntegration() {
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <div>
-              <p className="font-medium text-green-900" style={{ color: '#14532d' }}>Google Calendar Connected</p>
-              <p className="text-sm text-green-700" style={{ color: '#15803d' }}>
+              <p className="font-medium text-green-900">Google Calendar Connected</p>
+              <p className="text-sm text-green-700">
                 Last sync: {calendarStatus.lastSyncAt 
                   ? new Date(calendarStatus.lastSyncAt).toLocaleString() 
                   : 'Never'}
@@ -299,7 +299,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Manual Sync Controls */}
         <div className="space-y-3">
-          <Label className="text-base font-medium text-black" style={{ color: 'black' }}>Manual Sync</Label>
+          <Label className="text-base font-medium">Manual Sync</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Button 
               variant="outline" 
@@ -339,13 +339,13 @@ export default function GoogleCalendarIntegration() {
 
         {/* Sync Settings */}
         <div className="space-y-4">
-          <Label className="text-base font-medium text-black" style={{ color: 'black' }}>Sync Settings</Label>
+          <Label className="text-base font-medium">Sync Settings</Label>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="sync-enabled" className="text-black" style={{ color: 'black' }}>Enable Sync</Label>
-                <p className="text-sm text-gray-600" style={{ color: '#4b5563' }}>
+                <Label htmlFor="sync-enabled">Enable Sync</Label>
+                <p className="text-sm text-gray-600">
                   Enable automatic synchronization between MusoBuddy and Google Calendar
                 </p>
               </div>
@@ -358,8 +358,8 @@ export default function GoogleCalendarIntegration() {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="auto-sync-bookings" className="text-black" style={{ color: 'black' }}>Export Bookings</Label>
-                <p className="text-sm text-gray-600" style={{ color: '#4b5563' }}>
+                <Label htmlFor="auto-sync-bookings">Export Bookings</Label>
+                <p className="text-sm text-gray-600">
                   Automatically create Google Calendar events for new MusoBuddy bookings
                 </p>
               </div>
@@ -373,8 +373,8 @@ export default function GoogleCalendarIntegration() {
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="auto-import-events" className="text-black" style={{ color: 'black' }}>Import Events</Label>
-                <p className="text-sm text-gray-600" style={{ color: '#4b5563' }}>
+                <Label htmlFor="auto-import-events">Import Events</Label>
+                <p className="text-sm text-gray-600">
                   Automatically import Google Calendar events as MusoBuddy bookings
                 </p>
               </div>
@@ -387,7 +387,7 @@ export default function GoogleCalendarIntegration() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sync-direction" className="text-black" style={{ color: 'black' }}>Sync Direction</Label>
+              <Label htmlFor="sync-direction">Sync Direction</Label>
               <Select
                 value={calendarStatus.syncDirection}
                 onValueChange={(value) => updateSetting('syncDirection', value)}
@@ -410,7 +410,7 @@ export default function GoogleCalendarIntegration() {
 
         {/* Disconnect */}
         <div className="space-y-3">
-          <Label className="text-base font-medium text-black" style={{ color: 'black' }}>Disconnect</Label>
+          <Label className="text-base font-medium">Disconnect</Label>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">

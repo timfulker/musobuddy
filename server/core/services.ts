@@ -44,6 +44,12 @@ export class EmailService {
         html: emailData.html
       };
 
+      // Add CC support for invoices (contracts remain single-recipient only)
+      if (emailData.cc) {
+        messageData.cc = emailData.cc;
+        console.log(`📧 CC: ${messageData.cc}`);
+      }
+
       if (emailData.attachments) {
         messageData.attachment = emailData.attachments;
       }
@@ -59,6 +65,9 @@ export class EmailService {
       console.log(`📧 Sending email: ${emailData.subject}`);
       console.log(`📧 From: ${messageData.from}`);  
       console.log(`📧 To: ${messageData.to}`);
+      if (messageData.cc) {
+        console.log(`📧 CC: ${messageData.cc}`);
+      }
       console.log(`📧 Domain: ${domain} (${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'})`);
       
       const result = await this.mailgun.messages.create(domain, messageData);

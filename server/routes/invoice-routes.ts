@@ -437,12 +437,21 @@ export function registerInvoiceRoutes(app: Express) {
                            `<p>${customMessage}</p><p>Please find your invoice attached.</p>`) : 
           emailHtml;
         
-        // Send email using the general sendEmail method
-        const emailResult = await emailService.sendEmail({
+        // Build email data with optional CC for invoices
+        const emailData: any = {
           to: invoice.clientEmail,
           subject: subject,
           html: finalEmailHtml
-        });
+        };
+
+        // Add CC recipient if specified (invoices only - contracts remain single-recipient)
+        if (invoice.ccEmail && invoice.ccEmail.trim()) {
+          emailData.cc = invoice.ccEmail.trim();
+          console.log(`📧 Including CC recipient: ${emailData.cc}`);
+        }
+
+        // Send email using the general sendEmail method
+        const emailResult = await emailService.sendEmail(emailData);
         
         if (emailResult.success) {
           console.log(`✅ Invoice email sent successfully for invoice ${invoiceId}`);
