@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileText, CheckCircle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { findActiveAuthToken } from "@/utils/authToken";
 
 interface DocumentUploadDialogProps {
   booking: any;
@@ -72,9 +73,17 @@ export default function DocumentUploadDialog({ booking, open, onClose }: Documen
     formData.append('type', documentType);
 
     try {
+      // Get auth token for authentication
+      const authToken = findActiveAuthToken();
+      const headers: HeadersInit = {};
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const response = await fetch(`/api/bookings/${booking.id}/upload-document`, {
         method: 'POST',
-        credentials: 'include',
+        headers,
         body: formData,
       });
 
