@@ -25,7 +25,8 @@ export function useBookingDocuments(bookingId: number, booking?: any): UseBookin
       try {
         // Get new multi-document count
         const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
-        let newDocCount = response.length || 0;
+        const data = await response.json();
+        let newDocCount = data.documents?.length || 0;
         
         // Add legacy document if it exists
         let legacyDocCount = 0;
