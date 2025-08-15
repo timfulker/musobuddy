@@ -96,28 +96,8 @@ export function setupAdminDatabaseRoutes(app: Express) {
       
       let query = db.select().from(tableSchema);
       
-      // Order results to show meaningful data first
-      if (tableName === 'contracts') {
-        query = query.orderBy(sql`
-          CASE 
-            WHEN client_name IS NOT NULL AND client_name != '' THEN 0
-            ELSE 1
-          END,
-          id DESC
-        `);
-      } else if (tableName === 'bookings') {
-        query = query.orderBy(sql`id DESC`);
-      } else if (tableName === 'invoices') {
-        query = query.orderBy(sql`
-          CASE 
-            WHEN client_name IS NOT NULL AND client_name != '' THEN 0
-            ELSE 1
-          END,
-          id DESC
-        `);
-      } else {
-        query = query.orderBy(sql`id DESC`);
-      }
+      // Order results to show meaningful data first (applied after search filtering)
+      const shouldOrderMeaningfulFirst = (tableName === 'contracts' || tableName === 'invoices');
       
       // Apply search filtering using raw SQL for better compatibility
       if (search && typeof search === 'string' && search.trim()) {
@@ -234,6 +214,30 @@ export function setupAdminDatabaseRoutes(app: Express) {
         }
       }
       
+      // Apply ordering for meaningful data first
+      if (shouldOrderMeaningfulFirst && !search) {
+        if (tableName === 'contracts') {
+          query = query.orderBy(sql`
+            CASE 
+              WHEN client_name IS NOT NULL AND client_name != '' THEN 0
+              ELSE 1
+            END,
+            id DESC
+          `);
+        } else if (tableName === 'invoices') {
+          query = query.orderBy(sql`
+            CASE 
+              WHEN client_name IS NOT NULL AND client_name != '' THEN 0
+              ELSE 1
+            END,
+            id DESC
+          `);
+        }
+      } else if (!search) {
+        // Default ordering by id for other tables or when no search
+        query = query.orderBy(sql`id DESC`);
+      }
+
       const [rows, countResult] = await Promise.all([
         query.limit(limitNum).offset(offset),
         countQuery
