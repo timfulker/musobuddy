@@ -10,19 +10,10 @@ interface BookingDocumentIndicatorProps {
 }
 
 export function BookingDocumentIndicator({ bookingId, booking, onClick }: BookingDocumentIndicatorProps) {
-  const { documents, legacyDocuments, isLoading } = useBookingDocuments(bookingId);
-  
-  // Safely check if any documents exist with proper fallbacks
-  const safeDocuments = documents || [];
-  const safeLegacyDocuments = legacyDocuments || [];
-  
-  const hasDocuments = safeDocuments.length > 0 || 
-                      booking?.contractUrl || 
-                      booking?.invoiceUrl || 
-                      safeLegacyDocuments.length > 0;
+  const { hasDocuments, loading } = useBookingDocuments(bookingId, booking);
   
   // Don't show anything if loading or no documents
-  if (isLoading || !hasDocuments) {
+  if (loading || !hasDocuments) {
     return null;
   }
   
