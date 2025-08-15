@@ -266,10 +266,15 @@ export default function NewBookingPage() {
   const [formInitialized, setFormInitialized] = useState(false);
   
   useEffect(() => {
-    // Skip calculation if we're in edit mode and already have existing mileage data
-    if (isEditMode && editingBooking && (editingBooking.distance || editingBooking.duration)) {
-      console.log('🚗 Skipping mileage calculation - existing booking already has mileage data');
-      return;
+    // Always skip calculation if we're in edit mode and already have existing mileage data
+    if (isEditMode && editingBooking) {
+      if (editingBooking.distance || editingBooking.duration) {
+        console.log('🚗 Skipping mileage calculation - existing booking already has mileage data:', {
+          distance: editingBooking.distance,
+          duration: editingBooking.duration
+        });
+        return;
+      }
     }
     
     // Skip calculation during initial form population
@@ -289,15 +294,17 @@ export default function NewBookingPage() {
       
       return () => clearTimeout(timeoutId);
     } else {
-      // Clear mileage data when address is too short
-      console.log('🚗 Clearing mileage data - address too short');
-      setMileageData({
-        distance: null,
-        distanceValue: null,
-        duration: null,
-        isCalculating: false,
-        error: null
-      });
+      // Clear mileage data when address is too short (only for new bookings)
+      if (!isEditMode || !editingBooking) {
+        console.log('🚗 Clearing mileage data - address too short');
+        setMileageData({
+          distance: null,
+          distanceValue: null,
+          duration: null,
+          isCalculating: false,
+          error: null
+        });
+      }
     }
   }, [watchedVenueAddress, userSettings, isEditMode, editingBooking, formInitialized]);
 
