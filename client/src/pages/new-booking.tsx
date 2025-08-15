@@ -1015,9 +1015,29 @@ export default function NewBookingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Performance Duration</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g. 2 hours" />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select performance duration" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="not_specified">Not specified</SelectItem>
+                            <SelectItem value="30 minutes">30 minutes</SelectItem>
+                            <SelectItem value="45 minutes">45 minutes</SelectItem>
+                            <SelectItem value="1 hour">1 hour</SelectItem>
+                            <SelectItem value="75 minutes">75 minutes (1 hour 15 mins)</SelectItem>
+                            <SelectItem value="90 minutes">90 minutes (1.5 hours)</SelectItem>
+                            <SelectItem value="2 hours">2 hours</SelectItem>
+                            <SelectItem value="2.5 hours">2.5 hours</SelectItem>
+                            <SelectItem value="3 hours">3 hours</SelectItem>
+                            <SelectItem value="3.5 hours">3.5 hours</SelectItem>
+                            <SelectItem value="4 hours">4 hours</SelectItem>
+                            <SelectItem value="2 x 45 min sets">2 x 45 min sets</SelectItem>
+                            <SelectItem value="2 x 1 hour sets">2 x 1 hour sets</SelectItem>
+                            <SelectItem value="3 x 45 min sets">3 x 45 min sets</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
