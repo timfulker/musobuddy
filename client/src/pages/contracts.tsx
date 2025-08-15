@@ -169,6 +169,7 @@ export default function Contracts() {
               form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
               form.setValue('eventTime', booking.eventTime || '');
               form.setValue('eventEndTime', booking.eventEndTime || '');
+              form.setValue('performanceDuration', booking.performanceDuration || '');
               form.setValue('fee', booking.fee || '');
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
