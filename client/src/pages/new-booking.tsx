@@ -218,6 +218,33 @@ export default function NewBookingPage() {
       parkingInfo: "",
       notes: "",
       travelExpense: "",
+      // Collaborative fields
+      venueContact: "",
+      soundTechContact: "",
+      stageSize: "",
+      powerEquipment: "",
+      styleMood: "",
+      mustPlaySongs: "",
+      avoidSongs: "",
+      setOrder: "",
+      firstDanceSong: "",
+      processionalSong: "",
+      signingRegisterSong: "",
+      recessionalSong: "",
+      specialDedications: "",
+      guestAnnouncements: "",
+      loadInInfo: "",
+      soundCheckTime: "",
+      weatherContingency: "",
+      parkingPermitRequired: false,
+      mealProvided: false,
+      dietaryRequirements: "",
+      sharedNotes: "",
+      referenceTracks: "",
+      photoPermission: false,
+      encoreAllowed: false,
+      encoreSuggestions: "",
+      what3words: "",
     },
   });
 
@@ -1477,6 +1504,55 @@ export default function NewBookingPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Uploaded Documents Section */}
+            {isEditMode && editingBooking && (() => {
+              const uploadedDocs = editingBooking.uploadedDocuments || [];
+              const parsedDocs = typeof uploadedDocs === 'string' ? JSON.parse(uploadedDocs) : uploadedDocs;
+              
+              return parsedDocs.length > 0 && (
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
+                    <CardTitle className="text-xl font-semibold text-green-800 flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">📎</span>
+                      </div>
+                      Uploaded Documents
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      {parsedDocs.map((doc: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-green-50/30 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <span className="text-green-600 font-bold text-sm">PDF</span>
+                            </div>
+                            <div>
+                              <div className="font-medium text-green-800">{doc.filename}</div>
+                              <div className="text-sm text-green-600">
+                                {doc.type === 'contract' ? 'Contract' : doc.type === 'invoice' ? 'Invoice' : 'Document'}
+                                {doc.uploadedAt && <span className="ml-2">• Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Field Lock Management - Only show in edit mode */}
             {isEditMode && editingBooking && (

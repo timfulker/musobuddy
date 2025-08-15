@@ -107,6 +107,11 @@ export default function DocumentUploadDialog({ booking, open, onClose }: Documen
       // Invalidate bookings query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       
+      // Auto-close dialog after successful upload
+      setTimeout(() => {
+        onClose();
+      }, 1500); // Close after 1.5 seconds to let user see success message
+      
     } catch (error: any) {
       console.error('Upload error:', error);
       toast({
