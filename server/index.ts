@@ -1,5 +1,6 @@
 import express from 'express';
 import session from 'express-session';
+import multer from 'multer';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -7,6 +8,9 @@ import fetch from 'node-fetch';
 import { existsSync } from 'fs';
 
 const app = express();
+
+// Configure multer for handling multipart/form-data from Mailgun webhooks
+const upload = multer();
 
 // CORS middleware for R2-hosted collaborative forms
 app.use((req, res, next) => {
@@ -90,8 +94,8 @@ app.get('/api/webhook/logs', (req, res) => {
   });
 });
 
-// Enhanced Mailgun webhook handler
-app.post('/api/webhook/mailgun', async (req, res) => {
+// Enhanced Mailgun webhook handler with multipart support
+app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
   logWebhookActivity('Received Mailgun webhook', { keys: Object.keys(req.body || {}) });
   
   try {
