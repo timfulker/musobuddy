@@ -110,6 +110,9 @@ export default function UnifiedBookings() {
   const [bulkStatusChange, setBulkStatusChange] = useState<string>("");
   const [showBulkStatusDialog, setShowBulkStatusDialog] = useState(false);
   
+  // Calendar hover card state - controlled open/close
+  const [openHoverCard, setOpenHoverCard] = useState<string | null>(null);
+  
   const { isDesktop } = useResponsive();
   const [location, navigate] = useLocation();
   const { toast } = useToast();
@@ -1805,7 +1808,19 @@ export default function UnifiedBookings() {
                                 const booking = validBookings.find((b) => b.id === event.id);
                                 
                                 return (
-                                  <HoverCard key={eventIndex} openDelay={200} closeDelay={2000}>
+                                  <HoverCard 
+                                    key={eventIndex} 
+                                    openDelay={200} 
+                                    closeDelay={300}
+                                    open={openHoverCard === `week-${event.id}-${eventIndex}`}
+                                    onOpenChange={(open) => {
+                                      if (open) {
+                                        setOpenHoverCard(`week-${event.id}-${eventIndex}`);
+                                      } else {
+                                        setOpenHoverCard(null);
+                                      }
+                                    }}
+                                  >
                                     <HoverCardTrigger asChild>
                                       <div
                                         className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
@@ -1959,7 +1974,19 @@ export default function UnifiedBookings() {
                                   const booking = validBookings.find((b) => b.id === event.id);
                                   
                                   return (
-                                    <HoverCard key={eventIndex} openDelay={200} closeDelay={2000}>
+                                    <HoverCard 
+                                      key={eventIndex} 
+                                      openDelay={200} 
+                                      closeDelay={300}
+                                      open={openHoverCard === `month-${event.id}-${eventIndex}`}
+                                      onOpenChange={(open) => {
+                                        if (open) {
+                                          setOpenHoverCard(`month-${event.id}-${eventIndex}`);
+                                        } else {
+                                          setOpenHoverCard(null);
+                                        }
+                                      }}
+                                    >
                                       <HoverCardTrigger asChild>
                                         <div
                                           className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
