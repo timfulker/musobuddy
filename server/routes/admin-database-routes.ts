@@ -31,6 +31,17 @@ const AVAILABLE_TABLES = {
   'globalGigTypes': globalGigTypes
 } as const;
 
+// Map export names to actual database table names (for tables with naming mismatches)
+const TABLE_NAME_MAPPING: Record<string, string> = {
+  'complianceDocuments': 'compliance_documents',
+  'userSettings': 'user_settings',
+  'bookingConflicts': 'booking_conflicts',
+  'conflictResolutions': 'conflict_resolutions',
+  'unparseableMessages': 'unparseable_messages',
+  'emailTemplates': 'email_templates',
+  'globalGigTypes': 'global_gig_types'
+};
+
 type TableName = keyof typeof AVAILABLE_TABLES;
 
 export function setupAdminDatabaseRoutes(app: Express) {
@@ -46,10 +57,11 @@ export function setupAdminDatabaseRoutes(app: Express) {
           const rowCount = countResult[0]?.count || 0;
           
           // Get column names using SQL query instead of schema metadata
+          const actualTableName = TABLE_NAME_MAPPING[tableName] || tableName;
           const columnQuery = await db.execute(sql`
             SELECT column_name 
             FROM information_schema.columns 
-            WHERE table_name = ${tableName} 
+            WHERE table_name = ${actualTableName} 
             AND table_schema = 'public'
             ORDER BY ordinal_position
           `);
@@ -146,6 +158,12 @@ export function setupAdminDatabaseRoutes(app: Express) {
             LOWER(COALESCE(last_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(email_prefix, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
+        } else if (tableName === 'complianceDocuments') {
+          query = query.where(sql`
+            LOWER(COALESCE(name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
         } else {
           // For other tables, try a generic text search on common column names
           query = query.where(sql`
@@ -203,6 +221,12 @@ export function setupAdminDatabaseRoutes(app: Express) {
             LOWER(COALESCE(first_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(last_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(email_prefix, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'complianceDocuments') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
         } else {
           countQuery = countQuery.where(sql`
