@@ -27,6 +27,7 @@ Document count indicators: Removed from booking cards due to persistent accuracy
 Mileage calculation optimization: Fixed wasteful API calls (August 2025). System now skips mileage calculation for existing bookings that already have saved mileage data, only calculates for new bookings or manual address changes.
 AI venue parsing improvement: Enhanced AI to properly distinguish between venue names and location names (January 2025). System now correctly identifies "our garden" as venue name and "Swindon" as location, preventing Google Maps from suggesting unrelated venues like "Sky Garden" in London when parsing booking emails. AI also simplifies location descriptions ("near Swindon" → "Swindon") for better Google Maps compatibility.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted (January 2025), instead of just going to generic bookings page.
+Forgot password system: Complete email-based password reset functionality implemented (January 2025) with secure crypto-generated tokens, 1-hour expiration, professional email templates using existing Mailgun infrastructure, and user-friendly frontend flow including dedicated forgot password and reset password pages.
 
 ## System Architecture
 
@@ -40,7 +41,7 @@ Address book navigation: "View Details" button on client cards in address book n
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
-- **Authentication**: Pure JWT-based system with SMS verification, email/password login, and phone number verification, using a unified middleware. Production URLs are hardcoded for Stripe redirects.
+- **Authentication**: Pure JWT-based system with SMS verification, email/password login, phone number verification, and secure forgot password functionality using email-based reset flow with 1-hour token expiration, using a unified middleware. Production URLs are hardcoded for Stripe redirects.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
