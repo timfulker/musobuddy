@@ -106,9 +106,12 @@ export function setupAdminDatabaseRoutes(app: Express) {
           query = query.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(venue_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`})
+            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_phone, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
         } else if (tableName === 'clients') {
           query = query.where(sql`
@@ -160,9 +163,12 @@ export function setupAdminDatabaseRoutes(app: Express) {
           countQuery = countQuery.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(venue_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`})
+            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_phone, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
         } else if (tableName === 'clients') {
           countQuery = countQuery.where(sql`
