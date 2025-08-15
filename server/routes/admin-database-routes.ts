@@ -275,6 +275,10 @@ export function setupAdminDatabaseRoutes(app: Express) {
       const totalCount = countResult[0]?.count || 0;
       
       console.log(`📊 Query results for ${tableName}: ${rows.length} rows found, total count: ${totalCount}`);
+      if (rows.length > 0) {
+        console.log(`📊 Sample row keys:`, Object.keys(rows[0]));
+        console.log(`📊 Sample row data:`, rows[0]);
+      }
       
       res.json({
         rows,
