@@ -193,7 +193,7 @@ export function ApiUsageManager() {
               <TrendingUp className="h-4 w-4 text-green-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-600">Total Cost</p>
-                <p className="text-2xl font-bold">${stats?.totalCost?.toFixed(4) || '0.0000'}</p>
+                <p className="text-2xl font-bold">${typeof stats?.totalCost === 'number' ? stats.totalCost.toFixed(4) : '0.0000'}</p>
               </div>
             </div>
           </CardContent>
@@ -284,7 +284,7 @@ export function ApiUsageManager() {
 
                       {/* Cost & Actions */}
                       <div className="flex justify-between items-center text-sm">
-                        <span>Cost: ${serviceData.totalCost?.toFixed(4) || '0.0000'}</span>
+                        <span>Cost: ${typeof serviceData.totalCost === 'number' ? serviceData.totalCost.toFixed(4) : '0.0000'}</span>
                         
                         <Dialog>
                           <DialogTrigger asChild>
