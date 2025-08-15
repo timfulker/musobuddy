@@ -635,7 +635,8 @@ export default function UnifiedBookings() {
 
     const validBookings = validateBookingArray(bookings) ? bookings : [];
     validBookings.forEach((booking) => {
-      if (booking.eventDate) {
+      // Exclude rejected bookings from calendar view but keep them in storage for reference
+      if (booking.eventDate && booking.status !== 'rejected') {
         const bookingDate = new Date(booking.eventDate);
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
           String(bookingDate.getMonth() + 1).padStart(2, '0') + '-' + 
@@ -974,7 +975,7 @@ export default function UnifiedBookings() {
                             <div>
                               <p className="text-purple-100 text-sm">Total Revenue</p>
                               <p className="text-2xl font-bold">
-                                £{(bookings || []).reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
+                                £{(bookings || []).filter((b: any) => b.status !== 'rejected' && b.status !== 'cancelled').reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
                               </p>
                             </div>
                             <PoundSterling className="w-8 h-8 text-purple-200" />
