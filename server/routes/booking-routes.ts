@@ -588,7 +588,7 @@ ${messageText.replace(/\n/g, '<br>')}
         
         // Import multer and cloud storage dynamically
         const multer = await import('multer');
-        const { uploadToR2 } = await import('../core/cloud-storage');
+        const { uploadToCloudflareR2 } = await import('../core/cloud-storage');
         
         // Configure multer for memory storage
         const upload = multer.default({
@@ -624,7 +624,7 @@ ${messageText.replace(/\n/g, '<br>')}
           
           // Upload to R2
           const filename = `booking-${bookingId}-${documentType}-${Date.now()}.pdf`;
-          const uploadResult = await uploadToR2(
+          const uploadResult = await uploadToCloudflareR2(
             file.buffer,
             filename,
             'application/pdf'
