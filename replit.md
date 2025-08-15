@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, enabling musicians to focus more on their craft. The business vision is to empower musicians by providing a robust, all-in-one platform that handles administrative burdens, allowing them to focus on their artistic endeavors and grow their businesses.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, empowering musicians to focus more on their craft by handling administrative burdens.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -17,56 +17,38 @@ Theme auto-save: User expects theme changes to automatically save to database wh
 Onboarding wizard: Should be a helpful optional tool rather than mandatory, appearing immediately for new authenticated users, and always allow users to dismiss/abort the wizard. It's designed to be helpful rather than something users must complete. Focuses on 5 essential setup items: business address, email prefix, business email, bank details, and booking widget generation.
 Invoice data integrity: When invoices are edited, the PDF automatically regenerates with updated data and uploads to replace the old version, ensuring clients always see accurate information.
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
-Recent fixes (Jan 2025): Fixed booking edit form issue where existing booking data wasn't loading into form fields. Added missing useEffect to populate form on edit mode. Also fixed "Back to Bookings" button luminance awareness by adding text-primary-foreground class for proper theme contrast. CRITICAL: Fixed booking widget routing bug - messages without clear dates now properly route to review messages instead of creating fake bookings. Simple rule: no date = review messages, regardless of other content. Fixed delete button text luminance in booking deletion modal by adding text-white class for proper red background contrast.
-
-Email processing system (Aug 2025): Successfully fixed and tested email processing system for production launch. System now properly handles different Mailgun webhook types (direct emails, event webhooks, storage webhooks with attachments). Regular booking emails process correctly and create bookings automatically. Encore emails with attachments were failing with 400 Bad Request errors because storage webhook handling wasn't deployed to production - fixed by deploying updated webhook handler that processes storage webhooks. Switched from OpenAI back to Claude for cost efficiency with increased API limits (1000 daily/10000 monthly) to match user's paid Claude plan.
-
-CRITICAL FIX DEPLOYED (Aug 15, 2025): Root cause identified and resolved - email signature images (354KB PNG files with auto-generated names like "D2BE90F87486485EACF5C2F08EA20FCE.png") trigger multipart/form-data encoding that webhook couldn't handle. Affected accounts: timfulkermusic@gmail.com and tim@saxweddings.com have image signatures. Enhanced webhook handler deployed with comprehensive logging system (/api/webhook/logs endpoint) to properly process storage webhooks and multipart data. System now handles all email types: direct content, storage webhooks, and event webhooks with 200 status responses to prevent Mailgun retry loops. Signature images preserved - webhook upgraded to handle modern email properly.
-
-CONSECUTIVE EMAIL BOTTLENECK SOLVED (Aug 15, 2025): Identified that consecutive email failures weren't due to OpenAI API limits (which handle 300+ RPM) but database race conditions. Real bottleneck was lack of unique constraints on booking creation - two emails arriving simultaneously could create duplicate bookings or cause database connection contention. Implemented database-level duplicate prevention with unique emailHash constraint and proper PostgreSQL error handling (code 23505). Enhanced per-user queue system with dynamic AI rate limiting that scales from 0.5s to 2s delays based on actual API usage, eliminating global bottlenecks while maintaining per-user processing accuracy.
-
-Calendar view enhancement (Aug 2025): Successfully implemented responsive action buttons in calendar hover tooltips. Users can now access full "Respond" dropdown menu (with all options: Respond to Client, Issue Contract, Issue Invoice, Send Thank You, etc.) and "Apply on Encore" buttons directly from calendar bookings without switching views. Hover cards appear quickly (500ms delay) with stable dropdown interaction using mouse event isolation to prevent premature closing.
-
-Performance duration consistency (Aug 2025): Standardized performance duration field across booking and contract forms using identical dropdown menus. Changed booking form from text input to dropdown with same options as contract form (30 minutes, 1 hour, 2 hours, 2.5 hours, 3 hours, etc.). Added auto-population of performance duration when creating contracts from bookings - selections now properly transfer from booking to contract form.
-
-Real-time notification system (Jan 2025): Implemented comprehensive notification badges with 30-second polling for new bookings, unparseable messages, overdue invoices, and expiring documents. Cost implications: ~2,880 API calls/day per active user for notification updates, but queries are optimized and lightweight. SMS notifications postponed - UK costs £3/month per 100 messages make it expensive even for premium plans. TypeScript errors fixed - notification badges now handle undefined values gracefully.
-
-Invoice overdue detection fix (Jan 2025): Fixed critical bug where overdue invoice filter showed no results despite notification badges correctly showing overdue count. Issue was database stored "sent" status while frontend looked for "overdue" status. Implemented dynamic overdue calculation in frontend (sent + past due date + not paid) with red gradient backgrounds for visual identification. Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
-
-Encore integration (Aug 2025): Successfully implemented Encore Musicians platform integration with apply-now link extraction from forwarded emails. System detects AWS tracking URLs (awstrack.me) that redirect to Encore jobs, extracts job IDs from email subjects for reference, and displays purple "🎵 ENCORE" badges with "Apply on Encore" buttons on booking cards. Integration works in both list view and kanban dashboard. Correct URL format: `https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow` (note: /jobs/ plural). Note: Forwarded emails lose HTML/clickable URLs, so tracking URLs should be copied from "Apply now" button hover text before forwarding for best results. Job alert links may expire after a few days.
-
-Email processing queue (Aug 2025): Successfully implemented comprehensive email processing queue system to eliminate race conditions when multiple emails arrive within seconds. The queue processes emails sequentially with 5-second delays between jobs for AI accuracy, using mutex locking and duplicate detection to prevent concurrent processing conflicts that caused missing emails. System includes retry logic (3 attempts), queue status monitoring via `/api/email-queue/status`, mutex locking for database operations, and fallback to immediate processing if queue fails. All emails now properly route through enhanced `server/core/email-queue.ts` with comprehensive error handling and title cleanup integration. FIXED (Aug 15): Critical webhook function import error resolved - emails now route correctly to user accounts based on email prefix instead of defaulting to admin user. Extensive testing confirms Encore emails with proper booking information (date, venue, fee) successfully create bookings with Google Places venue enrichment and Encore job detection.
+Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 
 ## System Architecture
 
 ### Frontend
-- **Framework**: React 18 (TypeScript, Vite).
+- **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI.
 - **State Management**: React Query.
-- **Routing**: Wouter.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast, consistent logo branding. Initial default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Core Structure**: Modular route architecture for authentication, contracts, invoices, bookings, settings, and administration.
-- **Authentication**: Pure JWT-based system with SMS verification, email/password login, and phone number verification, using a unified middleware. Production URLs are hardcoded for Stripe redirects to prevent environment conflicts.
+- **Core Structure**: Modular route architecture.
+- **Authentication**: Pure JWT-based system with SMS verification, email/password login, and phone number verification, using a unified middleware. Production URLs are hardcoded for Stripe redirects.
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, email parsing, and email template management. Professional email styling for invoices includes responsive design, Google Fonts, gradient headers, and branding.
+- **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic (switched from OpenAI for ~50% cost savings).
+- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic.
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields.
-    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation with enterprise-grade retry logic, and legally compliant amendment system that creates new contracts while preserving originals.
+    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system that creates new contracts while preserving originals.
     - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid" for bank transfers), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-    - **System Health Monitoring**: Real-time dashboard (`/system-health`) for database, authentication, email, and storage services.
+    - **System Health Monitoring**: Real-time dashboard (`/system-health`).
     - **Deployment**: Node.js server serving built frontend.
     - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
     - **Onboarding Wizard**: Multi-step wizard for new users covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding, ensuring proper system setup.
+    - **Email Processing**: Comprehensive queue system to eliminate race conditions, processing emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
 
 ## External Dependencies
 
@@ -78,8 +60,8 @@ Email processing queue (Aug 2025): Successfully implemented comprehensive email 
 - **APIs and Services**:
     - Anthropic Claude Haiku
     - Google Maps API
-    - OpenAI
     - Puppeteer
-    - Stripe (for user subscriptions only, invoices use direct bank transfers; dual configuration for subscriptions and legacy invoice payments exists but invoice payments are currently disabled)
+    - Stripe (for user subscriptions)
     - Twilio
     - what3words API
+```
