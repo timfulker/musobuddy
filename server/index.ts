@@ -79,9 +79,47 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     }
     
     // Handle storage webhooks (large emails/attachments)
-    if (req.body.storage) {
-      console.log('📧 Storage webhook - acknowledged');
-      return res.status(200).json({ success: true, message: 'Storage webhook' });
+    if (req.body.storage && req.body.storage.url) {
+      console.log('📧 Storage webhook - fetching email content from storage');
+      
+      try {
+        // Fetch email content from Mailgun storage
+        const storageUrl = req.body.storage.url[0];
+        const storageResponse = await fetch(storageUrl, {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`
+          }
+        });
+        
+        if (storageResponse.ok) {
+          const emailData = await storageResponse.json();
+          
+          // Extract email fields from stored content
+          const bodyText = emailData['body-plain'] || emailData['stripped-text'] || emailData.text || '';
+          const fromEmail = emailData.from || emailData.sender || '';
+          const subject = emailData.subject || '';
+          const recipient = emailData.recipient || emailData.to || '';
+          
+          if (fromEmail && bodyText && recipient) {
+            // Process the fetched email through normal queue
+            const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
+            const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
+              from: fromEmail,
+              subject,
+              'body-plain': bodyText,
+              recipient
+            });
+            
+            console.log(`✅ Storage email processed - Job ${jobId}`);
+            return res.status(200).json({ success: true, message: 'Storage email processed', jobId, queuePosition });
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch from storage:', error);
+      }
+      
+      console.log('📧 Storage webhook acknowledged (could not process content)');
+      return res.status(200).json({ success: true, message: 'Storage webhook acknowledged' });
     }
     
     // Process actual email content
