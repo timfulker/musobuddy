@@ -99,6 +99,7 @@ export function setupAdminDatabaseRoutes(app: Express) {
       // Apply search filtering using raw SQL for better compatibility
       if (search && typeof search === 'string' && search.trim()) {
         const searchTerm = search.trim();
+        console.log(`🔍 Searching ${tableName} table for: "${searchTerm}"`);
         
         // Use raw SQL to search across multiple text columns
         // This is more reliable than trying to access schema metadata
@@ -123,14 +124,15 @@ export function setupAdminDatabaseRoutes(app: Express) {
         } else if (tableName === 'contracts') {
           query = query.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`})
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(contract_number, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
         } else if (tableName === 'invoices') {
           query = query.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(description, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(invoice_number, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
@@ -180,14 +182,15 @@ export function setupAdminDatabaseRoutes(app: Express) {
         } else if (tableName === 'contracts') {
           countQuery = countQuery.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`})
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(contract_number, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
         } else if (tableName === 'invoices') {
           countQuery = countQuery.where(sql`
             LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
-            LOWER(COALESCE(description, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(client_email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
             LOWER(COALESCE(invoice_number, '')) LIKE LOWER(${`%${searchTerm}%`})
           `);
@@ -214,6 +217,8 @@ export function setupAdminDatabaseRoutes(app: Express) {
       ]);
       
       const totalCount = countResult[0]?.count || 0;
+      
+      console.log(`📊 Query results for ${tableName}: ${rows.length} rows found, total count: ${totalCount}`);
       
       res.json({
         rows,
