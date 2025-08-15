@@ -15,7 +15,7 @@ const API_COSTS = {
 
 // Default fair usage limits per service (based on recommended fair usage)
 export const DEFAULT_LIMITS = {
-  claude: { daily: 10, monthly: 250 }, // AI email parsing: 150-300 recommended, using 250 as middle ground
+  claude: { daily: 1000, monthly: 10000 }, // AI email parsing: User has paid Claude plan with high limits
   googlemaps: { daily: 7, monthly: 150 }, // Address lookups: 100-200 recommended, using 150 as conservative start
   mailgun: { daily: 15, monthly: 400 }, // Email sending: 300-500 sending + 200-300 receiving = ~800 total, using 400 as starting point
   stripe: { daily: 20, monthly: 500 }, // Payment processing - keeping existing reasonable limits

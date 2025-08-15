@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { trackApiCall } from '../middleware/api-usage-tracker';
 
 // Helper function to enrich venue data using Google Places API
@@ -111,9 +111,9 @@ export async function parseBookingMessage(
   userId?: string
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 OpenAI: Parsing booking message with enhanced AI for better cost efficiency...');
-    console.log('🤖 OpenAI: Message length:', messageText?.length || 0);
-    console.log('🤖 OpenAI: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
+    console.log('🤖 Claude: Message length:', messageText?.length || 0);
+    console.log('🤖 Claude: First 200 chars:', messageText?.substring(0, 200) || 'No content');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -161,35 +161,34 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
 
     // Track API usage if userId is provided
     if (userId) {
-      const canProceed = await trackApiCall(userId, 'openai', 'booking-message-parser');
+      const canProceed = await trackApiCall(userId, 'claude', 'booking-message-parser');
       if (!canProceed) {
-        throw new Error('API usage limit exceeded for OpenAI service');
+        throw new Error('API usage limit exceeded for Claude service');
       }
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
     const startTime = Date.now();
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
       max_tokens: 800,
       temperature: 0.1,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
       ]
     });
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.choices[0]?.message?.content;
+    const rawContent = response.content[0]?.text;
     if (!rawContent) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from Claude');
     }
 
-    console.log('🤖 OpenAI raw response:', rawContent);
+    console.log('🤖 Claude raw response:', rawContent);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
@@ -205,7 +204,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Raw content:', rawContent);
-      throw new Error('Invalid JSON response from OpenAI');
+      throw new Error('Invalid JSON response from Claude');
     }
     
     // Clean and validate the parsed data

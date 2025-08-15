@@ -77,13 +77,31 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     console.log('🔍 Raw body type:', typeof req.body);
     console.log('🔍 Body keys:', Object.keys(req.body || {}));
     
-    // Mailgun sends fields in lowercase, handle both cases
-    const bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body['body-html'] || '';
-    const fromEmail = req.body.from || req.body.From || req.body.sender || '';
-    const subject = req.body.subject || req.body.Subject || '';
-    const recipient = req.body.recipient || req.body.To || req.body.to || '';
+    // Handle different Mailgun webhook formats
+    let bodyText = '';
+    let fromEmail = '';
+    let subject = '';
+    let recipient = '';
     
-    console.log('📧 Processing email webhook:', { 
+    // Check if this is an event webhook (delivery status, failed, etc.)
+    if (req.body.event) {
+      console.log(`📧 Mailgun event webhook: ${req.body.event} - acknowledging without processing`);
+      return res.status(200).json({ success: true, message: 'Event webhook acknowledged', event: req.body.event });
+    }
+    
+    // Check if this is a message storage webhook (attachments, large emails)
+    if (req.body.storage && req.body.storage.url) {
+      console.log('📧 Storage webhook detected - email content stored externally');
+      return res.status(200).json({ success: true, message: 'Storage webhook acknowledged - content in external storage' });
+    }
+    
+    // Standard direct webhook format
+    bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body['body-html'] || '';
+    fromEmail = req.body.from || req.body.From || req.body.sender || '';
+    subject = req.body.subject || req.body.Subject || '';
+    recipient = req.body.recipient || req.body.To || req.body.to || '';
+    
+    console.log('📧 Processing direct email webhook:', { 
       from: fromEmail, 
       subject, 
       to: recipient,
@@ -91,7 +109,7 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    // Validate required fields
+    // Validate required fields for direct webhooks
     if (!fromEmail || !bodyText) {
       console.log('❌ Missing required email fields:', { hasFrom: !!fromEmail, hasBody: !!bodyText });
       return res.status(400).json({ success: false, error: 'Missing required email fields' });
