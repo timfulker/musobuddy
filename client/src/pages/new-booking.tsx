@@ -131,6 +131,19 @@ export default function NewBookingPage() {
     },
     enabled: isEditMode && !!editBookingId
   });
+
+  // Debug documents
+  React.useEffect(() => {
+    if (isEditMode && editingBooking) {
+      console.log('📄 BOOKING FORM DEBUG:', {
+        editMode: isEditMode,
+        bookingId: editingBooking.id,
+        hasBookingData: !!editingBooking,
+        documents: bookingDocuments.length > 0 ? bookingDocuments : 'None',
+        rawBookingData: editingBooking.uploadedDocuments ? JSON.parse(JSON.stringify(editingBooking.uploadedDocuments)) : []
+      });
+    }
+  }, [isEditMode, editingBooking, bookingDocuments]);
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
