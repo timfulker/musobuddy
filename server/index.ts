@@ -129,8 +129,8 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     // Process the email content (either direct or fetched from storage)
     const bodyText = emailData['body-plain'] || emailData['stripped-text'] || emailData.text || '';
     const fromEmail = emailData.from || emailData.sender || '';
-    const subject = emailData.subject || '';
-    const recipient = emailData.recipient || emailData.to || req.body.recipient || req.body.to || '';
+    const subject = emailData.subject || emailData.Subject || '';
+    const recipient = emailData.recipient || emailData.recipients || emailData.To || emailData.to || req.body.recipient || req.body.to || '';
     
     if (!fromEmail || !bodyText || !recipient) {
       console.log('❌ Missing email fields after processing');
