@@ -44,6 +44,7 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res, next) => {
   // If it's an explicit API health check or a curl/health check request
   if (req.headers['user-agent']?.includes('GoogleHC') || 
+      req.headers['user-agent']?.includes('curl') ||
       req.headers['accept']?.includes('application/json')) {
     return res.status(200).json({ 
       status: 'MusoBuddy API', 
@@ -52,16 +53,8 @@ app.get('/', (req, res, next) => {
     });
   }
   
-  if (process.env.NODE_ENV === 'production') {
-    // In production, let the static serving middleware handle it
-    return next();
-  }
-  
-  res.status(200).json({ 
-    status: 'MusoBuddy API', 
-    mode: process.env.NODE_ENV,
-    timestamp: new Date().toISOString() 
-  });
+  // In both development and production, let other middleware handle HTML requests
+  return next();
 });
 
 // Initialize storage and services
