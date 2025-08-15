@@ -11,34 +11,24 @@ interface ComplianceIndicatorProps {
 }
 
 export function ComplianceIndicator({ bookingId, booking, onClick }: ComplianceIndicatorProps) {
-  // Check if user has valid compliance documents
-  const { data: complianceData, isLoading } = useQuery({
-    queryKey: ['compliance-documents'],
+  // Check if compliance documents have been sent for this specific booking
+  const { data: sentData, isLoading } = useQuery({
+    queryKey: ['compliance-sent', bookingId],
     queryFn: async () => {
       try {
-        const response = await apiRequest('/api/compliance');
-        const documents = await response.json();
-        return { documents };
+        const response = await apiRequest(`/api/bookings/${bookingId}/compliance-sent`);
+        return await response.json();
       } catch (error) {
-        console.error('📋 Error fetching compliance documents:', error);
-        return { documents: [] };
+        console.error('📋 Error checking compliance sent status:', error);
+        return { sent: false, documents: [] };
       }
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
   
-  // Don't show indicator if loading or no compliance documents
-  if (isLoading || !complianceData?.documents?.length) {
-    return null;
-  }
-  
-  // Check which valid documents are available
-  const validDocuments = complianceData.documents.filter((doc: any) => 
-    doc.status === 'valid'
-  );
-  
-  if (validDocuments.length === 0) {
+  // Don't show indicator if loading or no compliance has been sent for this booking
+  if (isLoading || !sentData?.sent) {
     return null;
   }
   
@@ -56,9 +46,9 @@ export function ComplianceIndicator({ bookingId, booking, onClick }: ComplianceI
     }
   };
   
-  // Get available document types
-  const availableTypes = validDocuments.map((doc: any) => getDocumentLabel(doc.type));
-  const uniqueTypes = [...new Set(availableTypes)];
+  // Get sent document types
+  const sentTypes = sentData.documents.map((doc: any) => getDocumentLabel(doc.type));
+  const uniqueTypes = [...new Set(sentTypes)];
   
   // Create individual badges for each document type
   return (

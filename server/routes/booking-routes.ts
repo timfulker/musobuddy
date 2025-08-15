@@ -683,6 +683,14 @@ ${businessName}</p>
           html: emailBody
         });
 
+        // Log that compliance documents were sent for this booking
+        const { db } = await import('../core/database');
+        await db.query(
+          `INSERT INTO compliance_sent_log (booking_id, user_id, recipient_email, document_ids, sent_at) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [bookingId, userId, recipientEmail, JSON.stringify(documentIds), new Date()]
+        );
+
         console.log(`✅ Compliance documents sent for booking ${bookingId} to ${recipientEmail}`);
         
         res.json({ 
@@ -695,6 +703,62 @@ ${businessName}</p>
         console.error('❌ Failed to send compliance documents:', error);
         res.status(500).json({ 
           error: 'Failed to send compliance documents',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
+  // Check if compliance documents have been sent for a specific booking
+  app.get('/api/bookings/:id/compliance-sent', 
+    requireAuth,
+    requireSubscriptionOrAdmin,
+    asyncHandler(async (req: any, res: any) => {
+      try {
+        const userId = req.user?.userId;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const bookingId = parseInt(req.params.id);
+        
+        // Verify booking ownership
+        const booking = await storage.getBooking(bookingId, userId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        // Check if compliance has been sent for this booking
+        const { db } = await import('../core/database');
+        const result = await db.query(
+          `SELECT cs.*, array_agg(cd.type) as document_types 
+           FROM compliance_sent_log cs
+           LEFT JOIN compliance_documents cd ON cd.id = ANY(string_to_array(cs.document_ids::text, ',')::int[])
+           WHERE cs.booking_id = $1 AND cs.user_id = $2
+           GROUP BY cs.id
+           ORDER BY cs.sent_at DESC 
+           LIMIT 1`,
+          [bookingId, userId]
+        );
+
+        if (result.rows.length === 0) {
+          return res.json({ sent: false, documents: [] });
+        }
+
+        const sentLog = result.rows[0];
+        const documentTypes = sentLog.document_types.filter(Boolean);
+        
+        res.json({ 
+          sent: true,
+          sentAt: sentLog.sent_at,
+          recipientEmail: sentLog.recipient_email,
+          documents: documentTypes.map(type => ({ type }))
+        });
+
+      } catch (error: any) {
+        console.error('❌ Failed to check compliance sent status:', error);
+        res.status(500).json({ 
+          error: 'Failed to check compliance status',
           details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
       }
