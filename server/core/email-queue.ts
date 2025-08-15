@@ -111,7 +111,7 @@ class EmailQueue {
     console.log(`📧 [${requestId}] Processing email from queue`);
 
     // Helper function to save to review messages with proper error handling
-    const saveToReviewMessages = async (reason: string, errorDetails?: string) => {
+    const saveToReviewMessages = async (reason: string, errorDetails?: string, targetUserId?: string) => {
       try {
         const { storage } = await import('./storage');
         
@@ -137,7 +137,7 @@ class EmailQueue {
         const cleanedSubject = cleanEncoreTitle(subjectField);
 
         await storage.createUnparseableMessage({
-          userId: "43963086", // Default admin user for review
+          userId: targetUserId || "43963086", // Use target user ID or fallback to admin
           source: 'email',
           fromContact: `${clientName} <${clientEmail}>`,
           rawMessage: bodyField || 'No message content',
@@ -227,7 +227,7 @@ class EmailQueue {
                             (isEncoreMessage && parsedData.venue);
       
       if (!hasMinimumInfo) {
-        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no date, venue, or event type found');
+        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no date, venue, or event type found', user.id);
         return;
       }
 
@@ -271,7 +271,7 @@ class EmailQueue {
         subjectField: subjectField?.substring(0, 100),
         bodyLength: bodyField?.length || 0
       });
-      await saveToReviewMessages('Email parsing failed', parseError.message);
+      await saveToReviewMessages('Email parsing failed', parseError.message, user?.id);
     }
   }
 
