@@ -122,7 +122,7 @@ app.post('/api/webhook/mailgun', async (req, res) => {
         console.error('❌ Failed to fetch from storage:', error);
         console.error('Storage URL:', storageUrl);
         console.error('API Key prefix:', process.env.MAILGUN_API_KEY?.substring(0, 10));
-        return res.status(500).json({ success: false, error: `Storage fetch failed: ${error.message}` });
+        return res.status(500).json({ success: false, error: `Storage fetch failed: ${error instanceof Error ? error.message : String(error)}` });
       }
     }
     
