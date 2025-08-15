@@ -499,6 +499,30 @@ class CollaborativeFormGenerator {
                     document.body.appendChild(iframe);
                 }
                 
+                // Listen for iframe response
+                iframe.onload = function() {
+                    try {
+                        // Form submitted successfully
+                        hasUnsavedChanges = false;
+                        const now = new Date().toLocaleString('en-GB');
+                        document.getElementById('last-saved').textContent = now;
+                        updateSaveStatus(\`Last saved: \${now}\`);
+                        
+                        if (!autoSave) {
+                            showStatusMessage('All changes saved successfully! Other parties have been notified.', 'success');
+                            saveBtn.disabled = false;
+                            saveBtn.querySelector('span').textContent = 'Save All Changes';
+                        }
+                    } catch (e) {
+                        console.error('Error processing form response:', e);
+                        updateSaveStatus('Save failed - will retry');
+                        if (!autoSave) {
+                            saveBtn.disabled = false;
+                            saveBtn.querySelector('span').textContent = 'Save All Changes';
+                        }
+                    }
+                };
+                
                 // Submit form
                 form.submit();
                 
@@ -506,21 +530,6 @@ class CollaborativeFormGenerator {
                 setTimeout(() => {
                     document.body.removeChild(form);
                 }, 1000);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to save changes');
-                }
-                
-                hasUnsavedChanges = false;
-                const now = new Date().toLocaleString('en-GB');
-                document.getElementById('last-saved').textContent = now;
-                updateSaveStatus(\`Last saved: \${now}\`);
-                
-                if (!autoSave) {
-                    showStatusMessage('All changes saved successfully! Other parties have been notified.', 'success');
-                    saveBtn.disabled = false;
-                    saveBtn.querySelector('span').textContent = 'Save All Changes';
-                }
                 
             } catch (error) {
                 console.error('Error saving changes:', error);

@@ -51,8 +51,11 @@ class ClientPortalService {
       }
 
       // Convert contract to booking data format
+      // For standalone contracts, we'll create a virtual booking ID using the contract ID
+      const bookingId = contract.enquiryId || contract.id;
+      
       const formData = {
-        id: contract.enquiryId || contract.id,
+        id: bookingId,
         contractId: contract.id,
         clientName: contract.clientName,
         venue: contract.venue,
