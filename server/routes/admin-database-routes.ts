@@ -214,34 +214,39 @@ export function setupAdminDatabaseRoutes(app: Express) {
         }
       }
       
-      // Apply ordering for meaningful data first
-      if (shouldOrderMeaningfulFirst && !search) {
-        if (tableName === 'contracts') {
-          query = query.orderBy(sql`
+      // For contracts and invoices, use direct SQL query to ensure proper ordering
+      let rows, countResult;
+      
+      if ((tableName === 'contracts' || tableName === 'invoices') && !search) {
+        // Use direct SQL for contracts/invoices to ensure proper ordering
+        const directQuery = sql`
+          SELECT * FROM ${sql.identifier(tableName)}
+          ORDER BY 
             CASE 
               WHEN client_name IS NOT NULL AND client_name != '' THEN 0
               ELSE 1
             END,
             id DESC
-          `);
-        } else if (tableName === 'invoices') {
-          query = query.orderBy(sql`
-            CASE 
-              WHEN client_name IS NOT NULL AND client_name != '' THEN 0
-              ELSE 1
-            END,
-            id DESC
-          `);
+          LIMIT ${limitNum} OFFSET ${offset}
+        `;
+        
+        [rows, countResult] = await Promise.all([
+          db.execute(directQuery),
+          countQuery
+        ]);
+        
+        rows = rows.rows; // Extract rows from the result
+      } else {
+        // Apply standard ordering for other cases
+        if (!search) {
+          query = query.orderBy(sql`id DESC`);
         }
-      } else if (!search) {
-        // Default ordering by id for other tables or when no search
-        query = query.orderBy(sql`id DESC`);
+        
+        [rows, countResult] = await Promise.all([
+          query.limit(limitNum).offset(offset),
+          countQuery
+        ]);
       }
-
-      const [rows, countResult] = await Promise.all([
-        query.limit(limitNum).offset(offset),
-        countQuery
-      ]);
       
       const totalCount = countResult[0]?.count || 0;
       
