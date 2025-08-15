@@ -29,7 +29,7 @@ export class MailgunRouteManager {
       const expression = `match_recipient("${emailPrefix}@${this.domain}")`;
       
       // Use production URL for webhook to ensure reliability
-      const webhookUrl = `https://www.musobuddy.com/api/webhook/mailgun`;
+      const webhookUrl = `https://musobuddy.replit.app/api/webhook/mailgun`;
       
       console.log(`🔧 Creating route with webhook URL: ${webhookUrl}`);
       
