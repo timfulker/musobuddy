@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { trackApiCall } from '../middleware/api-usage-tracker';
 
 // Helper function to enrich venue data using Google Places API
@@ -78,10 +78,7 @@ async function enrichVenueData(venueName: string): Promise<any> {
   }
 }
 
-// Enhanced booking message parser using Claude Haiku for cost efficiency
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Enhanced booking message parser using OpenAI for better availability
 
 interface ParsedBookingData {
   clientName?: string;
@@ -114,9 +111,9 @@ export async function parseBookingMessage(
   userId?: string
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
-    console.log('🤖 Claude: Message length:', messageText?.length || 0);
-    console.log('🤖 Claude: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 OpenAI: Parsing booking message with enhanced AI for better cost efficiency...');
+    console.log('🤖 OpenAI: Message length:', messageText?.length || 0);
+    console.log('🤖 OpenAI: First 200 chars:', messageText?.substring(0, 200) || 'No content');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -164,31 +161,35 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
 
     // Track API usage if userId is provided
     if (userId) {
-      const canProceed = await trackApiCall(userId, 'claude', 'booking-message-parser');
+      const canProceed = await trackApiCall(userId, 'openai', 'booking-message-parser');
       if (!canProceed) {
-        throw new Error('API usage limit exceeded for Claude service');
+        throw new Error('API usage limit exceeded for OpenAI service');
       }
     }
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const startTime = Date.now();
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
       max_tokens: 800,
       temperature: 0.1,
-      system: systemPrompt,
       messages: [
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]
     });
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.content[0]?.text;
+    const rawContent = response.choices[0]?.message?.content;
     if (!rawContent) {
-      throw new Error('No response from Claude');
+      throw new Error('No response from OpenAI');
     }
 
-    console.log('🤖 Claude raw response:', rawContent);
+    console.log('🤖 OpenAI raw response:', rawContent);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
@@ -204,7 +205,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Raw content:', rawContent);
-      throw new Error('Invalid JSON response from Claude');
+      throw new Error('Invalid JSON response from OpenAI');
     }
     
     // Clean and validate the parsed data
@@ -289,7 +290,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       }
     }
 
-    console.log('🎯 Claude: Parsed booking data:', {
+    console.log('🎯 OpenAI: Parsed booking data:', {
       ...cleanedData,
       message: `${messageText.substring(0, 100)}...`
     });
@@ -297,7 +298,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     return cleanedData;
 
   } catch (error: any) {
-    console.error('❌ Claude booking parse error:', error);
+    console.error('❌ OpenAI booking parse error:', error);
     
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
