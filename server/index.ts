@@ -132,9 +132,16 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     const subject = emailData.subject || emailData.Subject || '';
     const recipient = emailData.recipient || emailData.recipients || emailData.To || emailData.to || req.body.recipient || req.body.to || '';
     
+    console.log('📧 Extracted fields:');
+    console.log('  - fromEmail:', fromEmail ? '✓' : '❌', fromEmail?.substring(0, 20));
+    console.log('  - bodyText:', bodyText ? '✓' : '❌', bodyText?.substring(0, 50));
+    console.log('  - subject:', subject ? '✓' : '❌', subject?.substring(0, 30));
+    console.log('  - recipient:', recipient ? '✓' : '❌', recipient?.substring(0, 30));
+    
     if (!fromEmail || !bodyText || !recipient) {
       console.log('❌ Missing email fields after processing');
-      return res.status(400).json({ success: false, error: 'Missing email fields' });
+      console.log('Available emailData keys:', Object.keys(emailData));
+      return res.status(400).json({ success: false, error: 'Missing email fields', availableKeys: Object.keys(emailData).slice(0, 10) });
     }
     
     // Use the enhanced email queue for processing
