@@ -23,7 +23,8 @@
       "Bash(pm2 logs:*)",
       "Bash(journalctl:*)",
       "Bash(npx kill-port:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(test -f .eslintrc.json)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

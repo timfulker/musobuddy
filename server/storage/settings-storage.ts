@@ -68,6 +68,7 @@ export class SettingsStorage {
   async createEmailTemplate(data: {
     userId: string;
     name: string;
+    category?: string;
     subject: string;
     emailBody: string;
     smsBody?: string;
@@ -76,6 +77,7 @@ export class SettingsStorage {
     const result = await db.insert(emailTemplates).values({
       userId: data.userId,
       name: data.name,
+      category: data.category || 'general',
       subject: data.subject,
       emailBody: data.emailBody,
       smsBody: data.smsBody || '',

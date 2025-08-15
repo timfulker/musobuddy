@@ -18,6 +18,7 @@ import { findActiveAuthToken } from '@/utils/authToken';
 interface EmailTemplate {
   id: number;
   name: string;
+  category?: string;
   subject: string;
   emailBody: string;
   smsBody: string;
@@ -131,11 +132,25 @@ export default function Templates() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    category: 'general',
     subject: '',
     emailBody: '',
     smsBody: '',
     isAutoRespond: false
   });
+  
+  // Category filter state
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  const templateCategories = [
+    { value: 'all', label: 'All Templates' },
+    { value: 'booking', label: 'Booking' },
+    { value: 'contract', label: 'Contract' },
+    { value: 'invoice', label: 'Invoice' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'follow-up', label: 'Follow-up' },
+    { value: 'general', label: 'General' }
+  ];
 
   useEffect(() => {
     fetchTemplates();
@@ -290,6 +305,7 @@ export default function Templates() {
     setEditingTemplate(template);
     setFormData({
       name: template.name,
+      category: template.category || 'general',
       subject: template.subject,
       emailBody: template.emailBody,
       smsBody: template.smsBody,
@@ -300,12 +316,18 @@ export default function Templates() {
   const resetForm = () => {
     setFormData({
       name: '',
+      category: 'general',
       subject: '',
       emailBody: '',
       smsBody: '',
       isAutoRespond: false
     });
   };
+  
+  // Filter templates by category
+  const filteredTemplates = selectedCategory === 'all' 
+    ? templates 
+    : templates.filter(t => (t.category || 'general') === selectedCategory);
 
   const replaceTemplateVariables = (text: string, booking: any, userSettings?: any) => {
     if (!booking) return text;
@@ -502,10 +524,12 @@ export default function Templates() {
   // AI Generation Functions
   const handleGenerateAIResponse = async () => {
     const targetData = bookingData || messageData;
-    if (!targetData && !customPrompt) {
+    const targetClientEmail = targetData?.clientEmail || clientEmail;
+    
+    if (!targetData && !customPrompt && !targetClientEmail) {
       toast({
         title: "Missing Information",
-        description: "Please provide either booking context or a custom prompt for AI generation.",
+        description: "Please provide either booking context, client email, or a custom prompt for AI generation.",
         variant: "destructive",
       });
       return;
@@ -513,6 +537,40 @@ export default function Templates() {
 
     setAiLoading(true);
     try {
+      // Fetch client history if we have a client email
+      let clientHistory = null;
+      if (targetClientEmail) {
+        try {
+          const clientsResponse = await apiRequest('/api/clients', { method: 'GET' });
+          const clients = await clientsResponse.json();
+          const client = clients.find((c: any) => c.email === targetClientEmail);
+          
+          if (client) {
+            // Fetch client's booking history
+            const bookingsResponse = await apiRequest('/api/bookings', { method: 'GET' });
+            const allBookings = await bookingsResponse.json();
+            const clientBookings = allBookings.filter((b: any) => 
+              b.clientEmail === targetClientEmail || b.clientName === client.name
+            );
+            
+            clientHistory = {
+              name: client.name,
+              totalBookings: clientBookings.length,
+              totalRevenue: clientBookings.reduce((sum: number, b: any) => sum + (b.fee || 0), 0),
+              recentBookings: clientBookings.slice(0, 5).map((b: any) => ({
+                eventDate: b.eventDate,
+                venue: b.venue,
+                eventType: b.eventType,
+                fee: b.fee,
+                status: b.status
+              }))
+            };
+          }
+        } catch (error) {
+          console.log('Could not fetch client history:', error);
+        }
+      }
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
       
@@ -522,6 +580,7 @@ export default function Templates() {
           action: action || 'respond',
           bookingId: bookingId || null,
           customPrompt: customPrompt || null,
+          clientHistory: clientHistory,
           tone: aiTone,
           travelExpense: travelExpense || null
         }
@@ -751,18 +810,34 @@ export default function Templates() {
             </div>
           </div>
 
+          {/* Category Filter */}
+          <div className="mb-6">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full md:w-64">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                {templateCategories.map(category => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           {/* Booking Context */}
           {bookingId && (action === 'respond' || action === 'thankyou') && (
-            <Card className="mb-6 border-blue-200 bg-blue-50">
+            <Card className="mb-6 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                    {action === 'thankyou' ? `Sending Thank You for Booking #${bookingId}` : `Responding to Booking #${bookingId}`}
+                  <h3 className="text-xl font-bold text-green-800 mb-2">
+                    📧 {action === 'thankyou' ? `Send Thank You Email - Booking #${bookingId}` : `Send Response Email - Booking #${bookingId}`}
                   </h3>
-                  <p className="text-blue-600 mb-4">
+                  <p className="text-green-700 mb-4 text-lg">
                     {action === 'thankyou' 
-                      ? 'Select a thank you template below to send to your client after the event. The template will be automatically customized with booking details.'
-                      : 'Select an email template below to send a response to your client. The template will be automatically customized with booking details.'}
+                      ? '👇 Click "📧 Select & Send" on any template below to send a customized thank you email'
+                      : '👇 Click "📧 Select & Send" on any template below to send a customized response email'}
                   </p>
                   {bookingData && (
                     <div className="text-left bg-white p-4 rounded-lg mb-4">
@@ -789,6 +864,38 @@ export default function Templates() {
             </Card>
           )}
 
+          {/* Message Context */}
+          {messageId && action === 'respond' && (
+            <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-blue-800 mb-2">
+                    📧 Send Response Email
+                  </h3>
+                  <p className="text-blue-700 mb-4 text-lg">
+                    👇 Click "📧 Select & Send" on any template below to send a customized response
+                  </p>
+                  {messageData && (
+                    <div className="text-left bg-white p-4 rounded-lg mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">Message Details:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <span><strong>Client:</strong> {messageData.clientName}</span>
+                        <span><strong>Email:</strong> {messageData.clientEmail}</span>
+                      </div>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.history.back()}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    ← Back to Messages
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
       <div className="grid gap-4 md:grid-cols-2">
         {loading ? (
           <div className="col-span-2 text-center py-8">Loading templates...</div>
@@ -796,12 +903,33 @@ export default function Templates() {
           <div className="col-span-2 text-center py-8 text-red-500">
             Error loading templates: {error}
           </div>
-        ) : templates.length > 0 ? (
-          templates.map((template) => (
-            <Card key={template.id} className="h-fit">
+        ) : filteredTemplates.length > 0 ? (
+          filteredTemplates.map((template) => (
+            <Card 
+              key={template.id} 
+              className={`h-fit transition-all duration-300 ${
+                ((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond'))
+                  ? 'hover:shadow-xl hover:border-green-300 hover:bg-green-50/30 cursor-pointer border-2 border-gray-200 hover:border-green-400'
+                  : ''
+              }`}
+              onClick={((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) 
+                ? () => handleUseTemplate(template)
+                : undefined
+              }
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {template.name}
+                      {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond')) && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">👆 Click to use</span>
+                      )}
+                    </CardTitle>
+                    <Badge variant="outline" className="mt-1">
+                      {templateCategories.find(c => c.value === (template.category || 'general'))?.label || 'General'}
+                    </Badge>
+                  </div>
                   <div className="flex items-center space-x-2">
                     {template.isDefault && (
                       <Badge variant="secondary">Default</Badge>
@@ -814,7 +942,10 @@ export default function Templates() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEdit(template)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(template);
+                      }}
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
@@ -822,16 +953,22 @@ export default function Templates() {
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => handleUseTemplate(template)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUseTemplate(template);
+                        }}
+                        className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg border-0 transition-all duration-200 transform hover:scale-105"
                       >
-                        Use Template
+                        📧 Select & Send
                       </Button>
                     )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteTemplate(template)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTemplate(template);
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -897,6 +1034,21 @@ export default function Templates() {
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="e.g., Polite Decline"
               />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templateCategories.slice(1).map(category => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="subject">Email Subject</Label>
@@ -967,6 +1119,21 @@ export default function Templates() {
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="e.g., Polite Decline"
               />
+            </div>
+            <div>
+              <Label htmlFor="editCategory">Category</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templateCategories.slice(1).map(category => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="editSubject">Email Subject</Label>

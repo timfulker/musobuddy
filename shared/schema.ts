@@ -601,6 +601,7 @@ export const emailTemplates = pgTable("email_templates", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   name: varchar("name").notNull(), // "Decline Enquiry", "Request More Info", etc.
+  category: varchar("category").default("general"), // "booking", "contract", "invoice", "marketing", "follow-up", "general"
   subject: varchar("subject").notNull(),
   emailBody: text("email_body").notNull(),
   smsBody: text("sms_body"),

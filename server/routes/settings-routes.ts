@@ -529,7 +529,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { name, subject, emailBody, smsBody, isAutoRespond } = req.body;
+      const { name, category, subject, emailBody, smsBody, isAutoRespond } = req.body;
       
       if (!name || !subject || !emailBody) {
         return res.status(400).json({ error: 'Name, subject, and email body are required' });
@@ -538,6 +538,7 @@ export async function registerSettingsRoutes(app: Express) {
       const template = await storage.createEmailTemplate({
         userId,
         name,
+        category: category || 'general',
         subject,
         emailBody,
         smsBody: smsBody || '',
@@ -768,7 +769,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo } = req.body;
+      const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo, clientHistory } = req.body;
 
       console.log('🤖 AI generation request:', {
         action,
@@ -841,7 +842,8 @@ export async function registerSettingsRoutes(app: Express) {
         userSettings: fullSettings,
         customPrompt,
         tone: tone || 'professional',
-        contextualInfo: contextualInfo || null
+        contextualInfo: contextualInfo || null,
+        clientHistory: clientHistory || null
       });
 
       console.log('✅ AI response generated successfully');

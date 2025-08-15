@@ -60,6 +60,19 @@ interface UserSettings {
   specialOffers?: string;
 }
 
+interface ClientHistory {
+  name: string;
+  totalBookings: number;
+  totalRevenue: number;
+  recentBookings: Array<{
+    eventDate?: string;
+    venue?: string;
+    eventType?: string;
+    fee?: number;
+    status?: string;
+  }>;
+}
+
 interface AIResponseRequest {
   action: 'respond' | 'thankyou' | 'followup' | 'custom';
   bookingContext?: BookingContext;
@@ -67,6 +80,7 @@ interface AIResponseRequest {
   customPrompt?: string;
   tone?: 'professional' | 'friendly' | 'formal' | 'casual';
   contextualInfo?: string; // Additional context when no booking is selected
+  clientHistory?: ClientHistory; // Client's booking history for personalized emails
 }
 
 export class AIResponseGenerator {
@@ -84,7 +98,7 @@ export class AIResponseGenerator {
     emailBody: string;
     smsBody?: string;
   }> {
-    const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo } = request;
+    const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo, clientHistory } = request;
     
     console.log('🤖 Starting AI response generation...');
     console.log('🤖 Request details:', {
@@ -100,7 +114,7 @@ export class AIResponseGenerator {
       const anthropic = this.getAnthropicClient();
       
       const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext);
-      const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo);
+      const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo, clientHistory);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
@@ -409,11 +423,27 @@ PROFESSIONAL DETAILS TO INCLUDE:
 IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
   }
 
-  private buildUserPrompt(action: string, bookingContext?: BookingContext, customPrompt?: string, contextualInfo?: string): string {
+  private buildUserPrompt(action: string, bookingContext?: BookingContext, customPrompt?: string, contextualInfo?: string, clientHistory?: ClientHistory): string {
+    // Format client history for context
+    let clientHistoryContext = '';
+    if (clientHistory && clientHistory.totalBookings > 0) {
+      clientHistoryContext = `\n\nCLIENT HISTORY - PERSONALIZE YOUR RESPONSE:
+This is a returning client with ${clientHistory.totalBookings} previous booking${clientHistory.totalBookings > 1 ? 's' : ''} totaling £${clientHistory.totalRevenue}.
+${clientHistory.recentBookings.length > 0 ? `Recent events:` : ''}
+${clientHistory.recentBookings.map(b => `- ${b.eventType || 'Event'} at ${b.venue || 'venue'} (${b.eventDate ? new Date(b.eventDate).toLocaleDateString() : 'date TBD'})`).join('\n')}
+
+Use this history to:
+- Reference their past events positively if relevant
+- Show you remember them as a valued client
+- Suggest services based on their booking patterns
+- Acknowledge their loyalty and repeat business
+- Make the email feel personal and warm\n`;
+    }
+    
     if (customPrompt) {
       return `Generate a ${action} email response with this custom request: ${customPrompt}
 
-${contextualInfo ? `ADDITIONAL CONTEXT: ${contextualInfo}\n\n` : ''}${this.formatBookingContext(bookingContext)}
+${contextualInfo ? `ADDITIONAL CONTEXT: ${contextualInfo}\n\n` : ''}${clientHistoryContext}${this.formatBookingContext(bookingContext)}
 
 Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
     }
@@ -435,7 +465,7 @@ This additional context should be used to personalize the response and offer rel
 - If context mentions "corporate event", adjust tone and service focus accordingly
 - Use this context to suggest additional services that complement the inquiry
 
-` : ''}${this.formatBookingContext(bookingContext)}
+` : ''}${clientHistoryContext}${this.formatBookingContext(bookingContext)}
 
 Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
   }
