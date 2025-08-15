@@ -78,21 +78,43 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       return res.status(200).json({ success: true, event: req.body.event });
     }
     
-    // Handle storage webhooks (large emails/attachments) - just acknowledge them
-    if (req.body.storage) {
-      console.log('📧 Storage webhook - acknowledged');
-      return res.status(200).json({ success: true, message: 'Storage webhook' });
+    let emailData = req.body;
+    
+    // Check if this is a storage webhook (has attachments)
+    if (req.body.storage?.url || req.body['message-url']) {
+      console.log('📧 Storage webhook - fetching email content from Mailgun');
+      
+      const storageUrl = req.body.storage?.url?.[0] || req.body['message-url'];
+      
+      try {
+        // Fetch the actual email content from Mailgun storage
+        const response = await fetch(storageUrl, {
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch from Mailgun storage: ${response.status}`);
+        }
+        
+        emailData = await response.json();
+        console.log('✅ Fetched email content from storage');
+      } catch (error) {
+        console.error('❌ Failed to fetch from storage:', error);
+        return res.status(500).json({ success: false, error: 'Failed to fetch email content' });
+      }
     }
     
-    // Process actual email content
-    const bodyText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || '';
-    const fromEmail = req.body.from || req.body.sender || '';
-    const subject = req.body.subject || '';
-    const recipient = req.body.recipient || req.body.to || '';
+    // Process the email content (either direct or fetched from storage)
+    const bodyText = emailData['body-plain'] || emailData['stripped-text'] || emailData.text || '';
+    const fromEmail = emailData.from || emailData.sender || '';
+    const subject = emailData.subject || '';
+    const recipient = emailData.recipient || emailData.to || req.body.recipient || req.body.to || '';
     
     if (!fromEmail || !bodyText || !recipient) {
-      console.log('❌ Missing email fields');
-      return res.status(400).json({ success: false, error: 'Missing fields' });
+      console.log('❌ Missing email fields after processing');
+      return res.status(400).json({ success: false, error: 'Missing email fields' });
     }
     
     // Use the enhanced email queue for processing
