@@ -206,7 +206,13 @@ export default function UnparseableMessages() {
                 </div>
                 <div className="flex items-center text-sm text-gray-500 gap-2">
                   <Calendar className="w-4 h-4" />
-                  Received {formatReceivedTime(message.createdAt)}
+                  Received {new Date(message.createdAt).toLocaleDateString("en-GB", { 
+                    day: "numeric", 
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
                   {message.clientAddress && (
                     <span className="ml-2">• {message.clientAddress}</span>
                   )}
