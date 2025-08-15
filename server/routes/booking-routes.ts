@@ -189,6 +189,9 @@ export function registerBookingRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
       
+      console.log(`📋 Fetching booking ${bookingId} for user ${userId}`);
+      console.log(`📄 Booking uploadedDocuments field:`, booking.uploadedDocuments);
+      
       res.json(booking);
       
     } catch (error) {
