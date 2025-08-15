@@ -45,9 +45,16 @@ export function setupAdminDatabaseRoutes(app: Express) {
           const countResult = await db.select({ count: sql<number>`count(*)` }).from(tableSchema);
           const rowCount = countResult[0]?.count || 0;
           
-          // Get column names from schema - use a more reliable method
-          const schemaColumns = (tableSchema as any)._.columns;
-          const columns = schemaColumns ? Object.keys(schemaColumns) : [];
+          // Get column names using SQL query instead of schema metadata
+          const columnQuery = await db.execute(sql`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = ${tableName} 
+            AND table_schema = 'public'
+            ORDER BY ordinal_position
+          `);
+          
+          const columns = columnQuery.rows.map((row: any) => row.column_name);
           
           tables.push({
             name: tableName,
@@ -56,7 +63,12 @@ export function setupAdminDatabaseRoutes(app: Express) {
           });
         } catch (error) {
           console.error(`Error getting metadata for table ${tableName}:`, error);
-          // Continue with other tables
+          // Add table with basic info even if column detection fails
+          tables.push({
+            name: tableName,
+            rowCount: 0,
+            columns: []
+          });
         }
       }
       
