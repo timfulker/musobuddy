@@ -92,6 +92,12 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
           navigate(`/compliance?bookingId=${booking.id}&action=send`);
         }
         return;
+      case 'upload_document':
+        // Open document upload dialog
+        if (onUploadDocument) {
+          onUploadDocument(booking);
+        }
+        return;
       case 'reject':
         newStatus = 'rejected';
         message = "Booking rejected";
@@ -156,6 +162,13 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         >
           <DollarSign className="w-4 h-4 mr-2" />
           Issue Invoice
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleAction('upload_document')}
+          disabled={statusUpdateMutation.isPending}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Document
         </DropdownMenuItem>
 
         <DropdownMenuItem 

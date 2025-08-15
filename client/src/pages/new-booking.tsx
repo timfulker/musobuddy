@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown, MapPin } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin, FileText, Download, Upload } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -119,6 +119,17 @@ export default function NewBookingPage() {
       return response;
     },
     enabled: isEditMode
+  });
+
+  // Fetch documents for the booking
+  const { data: bookingDocuments = [], isLoading: isLoadingDocuments } = useQuery({
+    queryKey: ['/api/bookings', editBookingId, 'documents'],
+    queryFn: async () => {
+      if (!editBookingId) return [];
+      const response = await apiRequest(`/api/bookings/${editBookingId}/documents`);
+      return response.documents || [];
+    },
+    enabled: isEditMode && !!editBookingId
   });
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
@@ -1591,6 +1602,61 @@ export default function NewBookingPage() {
                   console.log('🔒 Field locks updated:', newFieldLocks);
                 }}
               />
+            )}
+
+            {/* Documents Section - Only show in edit mode when there are documents */}
+            {isEditMode && editingBooking && (
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-emerald-100">
+                <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-lg border-b border-emerald-100">
+                  <CardTitle className="text-xl font-semibold text-emerald-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    Uploaded Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {isLoadingDocuments ? (
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-emerald-500 rounded-full"></div>
+                      Loading documents...
+                    </div>
+                  ) : bookingDocuments.length > 0 ? (
+                    <div className="space-y-3">
+                      {bookingDocuments.map((doc: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-lg border border-emerald-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{doc.filename}</div>
+                              <div className="text-sm text-gray-500 capitalize">
+                                {doc.type} Document • Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => window.open(doc.url, '_blank')}
+                            className="bg-white/50 hover:bg-emerald-50"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            View
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">No documents uploaded yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Documents will appear here once uploaded</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
 
             {/* Enhanced Action Buttons */}
