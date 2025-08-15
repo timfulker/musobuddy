@@ -24,6 +24,7 @@ export default function AddressBook() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<'name' | 'bookings' | 'revenue' | 'created'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -175,6 +176,10 @@ export default function AddressBook() {
     if (confirm("Are you sure you want to remove this client from your address book?")) {
       deleteClientMutation.mutate(id);
     }
+  };
+
+  const handleViewClient = (client: Client) => {
+    setViewingClient(client);
   };
 
   // Filter and sort clients
@@ -417,6 +422,141 @@ export default function AddressBook() {
                     </div>
                   </form>
                 </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Client Detail Dialog */}
+            <Dialog open={!!viewingClient} onOpenChange={(open) => !open && setViewingClient(null)}>
+              <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    {viewingClient?.name}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Complete client information and booking history
+                  </DialogDescription>
+                </DialogHeader>
+
+                {viewingClient && (
+                  <div className="space-y-6">
+                    {/* Contact Information */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Contact Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {viewingClient.email && (
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <Mail className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="text-sm text-gray-600">Email</p>
+                              <p className="font-medium">{viewingClient.email}</p>
+                            </div>
+                          </div>
+                        )}
+                        {viewingClient.phone && (
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <Phone className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="text-sm text-gray-600">Phone</p>
+                              <p className="font-medium">{viewingClient.phone}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {viewingClient.address && (
+                        <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg mt-4">
+                          <MapPin className="w-5 h-5 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-600">Address</p>
+                            <p className="font-medium">{viewingClient.address}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Business Summary */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Business Summary</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
+                          <Calendar className="w-6 h-6 text-blue-600" />
+                          <div>
+                            <p className="text-sm text-gray-600">Total Bookings</p>
+                            <p className="text-2xl font-bold text-blue-600">{viewingClient.totalBookings || 0}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg">
+                          <DollarSign className="w-6 h-6 text-green-600" />
+                          <div>
+                            <p className="text-sm text-gray-600">Total Revenue</p>
+                            <p className="text-2xl font-bold text-green-600">£{parseFloat(viewingClient.totalRevenue || "0").toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    {viewingClient.notes && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Notes</h3>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <p className="text-gray-700">{viewingClient.notes}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Booking History */}
+                    {viewingClient.bookingIds && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Recent Bookings</h3>
+                        <div className="space-y-2">
+                          {JSON.parse(viewingClient.bookingIds).slice(0, 5).map((bookingId: number, index: number) => (
+                            <div key={bookingId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <Calendar className="w-4 h-4 text-gray-500" />
+                                <span className="text-sm font-medium">Booking #{bookingId}</span>
+                              </div>
+                              <Link href={`/bookings`}>
+                                <Button variant="ghost" size="sm">
+                                  View Details
+                                </Button>
+                              </Link>
+                            </div>
+                          ))}
+                          {JSON.parse(viewingClient.bookingIds).length > 5 && (
+                            <p className="text-sm text-gray-500 text-center pt-2">
+                              and {JSON.parse(viewingClient.bookingIds).length - 5} more bookings...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4 border-t">
+                      <Button 
+                        onClick={() => {
+                          setViewingClient(null);
+                          handleEdit(viewingClient);
+                        }}
+                        className="flex-1"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Client
+                      </Button>
+                      {viewingClient.email && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => window.open(`mailto:${viewingClient.email}`, '_blank')}
+                          className="flex-1"
+                        >
+                          <Mail className="w-4 h-4 mr-2" />
+                          Send Email
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           </div>
@@ -718,16 +858,26 @@ export default function AddressBook() {
                 /* Card View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {paginatedClients.map((client: Client) => (
-                    <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader className="pb-3">
+                    <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                      <CardHeader className="pb-3" onClick={() => handleViewClient(client)}>
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg">{client.name}</CardTitle>
-                          <div className="flex space-x-1">
+                          <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewClient(client)}
+                              className="h-8 w-8 p-0"
+                              title="View details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleEdit(client)}
                               className="h-8 w-8 p-0"
+                              title="Edit client"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -736,13 +886,14 @@ export default function AddressBook() {
                               size="sm"
                               onClick={() => handleDelete(client.id)}
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              title="Delete client"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0" onClick={() => handleViewClient(client)}>
                         <div className="space-y-2">
                           {client.email && (
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
