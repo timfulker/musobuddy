@@ -1505,6 +1505,21 @@ export default function NewBookingPage() {
               </CardContent>
             </Card>
 
+            {/* Debug Info - Remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <Card className="bg-yellow-50 border-yellow-200">
+                <CardContent className="p-4">
+                  <div className="text-sm">
+                    <div><strong>Debug Info:</strong></div>
+                    <div>Edit Mode: {isEditMode ? 'Yes' : 'No'}</div>
+                    <div>Booking ID: {editBookingId || 'None'}</div>
+                    <div>Has Booking Data: {editingBooking ? 'Yes' : 'No'}</div>
+                    <div>Documents: {editingBooking?.uploadedDocuments ? JSON.stringify(editingBooking.uploadedDocuments) : 'None'}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Uploaded Documents Section */}
             {isEditMode && editingBooking && (() => {
               console.log('🔍 Checking uploaded documents:', editingBooking.uploadedDocuments);
