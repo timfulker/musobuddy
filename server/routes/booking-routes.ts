@@ -646,6 +646,21 @@ ${messageText.replace(/\n/g, '<br>')}
 
         emailBody += `</ul>`;
 
+        // Add document download links
+        emailBody += `
+<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+  <p><strong>Download Documents:</strong></p>
+`;
+
+        documentsToSend.forEach((doc: any) => {
+          const typeLabel = doc.type === 'public_liability' ? 'Public Liability Insurance' :
+                           doc.type === 'pat_testing' ? 'PAT Testing Certificate' :
+                           doc.type === 'music_license' ? 'Music License' : doc.type;
+          emailBody += `  <p>• <a href="${doc.documentUrl}" style="color: #667eea; text-decoration: none;">${typeLabel} - ${doc.name}</a></p>`;
+        });
+
+        emailBody += `</div>`;
+
         if (customMessage && customMessage.trim()) {
           emailBody += `
 <div style="border-left: 4px solid #667eea; padding-left: 16px; margin: 20px 0;">
@@ -661,17 +676,11 @@ ${messageText.replace(/\n/g, '<br>')}
 ${businessName}</p>
 `;
 
-        // Create attachments array
-        const attachments = documentsToSend.map((doc: any) => ({
-          url: doc.documentUrl,
-          filename: doc.name
-        }));
-
+        // Send email without attachments - documents are linked from R2
         await emailService.sendEmail({
           to: recipientEmail,
           subject: subject,
-          html: emailBody,
-          attachments: attachments
+          html: emailBody
         });
 
         console.log(`✅ Compliance documents sent for booking ${bookingId} to ${recipientEmail}`);
