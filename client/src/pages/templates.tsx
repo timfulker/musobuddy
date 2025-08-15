@@ -803,8 +803,7 @@ export default function Templates() {
               </Button>
               <Button 
                 onClick={() => setShowAIDialog(true)}
-                variant="outline"
-                className="bg-gradient-to-r from-primary to-blue-600 text-white border-none hover:from-primary/90 hover:to-blue-700"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 AI Generate
@@ -1234,7 +1233,7 @@ export default function Templates() {
                 </Button>
                 <Button 
                   onClick={handleSendEmail}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   Send Email
                 </Button>
