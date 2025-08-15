@@ -60,6 +60,9 @@ export const users = pgTable("users", {
   loginAttempts: integer("login_attempts").default(0),
   lockedUntil: timestamp("locked_until"),
   forcePasswordChange: boolean("force_password_change").default(false),
+  // Password reset fields
+  passwordResetToken: varchar("password_reset_token", { length: 128 }),
+  passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

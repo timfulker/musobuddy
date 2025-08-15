@@ -49,6 +49,10 @@ export class Storage {
     return userStorage.getUserByQuickAddToken(token);
   }
 
+  async getUserByResetToken(token: string) {
+    return userStorage.getUserByResetToken(token);
+  }
+
   async generateQuickAddToken(userId: string) {
     return userStorage.generateQuickAddToken(userId);
   }

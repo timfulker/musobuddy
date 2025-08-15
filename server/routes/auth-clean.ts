@@ -2,6 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 import { generateAuthToken, requireAuth } from '../middleware/auth';
 
 // Phone number formatting
@@ -624,6 +625,103 @@ export function setupAuthRoutes(app: Express) {
     } catch (error) {
       console.error('Stripe login error:', error);
       res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
+  // Forgot Password endpoint
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Return success even if user doesn't exist (security best practice)
+        return res.json({ 
+          success: true, 
+          message: 'If an account with that email exists, you will receive a password reset link.' 
+        });
+      }
+
+      // Generate secure reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Save reset token to database
+      await storage.updateUser(user.id, {
+        passwordResetToken: resetToken,
+        passwordResetExpiresAt: resetExpiry
+      });
+
+      // Send reset email
+      try {
+        const { EmailService } = await import('../core/services');
+        const emailService = new EmailService();
+        
+        const resetUrl = `${process.env.APP_URL || 'https://musobuddy.replit.app'}/auth/reset-password?token=${resetToken}`;
+        
+        await emailService.sendPasswordResetEmail(email, user.firstName || 'User', resetUrl);
+        
+        console.log(`✅ Password reset email sent to ${email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send reset email:', emailError);
+        // Continue anyway - don't reveal email sending issues
+      }
+
+      res.json({
+        success: true,
+        message: 'If an account with that email exists, you will receive a password reset link.'
+      });
+
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Reset Password endpoint
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res.status(400).json({ error: 'Token and new password are required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
+
+      // Find user with valid reset token
+      const user = await storage.getUserByResetToken(token);
+      if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and clear reset token
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null
+      });
+
+      console.log(`✅ Password reset successful for user: ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Password reset successfully'
+      });
+
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
   

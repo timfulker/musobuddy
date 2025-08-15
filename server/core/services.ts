@@ -752,6 +752,223 @@ export class EmailService {
       return { success: false, error: error.message };
     }
   }
+
+  async sendPasswordResetEmail(email: string, userName: string, resetUrl: string) {
+    try {
+      const html = this.generatePasswordResetEmailHTML(userName, resetUrl);
+      
+      return await this.sendEmail({
+        to: email,
+        subject: 'Reset Your MusoBuddy Password',
+        html: html
+      });
+    } catch (error: any) {
+      console.error('Error sending password reset email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  generatePasswordResetEmailHTML(userName: string, resetUrl: string) {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your MusoBuddy Password</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+          }
+          
+          .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+          }
+          
+          .header p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 400;
+          }
+          
+          .content {
+            padding: 40px 30px;
+          }
+          
+          .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 20px;
+          }
+          
+          .message {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.7;
+          }
+          
+          .cta-section {
+            text-align: center;
+            margin: 40px 0;
+          }
+          
+          .reset-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+            letter-spacing: 0.025em;
+          }
+          
+          .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.4);
+          }
+          
+          .security-note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+          }
+          
+          .security-note h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #92400e;
+            margin: 0 0 10px 0;
+          }
+          
+          .security-note p {
+            font-size: 14px;
+            color: #92400e;
+            margin: 0;
+            line-height: 1.5;
+          }
+          
+          .footer {
+            background: #f8fafc;
+            padding: 30px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+          }
+          
+          .signature {
+            font-size: 16px;
+            color: #374151;
+            margin-bottom: 10px;
+          }
+          
+          .business-name {
+            font-weight: 600;
+            color: #111827;
+            font-size: 17px;
+          }
+          
+          .help-text {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-top: 20px;
+            line-height: 1.5;
+          }
+          
+          @media (max-width: 600px) {
+            .email-container {
+              margin: 20px;
+              border-radius: 8px;
+            }
+            
+            .header, .content, .footer {
+              padding: 20px;
+            }
+            
+            .header h1 {
+              font-size: 24px;
+            }
+            
+            .reset-btn {
+              padding: 14px 28px;
+              font-size: 15px;
+              margin: 6px auto;
+              display: block;
+              width: calc(100% - 12px);
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <h1>Password Reset</h1>
+            <p>Secure access to your MusoBuddy account</p>
+          </div>
+          
+          <div class="content">
+            <div class="greeting">Hello ${userName},</div>
+            <div class="message">
+              We received a request to reset the password for your MusoBuddy account. If you made this request, click the button below to set a new password.
+            </div>
+            
+            <div class="cta-section">
+              <a href="${resetUrl}" class="reset-btn">Reset My Password</a>
+            </div>
+            
+            <div class="security-note">
+              <h3>🔒 Security Note</h3>
+              <p>This link will expire in 1 hour for your security. If you didn't request this password reset, you can safely ignore this email.</p>
+            </div>
+            
+            <div class="message">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${resetUrl}" style="color: #6366f1; word-break: break-all;">${resetUrl}</a>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="signature">Best regards,</div>
+            <div class="business-name">The MusoBuddy Team</div>
+            <div class="help-text">
+              If you have any questions or need assistance, please contact our support team.
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
 }
 
 // Export instance for direct use

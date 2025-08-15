@@ -52,6 +52,12 @@ export class UserStorage {
     return result[0] || null;
   }
 
+  async getUserByResetToken(token: string) {
+    const result = await db.select().from(users)
+      .where(eq(users.passwordResetToken, token));
+    return result[0] || null;
+  }
+
   async generateQuickAddToken(userId: string) {
     const requestId = Date.now().toString();
     
