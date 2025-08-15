@@ -111,7 +111,7 @@ export default function UnifiedBookings() {
   const [showBulkStatusDialog, setShowBulkStatusDialog] = useState(false);
   
   // Calendar hover card state - controlled open/close
-  const [openHoverCard, setOpenHoverCard] = useState<string | null>(null);
+
   
   const { isDesktop } = useResponsive();
   const [location, navigate] = useLocation();
@@ -1811,15 +1811,7 @@ export default function UnifiedBookings() {
                                   <HoverCard 
                                     key={eventIndex} 
                                     openDelay={200} 
-                                    closeDelay={300}
-                                    open={openHoverCard === `week-${event.id}-${eventIndex}`}
-                                    onOpenChange={(open) => {
-                                      if (open) {
-                                        setOpenHoverCard(`week-${event.id}-${eventIndex}`);
-                                      } else {
-                                        setOpenHoverCard(null);
-                                      }
-                                    }}
+                                    closeDelay={1000}
                                   >
                                     <HoverCardTrigger asChild>
                                       <div
@@ -1884,8 +1876,6 @@ export default function UnifiedBookings() {
                                               {/* Respond Menu - show for all bookings */}
                                               <div 
                                                 onClick={(e) => e.stopPropagation()}
-                                                onMouseEnter={(e) => e.stopPropagation()}
-                                                onMouseLeave={(e) => e.stopPropagation()}
                                               >
                                                 <BookingActionMenu 
                                                   booking={booking}
@@ -1977,15 +1967,7 @@ export default function UnifiedBookings() {
                                     <HoverCard 
                                       key={eventIndex} 
                                       openDelay={200} 
-                                      closeDelay={300}
-                                      open={openHoverCard === `month-${event.id}-${eventIndex}`}
-                                      onOpenChange={(open) => {
-                                        if (open) {
-                                          setOpenHoverCard(`month-${event.id}-${eventIndex}`);
-                                        } else {
-                                          setOpenHoverCard(null);
-                                        }
-                                      }}
+                                      closeDelay={1000}
                                     >
                                       <HoverCardTrigger asChild>
                                         <div
@@ -2050,8 +2032,6 @@ export default function UnifiedBookings() {
                                                 {/* Respond Menu - show for all bookings */}
                                                 <div 
                                                   onClick={(e) => e.stopPropagation()}
-                                                  onMouseEnter={(e) => e.stopPropagation()}
-                                                  onMouseLeave={(e) => e.stopPropagation()}
                                                 >
                                                   <BookingActionMenu 
                                                     booking={booking}

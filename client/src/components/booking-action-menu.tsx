@@ -21,6 +21,7 @@ interface BookingActionMenuProps {
 export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ bookingId, newStatus }: { bookingId: number; newStatus: string }) => {
@@ -47,6 +48,9 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
   });
 
   const handleAction = (action: string) => {
+    // Close dropdown when action is taken
+    setDropdownOpen(false);
+    
     let newStatus = booking.status; // Default to current status
     let message = "";
 
@@ -108,14 +112,28 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDropdownOpen(!dropdownOpen);
+          }}
+        >
           <MoreHorizontal className="w-4 h-4 mr-1" />
           Respond
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-48" 
+        side="bottom"
+        sideOffset={5}
+        onPointerDownOutside={() => setDropdownOpen(false)}
+        onEscapeKeyDown={() => setDropdownOpen(false)}
+      >
         <DropdownMenuItem 
           onClick={() => handleAction('respond_to_client')}
           disabled={statusUpdateMutation.isPending}
