@@ -24,7 +24,9 @@
       "Bash(journalctl:*)",
       "Bash(npx kill-port:*)",
       "Bash(lsof:*)",
-      "Bash(test -f .eslintrc.json)"
+      "Bash(test -f .eslintrc.json)",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

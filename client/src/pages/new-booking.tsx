@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown, MapPin } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,7 +19,8 @@ import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
-import FieldLockManager from "@/components/field-lock-manager";
+import BookingDocumentsManager from "@/components/booking-documents-manager";
+import IndividualFieldLock from "@/components/individual-field-lock";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -103,10 +104,22 @@ export default function NewBookingPage() {
     error: null
   });
   
+  // Document management dialog state
+  const [documentsManagerOpen, setDocumentsManagerOpen] = useState(false);
+  
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
   });
+  
+  // Get documents for the booking being edited
+  const { data: documentsResponse } = useQuery({
+    queryKey: [`/api/bookings/${editBookingId}/documents`],
+    enabled: isEditMode && !!editBookingId,
+    retry: false,
+  });
+  
+  const bookingDocuments = documentsResponse?.documents || [];
   
   // Fetch specific booking if in edit mode
   const { data: editingBooking, isLoading: isLoadingBooking } = useQuery({
@@ -1170,7 +1183,16 @@ export default function NewBookingPage() {
                       name="venueContact"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Venue On-Day Contact</FormLabel>
+                          <FormLabel className="flex items-center">
+                            Venue On-Day Contact
+                            {isEditMode && editingBooking && (
+                              <IndividualFieldLock
+                                bookingId={editingBooking.id}
+                                fieldName="venueContact"
+                                initialLock={editingBooking.fieldLocks?.venueContact}
+                              />
+                            )}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Phone number for event day" className="bg-purple-50/30 border-purple-200" />
                           </FormControl>
@@ -1184,7 +1206,16 @@ export default function NewBookingPage() {
                       name="soundTechContact"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Sound Tech Contact</FormLabel>
+                          <FormLabel className="flex items-center">
+                            Sound Tech Contact
+                            {isEditMode && editingBooking && (
+                              <IndividualFieldLock
+                                bookingId={editingBooking.id}
+                                fieldName="soundTechContact"
+                                initialLock={editingBooking.fieldLocks?.soundTechContact}
+                              />
+                            )}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Sound engineer contact" className="bg-purple-50/30 border-purple-200" />
                           </FormControl>
@@ -1198,7 +1229,16 @@ export default function NewBookingPage() {
                       name="stageSize"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stage/Performance Area Size</FormLabel>
+                          <FormLabel className="flex items-center">
+                            Stage/Performance Area Size
+                            {isEditMode && editingBooking && (
+                              <IndividualFieldLock
+                                bookingId={editingBooking.id}
+                                fieldName="stageSize"
+                                initialLock={editingBooking.fieldLocks?.stageSize}
+                              />
+                            )}
+                          </FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-purple-50/30 border-purple-200">
@@ -1222,7 +1262,16 @@ export default function NewBookingPage() {
                       name="soundCheckTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Preferred Sound Check Time</FormLabel>
+                          <FormLabel className="flex items-center">
+                            Preferred Sound Check Time
+                            {isEditMode && editingBooking && (
+                              <IndividualFieldLock
+                                bookingId={editingBooking.id}
+                                fieldName="soundCheckTime"
+                                initialLock={editingBooking.fieldLocks?.soundCheckTime}
+                              />
+                            )}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="e.g., 2 hours before event" className="bg-purple-50/30 border-purple-200" />
                           </FormControl>
@@ -1237,7 +1286,16 @@ export default function NewBookingPage() {
                     name="powerEquipment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Power & Equipment Availability</FormLabel>
+                        <FormLabel className="flex items-center">
+                          Power & Equipment Availability
+                          {isEditMode && editingBooking && (
+                            <IndividualFieldLock
+                              bookingId={editingBooking.id}
+                              fieldName="powerEquipment"
+                              initialLock={editingBooking.fieldLocks?.powerEquipment}
+                            />
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Textarea {...field} rows={2} placeholder="Number of sockets, voltage, any noise limiter restrictions..." className="bg-purple-50/30 border-purple-200" />
                         </FormControl>
@@ -1258,7 +1316,16 @@ export default function NewBookingPage() {
                       name="styleMood"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Style/Mood Preference</FormLabel>
+                          <FormLabel className="flex items-center">
+                            Style/Mood Preference
+                            {isEditMode && editingBooking && (
+                              <IndividualFieldLock
+                                bookingId={editingBooking.id}
+                                fieldName="styleMood"
+                                initialLock={editingBooking.fieldLocks?.styleMood}
+                              />
+                            )}
+                          </FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-purple-50/30 border-purple-200">
@@ -1478,15 +1545,117 @@ export default function NewBookingPage() {
               </CardContent>
             </Card>
 
-            {/* Field Lock Management - Only show in edit mode */}
+
+            {/* Document Management Section - Only show in edit mode */}
             {isEditMode && editingBooking && (
-              <FieldLockManager 
-                bookingId={editingBooking.id}
-                initialFieldLocks={editingBooking.fieldLocks || {}}
-                onFieldLocksUpdated={(newFieldLocks) => {
-                  console.log('🔒 Field locks updated:', newFieldLocks);
-                }}
-              />
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
+                  <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <Paperclip className="w-4 h-4 text-white" />
+                    </div>
+                    Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  {bookingDocuments.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-600">
+                          {bookingDocuments.length} document{bookingDocuments.length !== 1 ? 's' : ''} uploaded
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDocumentsManagerOpen(true)}
+                          className="bg-white hover:bg-green-50"
+                        >
+                          <Upload className="w-4 h-4 mr-1" />
+                          Manage Documents
+                        </Button>
+                      </div>
+                      
+                      {bookingDocuments.slice(0, 3).map((doc: any) => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <Paperclip className="w-4 h-4 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-green-800 text-sm">
+                                {doc.documentName}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
+                                  {doc.documentType.charAt(0).toUpperCase() + doc.documentType.slice(1)}
+                                </span>
+                                <span className="text-xs text-green-600">
+                                  {new Date(doc.uploadedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(doc.documentUrl, '_blank')}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.documentUrl;
+                                link.download = doc.documentName;
+                                link.click();
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Download className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {bookingDocuments.length > 3 && (
+                        <p className="text-sm text-gray-500 text-center">
+                          and {bookingDocuments.length - 3} more... 
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            onClick={() => setDocumentsManagerOpen(true)}
+                            className="h-auto p-0 ml-1"
+                          >
+                            View all
+                          </Button>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                      <Paperclip className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600 mb-2">No documents uploaded yet</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setDocumentsManagerOpen(true)}
+                        className="bg-white hover:bg-gray-100"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Documents
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
 
             {/* Enhanced Action Buttons */}
@@ -1524,6 +1693,15 @@ export default function NewBookingPage() {
             </div>
           </form>
         </Form>
+        
+        {/* Documents Manager Dialog */}
+        {isEditMode && editingBooking && (
+          <BookingDocumentsManager
+            booking={editingBooking}
+            isOpen={documentsManagerOpen}
+            onClose={() => setDocumentsManagerOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

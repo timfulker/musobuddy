@@ -388,6 +388,12 @@ export const bookings = pgTable("bookings", {
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
   
+  // Legacy single document fields - will be removed after migration
+  documentUrl: text("document_url"), // URL to the uploaded document in R2
+  documentKey: text("document_key"), // Storage key for the document in R2
+  documentName: text("document_name"), // Original filename of the uploaded document
+  documentUploadedAt: timestamp("document_uploaded_at"), // When the document was uploaded
+  
   // New workflow tracking fields
   completed: boolean("completed").default(false), // Booking completed flag
   conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
@@ -471,6 +477,21 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Booking documents table - supports multiple documents per booking
+export const bookingDocuments = pgTable("booking_documents", {
+  id: serial("id").primaryKey(),
+  bookingId: integer("booking_id").notNull(),
+  userId: varchar("user_id").notNull(), // For security - ensure user owns the booking
+  documentType: varchar("document_type").notNull().default("other"), // contract, invoice, other
+  documentName: varchar("document_name").notNull(), // Original filename
+  documentUrl: text("document_url").notNull(), // URL to document in R2
+  documentKey: text("document_key").notNull(), // Storage key in R2
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+}, (table) => [
+  index("idx_booking_documents_booking").on(table.bookingId),
+  index("idx_booking_documents_user").on(table.userId),
+]);
 
 // Compliance documents table
 export const complianceDocuments = pgTable("compliance_documents", {

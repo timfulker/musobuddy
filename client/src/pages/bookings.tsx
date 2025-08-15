@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -25,6 +25,7 @@ import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
+import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
@@ -103,6 +104,10 @@ export default function UnifiedBookings() {
   // Conflict resolution dialog states
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
   const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
+  
+  // Document upload dialog states
+  const [documentUploadDialogOpen, setDocumentUploadDialogOpen] = useState(false);
+  const [selectedBookingForDocument, setSelectedBookingForDocument] = useState<any>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -377,6 +382,11 @@ export default function UnifiedBookings() {
   const openComplianceDialog = (booking: any) => {
     setSelectedBookingForCompliance(booking);
     setSendComplianceDialogOpen(true);
+  };
+  
+  const openDocumentManagerDialog = (booking: any) => {
+    setSelectedBookingForDocument(booking);
+    setDocumentUploadDialogOpen(true);
   };
   
   // Enhanced sorting function
@@ -1451,6 +1461,21 @@ export default function UnifiedBookings() {
                                                 <Badge className={getStatusColor(groupBooking.status)}>
                                                   {groupBooking.status?.replace('_', ' ') || 'New'}
                                                 </Badge>
+                                                {/* Document indicator */}
+                                                {groupBooking.documentUrl && (
+                                                  <Badge 
+                                                    variant="outline" 
+                                                    className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      window.open(groupBooking.documentUrl, '_blank');
+                                                    }}
+                                                    title="Click to view document"
+                                                  >
+                                                    <Paperclip className="h-3 w-3 mr-1" />
+                                                    Document
+                                                  </Badge>
+                                                )}
                                                 {/* Conflict badge - matching dashboard style */}
                                                 {detectConflicts(groupBooking).length > 0 && (
                                                   <Badge 
@@ -1531,6 +1556,7 @@ export default function UnifiedBookings() {
                                               booking={groupBooking}
                                               onEditBooking={handleEditBooking}
                                               onSendCompliance={openComplianceDialog}
+                                              onManageDocuments={openDocumentManagerDialog}
                                             />
                                           </div>
                                         </CardContent>
@@ -1573,6 +1599,21 @@ export default function UnifiedBookings() {
                                   <Badge className={getStatusColor(booking.status)}>
                                     {booking.status?.replace('_', ' ') || 'New'}
                                   </Badge>
+                                  {/* Document indicator */}
+                                  {booking.documentUrl && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(booking.documentUrl, '_blank');
+                                      }}
+                                      title="Click to view document"
+                                    >
+                                      <Paperclip className="h-3 w-3 mr-1" />
+                                      Document
+                                    </Badge>
+                                  )}
                                   {/* Conflict badge - matching dashboard style */}
                                   {detectConflicts(booking).length > 0 && (
                                     <Badge 
@@ -1647,6 +1688,7 @@ export default function UnifiedBookings() {
                                   booking={booking}
                                   onEditBooking={handleEditBooking}
                                   onSendCompliance={openComplianceDialog}
+                                  onManageDocuments={openDocumentManagerDialog}
                                 />
                               </div>
                             </div>
@@ -1904,6 +1946,21 @@ export default function UnifiedBookings() {
                                             <Badge className={getStatusColor(booking.status || 'new')}>
                                               {booking.status?.replace('_', ' ') || 'New'}
                                             </Badge>
+                                            {/* Document indicator */}
+                                            {booking.documentUrl && (
+                                              <Badge 
+                                                variant="outline" 
+                                                className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  window.open(booking.documentUrl, '_blank');
+                                                }}
+                                                title="Click to view document"
+                                              >
+                                                <Paperclip className="h-3 w-3 mr-1" />
+                                                Document
+                                              </Badge>
+                                            )}
                                             
                                             <div className="flex items-center gap-2">
                                               {/* Respond Menu - show for all bookings */}
@@ -1914,6 +1971,7 @@ export default function UnifiedBookings() {
                                                   booking={booking}
                                                   onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
                                                   onSendCompliance={openComplianceDialog}
+                                                  onManageDocuments={openDocumentManagerDialog}
                                                 />
                                               </div>
                                               
@@ -2060,6 +2118,21 @@ export default function UnifiedBookings() {
                                               <Badge className={getStatusColor(booking.status || 'new')}>
                                                 {booking.status?.replace('_', ' ') || 'New'}
                                               </Badge>
+                                              {/* Document indicator */}
+                                              {booking.documentUrl && (
+                                                <Badge 
+                                                  variant="outline" 
+                                                  className="text-xs cursor-pointer hover:bg-green-50 hover:border-green-300"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(booking.documentUrl, '_blank');
+                                                  }}
+                                                  title="Click to view document"
+                                                >
+                                                  <Paperclip className="h-3 w-3 mr-1" />
+                                                  Document
+                                                </Badge>
+                                              )}
                                               
                                               <div className="flex items-center gap-2">
                                                 {/* Respond Menu - show for all bookings */}
@@ -2070,6 +2143,7 @@ export default function UnifiedBookings() {
                                                     booking={booking}
                                                     onEditBooking={(booking) => navigate(`/new-booking?edit=${booking.id}`)}
                                                     onSendCompliance={openComplianceDialog}
+                                                    onManageDocuments={openDocumentManagerDialog}
                                                   />
                                                 </div>
                                                 
@@ -2177,6 +2251,16 @@ export default function UnifiedBookings() {
         isOpen={sendComplianceDialogOpen}
         onOpenChange={setSendComplianceDialogOpen}
         booking={selectedBookingForCompliance}
+      />
+
+      {/* Document Manager Dialog */}
+      <BookingDocumentsManager
+        booking={selectedBookingForDocument}
+        isOpen={documentUploadDialogOpen}
+        onClose={() => {
+          setDocumentUploadDialogOpen(false);
+          setSelectedBookingForDocument(null);
+        }}
       />
       
       <ConflictResolutionDialog

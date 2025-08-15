@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield } from "lucide-react";
+import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield, Upload } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -16,9 +16,10 @@ interface BookingActionMenuProps {
   booking: any;
   onEditBooking?: (booking: any) => void;
   onSendCompliance?: (booking: any) => void;
+  onManageDocuments?: (booking: any) => void;
 }
 
-export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance }: BookingActionMenuProps) {
+export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance, onManageDocuments }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -89,6 +90,12 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         } else {
           // Fallback to navigation if no callback provided
           navigate(`/compliance?bookingId=${booking.id}&action=send`);
+        }
+        return;
+      case 'manage_documents':
+        // Open documents manager dialog
+        if (onManageDocuments) {
+          onManageDocuments(booking);
         }
         return;
       case 'reject':
@@ -177,6 +184,13 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         >
           <Shield className="w-4 h-4 mr-2" />
           Send Compliance Documents
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleAction('manage_documents')}
+          disabled={statusUpdateMutation.isPending}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Manage Documents
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleAction('reject')}
