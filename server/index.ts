@@ -63,14 +63,35 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Original Mailgun webhook handler - restored to working version
+// Enhanced Mailgun webhook handler with detailed logging
 app.post('/api/webhook/mailgun', async (req, res) => {
   try {
+    // Log all incoming webhook data for debugging
+    console.log('🔍 WEBHOOK DEBUG: Full request received');
+    console.log('🔍 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔍 Body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Method:', req.method);
+    console.log('🔍 URL:', req.url);
+    console.log('🔍 Query:', JSON.stringify(req.query, null, 2));
+    
     const bodyText = req.body['body-plain'] || req.body.text || '';
     const fromEmail = req.body.From || req.body.from || '';
     const subject = req.body.Subject || req.body.subject || '';
+    const recipient = req.body.To || req.body.recipient || '';
     
-    console.log('📧 Processing email webhook:', { from: fromEmail, subject });
+    console.log('📧 Processing email webhook:', { 
+      from: fromEmail, 
+      subject, 
+      to: recipient,
+      bodyLength: bodyText?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Validate required fields
+    if (!fromEmail || !bodyText) {
+      console.log('❌ Missing required email fields:', { hasFrom: !!fromEmail, hasBody: !!bodyText });
+      return res.status(400).json({ success: false, error: 'Missing required email fields' });
+    }
     
     // Use the enhanced email queue for processing
     const { emailQueue } = await import('./core/email-queue');
@@ -78,16 +99,18 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       From: fromEmail,
       Subject: subject,
       'body-plain': bodyText,
-      To: req.body.To || req.body.recipient || '',
+      To: recipient,
       from: fromEmail,
       subject: subject,
       text: bodyText
     });
     
+    console.log('✅ Email successfully queued for processing');
     res.status(200).json({ success: true, message: 'Email processed' });
     
   } catch (error: any) {
     console.error('❌ Webhook error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(200).json({ success: false, error: error.message });
   }
 });
