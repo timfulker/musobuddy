@@ -77,56 +77,8 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     
     // Handle storage webhooks (large emails/attachments)
     if (req.body.storage) {
-      console.log('📧 Storage webhook received:', JSON.stringify(req.body, null, 2));
-      
-      // Try to extract email content from storage webhook
-      const storageData = req.body.storage;
-      const messageHeaders = req.body['message-headers'] || {};
-      
-      // Extract basic email info from headers
-      let fromEmail = '';
-      let subject = '';
-      let recipient = '';
-      
-      if (typeof messageHeaders === 'string') {
-        try {
-          const headers = JSON.parse(messageHeaders);
-          for (const [key, value] of headers) {
-            if (key.toLowerCase() === 'from') fromEmail = value;
-            if (key.toLowerCase() === 'subject') subject = value;
-            if (key.toLowerCase() === 'to') recipient = value;
-          }
-        } catch (e) {
-          console.log('Could not parse message headers');
-        }
-      }
-      
-      // Use fallback fields if headers parsing failed
-      fromEmail = fromEmail || req.body.sender || req.body.from || '';
-      subject = subject || req.body.subject || '';
-      recipient = recipient || req.body.recipient || req.body.to || '';
-      
-      // For storage webhooks, we'll use the subject as the body content for Encore detection
-      const bodyText = subject + ' ' + (req.body['body-plain'] || req.body.text || '');
-      
-      console.log('📧 Storage email extracted:', { fromEmail, subject, recipient, hasBody: !!bodyText });
-      
-      if (fromEmail && subject && recipient) {
-        // Process storage email through normal queue
-        const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-        const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
-          from: fromEmail,
-          subject,
-          'body-plain': bodyText,
-          recipient
-        });
-        
-        console.log(`✅ Storage email queued - Job ${jobId}`);
-        return res.status(200).json({ success: true, message: 'Storage email processed', jobId, queuePosition });
-      }
-      
-      console.log('📧 Storage webhook acknowledged (insufficient data)');
-      return res.status(200).json({ success: true, message: 'Storage webhook acknowledged' });
+      console.log('📧 Storage webhook - acknowledged');
+      return res.status(200).json({ success: true, message: 'Storage webhook' });
     }
     
     // Process actual email content
