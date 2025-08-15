@@ -450,6 +450,10 @@ export class Storage {
   }
 
   // ===== CLIENT METHODS =====
+  async getClients(userId: string) {
+    return miscStorage.getClientsByUser(userId);
+  }
+
   async getClientsByUser(userId: string) {
     return miscStorage.getClientsByUser(userId);
   }
@@ -458,15 +462,15 @@ export class Storage {
     return miscStorage.getClient(id);
   }
 
-  async createClient(data: any) {
-    return miscStorage.createClient(data);
+  async createClient(userId: string, data: any) {
+    return miscStorage.createClient({ userId, ...data });
   }
 
-  async updateClient(id: number, userId: string, updates: any) {
+  async updateClient(userId: string, id: number, updates: any) {
     return miscStorage.updateClient(id, userId, updates);
   }
 
-  async deleteClient(id: number, userId: string) {
+  async deleteClient(userId: string, id: number) {
     return miscStorage.deleteClient(id, userId);
   }
 
