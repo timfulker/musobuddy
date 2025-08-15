@@ -45,8 +45,9 @@ export function setupAdminDatabaseRoutes(app: Express) {
           const countResult = await db.select({ count: sql<number>`count(*)` }).from(tableSchema);
           const rowCount = countResult[0]?.count || 0;
           
-          // Get column names from schema
-          const columns = Object.keys(tableSchema);
+          // Get column names from schema - use a more reliable method
+          const schemaColumns = (tableSchema as any)._.columns;
+          const columns = schemaColumns ? Object.keys(schemaColumns) : [];
           
           tables.push({
             name: tableName,
@@ -83,52 +84,109 @@ export function setupAdminDatabaseRoutes(app: Express) {
       
       let query = db.select().from(tableSchema);
       
-      // Apply search filtering
+      // Apply search filtering using raw SQL for better compatibility
       if (search && typeof search === 'string' && search.trim()) {
-        const searchTerm = `%${search.trim()}%`;
-        const columns = Object.entries((tableSchema as any)._.columns);
+        const searchTerm = search.trim();
         
-        // Create search conditions for text/varchar columns only
-        const searchConditions = columns
-          .filter(([_, column]) => {
-            const columnType = (column as any).dataType;
-            return columnType === 'string' || columnType === 'text';
-          })
-          .map(([columnName, column]) => {
-            return like((column as any), searchTerm);
-          });
-        
-        if (searchConditions.length > 0) {
-          query = query.where(or(...searchConditions));
+        // Use raw SQL to search across multiple text columns
+        // This is more reliable than trying to access schema metadata
+        if (tableName === 'bookings') {
+          query = query.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'clients') {
+          query = query.where(sql`
+            LOWER(COALESCE(name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(phone, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(company, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'contracts') {
+          query = query.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'invoices') {
+          query = query.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(description, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(invoice_number, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'users') {
+          query = query.where(sql`
+            LOWER(COALESCE(email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(first_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(last_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email_prefix, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else {
+          // For other tables, try a generic text search on common column names
+          query = query.where(sql`
+            LOWER(COALESCE(name::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(description::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(notes::text, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
         }
       }
       
-      // Apply column-specific filtering
-      if (filterColumn && typeof filterColumn === 'string' && filterColumn !== 'all') {
-        const columns = (tableSchema as any)._.columns;
-        if (filterColumn in columns && search) {
-          const column = columns[filterColumn];
-          const searchTerm = `%${search}%`;
-          query = query.where(like(column, searchTerm));
-        }
-      }
+      // Get total count for pagination with same search conditions
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(tableSchema);
       
-      // Get total count for pagination
-      const countQuery = db.select({ count: sql<number>`count(*)` }).from(tableSchema);
       if (search && typeof search === 'string' && search.trim()) {
-        const searchTerm = `%${search.trim()}%`;
-        const columns = Object.entries((tableSchema as any)._.columns);
-        const searchConditions = columns
-          .filter(([_, column]) => {
-            const columnType = (column as any).dataType;
-            return columnType === 'string' || columnType === 'text';
-          })
-          .map(([columnName, column]) => {
-            return like((column as any), searchTerm);
-          });
+        const searchTerm = search.trim();
         
-        if (searchConditions.length > 0) {
-          countQuery.where(or(...searchConditions));
+        // Apply the same search conditions to count query
+        if (tableName === 'bookings') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(venue_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(notes, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'clients') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(phone, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(company, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'contracts') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(event_type, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(title, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'invoices') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(client_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(description, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(status, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(invoice_number, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else if (tableName === 'users') {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(email, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(first_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(last_name, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email_prefix, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
+        } else {
+          countQuery = countQuery.where(sql`
+            LOWER(COALESCE(name::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(email::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(description::text, '')) LIKE LOWER(${`%${searchTerm}%`}) OR
+            LOWER(COALESCE(notes::text, '')) LIKE LOWER(${`%${searchTerm}%`})
+          `);
         }
       }
       
