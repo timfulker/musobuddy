@@ -155,7 +155,7 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
     await enhancedEmailQueue.addEmail(emailData);
     
-    console.log('📧 WEBHOOK: Email added to queue successfully');
+    logWebhookActivity('Email added to queue successfully');
     res.status(200).json({ status: 'ok' });
     
   } catch (error: any) {
