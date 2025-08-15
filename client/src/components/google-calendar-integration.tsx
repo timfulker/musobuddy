@@ -299,13 +299,13 @@ export default function GoogleCalendarIntegration() {
 
         {/* Manual Sync Controls */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">Manual Sync</Label>
+          <Label className="text-base font-medium text-gray-900">Manual Sync</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Button 
               variant="outline" 
               onClick={() => handleSync('export')}
               disabled={isSyncing || syncMutation.isPending}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
             >
               <Upload className="w-4 h-4" />
               Export to Google
@@ -314,7 +314,7 @@ export default function GoogleCalendarIntegration() {
               variant="outline" 
               onClick={() => handleSync('import')}
               disabled={isSyncing || syncMutation.isPending}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
             >
               <Download className="w-4 h-4" />
               Import from Google
@@ -323,7 +323,7 @@ export default function GoogleCalendarIntegration() {
               variant="outline" 
               onClick={() => handleSync('bidirectional')}
               disabled={isSyncing || syncMutation.isPending}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
             >
               {(isSyncing || syncMutation.isPending) ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -339,67 +339,76 @@ export default function GoogleCalendarIntegration() {
 
         {/* Sync Settings */}
         <div className="space-y-4">
-          <Label className="text-base font-medium">Sync Settings</Label>
+          <Label className="text-base font-medium text-gray-900">Sync Settings</Label>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="sync-enabled">Enable Sync</Label>
-                <p className="text-sm text-gray-600">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="sync-enabled" className="text-sm font-medium text-gray-900">Enable Sync</Label>
+                <p className="text-sm text-gray-700">
                   Enable automatic synchronization between MusoBuddy and Google Calendar
                 </p>
               </div>
-              <Switch
-                id="sync-enabled"
-                checked={calendarStatus.syncEnabled}
-                onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
-              />
+              <div className="ml-4">
+                <Switch
+                  id="sync-enabled"
+                  checked={calendarStatus.syncEnabled}
+                  onCheckedChange={(checked) => updateSetting('syncEnabled', checked)}
+                  className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-300"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-sync-bookings">Export Bookings</Label>
-                <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="auto-sync-bookings" className="text-sm font-medium text-gray-900">Export Bookings</Label>
+                <p className="text-sm text-gray-700">
                   Automatically create Google Calendar events for new MusoBuddy bookings
                 </p>
               </div>
-              <Switch
-                id="auto-sync-bookings"
-                checked={calendarStatus.autoSyncBookings}
-                onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
-                disabled={!calendarStatus.syncEnabled}
-              />
+              <div className="ml-4">
+                <Switch
+                  id="auto-sync-bookings"
+                  checked={calendarStatus.autoSyncBookings}
+                  onCheckedChange={(checked) => updateSetting('autoSyncBookings', checked)}
+                  disabled={!calendarStatus.syncEnabled}
+                  className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-300 disabled:opacity-50"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-import-events">Import Events</Label>
-                <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="auto-import-events" className="text-sm font-medium text-gray-900">Import Events</Label>
+                <p className="text-sm text-gray-700">
                   Automatically import Google Calendar events as MusoBuddy bookings
                 </p>
               </div>
-              <Switch
-                id="auto-import-events"
-                checked={calendarStatus.autoImportEvents}
-                onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
-                disabled={!calendarStatus.syncEnabled}
-              />
+              <div className="ml-4">
+                <Switch
+                  id="auto-import-events"
+                  checked={calendarStatus.autoImportEvents}
+                  onCheckedChange={(checked) => updateSetting('autoImportEvents', checked)}
+                  disabled={!calendarStatus.syncEnabled}
+                  className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-300 disabled:opacity-50"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sync-direction">Sync Direction</Label>
+            <div className="space-y-3 p-4 bg-white border border-gray-200 rounded-lg">
+              <Label htmlFor="sync-direction" className="text-sm font-medium text-gray-900">Sync Direction</Label>
               <Select
                 value={calendarStatus.syncDirection}
                 onValueChange={(value) => updateSetting('syncDirection', value)}
                 disabled={!calendarStatus.syncEnabled}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bidirectional">Two-way sync</SelectItem>
-                  <SelectItem value="export_only">Export only (MusoBuddy → Google)</SelectItem>
-                  <SelectItem value="import_only">Import only (Google → MusoBuddy)</SelectItem>
+                <SelectContent className="bg-white border border-gray-300">
+                  <SelectItem value="bidirectional" className="text-gray-900 hover:bg-gray-100">Two-way sync</SelectItem>
+                  <SelectItem value="export_only" className="text-gray-900 hover:bg-gray-100">Export only (MusoBuddy → Google)</SelectItem>
+                  <SelectItem value="import_only" className="text-gray-900 hover:bg-gray-100">Import only (Google → MusoBuddy)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -410,10 +419,10 @@ export default function GoogleCalendarIntegration() {
 
         {/* Disconnect */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">Disconnect</Label>
+          <Label className="text-base font-medium text-gray-900">Disconnect</Label>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700 text-white">
                 <Unlink className="w-4 h-4 mr-2" />
                 Disconnect Google Calendar
               </Button>
