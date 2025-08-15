@@ -12,14 +12,17 @@ interface BookingDocumentIndicatorProps {
 export function BookingDocumentIndicator({ bookingId, booking, onClick }: BookingDocumentIndicatorProps) {
   const { documents, legacyDocuments, isLoading } = useBookingDocuments(bookingId);
   
-  // Check if any documents exist (new multi-document system or legacy)
-  const hasDocuments = documents.length > 0 || 
+  // Safely check if any documents exist with proper fallbacks
+  const safeDocuments = documents || [];
+  const safeLegacyDocuments = legacyDocuments || [];
+  
+  const hasDocuments = safeDocuments.length > 0 || 
                       booking?.contractUrl || 
                       booking?.invoiceUrl || 
-                      legacyDocuments.length > 0;
+                      safeLegacyDocuments.length > 0;
   
-  // Don't show anything if no documents
-  if (!hasDocuments) {
+  // Don't show anything if loading or no documents
+  if (isLoading || !hasDocuments) {
     return null;
   }
   
