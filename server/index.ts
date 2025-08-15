@@ -67,7 +67,10 @@ async function initializeServer() {
 // Simple Mailgun webhook handler
 app.post('/api/webhook/mailgun', async (req, res) => {
   try {
-    console.log('📧 Mailgun webhook received:', new Date().toISOString());
+    console.log('📧 🚨 MAILGUN WEBHOOK RECEIVED 🚨:', new Date().toISOString());
+    console.log('📧 Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📧 Request body keys:', Object.keys(req.body));
+    console.log('📧 Full request body:', JSON.stringify(req.body, null, 2));
     
     // Handle event webhooks (delivery status, etc.)
     if (req.body.event) {
