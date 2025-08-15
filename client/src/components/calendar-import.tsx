@@ -108,7 +108,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[504px] calendar-integration-dialog">
+      <DialogContent className="sm:max-w-[900px] calendar-integration-dialog">
         <DialogHeader>
           <DialogTitle>Calendar Integration</DialogTitle>
           <DialogDescription>

@@ -340,103 +340,183 @@ export default function GoogleCalendarIntegration() {
 
         <Separator />
 
-        {/* Sync Settings */}
-        <div className="space-y-4">
-          <Label className="text-base font-medium" style={{ color: '#111827 !important' }}>Sync Settings</Label>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
+          {/* Left Column - Sync Settings */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="sync-enabled" style={{ color: '#111827 !important' }}>Enable Sync</Label>
-                <p className="text-sm" style={{ color: '#374151 !important' }}>
-                  Enable automatic synchronization between MusoBuddy and Google Calendar
-                </p>
+            <Label className="text-lg font-semibold" style={{ color: '#111827 !important' }}>Sync Settings</Label>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="sync-enabled" style={{ color: '#111827 !important' }} className="font-medium text-base">Enable Sync</Label>
+                    <p className="text-sm" style={{ color: '#374151 !important' }}>
+                      Enable automatic synchronization between MusoBuddy and Google Calendar
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <button
+                      onClick={() => updateSetting('syncEnabled', !calendarStatus.syncEnabled)}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      style={{
+                        backgroundColor: calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db'
+                      }}
+                    >
+                      <span 
+                        className="inline-block h-4 w-4 transform rounded-full bg-white transition"
+                        style={{
+                          transform: calendarStatus.syncEnabled ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+                        }}
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div 
-                onClick={() => updateSetting('syncEnabled', !calendarStatus.syncEnabled)}
-                className="inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors"
-                style={{
-                  backgroundColor: calendarStatus.syncEnabled ? '#2563eb !important' : '#d1d5db !important'
-                }}
-              >
-                <div 
-                  className="pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform"
-                  style={{
-                    backgroundColor: '#ffffff !important',
-                    transform: calendarStatus.syncEnabled ? 'translateX(20px)' : 'translateX(0px)'
-                  }}
-                />
+
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="auto-sync-bookings" style={{ color: '#111827 !important' }} className="font-medium text-base">Export Bookings</Label>
+                    <p className="text-sm" style={{ color: '#374151 !important' }}>
+                      Automatically create Google Calendar events for new MusoBuddy bookings
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <button
+                      onClick={() => calendarStatus.syncEnabled && updateSetting('autoSyncBookings', !calendarStatus.autoSyncBookings)}
+                      disabled={!calendarStatus.syncEnabled}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db'
+                      }}
+                    >
+                      <span 
+                        className="inline-block h-4 w-4 transform rounded-full bg-white transition"
+                        style={{
+                          transform: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+                        }}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1 flex-1">
+                    <Label htmlFor="auto-import-events" style={{ color: '#111827 !important' }} className="font-medium text-base">Import Events</Label>
+                    <p className="text-sm" style={{ color: '#374151 !important' }}>
+                      Automatically import Google Calendar events as MusoBuddy bookings
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <button
+                      onClick={() => calendarStatus.syncEnabled && updateSetting('autoImportEvents', !calendarStatus.autoImportEvents)}
+                      disabled={!calendarStatus.syncEnabled}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? '#2563eb' : '#d1d5db'
+                      }}
+                    >
+                      <span 
+                        className="inline-block h-4 w-4 transform rounded-full bg-white transition"
+                        style={{
+                          transform: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+                        }}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="space-y-3">
+                  <Label htmlFor="sync-direction" style={{ color: '#111827 !important' }} className="font-medium text-base">Sync Direction</Label>
+                  <Select
+                    value={calendarStatus.syncDirection}
+                    onValueChange={(value) => updateSetting('syncDirection', value)}
+                    disabled={!calendarStatus.syncEnabled}
+                  >
+                    <SelectTrigger style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important' }}>
+                      <SelectItem value="bidirectional" style={{ color: '#111827 !important' }}>Two-way sync</SelectItem>
+                      <SelectItem value="export_only" style={{ color: '#111827 !important' }}>Export only (MusoBuddy → Google)</SelectItem>
+                      <SelectItem value="import_only" style={{ color: '#111827 !important' }}>Import only (Google → MusoBuddy)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-sync-bookings" style={{ color: '#111827 !important' }}>Export Bookings</Label>
-                <p className="text-sm" style={{ color: '#374151 !important' }}>
-                  Automatically create Google Calendar events for new MusoBuddy bookings
-                </p>
-              </div>
-              <div 
-                onClick={() => calendarStatus.syncEnabled && updateSetting('autoSyncBookings', !calendarStatus.autoSyncBookings)}
-                className="inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors"
-                style={{
-                  backgroundColor: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? '#2563eb !important' : '#d1d5db !important',
-                  opacity: !calendarStatus.syncEnabled ? 0.5 : 1,
-                  cursor: !calendarStatus.syncEnabled ? 'not-allowed' : 'pointer'
-                }}
+          {/* Right Column - Manual Sync & Actions */}
+          <div className="space-y-6">
+            <div>
+              <Label className="text-lg font-semibold" style={{ color: '#111827 !important' }}>Manual Sync</Label>
+              <p className="text-sm mt-2" style={{ color: '#374151 !important' }}>
+                Trigger one-time sync operations manually
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Button 
+                variant="outline" 
+                onClick={() => handleSync('export')}
+                disabled={isSyncing || syncMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 h-12"
+                style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
               >
-                <div 
-                  className="pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform"
-                  style={{
-                    backgroundColor: '#ffffff !important',
-                    transform: calendarStatus.autoSyncBookings && calendarStatus.syncEnabled ? 'translateX(20px)' : 'translateX(0px)'
-                  }}
-                />
-              </div>
+                <Upload className="w-4 h-4" />
+                Export to Google Calendar
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleSync('import')}
+                disabled={isSyncing || syncMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 h-12"
+                style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
+              >
+                <Download className="w-4 h-4" />
+                Import from Google Calendar
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleSync('bidirectional')}
+                disabled={isSyncing || syncMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 h-12"
+                style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
+              >
+                {(isSyncing || syncMutation.isPending) ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRightLeft className="w-4 h-4" />
+                )}
+                Full Sync (Both Directions)
+              </Button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-import-events" style={{ color: '#111827 !important' }}>Import Events</Label>
-                <p className="text-sm" style={{ color: '#374151 !important' }}>
-                  Automatically import Google Calendar events as MusoBuddy bookings
-                </p>
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Sync Notes
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>Manual sync operations will respect your current sync direction settings. Changes may take a few moments to appear.</p>
+                  </div>
+                </div>
               </div>
-              <div 
-                onClick={() => calendarStatus.syncEnabled && updateSetting('autoImportEvents', !calendarStatus.autoImportEvents)}
-                className="inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors"
-                style={{
-                  backgroundColor: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? '#2563eb !important' : '#d1d5db !important',
-                  opacity: !calendarStatus.syncEnabled ? 0.5 : 1,
-                  cursor: !calendarStatus.syncEnabled ? 'not-allowed' : 'pointer'
-                }}
-              >
-                <div 
-                  className="pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform"
-                  style={{
-                    backgroundColor: '#ffffff !important',
-                    transform: calendarStatus.autoImportEvents && calendarStatus.syncEnabled ? 'translateX(20px)' : 'translateX(0px)'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sync-direction" style={{ color: '#111827 !important' }}>Sync Direction</Label>
-              <Select
-                value={calendarStatus.syncDirection}
-                onValueChange={(value) => updateSetting('syncDirection', value)}
-                disabled={!calendarStatus.syncEnabled}
-              >
-                <SelectTrigger style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important' }}>
-                  <SelectItem value="bidirectional" style={{ color: '#111827 !important' }}>Two-way sync</SelectItem>
-                  <SelectItem value="export_only" style={{ color: '#111827 !important' }}>Export only (MusoBuddy → Google)</SelectItem>
-                  <SelectItem value="import_only" style={{ color: '#111827 !important' }}>Import only (Google → MusoBuddy)</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
