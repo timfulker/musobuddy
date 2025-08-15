@@ -123,7 +123,17 @@ CRITICAL INSTRUCTIONS:
 - For dates: "June 23rd next year" = "2026-06-23", "June 23rd" = "2025-06-23", "next [month]" = next occurrence
 - IMPORTANT: If message says "don't have the date", "no date yet", "TBC", or just "next year" without month/day = return null for eventDate
 - SPECIFIC DATES: "June 17th next year" = "2026-06-17", "March 15th 2026" = "2026-03-15" - these ARE valid dates
-- For venues: Extract venue names exactly as mentioned (e.g., "Buckingham Palace")
+
+VENUE vs LOCATION DISTINCTION - CRITICAL:
+- VENUE NAME: The actual name/description of the place (e.g., "our garden", "my home", "the church hall", "St. Mary's Church", "The Royal Albert Hall", "our backyard")
+- VENUE ADDRESS: The city, town, area, or region (e.g., "Swindon", "London", "just outside Manchester", "near Bristol")
+- EXAMPLES:
+  • "our wedding in our garden which is just outside Swindon" → venue: "Our Garden", venueAddress: "Just outside Swindon"
+  • "playing at the church in Birmingham" → venue: "The Church", venueAddress: "Birmingham"
+  • "event at Sky Garden in London" → venue: "Sky Garden", venueAddress: "London"
+  • "party at home near Oxford" → venue: "Home", venueAddress: "Near Oxford"
+- DO NOT assume a location name is a venue name (e.g., "Swindon" is a location, not a venue)
+
 - IGNORE company signatures, footers, and "sent from" addresses - only extract EVENT information
 - For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.
 - Extract client names, emails, phone numbers from the message or context

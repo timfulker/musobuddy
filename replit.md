@@ -25,6 +25,7 @@ Launch timeline: Few days for bug fixes → next week for landing page → beta 
 Admin database access: Read-only database administration panel added as submenu in admin section (August 2025). Includes table browsing, filtering, search, and CSV export with strict admin-only access controls. Enhanced frontend security protection prevents non-admin users from accessing admin panel even in development cross-session scenarios. Fixed table name mapping for underscore database tables (compliance_documents, email_templates, etc.) and enhanced search functionality across all database tables.
 Document count indicators: Removed from booking cards due to persistent accuracy issues (August 2025). User prefers working system without confusing indicators - Documents section remains accessible via booking details.
 Mileage calculation optimization: Fixed wasteful API calls (August 2025). System now skips mileage calculation for existing bookings that already have saved mileage data, only calculates for new bookings or manual address changes.
+AI venue parsing improvement: Enhanced AI to properly distinguish between venue names and location names (January 2025). System now correctly identifies "our garden" as venue name and "Swindon" as location, preventing Google Maps from suggesting unrelated venues like "Sky Garden" in London when parsing booking emails.
 
 ## System Architecture
 
@@ -42,7 +43,7 @@ Mileage calculation optimization: Fixed wasteful API calls (August 2025). System
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic.
+- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic. Enhanced venue extraction (January 2025) to distinguish between venue names (e.g., "our garden", "the church hall") and location/city names (e.g., "Swindon", "London").
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms (August 2025), allowing users to control which specific fields clients can edit on a per-field basis.
