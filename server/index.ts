@@ -90,29 +90,34 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       try {
         // Fetch the actual email content from Mailgun storage
         const response = await fetch(storageUrl, {
+          method: 'GET',
           headers: {
-            'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`
+            'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`,
+            'Accept': 'multipart/form-data, application/json, text/plain, */*'
           }
         });
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch from Mailgun storage: ${response.status}`);
+          throw new Error(`Failed to fetch from Mailgun storage: ${response.status} ${response.statusText}`);
         }
         
-        const responseText = await response.text();
-        console.log('📧 Raw storage response:', responseText.substring(0, 500));
+        const contentType = response.headers.get('content-type') || '';
+        console.log('📧 Storage response content-type:', contentType);
         
-        try {
-          emailData = JSON.parse(responseText);
-          console.log('✅ Fetched email content from storage');
-          console.log('📧 Email data keys:', Object.keys(emailData));
-        } catch (parseError) {
-          console.error('❌ Failed to parse storage response as JSON:', parseError);
-          // Try form-encoded response
+        if (contentType.includes('application/json')) {
+          emailData = await response.json();
+          console.log('✅ Fetched JSON email content from storage');
+        } else {
+          // Handle form-encoded data (most common for Mailgun storage)
+          const responseText = await response.text();
+          console.log('📧 Raw form-encoded response size:', responseText.length);
+          
           const urlParams = new URLSearchParams(responseText);
           emailData = Object.fromEntries(urlParams);
-          console.log('📧 Parsed as form data, keys:', Object.keys(emailData));
+          console.log('✅ Parsed form-encoded email content from storage');
         }
+        
+        console.log('📧 Email data keys:', Object.keys(emailData));
       } catch (error) {
         console.error('❌ Failed to fetch from storage:', error);
         console.error('Storage URL:', storageUrl);
