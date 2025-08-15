@@ -567,5 +567,178 @@ ${messageText.replace(/\n/g, '<br>')}
     }
   });
 
+  // Upload document for booking (contract or invoice)
+  app.post('/api/bookings/:id/upload-document',
+    requireAuth,
+    requireSubscriptionOrAdmin,
+    asyncHandler(async (req: any, res: any) => {
+      try {
+        const userId = req.user?.userId;
+        const bookingId = parseInt(req.params.id);
+        
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Check if booking exists and belongs to user
+        const booking = await storage.getBookingById(bookingId, userId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+        
+        // Import multer and cloud storage dynamically
+        const multer = await import('multer');
+        const { uploadToR2 } = await import('../core/cloud-storage');
+        
+        // Configure multer for memory storage
+        const upload = multer.default({
+          storage: multer.default.memoryStorage(),
+          limits: {
+            fileSize: 10 * 1024 * 1024 // 10MB limit
+          },
+          fileFilter: (req: any, file: any, cb: any) => {
+            // Only allow PDF files
+            if (file.mimetype === 'application/pdf') {
+              cb(null, true);
+            } else {
+              cb(new Error('Only PDF files are allowed'));
+            }
+          }
+        }).single('document');
+        
+        // Process the upload
+        upload(req, res, async (err: any) => {
+          if (err) {
+            console.error('❌ Multer error:', err);
+            return res.status(400).json({ error: err.message });
+          }
+          
+          if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+          }
+          
+          const file = req.file;
+          const documentType = req.body.type || 'general'; // 'contract', 'invoice', or 'general'
+          
+          console.log(`📎 Uploading ${documentType} document for booking #${bookingId}`);
+          
+          // Upload to R2
+          const filename = `booking-${bookingId}-${documentType}-${Date.now()}.pdf`;
+          const uploadResult = await uploadToR2(
+            file.buffer,
+            filename,
+            'application/pdf'
+          );
+          
+          if (!uploadResult.success) {
+            console.error('❌ Failed to upload to R2:', uploadResult.error);
+            return res.status(500).json({ error: 'Failed to upload document' });
+          }
+          
+          // Update booking with document URL based on type
+          const updateData: any = {};
+          
+          if (documentType === 'contract') {
+            updateData.uploadedContractUrl = uploadResult.url;
+            updateData.uploadedContractKey = uploadResult.key;
+            updateData.uploadedContractFilename = file.originalname;
+          } else if (documentType === 'invoice') {
+            updateData.uploadedInvoiceUrl = uploadResult.url;
+            updateData.uploadedInvoiceKey = uploadResult.key;
+            updateData.uploadedInvoiceFilename = file.originalname;
+          } else {
+            // For general documents, append to uploadedDocuments array
+            const currentDocs = booking.uploadedDocuments || [];
+            currentDocs.push({
+              url: uploadResult.url,
+              key: uploadResult.key,
+              filename: file.originalname,
+              type: documentType,
+              uploadedAt: new Date().toISOString()
+            });
+            updateData.uploadedDocuments = JSON.stringify(currentDocs);
+          }
+          
+          // Update the booking
+          await storage.updateBooking(bookingId, userId, updateData);
+          
+          console.log(`✅ ${documentType} document uploaded successfully for booking #${bookingId}`);
+          
+          res.json({
+            success: true,
+            url: uploadResult.url,
+            filename: file.originalname,
+            type: documentType
+          });
+        });
+        
+      } catch (error: any) {
+        console.error('❌ Document upload failed:', error);
+        res.status(500).json({ 
+          error: 'Failed to upload document',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+  
+  // Get uploaded documents for a booking
+  app.get('/api/bookings/:id/documents',
+    requireAuth,
+    requireSubscriptionOrAdmin,
+    asyncHandler(async (req: any, res: any) => {
+      try {
+        const userId = req.user?.userId;
+        const bookingId = parseInt(req.params.id);
+        
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Check if booking exists and belongs to user
+        const booking = await storage.getBookingById(bookingId, userId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+        
+        // Gather all documents
+        const documents = [];
+        
+        if (booking.uploadedContractUrl) {
+          documents.push({
+            type: 'contract',
+            url: booking.uploadedContractUrl,
+            filename: booking.uploadedContractFilename || 'Contract.pdf'
+          });
+        }
+        
+        if (booking.uploadedInvoiceUrl) {
+          documents.push({
+            type: 'invoice',
+            url: booking.uploadedInvoiceUrl,
+            filename: booking.uploadedInvoiceFilename || 'Invoice.pdf'
+          });
+        }
+        
+        // Add any general documents
+        if (booking.uploadedDocuments) {
+          const generalDocs = typeof booking.uploadedDocuments === 'string' 
+            ? JSON.parse(booking.uploadedDocuments) 
+            : booking.uploadedDocuments;
+          documents.push(...generalDocs);
+        }
+        
+        res.json({ documents });
+        
+      } catch (error: any) {
+        console.error('❌ Failed to fetch documents:', error);
+        res.status(500).json({ 
+          error: 'Failed to fetch documents',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
   console.log('✅ Booking routes configured');
 }
