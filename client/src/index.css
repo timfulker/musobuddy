@@ -823,6 +823,30 @@ body {
   @apply bg-muted bg-opacity-50;
 }
 
+/* CRITICAL FIX: Google Calendar Dialog Text Visibility */
+[data-radix-dialog-content] {
+  background: white !important;
+  color: black !important;
+}
+
+[data-radix-dialog-content] *,
+[data-radix-dialog-content] h1,
+[data-radix-dialog-content] h2,
+[data-radix-dialog-content] h3,
+[data-radix-dialog-content] h4,
+[data-radix-dialog-content] p,
+[data-radix-dialog-content] span,
+[data-radix-dialog-content] div,
+[data-radix-dialog-content] label {
+  color: black !important;
+}
+
+[data-radix-dialog-content] .text-gray-600,
+[data-radix-dialog-content] .text-gray-700,
+[data-radix-dialog-content] .text-muted-foreground {
+  color: #4b5563 !important;
+}
+
 /* Loading states */
 .loading-skeleton {
   @apply animate-pulse bg-muted rounded;

@@ -104,10 +104,10 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] text-gray-900 dark:text-gray-100">
+      <DialogContent className="sm:max-w-[700px] bg-white text-black [&_*]:text-black [&_.text-gray-600]:text-gray-600 [&_.text-gray-700]:text-gray-700 [&_.text-muted-foreground]:text-gray-600" style={{ background: 'white', color: 'black' }}>
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">Calendar Integration</DialogTitle>
-          <DialogDescription className="text-gray-700 dark:text-gray-300">
+          <DialogTitle className="text-black" style={{ color: 'black' }}>Calendar Integration</DialogTitle>
+          <DialogDescription className="text-gray-700" style={{ color: '#374151' }}>
             Sync your bookings with your calendar using Google Calendar integration or import from .ics files
           </DialogDescription>
         </DialogHeader>
@@ -125,9 +125,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
           </TabsList>
           
           <TabsContent value="google" className="mt-6">
-            <div className="text-gray-900 dark:text-gray-100 [&_*]:text-gray-900 [&_*]:dark:text-gray-100 [&_.text-gray-600]:text-gray-600 [&_.text-gray-600]:dark:text-gray-400 [&_.text-gray-700]:text-gray-700 [&_.text-gray-700]:dark:text-gray-300">
-              <GoogleCalendarIntegration />
-            </div>
+            <GoogleCalendarIntegration />
           </TabsContent>
           
           <TabsContent value="import" className="mt-6">
