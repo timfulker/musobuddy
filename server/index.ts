@@ -73,8 +73,16 @@ app.post('/api/webhook/mailgun', async (req, res) => {
     console.log('📧 Processing email webhook:', { from: fromEmail, subject });
     
     // Use the enhanced email queue for processing
-    const { processEmailInQueue } = await import('./core/email-queue');
-    await processEmailInQueue(fromEmail, subject, bodyText);
+    const { emailQueue } = await import('./core/email-queue');
+    await emailQueue.addEmail({
+      From: fromEmail,
+      Subject: subject,
+      'body-plain': bodyText,
+      To: req.body.To || req.body.recipient || '',
+      from: fromEmail,
+      subject: subject,
+      text: bodyText
+    });
     
     res.status(200).json({ success: true, message: 'Email processed' });
     
@@ -115,6 +123,17 @@ app.get('/payment/success', async (req: any, res) => {
 
 app.get('/payment/cancel', (req, res) => {
   res.redirect('/?payment=cancelled');
+});
+
+// Email queue status endpoint
+app.get('/api/email-queue/status', async (req, res) => {
+  try {
+    const { emailQueue } = await import('./core/email-queue');
+    const status = emailQueue.getStatus();
+    res.json(status);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Register all API routes
