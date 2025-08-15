@@ -88,10 +88,12 @@ app.post('/api/webhook/mailgun', async (req, res) => {
       
       try {
         // Fetch the actual email content from Mailgun storage
+        const { default: fetch } = await import('node-fetch');
         const response = await fetch(storageUrl, {
           headers: {
             'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`
-          }
+          },
+          timeout: 10000
         });
         
         if (!response.ok) {
