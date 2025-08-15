@@ -65,102 +65,86 @@ async function initializeServer() {
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-// Simple Mailgun webhook handler
+// Enhanced Mailgun webhook handler
 app.post('/api/webhook/mailgun', async (req, res) => {
+  console.log('📧 WEBHOOK: Received Mailgun webhook');
+  console.log('📧 WEBHOOK: Headers:', req.headers);
+  console.log('📧 WEBHOOK: Body keys:', Object.keys(req.body || {}));
+  
   try {
-    console.log('📧 🚨 MAILGUN WEBHOOK RECEIVED 🚨:', new Date().toISOString());
-    console.log('📧 Request headers:', JSON.stringify(req.headers, null, 2));
-    console.log('📧 Request body keys:', Object.keys(req.body));
-    console.log('📧 Full request body:', JSON.stringify(req.body, null, 2));
+    const webhookData = req.body;
     
-    // Handle event webhooks (delivery status, etc.)
-    if (req.body.event) {
-      console.log(`📧 Event webhook: ${req.body.event} - acknowledged`);
-      return res.status(200).json({ success: true, event: req.body.event });
+    // Log what type of webhook this is
+    if (webhookData['body-plain'] || webhookData['body-html'] || webhookData['stripped-text']) {
+      console.log('📧 WEBHOOK: Direct email content detected');
+    } else if (webhookData['message-url']) {
+      console.log('📧 WEBHOOK: Storage webhook detected (message-url)');
+    } else if (webhookData.storage?.url) {
+      console.log('📧 WEBHOOK: Storage webhook detected (storage.url)');
+    } else {
+      console.log('📧 WEBHOOK: Unknown format - available keys:', Object.keys(webhookData));
     }
     
-    let emailData = req.body;
+    // Check if this is an event webhook (not an email)
+    if (webhookData.event) {
+      console.log('📧 WEBHOOK: Event webhook received:', webhookData.event);
+      // Event webhooks should just be acknowledged
+      return res.status(200).json({ status: 'ok', type: 'event' });
+    }
     
-    // Check if this is a storage webhook (has attachments)
-    if (req.body.storage?.url || req.body['message-url']) {
-      console.log('📧 Storage webhook - fetching email content from Mailgun');
+    // Try to process as email
+    let emailData = webhookData;
+    
+    // If it's a storage webhook, fetch the content
+    if (!webhookData['body-plain'] && !webhookData['body-html']) {
+      const storageUrl = webhookData['message-url'] || 
+                       webhookData.storage?.url?.[0] || 
+                       webhookData.storage?.url;
       
-      const storageUrl = req.body.storage?.url?.[0] || req.body['message-url'];
-      
-      try {
-        // Fetch the actual email content from Mailgun storage
-        const response = await fetch(storageUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`,
-            'Accept': 'multipart/form-data, application/json, text/plain, */*'
-          }
-        });
+      if (storageUrl) {
+        console.log('📧 WEBHOOK: Fetching from storage URL:', storageUrl);
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch from Mailgun storage: ${response.status} ${response.statusText}`);
-        }
-        
-        const contentType = response.headers.get('content-type') || '';
-        console.log('📧 Storage response content-type:', contentType);
-        
-        if (contentType.includes('application/json')) {
-          emailData = await response.json();
-          console.log('✅ Fetched JSON email content from storage');
-        } else {
-          // Handle form-encoded data (most common for Mailgun storage)
-          const responseText = await response.text();
-          console.log('📧 Raw form-encoded response size:', responseText.length);
+        try {
+          const response = await fetch(storageUrl, {
+            headers: {
+              'Authorization': `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`
+            }
+          });
           
-          const urlParams = new URLSearchParams(responseText);
-          emailData = Object.fromEntries(urlParams);
-          console.log('✅ Parsed form-encoded email content from storage');
+          console.log('📧 WEBHOOK: Storage fetch status:', response.status);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('📧 WEBHOOK: Storage fetch failed:', errorText);
+            throw new Error(`Storage fetch failed: ${response.status}`);
+          }
+          
+          emailData = await response.json();
+          console.log('📧 WEBHOOK: Fetched email data keys:', Object.keys(emailData));
+        } catch (fetchError) {
+          console.error('📧 WEBHOOK: Storage fetch error:', fetchError);
+          throw fetchError;
         }
-        
-        console.log('📧 Email data keys:', Object.keys(emailData));
-      } catch (error) {
-        console.error('❌ Failed to fetch from storage:', error);
-        console.error('Storage URL:', storageUrl);
-        console.error('API Key prefix:', process.env.MAILGUN_API_KEY?.substring(0, 10));
-        return res.status(500).json({ success: false, error: `Storage fetch failed: ${error instanceof Error ? error.message : String(error)}` });
       }
     }
     
-    // Process the email content (either direct or fetched from storage)
-    const bodyText = emailData['body-plain'] || emailData['stripped-text'] || emailData.text || '';
-    const fromEmail = emailData.from || emailData.sender || '';
-    const subject = emailData.subject || emailData.Subject || '';
-    const recipient = emailData.recipient || emailData.recipients || emailData.To || emailData.to || req.body.recipient || req.body.to || '';
-    
-    console.log('📧 Extracted fields:');
-    console.log('  - fromEmail:', fromEmail ? '✓' : '❌', fromEmail?.substring(0, 20));
-    console.log('  - bodyText:', bodyText ? '✓' : '❌', bodyText?.substring(0, 50));
-    console.log('  - subject:', subject ? '✓' : '❌', subject?.substring(0, 30));
-    console.log('  - recipient:', recipient ? '✓' : '❌', recipient?.substring(0, 30));
-    
-    if (!fromEmail || !bodyText || !recipient) {
-      console.log('❌ Missing email fields after processing');
-      console.log('Available emailData keys:', Object.keys(emailData));
-      return res.status(400).json({ success: false, error: 'Missing email fields', availableKeys: Object.keys(emailData).slice(0, 10) });
-    }
-    
-    // Use the enhanced email queue for processing
+    // Process the email
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-    const { jobId, queuePosition } = await enhancedEmailQueue.addEmail({
-      from: fromEmail,
-      subject,
-      'body-plain': bodyText,
-      recipient
-    });
+    await enhancedEmailQueue.addEmail(emailData);
     
-    const result = { success: true, message: 'Email processed', jobId, queuePosition };
-    
-    console.log('✅ Email processed:', result);
-    res.status(200).json(result);
+    console.log('📧 WEBHOOK: Email added to queue successfully');
+    res.status(200).json({ status: 'ok' });
     
   } catch (error: any) {
-    console.error('❌ Webhook error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('📧 WEBHOOK: Error processing webhook:', error);
+    console.error('📧 WEBHOOK: Error stack:', error.stack);
+    
+    // Return 200 anyway to prevent Mailgun retries that could duplicate emails
+    res.status(200).json({ 
+      status: 'error', 
+      message: error.message,
+      note: 'Returning 200 to prevent Mailgun retries'
+    });
   }
 });
 
