@@ -685,7 +685,7 @@ ${messageText.replace(/\n/g, '<br>')}
           }
           
           // Update the booking
-          await storage.updateBooking(bookingId, userId, updateData);
+          await storage.updateBooking(bookingId, updateData, userId);
           
           console.log(`✅ ${documentType} document uploaded successfully for booking #${bookingId}`);
           console.log('📄 Updated booking data:', updateData);
