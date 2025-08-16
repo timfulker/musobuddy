@@ -2457,8 +2457,8 @@ export default function UnifiedBookings() {
                 ))}
               </div>
               
-              {/* Calendar Grid - Full Height, No Scrolling */}
-              <div className="grid grid-cols-7 gap-2 flex-1">
+              {/* Calendar Grid - 6 Weeks (42 days) with Equal Row Heights */}
+              <div className="grid grid-cols-7 grid-rows-6 gap-2 flex-1 min-h-0">
                 {(() => {
                   // Generate calendar data for complete 6 weeks (42 days) to show full month context
                   const firstDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth(), 1);
@@ -2488,7 +2488,7 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 cursor-pointer flex flex-col min-h-[110px] rounded-xl transition-all duration-300 transform hover:scale-[1.02]
+                        p-3 cursor-pointer flex flex-col h-full rounded-xl transition-all duration-300 transform hover:scale-[1.02]
                         ${day.isCurrentMonth ? 'shadow-lg hover:shadow-xl' : 'opacity-70 hover:opacity-90'}
                         ${day.isToday ? 'shadow-2xl ring-4 ring-opacity-50' : ''}
                         ${isSelectedDate ? 'ring-4 ring-opacity-60 scale-[1.02]' : ''}
