@@ -532,7 +532,7 @@ export const clientCommunications = pgTable("client_communications", {
   templateName: varchar("template_name"), // Name of template used
   templateCategory: varchar("template_category"), // Category of template used
   subject: text("subject"), // Email subject
-  messageBody: text("message_body").notNull(), // Email/SMS content
+  messageBody: text("message_body").notNull(), // Email/SMS content or R2 URL for cloud-stored content
   attachments: jsonb("attachments").default('[]'), // Array of attachment info {name, url, type}
   sentAt: timestamp("sent_at").defaultNow(),
   deliveryStatus: varchar("delivery_status").default("sent"), // sent, delivered, failed, bounced

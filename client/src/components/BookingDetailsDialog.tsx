@@ -33,6 +33,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useGigTypes } from "@/hooks/useGigTypes";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { CommunicationHistory } from "@/components/communication-history";
 import type { Booking } from "@shared/schema";
 
 // Note: Custom auth functions removed - now using standard apiRequest for JWT authentication
@@ -1333,6 +1334,25 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                       )}
                     />
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Communication History Section */}
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-blue-100">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg border-b border-purple-100">
+                  <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">📧</span>
+                    </div>
+                    Communication History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <CommunicationHistory
+                    bookingId={booking.id}
+                    clientEmail={booking.clientEmail}
+                    showHeader={false}
+                  />
                 </CardContent>
               </Card>
 

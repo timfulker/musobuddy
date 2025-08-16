@@ -160,7 +160,7 @@ export function CommunicationHistory({ bookingId, clientEmail, showHeader = true
           </CardHeader>
         )}
         <CardContent>
-          <p className="text-gray-500 text-center py-4">No communication history found</p>
+          <p className="text-gray-500 text-center py-4">No communications found for this booking</p>
         </CardContent>
       </Card>
     );
@@ -178,102 +178,74 @@ export function CommunicationHistory({ bookingId, clientEmail, showHeader = true
       )}
       <CardContent className="space-y-3">
         {communications.map((comm: Communication) => (
-          <div key={comm.id} className="border rounded-lg p-3">
-            <Collapsible
-              open={expandedItems.has(comm.id)}
-              onOpenChange={() => toggleExpanded(comm.id)}
-            >
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="flex items-center gap-2">
-                      {getCommunicationIcon(comm.communicationType)}
-                      <Badge variant="secondary" className={getDirectionColor(comm.direction)}>
-                        {comm.direction}
+          <div key={comm.id} className="border rounded-lg p-4">
+            <div className="flex items-center gap-3 justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="flex items-center gap-2">
+                  {getCommunicationIcon(comm.communicationType)}
+                  <Badge variant="secondary" className={getDirectionColor(comm.direction)}>
+                    {comm.direction}
+                  </Badge>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium truncate">
+                      {comm.subject || 'No subject'}
+                    </span>
+                    {comm.templateCategory && (
+                      <Badge variant="outline" className={`text-xs ${getCategoryColor(comm.templateCategory)}`}>
+                        {comm.templateCategory.replace('_', ' ')}
                       </Badge>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate max-w-[300px]">
-                          {comm.subject || 'No subject'}
-                        </span>
-                        {comm.templateCategory && (
-                          <Badge variant="outline" className={`text-xs ${getCategoryColor(comm.templateCategory)}`}>
-                            {comm.templateCategory.replace('_', ' ')}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-4">
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {comm.clientName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {format(new Date(comm.sentAt), 'MMM d, yyyy h:mm a')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {expandedItems.has(comm.id) ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="mt-3">
-                <Separator className="mb-3" />
-                
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">To:</span> {comm.clientEmail}
-                    </div>
-                    <div>
-                      <span className="font-medium">Type:</span> {comm.communicationType.toUpperCase()}
-                    </div>
-                    <div>
-                      <span className="font-medium">Status:</span> 
-                      <Badge variant="outline" className="ml-1 text-xs">
-                        {comm.deliveryStatus}
-                      </Badge>
-                    </div>
-                    {comm.templateName && (
-                      <div>
-                        <span className="font-medium">Template:</span> {comm.templateName}
-                      </div>
                     )}
                   </div>
-                  
-                  {comm.subject && (
-                    <div>
-                      <span className="font-medium text-sm">Subject:</span>
-                      <p className="mt-1 text-sm bg-gray-50 p-2 rounded border">
-                        {comm.subject}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <span className="font-medium text-sm">Message:</span>
-                    <div className="mt-1 text-sm bg-gray-50 p-3 rounded border max-h-60 overflow-y-auto">
-                      <div dangerouslySetInnerHTML={{ __html: comm.messageBody }} />
-                    </div>
+                  <div className="text-sm text-gray-500 flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {comm.clientName}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(comm.sentAt), 'MMM d, yyyy h:mm a')}
+                    </span>
                   </div>
-                  
-                  {comm.attachments && comm.attachments !== '[]' && (
-                    <div>
-                      <span className="font-medium text-sm">Attachments:</span>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {JSON.parse(comm.attachments).length} attachment(s)
-                      </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Check if messageBody is a URL (starts with https://)
+                  if (comm.messageBody.startsWith('https://')) {
+                    window.open(comm.messageBody, '_blank');
+                  } else {
+                    // Legacy: Show inline content
+                    toggleExpanded(comm.id);
+                  }
+                }}
+                className="shrink-0"
+              >
+                {comm.messageBody.startsWith('https://') ? 'View Email' : expandedItems.has(comm.id) ? 'Hide' : 'Show'}
+              </Button>
+            </div>
+            
+            {/* Legacy inline content for old records */}
+            {!comm.messageBody.startsWith('https://') && (
+              <Collapsible
+                open={expandedItems.has(comm.id)}
+                onOpenChange={() => toggleExpanded(comm.id)}
+              >
+                <CollapsibleContent className="mt-3 pt-3 border-t">
+                  <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">
+                    {comm.messageBody}
+                  </div>
+                  {comm.deliveryStatus && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Status: {comm.deliveryStatus}
                     </div>
                   )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         ))}
       </CardContent>

@@ -747,26 +747,84 @@ export async function registerSettingsRoutes(app: Express) {
         console.log(`✅ Booking ${bookingId} marked as completed after thank you email`);
       }
 
-      // Save communication history
+      // Save communication history to cloud storage
       try {
-        const communicationData = {
-          userId,
-          bookingId: bookingId || null,
-          clientName: recipientName || recipientEmail,
-          clientEmail: recipientEmail,
-          communicationType: 'email',
-          direction: 'outbound',
-          templateId: null, // We don't have template ID here
-          templateName: null, // Could add template name if available
-          templateCategory: isThankYouTemplate ? 'thank_you' : 'general',
-          subject: template.subject,
-          messageBody: template.emailBody,
-          attachments: JSON.stringify([]),
-          deliveryStatus: 'sent'
-        };
+        // Create HTML content for the email
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${template.subject}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .email-header { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .email-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="email-header">
+        <h2>${template.subject}</h2>
+        <p><strong>To:</strong> ${recipientName || recipientEmail} (${recipientEmail})</p>
+        <p><strong>From:</strong> ${senderName || user?.email} (${senderEmail})</p>
+        <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}</p>
+        <p><strong>Type:</strong> Template Email - ${isThankYouTemplate ? 'Thank You' : 'General'}</p>
+    </div>
+    <div class="email-content">
+        ${template.emailBody.replace(/\n/g, '<br>')}
+    </div>
+</body>
+</html>`;
 
-        await db.insert(clientCommunications).values(communicationData);
-        console.log(`✅ Communication history saved for ${recipientEmail}`);
+        // Upload to R2 storage
+        const { uploadToCloudflareR2 } = await import('../core/cloud-storage.js');
+        const emailDate = new Date();
+        const dateFolder = emailDate.toISOString().split('T')[0];
+        const emailId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const filename = `${emailId}.html`;
+        const storageKey = `communications/${userId}/${dateFolder}/${filename}`;
+        
+        const uploadResult = await uploadToCloudflareR2(
+          Buffer.from(emailHtml, 'utf8'),
+          storageKey,
+          'text/html',
+          {
+            'email-subject': template.subject,
+            'recipient-email': recipientEmail,
+            'booking-id': bookingId?.toString() || 'none'
+          }
+        );
+
+        if (uploadResult.success) {
+          // Save metadata to database
+          const communicationData = {
+            userId,
+            bookingId: bookingId || null,
+            clientName: recipientName || recipientEmail,
+            clientEmail: recipientEmail,
+            communicationType: 'email',
+            direction: 'outbound',
+            templateId: null,
+            templateName: null,
+            templateCategory: isThankYouTemplate ? 'thank_you' : 'general',
+            subject: template.subject,
+            messageBody: uploadResult.url, // Store R2 URL instead of content
+            attachments: JSON.stringify([]),
+            deliveryStatus: 'sent'
+          };
+
+          await db.insert(clientCommunications).values(communicationData);
+          console.log(`✅ Communication saved to cloud storage: ${uploadResult.url}`);
+        } else {
+          console.error('⚠️ Failed to upload communication to cloud storage:', uploadResult.error);
+        }
       } catch (commError) {
         console.error('⚠️ Failed to save communication history:', commError);
         // Don't fail the email sending if communication logging fails
