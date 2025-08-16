@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages, googleCalendarIntegration, eventSyncMapping } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping } from "../../shared/schema";
 import { eq, and, desc, sql, lte, gte } from "drizzle-orm";
 
 export class MiscStorage {
@@ -377,6 +377,48 @@ export class MiscStorage {
     return result[0]?.count || 0;
   }
 
+  // ===== MESSAGE NOTIFICATION METHODS =====
+
+  async createMessageNotification(data: {
+    userId: string;
+    bookingId: number;
+    senderEmail: string;
+    subject: string;
+    messageUrl: string;
+  }) {
+    const result = await db.insert(messageNotifications).values({
+      ...data,
+      isRead: false,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async getMessageNotifications(userId: string, isRead?: boolean) {
+    const whereClause = isRead !== undefined
+      ? and(eq(messageNotifications.userId, userId), eq(messageNotifications.isRead, isRead))
+      : eq(messageNotifications.userId, userId);
+
+    const result = await db.select().from(messageNotifications)
+      .where(whereClause)
+      .orderBy(desc(messageNotifications.createdAt));
+    return result;
+  }
+
+  async markMessageNotificationAsRead(id: number) {
+    const result = await db.update(messageNotifications)
+      .set({ isRead: true })
+      .where(eq(messageNotifications.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteMessageNotification(id: number) {
+    const result = await db.delete(messageNotifications)
+      .where(eq(messageNotifications.id, id))
+      .returning();
+    return result[0];
+  }
 
 }
 

@@ -606,6 +606,23 @@ export class Storage {
   async getExpiringDocumentsCount(userId: string) {
     return miscStorage.getExpiringDocumentsCount(userId);
   }
+
+  // ===== MESSAGE NOTIFICATION METHODS =====
+  async createMessageNotification(notificationData: any) {
+    return miscStorage.createMessageNotification(notificationData);
+  }
+
+  async getMessageNotifications(userId: string, isRead?: boolean) {
+    return miscStorage.getMessageNotifications(userId, isRead);
+  }
+
+  async markMessageNotificationAsRead(id: number) {
+    return miscStorage.markMessageNotificationAsRead(id);
+  }
+
+  async deleteMessageNotification(id: number) {
+    return miscStorage.deleteMessageNotification(id);
+  }
 }
 
 export const storage = new Storage();

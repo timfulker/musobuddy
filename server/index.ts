@@ -155,7 +155,76 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       }
     }
     
-    // Process the email
+    // Check if this is a reply to a booking-specific email
+    const recipient = emailData.recipient || emailData.To || '';
+    const bookingIdMatch = recipient.match(/user(\d+)-booking(\d+)@/);
+    
+    if (bookingIdMatch) {
+      const userId = bookingIdMatch[1];
+      const bookingId = bookingIdMatch[2];
+      
+      logWebhookActivity('Booking reply detected', { userId, bookingId, recipient });
+      
+      // Store immediately in cloud storage as client message
+      try {
+        const { cloudStorage } = await import('./core/cloud-storage');
+        
+        // Create HTML content for the reply message
+        const messageHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Client Reply - ${emailData.subject || 'No Subject'}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .message-header { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .message-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .metadata { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="message-header">
+        <div class="metadata">
+            <strong>📨 Client Reply</strong><br>
+            <strong>From:</strong> ${emailData.sender || emailData.From || 'Unknown'}<br>
+            <strong>Subject:</strong> ${emailData.subject || emailData.Subject || 'No Subject'}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
+            <strong>Booking ID:</strong> ${bookingId}
+        </div>
+    </div>
+    <div class="message-content">
+        ${emailData['body-html'] || emailData['stripped-html'] || emailData['body-plain']?.replace(/\n/g, '<br>') || 'No content'}
+    </div>
+</body>
+</html>`;
+
+        // Store as incoming message
+        const fileName = `user${userId}/booking${bookingId}/messages/reply_${Date.now()}.html`;
+        await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+        
+        // Create notification entry in database
+        await storage.createMessageNotification({
+          userId: userId,
+          bookingId: bookingId,
+          senderEmail: emailData.sender || emailData.From || 'Unknown',
+          subject: emailData.subject || emailData.Subject || 'No Subject',
+          messageUrl: fileName,
+          isRead: false,
+          createdAt: new Date()
+        });
+        
+        logWebhookActivity('Client reply stored successfully', { fileName, userId, bookingId });
+        return res.status(200).json({ status: 'ok', type: 'booking_reply', bookingId, userId });
+        
+      } catch (error: any) {
+        logWebhookActivity('Failed to store client reply', { error: error.message });
+        // Fall through to normal processing if storage fails
+      }
+    }
+
+    // Process as new inquiry (no booking ID detected)
+    logWebhookActivity('Processing as new inquiry - no booking ID detected');
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
     await enhancedEmailQueue.addEmail(emailData);
     

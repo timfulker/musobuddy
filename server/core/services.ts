@@ -50,6 +50,12 @@ export class EmailService {
         console.log(`📧 CC: ${messageData.cc}`);
       }
 
+      // Add Reply-To support for booking-specific email routing
+      if (emailData.replyTo) {
+        messageData['h:Reply-To'] = emailData.replyTo;
+        console.log(`📧 Reply-To: ${messageData['h:Reply-To']}`);
+      }
+
       // Handle attachments - for compliance documents, we include links in email content
       // Only attach actual files when provided as Buffer/data
       if (emailData.attachments && emailData.attachments.length > 0) {
@@ -705,12 +711,13 @@ export class EmailService {
   }
 
   // Simple sendEmail method for compatibility with templates
-  async sendEmailSimple(toEmail: string, subject: string, body: string, fromEmail?: string, fromName?: string) {
+  async sendEmailSimple(toEmail: string, subject: string, body: string, fromEmail?: string, fromName?: string, replyTo?: string) {
     const emailData = {
       to: toEmail,
       subject: subject,
       html: body,
-      from: fromEmail && fromName ? `${fromName} <${fromEmail}>` : undefined
+      from: fromEmail && fromName ? `${fromName} <${fromEmail}>` : undefined,
+      replyTo: replyTo
     };
     
     const result = await this.sendEmail(emailData);

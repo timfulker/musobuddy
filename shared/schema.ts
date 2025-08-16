@@ -784,6 +784,18 @@ export const unparseableMessages = pgTable("unparseable_messages", {
   reviewedAt: timestamp("reviewed_at"),
 });
 
+// Message notifications table - for client replies to booking emails
+export const messageNotifications = pgTable("message_notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bookingId: integer("booking_id").notNull().references(() => bookings.id, { onDelete: 'cascade' }),
+  senderEmail: varchar("sender_email").notNull(),
+  subject: varchar("subject").notNull(),
+  messageUrl: text("message_url").notNull(), // Cloud storage URL for the message content
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   contracts: many(contracts),
@@ -1000,6 +1012,11 @@ export const insertApiUsageLimitsSchema = createInsertSchema(apiUsageLimits).omi
   updatedAt: true,
 });
 
+export const insertMessageNotificationSchema = createInsertSchema(messageNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 
 
 
@@ -1011,6 +1028,10 @@ export type User = typeof users.$inferSelect;
 // Blocked dates types
 export type BlockedDate = typeof blockedDates.$inferSelect;
 export type InsertBlockedDate = typeof blockedDates.$inferInsert;
+
+// Message notification types
+export type MessageNotification = typeof messageNotifications.$inferSelect;
+export type InsertMessageNotification = typeof messageNotifications.$inferInsert;
 
 // Blocked dates Zod schemas
 export const insertBlockedDateSchema = createInsertSchema(blockedDates).omit({

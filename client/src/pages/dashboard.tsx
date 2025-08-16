@@ -7,6 +7,7 @@ import CalendarWidget from "@/components/calendar-widget";
 import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
 import { ContractNotifications } from "@/components/contract-notifications";
+import { MessageNotifications } from "@/components/MessageNotifications";
 import ConflictsWidget from "@/components/conflicts-widget";
 import BookingCTAButtons from "@/components/booking-cta-buttons";
 import MobileNav from "@/components/mobile-nav";
@@ -20,7 +21,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Handle Stripe session restoration on dashboard load
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <BookingCTAButtons />
                 <QuickActions />
+                {user && <MessageNotifications userId={user.id} />}
                 <ConflictsWidget />
                 <ComplianceAlerts />
                 <ContractNotifications />
@@ -157,6 +159,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               <BookingCTAButtons />
               <QuickActions />
+              {user && <MessageNotifications userId={user.id} />}
               <ConflictsWidget />
               <ComplianceAlerts />
               <ContractNotifications />
