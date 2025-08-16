@@ -318,9 +318,12 @@ app.get('/api/email-queue/status', async (req, res) => {
       const webhookData = req.body;
       const recipientEmail = webhookData.recipient || webhookData.To || '';
       
-      // Extract booking ID from email address (booking-12345@mg.musobuddy.com)
-      const bookingMatch = recipientEmail.match(/booking-(\d+)@/);
-      const invoiceMatch = recipientEmail.match(/invoice-(\d+)@/);
+      // Extract booking ID from email address 
+      // Supports both formats:
+      // - booking-12345@mg.musobuddy.com (old format)
+      // - user1754488522516-booking7317@enquiries.musobuddy.com (new format)
+      const bookingMatch = recipientEmail.match(/booking-?(\d+)@/);
+      const invoiceMatch = recipientEmail.match(/invoice-?(\d+)@/);
       
       let bookingId = null;
       let replyType = 'unknown';
