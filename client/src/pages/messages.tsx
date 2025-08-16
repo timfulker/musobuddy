@@ -59,21 +59,31 @@ export default function Messages() {
         -webkit-text-fill-color: white !important;
       }
       
-      /* Force unselected tabs to have white background with dark text */
-      button[data-state="inactive"] {
+      /* Force unselected tabs to have white background with dark text and icons */
+      [role="tablist"] button[data-state="inactive"] {
         background-color: white !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+        border: 1px solid #e5e5e5 !important;
       }
       
-      button[data-state="inactive"] svg {
+      [role="tablist"] button[data-state="inactive"] * {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
+        fill: #000000 !important;
       }
       
-      /* Keep selected tab as-is (theme color) */
-      button[data-state="active"] {
-        /* Selected state retains theme styling */
+      /* Keep selected tab with theme color */
+      [role="tablist"] button[data-state="active"] {
+        background-color: #191970 !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      
+      [role="tablist"] button[data-state="active"] * {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+        fill: white !important;
       }
     `;
     document.head.appendChild(style);
