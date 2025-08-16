@@ -14,6 +14,15 @@ export function registerNotificationRoutes(app: Express) {
       }
       
       console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}, Email: ${req.user?.email}`);
+      
+      // TEMPORARY: Check for authentication contamination
+      if (req.user?.email === 'timfulkermusic@gmail.com' && userId !== '1754488522516') {
+        console.log(`🚨 AUTH CONTAMINATION DETECTED: Email shows timfulkermusic@gmail.com but token has userId ${userId}`);
+        return res.status(401).json({ 
+          error: 'Authentication contamination detected', 
+          details: 'Please log out and log back in to refresh your session'
+        });
+      }
 
       // Get all notification counts in parallel for efficiency
       const [
