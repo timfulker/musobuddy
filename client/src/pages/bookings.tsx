@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,11 @@ export default function UnifiedBookings() {
   // Individual booking deletion states
   const [selectedBookingForDeletion, setSelectedBookingForDeletion] = useState<any>(null);
   const [singleDeleteDialogOpen, setSingleDeleteDialogOpen] = useState(false);
+
+  // Hover card portal states
+  const [hoveredBooking, setHoveredBooking] = useState<any>(null);
+  const [hoverCardPosition, setHoverCardPosition] = useState({ x: 0, y: 0 });
+  const [hoverCardVisible, setHoverCardVisible] = useState(false);
   
   // Calendar hover card state - controlled open/close
 
@@ -2458,7 +2464,7 @@ export default function UnifiedBookings() {
       >
         <DialogContent 
           className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware"
-          style={{ width: '95vw', height: '95vh', zIndex: 50 }}
+          style={{ width: '95vw', height: '95vh' }}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft') {
               e.preventDefault();
@@ -2654,140 +2660,42 @@ export default function UnifiedBookings() {
                           const booking = validBookings.find((b) => b.id === event.id);
                           
                           return (
-                            <HoverCard 
-                              key={eventIndex} 
-                              openDelay={200} 
-                              closeDelay={3000}
+                            <div
+                              key={eventIndex}
+                              className={`text-xs p-1 rounded truncate font-medium cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-sm ${
+                                day.isCurrentMonth 
+                                  ? getStatusColor(event.status || 'new')
+                                  : 'bg-gray-300 text-gray-600'
+                              } ${
+                                highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (booking) {
+                                  setFullScreenCalendarOpen(false);
+                                  navigate(`/new-booking?edit=${booking.id}`);
+                                }
+                              }}
+                              onMouseEnter={(e) => {
+                                if (booking) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setHoverCardPosition({
+                                    x: rect.right + 10,
+                                    y: rect.top
+                                  });
+                                  setHoveredBooking(booking);
+                                  setTimeout(() => setHoverCardVisible(true), 200);
+                                }
+                              }}
+                              onMouseLeave={() => {
+                                setHoverCardVisible(false);
+                                setTimeout(() => {
+                                  if (!hoverCardVisible) setHoveredBooking(null);
+                                }, 3000);
+                              }}
                             >
-                              <HoverCardTrigger asChild>
-                                <div
-                                  className={`text-xs p-1 rounded truncate font-medium cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-sm ${
-                                    day.isCurrentMonth 
-                                      ? getStatusColor(event.status || 'new')
-                                      : 'bg-gray-300 text-gray-600'
-                                  } ${
-                                    highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (booking) {
-                                      setFullScreenCalendarOpen(false);
-                                      navigate(`/new-booking?edit=${booking.id}`);
-                                    }
-                                  }}
-                                >
-                                  {event.title}
-                                </div>
-                              </HoverCardTrigger>
-                              {booking && (
-                                <HoverCardContent 
-                                  className="w-80 hover-card-force-top" 
-                                  align="start" 
-                                  side="right" 
-                                  sideOffset={10}
-                                  style={{ zIndex: 2147483647, position: 'fixed' }}
-                                >
-                                  <div className="space-y-2">
-                                    <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <User className="w-3 h-3 text-gray-500" />
-                                        <span className="font-medium">Client:</span>
-                                        <span>{booking.clientName || 'Unknown'}</span>
-                                      </div>
-                                      {booking.venue && (
-                                        <div className="flex items-center gap-2">
-                                          <MapPin className="w-3 h-3 text-gray-500" />
-                                          <span className="font-medium">Venue:</span>
-                                          <span>{booking.venue}</span>
-                                        </div>
-                                      )}
-                                      {booking.venueAddress && (
-                                        <div className="flex items-start gap-2">
-                                          <MapPin className="w-3 h-3 text-gray-500 mt-1" />
-                                          <span className="font-medium">Address:</span>
-                                          <span className="flex-1">{booking.venueAddress}</span>
-                                        </div>
-                                      )}
-                                      {booking.eventTime && (
-                                        <div className="flex items-center gap-2">
-                                          <Clock className="w-3 h-3 text-gray-500" />
-                                          <span className="font-medium">Time:</span>
-                                          <span>{booking.eventTime}</span>
-                                        </div>
-                                      )}
-                                      {booking.fee && (
-                                        <div className="flex items-center gap-2">
-                                          <PoundSterling className="w-3 h-3 text-gray-500" />
-                                          <span className="font-medium">Fee:</span>
-                                          <span className="text-green-600">£{booking.fee}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="pt-2 border-t space-y-2">
-                                      <Badge className={getStatusColor(booking.status || 'new')}>
-                                        {booking.status?.replace('_', ' ') || 'New'}
-                                      </Badge>
-                                      {/* Document indicator - includes both new and legacy documents */}
-                                      <BookingDocumentIndicator 
-                                        bookingId={booking.id}
-                                        booking={booking}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openDocumentManagerDialog(booking);
-                                        }}
-                                      />
-                                      {/* Compliance indicator - shows available compliance documents */}
-                                      <ComplianceIndicator 
-                                        bookingId={booking.id}
-                                        booking={booking}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openComplianceDialog(booking);
-                                        }}
-                                      />
-                                      
-                                      <div className="flex items-center gap-2">
-                                        {/* Respond Menu - show for all bookings */}
-                                        <div 
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <BookingActionMenu 
-                                            booking={booking}
-                                            onEditBooking={(booking) => {
-                                              setFullScreenCalendarOpen(false);
-                                              navigate(`/new-booking?edit=${booking.id}`);
-                                            }}
-                                            onDeleteBooking={openDeleteDialog}
-                                            onStatusChange={(booking, newStatus) => {
-                                              statusChangeMutation.mutate({
-                                                bookingId: booking.id,
-                                                status: newStatus
-                                              });
-                                            }}
-                                          />
-                                        </div>
-                                        
-                                        {/* Apply on Encore Button - only show for Encore bookings */}
-                                        {booking.applyNowLink && (
-                                          <Button 
-                                            size="sm" 
-                                            variant="outline"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              window.open(booking.applyNowLink, '_blank');
-                                            }}
-                                            className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                          >
-                                            Apply on Encore
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </HoverCardContent>
-                              )}
-                            </HoverCard>
+                              {event.title}
+                            </div>
                           );
                         })}
                         {day.events.length > (day.isCurrentMonth ? 3 : 2) && (
@@ -2809,6 +2717,106 @@ export default function UnifiedBookings() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Portal-based Hover Card */}
+      {hoveredBooking && hoverCardVisible && createPortal(
+        <div 
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80"
+          style={{ 
+            left: hoverCardPosition.x, 
+            top: hoverCardPosition.y, 
+            zIndex: 999999,
+            pointerEvents: 'auto'
+          }}
+          onMouseEnter={() => setHoverCardVisible(true)}
+          onMouseLeave={() => {
+            setHoverCardVisible(false);
+            setTimeout(() => setHoveredBooking(null), 100);
+          }}
+        >
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">{hoveredBooking.eventType || 'Event'}</h4>
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center gap-2">
+                <User className="w-3 h-3 text-gray-500" />
+                <span className="font-medium">Client:</span>
+                <span>{hoveredBooking.clientName || 'Unknown'}</span>
+              </div>
+              {hoveredBooking.venue && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3 h-3 text-gray-500" />
+                  <span className="font-medium">Venue:</span>
+                  <span>{hoveredBooking.venue}</span>
+                </div>
+              )}
+              {hoveredBooking.venueAddress && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3 h-3 text-gray-500 mt-1" />
+                  <span className="font-medium">Address:</span>
+                  <span className="flex-1">{hoveredBooking.venueAddress}</span>
+                </div>
+              )}
+              {hoveredBooking.eventTime && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-gray-500" />
+                  <span className="font-medium">Time:</span>
+                  <span>{hoveredBooking.eventTime}</span>
+                </div>
+              )}
+              {hoveredBooking.fee && (
+                <div className="flex items-center gap-2">
+                  <PoundSterling className="w-3 h-3 text-gray-500" />
+                  <span className="font-medium">Fee:</span>
+                  <span className="text-green-600">£{hoveredBooking.fee}</span>
+                </div>
+              )}
+            </div>
+            <div className="pt-2 border-t space-y-2">
+              <Badge className={getStatusColor(hoveredBooking.status || 'new')}>
+                {hoveredBooking.status?.replace('_', ' ') || 'New'}
+              </Badge>
+              
+              <div className="flex items-center gap-2">
+                {/* Respond Menu */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <BookingActionMenu 
+                    booking={hoveredBooking}
+                    onEditBooking={(booking) => {
+                      setFullScreenCalendarOpen(false);
+                      setHoverCardVisible(false);
+                      setHoveredBooking(null);
+                      navigate(`/new-booking?edit=${booking.id}`);
+                    }}
+                    onDeleteBooking={openDeleteDialog}
+                    onStatusChange={(booking, newStatus) => {
+                      statusChangeMutation.mutate({
+                        bookingId: booking.id,
+                        status: newStatus
+                      });
+                    }}
+                  />
+                </div>
+                
+                {/* Apply on Encore Button */}
+                {hoveredBooking.applyNowLink && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(hoveredBooking.applyNowLink, '_blank');
+                    }}
+                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                  >
+                    Apply on Encore
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Mobile Navigation */}
       {!isDesktop && <MobileNav />}
