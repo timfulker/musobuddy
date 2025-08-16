@@ -381,9 +381,14 @@ app.get('/api/email-queue/status', async (req, res) => {
 </html>`;
       
       // Store message in cloud storage
-      const { cloudStorage } = await import('./core/cloud-storage');
+      const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
       const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
-      await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+      const messageBuffer = Buffer.from(messageHtml, 'utf8');
+      await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+        'booking-id': bookingId,
+        'user-id': userId,
+        'reply-type': replyType
+      });
       
       // Create notification entry
       await storage.createMessageNotification({
