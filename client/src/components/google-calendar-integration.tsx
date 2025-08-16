@@ -283,12 +283,12 @@ export default function GoogleCalendarIntegration() {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Sync Status */}
-        <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <div>
-              <p className="font-medium text-green-900 text-sm">Connected</p>
-              <p className="text-xs text-green-700">
+              <p className="font-medium text-sm" style={{ color: '#166534 !important' }}>Google Calendar Connected</p>
+              <p className="text-xs" style={{ color: '#15803d !important' }}>
                 Last sync: {calendarStatus.lastSyncAt 
                   ? new Date(calendarStatus.lastSyncAt).toLocaleString() 
                   : 'Never'}
