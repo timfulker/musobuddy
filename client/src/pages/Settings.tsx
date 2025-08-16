@@ -253,6 +253,7 @@ export default function Settings() {
     pricing: false, // AI Pricing Guide section
     gigTypes: false, // Custom gig types management section
     widget: false, // Widget URL management section
+    templates: false, // Email templates management section
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
@@ -1803,6 +1804,61 @@ export default function Settings() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Email Templates Management */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.templates} onOpenChange={() => toggleSection('templates')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="w-5 h-5 text-primary" />
+                          <span>Email Templates</span>
+                        </div>
+                        {expandedSections.templates ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Manage your email templates for client communication and automated responses
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="bg-primary/5 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <Mail className="w-5 h-5 text-primary mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-primary-900 dark:text-primary-100">Template Management</h4>
+                            <p className="text-sm text-primary/90 dark:text-primary-300 mt-1">
+                              Create and manage email templates for responding to client enquiries, sending follow-ups, and automated responses.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                        <div>
+                          <h5 className="font-medium text-gray-900 dark:text-gray-100">Manage Templates</h5>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Create, edit, and organize your email templates for efficient client communication.
+                          </p>
+                        </div>
+                        <Button 
+                          type="button"
+                          onClick={() => window.open('/templates', '_blank')}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open Templates
+                        </Button>
                       </div>
                     </CardContent>
                   </CollapsibleContent>

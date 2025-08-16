@@ -671,89 +671,7 @@ export default function Templates() {
     setIsCreateDialogOpen(true);
   };
 
-  // Glockapps deliverability test function
-  const runGlockAppsTest = async () => {
-    if (templates.length === 0) {
-      toast({
-        title: "No Templates",
-        description: "Please create a template first to run the deliverability test.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    const confirmed = window.confirm(
-      `Run Glockapps deliverability test?\n\nThis will send your first template to 25 test email addresses to check spam filter performance.\n\nTest ID: UK-Launch-Batch1-${Date.now()}\n\nCheck your Glockapps dashboard in 5-10 minutes for results.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setLoading(true);
-      toast({
-        title: "Starting Deliverability Test",
-        description: "Sending test emails through your MusoBuddy system...",
-      });
-
-      // Your Batch 1 seed emails (25 addresses for rate limiting)
-      const seedEmails = [
-        "elizabeaver@auth.glockdb.com", 
-        "clyde@trustycheck.pro", 
-        "johnsimonskh@gmail.com", 
-        "juliarspivey@aol.com", 
-        "eliza@spamcombat.com", 
-        "madeleinecagleks@gmail.com", 
-        "joereddison@outlook.com", 
-        "virginia@buyemailsoftware.com", 
-        "carollpooool@outlook.com", 
-        "davidkdoyle@hotmail.com", 
-        "simonetgrimard@laposte.net", 
-        "verifycom79@gmx.com", 
-        "dannakbond@aol.com", 
-        "allanb@glockapps.awsapps.com", 
-        "frankdesalvo@mailo.com", 
-        "lynettedweyand@protonmail.com", 
-        "glencabrera@outlook.fr", 
-        "brittanyrocha@outlook.de", 
-        "irene@postmasterpro.email", 
-        "bbarretthenryhe@gmail.com", 
-        "deweymadddax@currently.com", 
-        "gailllitle@att.net", 
-        "bobbybagdgddwins@mailo.com", 
-        "naomimartinsn@hotmail.com", 
-        "luisl417@yahoo.com"
-      ];
-
-      const testId = `UK-Launch-Batch1-${Date.now()}`;
-      const response = await apiRequest('/api/test/glockapp-delivery', {
-        method: 'POST',
-        body: {
-          testId,
-          templateId: templates[0].id.toString(),
-          seedEmails: seedEmails
-        }
-      });
-      
-      const result = await response.json();
-      
-      toast({
-        title: "Deliverability Test Completed!",
-        description: `✅ ${result.totalSent} emails sent successfully. Check your Glockapps dashboard in 5-10 minutes for spam filter results.`,
-      });
-
-      console.log('Deliverability test results:', result);
-
-    } catch (error: any) {
-      console.error('Deliverability test error:', error);
-      toast({
-        title: "Test Failed",
-        description: error.message || "Failed to run deliverability test",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
   return (
@@ -792,15 +710,6 @@ export default function Templates() {
               </p>
             </div>
             <div className="flex space-x-2">
-              <Button 
-                onClick={() => runGlockAppsTest()}
-                variant="outline"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-none hover:from-green-600 hover:to-emerald-600"
-                disabled={loading || templates.length === 0}
-              >
-                <Bot className="w-4 h-4 mr-2" />
-                Spam Test
-              </Button>
               <Button 
                 onClick={() => setShowAIDialog(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
