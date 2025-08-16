@@ -244,35 +244,35 @@ export default function Messages() {
                         key={message.id}
                         className={`p-4 border rounded-lg ${
                           message.isRead 
-                            ? 'bg-background border-border' 
-                            : 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
+                            ? 'bg-background border-border text-foreground' 
+                            : 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800 text-foreground dark:text-white'
                         }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-sm truncate">
+                              <p className="font-medium text-sm truncate text-foreground dark:text-white">
                                 {message.subject}
                               </p>
                               {!message.isRead && (
                                 <Badge variant="default" className="h-4 text-xs">New</Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground mb-1">
+                            <p className="text-sm text-muted-foreground dark:text-gray-300 mb-1">
                               From: {message.senderEmail}
                             </p>
                             {message.clientName && (
-                              <p className="text-sm font-medium text-primary mb-1">
+                              <p className="text-sm font-medium text-primary dark:text-blue-400 mb-1">
                                 Client: {message.clientName}
                               </p>
                             )}
                             {message.eventDate && (
-                              <p className="text-sm text-muted-foreground mb-1">
+                              <p className="text-sm text-muted-foreground dark:text-gray-300 mb-1">
                                 Booking: {new Date(message.eventDate).toLocaleDateString()} 
                                 {message.venue && ` at ${message.venue}`}
                               </p>
                             )}
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground dark:text-gray-400">
                               Booking #{message.bookingId} • Received: {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
                             </p>
                           </div>
