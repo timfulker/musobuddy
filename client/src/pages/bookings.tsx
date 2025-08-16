@@ -115,6 +115,7 @@ export default function UnifiedBookings() {
   // Full-screen calendar modal state
   const [fullScreenCalendarOpen, setFullScreenCalendarOpen] = useState(false);
   const [fullScreenSelectedDate, setFullScreenSelectedDate] = useState<Date | null>(null);
+  const [fullScreenCurrentDate, setFullScreenCurrentDate] = useState(new Date());
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -852,6 +853,7 @@ export default function UnifiedBookings() {
     } else {
       // Open full-screen calendar modal for empty dates
       setFullScreenSelectedDate(date);
+      setFullScreenCurrentDate(new Date(date));
       setFullScreenCalendarOpen(true);
     }
   };
@@ -2377,6 +2379,33 @@ export default function UnifiedBookings() {
         <DialogContent 
           className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware"
           style={{ width: '95vw', height: '95vh' }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              const newDate = new Date(fullScreenCurrentDate);
+              newDate.setMonth(newDate.getMonth() - 1);
+              setFullScreenCurrentDate(newDate);
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              const newDate = new Date(fullScreenCurrentDate);
+              newDate.setMonth(newDate.getMonth() + 1);
+              setFullScreenCurrentDate(newDate);
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              const newDate = new Date(fullScreenCurrentDate);
+              newDate.setFullYear(newDate.getFullYear() - 1);
+              setFullScreenCurrentDate(newDate);
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              const newDate = new Date(fullScreenCurrentDate);
+              newDate.setFullYear(newDate.getFullYear() + 1);
+              setFullScreenCurrentDate(newDate);
+            } else if (e.key === 'Home') {
+              e.preventDefault();
+              setFullScreenCurrentDate(new Date());
+            }
+          }}
+          tabIndex={0}
         >
           <DialogHeader className="p-6 pb-4 border-b">
             <DialogTitle className="text-2xl font-semibold luminance-aware">
@@ -2398,11 +2427,14 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-6">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col">
-              {/* Month Header - Fixed */}
-              <div className="flex items-center justify-center mb-6">
+              {/* Month Header - Fixed with Keyboard Hints */}
+              <div className="flex items-center justify-center mb-6 flex-col">
                 <h2 className="text-3xl font-bold luminance-aware">
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                  {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                 </h2>
+                <div className="text-sm text-gray-500 mt-2 luminance-aware-muted">
+                  Use arrow keys: ← → months • ↑ ↓ years • Home for today
+                </div>
               </div>
               
               {/* Day Headers - Fixed */}
@@ -2416,7 +2448,29 @@ export default function UnifiedBookings() {
               
               {/* Calendar Grid - Full Height, No Scrolling */}
               <div className="grid grid-cols-7 gap-2 flex-1">
-                {generateCalendarData().map((day, index) => {
+                {(() => {
+                  // Generate calendar data for the full-screen modal using fullScreenCurrentDate
+                  const firstDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth(), 1);
+                  const lastDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth() + 1, 0);
+                  const startDate = new Date(firstDay);
+                  startDate.setDate(startDate.getDate() - firstDay.getDay());
+                  
+                  const days = [];
+                  for (let i = 0; i < 42; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    const events = getEventsForDate(date);
+                    days.push({
+                      date,
+                      day: date.getDate(),
+                      events,
+                      isCurrentMonth: date.getMonth() === fullScreenCurrentDate.getMonth(),
+                      isToday: date.toDateString() === new Date().toDateString()
+                    });
+                  }
+                  
+                  return days;
+                })().map((day, index) => {
                   const isSelectedDate = fullScreenSelectedDate && 
                     day.date.toDateString() === fullScreenSelectedDate.toDateString();
                   
