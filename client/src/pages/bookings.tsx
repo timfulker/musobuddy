@@ -144,7 +144,33 @@ export default function UnifiedBookings() {
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
   
-  // Calendar hover card state - controlled open/close
+  // Clean up hover card state when full screen calendar closes
+  useEffect(() => {
+    if (!fullScreenCalendarOpen) {
+      setHoverCardVisible(false);
+      setHoveredBooking(null);
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        setHoverTimeout(null);
+      }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        setHideTimeout(null);
+      }
+    }
+  }, [fullScreenCalendarOpen, hoverTimeout, hideTimeout]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+    };
+  }, [hoverTimeout, hideTimeout]);
 
   
   const { isDesktop } = useResponsive();
@@ -2755,6 +2781,8 @@ export default function UnifiedBookings() {
             }, 300);
             setHideTimeout(timeout);
           }}
+          // Add key to force remount and prevent stale state
+          key={hoveredBooking?.id}
         >
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">{hoveredBooking.eventType || 'Event'}</h4>
@@ -2800,7 +2828,22 @@ export default function UnifiedBookings() {
               
               <div className="flex items-center gap-2">
                 {/* Respond Menu */}
-                <div onClick={(e) => e.stopPropagation()}>
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={() => {
+                    // Immediately hide hover card when action menu is clicked
+                    setHoverCardVisible(false);
+                    setHoveredBooking(null);
+                    if (hideTimeout) {
+                      clearTimeout(hideTimeout);
+                      setHideTimeout(null);
+                    }
+                    if (hoverTimeout) {
+                      clearTimeout(hoverTimeout);
+                      setHoverTimeout(null);
+                    }
+                  }}
+                >
                   <BookingActionMenu 
                     booking={hoveredBooking}
                     onEditBooking={(booking) => {
@@ -2809,8 +2852,16 @@ export default function UnifiedBookings() {
                       setHoveredBooking(null);
                       navigate(`/new-booking?edit=${booking.id}`);
                     }}
-                    onDeleteBooking={openDeleteDialog}
+                    onDeleteBooking={(booking) => {
+                      // Clear hover card state before opening delete dialog
+                      setHoverCardVisible(false);
+                      setHoveredBooking(null);
+                      openDeleteDialog(booking);
+                    }}
                     onStatusChange={(booking, newStatus) => {
+                      // Clear hover card state before status change
+                      setHoverCardVisible(false);
+                      setHoveredBooking(null);
                       statusChangeMutation.mutate({
                         bookingId: booking.id,
                         status: newStatus
