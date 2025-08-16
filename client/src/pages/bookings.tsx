@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip } from "lucide-react";
@@ -110,6 +111,10 @@ export default function UnifiedBookings() {
   // Document upload dialog states
   const [documentUploadDialogOpen, setDocumentUploadDialogOpen] = useState(false);
   const [selectedBookingForDocument, setSelectedBookingForDocument] = useState<any>(null);
+  
+  // Full-screen calendar modal state
+  const [fullScreenCalendarOpen, setFullScreenCalendarOpen] = useState(false);
+  const [fullScreenSelectedDate, setFullScreenSelectedDate] = useState<Date | null>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -844,6 +849,10 @@ export default function UnifiedBookings() {
       if (booking) {
         navigate(`/new-booking?edit=${booking.id}`);
       }
+    } else {
+      // Open full-screen calendar modal for empty dates
+      setFullScreenSelectedDate(date);
+      setFullScreenCalendarOpen(true);
     }
   };
 
@@ -1773,20 +1782,22 @@ export default function UnifiedBookings() {
                           {calendarView === 'year' && currentDate.getFullYear()}
                         </h2>
                         
-                        {/* Navigation Arrows - Fixed Position Below Date */}
-                        <div className="flex items-center justify-center gap-4 mt-2">
+                        {/* Navigation - Combined Arrow + Today Navigation */}
+                        <div className="flex items-center justify-center gap-2 mt-2">
                           <Button variant="outline" size="sm" onClick={goToPrevious}>
                             <ChevronLeft className="w-4 h-4" />
+                            Previous
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
                             onClick={() => setCurrentDate(new Date())}
-                            className="text-xs px-3"
+                            className="text-xs px-4"
                           >
                             Today
                           </Button>
                           <Button variant="outline" size="sm" onClick={goToNext}>
+                            Next
                             <ChevronRight className="w-4 h-4" />
                           </Button>
                         </div>
@@ -2358,6 +2369,115 @@ export default function UnifiedBookings() {
         </AlertDialogContent>
       </AlertDialog>
       
+      {/* Full-Screen Calendar Modal */}
+      <Dialog 
+        open={fullScreenCalendarOpen} 
+        onOpenChange={setFullScreenCalendarOpen}
+      >
+        <DialogContent 
+          className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware"
+          style={{ width: '95vw', height: '95vh' }}
+        >
+          <DialogHeader className="p-6 pb-4 border-b">
+            <DialogTitle className="text-2xl font-semibold luminance-aware">
+              {fullScreenSelectedDate 
+                ? `Calendar - ${fullScreenSelectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}`
+                : 'Full Calendar View'
+              }
+            </DialogTitle>
+            <div className="text-sm text-gray-500 luminance-aware-muted">
+              Click on a date to create a new booking or view existing ones
+            </div>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden p-6">
+            {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
+            <div className="h-full flex flex-col">
+              {/* Month Header - Fixed */}
+              <div className="flex items-center justify-center mb-6">
+                <h2 className="text-3xl font-bold luminance-aware">
+                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </h2>
+              </div>
+              
+              {/* Day Headers - Fixed */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="text-center font-semibold text-gray-600 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Calendar Grid - Full Height, No Scrolling */}
+              <div className="grid grid-cols-7 gap-2 flex-1">
+                {generateCalendarData().map((day, index) => {
+                  const isSelectedDate = fullScreenSelectedDate && 
+                    day.date.toDateString() === fullScreenSelectedDate.toDateString();
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        p-4 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col
+                        ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                        ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                        ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
+                      `}
+                      onClick={() => {
+                        if (day.events.length > 0) {
+                          const firstEvent = day.events[0];
+                          const validBookings = validateBookingArray(bookings) ? bookings : [];
+                          const booking = validBookings.find((b) => b.id === firstEvent.id);
+                          if (booking) {
+                            setFullScreenCalendarOpen(false);
+                            navigate(`/new-booking?edit=${booking.id}`);
+                          }
+                        } else {
+                          // Create new booking for this date
+                          const dateStr = day.date.toISOString().split('T')[0];
+                          setFullScreenCalendarOpen(false);
+                          navigate(`/new-booking?date=${dateStr}`);
+                        }
+                      }}
+                    >
+                      <div className="font-medium text-lg mb-2">
+                        {day.day}
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        {day.events.slice(0, 3).map((event, eventIndex) => (
+                          <div
+                            key={eventIndex}
+                            className={`text-xs p-2 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {day.events.length > 3 && (
+                          <div className="text-xs text-gray-500 font-medium">
+                            +{day.events.length - 3} more
+                          </div>
+                        )}
+                        {day.events.length === 0 && (
+                          <div className="text-xs text-gray-400 italic py-2">
+                            Click to add booking
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Mobile Navigation */}
       {!isDesktop && <MobileNav />}
     </div>
