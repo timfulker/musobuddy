@@ -2542,18 +2542,136 @@ export default function UnifiedBookings() {
                         {day.day}
                       </div>
                       <div className="space-y-1 flex-1">
-                        {day.events.slice(0, day.isCurrentMonth ? 3 : 2).map((event, eventIndex) => (
-                          <div
-                            key={eventIndex}
-                            className={`text-xs p-1 rounded truncate font-medium ${
-                              day.isCurrentMonth 
-                                ? getStatusColor(event.status || 'new')
-                                : 'bg-gray-300 text-gray-600'
-                            }`}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
+                        {day.events.slice(0, day.isCurrentMonth ? 3 : 2).map((event, eventIndex) => {
+                          const validBookings = validateBookingArray(bookings) ? bookings : [];
+                          const booking = validBookings.find((b) => b.id === event.id);
+                          
+                          return (
+                            <HoverCard 
+                              key={eventIndex} 
+                              openDelay={200} 
+                              closeDelay={3000}
+                            >
+                              <HoverCardTrigger asChild>
+                                <div
+                                  className={`text-xs p-1 rounded truncate font-medium cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-sm ${
+                                    day.isCurrentMonth 
+                                      ? getStatusColor(event.status || 'new')
+                                      : 'bg-gray-300 text-gray-600'
+                                  } ${
+                                    highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (booking) {
+                                      setFullScreenCalendarOpen(false);
+                                      navigate(`/new-booking?edit=${booking.id}`);
+                                    }
+                                  }}
+                                >
+                                  {event.title}
+                                </div>
+                              </HoverCardTrigger>
+                              {booking && (
+                                <HoverCardContent className="w-80" align="start" side="right">
+                                  <div className="space-y-2">
+                                    <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <User className="w-3 h-3 text-gray-500" />
+                                        <span className="font-medium">Client:</span>
+                                        <span>{booking.clientName || 'Unknown'}</span>
+                                      </div>
+                                      {booking.venue && (
+                                        <div className="flex items-center gap-2">
+                                          <MapPin className="w-3 h-3 text-gray-500" />
+                                          <span className="font-medium">Venue:</span>
+                                          <span>{booking.venue}</span>
+                                        </div>
+                                      )}
+                                      {booking.venueAddress && (
+                                        <div className="flex items-start gap-2">
+                                          <MapPin className="w-3 h-3 text-gray-500 mt-1" />
+                                          <span className="font-medium">Address:</span>
+                                          <span className="flex-1">{booking.venueAddress}</span>
+                                        </div>
+                                      )}
+                                      {booking.eventTime && (
+                                        <div className="flex items-center gap-2">
+                                          <Clock className="w-3 h-3 text-gray-500" />
+                                          <span className="font-medium">Time:</span>
+                                          <span>{booking.eventTime}</span>
+                                        </div>
+                                      )}
+                                      {booking.fee && (
+                                        <div className="flex items-center gap-2">
+                                          <PoundSterling className="w-3 h-3 text-gray-500" />
+                                          <span className="font-medium">Fee:</span>
+                                          <span className="text-green-600">£{booking.fee}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="pt-2 border-t space-y-2">
+                                      <Badge className={getStatusColor(booking.status || 'new')}>
+                                        {booking.status?.replace('_', ' ') || 'New'}
+                                      </Badge>
+                                      {/* Document indicator - includes both new and legacy documents */}
+                                      <BookingDocumentIndicator 
+                                        bookingId={booking.id}
+                                        booking={booking}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openDocumentManagerDialog(booking);
+                                        }}
+                                      />
+                                      {/* Compliance indicator - shows available compliance documents */}
+                                      <ComplianceIndicator 
+                                        bookingId={booking.id}
+                                        booking={booking}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openComplianceDialog(booking);
+                                        }}
+                                      />
+                                      
+                                      <div className="flex items-center gap-2">
+                                        {/* Respond Menu - show for all bookings */}
+                                        <div 
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <BookingActionMenu 
+                                            booking={booking}
+                                            onEditBooking={(booking) => {
+                                              setFullScreenCalendarOpen(false);
+                                              navigate(`/new-booking?edit=${booking.id}`);
+                                            }}
+                                            onSendCompliance={openComplianceDialog}
+                                            onManageDocuments={openDocumentManagerDialog}
+                                          />
+                                        </div>
+                                        
+                                        {/* Apply on Encore Button - only show for Encore bookings */}
+                                        {booking.applyNowLink && (
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              window.open(booking.applyNowLink, '_blank');
+                                            }}
+                                            className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                          >
+                                            Apply on Encore
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </HoverCardContent>
+                              )}
+                            </HoverCard>
+                          );
+                        })}
                         {day.events.length > (day.isCurrentMonth ? 3 : 2) && (
                           <div className="text-xs text-gray-500 font-medium text-center mt-1">
                             +{day.events.length - (day.isCurrentMonth ? 3 : 2)} more
