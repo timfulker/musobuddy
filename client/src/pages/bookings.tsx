@@ -141,6 +141,8 @@ export default function UnifiedBookings() {
   const [hoveredBooking, setHoveredBooking] = useState<any>(null);
   const [hoverCardPosition, setHoverCardPosition] = useState({ x: 0, y: 0 });
   const [hoverCardVisible, setHoverCardVisible] = useState(false);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // Calendar hover card state - controlled open/close
 
@@ -2678,20 +2680,37 @@ export default function UnifiedBookings() {
                               }}
                               onMouseEnter={(e) => {
                                 if (booking) {
+                                  // Clear any existing timeouts
+                                  if (hideTimeout) {
+                                    clearTimeout(hideTimeout);
+                                    setHideTimeout(null);
+                                  }
+                                  
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   setHoverCardPosition({
                                     x: rect.right + 10,
                                     y: rect.top
                                   });
                                   setHoveredBooking(booking);
-                                  setTimeout(() => setHoverCardVisible(true), 200);
+                                  
+                                  // Longer delay before showing (600ms)
+                                  const timeout = setTimeout(() => setHoverCardVisible(true), 600);
+                                  setHoverTimeout(timeout);
                                 }
                               }}
                               onMouseLeave={() => {
-                                setHoverCardVisible(false);
-                                setTimeout(() => {
-                                  if (!hoverCardVisible) setHoveredBooking(null);
-                                }, 3000);
+                                // Clear show timeout if still pending
+                                if (hoverTimeout) {
+                                  clearTimeout(hoverTimeout);
+                                  setHoverTimeout(null);
+                                }
+                                
+                                // Longer delay before hiding (1.5 seconds for user to move to hover card)
+                                const timeout = setTimeout(() => {
+                                  setHoverCardVisible(false);
+                                  setTimeout(() => setHoveredBooking(null), 100);
+                                }, 1500);
+                                setHideTimeout(timeout);
                               }}
                             >
                               {event.title}
@@ -2728,10 +2747,21 @@ export default function UnifiedBookings() {
             zIndex: 999999,
             pointerEvents: 'auto'
           }}
-          onMouseEnter={() => setHoverCardVisible(true)}
+          onMouseEnter={() => {
+            // Clear any hide timeout when hovering over the card
+            if (hideTimeout) {
+              clearTimeout(hideTimeout);
+              setHideTimeout(null);
+            }
+            setHoverCardVisible(true);
+          }}
           onMouseLeave={() => {
-            setHoverCardVisible(false);
-            setTimeout(() => setHoveredBooking(null), 100);
+            // Start hide timer when leaving the hover card
+            const timeout = setTimeout(() => {
+              setHoverCardVisible(false);
+              setTimeout(() => setHoveredBooking(null), 100);
+            }, 300);
+            setHideTimeout(timeout);
           }}
         >
           <div className="space-y-2">
