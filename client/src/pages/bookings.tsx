@@ -2400,9 +2400,12 @@ export default function UnifiedBookings() {
               const newDate = new Date(fullScreenCurrentDate);
               newDate.setFullYear(newDate.getFullYear() + 1);
               setFullScreenCurrentDate(newDate);
-            } else if (e.key === 'Home' || (e.metaKey && e.key === 'ArrowLeft')) {
+            } else if (e.key === 'Home' || (e.metaKey && e.key === 'ArrowLeft') || e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               setFullScreenCurrentDate(new Date());
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              setFullScreenCalendarOpen(false);
             }
           }}
           tabIndex={0}
@@ -2426,14 +2429,14 @@ export default function UnifiedBookings() {
           
           <div className="flex-1 overflow-hidden p-6">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
               {/* Month Header - Fixed with Keyboard Hints */}
               <div className="flex items-center justify-center mb-6 flex-col">
                 <h2 className="text-3xl font-bold luminance-aware">
                   {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                 </h2>
                 <div className="text-sm text-gray-500 mt-2 luminance-aware-muted">
-                  Use arrow keys: ← → months • ↑ ↓ years • Home or ⌘← for today
+                  Navigate: ← → months • ↑ ↓ years • Enter/Space for today • Esc to close
                 </div>
               </div>
               
