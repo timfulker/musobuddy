@@ -51,15 +51,19 @@ export default function Messages() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
 
+  // More robust user ID detection
+  const userId = user?.id || user?.userId || (user as any)?.user_id;
+  
   // Fetch client messages
   const { data: clientMessages = [], isLoading: clientMessagesLoading, error: clientMessagesError } = useQuery({
-    queryKey: ['notifications', 'messages', user?.id],
+    queryKey: ['notifications', 'messages', userId],
     queryFn: () => apiRequest(`/api/notifications/messages`),
-    enabled: !!user?.id,
+    enabled: !!userId,
   });
 
-  // Debug logging
-  console.log('🔍 CLIENT DEBUG - User:', user?.id, 'Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading, 'Error:', clientMessagesError);
+  // Enhanced debug logging
+  console.log('🔍 CLIENT DEBUG - User object:', user);
+  console.log('🔍 CLIENT DEBUG - Detected userId:', userId, 'Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading, 'Error:', clientMessagesError);
 
   // Fetch unparseable messages
   const { data: unparseableMessages = [], isLoading: unparseableLoading } = useQuery({
