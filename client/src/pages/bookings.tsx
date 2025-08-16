@@ -2706,10 +2706,31 @@ export default function UnifiedBookings() {
                                   }
                                   
                                   const rect = e.currentTarget.getBoundingClientRect();
-                                  setHoverCardPosition({
-                                    x: rect.right + 10,
-                                    y: rect.top
-                                  });
+                                  const cardWidth = 320; // 80 * 4 = w-80 in Tailwind
+                                  const cardHeight = 300; // Estimated height of hover card
+                                  const viewportWidth = window.innerWidth;
+                                  const viewportHeight = window.innerHeight;
+                                  
+                                  // Smart positioning logic
+                                  let x = rect.right + 10;
+                                  let y = rect.top;
+                                  
+                                  // If card would go off-screen to the right, place it to the left
+                                  if (x + cardWidth > viewportWidth) {
+                                    x = rect.left - cardWidth - 10;
+                                  }
+                                  
+                                  // If card would go off-screen at the bottom, move it up
+                                  if (y + cardHeight > viewportHeight) {
+                                    y = viewportHeight - cardHeight - 20; // 20px padding from bottom
+                                  }
+                                  
+                                  // Ensure card doesn't go above the viewport
+                                  if (y < 20) {
+                                    y = 20; // 20px padding from top
+                                  }
+                                  
+                                  setHoverCardPosition({ x, y });
                                   setHoveredBooking(booking);
                                   
                                   // Longer delay before showing (600ms)
