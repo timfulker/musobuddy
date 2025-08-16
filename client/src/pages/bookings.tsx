@@ -2412,18 +2412,15 @@ export default function UnifiedBookings() {
         >
           <DialogHeader className="p-6 pb-4 border-b">
             <DialogTitle className="text-2xl font-semibold luminance-aware">
-              {fullScreenSelectedDate 
-                ? `Calendar - ${fullScreenSelectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long',
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}`
-                : 'Full Calendar View'
-              }
+              Calendar - {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
             </DialogTitle>
             <div className="text-sm text-gray-500 luminance-aware-muted">
-              Click on a date to create a new booking or view existing ones
+              {fullScreenSelectedDate 
+                ? `Originally selected: ${fullScreenSelectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', month: 'long', day: 'numeric' 
+                  })} • Click any date to create booking or view existing ones`
+                : 'Click on a date to create a new booking or view existing ones'
+              }
             </div>
           </DialogHeader>
           
