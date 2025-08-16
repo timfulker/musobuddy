@@ -2437,14 +2437,13 @@ export default function UnifiedBookings() {
               {/* Calendar Grid - Full Height, No Scrolling */}
               <div className="grid grid-cols-7 gap-2 flex-1">
                 {(() => {
-                  // Generate calendar data for the full-screen modal using fullScreenCurrentDate
+                  // Generate calendar data for exactly 5 weeks (35 days) for better proportions
                   const firstDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth(), 1);
-                  const lastDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth() + 1, 0);
                   const startDate = new Date(firstDay);
                   startDate.setDate(startDate.getDate() - firstDay.getDay());
                   
                   const days = [];
-                  for (let i = 0; i < 42; i++) {
+                  for (let i = 0; i < 35; i++) { // 5 weeks = 35 days
                     const date = new Date(startDate);
                     date.setDate(startDate.getDate() + i);
                     const events = getEventsForDate(date);
@@ -2466,7 +2465,7 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[120px]
+                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[140px]
                         ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
                         ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
                         ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
