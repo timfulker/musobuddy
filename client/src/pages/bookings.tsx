@@ -2832,9 +2832,14 @@ export default function UnifiedBookings() {
                 <HoverResponseMenu 
                   booking={hoveredBooking}
                   onAction={(action, booking) => {
-                    // Clear hover card state before action
+                    console.log('Action triggered:', action, 'for booking:', booking.id);
+                    
+                    // Clear ALL state before action
                     setHoverCardVisible(false);
                     setHoveredBooking(null);
+                    setFullScreenCalendarOpen(false);
+                    setHoverCardState(null);
+                    
                     if (hideTimeout) {
                       clearTimeout(hideTimeout);
                       setHideTimeout(null);
@@ -2847,32 +2852,42 @@ export default function UnifiedBookings() {
                     // Handle the action
                     switch (action) {
                       case 'edit':
-                        setFullScreenCalendarOpen(false);
-                        // Small delay to ensure state clears before navigation
-                        setTimeout(() => navigate(`/new-booking?edit=${booking.id}`), 100);
+                        // Delay to ensure all state clears before navigation
+                        setTimeout(() => {
+                          console.log('Navigating to edit booking:', booking.id);
+                          navigate(`/new-booking?edit=${booking.id}`);
+                        }, 200);
                         break;
                       case 'delete':
                         openDeleteDialog(booking);
                         break;
                       case 'respond':
-                        setFullScreenCalendarOpen(false);
-                        // Small delay to ensure state clears before navigation
-                        setTimeout(() => navigate(`/templates?bookingId=${booking.id}&action=respond`), 100);
+                        // Delay to ensure all state clears before navigation
+                        setTimeout(() => {
+                          console.log('Navigating to templates for respond:', booking.id);
+                          navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                        }, 200);
                         break;
                       case 'contract':
-                        setFullScreenCalendarOpen(false);
-                        // Small delay to ensure state clears before navigation
-                        setTimeout(() => navigate(`/contracts?bookingId=${booking.id}&action=create`), 100);
+                        // Delay to ensure all state clears before navigation
+                        setTimeout(() => {
+                          console.log('Navigating to contracts for creation:', booking.id);
+                          navigate(`/contracts?bookingId=${booking.id}&action=create`);
+                        }, 200);
                         break;
                       case 'invoice':
-                        setFullScreenCalendarOpen(false);
-                        // Small delay to ensure state clears before navigation
-                        setTimeout(() => navigate(`/invoices?bookingId=${booking.id}&action=create`), 100);
+                        // Delay to ensure all state clears before navigation
+                        setTimeout(() => {
+                          console.log('Navigating to invoices for creation:', booking.id);
+                          navigate(`/invoices?bookingId=${booking.id}&action=create`);
+                        }, 200);
                         break;
                       case 'thankyou':
-                        setFullScreenCalendarOpen(false);
-                        // Small delay to ensure state clears before navigation
-                        setTimeout(() => navigate(`/templates?bookingId=${booking.id}&action=thankyou`), 100);
+                        // Delay to ensure all state clears before navigation
+                        setTimeout(() => {
+                          console.log('Navigating to templates for thankyou:', booking.id);
+                          navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+                        }, 200);
                         break;
                       case 'send_compliance':
                         setSelectedBookingForCompliance(booking);
