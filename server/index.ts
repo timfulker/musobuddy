@@ -274,40 +274,34 @@ app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
     const webhookData = req.body;
     const recipientEmail = webhookData.recipient || webhookData.To || '';
     
-    // Extract booking ID and user ID from email address (booking-12345u43963086@mg.musobuddy.com)
-    const bookingMatch = recipientEmail.match(/booking-(\d+)u(\d+)@/);
-    const invoiceMatch = recipientEmail.match(/invoice-(\d+)u(\d+)@/);
+    // Extract booking ID from email address (booking-12345@mg.musobuddy.com)
+    const bookingMatch = recipientEmail.match(/booking-(\d+)@/);
+    const invoiceMatch = recipientEmail.match(/invoice-(\d+)@/);
     
     let bookingId = null;
-    let userId = null;
     let replyType = 'unknown';
     
     if (bookingMatch) {
       bookingId = bookingMatch[1];
-      userId = bookingMatch[2];
       replyType = 'booking';
     } else if (invoiceMatch) {
-      bookingId = invoiceMatch[1];
-      userId = invoiceMatch[2];
+      bookingId = invoiceMatch[1]; // Invoice replies also link to booking
       replyType = 'invoice';
     } else {
-      logReplyWebhookActivity('No booking/invoice ID and user ID found in recipient', { recipientEmail });
+      logReplyWebhookActivity('No booking/invoice ID found in recipient', { recipientEmail });
       return res.status(200).json({ status: 'ignored', reason: 'no_id_found' });
     }
     
-    // Verify the booking exists and belongs to the user (security check)
+    // Find the booking to get user ID
     const { storage } = await import('./core/storage');
     const booking = await storage.getBooking(bookingId);
     
     if (!booking) {
-      logReplyWebhookActivity('Booking not found', { bookingId, userId });
+      logReplyWebhookActivity('Booking not found', { bookingId });
       return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
     }
     
-    if (booking.userId !== userId) {
-      logReplyWebhookActivity('Security: Booking does not belong to user', { bookingId, userId, actualUserId: booking.userId });
-      return res.status(200).json({ status: 'ignored', reason: 'user_mismatch' });
-    }
+    const userId = booking.userId;
     const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
     const subject = webhookData.subject || webhookData.Subject || 'No Subject';
     
