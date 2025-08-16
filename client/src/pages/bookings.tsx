@@ -2415,20 +2415,33 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-4">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
-              {/* Month Header - Centered */}
-              <div className="flex items-center justify-center mb-6 flex-col">
-                <h2 className="text-4xl font-bold luminance-aware mb-3">
-                  {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
-                </h2>
-                <div className="text-xs text-gray-400 luminance-aware-muted bg-gray-50 px-3 py-1 rounded-full">
-                  ← → months • ↑ ↓ years • Enter/Space today • Esc close
+              {/* Month Header - Theme-Aware with Gradient Background */}
+              <div className="flex items-center justify-center mb-6 flex-col relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-lg opacity-60" style={{
+                  background: `linear-gradient(135deg, ${settings?.themeAccentColor || '#8B5CF6'}15, ${settings?.themeAccentColor || '#8B5CF6'}25, ${settings?.themeAccentColor || '#8B5CF6'}15)`
+                }}></div>
+                <div className="relative z-10 py-4 px-6">
+                  <h2 className="text-4xl font-bold luminance-aware mb-3 text-center" style={{
+                    color: settings?.themeAccentColor || '#8B5CF6'
+                  }}>
+                    {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
+                  </h2>
+                  <div className="text-xs text-gray-400 luminance-aware-muted px-3 py-1 rounded-full text-center" style={{
+                    backgroundColor: `${settings?.themeAccentColor || '#8B5CF6'}10`,
+                    border: `1px solid ${settings?.themeAccentColor || '#8B5CF6'}20`
+                  }}>
+                    ← → months • ↑ ↓ years • Enter/Space today • Esc close
+                  </div>
                 </div>
               </div>
               
-              {/* Day Headers - Compact */}
+              {/* Day Headers - Theme-Aware */}
               <div className="grid grid-cols-7 gap-2 mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center font-semibold text-gray-600 py-1 text-sm">
+                  <div key={day} className="text-center font-semibold py-2 text-sm rounded-md" style={{
+                    color: settings?.themeAccentColor || '#8B5CF6',
+                    backgroundColor: `${settings?.themeAccentColor || '#8B5CF6'}08`
+                  }}>
                     {day}
                   </div>
                 ))}
@@ -2465,11 +2478,24 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[110px]
-                        ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-100 text-gray-500 opacity-60'}
-                        ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
-                        ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
+                        p-3 cursor-pointer flex flex-col min-h-[110px] rounded-md transition-all duration-200
+                        ${day.isCurrentMonth ? 'bg-white shadow-sm hover:shadow-md' : 'bg-gray-100 text-gray-500 opacity-60 hover:opacity-80'}
+                        ${day.isToday ? 'shadow-lg' : ''}
+                        ${isSelectedDate ? 'ring-2 bg-blue-50' : ''}
                       `}
+                      style={{
+                        border: day.isCurrentMonth 
+                          ? `2px solid ${settings?.themeAccentColor || '#8B5CF6'}30`
+                          : '1px solid #e5e7eb',
+                        backgroundColor: day.isToday 
+                          ? `${settings?.themeAccentColor || '#8B5CF6'}10`
+                          : isSelectedDate
+                          ? `${settings?.themeAccentColor || '#8B5CF6'}15`
+                          : day.isCurrentMonth ? 'white' : '#f9fafb',
+                        borderColor: day.isToday || isSelectedDate
+                          ? settings?.themeAccentColor || '#8B5CF6'
+                          : undefined
+                      }}
                       onClick={() => {
                         if (day.events.length > 0) {
                           const firstEvent = day.events[0];
@@ -2488,8 +2514,12 @@ export default function UnifiedBookings() {
                       }}
                     >
                       <div className={`font-semibold mb-2 text-center ${
-                        day.isCurrentMonth ? 'text-xl text-gray-900' : 'text-lg text-gray-500'
-                      }`}>
+                        day.isCurrentMonth ? 'text-xl' : 'text-lg text-gray-500'
+                      }`} style={{
+                        color: day.isCurrentMonth 
+                          ? (day.isToday ? settings?.themeAccentColor || '#8B5CF6' : '#1f2937')
+                          : undefined
+                      }}>
                         {day.day}
                       </div>
                       <div className="space-y-1 flex-1">
