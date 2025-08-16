@@ -2521,29 +2521,13 @@ export default function UnifiedBookings() {
                   <h2 className="text-5xl font-bold mb-4 text-center luminance-aware drop-shadow-lg">
                     {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                   </h2>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center">
                     <div className="text-xs font-medium px-4 py-2 rounded-full text-center luminance-aware-muted backdrop-blur-sm border border-white/20" style={{
                       backgroundColor: 'rgba(255,255,255,0.15)',
                       boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
                     }}>
                       ← → months • ↑ ↓ years • Enter/Space today • Esc close
                     </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="text-xs backdrop-blur-sm border border-white/20"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        color: 'inherit'
-                      }}
-                      onClick={() => {
-                        setFullScreenCalendarOpen(false);
-                        // We'll add a blocked dates dialog here later
-                      }}
-                      tabIndex={-1}
-                    >
-                      🚫 Manage Blocked Dates
-                    </Button>
                   </div>
                 </div>
               </div>
