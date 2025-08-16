@@ -2497,6 +2497,10 @@ export default function UnifiedBookings() {
             }
           }}
           tabIndex={0}
+          onOpenAutoFocus={(e) => {
+            // Prevent auto-focus on dialog open to avoid focus issues
+            e.preventDefault();
+          }}
         >
 
           
@@ -2533,6 +2537,7 @@ export default function UnifiedBookings() {
                         setFullScreenCalendarOpen(false);
                         // We'll add a blocked dates dialog here later
                       }}
+                      tabIndex={-1}
                     >
                       🚫 Manage Blocked Dates
                     </Button>
