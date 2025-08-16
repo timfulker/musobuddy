@@ -46,6 +46,17 @@ export function CommunicationHistory({ bookingId, clientEmail, showHeader = true
 
   const { data: communications = [], isLoading, error } = useQuery({
     queryKey: [queryUrl, bookingId, clientEmail],
+    enabled: !!queryUrl, // Only run query when we have a valid URL
+  });
+
+  // Debug logging
+  console.log('Communication History Debug:', {
+    queryUrl,
+    bookingId,
+    clientEmail,
+    isLoading,
+    error,
+    communications: communications?.length
   });
 
   const toggleExpanded = (id: number) => {

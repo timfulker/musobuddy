@@ -89,10 +89,12 @@ export function setupCommunicationRoutes(app: any) {
     try {
       const userId = req.user?.userId;
       if (!userId) {
+        console.log('❌ No userId found in request');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const bookingId = parseInt(req.params.bookingId);
+      console.log(`🔍 Fetching communications for booking ${bookingId}, user ${userId}`);
       
       const communications = await db
         .select()
@@ -103,6 +105,7 @@ export function setupCommunicationRoutes(app: any) {
         ))
         .orderBy(desc(clientCommunications.sentAt));
 
+      console.log(`✅ Found ${communications.length} communications for booking ${bookingId}`);
       res.json(communications);
 
     } catch (error) {
