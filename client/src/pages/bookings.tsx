@@ -2400,7 +2400,7 @@ export default function UnifiedBookings() {
               const newDate = new Date(fullScreenCurrentDate);
               newDate.setFullYear(newDate.getFullYear() + 1);
               setFullScreenCurrentDate(newDate);
-            } else if (e.key === 'Home') {
+            } else if (e.key === 'Home' || (e.metaKey && e.key === 'ArrowLeft')) {
               e.preventDefault();
               setFullScreenCurrentDate(new Date());
             }
@@ -2433,7 +2433,7 @@ export default function UnifiedBookings() {
                   {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                 </h2>
                 <div className="text-sm text-gray-500 mt-2 luminance-aware-muted">
-                  Use arrow keys: ← → months • ↑ ↓ years • Home for today
+                  Use arrow keys: ← → months • ↑ ↓ years • Home or ⌘← for today
                 </div>
               </div>
               
