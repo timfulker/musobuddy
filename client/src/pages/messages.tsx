@@ -162,12 +162,12 @@ export default function Messages() {
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center gap-2">
             {clientUnreadCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
+              <Badge className="text-xs bg-green-500 text-black hover:bg-green-600">
                 {clientUnreadCount} unread client messages
               </Badge>
             )}
             {unparseableUnreadCount > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge className="text-xs bg-green-500 text-black hover:bg-green-600">
                 {unparseableUnreadCount} new unparseable messages
               </Badge>
             )}
@@ -180,7 +180,7 @@ export default function Messages() {
               <MessageCircle className="h-4 w-4" />
               Client Messages
               {clientUnreadCount > 0 && (
-                <Badge variant="destructive" className="h-5 text-xs ml-1">
+                <Badge className="h-5 text-xs ml-1 bg-green-500 text-black hover:bg-green-600">
                   {clientUnreadCount}
                 </Badge>
               )}
@@ -189,7 +189,7 @@ export default function Messages() {
               <AlertTriangle className="h-4 w-4" />
               Unparseable Messages
               {unparseableUnreadCount > 0 && (
-                <Badge variant="secondary" className="h-5 text-xs ml-1">
+                <Badge className="h-5 text-xs ml-1 bg-green-500 text-black hover:bg-green-600">
                   {unparseableUnreadCount}
                 </Badge>
               )}
