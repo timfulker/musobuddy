@@ -2838,7 +2838,6 @@ export default function UnifiedBookings() {
                     setHoverCardVisible(false);
                     setHoveredBooking(null);
                     setFullScreenCalendarOpen(false);
-                    setHoverCardState(null);
                     
                     if (hideTimeout) {
                       clearTimeout(hideTimeout);
