@@ -13,15 +13,7 @@ export function registerNotificationRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}, Email: ${req.user?.email}`);
-      
-      // DEVELOPMENT FIX: Handle dev/prod account mismatch
-      let actualUserId = userId;
-      if (process.env.NODE_ENV === 'development' && userId === '43963086') {
-        // In development, also check messages for the production account
-        actualUserId = '1754488522516';
-        console.log(`🔧 DEV MODE: Checking messages for production account ${actualUserId} instead of ${userId}`);
-      }
+      console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}, Email: ${req.user?.email}, Environment: ${process.env.NODE_ENV}`);
 
       // Get all notification counts in parallel for efficiency
       const [
@@ -35,7 +27,7 @@ export function registerNotificationRoutes(app: Express) {
         storage.getUnparseableMessagesCount(userId),
         storage.getOverdueInvoicesCount(userId),
         storage.getExpiringDocumentsCount(userId),
-        storage.getUnreadMessageNotificationsCount(actualUserId)
+        storage.getUnreadMessageNotificationsCount(userId)
       ]);
 
       const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
@@ -140,16 +132,10 @@ export function registerNotificationRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // DEVELOPMENT FIX: Handle dev/prod account mismatch
-      let actualUserId = userId;
-      if (process.env.NODE_ENV === 'development' && userId === '43963086') {
-        // In development, check messages for the production account
-        actualUserId = '1754488522516';
-        console.log(`🔧 DEV MODE: Fetching messages for production account ${actualUserId} instead of ${userId}`);
-      }
+      console.log(`🔍 [MESSAGES] User ID from token: ${userId}, Email: ${req.user?.email}, Environment: ${process.env.NODE_ENV}`);
 
       // Get all message notifications for this user
-      const messages = await storage.getMessageNotifications(actualUserId);
+      const messages = await storage.getMessageNotifications(userId);
       
       res.json(messages);
 
