@@ -73,14 +73,27 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: #6b7280 !important;
 }
 
-/* Fix hover card z-index in dialog context */
-[data-radix-popper-content-wrapper] {
-  z-index: 100000 !important;
+/* Fix hover card z-index in dialog context - Multiple selectors for maximum coverage */
+[data-radix-popper-content-wrapper],
+[data-radix-hover-card-content],
+[data-radix-hover-card-portal],
+[role="dialog"] [data-radix-hover-card-content],
+[role="dialog"] [data-radix-popper-content-wrapper] {
+  z-index: 999999 !important;
 }
 
-/* Alternative selector for hover card content */
-[data-radix-hover-card-content] {
-  z-index: 100000 !important;
+/* Force all popper content to appear above dialogs */
+[data-radix-popper-content-wrapper] > * {
+  z-index: 999999 !important;
+}
+
+/* Dialog overlay fix - ensure it doesn't interfere with hover cards */
+[data-radix-dialog-overlay] {
+  z-index: 48 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 49 !important;
 }
 
 .calendar-integration-dialog .card {
