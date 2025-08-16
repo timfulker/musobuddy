@@ -2427,20 +2427,17 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-6">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
-              {/* Month Header - Fixed with Keyboard Hints */}
-              <div className="flex items-center justify-center mb-6 flex-col">
-                <h2 className="text-3xl font-bold luminance-aware">
-                  {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
-                </h2>
-                <div className="text-sm text-gray-500 mt-2 luminance-aware-muted">
-                  Navigate: ← → months • ↑ ↓ years • Enter/Space for today • Esc to close
+              {/* Keyboard Hints Only - Compact */}
+              <div className="flex items-center justify-center mb-4">
+                <div className="text-xs text-gray-400 luminance-aware-muted bg-gray-50 px-3 py-1 rounded-full">
+                  ← → months • ↑ ↓ years • Enter/Space today • Esc close
                 </div>
               </div>
               
-              {/* Day Headers - Fixed */}
-              <div className="grid grid-cols-7 gap-2 mb-4">
+              {/* Day Headers - Compact */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center font-semibold text-gray-600 py-2">
+                  <div key={day} className="text-center font-semibold text-gray-600 py-1 text-sm">
                     {day}
                   </div>
                 ))}
@@ -2478,7 +2475,7 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-4 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col
+                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[120px]
                         ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
                         ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
                         ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
@@ -2500,26 +2497,26 @@ export default function UnifiedBookings() {
                         }
                       }}
                     >
-                      <div className="font-medium text-lg mb-2">
+                      <div className="font-semibold text-xl mb-3 text-center">
                         {day.day}
                       </div>
                       <div className="space-y-1 flex-1">
-                        {day.events.slice(0, 3).map((event, eventIndex) => (
+                        {day.events.slice(0, 4).map((event, eventIndex) => (
                           <div
                             key={eventIndex}
-                            className={`text-xs p-2 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                            className={`text-xs p-2 rounded truncate font-medium ${getStatusColor(event.status || 'new')}`}
                           >
                             {event.title}
                           </div>
                         ))}
-                        {day.events.length > 3 && (
-                          <div className="text-xs text-gray-500 font-medium">
-                            +{day.events.length - 3} more
+                        {day.events.length > 4 && (
+                          <div className="text-xs text-gray-500 font-medium text-center mt-1">
+                            +{day.events.length - 4} more
                           </div>
                         )}
                         {day.events.length === 0 && (
-                          <div className="text-xs text-gray-400 italic py-2">
-                            Click to add booking
+                          <div className="text-xs text-gray-400 italic text-center mt-4 opacity-60">
+                            + Add booking
                           </div>
                         )}
                       </div>
