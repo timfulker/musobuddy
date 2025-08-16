@@ -278,15 +278,19 @@ export default function GoogleCalendarIntegration() {
           <div 
             className="inline-flex items-center px-3 py-1 rounded-full border"
             style={{ 
-              backgroundColor: '#f0fdf4', 
-              borderColor: '#22c55e',
-              color: '#15803d',
+              backgroundColor: calendarStatus?.connected ? '#f0fdf4' : '#fef2f2', 
+              borderColor: calendarStatus?.connected ? '#22c55e' : '#ef4444',
+              color: calendarStatus?.connected ? '#15803d' : '#dc2626',
               fontSize: '14px',
               fontWeight: '500'
             }}
           >
-            <CheckCircle className="w-3 h-3 mr-1" style={{ color: '#15803d' }} />
-            Connected
+            {calendarStatus?.connected ? (
+              <CheckCircle className="w-3 h-3 mr-1" style={{ color: '#15803d' }} />
+            ) : (
+              <X className="w-3 h-3 mr-1" style={{ color: '#dc2626' }} />
+            )}
+            {calendarStatus?.connected ? 'Connected' : 'Disconnected'}
           </div>
         </CardTitle>
       </CardHeader>
