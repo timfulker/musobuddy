@@ -2423,33 +2423,34 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-4">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
-              {/* Month Header - Vibrant Theme-Aware with Rich Gradient */}
+              {/* Month Header - Bold Theme Background */}
               <div className="flex items-center justify-center mb-6 flex-col relative">
-                <div className="absolute inset-0 rounded-xl shadow-lg" style={{
-                  background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}20, ${settings?.themeAccentColor || theme.colors.primary}35, ${settings?.themeAccentColor || theme.colors.primary}20)`,
-                  backdropFilter: 'blur(10px)'
+                <div className="absolute inset-0 rounded-xl shadow-xl" style={{
+                  backgroundColor: settings?.themeAccentColor || theme.colors.primary,
+                  background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}ee, ${settings?.themeAccentColor || theme.colors.primary})`,
+                  boxShadow: `0 8px 32px ${settings?.themeAccentColor || theme.colors.primary}40`
                 }}></div>
                 <div className="relative z-10 py-6 px-8">
-                  <h2 className="text-5xl font-bold mb-4 text-center text-white drop-shadow-lg">
+                  <h2 className="text-5xl font-bold mb-4 text-center luminance-aware drop-shadow-lg">
                     {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                   </h2>
-                  <div className="text-xs font-medium px-4 py-2 rounded-full text-center text-white/90 backdrop-blur-sm" style={{
-                    backgroundColor: `${settings?.themeAccentColor || theme.colors.primary}40`,
-                    border: `1px solid ${settings?.themeAccentColor || theme.colors.primary}50`,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  <div className="text-xs font-medium px-4 py-2 rounded-full text-center luminance-aware-muted backdrop-blur-sm border border-white/20" style={{
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
                   }}>
                     ← → months • ↑ ↓ years • Enter/Space today • Esc close
                   </div>
                 </div>
               </div>
               
-              {/* Day Headers - Vibrant Theme-Aware */}
+              {/* Day Headers - Full Theme Color Backgrounds with Luminance Aware Text */}
               <div className="grid grid-cols-7 gap-2 mb-3">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                  <div key={day} className="text-center font-bold py-3 text-sm rounded-lg shadow-sm text-white" style={{
-                    background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}70, ${settings?.themeAccentColor || theme.colors.primary}90)`,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    transform: 'translateZ(0)' // Hardware acceleration
+                  <div key={day} className="text-center font-bold py-4 text-sm rounded-lg shadow-md luminance-aware" style={{
+                    backgroundColor: settings?.themeAccentColor || theme.colors.primary,
+                    background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}, ${settings?.themeAccentColor || theme.colors.primary}dd)`,
+                    textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                    boxShadow: `0 4px 12px ${settings?.themeAccentColor || theme.colors.primary}30`
                   }}>
                     {day}
                   </div>
@@ -2501,13 +2502,13 @@ export default function UnifiedBookings() {
                             : 'linear-gradient(135deg, #ffffff, #f8fafc)')
                           : 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
                         border: day.isCurrentMonth 
-                          ? `3px solid ${settings?.themeAccentColor || theme.colors.primary}40`
+                          ? `3px solid ${settings?.themeAccentColor || theme.colors.primary}60`
                           : '2px solid #cbd5e1',
                         ringColor: day.isToday || isSelectedDate
                           ? `${settings?.themeAccentColor || theme.colors.primary}50`
                           : undefined,
                         boxShadow: day.isToday 
-                          ? `0 20px 25px -5px ${settings?.themeAccentColor || theme.colors.primary}20, 0 10px 10px -5px ${settings?.themeAccentColor || theme.colors.primary}10`
+                          ? `0 20px 25px -5px ${settings?.themeAccentColor || theme.colors.primary}30, 0 10px 10px -5px ${settings?.themeAccentColor || theme.colors.primary}15, inset 0 2px 4px ${settings?.themeAccentColor || theme.colors.primary}20`
                           : day.isCurrentMonth 
                           ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
                           : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
