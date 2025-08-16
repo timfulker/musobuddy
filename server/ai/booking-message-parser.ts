@@ -245,7 +245,14 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
 
-    // Check if this is an Encore booking
+    // FIRST: Extract Encore apply-now link to properly detect Encore bookings
+    const applyNowLink = extractEncoreApplyLink(messageText);
+    if (applyNowLink) {
+      cleanedData.applyNowLink = applyNowLink;
+      console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+    }
+
+    // Check if this is an Encore booking (now we have applyNowLink)
     const isEncoreBooking = cleanedData.applyNowLink || 
                            messageText.toLowerCase().includes('encore musicians') ||
                            messageText.includes('notification@encoremusicians.com');
@@ -287,15 +294,8 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
         console.warn('Failed to enrich venue data:', error);
       }
     }
-
-    // Enhanced Encore apply-now link extraction (handles tracking URLs)
-    const applyNowLink = extractEncoreApplyLink(messageText);
-    if (applyNowLink) {
-      cleanedData.applyNowLink = applyNowLink;
-      console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
-    }
     
-    // Detect Encore emails even without clickable links
+    // Detect Encore emails even without clickable links (for forwarded emails)
     const isEncoreEmail = messageText.toLowerCase().includes('encore musicians') || 
                          messageText.includes('notification@encoremusicians.com') ||
                          messageText.includes('encoremusicians.com');
