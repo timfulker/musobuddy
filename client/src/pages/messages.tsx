@@ -273,7 +273,8 @@ export default function Messages() {
                                 <div className="inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold h-4" 
                                      style={{ 
                                        backgroundColor: '#191970', 
-                                       color: 'white',
+                                       color: 'white !important',
+                                       WebkitTextFillColor: 'white !important',
                                        fontSize: '11px',
                                        lineHeight: '1'
                                      }}>
