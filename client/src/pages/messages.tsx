@@ -64,6 +64,7 @@ export default function Messages() {
   // Enhanced debug logging
   console.log('🔍 CLIENT DEBUG - User object:', user);
   console.log('🔍 CLIENT DEBUG - Detected userId:', userId, 'Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading, 'Error:', clientMessagesError);
+  console.log('🔍 CLIENT DEBUG - Messages data:', clientMessages);
 
   // Fetch unparseable messages
   const { data: unparseableMessages = [], isLoading: unparseableLoading } = useQuery({
@@ -224,7 +225,7 @@ export default function Messages() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-muted-foreground">Loading messages...</p>
                   </div>
-                ) : !Array.isArray(clientMessages) || clientMessages.length === 0 ? (
+                ) : clientMessages.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No client messages yet</p>
