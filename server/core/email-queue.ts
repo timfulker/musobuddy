@@ -294,40 +294,98 @@ class EmailQueue {
         return;
       }
 
-      // Special handling for Weebly form submissions
-      const isWeeblyForm = fromField.toLowerCase().includes('weebly.com') || 
-                          fromField.toLowerCase().includes('no-reply@weebly');
+      // List of known form builder/website host domains that forward contact forms
+      // These services typically send from no-reply addresses, with actual client info in the form content
+      const formBuilderDomains = [
+        'weebly.com',
+        'wix.com',
+        'squarespace.com',
+        'wordpress.com',
+        'wpengine.com',
+        'godaddy.com',
+        'typeform.com',
+        'jotform.com',
+        'formspree.io',
+        'formstack.com',
+        'hubspot.com',
+        'mailchimp.com',
+        'constantcontact.com',
+        'google.com', // Google Forms
+        'microsoft.com', // Microsoft Forms
+        '123formbuilder.com',
+        'cognito.com',
+        'zoho.com'
+      ];
+      
+      // Check if this is a form builder submission
+      const fromLower = fromField.toLowerCase();
+      const isFormBuilderSubmission = 
+        fromLower.includes('no-reply') || 
+        fromLower.includes('noreply') ||
+        fromLower.includes('do-not-reply') ||
+        formBuilderDomains.some(domain => fromLower.includes(domain));
       
       // Determine client information based on source
       let finalClientName = parsedData.clientName || null;
       let finalClientEmail = parsedData.clientEmail || null;
       
-      if (isWeeblyForm) {
-        // For Weebly forms, prioritize the extracted email from form content
-        console.log(`📧 [${requestId}] Detected Weebly form submission - extracting client email from form content`);
+      if (isFormBuilderSubmission) {
+        // For form builder submissions, extract client info from form content
+        console.log(`📧 [${requestId}] Detected form builder submission from: ${fromField}`);
+        console.log(`📧 [${requestId}] Extracting actual client details from form content...`);
         
-        // Extract email from the form content using a more precise pattern
-        const emailPattern = /Email\s*[\n:]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i;
-        const emailMatch = bodyField.match(emailPattern);
-        if (emailMatch) {
-          finalClientEmail = emailMatch[1].toLowerCase();
-          console.log(`📧 [${requestId}] Extracted client email from Weebly form: ${finalClientEmail}`);
+        // Try multiple patterns for email extraction (different form formats)
+        const emailPatterns = [
+          /Email\s*[:=]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i,
+          /Email\s*\n\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i,
+          /E-mail\s*[:=]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i,
+          /Your Email\s*[:=]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i,
+          /Contact Email\s*[:=]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i,
+          /Reply To\s*[:=]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i
+        ];
+        
+        for (const pattern of emailPatterns) {
+          const match = bodyField.match(pattern);
+          if (match) {
+            finalClientEmail = match[1].toLowerCase();
+            console.log(`📧 [${requestId}] Extracted client email from form: ${finalClientEmail}`);
+            break;
+          }
         }
         
-        // Extract name from the form content
-        const namePattern = /Name\s*[\n:]\s*([^\n]+)/i;
-        const nameMatch = bodyField.match(namePattern);
-        if (nameMatch) {
-          finalClientName = nameMatch[1].trim();
-          console.log(`📧 [${requestId}] Extracted client name from Weebly form: ${finalClientName}`);
+        // Try multiple patterns for name extraction
+        const namePatterns = [
+          /Name\s*[:=]\s*([^\n]+)/i,
+          /Name\s*\n\s*([^\n]+)/i,
+          /Full Name\s*[:=]\s*([^\n]+)/i,
+          /Your Name\s*[:=]\s*([^\n]+)/i,
+          /Contact Name\s*[:=]\s*([^\n]+)/i,
+          /First Name\s*[:=]\s*([^\n]+)/i // Will get first name only
+        ];
+        
+        for (const pattern of namePatterns) {
+          const match = bodyField.match(pattern);
+          if (match) {
+            finalClientName = match[1].trim();
+            console.log(`📧 [${requestId}] Extracted client name from form: ${finalClientName}`);
+            break;
+          }
         }
         
-        // If no email found in specific field, use parsed data
+        // If no specific fields found, fall back to AI parsed data
         if (!finalClientEmail && parsedData.clientEmail) {
           finalClientEmail = parsedData.clientEmail;
+          console.log(`📧 [${requestId}] Using AI-extracted email: ${finalClientEmail}`);
         }
         if (!finalClientName && parsedData.clientName) {
           finalClientName = parsedData.clientName;
+          console.log(`📧 [${requestId}] Using AI-extracted name: ${finalClientName}`);
+        }
+        
+        // Log warning if we couldn't extract client info from a form submission
+        if (!finalClientEmail) {
+          console.warn(`⚠️ [${requestId}] Form builder submission detected but could not extract client email!`);
+          console.warn(`⚠️ [${requestId}] Consider adding extraction pattern for this form format`);
         }
       } else {
         // For regular emails, use sender information if parsed data is not available
