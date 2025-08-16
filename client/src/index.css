@@ -54,6 +54,16 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: #1f2937 !important;
 }
 
+/* Hover Card Portal and Dropdown Z-Index Management */
+[data-radix-popper-content-wrapper] {
+  z-index: 99999999 !important;
+}
+
+/* Ensure dropdown content appears above hover cards */
+[data-radix-dropdown-menu-content] {
+  z-index: 99999999 !important;
+}
+
 .calendar-integration-dialog h1,
 .calendar-integration-dialog h2,
 .calendar-integration-dialog h3,

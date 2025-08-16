@@ -2762,7 +2762,7 @@ export default function UnifiedBookings() {
           style={{ 
             left: hoverCardPosition.x, 
             top: hoverCardPosition.y, 
-            zIndex: 999999,
+            zIndex: 9999998,
             pointerEvents: 'auto'
           }}
           onMouseEnter={() => {
@@ -2830,42 +2830,61 @@ export default function UnifiedBookings() {
                 {/* Respond Menu */}
                 <div 
                   onClick={(e) => e.stopPropagation()}
-                  onMouseDown={() => {
-                    // Immediately hide hover card when action menu is clicked
-                    setHoverCardVisible(false);
-                    setHoveredBooking(null);
-                    if (hideTimeout) {
-                      clearTimeout(hideTimeout);
-                      setHideTimeout(null);
-                    }
-                    if (hoverTimeout) {
-                      clearTimeout(hoverTimeout);
-                      setHoverTimeout(null);
-                    }
+                  onMouseLeave={(e) => {
+                    // Prevent hover card from hiding when interacting with dropdown
+                    e.stopPropagation();
                   }}
                 >
                   <BookingActionMenu 
                     booking={hoveredBooking}
                     onEditBooking={(booking) => {
-                      setFullScreenCalendarOpen(false);
+                      // Clear hover card state and navigate
                       setHoverCardVisible(false);
                       setHoveredBooking(null);
+                      if (hideTimeout) {
+                        clearTimeout(hideTimeout);
+                        setHideTimeout(null);
+                      }
+                      if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        setHoverTimeout(null);
+                      }
+                      setFullScreenCalendarOpen(false);
                       navigate(`/new-booking?edit=${booking.id}`);
                     }}
                     onDeleteBooking={(booking) => {
                       // Clear hover card state before opening delete dialog
                       setHoverCardVisible(false);
                       setHoveredBooking(null);
+                      if (hideTimeout) {
+                        clearTimeout(hideTimeout);
+                        setHideTimeout(null);
+                      }
+                      if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        setHoverTimeout(null);
+                      }
                       openDeleteDialog(booking);
                     }}
                     onStatusChange={(booking, newStatus) => {
-                      // Clear hover card state before status change
-                      setHoverCardVisible(false);
-                      setHoveredBooking(null);
+                      // Clear hover card state after status change
                       statusChangeMutation.mutate({
                         bookingId: booking.id,
                         status: newStatus
                       });
+                      // Delay cleanup to allow mutation to complete
+                      setTimeout(() => {
+                        setHoverCardVisible(false);
+                        setHoveredBooking(null);
+                        if (hideTimeout) {
+                          clearTimeout(hideTimeout);
+                          setHideTimeout(null);
+                        }
+                        if (hoverTimeout) {
+                          clearTimeout(hoverTimeout);
+                          setHoverTimeout(null);
+                        }
+                      }, 100);
                     }}
                   />
                 </div>

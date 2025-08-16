@@ -135,7 +135,7 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-48" 
+        className="w-48 z-[9999999]" 
         side="bottom"
         sideOffset={5}
         onPointerDownOutside={() => setDropdownOpen(false)}
