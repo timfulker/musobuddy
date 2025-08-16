@@ -6,6 +6,7 @@ interface NotificationCounts {
   unparseableMessages: number;
   overdueInvoices: number;
   expiringDocuments: number;
+  clientMessages: number;
   total: number;
 }
 
@@ -15,6 +16,7 @@ export function useNotifications() {
     unparseableMessages: 0,
     overdueInvoices: 0,
     expiringDocuments: 0,
+    clientMessages: 0,
     total: 0
   });
 

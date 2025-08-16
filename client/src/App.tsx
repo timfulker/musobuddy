@@ -32,6 +32,7 @@ import ClientPortal from "@/pages/client-portal";
 
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
+import Messages from "@/pages/messages";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
@@ -90,7 +91,7 @@ function Router() {
   }
 
   // If user tries to access protected routes without authentication, redirect to login
-  const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/email-setup', '/system-health', '/mobile-invoice-sender'];
+  const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/email-setup', '/system-health', '/mobile-invoice-sender'];
   const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
   
   if (!isAuthenticated && isProtectedRoute) {
@@ -145,6 +146,7 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/settings" component={Settings} />
       <Route path="/templates" component={Templates} />
+      <Route path="/messages" component={Messages} />
       <Route path="/unparseable-messages" component={UnparseableMessages} />
       <Route path="/user-guide" component={UserGuide} />
       <Route path="/system-health" component={SystemHealth} />

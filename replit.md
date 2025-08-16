@@ -28,6 +28,7 @@ Mileage calculation optimization: Fixed wasteful API calls (August 2025). System
 AI venue parsing improvement: Enhanced AI to properly distinguish between venue names and location names (January 2025). System now correctly identifies "our garden" as venue name and "Swindon" as location, preventing Google Maps from suggesting unrelated venues like "Sky Garden" in London when parsing booking emails. AI also simplifies location descriptions ("near Swindon" → "Swindon") for better Google Maps compatibility.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted (January 2025), instead of just going to generic bookings page.
 Forgot password system: Complete email-based password reset functionality implemented (January 2025) with secure crypto-generated tokens, 1-hour expiration, professional email templates using existing Mailgun infrastructure, and user-friendly frontend flow including dedicated forgot password and reset password pages.
+Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface (January 2025). Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 
 ## System Architecture
 

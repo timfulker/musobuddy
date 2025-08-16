@@ -145,6 +145,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
           
           <Link 
+            href="/messages" 
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/messages"),
+              isActive("/messages") ? 'bg-primary text-primary-foreground' : '',
+              'relative'
+            )}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span>Messages</span>
+            <NotificationBadge count={(counts.unparseableMessages || 0) + (counts.clientMessages || 0)} />
+          </Link>
+          
+          <Link 
             href="/address-book" 
             onClick={() => window.innerWidth < 768 && onClose()}
             className={cn(
@@ -261,22 +275,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           </div>
           
-          <Link 
-            href="/unparseable-messages" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={cn(
-              getNavLinkClass("/unparseable-messages"),
-              'relative'
-            )}
-            style={{ 
-              color: isActive("/unparseable-messages") ? getThemeTextColor(currentTheme) : '#1e293b',
-              backgroundColor: isActive("/unparseable-messages") ? 'var(--theme-primary)' : 'transparent'
-            }}
-          >
-            <AlertTriangle className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Review Messages</span>
-            <NotificationBadge count={counts.unparseableMessages} />
-          </Link>
+
           
           <Link 
             href="/user-guide" 

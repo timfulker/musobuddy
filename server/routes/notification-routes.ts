@@ -18,15 +18,17 @@ export function registerNotificationRoutes(app: Express) {
         newBookings,
         unparseableMessages, 
         overdueInvoices,
-        expiringDocuments
+        expiringDocuments,
+        unreadClientMessages
       ] = await Promise.all([
         storage.getNewBookingsCount(userId),
         storage.getUnparseableMessagesCount(userId),
         storage.getOverdueInvoicesCount(userId),
-        storage.getExpiringDocumentsCount(userId)
+        storage.getExpiringDocumentsCount(userId),
+        storage.getMessageNotifications(userId, false).then(messages => messages.length)
       ]);
 
-      const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments;
+      const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
 
       res.json({
         counts: {
@@ -34,6 +36,7 @@ export function registerNotificationRoutes(app: Express) {
           unparseableMessages,
           overdueInvoices,
           expiringDocuments,
+          clientMessages: unreadClientMessages,
           total: totalCount
         }
       });
