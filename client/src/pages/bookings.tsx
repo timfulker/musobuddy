@@ -2848,22 +2848,31 @@ export default function UnifiedBookings() {
                     switch (action) {
                       case 'edit':
                         setFullScreenCalendarOpen(false);
-                        navigate(`/new-booking?edit=${booking.id}`);
+                        // Small delay to ensure state clears before navigation
+                        setTimeout(() => navigate(`/new-booking?edit=${booking.id}`), 100);
                         break;
                       case 'delete':
                         openDeleteDialog(booking);
                         break;
                       case 'respond':
-                        navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                        setFullScreenCalendarOpen(false);
+                        // Small delay to ensure state clears before navigation
+                        setTimeout(() => navigate(`/templates?bookingId=${booking.id}&action=respond`), 100);
                         break;
                       case 'contract':
-                        navigate(`/contracts?bookingId=${booking.id}&action=create`);
+                        setFullScreenCalendarOpen(false);
+                        // Small delay to ensure state clears before navigation
+                        setTimeout(() => navigate(`/contracts?bookingId=${booking.id}&action=create`), 100);
                         break;
                       case 'invoice':
-                        navigate(`/invoices?bookingId=${booking.id}&action=create`);
+                        setFullScreenCalendarOpen(false);
+                        // Small delay to ensure state clears before navigation
+                        setTimeout(() => navigate(`/invoices?bookingId=${booking.id}&action=create`), 100);
                         break;
                       case 'thankyou':
-                        navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+                        setFullScreenCalendarOpen(false);
+                        // Small delay to ensure state clears before navigation
+                        setTimeout(() => navigate(`/templates?bookingId=${booking.id}&action=thankyou`), 100);
                         break;
                       case 'send_compliance':
                         setSelectedBookingForCompliance(booking);
