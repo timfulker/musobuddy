@@ -138,6 +138,15 @@ export function registerNotificationRoutes(app: Express) {
       const messages = await storage.getMessageNotifications(userId);
       console.log(`🔍 [MESSAGES] Found ${messages.length} messages for user ${userId}`);
       
+      if (messages.length > 0) {
+        console.log(`🔍 [MESSAGES] Sample message:`, {
+          id: messages[0].id,
+          bookingId: messages[0].bookingId,
+          senderEmail: messages[0].senderEmail,
+          messageUrl: messages[0].messageUrl
+        });
+      }
+      
       res.json(messages);
 
     } catch (error) {

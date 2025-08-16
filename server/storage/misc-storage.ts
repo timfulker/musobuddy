@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings } from "../../shared/schema";
 import { eq, and, desc, sql, lte, gte } from "drizzle-orm";
 
 export class MiscStorage {
