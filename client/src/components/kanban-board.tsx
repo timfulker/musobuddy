@@ -70,6 +70,18 @@ export default function ActionableEnquiries() {
       
       const data = await response.json();
       console.log('✅ Kanban board bookings loaded:', data.length);
+      
+      // Debug: Check what venue data we have for Encore bookings
+      const encoreBookings = data.filter((booking: any) => booking.applyNowLink);
+      encoreBookings.forEach((booking: any) => {
+        console.log(`🎵 Encore booking ${booking.id}:`, {
+          venue: booking.venue,
+          venueAddress: booking.venueAddress,
+          venue_address: booking.venue_address,
+          title: booking.title
+        });
+      });
+      
       return data;
     }
   });

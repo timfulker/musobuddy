@@ -187,6 +187,23 @@ export default function UnifiedBookings() {
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["/api/bookings"],
     retry: 2,
+    queryFn: async () => {
+      const response = await apiRequest('/api/bookings');
+      const data = await response.json();
+      
+      // Debug: Check what venue data we have for Encore bookings
+      const encoreBookings = data.filter((booking: any) => booking.applyNowLink);
+      encoreBookings.forEach((booking: any) => {
+        console.log(`🎵 Bookings page - Encore booking ${booking.id}:`, {
+          venue: booking.venue,
+          venueAddress: booking.venueAddress,
+          venue_address: booking.venue_address,
+          title: booking.title
+        });
+      });
+      
+      return data;
+    },
   }) as { data: Enquiry[], isLoading: boolean };
 
   const { data: contracts = [] } = useQuery({
