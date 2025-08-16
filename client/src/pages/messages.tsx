@@ -270,9 +270,7 @@ export default function Messages() {
                                 {message.subject || 'Client Reply Message'}
                               </p>
                               {!message.isRead && (
-                                <Badge variant="default" className="h-4 text-xs">
-                                  New
-                                </Badge>
+                                <Badge variant="default" className="h-4 text-xs">New</Badge>
                               )}
                             </div>
                             <p className="text-sm mb-1" style={{ color: '#333333' }}>
