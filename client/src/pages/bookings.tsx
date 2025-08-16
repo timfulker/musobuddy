@@ -2498,15 +2498,18 @@ export default function UnifiedBookings() {
           }}
           tabIndex={0}
           onOpenAutoFocus={(e) => {
-            // Prevent auto-focus on dialog open to avoid focus issues
-            e.preventDefault();
+            // Allow auto-focus but ensure it focuses on the dialog container
+            const target = e.currentTarget as HTMLElement;
+            if (target) {
+              target.focus();
+            }
           }}
         >
 
           
           <div className="flex-1 overflow-hidden p-4">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
-            <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
+            <div className="h-full flex flex-col">
               {/* Month Header - Bold Theme Background */}
               <div className="flex items-center justify-center mb-6 flex-col relative">
                 <div className="absolute inset-0 rounded-xl shadow-xl" style={{
