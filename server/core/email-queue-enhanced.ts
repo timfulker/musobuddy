@@ -374,7 +374,7 @@ class EnhancedEmailQueue {
       return;
     }
 
-    const emailPrefix = recipientMatch[1];
+    const emailPrefix = recipientMatch[1].toLowerCase(); // Make case-insensitive
     console.log(`📧 [${requestId}] Email prefix: ${emailPrefix}`);
 
     // Find user by email prefix
