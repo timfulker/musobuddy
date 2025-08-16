@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield, Upload } from "lucide-react";
+import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield, Upload, History } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +17,10 @@ interface BookingActionMenuProps {
   onEditBooking?: (booking: any) => void;
   onSendCompliance?: (booking: any) => void;
   onManageDocuments?: (booking: any) => void;
+  onViewCommunications?: (booking: any) => void;
 }
 
-export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance, onManageDocuments }: BookingActionMenuProps) {
+export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance, onManageDocuments, onViewCommunications }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -96,6 +97,12 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         // Open documents manager dialog
         if (onManageDocuments) {
           onManageDocuments(booking);
+        }
+        return;
+      case 'view_communications':
+        // Open communication history dialog
+        if (onViewCommunications) {
+          onViewCommunications(booking);
         }
         return;
       case 'reject':
@@ -191,6 +198,13 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         >
           <Upload className="w-4 h-4 mr-2" />
           Manage Documents
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleAction('view_communications')}
+          disabled={statusUpdateMutation.isPending}
+        >
+          <History className="w-4 h-4 mr-2" />
+          Communication History
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleAction('reject')}

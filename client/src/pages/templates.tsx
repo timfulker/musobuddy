@@ -144,12 +144,16 @@ export default function Templates() {
   
   const templateCategories = [
     { value: 'all', label: 'All Templates' },
-    { value: 'booking', label: 'Booking' },
-    { value: 'contract', label: 'Contract' },
-    { value: 'invoice', label: 'Invoice' },
-    { value: 'marketing', label: 'Marketing' },
-    { value: 'follow-up', label: 'Follow-up' },
-    { value: 'general', label: 'General' }
+    { value: 'sequence', label: 'Template Sequences', description: 'Multi-step email workflows' },
+    { value: 'inquiry', label: 'Initial Inquiry', description: 'First contact responses' },
+    { value: 'booking', label: 'Booking Confirmation', description: 'Confirming bookings' },
+    { value: 'contract', label: 'Contract & Agreement', description: 'Contract-related communications' },
+    { value: 'invoice', label: 'Invoice & Payment', description: 'Payment and billing' },
+    { value: 'reminder', label: 'Reminders', description: 'Event and payment reminders' },
+    { value: 'follow-up', label: 'Follow-up', description: 'Post-event follow-ups' },
+    { value: 'marketing', label: 'Marketing', description: 'Promotional content' },
+    { value: 'decline', label: 'Polite Declines', description: 'Unavailable or declining bookings' },
+    { value: 'general', label: 'General', description: 'Other communications' }
   ];
 
   useEffect(() => {

@@ -519,6 +519,34 @@ export const bookingDocuments = pgTable("booking_documents", {
   index("idx_booking_documents_user").on(table.userId),
 ]);
 
+// Client communication history table - tracks all emails/messages sent to clients
+export const clientCommunications = pgTable("client_communications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(), // User who sent the communication
+  bookingId: integer("booking_id"), // Optional - communication may not be linked to a specific booking
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email").notNull(),
+  communicationType: varchar("communication_type").notNull().default("email"), // email, sms, phone_call
+  direction: varchar("direction").notNull().default("outbound"), // outbound, inbound
+  templateId: integer("template_id"), // Optional - if sent using a template
+  templateName: varchar("template_name"), // Name of template used
+  templateCategory: varchar("template_category"), // Category of template used
+  subject: text("subject"), // Email subject
+  messageBody: text("message_body").notNull(), // Email/SMS content
+  attachments: jsonb("attachments").default('[]'), // Array of attachment info {name, url, type}
+  sentAt: timestamp("sent_at").defaultNow(),
+  deliveryStatus: varchar("delivery_status").default("sent"), // sent, delivered, failed, bounced
+  openedAt: timestamp("opened_at"), // When email was opened (if tracking available)
+  repliedAt: timestamp("replied_at"), // When client replied
+  notes: text("notes"), // Additional notes about this communication
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_client_communications_user").on(table.userId),
+  index("idx_client_communications_booking").on(table.bookingId),
+  index("idx_client_communications_client_email").on(table.clientEmail),
+  index("idx_client_communications_sent_at").on(table.sentAt),
+]);
+
 // Compliance documents table
 export const complianceDocuments = pgTable("compliance_documents", {
   id: serial("id").primaryKey(),
@@ -1095,6 +1123,7 @@ export const contractExtractionsRelations = relations(contractExtractions, ({ on
 export const insertImportedContractSchema = createInsertSchema(importedContracts);
 export const insertContractExtractionPatternSchema = createInsertSchema(contractExtractionPatterns);
 export const insertContractExtractionSchema = createInsertSchema(contractExtractions);
+export const insertClientCommunicationSchema = createInsertSchema(clientCommunications);
 
 // Types for the new tables
 export type InsertImportedContract = z.infer<typeof insertImportedContractSchema>;
@@ -1103,4 +1132,6 @@ export type InsertContractExtractionPattern = z.infer<typeof insertContractExtra
 export type ContractExtractionPattern = typeof contractExtractionPatterns.$inferSelect;
 export type InsertContractExtraction = z.infer<typeof insertContractExtractionSchema>;
 export type ContractExtraction = typeof contractExtractions.$inferSelect;
+export type InsertClientCommunication = z.infer<typeof insertClientCommunicationSchema>;
+export type ClientCommunication = typeof clientCommunications.$inferSelect;
 

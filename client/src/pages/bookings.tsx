@@ -32,6 +32,7 @@ import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
+import { CommunicationHistory } from "@/components/communication-history";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Enquiry } from "@shared/schema";
@@ -122,6 +123,10 @@ export default function UnifiedBookings() {
   // Document upload dialog states
   const [documentUploadDialogOpen, setDocumentUploadDialogOpen] = useState(false);
   const [selectedBookingForDocument, setSelectedBookingForDocument] = useState<any>(null);
+  
+  // Communication history dialog states
+  const [communicationHistoryDialogOpen, setCommunicationHistoryDialogOpen] = useState(false);
+  const [selectedBookingForCommunications, setSelectedBookingForCommunications] = useState<any>(null);
   
   // Full-screen calendar modal state
   const [fullScreenCalendarOpen, setFullScreenCalendarOpen] = useState(false);
@@ -449,6 +454,11 @@ export default function UnifiedBookings() {
   const openDocumentManagerDialog = (booking: any) => {
     setSelectedBookingForDocument(booking);
     setDocumentUploadDialogOpen(true);
+  };
+  
+  const openCommunicationHistoryDialog = (booking: any) => {
+    setSelectedBookingForCommunications(booking);
+    setCommunicationHistoryDialogOpen(true);
   };
   
   // Enhanced sorting function
@@ -1664,6 +1674,7 @@ export default function UnifiedBookings() {
                                               onEditBooking={handleEditBooking}
                                               onSendCompliance={openComplianceDialog}
                                               onManageDocuments={openDocumentManagerDialog}
+                                              onViewCommunications={openCommunicationHistoryDialog}
                                             />
                                           </div>
                                         </CardContent>
@@ -1799,6 +1810,7 @@ export default function UnifiedBookings() {
                                   onEditBooking={handleEditBooking}
                                   onSendCompliance={openComplianceDialog}
                                   onManageDocuments={openDocumentManagerDialog}
+                                  onViewCommunications={openCommunicationHistoryDialog}
                                 />
                               </div>
                             </div>
@@ -2417,6 +2429,29 @@ export default function UnifiedBookings() {
           setConflictResolutionDialogOpen(false);
         }}
       />
+
+      {/* Communication History Dialog */}
+      <Dialog 
+        open={communicationHistoryDialogOpen} 
+        onOpenChange={setCommunicationHistoryDialogOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Communication History - {selectedBookingForCommunications?.clientName || 'Client'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {selectedBookingForCommunications && (
+              <CommunicationHistory
+                bookingId={selectedBookingForCommunications.id}
+                clientEmail={selectedBookingForCommunications.clientEmail}
+                showHeader={false}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

@@ -20,6 +20,7 @@ import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
 import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
 import { registerNotificationRoutes } from "./notification-routes";
+import { setupCommunicationRoutes } from "./communication-routes";
 import bookingDocumentRoutes from "./booking-document-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
 
@@ -73,6 +74,9 @@ export async function registerRoutes(app: Express) {
   
   // Register notification routes
   registerNotificationRoutes(app);
+  
+  // Register communication history routes
+  setupCommunicationRoutes(app);
   
   // Register booking document routes
   app.use(bookingDocumentRoutes);

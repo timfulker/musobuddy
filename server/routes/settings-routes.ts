@@ -5,6 +5,8 @@ import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
+import { db } from '../core/database';
+import { clientCommunications } from '@shared/schema';
 
 export async function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
@@ -743,6 +745,31 @@ export async function registerSettingsRoutes(app: Express) {
       if (isThankYouTemplate && booking) {
         await storage.updateBooking(bookingId, { status: 'Completed' }, userId);
         console.log(`✅ Booking ${bookingId} marked as completed after thank you email`);
+      }
+
+      // Save communication history
+      try {
+        const communicationData = {
+          userId,
+          bookingId: bookingId || null,
+          clientName: recipientName || recipientEmail,
+          clientEmail: recipientEmail,
+          communicationType: 'email',
+          direction: 'outbound',
+          templateId: null, // We don't have template ID here
+          templateName: null, // Could add template name if available
+          templateCategory: isThankYouTemplate ? 'thank_you' : 'general',
+          subject: template.subject,
+          messageBody: template.emailBody,
+          attachments: JSON.stringify([]),
+          deliveryStatus: 'sent'
+        };
+
+        await db.insert(clientCommunications).values(communicationData);
+        console.log(`✅ Communication history saved for ${recipientEmail}`);
+      } catch (commError) {
+        console.error('⚠️ Failed to save communication history:', commError);
+        // Don't fail the email sending if communication logging fails
       }
 
       res.json({ 
