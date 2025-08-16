@@ -270,10 +270,15 @@ export default function Messages() {
                                 {message.subject || 'Client Reply Message'}
                               </p>
                               {!message.isRead && (
-                                <Badge variant="default" className="h-4 text-xs" style={{ 
-                                  backgroundColor: 'var(--primary)', 
-                                  color: 'var(--theme-primary-text, white)'
-                                }}>New</Badge>
+                                <div className="inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold h-4" 
+                                     style={{ 
+                                       backgroundColor: '#191970', 
+                                       color: 'white',
+                                       fontSize: '11px',
+                                       lineHeight: '1'
+                                     }}>
+                                  New
+                                </div>
                               )}
                             </div>
                             <p className="text-sm mb-1" style={{ color: '#333333' }}>
