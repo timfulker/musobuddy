@@ -15,13 +15,12 @@ export function registerNotificationRoutes(app: Express) {
       
       console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}, Email: ${req.user?.email}`);
       
-      // TEMPORARY: Check for authentication contamination
-      if (req.user?.email === 'timfulkermusic@gmail.com' && userId !== '1754488522516') {
-        console.log(`🚨 AUTH CONTAMINATION DETECTED: Email shows timfulkermusic@gmail.com but token has userId ${userId}`);
-        return res.status(401).json({ 
-          error: 'Authentication contamination detected', 
-          details: 'Please log out and log back in to refresh your session'
-        });
+      // DEVELOPMENT FIX: Handle dev/prod account mismatch
+      let actualUserId = userId;
+      if (process.env.NODE_ENV === 'development' && userId === '43963086') {
+        // In development, also check messages for the production account
+        actualUserId = '1754488522516';
+        console.log(`🔧 DEV MODE: Checking messages for production account ${actualUserId} instead of ${userId}`);
       }
 
       // Get all notification counts in parallel for efficiency
@@ -36,7 +35,7 @@ export function registerNotificationRoutes(app: Express) {
         storage.getUnparseableMessagesCount(userId),
         storage.getOverdueInvoicesCount(userId),
         storage.getExpiringDocumentsCount(userId),
-        storage.getUnreadMessageNotificationsCount(userId)
+        storage.getUnreadMessageNotificationsCount(actualUserId)
       ]);
 
       const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
@@ -141,8 +140,16 @@ export function registerNotificationRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      // DEVELOPMENT FIX: Handle dev/prod account mismatch
+      let actualUserId = userId;
+      if (process.env.NODE_ENV === 'development' && userId === '43963086') {
+        // In development, check messages for the production account
+        actualUserId = '1754488522516';
+        console.log(`🔧 DEV MODE: Fetching messages for production account ${actualUserId} instead of ${userId}`);
+      }
+
       // Get all message notifications for this user
-      const messages = await storage.getMessageNotifications(userId);
+      const messages = await storage.getMessageNotifications(actualUserId);
       
       res.json(messages);
 
