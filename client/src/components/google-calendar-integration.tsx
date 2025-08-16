@@ -275,10 +275,19 @@ export default function GoogleCalendarIntegration() {
             <Calendar className="w-5 h-5" />
             Google Calendar Integration
           </div>
-          <Badge variant="outline" className="text-green-700 border-green-700">
-            <CheckCircle className="w-3 h-3 mr-1" />
+          <div 
+            className="inline-flex items-center px-3 py-1 rounded-full border"
+            style={{ 
+              backgroundColor: '#f0fdf4', 
+              borderColor: '#22c55e',
+              color: '#15803d',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            <CheckCircle className="w-3 h-3 mr-1" style={{ color: '#15803d' }} />
             Connected
-          </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
