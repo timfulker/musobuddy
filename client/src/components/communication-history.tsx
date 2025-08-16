@@ -45,14 +45,7 @@ export function CommunicationHistory({ bookingId, clientEmail, showHeader = true
     : '/api/communications';
 
   const { data: communications = [], isLoading, error } = useQuery({
-    queryKey: ['communications', bookingId, clientEmail],
-    queryFn: async () => {
-      const response = await fetch(queryUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch communications');
-      }
-      return response.json();
-    },
+    queryKey: [queryUrl, bookingId, clientEmail],
   });
 
   const toggleExpanded = (id: number) => {
