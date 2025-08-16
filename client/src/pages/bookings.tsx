@@ -2681,11 +2681,11 @@ export default function UnifiedBookings() {
                               </HoverCardTrigger>
                               {booking && (
                                 <HoverCardContent 
-                                  className="w-80" 
+                                  className="w-80 hover-card-force-top" 
                                   align="start" 
                                   side="right" 
                                   sideOffset={10}
-                                  style={{ zIndex: 999999 }}
+                                  style={{ zIndex: 2147483647, position: 'fixed' }}
                                 >
                                   <div className="space-y-2">
                                     <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>

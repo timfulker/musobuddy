@@ -73,27 +73,43 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: #6b7280 !important;
 }
 
-/* Fix hover card z-index in dialog context - Multiple selectors for maximum coverage */
+/* ULTIMATE Z-INDEX FIX - Force hover cards above everything */
 [data-radix-popper-content-wrapper],
 [data-radix-hover-card-content],
 [data-radix-hover-card-portal],
 [role="dialog"] [data-radix-hover-card-content],
-[role="dialog"] [data-radix-popper-content-wrapper] {
-  z-index: 999999 !important;
+[role="dialog"] [data-radix-popper-content-wrapper],
+[data-state="open"][data-radix-hover-card-content],
+[data-side][data-radix-hover-card-content] {
+  z-index: 2147483647 !important; /* Maximum 32-bit integer */
+  position: relative !important;
 }
 
-/* Force all popper content to appear above dialogs */
-[data-radix-popper-content-wrapper] > * {
-  z-index: 999999 !important;
+/* Force all popper content above everything */
+[data-radix-popper-content-wrapper] > *,
+[data-radix-popper-content-wrapper] [data-radix-hover-card-content] {
+  z-index: 2147483647 !important;
 }
 
-/* Dialog overlay fix - ensure it doesn't interfere with hover cards */
+/* Reduce all dialog z-indexes significantly */
 [data-radix-dialog-overlay] {
-  z-index: 48 !important;
+  z-index: 10 !important;
 }
 
 [data-radix-dialog-content] {
-  z-index: 49 !important;
+  z-index: 20 !important;
+}
+
+/* Override any existing z-index styles in the document */
+.hover-card-force-top {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+}
+
+/* Target hover cards specifically within full-screen calendar */
+[role="dialog"] .hover-card-force-top,
+[data-radix-dialog-content] .hover-card-force-top {
+  z-index: 2147483647 !important;
 }
 
 .calendar-integration-dialog .card {
