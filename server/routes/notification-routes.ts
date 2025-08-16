@@ -122,5 +122,24 @@ export function registerNotificationRoutes(app: Express) {
     }
   });
 
+  // Get client messages specifically for the Messages page
+  app.get('/api/notifications/messages', requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Get all message notifications for this user
+      const messages = await storage.getMessageNotifications(userId);
+      
+      res.json(messages);
+
+    } catch (error) {
+      console.error('❌ Error fetching client messages:', error);
+      res.status(500).json({ error: 'Failed to fetch client messages' });
+    }
+  });
+
   console.log('✅ Notification routes configured');
 }

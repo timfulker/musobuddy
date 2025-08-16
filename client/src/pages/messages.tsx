@@ -22,6 +22,10 @@ interface MessageNotification {
   messageUrl: string;
   isRead: boolean;
   createdAt: string;
+  // Booking details
+  clientName: string | null;
+  eventDate: string | null;
+  venue: string | null;
 }
 
 interface UnparseableMessage {
@@ -243,8 +247,19 @@ export default function Messages() {
                             <p className="text-sm text-muted-foreground mb-1">
                               From: {message.senderEmail}
                             </p>
+                            {message.clientName && (
+                              <p className="text-sm font-medium text-primary mb-1">
+                                Client: {message.clientName}
+                              </p>
+                            )}
+                            {message.eventDate && (
+                              <p className="text-sm text-muted-foreground mb-1">
+                                Booking: {new Date(message.eventDate).toLocaleDateString()} 
+                                {message.venue && ` at ${message.venue}`}
+                              </p>
+                            )}
                             <p className="text-xs text-muted-foreground">
-                              Booking #{message.bookingId} • {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
+                              Booking #{message.bookingId} • Received: {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
                             </p>
                           </div>
                           

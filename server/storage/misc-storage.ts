@@ -399,9 +399,24 @@ export class MiscStorage {
       ? and(eq(messageNotifications.userId, userId), eq(messageNotifications.isRead, isRead))
       : eq(messageNotifications.userId, userId);
 
-    const result = await db.select().from(messageNotifications)
-      .where(whereClause)
-      .orderBy(desc(messageNotifications.createdAt));
+    const result = await db.select({
+      id: messageNotifications.id,
+      userId: messageNotifications.userId,
+      bookingId: messageNotifications.bookingId,
+      senderEmail: messageNotifications.senderEmail,
+      subject: messageNotifications.subject,
+      messageUrl: messageNotifications.messageUrl,
+      isRead: messageNotifications.isRead,
+      createdAt: messageNotifications.createdAt,
+      // Join booking data
+      clientName: bookings.clientName,
+      eventDate: bookings.eventDate,
+      venue: bookings.venue
+    })
+    .from(messageNotifications)
+    .leftJoin(bookings, eq(messageNotifications.bookingId, bookings.id))
+    .where(whereClause)
+    .orderBy(desc(messageNotifications.createdAt));
     return result;
   }
 
