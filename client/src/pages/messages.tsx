@@ -58,6 +58,23 @@ export default function Messages() {
         color: white !important;
         -webkit-text-fill-color: white !important;
       }
+      
+      /* Force unselected tabs to have white background with dark text */
+      button[data-state="inactive"] {
+        background-color: white !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      
+      button[data-state="inactive"] svg {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      
+      /* Keep selected tab as-is (theme color) */
+      button[data-state="active"] {
+        /* Selected state retains theme styling */
+      }
     `;
     document.head.appendChild(style);
     return () => {
