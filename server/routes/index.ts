@@ -21,6 +21,7 @@ import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
 import { registerNotificationRoutes } from "./notification-routes";
 import bookingDocumentRoutes from "./booking-document-routes";
+import blockedDatesRoutes from "./blocked-dates-routes";
 
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
@@ -75,6 +76,9 @@ export async function registerRoutes(app: Express) {
   
   // Register booking document routes
   app.use(bookingDocumentRoutes);
+  
+  // Register blocked dates routes
+  app.use('/api/blocked-dates', blockedDatesRoutes);
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {

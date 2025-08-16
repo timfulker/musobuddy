@@ -178,6 +178,24 @@ export const userAuditLogs = pgTable("user_audit_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Blocked dates table - for holidays, personal time, unavailable dates
+export const blockedDates = pgTable("blocked_dates", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(), // Support date ranges
+  title: varchar("title", { length: 100 }).notNull(), // "Holiday", "Personal Time", etc.
+  description: text("description"), // Optional details
+  isRecurring: boolean("is_recurring").default(false), // For annual holidays
+  recurrencePattern: varchar("recurrence_pattern"), // "yearly", "monthly", etc.
+  color: varchar("color", { length: 7 }).default("#ef4444"), // Hex color for calendar display
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_blocked_dates_user").on(table.userId),
+  index("idx_blocked_dates_range").on(table.startDate, table.endDate),
+]);
+
 // Phone verification tracking
 export const phoneVerifications = pgTable("phone_verifications", {
   id: serial("id").primaryKey(),
@@ -961,6 +979,20 @@ export const insertApiUsageLimitsSchema = createInsertSchema(apiUsageLimits).omi
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Blocked dates types
+export type BlockedDate = typeof blockedDates.$inferSelect;
+export type InsertBlockedDate = typeof blockedDates.$inferInsert;
+
+// Blocked dates Zod schemas
+export const insertBlockedDateSchema = createInsertSchema(blockedDates).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertBlockedDateType = z.infer<typeof insertBlockedDateSchema>;
 export type InsertEnquiry = z.infer<typeof insertBookingSchema>;
 export type Enquiry = typeof bookings.$inferSelect;
 export type InsertContract = z.infer<typeof insertContractSchema>;

@@ -168,6 +168,12 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
+  // Fetch blocked dates
+  const { data: blockedDates = [] } = useQuery({
+    queryKey: ["/api/blocked-dates"],
+    retry: 2,
+  });
+
   // Backend conflicts loaded
 
   // Highlight state for calendar navigation
@@ -697,6 +703,24 @@ export default function UnifiedBookings() {
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-blue-100 text-blue-800';
     }
+  };
+
+  // Check if a date is blocked
+  const isDateBlocked = (date: Date) => {
+    if (!Array.isArray(blockedDates)) return null;
+    
+    return blockedDates.find((blocked: any) => {
+      const startDate = new Date(blocked.startDate);
+      const endDate = new Date(blocked.endDate);
+      const checkDate = new Date(date);
+      
+      // Reset time for date-only comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      checkDate.setHours(12, 0, 0, 0); // Noon to avoid timezone issues
+      
+      return checkDate >= startDate && checkDate <= endDate;
+    });
   };
 
   const formatReceivedTime = (dateString: string) => {
@@ -2434,11 +2458,28 @@ export default function UnifiedBookings() {
                   <h2 className="text-5xl font-bold mb-4 text-center luminance-aware drop-shadow-lg">
                     {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                   </h2>
-                  <div className="text-xs font-medium px-4 py-2 rounded-full text-center luminance-aware-muted backdrop-blur-sm border border-white/20" style={{
-                    backgroundColor: 'rgba(255,255,255,0.15)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-                  }}>
-                    ← → months • ↑ ↓ years • Enter/Space today • Esc close
+                  <div className="flex items-center gap-4">
+                    <div className="text-xs font-medium px-4 py-2 rounded-full text-center luminance-aware-muted backdrop-blur-sm border border-white/20" style={{
+                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+                    }}>
+                      ← → months • ↑ ↓ years • Enter/Space today • Esc close
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="text-xs backdrop-blur-sm border border-white/20"
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        color: 'inherit'
+                      }}
+                      onClick={() => {
+                        setFullScreenCalendarOpen(false);
+                        // We'll add a blocked dates dialog here later
+                      }}
+                    >
+                      🚫 Manage Blocked Dates
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -2475,12 +2516,14 @@ export default function UnifiedBookings() {
                     const date = new Date(startDate);
                     date.setDate(startDate.getDate() + i);
                     const events = getEventsForDate(date);
+                    const blockedDate = isDateBlocked(date);
                     days.push({
                       date,
                       day: date.getDate(),
                       events,
                       isCurrentMonth: date.getMonth() === fullScreenCurrentDate.getMonth(),
-                      isToday: date.toDateString() === new Date().toDateString()
+                      isToday: date.toDateString() === new Date().toDateString(),
+                      blockedDate: blockedDate
                     });
                   }
                   
@@ -2547,7 +2590,18 @@ export default function UnifiedBookings() {
                         {day.day}
                       </div>
                       <div className="space-y-1 flex-1">
-                        {day.events.slice(0, day.isCurrentMonth ? 3 : 2).map((event, eventIndex) => {
+                        {/* Show blocked date indicator first */}
+                        {day.blockedDate && (
+                          <div 
+                            className="px-2 py-1 rounded-md text-xs font-bold text-white text-center shadow-sm"
+                            style={{ backgroundColor: day.blockedDate.color }}
+                            title={day.blockedDate.description || day.blockedDate.title}
+                          >
+                            🚫 {day.blockedDate.title}
+                          </div>
+                        )}
+                        
+                        {day.events.slice(0, day.isCurrentMonth ? (day.blockedDate ? 2 : 3) : (day.blockedDate ? 1 : 2)).map((event, eventIndex) => {
                           const validBookings = validateBookingArray(bookings) ? bookings : [];
                           const booking = validBookings.find((b) => b.id === event.id);
                           
