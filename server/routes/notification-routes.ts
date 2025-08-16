@@ -143,7 +143,9 @@ export function registerNotificationRoutes(app: Express) {
           id: messages[0].id,
           bookingId: messages[0].bookingId,
           senderEmail: messages[0].senderEmail,
-          messageUrl: messages[0].messageUrl
+          messageUrl: messages[0].messageUrl,
+          subject: messages[0].subject,
+          clientName: messages[0].clientName
         });
       }
       
