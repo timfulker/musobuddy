@@ -136,6 +136,7 @@ export function registerNotificationRoutes(app: Express) {
 
       // Get all message notifications for this user
       const messages = await storage.getMessageNotifications(userId);
+      console.log(`🔍 [MESSAGES] Found ${messages.length} messages for user ${userId}`);
       
       res.json(messages);
 

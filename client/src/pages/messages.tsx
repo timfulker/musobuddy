@@ -52,11 +52,14 @@ export default function Messages() {
   const { user } = useAuth();
 
   // Fetch client messages
-  const { data: clientMessages = [], isLoading: clientMessagesLoading } = useQuery({
+  const { data: clientMessages = [], isLoading: clientMessagesLoading, error: clientMessagesError } = useQuery({
     queryKey: ['notifications', 'messages', user?.id],
     queryFn: () => apiRequest(`/api/notifications/messages`),
     enabled: !!user?.id,
   });
+
+  // Debug logging
+  console.log('🔍 CLIENT DEBUG - User:', user?.id, 'Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading, 'Error:', clientMessagesError);
 
   // Fetch unparseable messages
   const { data: unparseableMessages = [], isLoading: unparseableLoading } = useQuery({
