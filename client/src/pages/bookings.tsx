@@ -1613,10 +1613,13 @@ export default function UnifiedBookings() {
                                                     <User className="w-4 h-4" />
                                                     {groupBooking.clientName || 'Unknown Client'}
                                                   </span>
-                                                  {groupBooking.venue && (
+                                                  {(groupBooking.venue || groupBooking.venueAddress) && (
                                                     <span className="flex items-center gap-1">
                                                       <MapPin className="w-4 h-4" />
-                                                      {groupBooking.venue}
+                                                      {/* Show area for Encore bookings, venue for others */}
+                                                      {groupBooking.applyNowLink && groupBooking.venueAddress 
+                                                        ? groupBooking.venueAddress 
+                                                        : groupBooking.venue}
                                                     </span>
                                                   )}
                                                   {groupBooking.eventTime && (
@@ -1777,9 +1780,12 @@ export default function UnifiedBookings() {
                                       </Badge>
                                     )}
                                   </div>
-                                  {booking.venue && (
+                                  {(booking.venue || booking.venueAddress) && (
                                     <div className="text-gray-500">
-                                      {booking.venue}
+                                      {/* Show area for Encore bookings, venue for others */}
+                                      {booking.applyNowLink && booking.venueAddress 
+                                        ? booking.venueAddress 
+                                        : booking.venue}
                                     </div>
                                   )}
                                   {booking.createdAt && (
