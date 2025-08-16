@@ -420,6 +420,16 @@ export class MiscStorage {
     return result;
   }
 
+  async getUnreadMessageNotificationsCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(messageNotifications)
+      .where(and(
+        eq(messageNotifications.userId, userId),
+        eq(messageNotifications.isRead, false)
+      ));
+    return result[0]?.count || 0;
+  }
+
   async markMessageNotificationAsRead(id: number) {
     const result = await db.update(messageNotifications)
       .set({ isRead: true })

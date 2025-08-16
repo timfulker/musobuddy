@@ -25,7 +25,7 @@ export function registerNotificationRoutes(app: Express) {
         storage.getUnparseableMessagesCount(userId),
         storage.getOverdueInvoicesCount(userId),
         storage.getExpiringDocumentsCount(userId),
-        storage.getMessageNotifications(userId, false).then(messages => messages.length)
+        storage.getUnreadMessageNotificationsCount(userId)
       ]);
 
       const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + unreadClientMessages;

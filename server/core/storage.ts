@@ -616,6 +616,10 @@ export class Storage {
     return miscStorage.getMessageNotifications(userId, isRead);
   }
 
+  async getUnreadMessageNotificationsCount(userId: string): Promise<number> {
+    return miscStorage.getUnreadMessageNotificationsCount(userId);
+  }
+
   async markMessageNotificationAsRead(id: number) {
     return miscStorage.markMessageNotificationAsRead(id);
   }
