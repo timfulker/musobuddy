@@ -2423,32 +2423,33 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-4">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
-              {/* Month Header - Theme-Aware with Gradient Background */}
+              {/* Month Header - Vibrant Theme-Aware with Rich Gradient */}
               <div className="flex items-center justify-center mb-6 flex-col relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-lg opacity-60" style={{
-                  background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}15, ${settings?.themeAccentColor || theme.colors.primary}25, ${settings?.themeAccentColor || theme.colors.primary}15)`
+                <div className="absolute inset-0 rounded-xl shadow-lg" style={{
+                  background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}20, ${settings?.themeAccentColor || theme.colors.primary}35, ${settings?.themeAccentColor || theme.colors.primary}20)`,
+                  backdropFilter: 'blur(10px)'
                 }}></div>
-                <div className="relative z-10 py-4 px-6">
-                  <h2 className="text-4xl font-bold luminance-aware mb-3 text-center" style={{
-                    color: settings?.themeAccentColor || theme.colors.primary
-                  }}>
+                <div className="relative z-10 py-6 px-8">
+                  <h2 className="text-5xl font-bold mb-4 text-center text-white drop-shadow-lg">
                     {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                   </h2>
-                  <div className="text-xs text-gray-400 luminance-aware-muted px-3 py-1 rounded-full text-center" style={{
-                    backgroundColor: `${settings?.themeAccentColor || theme.colors.primary}10`,
-                    border: `1px solid ${settings?.themeAccentColor || theme.colors.primary}20`
+                  <div className="text-xs font-medium px-4 py-2 rounded-full text-center text-white/90 backdrop-blur-sm" style={{
+                    backgroundColor: `${settings?.themeAccentColor || theme.colors.primary}40`,
+                    border: `1px solid ${settings?.themeAccentColor || theme.colors.primary}50`,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                   }}>
                     ← → months • ↑ ↓ years • Enter/Space today • Esc close
                   </div>
                 </div>
               </div>
               
-              {/* Day Headers - Theme-Aware */}
-              <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center font-semibold py-2 text-sm rounded-md" style={{
-                    color: settings?.themeAccentColor || theme.colors.primary,
-                    backgroundColor: `${settings?.themeAccentColor || theme.colors.primary}08`
+              {/* Day Headers - Vibrant Theme-Aware */}
+              <div className="grid grid-cols-7 gap-2 mb-3">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                  <div key={day} className="text-center font-bold py-3 text-sm rounded-lg shadow-sm text-white" style={{
+                    background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}70, ${settings?.themeAccentColor || theme.colors.primary}90)`,
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    transform: 'translateZ(0)' // Hardware acceleration
                   }}>
                     {day}
                   </div>
@@ -2486,23 +2487,30 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 cursor-pointer flex flex-col min-h-[110px] rounded-md transition-all duration-200
-                        ${day.isCurrentMonth ? 'bg-white shadow-sm hover:shadow-md' : 'bg-gray-100 text-gray-500 opacity-60 hover:opacity-80'}
-                        ${day.isToday ? 'shadow-lg' : ''}
-                        ${isSelectedDate ? 'ring-2 bg-blue-50' : ''}
+                        p-3 cursor-pointer flex flex-col min-h-[110px] rounded-xl transition-all duration-300 transform hover:scale-[1.02]
+                        ${day.isCurrentMonth ? 'shadow-lg hover:shadow-xl' : 'opacity-70 hover:opacity-90'}
+                        ${day.isToday ? 'shadow-2xl ring-4 ring-opacity-50' : ''}
+                        ${isSelectedDate ? 'ring-4 ring-opacity-60 scale-[1.02]' : ''}
                       `}
                       style={{
+                        background: day.isCurrentMonth 
+                          ? (day.isToday 
+                            ? `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}15, ${settings?.themeAccentColor || theme.colors.primary}25)`
+                            : isSelectedDate
+                            ? `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}20, ${settings?.themeAccentColor || theme.colors.primary}30)`
+                            : 'linear-gradient(135deg, #ffffff, #f8fafc)')
+                          : 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
                         border: day.isCurrentMonth 
-                          ? `2px solid ${settings?.themeAccentColor || theme.colors.primary}30`
-                          : '1px solid #e5e7eb',
-                        backgroundColor: day.isToday 
-                          ? `${settings?.themeAccentColor || theme.colors.primary}10`
-                          : isSelectedDate
-                          ? `${settings?.themeAccentColor || theme.colors.primary}15`
-                          : day.isCurrentMonth ? 'white' : '#f9fafb',
-                        borderColor: day.isToday || isSelectedDate
-                          ? settings?.themeAccentColor || theme.colors.primary
-                          : undefined
+                          ? `3px solid ${settings?.themeAccentColor || theme.colors.primary}40`
+                          : '2px solid #cbd5e1',
+                        ringColor: day.isToday || isSelectedDate
+                          ? `${settings?.themeAccentColor || theme.colors.primary}50`
+                          : undefined,
+                        boxShadow: day.isToday 
+                          ? `0 20px 25px -5px ${settings?.themeAccentColor || theme.colors.primary}20, 0 10px 10px -5px ${settings?.themeAccentColor || theme.colors.primary}10`
+                          : day.isCurrentMonth 
+                          ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                       }}
                       onClick={() => {
                         if (day.events.length > 0) {
@@ -2521,12 +2529,14 @@ export default function UnifiedBookings() {
                         }
                       }}
                     >
-                      <div className={`font-semibold mb-2 text-center ${
-                        day.isCurrentMonth ? 'text-xl' : 'text-lg text-gray-500'
+                      <div className={`font-bold mb-2 text-center ${
+                        day.isCurrentMonth ? 'text-2xl' : 'text-lg text-gray-500'
                       }`} style={{
                         color: day.isCurrentMonth 
-                          ? (day.isToday ? settings?.themeAccentColor || theme.colors.primary : '#1f2937')
-                          : undefined
+                          ? (day.isToday ? settings?.themeAccentColor || theme.colors.primary : '#1e293b')
+                          : '#64748b',
+                        textShadow: day.isToday ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                        fontWeight: day.isToday ? '900' : '700'
                       }}>
                         {day.day}
                       </div>
