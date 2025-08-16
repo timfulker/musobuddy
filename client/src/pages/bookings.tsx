@@ -2445,7 +2445,7 @@ export default function UnifiedBookings() {
               
               {/* Day Headers - Full Theme Color Backgrounds with Luminance Aware Text */}
               <div className="grid grid-cols-7 gap-2 mb-3">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
                   <div key={day} className="text-center font-bold py-4 text-sm rounded-lg shadow-md luminance-aware" style={{
                     backgroundColor: settings?.themeAccentColor || theme.colors.primary,
                     background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}, ${settings?.themeAccentColor || theme.colors.primary}dd)`,
@@ -2461,9 +2461,14 @@ export default function UnifiedBookings() {
               <div className="grid grid-cols-7 grid-rows-6 gap-2 flex-1 min-h-0">
                 {(() => {
                   // Generate calendar data for complete 6 weeks (42 days) to show full month context
+                  // Monday-to-Sunday week layout for musicians (weekend work is common)
                   const firstDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth(), 1);
                   const startDate = new Date(firstDay);
-                  startDate.setDate(startDate.getDate() - firstDay.getDay());
+                  // Calculate days back to Monday: getDay() returns 0=Sunday, 1=Monday, etc.
+                  // For Monday start: if Sunday (0), go back 6 days; if Monday (1), go back 0 days
+                  const dayOfWeek = firstDay.getDay();
+                  const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                  startDate.setDate(startDate.getDate() - daysBack);
                   
                   const days = [];
                   for (let i = 0; i < 42; i++) { // 6 weeks = 42 days
