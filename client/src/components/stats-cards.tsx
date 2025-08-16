@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { PoundSterling, Calendar, FileText, ArrowUp, Clock, AlertCircle } from "lucide-react";
+import { PoundSterling, Calendar, FileText, ArrowUp, Clock, AlertCircle, MessageCircle, Bell } from "lucide-react";
 
 interface DashboardStats {
   monthlyRevenue?: number;
@@ -8,6 +8,8 @@ interface DashboardStats {
   pendingInvoices?: number;
   overdueInvoices?: number;
   enquiriesRequiringResponse?: number;
+  totalMessages?: number;
+  unreadMessages?: number;
 }
 
 export default function StatsCards() {
@@ -117,6 +119,26 @@ export default function StatsCards() {
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 md:p-6">
+          <div className="flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Messages Received</p>
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+                {stats?.totalMessages || 0}
+              </p>
+              <p className="text-xs md:text-sm text-purple-600 mt-1 flex items-center">
+                <Bell className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                {stats?.unreadMessages || 0} unread
+              </p>
+            </div>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <MessageCircle className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
             </div>
           </div>
         </CardContent>

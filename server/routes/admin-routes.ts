@@ -371,10 +371,11 @@ export function registerAdminRoutes(app: Express) {
       }
       
       // Get all data for the user
-      const [contracts, invoices, bookings] = await Promise.all([
+      const [contracts, invoices, bookings, messageNotifications] = await Promise.all([
         storage.getContracts(userId),
         storage.getInvoices(userId),
-        storage.getBookings(userId)
+        storage.getBookings(userId),
+        storage.getMessageNotifications(userId)
       ]);
       
       // Calculate statistics
@@ -396,7 +397,10 @@ export function registerAdminRoutes(app: Express) {
           .reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0),
         pendingRevenue: invoices
           .filter(i => i.status !== 'paid')
-          .reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0)
+          .reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0),
+        // Message notification stats
+        totalMessages: messageNotifications.length,
+        unreadMessages: messageNotifications.filter(m => !m.isRead).length
       };
       
       console.log(`✅ Generated dashboard stats for user ${userId}`);
