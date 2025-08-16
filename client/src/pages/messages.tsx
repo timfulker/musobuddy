@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,22 @@ interface UnparseableMessage {
 }
 
 export default function Messages() {
+  // Force black text on all message cards
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .message-card-override,
+      .message-card-override * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+  
   const [selectedUnparseableMessage, setSelectedUnparseableMessage] = useState<UnparseableMessage | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [activeTab, setActiveTab] = useState("client-messages");
@@ -237,37 +253,41 @@ export default function Messages() {
                     {clientMessages.map((message: MessageNotification) => (
                       <div
                         key={message.id}
-                        className={`p-4 border rounded-lg ${
+                        className={`message-card-override p-4 border rounded-lg ${
                           message.isRead 
-                            ? 'bg-background border-border text-foreground' 
-                            : 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800 text-foreground dark:text-white'
+                            ? 'bg-gray-50 border-gray-300' 
+                            : 'bg-blue-50 border-blue-200'
                         }`}
+                        style={{ 
+                          color: '#000000 !important',
+                          '--tw-text-opacity': '1 !important'
+                        }}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-sm truncate text-gray-900 dark:text-white">
+                              <p className="font-medium text-sm truncate" style={{ color: '#000000' }}>
                                 {message.subject || 'Client Reply Message'}
                               </p>
                               {!message.isRead && (
                                 <Badge variant="default" className="h-4 text-xs">New</Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                            <p className="text-sm mb-1" style={{ color: '#333333' }}>
                               From: {message.senderEmail}
                             </p>
                             {message.clientName && (
-                              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">
+                              <p className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
                                 Client: {message.clientName}
                               </p>
                             )}
                             {message.eventDate && (
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                              <p className="text-sm mb-1" style={{ color: '#333333' }}>
                                 Booking: {new Date(message.eventDate).toLocaleDateString()} 
                                 {message.venue && ` at ${message.venue}`}
                               </p>
                             )}
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs" style={{ color: '#555555' }}>
                               Booking #{message.bookingId} • Received: {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
                             </p>
                           </div>
@@ -331,10 +351,14 @@ export default function Messages() {
                       <div
                         key={message.id}
                         className={cn(
-                          "p-4 border rounded-lg cursor-pointer transition-all",
-                          message.status === 'new' ? 'border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800' : 'border-gray-200 bg-gray-50 dark:bg-gray-900 dark:border-gray-700',
+                          "message-card-override p-4 border rounded-lg cursor-pointer transition-all",
+                          message.status === 'new' ? 'border-orange-200 bg-orange-50' : 'border-gray-200 bg-gray-50',
                           selectedUnparseableMessage?.id === message.id && 'ring-2 ring-primary'
                         )}
+                        style={{ 
+                          color: '#000000 !important',
+                          '--tw-text-opacity': '1 !important'
+                        }}
                         onClick={() => setSelectedUnparseableMessage(message)}
                       >
                         <div className="flex items-start justify-between">
@@ -347,13 +371,13 @@ export default function Messages() {
                                 {message.source}
                               </span>
                             </div>
-                            <p className="font-medium text-sm mb-1">
+                            <p className="font-medium text-sm mb-1" style={{ color: '#000000' }}>
                               From: {message.fromContact}
                             </p>
                             <p className="text-xs text-muted-foreground mb-2">
                               {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                            <p className="text-sm line-clamp-2" style={{ color: '#333333' }}>
                               {message.rawMessage?.substring(0, 150)}...
                             </p>
                           </div>
