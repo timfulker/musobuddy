@@ -2410,26 +2410,14 @@ export default function UnifiedBookings() {
           }}
           tabIndex={0}
         >
-          <DialogHeader className="p-6 pb-4 border-b">
-            <DialogTitle className="text-2xl font-semibold luminance-aware">
-              Calendar - {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
-            </DialogTitle>
-            <div className="text-sm text-gray-500 luminance-aware-muted">
-              {fullScreenSelectedDate 
-                ? `Originally selected: ${fullScreenSelectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', month: 'long', day: 'numeric' 
-                  })} • Click any date to create booking or view existing ones`
-                : 'Click on a date to create a new booking or view existing ones'
-              }
-            </div>
-          </DialogHeader>
+
           
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 overflow-hidden p-4">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
               {/* Month Header - Centered */}
-              <div className="flex items-center justify-center mb-4 flex-col">
-                <h2 className="text-3xl font-bold luminance-aware mb-2">
+              <div className="flex items-center justify-center mb-6 flex-col">
+                <h2 className="text-4xl font-bold luminance-aware mb-3">
                   {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                 </h2>
                 <div className="text-xs text-gray-400 luminance-aware-muted bg-gray-50 px-3 py-1 rounded-full">
