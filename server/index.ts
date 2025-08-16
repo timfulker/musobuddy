@@ -418,6 +418,7 @@ app.get('/api/email-queue/status', async (req, res) => {
 });
 
   // Register all API routes
+  console.log('🔄 Registering all modular routes...');
   const { registerRoutes } = await import('./routes');
   await registerRoutes(app);
 
