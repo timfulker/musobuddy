@@ -46,6 +46,7 @@ const HoverResponseMenu = ({ booking, onAction }: HoverResponseMenuProps) => {
   };
 
   const handleAction = (action: string, event?: React.MouseEvent) => {
+    console.log('HoverResponseMenu handleAction called with:', action);
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -55,6 +56,7 @@ const HoverResponseMenu = ({ booking, onAction }: HoverResponseMenuProps) => {
       clearTimeout(submenuTimeout);
       setSubmenuTimeout(null);
     }
+    console.log('About to call onAction with:', action, booking);
     onAction(action, booking);
   };
 
@@ -98,7 +100,13 @@ const HoverResponseMenu = ({ booking, onAction }: HoverResponseMenuProps) => {
             <div
               key={action}
               className={`flex items-center px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer ${className || ''}`}
-              onClick={(e) => handleAction(action, e)}
+              onClick={(e) => {
+                console.log('Menu item clicked:', action);
+                handleAction(action, e);
+              }}
+              onMouseDown={(e) => {
+                console.log('Mouse down on menu item:', action);
+              }}
             >
               <Icon className="w-4 h-4 mr-2" />
               {label}
