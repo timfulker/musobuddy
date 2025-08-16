@@ -2409,7 +2409,7 @@ export default function UnifiedBookings() {
         onOpenChange={setFullScreenCalendarOpen}
       >
         <DialogContent 
-          className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware"
+          className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware z-[100]"
           style={{ width: '95vw', height: '95vh' }}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft') {
@@ -2632,7 +2632,7 @@ export default function UnifiedBookings() {
                                 </div>
                               </HoverCardTrigger>
                               {booking && (
-                                <HoverCardContent className="w-80 z-[9999]" align="start" side="right">
+                                <HoverCardContent className="w-80 z-[200]" align="start" side="right" sideOffset={10}>
                                   <div className="space-y-2">
                                     <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
                                     <div className="space-y-1 text-sm">

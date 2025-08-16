@@ -73,6 +73,16 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   color: #6b7280 !important;
 }
 
+/* Fix hover card z-index in dialog context */
+[data-radix-popper-content-wrapper] {
+  z-index: 100000 !important;
+}
+
+/* Alternative selector for hover card content */
+[data-radix-hover-card-content] {
+  z-index: 100000 !important;
+}
+
 .calendar-integration-dialog .card {
   background: white !important;
   color: #1f2937 !important;
