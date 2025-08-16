@@ -2427,8 +2427,11 @@ export default function UnifiedBookings() {
           <div className="flex-1 overflow-hidden p-6">
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col" onKeyDown={(e) => e.stopPropagation()}>
-              {/* Keyboard Hints Only - Compact */}
-              <div className="flex items-center justify-center mb-4">
+              {/* Month Header - Centered */}
+              <div className="flex items-center justify-center mb-4 flex-col">
+                <h2 className="text-3xl font-bold luminance-aware mb-2">
+                  {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
+                </h2>
                 <div className="text-xs text-gray-400 luminance-aware-muted bg-gray-50 px-3 py-1 rounded-full">
                   ← → months • ↑ ↓ years • Enter/Space today • Esc close
                 </div>
