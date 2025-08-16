@@ -733,7 +733,13 @@ ${businessName}</p>
           SELECT cs.*, 
                  COALESCE(array_agg(cd.type) FILTER (WHERE cd.type IS NOT NULL), ARRAY[]::text[]) as document_types 
           FROM compliance_sent_log cs
-          LEFT JOIN compliance_documents cd ON cd.id::text = ANY(string_to_array(cs.document_ids, ','))
+          LEFT JOIN compliance_documents cd ON cd.id::text = ANY(
+            CASE 
+              WHEN cs.document_ids IS NULL THEN ARRAY[]::text[]
+              WHEN cs.document_ids::text LIKE '{%}' THEN cs.document_ids::text[]
+              ELSE string_to_array(cs.document_ids::text, ',')
+            END
+          )
           WHERE cs.booking_id = ${bookingId} AND cs.user_id = '${userId}'
           GROUP BY cs.id, cs.booking_id, cs.user_id, cs.recipient_email, cs.document_ids, cs.sent_at
           ORDER BY cs.sent_at DESC 
