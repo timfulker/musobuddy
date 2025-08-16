@@ -320,8 +320,8 @@ app.get('/api/email-queue/status', async (req, res) => {
       
       // Extract booking ID from email address 
       // Supports both formats:
-      // - booking-12345@mg.musobuddy.com (old format)
-      // - user1754488522516-booking7317@enquiries.musobuddy.com (new format)
+      // - booking-12345@mg.musobuddy.com (direct format)
+      // - user1754488522516-booking7317@mg.musobuddy.com (user-specific format)
       const bookingMatch = recipientEmail.match(/booking-?(\d+)@/);
       const invoiceMatch = recipientEmail.match(/invoice-?(\d+)@/);
       

@@ -727,8 +727,8 @@ export async function registerSettingsRoutes(app: Express) {
 
       // Create reply-to address with user ID and booking ID for email routing
       const replyToAddress = bookingId 
-        ? `user${userId}-booking${bookingId}@enquiries.musobuddy.com`
-        : `user${userId}@enquiries.musobuddy.com`;
+        ? `user${userId}-booking${bookingId}@mg.musobuddy.com`
+        : `user${userId}@mg.musobuddy.com`;
 
       // Send the email
       const emailSent = await services.sendEmailSimple(
