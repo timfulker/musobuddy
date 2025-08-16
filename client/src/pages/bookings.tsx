@@ -193,14 +193,10 @@ export default function UnifiedBookings() {
       
       // Debug: Check what venue data we have for Encore bookings
       const encoreBookings = data.filter((booking: any) => booking.applyNowLink);
-      encoreBookings.forEach((booking: any) => {
-        console.log(`🎵 Bookings page - Encore booking ${booking.id}:`, {
-          venue: booking.venue,
-          venueAddress: booking.venueAddress,
-          venue_address: booking.venue_address,
-          title: booking.title
-        });
-      });
+      if (encoreBookings.length > 0) {
+        console.log(`🎵 Bookings page - Found ${encoreBookings.length} Encore bookings. First one:`, encoreBookings[0]);
+        console.log(`🎵 Bookings page - Venue fields: venue="${encoreBookings[0].venue}", venueAddress="${encoreBookings[0].venueAddress}", venue_address="${encoreBookings[0].venue_address}"`);
+      }
       
       return data;
     },
