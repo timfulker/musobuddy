@@ -25,6 +25,7 @@ import { useTheme } from "@/hooks/useTheme";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
 import BookingActionMenu from "@/components/booking-action-menu";
+import HoverResponseMenu from "@/components/hover-response-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
@@ -2827,67 +2828,61 @@ export default function UnifiedBookings() {
               </Badge>
               
               <div className="flex items-center gap-2">
-                {/* Respond Menu */}
-                <div 
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseLeave={(e) => {
-                    // Prevent hover card from hiding when interacting with dropdown
-                    e.stopPropagation();
+                {/* Hover-based Respond Menu */}
+                <HoverResponseMenu 
+                  booking={hoveredBooking}
+                  onAction={(action, booking) => {
+                    // Clear hover card state before action
+                    setHoverCardVisible(false);
+                    setHoveredBooking(null);
+                    if (hideTimeout) {
+                      clearTimeout(hideTimeout);
+                      setHideTimeout(null);
+                    }
+                    if (hoverTimeout) {
+                      clearTimeout(hoverTimeout);
+                      setHoverTimeout(null);
+                    }
+                    
+                    // Handle the action
+                    switch (action) {
+                      case 'edit':
+                        setFullScreenCalendarOpen(false);
+                        navigate(`/new-booking?edit=${booking.id}`);
+                        break;
+                      case 'delete':
+                        openDeleteDialog(booking);
+                        break;
+                      case 'respond':
+                        navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                        break;
+                      case 'contract':
+                        navigate(`/contracts?bookingId=${booking.id}&action=create`);
+                        break;
+                      case 'invoice':
+                        navigate(`/invoices?bookingId=${booking.id}&action=create`);
+                        break;
+                      case 'thankyou':
+                        navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+                        break;
+                      case 'send_compliance':
+                        setSelectedBookingForCompliance(booking);
+                        setComplianceDialogOpen(true);
+                        break;
+                      case 'manage_documents':
+                        setSelectedBookingForDocument(booking);
+                        setDocumentUploadDialogOpen(true);
+                        break;
+                      default:
+                        // Status change (like rejected)
+                        statusChangeMutation.mutate({
+                          bookingId: booking.id,
+                          status: action
+                        });
+                        break;
+                    }
                   }}
-                >
-                  <BookingActionMenu 
-                    booking={hoveredBooking}
-                    onEditBooking={(booking) => {
-                      // Clear hover card state and navigate
-                      setHoverCardVisible(false);
-                      setHoveredBooking(null);
-                      if (hideTimeout) {
-                        clearTimeout(hideTimeout);
-                        setHideTimeout(null);
-                      }
-                      if (hoverTimeout) {
-                        clearTimeout(hoverTimeout);
-                        setHoverTimeout(null);
-                      }
-                      setFullScreenCalendarOpen(false);
-                      navigate(`/new-booking?edit=${booking.id}`);
-                    }}
-                    onDeleteBooking={(booking) => {
-                      // Clear hover card state before opening delete dialog
-                      setHoverCardVisible(false);
-                      setHoveredBooking(null);
-                      if (hideTimeout) {
-                        clearTimeout(hideTimeout);
-                        setHideTimeout(null);
-                      }
-                      if (hoverTimeout) {
-                        clearTimeout(hoverTimeout);
-                        setHoverTimeout(null);
-                      }
-                      openDeleteDialog(booking);
-                    }}
-                    onStatusChange={(booking, newStatus) => {
-                      // Clear hover card state after status change
-                      statusChangeMutation.mutate({
-                        bookingId: booking.id,
-                        status: newStatus
-                      });
-                      // Delay cleanup to allow mutation to complete
-                      setTimeout(() => {
-                        setHoverCardVisible(false);
-                        setHoveredBooking(null);
-                        if (hideTimeout) {
-                          clearTimeout(hideTimeout);
-                          setHideTimeout(null);
-                        }
-                        if (hoverTimeout) {
-                          clearTimeout(hoverTimeout);
-                          setHoverTimeout(null);
-                        }
-                      }, 100);
-                    }}
-                  />
-                </div>
+                />
                 
                 {/* Apply on Encore Button */}
                 {hoveredBooking.applyNowLink && (
