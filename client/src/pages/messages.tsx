@@ -152,8 +152,8 @@ export default function Messages() {
     window.open(messageUrl, '_blank');
   };
 
-  const clientUnreadCount = clientMessages.filter((m: MessageNotification) => !m.isRead).length;
-  const unparseableUnreadCount = unparseableMessages.filter((m: UnparseableMessage) => m.status === 'new').length;
+  const clientUnreadCount = Array.isArray(clientMessages) ? clientMessages.filter((m: MessageNotification) => !m.isRead).length : 0;
+  const unparseableUnreadCount = Array.isArray(unparseableMessages) ? unparseableMessages.filter((m: UnparseableMessage) => m.status === 'new').length : 0;
 
   return (
     <Layout>
@@ -213,7 +213,7 @@ export default function Messages() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-muted-foreground">Loading messages...</p>
                   </div>
-                ) : clientMessages.length === 0 ? (
+                ) : !Array.isArray(clientMessages) || clientMessages.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No client messages yet</p>
@@ -295,7 +295,7 @@ export default function Messages() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-muted-foreground">Loading messages...</p>
                   </div>
-                ) : unparseableMessages.length === 0 ? (
+                ) : !Array.isArray(unparseableMessages) || unparseableMessages.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertTriangle className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No unparseable messages</p>
