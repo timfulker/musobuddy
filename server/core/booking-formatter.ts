@@ -59,6 +59,34 @@ export function cleanEncoreTitle(rawTitle: string): string {
   return cleaned || rawTitle;
 }
 
+/**
+ * Extract area/location from Encore booking titles
+ * For Encore bookings, the venue is never revealed - only the area
+ * Format: "Saxophonist needed for birthday party in Hale"
+ */
+export function extractEncoreArea(rawTitle: string): string | null {
+  if (!rawTitle) return null;
+  
+  let cleaned = rawTitle;
+  
+  // Remove common email forwarding prefixes
+  cleaned = cleaned.replace(/^(Fwd:\s*|RE:\s*|Re:\s*)/i, '');
+  
+  // Remove "Job Alert:" prefix and fee range
+  cleaned = cleaned.replace(/^Job Alert:\s*£\d+-\d+,\s*/i, '');
+  cleaned = cleaned.replace(/^Job Alert:\s*/i, '');
+  
+  // Extract area from patterns like "...in Hale" or "...in Birmingham"
+  const areaMatch = cleaned.match(/\bin\s+([^[\]]+?)(?:\s*\[.+?\])?$/i);
+  if (areaMatch) {
+    const area = areaMatch[1].trim();
+    console.log(`🎵 Extracted Encore area from title: "${area}"`);
+    return area;
+  }
+  
+  return null;
+}
+
 export interface FormattedBooking {
   id: number;
   userId: string;

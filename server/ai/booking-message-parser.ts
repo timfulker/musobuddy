@@ -96,6 +96,7 @@ interface ParsedBookingData {
   message?: string;
   specialRequirements?: string;
   confidence: number;
+  applyNowLink?: string;  // For Encore bookings
   venueDetails?: {
     phoneNumber?: string;
     website?: string;
@@ -108,7 +109,8 @@ export async function parseBookingMessage(
   messageText: string,
   clientContact?: string,
   clientAddress?: string,
-  userId?: string
+  userId?: string,
+  subject?: string  // Added subject parameter for Encore area extraction
 ): Promise<ParsedBookingData> {
   try {
     console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
@@ -201,7 +203,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.content[0]?.text;
+    const rawContent = (response.content[0] as any)?.text;
     if (!rawContent) {
       throw new Error('No response from Claude');
     }
@@ -243,8 +245,26 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
 
-    // Enrich venue data with Google Places information
-    if (cleanedData.venue) {
+    // Check if this is an Encore booking
+    const isEncoreBooking = cleanedData.applyNowLink || 
+                           messageText.toLowerCase().includes('encore musicians') ||
+                           messageText.includes('notification@encoremusicians.com');
+    
+    // For Encore bookings, extract area from title instead of enriching venue
+    if (isEncoreBooking && subject) {
+      const { extractEncoreArea } = await import('../core/booking-formatter');
+      const area = extractEncoreArea(subject);
+      
+      if (area) {
+        console.log(`🎵 Encore booking - using area from title: "${area}"`);
+        // For Encore, we don't know the actual venue, just the area
+        cleanedData.venue = 'Venue TBC';  // Encore never reveals venue until booking confirmed
+        cleanedData.venueAddress = area;  // Use the area from title
+        console.log(`🎵 Set Encore venue as TBC, area: ${area}`);
+      }
+    } 
+    // Only enrich venue data for non-Encore bookings
+    else if (cleanedData.venue && !isEncoreBooking) {
       try {
         console.log(`🗺️ Attempting to enrich venue: ${cleanedData.venue}`);
         const venueData = await enrichVenueData(cleanedData.venue);

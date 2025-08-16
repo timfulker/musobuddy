@@ -402,7 +402,8 @@ class EnhancedEmailQueue {
       // Track this API call for dynamic rate limiting
       this.recordApiCall();
       
-      const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id);
+      // Pass subject for Encore area extraction
+      const parsedData = await parseBookingMessage(bodyField, fromField, null, user.id, subjectField);
       
       console.log(`✅ [${requestId}] AI PARSING: Completed parsing (API call #${this.apiCallCount} this minute)`);
       console.log(`🔍 [${requestId}] CONTAMINATION DEBUG: Parsed data from AI:`, {
