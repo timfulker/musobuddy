@@ -294,13 +294,58 @@ class EmailQueue {
         return;
       }
 
+      // Special handling for Weebly form submissions
+      const isWeeblyForm = fromField.toLowerCase().includes('weebly.com') || 
+                          fromField.toLowerCase().includes('no-reply@weebly');
+      
+      // Determine client information based on source
+      let finalClientName = parsedData.clientName || null;
+      let finalClientEmail = parsedData.clientEmail || null;
+      
+      if (isWeeblyForm) {
+        // For Weebly forms, prioritize the extracted email from form content
+        console.log(`📧 [${requestId}] Detected Weebly form submission - extracting client email from form content`);
+        
+        // Extract email from the form content using a more precise pattern
+        const emailPattern = /Email\s*[\n:]\s*([^\s@]+@[^\s@]+\.[^\s@]+)/i;
+        const emailMatch = bodyField.match(emailPattern);
+        if (emailMatch) {
+          finalClientEmail = emailMatch[1].toLowerCase();
+          console.log(`📧 [${requestId}] Extracted client email from Weebly form: ${finalClientEmail}`);
+        }
+        
+        // Extract name from the form content
+        const namePattern = /Name\s*[\n:]\s*([^\n]+)/i;
+        const nameMatch = bodyField.match(namePattern);
+        if (nameMatch) {
+          finalClientName = nameMatch[1].trim();
+          console.log(`📧 [${requestId}] Extracted client name from Weebly form: ${finalClientName}`);
+        }
+        
+        // If no email found in specific field, use parsed data
+        if (!finalClientEmail && parsedData.clientEmail) {
+          finalClientEmail = parsedData.clientEmail;
+        }
+        if (!finalClientName && parsedData.clientName) {
+          finalClientName = parsedData.clientName;
+        }
+      } else {
+        // For regular emails, use sender information if parsed data is not available
+        if (!finalClientName) {
+          finalClientName = fromField.split('<')[0].trim() || 'Unknown Client';
+        }
+        if (!finalClientEmail) {
+          finalClientEmail = fromField.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || null;
+        }
+      }
+      
       // Create booking with cleaned title
       const bookingData = {
         userId: user.id,
-        title: cleanedSubject || `Email Booking - ${fromField.split('<')[0].trim() || 'Unknown'}`,
-        clientName: fromField.split('<')[0].trim() || 'Unknown Client',
-        clientEmail: fromField.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || null,
-        clientPhone: null,
+        title: cleanedSubject || `Email Booking - ${finalClientName || 'Unknown'}`,
+        clientName: finalClientName || 'Unknown Client',
+        clientEmail: finalClientEmail,
+        clientPhone: parsedData.clientPhone || null,
         venue: parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
         eventDate: parsedData.eventDate || null,
