@@ -132,6 +132,10 @@ export default function UnifiedBookings() {
   const [bulkStatusChange, setBulkStatusChange] = useState<string>("");
   const [showBulkStatusDialog, setShowBulkStatusDialog] = useState(false);
   
+  // Individual booking deletion states
+  const [selectedBookingForDeletion, setSelectedBookingForDeletion] = useState<any>(null);
+  const [singleDeleteDialogOpen, setSingleDeleteDialogOpen] = useState(false);
+  
   // Calendar hover card state - controlled open/close
 
   
@@ -615,6 +619,25 @@ export default function UnifiedBookings() {
     if (bulkStatusChange && selectedBookings.length > 0) {
       statusChangeMutation.mutate({ bookingIds: selectedBookings, status: bulkStatusChange });
     }
+  };
+
+  // Individual booking deletion functions
+  const openDeleteDialog = (booking: any) => {
+    setSelectedBookingForDeletion(booking);
+    setSingleDeleteDialogOpen(true);
+  };
+
+  const confirmSingleDelete = () => {
+    if (selectedBookingForDeletion) {
+      deleteMutation.mutate([selectedBookingForDeletion.id]);
+      setSingleDeleteDialogOpen(false);
+      setSelectedBookingForDeletion(null);
+    }
+  };
+
+  const closeSingleDeleteDialog = () => {
+    setSingleDeleteDialogOpen(false);
+    setSelectedBookingForDeletion(null);
   };
   
   // Toggle view mode and persist preference
@@ -2374,6 +2397,30 @@ export default function UnifiedBookings() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmBulkDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Individual Delete Confirmation Dialog */}
+      <AlertDialog open={singleDeleteDialogOpen} onOpenChange={setSingleDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the booking "{selectedBookingForDeletion?.eventType || 'Event'}" 
+              for {selectedBookingForDeletion?.clientName || 'Unknown Client'}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeSingleDeleteDialog}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmSingleDelete}
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={deleteMutation.isPending}
             >
