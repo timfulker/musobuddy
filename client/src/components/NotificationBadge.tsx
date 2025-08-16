@@ -4,8 +4,8 @@ interface NotificationBadgeProps {
 }
 
 export function NotificationBadge({ count, maxDisplay = 99 }: NotificationBadgeProps) {
-  // Handle undefined count gracefully
-  if (!count || count === 0) return null;
+  // Only show badge if count is greater than 0
+  if (!count || count <= 0) return null;
 
   const displayCount = count > maxDisplay ? `${maxDisplay}+` : count.toString();
 
