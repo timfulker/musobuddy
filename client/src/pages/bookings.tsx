@@ -2437,13 +2437,13 @@ export default function UnifiedBookings() {
               {/* Calendar Grid - Full Height, No Scrolling */}
               <div className="grid grid-cols-7 gap-2 flex-1">
                 {(() => {
-                  // Generate calendar data for exactly 5 weeks (35 days) for better proportions
+                  // Generate calendar data for complete 6 weeks (42 days) to show full month context
                   const firstDay = new Date(fullScreenCurrentDate.getFullYear(), fullScreenCurrentDate.getMonth(), 1);
                   const startDate = new Date(firstDay);
                   startDate.setDate(startDate.getDate() - firstDay.getDay());
                   
                   const days = [];
-                  for (let i = 0; i < 35; i++) { // 5 weeks = 35 days
+                  for (let i = 0; i < 42; i++) { // 6 weeks = 42 days
                     const date = new Date(startDate);
                     date.setDate(startDate.getDate() + i);
                     const events = getEventsForDate(date);
@@ -2465,8 +2465,8 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[140px]
-                        ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                        p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 flex flex-col min-h-[110px]
+                        ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-100 text-gray-500 opacity-60'}
                         ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
                         ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-100' : ''}
                       `}
@@ -2487,25 +2487,31 @@ export default function UnifiedBookings() {
                         }
                       }}
                     >
-                      <div className="font-semibold text-xl mb-3 text-center">
+                      <div className={`font-semibold mb-2 text-center ${
+                        day.isCurrentMonth ? 'text-xl text-gray-900' : 'text-lg text-gray-500'
+                      }`}>
                         {day.day}
                       </div>
                       <div className="space-y-1 flex-1">
-                        {day.events.slice(0, 4).map((event, eventIndex) => (
+                        {day.events.slice(0, day.isCurrentMonth ? 3 : 2).map((event, eventIndex) => (
                           <div
                             key={eventIndex}
-                            className={`text-xs p-2 rounded truncate font-medium ${getStatusColor(event.status || 'new')}`}
+                            className={`text-xs p-1 rounded truncate font-medium ${
+                              day.isCurrentMonth 
+                                ? getStatusColor(event.status || 'new')
+                                : 'bg-gray-300 text-gray-600'
+                            }`}
                           >
                             {event.title}
                           </div>
                         ))}
-                        {day.events.length > 4 && (
+                        {day.events.length > (day.isCurrentMonth ? 3 : 2) && (
                           <div className="text-xs text-gray-500 font-medium text-center mt-1">
-                            +{day.events.length - 4} more
+                            +{day.events.length - (day.isCurrentMonth ? 3 : 2)} more
                           </div>
                         )}
-                        {day.events.length === 0 && (
-                          <div className="text-xs text-gray-400 italic text-center mt-4 opacity-60">
+                        {day.events.length === 0 && day.isCurrentMonth && (
+                          <div className="text-xs text-gray-400 italic text-center mt-2 opacity-50">
                             + Add booking
                           </div>
                         )}
