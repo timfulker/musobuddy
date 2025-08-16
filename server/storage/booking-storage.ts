@@ -13,8 +13,12 @@ export class BookingStorage {
     
     if (booking) {
       // Convert date strings to Date objects for timestamp fields
+      // Also ensure proper field mapping from snake_case to camelCase
       return {
         ...booking,
+        // Explicitly map snake_case fields to camelCase for frontend compatibility
+        venueAddress: (booking as any).venue_address || booking.venueAddress,
+        applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
         eventDate: booking.eventDate ? new Date(booking.eventDate) : null,
         createdAt: booking.createdAt ? new Date(booking.createdAt) : null,
         updatedAt: booking.updatedAt ? new Date(booking.updatedAt) : null,
@@ -30,8 +34,12 @@ export class BookingStorage {
       .orderBy(desc(bookings.createdAt));
     
     // Convert date strings to Date objects for timestamp fields
+    // Also ensure proper field mapping from snake_case to camelCase
     return results.map(booking => ({
       ...booking,
+      // Explicitly map snake_case fields to camelCase for frontend compatibility
+      venueAddress: (booking as any).venue_address || booking.venueAddress,
+      applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
       eventDate: booking.eventDate ? new Date(booking.eventDate) : null,
       createdAt: booking.createdAt ? new Date(booking.createdAt) : null,
       updatedAt: booking.updatedAt ? new Date(booking.updatedAt) : null,
