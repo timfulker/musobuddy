@@ -28,10 +28,13 @@ export function MessageNotifications({ userId }: MessageNotificationsProps) {
   const [selectedNotification, setSelectedNotification] = useState<MessageNotification | null>(null);
 
   // Fetch message notifications
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notificationsData, isLoading, error } = useQuery({
     queryKey: ['notifications', 'messages', userId],
     queryFn: () => apiRequest(`/api/notifications/messages`),
   });
+
+  // Ensure notifications is always an array
+  const notifications: MessageNotification[] = Array.isArray(notificationsData) ? notificationsData : [];
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
@@ -86,7 +89,7 @@ export function MessageNotifications({ userId }: MessageNotificationsProps) {
     window.open(messageUrl, '_blank');
   };
 
-  const unreadCount = notifications.filter((n: MessageNotification) => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   if (isLoading) {
     return (
@@ -127,7 +130,7 @@ export function MessageNotifications({ userId }: MessageNotificationsProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {notifications.map((notification: MessageNotification) => (
+          {notifications.map((notification) => (
             <div
               key={notification.id}
               className={`p-4 border rounded-lg ${
