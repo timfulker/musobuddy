@@ -518,19 +518,19 @@ export default function GoogleCalendarIntegration() {
                 Disconnect Google Calendar
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="luminance-aware">
               <AlertDialogHeader>
-                <AlertDialogTitle>Disconnect Google Calendar?</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle className="luminance-aware font-semibold">Disconnect Google Calendar?</AlertDialogTitle>
+                <AlertDialogDescription className="luminance-aware-muted">
                   This will stop syncing your MusoBuddy bookings with Google Calendar. 
                   Existing events will remain in both calendars, but future changes won't sync.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="luminance-aware">Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => disconnectMutation.mutate()}
-                  className="bg-destructive hover:bg-destructive/90"
+                  className="bg-destructive hover:bg-destructive/90 text-white"
                 >
                   Disconnect
                 </AlertDialogAction>
