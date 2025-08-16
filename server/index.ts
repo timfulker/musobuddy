@@ -266,113 +266,6 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
   }
 });
 
-// Lightweight client reply webhook handler for mg.musobuddy.com
-app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
-  logReplyWebhookActivity('Received client reply', { keys: Object.keys(req.body || {}) });
-  
-  try {
-    const webhookData = req.body;
-    const recipientEmail = webhookData.recipient || webhookData.To || '';
-    
-    // Extract booking ID from email address (booking-12345@mg.musobuddy.com)
-    const bookingMatch = recipientEmail.match(/booking-(\d+)@/);
-    const invoiceMatch = recipientEmail.match(/invoice-(\d+)@/);
-    
-    let bookingId = null;
-    let replyType = 'unknown';
-    
-    if (bookingMatch) {
-      bookingId = bookingMatch[1];
-      replyType = 'booking';
-    } else if (invoiceMatch) {
-      bookingId = invoiceMatch[1]; // Invoice replies also link to booking
-      replyType = 'invoice';
-    } else {
-      logReplyWebhookActivity('No booking/invoice ID found in recipient', { recipientEmail });
-      return res.status(200).json({ status: 'ignored', reason: 'no_id_found' });
-    }
-    
-    // Find the booking to get user ID
-    const { storage } = await import('./core/storage');
-    const booking = await storage.getBooking(bookingId);
-    
-    if (!booking) {
-      logReplyWebhookActivity('Booking not found', { bookingId });
-      return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
-    }
-    
-    const userId = booking.userId;
-    const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
-    const subject = webhookData.subject || webhookData.Subject || 'No Subject';
-    
-    // Create simplified HTML message
-    const messageHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Client Reply - ${subject}</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-        .reply-header { background: #f0f9ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .reply-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-        .metadata { color: #666; font-size: 0.9em; margin-bottom: 10px; }
-        .reply-type { background: #06b6d4; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8em; }
-    </style>
-</head>
-<body>
-    <div class="reply-header">
-        <div class="metadata">
-            <span class="reply-type">${replyType.toUpperCase()} REPLY</span><br>
-            <strong>From:</strong> ${senderEmail}<br>
-            <strong>Subject:</strong> ${subject}<br>
-            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
-            <strong>Booking ID:</strong> ${bookingId}
-        </div>
-    </div>
-    <div class="reply-content">
-        ${webhookData['body-html'] || webhookData['stripped-html'] || webhookData['body-plain']?.replace(/\n/g, '<br>') || 'No content'}
-    </div>
-</body>
-</html>`;
-    
-    // Store message in cloud storage
-    const { cloudStorage } = await import('./core/cloud-storage');
-    const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
-    await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
-    
-    // Create notification entry
-    await storage.createMessageNotification({
-      userId: userId,
-      bookingId: bookingId,
-      senderEmail: senderEmail,
-      subject: subject,
-      messageUrl: fileName,
-      isRead: false,
-      createdAt: new Date()
-    });
-    
-    logReplyWebhookActivity(`${replyType} reply stored successfully`, { fileName, userId, bookingId });
-    res.status(200).json({ 
-      status: 'success', 
-      type: `${replyType}_reply`, 
-      bookingId, 
-      userId,
-      message: 'Reply processed and stored'
-    });
-    
-  } catch (error: any) {
-    logReplyWebhookActivity('Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
-    
-    // Return 200 to prevent Mailgun retries
-    res.status(200).json({ 
-      status: 'error', 
-      message: error.message,
-      note: 'Error logged, returning 200 to prevent retries'
-    });
-  }
-});
-
 // Stripe success/cancel handlers
 app.get('/payment/success', async (req: any, res) => {
   try {
@@ -416,6 +309,113 @@ app.get('/api/email-queue/status', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+  // Lightweight client reply webhook handler for mg.musobuddy.com (must be before modular routes)
+  app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
+    logReplyWebhookActivity('Received client reply', { keys: Object.keys(req.body || {}) });
+    
+    try {
+      const webhookData = req.body;
+      const recipientEmail = webhookData.recipient || webhookData.To || '';
+      
+      // Extract booking ID from email address (booking-12345@mg.musobuddy.com)
+      const bookingMatch = recipientEmail.match(/booking-(\d+)@/);
+      const invoiceMatch = recipientEmail.match(/invoice-(\d+)@/);
+      
+      let bookingId = null;
+      let replyType = 'unknown';
+      
+      if (bookingMatch) {
+        bookingId = bookingMatch[1];
+        replyType = 'booking';
+      } else if (invoiceMatch) {
+        bookingId = invoiceMatch[1]; // Invoice replies also link to booking
+        replyType = 'invoice';
+      } else {
+        logReplyWebhookActivity('No booking/invoice ID found in recipient', { recipientEmail });
+        return res.status(200).json({ status: 'ignored', reason: 'no_id_found' });
+      }
+      
+      // Find the booking to get user ID
+      const { storage } = await import('./core/storage');
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        logReplyWebhookActivity('Booking not found', { bookingId });
+        return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
+      }
+      
+      const userId = booking.userId;
+      const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
+      const subject = webhookData.subject || webhookData.Subject || 'No Subject';
+      
+      // Create simplified HTML message
+      const messageHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Client Reply - ${subject}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .reply-header { background: #f0f9ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .reply-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .metadata { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        .reply-type { background: #06b6d4; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <div class="reply-header">
+        <div class="metadata">
+            <span class="reply-type">${replyType.toUpperCase()} REPLY</span><br>
+            <strong>From:</strong> ${senderEmail}<br>
+            <strong>Subject:</strong> ${subject}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
+            <strong>Booking ID:</strong> ${bookingId}
+        </div>
+    </div>
+    <div class="reply-content">
+        ${webhookData['body-html'] || webhookData['stripped-html'] || webhookData['body-plain']?.replace(/\n/g, '<br>') || 'No content'}
+    </div>
+</body>
+</html>`;
+      
+      // Store message in cloud storage
+      const { cloudStorage } = await import('./core/cloud-storage');
+      const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
+      await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+      
+      // Create notification entry
+      await storage.createMessageNotification({
+        userId: userId,
+        bookingId: bookingId,
+        senderEmail: senderEmail,
+        subject: subject,
+        messageUrl: fileName,
+        isRead: false,
+        createdAt: new Date()
+      });
+      
+      logReplyWebhookActivity(`${replyType} reply stored successfully`, { fileName, userId, bookingId });
+      res.status(200).json({ 
+        status: 'success', 
+        type: `${replyType}_reply`, 
+        bookingId, 
+        userId,
+        message: 'Reply processed and stored'
+      });
+      
+    } catch (error: any) {
+      logReplyWebhookActivity('Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
+      
+      // Return 200 to prevent Mailgun retries
+      res.status(200).json({ 
+        status: 'error', 
+        message: error.message,
+        note: 'Error logged, returning 200 to prevent retries'
+      });
+    }
+  });
 
   // Register all API routes
   console.log('🔄 Registering all modular routes...');
