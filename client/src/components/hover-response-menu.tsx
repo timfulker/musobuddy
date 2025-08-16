@@ -41,7 +41,7 @@ const HoverResponseMenu = ({ booking, onAction }: HoverResponseMenuProps) => {
   const hideSubmenu = () => {
     const timeout = setTimeout(() => {
       setSubmenuVisible(false);
-    }, 200);
+    }, 300); // Longer delay to allow for clicking
     setSubmenuTimeout(timeout);
   };
 
@@ -95,17 +95,29 @@ const HoverResponseMenu = ({ booking, onAction }: HoverResponseMenuProps) => {
           onMouseEnter={showSubmenu}
           onMouseLeave={hideSubmenu}
           style={{ pointerEvents: 'auto' }}
+          onMouseDown={(e) => {
+            // Prevent the menu from closing when starting to click
+            e.preventDefault();
+            if (submenuTimeout) {
+              clearTimeout(submenuTimeout);
+              setSubmenuTimeout(null);
+            }
+          }}
         >
           {menuItems.map(({ action, label, icon: Icon, className }) => (
             <div
               key={action}
               className={`flex items-center px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer ${className || ''}`}
-              onClick={(e) => {
-                console.log('Menu item clicked:', action);
-                handleAction(action, e);
-              }}
               onMouseDown={(e) => {
                 console.log('Mouse down on menu item:', action);
+                // Use mousedown instead of click for more reliable triggering
+                handleAction(action, e);
+              }}
+              onClick={(e) => {
+                console.log('Menu item clicked:', action);
+                // Backup click handler
+                e.preventDefault();
+                e.stopPropagation();
               }}
             >
               <Icon className="w-4 h-4 mr-2" />
