@@ -1267,6 +1267,38 @@ export default function Invoices() {
                     </div>
                   )}
                   
+                  {/* Microsoft Email Domain Warning */}
+                  {invoiceToSend?.clientEmail && (() => {
+                    const email = invoiceToSend.clientEmail.toLowerCase();
+                    const microsoftDomains = ['@hotmail.', '@outlook.', '@live.', '@msn.'];
+                    const isMicrosoft = microsoftDomains.some(domain => email.includes(domain));
+                    
+                    if (isMicrosoft) {
+                      return (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                          <div className="flex items-start">
+                            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-medium text-amber-900 mb-1">
+                                Microsoft Email Delivery Warning
+                              </p>
+                              <p className="text-amber-700">
+                                This email address is on a Microsoft domain (Hotmail/Outlook). 
+                                Microsoft is currently blocking some Mailgun emails. If this email doesn't arrive:
+                              </p>
+                              <ul className="mt-2 space-y-1 text-amber-700 ml-4">
+                                <li>• Check the spam/junk folder</li>
+                                <li>• Try sending from your personal email</li>
+                                <li>• Contact Mailgun support for IP rotation</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Add a personal message (optional)
