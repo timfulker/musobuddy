@@ -59,18 +59,13 @@ export default function Messages() {
     queryKey: ['notifications', 'messages', userId],
     queryFn: async () => {
       const response = await apiRequest(`/api/notifications/messages`);
-      const data = await response.json();
-      console.log('🔍 CLIENT DEBUG - Raw API response:', data);
-      return data;
+      return await response.json();
     },
     enabled: !!userId,
   });
 
-  // Enhanced debug logging
-  console.log('🔍 CLIENT DEBUG - User object:', user);
-  console.log('🔍 CLIENT DEBUG - Detected userId:', userId, 'Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading, 'Error:', clientMessagesError);
-  console.log('🔍 CLIENT DEBUG - Messages data:', clientMessages);
-  console.log('🔍 CLIENT DEBUG - Messages type check:', typeof clientMessages, 'Is array:', Array.isArray(clientMessages));
+  // Debug logging (can be removed once stable)
+  // console.log('🔍 CLIENT DEBUG - Messages:', clientMessages?.length, 'Loading:', clientMessagesLoading);
 
   // Fetch unparseable messages
   const { data: unparseableMessages = [], isLoading: unparseableLoading } = useQuery({
