@@ -2,14 +2,14 @@
 
 ## Six Key Selling Points That Set MusoBuddy Apart
 
-### 1. **AI-Powered Email Processing & Booking Automation**
-Transform your inbox into a booking powerhouse. MusoBuddy automatically reads your emails, extracts booking details, detects pricing enquiries, and creates bookings with conflict detection - all while you sleep. No more manual data entry or missed opportunities.
+### 1. **AI-Powered Email Processing & Complete Communication History**
+Transform your inbox into a booking powerhouse with dual-channel email processing. MusoBuddy automatically reads your emails, extracts booking details, detects pricing enquiries, and creates bookings with conflict detection. The enhanced system captures every client reply with full conversation history and real-time notifications - ensuring no communication is ever missed.
 
 ### 2. **Professional Contract & Invoice Generation with Digital Signatures**
 Generate legally compliant contracts and professional invoices in seconds. Clients can sign digitally with a simple link, and you'll both receive automatic confirmations. Built-in payment tracking and automated reminders keep your cash flow healthy.
 
-### 3. **Intelligent Conflict Detection & Resolution**
-Never double-book again. Our smart system detects scheduling conflicts across all your bookings and provides guided resolution options. See potential clashes before they become problems.
+### 3. **Advanced Calendar Management with Smart Conflict Detection**
+Never double-book again with enhanced calendar intelligence. Our smart system detects scheduling conflicts across all platforms including Google Calendar, provides automated buffer time management for different event types, and offers visual conflict resolution. Advanced features include drag-and-drop scheduling, intelligent travel time calculations, and seamless two-way Google Calendar synchronization.
 
 ### 4. **Compliance Made Simple**
 Upload your PLI certificates, PAT testing documents, and other compliance paperwork once. MusoBuddy tracks expiry dates, sends alerts, and can instantly share documents with venues that require them.
@@ -48,33 +48,42 @@ Two-way sync with Google Calendar plus embeddable booking widgets for your websi
 
 ---
 
-### 📅 **Bookings & Calendar**
-*Master your schedule with precision*
+### 📅 **Advanced Calendar & Booking Management**
+*Master your schedule with intelligent automation*
 
-**Booking Management:**
-- **List View**: Comprehensive booking table with sorting and filtering
-- **Calendar View**: Monthly/weekly visual scheduling with drag-and-drop
+**Enhanced Calendar Features:**
+- **Visual Conflict Detection**: Real-time clash alerts with color-coded warnings
+- **Smart Buffer Time Management**: Automatic setup/breakdown time for different event types
+- **Google Calendar Integration**: Seamless two-way synchronization with conflict resolution
+- **Drag-and-Drop Scheduling**: Intuitive visual booking management
+- **Multi-View Support**: Monthly, weekly, and agenda views with smooth transitions
+
+**Intelligent Booking Management:**
+- **List View**: Comprehensive booking table with advanced sorting and filtering
+- **Calendar View**: Enhanced visual scheduling with conflict indicators
 - **Status Workflow**: New → In Progress → Client Confirms → Confirmed → Completed
-- **Conflict Detection**: Real-time alerts for overlapping bookings
-- **Bulk Operations**: Mass status updates and conflict resolution
+- **Automated Conflict Resolution**: Guided tools for resolving scheduling clashes
+- **Bulk Operations**: Mass status updates and intelligent conflict resolution
 
 **Advanced Booking Features:**
 - **Google Maps Integration**: Auto-complete venues with full address details
-- **Mileage Calculation**: Automatic travel distance and cost computation
+- **Optimized Mileage Calculation**: Smart travel distance computation with API optimization
 - **What3Words Support**: Precise location finding for outdoor events
 - **TBC Time Support**: Handle bookings with flexible timing
 - **Actual Performance Time**: Track real vs. scheduled performance times
-- **Multi-Document Upload**: Attach contracts, riders, stage plots per booking
+- **Enhanced Document Management**: Multi-document upload with categorization and cloud storage
 
 **Collaborative Forms:**
-- **Field-Level Locking**: Control which fields clients can edit
-- **Real-time Updates**: See changes as clients make them
+- **Field-Level Locking**: Granular control over which fields clients can edit
+- **Real-time Updates**: See changes as clients make them instantly
 - **Permission Management**: Lock sensitive fields like pricing to you only
+- **Address Book Integration**: Navigate directly to specific bookings from client details
 
 **Export & Integration:**
 - **iCal Export**: Share your schedule with other calendar apps
-- **Google Calendar Sync**: Two-way synchronization with your Google account
+- **Enhanced Google Calendar Sync**: Bidirectional synchronization with conflict handling
 - **CSV Export**: Full booking data for external analysis
+- **Calendar Widget Embedding**: Add booking calendars to your website
 
 ---
 
@@ -204,14 +213,26 @@ Two-way sync with Google Calendar plus embeddable booking widgets for your websi
 
 ---
 
-### 📧 **Email Processing**
-*Turn your inbox into a booking machine*
+### 📧 **Email Processing & Communication Management**
+*Turn your inbox into a booking machine with complete conversation tracking*
+
+**Dual-Channel Email Architecture:**
+- **Primary Processing**: AI-powered enquiry processing via enquiries.musobuddy.com
+- **Client Reply Handling**: Lightweight webhook system for instant client message capture
+- **Complete Conversation History**: Every client reply stored with full context
+- **Real-Time Notifications**: Immediate alerts for new client messages
 
 **AI-Powered Processing:**
 - **Automatic Email Reading**: Processes enquiries from Mailgun webhooks
 - **Intelligent Parsing**: Extracts dates, venues, contact details, requirements
 - **Pricing Detection**: Identifies budget enquiries and fee discussions
 - **Message Categorization**: Sorts bookings, quotes, general enquiries
+
+**Enhanced Communication Tracking:**
+- **Centralized Messages Interface**: All client replies organized by booking
+- **Client Context Display**: Shows client name, booking date, and venue with each message
+- **Cloud Storage Integration**: All messages securely stored in Cloudflare R2
+- **Read/Unread Management**: Track which messages need attention
 
 **Queue Management:**
 - **Sequential Processing**: Prevents race conditions and duplicate bookings
@@ -224,6 +245,7 @@ Two-way sync with Google Calendar plus embeddable booking widgets for your websi
 - **Mutex Locking**: Ensures data integrity during concurrent processing
 - **Error Handling**: Graceful failure recovery with human review options
 - **Performance Optimization**: Smart delays for AI accuracy
+- **Scalable Architecture**: Separate processing channels for optimal performance
 
 ---
 
@@ -241,6 +263,32 @@ Two-way sync with Google Calendar plus embeddable booking widgets for your websi
 - **Search Functionality**: Advanced filtering across all tables
 - **System Diagnostics**: Performance monitoring and issue detection
 - **Security Controls**: Enhanced protection and access management
+
+---
+
+## Latest Platform Enhancements (2025)
+
+### 🚀 **Enhanced Calendar Intelligence**
+*Advanced scheduling with smart automation*
+- **Visual Conflict Detection**: Real-time scheduling clash alerts with intuitive resolution tools
+- **Smart Buffer Management**: Automatic setup/breakdown times customized by event type (weddings, corporate, etc.)
+- **Enhanced Google Calendar Sync**: Bidirectional synchronization with intelligent conflict resolution
+- **Optimized Performance**: Reduced API calls for mileage calculation and improved calendar loading
+
+### 💬 **Complete Communication History System**
+*Never miss a client message again*
+- **Dual-Channel Email Processing**: Separate high-performance channels for enquiries and client replies
+- **Centralized Messages Interface**: All client communications organized by booking with full context
+- **Real-Time Notifications**: Instant alerts for new client messages with unread count tracking
+- **Enhanced Message Display**: Client name, booking date, and venue shown with each message
+- **Cloud Storage Integration**: All conversations securely stored with instant access
+
+### 📨 **Advanced Email Architecture**  
+*Scalable, reliable communication processing*
+- **Primary Domain Processing**: enquiries.musobuddy.com for AI-powered booking creation
+- **Client Reply Handling**: mg.musobuddy.com for lightweight, instant message capture
+- **Queue-Based Processing**: Prevents race conditions and ensures reliable message handling
+- **Enhanced AI Parsing**: Improved venue recognition and date parsing accuracy
 
 ---
 
