@@ -12,6 +12,8 @@ export function registerNotificationRoutes(app: Express) {
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
+      
+      console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}`);
 
       // Get all notification counts in parallel for efficiency
       const [
