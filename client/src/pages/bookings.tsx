@@ -2632,7 +2632,7 @@ export default function UnifiedBookings() {
                                 </div>
                               </HoverCardTrigger>
                               {booking && (
-                                <HoverCardContent className="w-80" align="start" side="right">
+                                <HoverCardContent className="w-80 z-[9999]" align="start" side="right">
                                   <div className="space-y-2">
                                     <h4 className="text-sm font-semibold">{booking.eventType || 'Event'}</h4>
                                     <div className="space-y-1 text-sm">
