@@ -259,40 +259,32 @@ class EmailQueue {
       // Apply title cleanup
       const cleanedSubject = cleanEncoreTitle(subjectField);
       
-      // Create booking or save to review based on parsed data quality
+      // SIMPLE EMAIL ROUTING RULES:
+      // 1. Emails with dates → Create booking
+      // 2. Emails without dates → Send to review  
+      // 3. Encore emails → Create booking
+      // 4. Weebly-forwarded emails → Create booking
+      
+      const hasDate = !!parsedData.eventDate;
       const isEncoreMessage = bodyField.toLowerCase().includes('encore') || 
                               fromField.toLowerCase().includes('encore') ||
                               subjectField.toLowerCase().includes('encore') ||
                               bodyField.includes('apply now');
-
-      // Very lenient validation - create booking if we have ANY substantive booking information
-      const hasDate = !!parsedData.eventDate;
-      const hasVenue = !!parsedData.venue;
-      const hasEventType = !!parsedData.eventType;
-      const hasFee = !!parsedData.fee;
-      const hasSubstantialContent = bodyField.length > 50; // More than just a greeting
+      const isWeeblyForwarded = fromField.toLowerCase().includes('weebly') ||
+                               fromField.toLowerCase().includes('no-reply') ||
+                               bodyField.toLowerCase().includes('weebly');
       
-      // Create booking if we have:
-      // 1. Date + any other info, OR
-      // 2. Venue + event type, OR  
-      // 3. Venue + fee, OR
-      // 4. Event type + fee + substantial content, OR
-      // 5. Encore email with venue
-      const hasMinimumInfo = hasDate || 
-                            (hasVenue && hasEventType) ||
-                            (hasVenue && hasFee) ||
-                            (hasEventType && hasFee && hasSubstantialContent) ||
-                            (isEncoreMessage && hasVenue);
-      
-      console.log(`📧 [${requestId}] Validation check:`, {
-        hasDate, hasVenue, hasEventType, hasFee, hasSubstantialContent, isEncoreMessage,
-        hasMinimumInfo, confidence: parsedData.confidence
+      console.log(`📧 [${requestId}] Email routing check:`, {
+        hasDate, isEncoreMessage, isWeeblyForwarded
       });
       
-      if (!hasMinimumInfo) {
-        await saveToReviewMessages('Insufficient booking information', 'Message requires manual review - no clear booking details found', user.id);
+      // Send to review if NO date AND NOT Encore AND NOT Weebly
+      if (!hasDate && !isEncoreMessage && !isWeeblyForwarded) {
+        await saveToReviewMessages('No date found in email', 'Email does not contain a date and is not from Encore or Weebly', user.id);
         return;
       }
+      
+      // Otherwise, create booking
 
       // List of known form builder/website host domains that forward contact forms
       // These services typically send from no-reply addresses, with actual client info in the form content
