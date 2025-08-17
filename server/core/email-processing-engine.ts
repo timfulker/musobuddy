@@ -362,8 +362,33 @@ export class EmailProcessingEngine {
     try {
       const from = webhookData.From || webhookData.from || webhookData.sender || '';
       const subject = webhookData.Subject || webhookData.subject || '';
-      const body = webhookData['body-plain'] || webhookData.text || webhookData['stripped-text'] || '';
+      
+      // Prefer HTML content for better formatting cues, fall back to plain text
+      let body = webhookData['body-html'] || webhookData.html || webhookData['body-plain'] || webhookData.text || webhookData['stripped-text'] || '';
+      
+      // If we got HTML, convert basic tags to text equivalents for better parsing
+      if (body && body.includes('<')) {
+        // Convert HTML breaks and paragraphs to newlines for signature detection
+        body = body
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n')
+          .replace(/<p[^>]*>/gi, '\n')
+          .replace(/<[^>]+>/g, '') // Strip remaining HTML tags
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+      }
+      
       const recipient = webhookData.To || webhookData.recipient || '';
+      
+      console.log(`📧 [${requestId}] EMAIL EXTRACTION:`, {
+        from: from.substring(0, 50) + '...',
+        subject: subject.substring(0, 50) + '...',
+        bodyLength: body.length,
+        bodyPreview: body.substring(0, 100) + '...',
+        recipient: recipient.substring(0, 50) + '...'
+      });
       
       if (!from && !subject && !body) {
         console.error(`❌ [${requestId}] EMAIL DATA: All fields empty`);

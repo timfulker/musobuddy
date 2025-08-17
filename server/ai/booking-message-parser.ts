@@ -182,7 +182,7 @@ Extract client name (from signature first), event date (YYYY-MM-DD), venue, and 
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
       max_tokens: 800,
-      temperature: 0, // Zero temperature for most deterministic extraction
+      temperature: 0.3, // Slight flexibility for better parsing adaptability
       messages: [
         { 
           role: 'system', 

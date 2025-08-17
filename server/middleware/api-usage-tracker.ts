@@ -20,7 +20,7 @@ export const DEFAULT_LIMITS = {
   mailgun: { daily: 15, monthly: 400 }, // Email sending: 300-500 sending + 200-300 receiving = ~800 total, using 400 as starting point
   stripe: { daily: 20, monthly: 500 }, // Payment processing - keeping existing reasonable limits
   twilio: { daily: 10, monthly: 300 }, // SMS verification - keeping existing reasonable limits
-  openai: { daily: 7, monthly: 150 }, // Legacy AI requests: 100-200 recommended, using 150 as conservative start
+  openai: { daily: 1000, monthly: 10000 }, // User has massive OpenAI limits - 200k TPM, so this is very conservative
 } as const;
 
 export type ApiService = keyof typeof API_COSTS;
