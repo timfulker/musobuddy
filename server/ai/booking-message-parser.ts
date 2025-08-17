@@ -414,10 +414,10 @@ JSON:`;
       
       if (area) {
         console.log(`🎵 Encore booking - using area from title: "${area}"`);
-        // For Encore, we don't know the actual venue, just the area
-        cleanedData.venue = 'Venue TBC';  // Encore never reveals venue until booking confirmed
+        // For Encore, we don't know the actual venue, just the area - leave venue blank to avoid triggering Google Maps API
+        cleanedData.venue = '';  // Leave blank to prevent unnecessary Google Maps API calls
         cleanedData.venueAddress = area;  // Use the area from title
-        console.log(`🎵 Set Encore venue as TBC, area: ${area}`);
+        console.log(`🎵 Set Encore venue blank, area: ${area}`);
       }
     } 
     // Only enrich venue data for non-Encore bookings
