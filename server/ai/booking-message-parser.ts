@@ -152,7 +152,7 @@ JSON:`;
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
-      max_completion_tokens: 250, // Minimal: ~150 reasoning + ~50 response for simple emails
+      max_completion_tokens: 4000, // CRITICAL: GPT-5 reasoning model needs substantial tokens
       temperature: 1, // GPT-5 only supports default temperature
       messages: [
         { 
@@ -169,8 +169,25 @@ JSON:`;
     const responseTime = Date.now() - startTime;
 
     const rawContent = response.choices[0]?.message?.content;
-    if (!rawContent) {
-      throw new Error('No response from OpenAI');
+    const usage = response.usage;
+    
+    console.log('🔍 GPT-5 TOKEN USAGE:', {
+      promptTokens: usage?.prompt_tokens || 0,
+      completionTokens: usage?.completion_tokens || 0,
+      totalTokens: usage?.total_tokens || 0,
+      reasoningTokens: usage?.prompt_tokens_details?.reasoning_tokens || 0
+    });
+    
+    if (!rawContent || rawContent.trim().length === 0) {
+      console.error('❌ GPT-5 EMPTY RESPONSE - Token Analysis:', {
+        maxAllowed: 4000,
+        promptUsed: usage?.prompt_tokens || 0,
+        completionUsed: usage?.completion_tokens || 0,
+        reasoningUsed: usage?.prompt_tokens_details?.reasoning_tokens || 0,
+        hasContent: !!rawContent,
+        contentLength: rawContent?.length || 0
+      });
+      throw new Error('GPT-5 returned empty response - likely token exhaustion');
     }
 
     console.log('🤖 GPT-5 raw response:', rawContent);
