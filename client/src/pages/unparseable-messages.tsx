@@ -175,8 +175,10 @@ export default function UnparseableMessages() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {messages.map((message: UnparseableMessage) => (
-            <Card key={message.id} className="hover:shadow-md transition-shadow">
+          {messages.map((message: UnparseableMessage) => {
+            console.log('Message status:', message.status, 'ID:', message.id); // Debug log
+            return (
+              <Card key={message.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -245,7 +247,7 @@ export default function UnparseableMessages() {
                     </div>
                   )}
                   
-                  {message.status === 'pending' && (
+                  {message.status !== 'converted' && message.status !== 'discarded' && (
                     <div className="flex gap-2 pt-2">
                       <Button
                         size="sm"
@@ -290,8 +292,9 @@ export default function UnparseableMessages() {
                   )}
                 </div>
               </CardContent>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
