@@ -138,7 +138,14 @@ This means if today is August 2025:
 - "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
-{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
+{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","venueAddress":"string","eventType":"string","confidence":0.9}
+
+CRITICAL VENUE VS LOCATION RULES:
+- venue: ONLY put actual venue names here (e.g., "City Hall", "The Royal Hotel", "St. Mary's Church", "Riverside Theatre")
+- venueAddress: Put location/address information here (e.g., "Glasgow", "London", "123 Main St", "near Birmingham")
+- If someone says "in Glasgow" or "in Birmingham", that's a location - put "Glasgow" or "Birmingham" in venueAddress, leave venue BLANK
+- If someone says "at Glasgow City Hall", put "Glasgow City Hall" in venue and "Glasgow" in venueAddress
+- When in doubt, leave venue BLANK - better to have no venue than wrong venue
 
 CRITICAL EMAIL EXTRACTION RULES:
 - NEVER use service emails from FROM field (no-reply@weebly.com, noreply@, notifications@, etc.)
@@ -705,19 +712,34 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     }
   }
 
-  // Extract venue/location from message (improved patterns)
-  const venuePatterns = [
+  // Extract venue/location from message - distinguish between venue names and locations
+  const locationPatterns = [
     /at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i, // "at Brighton Church" (stop at fee)
     /venue:\s*([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
     /reception at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
     /location:\s*([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
-    /held at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i
+    /held at ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i,
+    /in ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i, // "in Glasgow"
+    /near ([^£\n]+?)(?:\s+for\s+£|\.|,|$)/i // "near Birmingham"
   ];
   
-  for (const pattern of venuePatterns) {
-    const venueMatch = messageText.match(pattern);
-    if (venueMatch && venueMatch[1].trim().length > 2) {
-      data.venue = venueMatch[1].trim();
+  for (const pattern of locationPatterns) {
+    const locationMatch = messageText.match(pattern);
+    if (locationMatch && locationMatch[1].trim().length > 2) {
+      const extractedText = locationMatch[1].trim();
+      
+      // Check if it's likely a proper venue name (has specific venue keywords)
+      const venueKeywords = /\b(hall|hotel|club|centre|center|church|school|park|theatre|theater|stadium|arena|pavilion|house|court|lodge|manor|castle|museum|gallery|library|inn|venue|building|restaurant|pub|bar|cafe|room)\b/i;
+      
+      if (venueKeywords.test(extractedText)) {
+        // This looks like an actual venue name
+        data.venue = extractedText;
+      } else {
+        // This looks like a general location - put in venueAddress, leave venue blank
+        data.venueAddress = extractedText;
+        console.log(`📍 Detected location (not venue): "${extractedText}" - putting in venueAddress`);
+      }
+      
       data.confidence = Math.min(0.7, data.confidence + 0.2);
       break;
     }

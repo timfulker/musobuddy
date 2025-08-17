@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, streamlining administrative tasks such as bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, enabling musicians to focus on their craft. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -59,6 +59,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing
 GPT-5 parsing system fully fixed: Resolved critical API compatibility issues preventing GPT-5 from functioning. Root cause was twofold: (1) Missing Mailgun route for user's email prefix - created route `68a22efe0a9e06824ff9973c` for `timfulkermusic@enquiries.musobuddy.com` to ensure emails reach the main webhook, (2) Insufficient token allocation for GPT-5 reasoning model - increased from 250 to 4000 tokens to accommodate GPT-5's internal reasoning plus response output. Previously, GPT-5 consumed all tokens for reasoning with none remaining for response content, causing empty responses. Added comprehensive token usage logging to track prompt/completion/reasoning token distribution. Additional fixes: artificial rate limiting increased from 7 to 50,000 daily calls matching user's 200k TPM limits, enhanced email extraction to prefer HTML content for better signature detection. System now properly routes emails and successfully extracts dates like "September 10th 2025" → "2025-09-10" and client names from signatures instead of FROM fields.
 GPT-5 email extraction system prompt fix: Resolved persistent issue where Weebly form submissions showed sender email (no-reply@weebly.com) instead of actual client email from form content. Updated GPT-5 system prompt with specific instructions to NEVER use service emails from FROM field and ALWAYS prioritize actual client emails found in contact forms, signatures, or email body content. System now correctly extracts emails like "tim@timfulker.com" from form data instead of using automated sender addresses.
 Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary Google Maps API calls. AI parser now sets venue as empty string for Encore bookings instead of placeholder text, preventing wasteful API usage while maintaining proper booking form functionality.
+Venue name vs location distinction: Fixed critical issue where location names like "Glasgow" were incorrectly treated as venue names, triggering unnecessary Google API calls. Updated both GPT-5 system prompt and fallback parser to distinguish between actual venue names (e.g., "Glasgow City Hall") and general locations (e.g., "Glasgow"). Venue name field now stays blank unless we actually know the specific venue name. Location information goes in venueAddress field. Removed booking form logic that auto-triggered API calls for town-only entries, significantly reducing API usage and improving accuracy per user preference.
 
 ## System Architecture
 
@@ -96,12 +97,12 @@ Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary 
 
 - **Cloud Services**:
     - Cloudflare R2
-    - Mailgun
     - Neon Database (PostgreSQL)
     - Replit (Authentication and hosting)
 - **APIs and Services**:
     - Anthropic Claude Haiku
     - Google Maps API
+    - Mailgun
     - OpenAI GPT-5
     - Puppeteer
     - Stripe

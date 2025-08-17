@@ -381,30 +381,8 @@ export default function NewBookingPage() {
     }
   }, [watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
   
-  // Also monitor venue field for town-only entries
-  useEffect(() => {
-    // Skip if we're in edit mode and form hasn't been initialized yet
-    if (isEditMode && !formInitialized) return;
-    
-    // Skip if we've already calculated mileage or have a venue address
-    if (mileageCalculated || watchedVenueAddress) return;
-    
-    // Check if venue looks like just a town name
-    if (watchedVenue && watchedVenue.length > 3) {
-      const isTownOnly = !watchedVenue.includes(',') && 
-                         !watchedVenue.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
-      
-      if (isTownOnly) {
-        console.log(`🏘️ Venue field contains town name only: ${watchedVenue}`);
-        // Set venue address to the town name and calculate distance
-        form.setValue('venueAddress', watchedVenue);
-        const timer = setTimeout(() => {
-          calculateMileageToTownCenter(watchedVenue);
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [watchedVenue, watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
+  // Removed: No longer auto-populate venue address from venue field to prevent unnecessary API calls
+  // User preference: Keep venue name blank unless we actually know the venue name
 
   // Populate form with existing booking data when editing
   useEffect(() => {
