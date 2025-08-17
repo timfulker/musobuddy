@@ -128,9 +128,6 @@ export async function registerSettingsRoutes(app: Express) {
         });
       }
       
-      // Ensure booking reply routes exist (high priority routes)
-      await mailgunRoutes.ensureBookingReplyRoutes();
-      
       // Create Mailgun route for this email
       const routeResult = await mailgunRoutes.createUserEmailRoute(prefix, userId);
       if (!routeResult.success) {
