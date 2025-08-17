@@ -85,6 +85,25 @@ export default function Messages() {
         -webkit-text-fill-color: white !important;
         fill: white !important;
       }
+      
+      /* Force visible text in unparseable message detail panel */
+      .unparseable-detail-panel,
+      .unparseable-detail-panel * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      
+      .unparseable-detail-panel .bg-gray-50 {
+        background-color: #f9f9f9 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      
+      .unparseable-detail-panel .bg-red-50 {
+        background-color: #fef2f2 !important;
+        color: #dc2626 !important;
+        -webkit-text-fill-color: #dc2626 !important;
+      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -472,7 +491,7 @@ export default function Messages() {
 
             {/* Message Detail Panel for Unparseable Messages */}
             {selectedUnparseableMessage && (
-              <Card>
+              <Card className="unparseable-detail-panel">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Message Details</span>
