@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings } from "../../shared/schema";
-import { eq, and, desc, sql, lte, gte } from "drizzle-orm";
+import { eq, and, desc, sql, lte, gte, ne } from "drizzle-orm";
 
 export class MiscStorage {
   private db = db;
@@ -207,7 +207,10 @@ export class MiscStorage {
 
   async getUnparseableMessages(userId: string) {
     return await db.select().from(unparseableMessages)
-      .where(eq(unparseableMessages.userId, userId))
+      .where(and(
+        eq(unparseableMessages.userId, userId),
+        ne(unparseableMessages.status, 'converted')  // Filter out converted messages
+      ))
       .orderBy(desc(unparseableMessages.createdAt));
   }
 
