@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -24,7 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 // BookingDetailsDialog removed - using new-booking page for all editing
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
-import BookingActionMenu from "@/components/booking-action-menu";
+
 import HoverResponseMenu from "@/components/hover-response-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
@@ -33,7 +33,7 @@ import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
-import { BookingActionsDialog } from "@/components/booking-actions-dialog";
+
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Enquiry } from "@shared/schema";
@@ -1740,13 +1740,73 @@ export default function UnifiedBookings() {
                                                 🎵 Apply on Encore
                                               </Button>
                                             )}
-                                            <BookingActionMenu
-                                              booking={groupBooking}
-                                              onEditBooking={handleEditBooking}
-                                              onSendCompliance={openComplianceDialog}
-                                              onManageDocuments={openDocumentManagerDialog}
-                                              onViewCommunications={openCommunicationHistoryDialog}
-                                            />
+                                            {/* Action Buttons Row */}
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  openCommunicationHistoryDialog(groupBooking);
+                                                }}
+                                                className="text-blue-600 hover:bg-blue-50"
+                                              >
+                                                <MessageCircle className="w-4 h-4 mr-1" />
+                                                Messages
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate(`/bookings/edit/${groupBooking.id}`);
+                                                }}
+                                                className="text-purple-600 hover:bg-purple-50"
+                                              >
+                                                <Eye className="w-4 h-4 mr-1" />
+                                                View
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate(`/bookings/edit/${groupBooking.id}?edit=true`);
+                                                }}
+                                                className="text-orange-600 hover:bg-orange-50"
+                                              >
+                                                <Edit className="w-4 h-4 mr-1" />
+                                                Edit
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate(`/invoices/new?bookingId=${groupBooking.id}`);
+                                                }}
+                                                className="text-yellow-600 hover:bg-yellow-50"
+                                              >
+                                                <Receipt className="w-4 h-4 mr-1" />
+                                                Invoice
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate(`/contracts/new?bookingId=${groupBooking.id}`);
+                                                }}
+                                                className="text-red-600 hover:bg-red-50"
+                                              >
+                                                <FileText className="w-4 h-4 mr-1" />
+                                                Contract
+                                              </Button>
+                                            </div>
                                           </div>
                                         </CardContent>
                                       </Card>
@@ -1843,6 +1903,15 @@ export default function UnifiedBookings() {
                                       <User className="w-4 h-4" />
                                       {booking.clientName || 'Unknown Client'}
                                     </span>
+                                    {(booking.venue || booking.venueAddress) && (
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-4 h-4" />
+                                        {/* Show area for Encore bookings, venue for others */}
+                                        {booking.applyNowLink && booking.venueAddress 
+                                          ? booking.venueAddress 
+                                          : booking.venue}
+                                      </span>
+                                    )}
                                     {booking.eventTime && (
                                       <span className="flex items-center gap-1">
                                         <Clock className="w-4 h-4" />
@@ -1850,9 +1919,9 @@ export default function UnifiedBookings() {
                                       </span>
                                     )}
                                     {booking.fee && (
-                                      <span className="flex items-center gap-1">
+                                      <span className="flex items-center gap-1 font-medium text-green-600">
                                         <PoundSterling className="w-4 h-4" />
-                                        £{booking.fee}
+                                        {booking.fee}
                                       </span>
                                     )}
                                     {booking.applyNowLink && (
@@ -1861,14 +1930,6 @@ export default function UnifiedBookings() {
                                       </Badge>
                                     )}
                                   </div>
-                                  {(booking.venue || booking.venueAddress) && (
-                                    <div className="text-gray-500">
-                                      {/* Show area for Encore bookings, venue for others */}
-                                      {booking.applyNowLink && booking.venueAddress 
-                                        ? booking.venueAddress 
-                                        : booking.venue}
-                                    </div>
-                                  )}
                                   {booking.createdAt && (
                                     <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
                                       <Clock className="w-3 h-3" />
@@ -1878,54 +1939,113 @@ export default function UnifiedBookings() {
                                 </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3">
-                                {booking.applyNowLink && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      
-                                      // Update booking status to "In progress"
-                                      try {
-                                        const token = getAuthToken();
-                                        const response = await fetch(`/api/bookings/${booking.id}`, {
-                                          method: "PATCH",
-                                          headers: { 
-                                            "Content-Type": "application/json",
-                                            "Authorization": `Bearer ${token}`,
-                                          },
-                                          body: JSON.stringify({ status: 'in_progress' }),
-                                        });
+                            </div>
+                            {/* Action Buttons Row */}
+                            <div className="flex items-center justify-end gap-3 mt-4">
+                              {booking.applyNowLink && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    
+                                    // Update booking status to "In progress"
+                                    try {
+                                      const token = getAuthToken();
+                                      const response = await fetch(`/api/bookings/${booking.id}`, {
+                                        method: "PATCH",
+                                        headers: { 
+                                          "Content-Type": "application/json",
+                                          "Authorization": `Bearer ${token}`,
+                                        },
+                                        body: JSON.stringify({ status: 'in_progress' }),
+                                      });
 
-                                        if (response.ok) {
-                                          // Refresh the bookings list
-                                          queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-                                          toast({
-                                            title: "Application submitted",
-                                            description: "Booking status updated to In Progress",
-                                          });
-                                        }
-                                      } catch (error) {
-                                        console.error('Error updating booking status:', error);
+                                      if (response.ok) {
+                                        // Refresh the bookings list
+                                        queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                        toast({
+                                          title: "Application submitted",
+                                          description: "Booking status updated to In Progress",
+                                        });
                                       }
-                                      
-                                      // Open Encore link in new tab
-                                      window.open(booking.applyNowLink, '_blank');
-                                    }}
-                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                  >
-                                    🎵 Apply on Encore
-                                  </Button>
-                                )}
-                                <BookingActionMenu
-                                  booking={booking}
-                                  onEditBooking={handleEditBooking}
-                                  onSendCompliance={openComplianceDialog}
-                                  onManageDocuments={openDocumentManagerDialog}
-                                  onViewCommunications={openCommunicationHistoryDialog}
-                                />
-                              </div>
+                                    } catch (error) {
+                                      console.error('Error updating booking status:', error);
+                                    }
+                                    
+                                    // Open Encore link in new tab
+                                    window.open(booking.applyNowLink, '_blank');
+                                  }}
+                                  className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                >
+                                  🎵 Apply on Encore
+                                </Button>
+                              )}
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCommunicationHistoryDialog(booking);
+                                }}
+                                className="text-blue-600 hover:bg-blue-50"
+                              >
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                Messages
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/bookings/edit/${booking.id}`);
+                                }}
+                                className="text-purple-600 hover:bg-purple-50"
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/bookings/edit/${booking.id}?edit=true`);
+                                }}
+                                className="text-orange-600 hover:bg-orange-50"
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/invoices/new?bookingId=${booking.id}`);
+                                }}
+                                className="text-yellow-600 hover:bg-yellow-50"
+                              >
+                                <Receipt className="w-4 h-4 mr-1" />
+                                Invoice
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/contracts/new?bookingId=${booking.id}`);
+                                }}
+                                className="text-red-600 hover:bg-red-50"
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                Contract
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
