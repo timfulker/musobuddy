@@ -472,7 +472,8 @@ export default function Messages() {
                         variant="secondary"
                         onClick={bulkReprocessWithAI}
                         disabled={isBulkProcessing}
-                        className="text-xs"
+                        className="text-xs text-white"
+                        style={{ color: 'white' }}
                       >
                         <Zap className="h-3 w-3 mr-1" />
                         {isBulkProcessing 
