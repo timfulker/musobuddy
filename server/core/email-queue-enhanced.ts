@@ -354,7 +354,7 @@ class EnhancedEmailQueue {
         const cleanedSubject = cleanEncoreTitle(subjectField);
 
         await storage.createUnparseableMessage({
-          userId: "43963086", // Default admin user for review
+          userId: job.userId, // Save under the actual user who should see it
           source: 'email',
           fromContact: `${clientName} <${clientEmail}>`,
           rawMessage: bodyField || 'No message content',
