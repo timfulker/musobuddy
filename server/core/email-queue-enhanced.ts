@@ -166,11 +166,6 @@ class EnhancedEmailQueue {
     const bodyStart = body.substring(0, 100);
     return `${from}|${subject}|${bodyStart}`;
   }
-    
-    // Default duplicate detection for regular emails
-    const bodyStart = body.substring(0, 100);
-    return `${from}|${subject}|${bodyStart}`;
-  }
 
   /**
    * Check if this email was recently processed
