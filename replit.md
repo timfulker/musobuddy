@@ -53,6 +53,7 @@ Encore booking location extraction: Fixed critical issue where Encore bookings w
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted (January 2025), instead of just going to generic bookings page.
 Forgot password system: Complete email-based password reset functionality implemented (January 2025) with secure crypto-generated tokens, 1-hour expiration, professional email templates using existing Mailgun infrastructure, and user-friendly frontend flow including dedicated forgot password and reset password pages.
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface (January 2025). Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
+Duplicate email processing fix: Resolved critical duplication issue (January 2025) caused by multiple Mailgun routes with same priority processing identical emails. Fixed by removing duplicate specific match_recipient routes for timfulkermusic@enquiries.musobuddy.com, keeping only the catch_all route. This eliminated duplicate bookings and review messages from single email submissions.
 
 ## System Architecture
 
