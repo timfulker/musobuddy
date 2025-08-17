@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, streamlining administrative tasks like bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution, empowering musicians by reducing administrative burdens. The vision is to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and tapping into the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its core purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, empowering musicians. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -61,33 +61,33 @@ GPT-5 parsing system fully fixed: Resolved critical API compatibility issues pre
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Features clean white cards, gradient forms, responsive layouts, consistent sidebar navigation, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue).
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, offering clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Includes QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: Incorporates QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
-- **Authentication**: Pure JWT-based system with SMS verification, email/password login, phone number verification, and secure forgot password functionality using email-based reset flow with 1-hour token expiration. Uses a unified middleware. Production URLs are hardcoded for Stripe redirects.
+- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset. Uses unified middleware. Production URLs are hardcoded for Stripe redirects.
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
+- **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
 - **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 for email parsing and enhanced venue extraction.
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms.
+    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API for venue auto-population, mileage, what3words), and a standalone, token-based booking widget that parses dates. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking.
     - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting.
     - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
-    - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid" for bank transfers), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
+    - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
     - **System Health Monitoring**: Real-time dashboard (`/system-health`).
     - **Deployment**: Node.js server serving built frontend.
     - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
-    - **Onboarding Wizard**: Multi-step wizard for new users covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
-    - **Email Processing**: Comprehensive queue system to eliminate race conditions, processing emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
+    - **Onboarding Wizard**: Multi-step wizard covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
+    - **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
 
 ## External Dependencies
 
