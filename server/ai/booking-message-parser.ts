@@ -196,6 +196,14 @@ ${messageText}`;
     console.log('🤖 GPT-5 raw response:', rawContent);
     console.log('🤖 GPT-5 response time:', `${responseTime}ms`);
     
+    // CRITICAL DEBUG: Log exactly what we sent and received
+    console.log('🚨 [CRITICAL DEBUG] GPT-5 CALL:', {
+      systemPrompt: systemPrompt.substring(0, 200),
+      userPrompt: userPrompt,
+      rawResponse: rawContent,
+      responseLength: rawContent.length
+    });
+    
     // Log input vs output for debugging
     console.log('🔍 [GPT-5 DEBUG] Input Analysis:', {
       fromField: clientContact,
@@ -227,8 +235,15 @@ ${messageText}`;
       fromFieldName: clientContact ? clientContact.split('<')[0].trim() : null,
       nameMatch: parsed.clientName === (clientContact ? clientContact.split('<')[0].trim() : null),
       eventDate: parsed.eventDate,
-      confidence: parsed.confidence
-    })
+      confidence: parsed.confidence,
+      fullParsedObject: parsed
+    });
+    
+    // CRITICAL: Log if date is missing
+    if (!parsed.eventDate) {
+      console.log('❌❌❌ GPT-5 FAILED TO EXTRACT DATE FROM:', messageText);
+      console.log('❌❌❌ GPT-5 RETURNED:', JSON.stringify(parsed));
+    }
     
     // POST-PROCESSING VALIDATION: Fix common GPT-5 mistakes
     // 1. Check if GPT-5 incorrectly used the From field as client name
@@ -257,7 +272,7 @@ ${messageText}`;
     
     // 2. Last-chance date extraction before sending to review
     if (!parsed.eventDate && messageText) {
-      console.log('🔧 [POST-PROCESS] GPT-5 missed date, attempting extraction...');
+      console.log('🔧 [POST-PROCESS] GPT-5 missed date, attempting extraction from:', messageText);
       
       const months: Record<string, number> = {
         january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
@@ -281,8 +296,10 @@ ${messageText}`;
       
       for (const pattern of datePatterns) {
         const matches = [...messageText.matchAll(pattern)];
+        console.log(`🔍 Testing pattern ${pattern}, found ${matches.length} matches`);
         if (matches.length > 0) {
           const match = matches[0];
+          console.log(`🔍 Match found:`, match[0], 'Groups:', match.slice(1));
           let parsedDate: string | null = null;
           
           // Pattern with year included
