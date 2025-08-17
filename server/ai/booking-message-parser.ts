@@ -125,42 +125,13 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `You are a booking information extractor for musicians. Today's date is ${currentDate}.
-
-Extract booking details from emails and return valid JSON only.
-
-CLIENT NAME RULES:
-- Look for signature after closing phrases: "Regards", "Sincerely", "Best", "Kind regards"
-- Extract name from 1-2 lines after closing phrase
-- If no closing phrase, use last non-empty line with a name
-- Fall back to FROM field only if no signature found
-
-DATE PARSING RULES:
-- Convert all dates to YYYY-MM-DD format
-- "17th of March 2026" → "2026-03-17"
-- "March 17, 2026" → "2026-03-17"
-- European format default: DD/MM/YYYY (01/03/2026 = March 1st)
-- Date must be future (after ${currentDate})
-- If ambiguous or unparseable, return null
-
-RETURN JSON FORMAT:
-{
-  "clientName": "string or null",
-  "clientEmail": "string or null",
-  "clientPhone": "string or null", 
-  "eventDate": "YYYY-MM-DD or null",
-  "eventTime": "HH:MM or null",
-  "venue": "string or null",
-  "venueAddress": "string or null",
-  "eventType": "string or null",
-  "confidence": number between 0.1 and 1.0
-}`;
+    const systemPrompt = `Extract booking info from musician emails. Today: ${currentDate}
+Return JSON: {"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
+Get client name from signature, not FROM field. Convert dates to YYYY-MM-DD. Set eventDate null if unclear.`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
-SUBJECT: ${subject || 'No subject'}
-BODY: ${messageText}
-
-Extract client name (from signature first), event date (YYYY-MM-DD), venue, and event type. Return JSON only:`;
+EMAIL: ${messageText}
+JSON:`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
@@ -181,7 +152,7 @@ Extract client name (from signature first), event date (YYYY-MM-DD), venue, and 
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
-      max_completion_tokens: 400, // Optimized for typical emails: ~200 reasoning + ~150 response tokens
+      max_completion_tokens: 250, // Minimal: ~150 reasoning + ~50 response for simple emails
       temperature: 1, // GPT-5 only supports default temperature
       messages: [
         { 
