@@ -457,8 +457,11 @@ class EnhancedEmailQueue {
         eventDate: parsedData.eventDate,
         eventType: parsedData.eventType,
         clientName: parsedData.clientName,
+        clientEmail: parsedData.clientEmail,
+        venueAddress: parsedData.venueAddress,
         confidence: parsedData.confidence
       });
+      console.log(`🔍 [${requestId}] FULL PARSED DATA:`, JSON.stringify(parsedData, null, 2));
       console.log(`📧 [${requestId}] RACE CONDITION DEBUG: parseBookingMessage completed`, {
         hasEventDate: !!parsedData.eventDate,
         hasVenue: !!parsedData.venue,
@@ -474,9 +477,32 @@ class EnhancedEmailQueue {
                               subjectField.toLowerCase().includes('encore') ||
                               bodyField.includes('apply now');
 
-      if (!parsedData.eventDate && !(isEncoreMessage && parsedData.venue && parsedData.eventType)) {
-        console.log(`❌ [${requestId}] PARSING FAILED: No valid event date found - saving to review messages`);
-        await saveToReviewMessages('No valid event date found', 'Message requires manual review');
+      // FLEXIBLE VALIDATION: Accept emails with event details AND contact/venue info
+      const hasEventDetails = !!(parsedData.eventDate || parsedData.eventType);
+      const hasContactInfo = !!(parsedData.clientName || parsedData.clientEmail);
+      const hasVenueInfo = !!(parsedData.venue || parsedData.venueAddress);
+      
+      // Special handling for Encore bookings
+      const encoreValidation = isEncoreMessage && parsedData.venue && parsedData.eventType;
+      
+      const isValidBooking = hasEventDetails && (hasContactInfo || hasVenueInfo) || encoreValidation;
+      
+      console.log(`🔍 [${requestId}] VALIDATION CHECK:`, {
+        hasEventDetails,
+        hasContactInfo, 
+        hasVenueInfo,
+        encoreValidation,
+        isValidBooking,
+        eventDate: parsedData.eventDate,
+        eventType: parsedData.eventType,
+        clientName: parsedData.clientName,
+        clientEmail: parsedData.clientEmail,
+        venue: parsedData.venue
+      });
+      
+      if (!isValidBooking) {
+        console.log(`❌ [${requestId}] PARSING FAILED: Insufficient booking data - saving to review messages`);
+        await saveToReviewMessages('Insufficient booking data', 'Message requires manual review');
         return;
       }
 

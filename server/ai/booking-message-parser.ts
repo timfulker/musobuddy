@@ -217,6 +217,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     }
 
     console.log('🤖 GPT-5 raw response:', rawContent);
+    console.log('🤖 GPT-5 response time:', `${responseTime}ms`);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
