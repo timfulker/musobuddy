@@ -1589,13 +1589,30 @@ export default function UnifiedBookings() {
                                         } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
                                       >
                                         <CardContent className="p-6">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4 flex-1">
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-4 flex-1">
                                               <Checkbox
                                                 checked={selectedBookings.includes(groupBooking.id)}
                                                 onCheckedChange={() => toggleSelectBooking(groupBooking.id)}
                                                 onClick={(e) => e.stopPropagation()}
                                               />
+                                              
+                                              {/* Prominent Date Display - Similar to Dashboard */}
+                                              <div className="flex-shrink-0 text-center border-r border-gray-200 pr-4 mr-2">
+                                                <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                                                  {new Date(groupBooking.eventDate).toLocaleDateString('en-US', { weekday: 'short' })}
+                                                </div>
+                                                <div className="text-3xl font-bold text-gray-900 leading-none mt-1">
+                                                  {new Date(groupBooking.eventDate).getDate()}
+                                                </div>
+                                                <div className="text-sm text-gray-500 mt-1">
+                                                  {new Date(groupBooking.eventDate).toLocaleDateString('en-US', { 
+                                                    month: 'short', 
+                                                    year: 'numeric' 
+                                                  })}
+                                                </div>
+                                              </div>
+
                                               <div 
                                                 className="flex-1 cursor-pointer" 
                                                 onClick={() => handleBookingClick(groupBooking)}
@@ -1679,14 +1696,6 @@ export default function UnifiedBookings() {
                                                   </div>
                                                 )}
                                               </div>
-                                                <p className="text-gray-500">
-                                                  {new Date(groupBooking.eventDate).toLocaleDateString('en-GB', {
-                                                    weekday: 'long',
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                  })}
-                                                </p>
                                               </div>
                                             </div>
                                           </div>
@@ -1760,13 +1769,30 @@ export default function UnifiedBookings() {
                           }`}
                         >
                           <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-4 flex-1">
                                 <Checkbox
                                   checked={selectedBookings.includes(booking.id)}
                                   onCheckedChange={() => toggleSelectBooking(booking.id)}
                                   onClick={(e) => e.stopPropagation()}
                                 />
+                                
+                                {/* Prominent Date Display - Similar to Dashboard */}
+                                <div className="flex-shrink-0 text-center border-r border-gray-200 pr-4 mr-2">
+                                  <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                                    {new Date(booking.eventDate).toLocaleDateString('en-US', { weekday: 'short' })}
+                                  </div>
+                                  <div className="text-3xl font-bold text-gray-900 leading-none mt-1">
+                                    {new Date(booking.eventDate).getDate()}
+                                  </div>
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    {new Date(booking.eventDate).toLocaleDateString('en-US', { 
+                                      month: 'short', 
+                                      year: 'numeric' 
+                                    })}
+                                  </div>
+                                </div>
+
                                 <div 
                                   className="flex-1 cursor-pointer" 
                                   onClick={() => handleBookingClick(booking)}
@@ -1815,10 +1841,6 @@ export default function UnifiedBookings() {
                                     <span className="flex items-center gap-1">
                                       <User className="w-4 h-4" />
                                       {booking.clientName || 'Unknown Client'}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="w-4 h-4" />
-                                      {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
                                     </span>
                                     {booking.eventTime && (
                                       <span className="flex items-center gap-1">
