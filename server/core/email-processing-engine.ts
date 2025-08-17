@@ -302,14 +302,14 @@ export class EmailProcessingEngine {
     try {
       // Extract form data using regex
       const nameMatch = emailData.body.match(/Name\s*([^\n]+)/i);
-      const emailMatch = emailData.body.match(/Email\s*([^\n]+)/i);
       const phoneMatch = emailData.body.match(/Phone\s*([^\n]+)/i);
       const locationMatch = emailData.body.match(/Location of Event\s*([^\n]+)/i);
       const dateMatch = emailData.body.match(/Date and type of event\s*([^\n]+)/i);
       const discoMatch = emailData.body.match(/complete package with disco[?\s]*([^\n]+)/i);
       
       const clientName = nameMatch?.[1]?.trim() || 'Unknown Client';
-      const clientEmail = emailMatch?.[1]?.trim();
+      // Use the same email priority logic as main processing
+      const clientEmail = this.extractClientEmail({}, emailData);
       const clientPhone = phoneMatch?.[1]?.trim();
       const eventLocation = locationMatch?.[1]?.trim();
       const eventDetails = dateMatch?.[1]?.trim();
@@ -437,11 +437,14 @@ export class EmailProcessingEngine {
     const { cleanEncoreTitle } = require('./booking-formatter');
     const cleanedSubject = cleanEncoreTitle(emailData.subject);
     
+    // Extract client email with proper priority: form content first, then parsed data, then sender
+    const clientEmail = this.extractClientEmail(parsedData, emailData);
+    
     return {
       userId: userId,
       title: cleanedSubject || `Email Booking - ${emailData.from.split('<')[0].trim() || 'Unknown'}`,
       clientName: parsedData.clientName || emailData.from.split('<')[0].trim() || 'Unknown Client',
-      clientEmail: emailData.from.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || null,
+      clientEmail: clientEmail,
       clientPhone: parsedData.clientPhone || null,
       venue: parsedData.venue || null,
       venueAddress: parsedData.venueAddress || null,
@@ -457,6 +460,76 @@ export class EmailProcessingEngine {
       applyNowLink: parsedData.applyNowLink || null,
       processedAt: new Date()
     };
+  }
+
+  /**
+   * Extract client email with proper priority:
+   * 1. Form content email (from body)
+   * 2. AI parsed email 
+   * 3. Sender email (fallback only)
+   */
+  private extractClientEmail(parsedData: any, emailData: EmailData): string | null {
+    // 1. First priority: Extract email from form content
+    const formEmails = this.extractEmailsFromFormContent(emailData.body);
+    if (formEmails.length > 0) {
+      console.log(`📧 PRIORITY: Using form content email: ${formEmails[0]}`);
+      return formEmails[0];
+    }
+    
+    // 2. Second priority: AI parsed email
+    if (parsedData.clientEmail && !parsedData.clientEmail.includes('weebly.com') && !parsedData.clientEmail.includes('encore.com')) {
+      console.log(`📧 PRIORITY: Using AI parsed email: ${parsedData.clientEmail}`);
+      return parsedData.clientEmail;
+    }
+    
+    // 3. Last resort: Sender email (but skip service emails)
+    const senderEmail = emailData.from.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0];
+    if (senderEmail && !senderEmail.includes('weebly.com') && !senderEmail.includes('encore.com') && !senderEmail.includes('no-reply')) {
+      console.log(`📧 PRIORITY: Using sender email: ${senderEmail}`);
+      return senderEmail;
+    }
+    
+    console.log(`⚠️ PRIORITY: No valid email found, returning null`);
+    return null;
+  }
+
+  /**
+   * Extract email addresses from form content (body text)
+   */
+  private extractEmailsFromFormContent(body: string): string[] {
+    const emails: string[] = [];
+    
+    // Common form patterns
+    const patterns = [
+      /Email[:\s]*([^\n\r]+)/i,
+      /E-mail[:\s]*([^\n\r]+)/i,
+      /Email Address[:\s]*([^\n\r]+)/i,
+      /Contact Email[:\s]*([^\n\r]+)/i,
+      // Generic email pattern in body
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g
+    ];
+    
+    for (const pattern of patterns) {
+      const matches = body.match(pattern);
+      if (matches) {
+        const emailMatch = matches[1] || matches[0];
+        const cleanEmail = emailMatch.trim();
+        
+        // Extract actual email if it contains extra text
+        const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+        const extracted = cleanEmail.match(emailRegex);
+        
+        if (extracted && extracted[0]) {
+          const email = extracted[0].toLowerCase();
+          // Skip service emails
+          if (!email.includes('weebly.com') && !email.includes('encore.com') && !email.includes('no-reply')) {
+            emails.push(email);
+          }
+        }
+      }
+    }
+    
+    return [...new Set(emails)]; // Remove duplicates
   }
 
   private async saveToUserReviewMessages(webhookData: any, reason: string, requestId: string, userId?: string): Promise<void> {
@@ -478,9 +551,16 @@ export class EmailProcessingEngine {
       const subjectField = webhookData.Subject || webhookData.subject || '';
       const bodyField = webhookData['body-plain'] || webhookData.text || webhookData['stripped-text'] || '';
       
-      let clientEmail = '';
-      const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
-      if (emailMatch) clientEmail = emailMatch[0];
+      // Use proper email extraction priority for review messages
+      const emailData = {
+        from: fromField,
+        subject: subjectField,
+        body: bodyField,
+        recipient: '',
+        timestamp: Date.now()
+      };
+      
+      const clientEmail = this.extractClientEmail({}, emailData) || '';
       
       let clientName = 'Unknown';
       if (fromField.includes('<')) {
@@ -488,6 +568,12 @@ export class EmailProcessingEngine {
         if (nameMatch) clientName = nameMatch[1].trim();
       } else if (clientEmail) {
         clientName = clientEmail.split('@')[0];
+      }
+      
+      // Try to extract name from form content if available
+      const nameMatch = bodyField.match(/Name[:\s]*([^\n\r]+)/i);
+      if (nameMatch && nameMatch[1]) {
+        clientName = nameMatch[1].trim();
       }
       
       await storage.createUnparseableMessage({
