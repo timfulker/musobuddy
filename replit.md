@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its core purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, enabling musicians to focus on their craft. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform for musicians, streamlining administrative tasks such as bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, enabling musicians to focus on their craft. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -64,15 +64,15 @@ Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary 
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, offering clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Features clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Incorporates QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
-- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset. Uses unified middleware.
+- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset, using unified middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
