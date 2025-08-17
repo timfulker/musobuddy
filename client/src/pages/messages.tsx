@@ -203,6 +203,20 @@ export default function Messages() {
     }
   });
 
+  // Delete unparseable message mutation
+  const deleteUnparseableMessageMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/unparseable-messages/${id}`, {
+      method: 'DELETE'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/unparseable-messages'] });
+      toast({
+        title: "Message deleted",
+        description: "The unparseable message has been removed.",
+      });
+    },
+  });
+
   const handleViewClientMessage = async (message: MessageNotification) => {
     // Mark as read if not already read
     if (!message.isRead) {
@@ -419,6 +433,34 @@ export default function Messages() {
                             <p className="text-sm line-clamp-2" style={{ color: '#333333' }}>
                               {message.rawMessage?.substring(0, 150)}...
                             </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUnparseableMessage(message);
+                              }}
+                              className="h-8"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Review
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteUnparseableMessageMutation.mutate(message.id);
+                              }}
+                              disabled={deleteUnparseableMessageMutation.isPending}
+                              className="h-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </div>
