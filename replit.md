@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks like bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed for musicians to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its primary purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -86,7 +86,7 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
     - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
-    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
+    **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
     - **System Health Monitoring**: Real-time dashboard (`/system-health`).
     - **Deployment**: Node.js server serving built frontend.
     - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
