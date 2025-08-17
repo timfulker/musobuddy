@@ -137,7 +137,17 @@ WHAT TO EXTRACT:
 - clientName: Person's name from email signature/content (e.g., "John Davies")
 - clientEmail: Email address from content or sender
 - clientPhone: Phone number if mentioned
-- eventDate: Convert dates to YYYY-MM-DD format ("January 30th 2026" → "2026-01-30")
+- eventDate: Convert ALL date formats to YYYY-MM-DD format:
+  • "January 30th 2026" → "2026-01-30"
+  • "30th January 2026" → "2026-01-30"
+  • "2026-01-30" → "2026-01-30"
+  • "next March" → resolve to next March (consider today is ${currentDate})
+  • "this December" → resolve appropriately based on current date
+  • For ambiguous formats like "01/10/2025" or "01-10-2025":
+    - Assume European format (DD/MM/YYYY) unless context suggests US format
+    - US format indicators: US address, USD currency, US phone numbers
+    - European format indicators: UK address, GBP/EUR currency, UK phone numbers
+    - When uncertain, default to European format (DD/MM/YYYY)
 - eventTime: Start time if mentioned
 - venue: Venue name ("The Savoy Grill", "church hall", etc.)
 - venueAddress: City/location ("London", "Birmingham", etc.)
