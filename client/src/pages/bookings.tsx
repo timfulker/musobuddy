@@ -1695,8 +1695,34 @@ export default function UnifiedBookings() {
                                               <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={(e) => {
+                                                onClick={async (e) => {
                                                   e.stopPropagation();
+                                                  
+                                                  // Update booking status to "In progress"
+                                                  try {
+                                                    const token = getAuthToken();
+                                                    const response = await fetch(`/api/bookings/${groupBooking.id}`, {
+                                                      method: "PATCH",
+                                                      headers: { 
+                                                        "Content-Type": "application/json",
+                                                        "Authorization": `Bearer ${token}`,
+                                                      },
+                                                      body: JSON.stringify({ status: 'in_progress' }),
+                                                    });
+
+                                                    if (response.ok) {
+                                                      // Refresh the bookings list
+                                                      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                                      toast({
+                                                        title: "Application submitted",
+                                                        description: "Booking status updated to In Progress",
+                                                      });
+                                                    }
+                                                  } catch (error) {
+                                                    console.error('Error updating booking status:', error);
+                                                  }
+                                                  
+                                                  // Open Encore link in new tab
                                                   window.open(groupBooking.applyNowLink, '_blank');
                                                 }}
                                                 className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
@@ -1834,8 +1860,34 @@ export default function UnifiedBookings() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                       e.stopPropagation();
+                                      
+                                      // Update booking status to "In progress"
+                                      try {
+                                        const token = getAuthToken();
+                                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                                          method: "PATCH",
+                                          headers: { 
+                                            "Content-Type": "application/json",
+                                            "Authorization": `Bearer ${token}`,
+                                          },
+                                          body: JSON.stringify({ status: 'in_progress' }),
+                                        });
+
+                                        if (response.ok) {
+                                          // Refresh the bookings list
+                                          queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                          toast({
+                                            title: "Application submitted",
+                                            description: "Booking status updated to In Progress",
+                                          });
+                                        }
+                                      } catch (error) {
+                                        console.error('Error updating booking status:', error);
+                                      }
+                                      
+                                      // Open Encore link in new tab
                                       window.open(booking.applyNowLink, '_blank');
                                     }}
                                     className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
