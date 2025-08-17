@@ -14,6 +14,9 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
 
+  // Debug logging
+  console.log('🗺️ BookingMap render:', { venue, apiKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ? 'SET' : 'NOT SET' });
+
   const loadGoogleMaps = () => {
     if (window.google && window.google.maps) {
       setMapLoaded(true);
@@ -36,7 +39,7 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
 
     // Load Google Maps script
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.onload = () => setMapLoaded(true);
