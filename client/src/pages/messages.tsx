@@ -340,19 +340,17 @@ export default function Messages() {
                       <div
                         key={message.id}
                         className={cn(
-                          "message-card-override p-4 border rounded-lg cursor-pointer transition-all",
-                          message.status === 'new' ? 'border-orange-200 bg-orange-50' : 'border-gray-200 bg-gray-50',
+                          "p-4 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                          message.status === 'new' 
+                            ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800' 
+                            : 'bg-background border-border',
                           selectedUnparseableMessage?.id === message.id && 'ring-2 ring-primary'
                         )}
-                        style={{ 
-                          color: '#000000 !important',
-                          '--tw-text-opacity': '1 !important'
-                        }}
                         onClick={() => setSelectedUnparseableMessage(message)}
                       >
                         <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2">
                               <Badge variant={message.status === 'new' ? 'destructive' : 'secondary'}>
                                 {message.status}
                               </Badge>
@@ -360,15 +358,17 @@ export default function Messages() {
                                 {message.source}
                               </span>
                             </div>
-                            <p className="font-medium text-sm mb-1" style={{ color: '#000000' }}>
-                              From: {message.fromContact}
-                            </p>
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
-                            </p>
-                            <p className="text-sm line-clamp-2" style={{ color: '#333333' }}>
-                              {message.rawMessage?.substring(0, 150)}...
-                            </p>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <p className="font-medium text-foreground">
+                                From: {message.fromContact}
+                              </p>
+                              <p className="text-xs">
+                                {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
+                              </p>
+                              <p className="line-clamp-2">
+                                {message.rawMessage?.substring(0, 150)}...
+                              </p>
+                            </div>
                           </div>
                           
                           <div className="flex items-center gap-2 ml-4">
@@ -405,10 +405,11 @@ export default function Messages() {
                 )}
               </CardContent>
             </Card>
+        </div>
 
-            {/* Message Detail Panel for Unparseable Messages */}
-            {selectedUnparseableMessage && (
-              <Card className="unparseable-detail-panel">
+        {/* Message Detail Panel for Unparseable Messages */}
+        {selectedUnparseableMessage && (
+          <Card className="mt-6">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Message Details</span>
@@ -497,8 +498,6 @@ export default function Messages() {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
-        </Tabs>
       </div>
     </Layout>
   );
