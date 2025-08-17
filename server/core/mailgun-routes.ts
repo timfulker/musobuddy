@@ -104,22 +104,24 @@ export class MailgunRouteManager {
     return { valid: true };
   }
 
-  // Create high-priority routes for booking/invoice replies
+  // Create high-priority routes for booking/invoice replies on mg.musobuddy.com
   async ensureBookingReplyRoutes(): Promise<{ success: boolean; error?: string }> {
     if (!this.mg) {
       return { success: false, error: 'Mailgun not configured' };
     }
 
     try {
-      console.log('📧 Ensuring booking reply routes exist...');
+      console.log('📧 Ensuring booking reply routes exist for mg.musobuddy.com...');
+      
+      const replyDomain = 'mg.musobuddy.com'; // Correct domain for booking/invoice replies
       
       // Check existing routes first
       const existingRoutes = await this.listRoutes();
       const hasBookingRoute = existingRoutes.some(route => 
-        route.expression?.includes('booking') && route.expression?.includes(this.domain)
+        route.expression?.includes('booking') && route.expression?.includes(replyDomain)
       );
       const hasInvoiceRoute = existingRoutes.some(route => 
-        route.expression?.includes('invoice') && route.expression?.includes(this.domain)
+        route.expression?.includes('invoice') && route.expression?.includes(replyDomain)
       );
 
       const repliesWebhookUrl = `https://musobuddy.replit.app/api/webhook/mailgun-replies`;
@@ -128,31 +130,31 @@ export class MailgunRouteManager {
       // Create booking reply route if it doesn't exist
       if (!hasBookingRoute) {
         const bookingRoute = await this.mg.routes.create({
-          priority: 0, // Higher priority than user routes (priority 1)
-          description: 'MusoBuddy booking replies - high priority',
-          expression: `match_recipient("*booking*@${this.domain}")`,
+          priority: 0, // Higher priority than other routes
+          description: 'MusoBuddy booking replies - mg.musobuddy.com - high priority',
+          expression: `match_recipient("*booking*@${replyDomain}")`,
           action: [`forward("${repliesWebhookUrl}")`]
         });
-        createdRoutes.push(`booking replies (${bookingRoute.id})`);
-        console.log(`✅ Created booking reply route: ${bookingRoute.id}`);
+        createdRoutes.push(`booking replies on ${replyDomain} (${bookingRoute.id})`);
+        console.log(`✅ Created booking reply route for ${replyDomain}: ${bookingRoute.id}`);
       }
 
       // Create invoice reply route if it doesn't exist  
       if (!hasInvoiceRoute) {
         const invoiceRoute = await this.mg.routes.create({
-          priority: 0, // Higher priority than user routes (priority 1)
-          description: 'MusoBuddy invoice replies - high priority',
-          expression: `match_recipient("*invoice*@${this.domain}")`,
+          priority: 0, // Higher priority than other routes
+          description: 'MusoBuddy invoice replies - mg.musobuddy.com - high priority',
+          expression: `match_recipient("*invoice*@${replyDomain}")`,
           action: [`forward("${repliesWebhookUrl}")`]
         });
-        createdRoutes.push(`invoice replies (${invoiceRoute.id})`);
-        console.log(`✅ Created invoice reply route: ${invoiceRoute.id}`);
+        createdRoutes.push(`invoice replies on ${replyDomain} (${invoiceRoute.id})`);
+        console.log(`✅ Created invoice reply route for ${replyDomain}: ${invoiceRoute.id}`);
       }
 
       if (createdRoutes.length > 0) {
         console.log(`✅ Created ${createdRoutes.length} reply routes: ${createdRoutes.join(', ')}`);
       } else {
-        console.log('✅ Booking reply routes already exist');
+        console.log(`✅ Booking reply routes already exist for ${replyDomain}`);
       }
 
       return { success: true };
