@@ -125,33 +125,42 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `Extract date, venue, and client name from this booking inquiry email.
+    const systemPrompt = `You are a booking information extractor for musicians. Today's date is ${currentDate}.
 
-The client name is who SIGNED the email (at the bottom), not who it's addressed to.
-Format any date as YYYY-MM-DD. Today is ${currentDate}.
+Extract booking details from emails and return valid JSON only.
 
-Return JSON:
+CLIENT NAME RULES:
+- Look for signature after closing phrases: "Regards", "Sincerely", "Best", "Kind regards"
+- Extract name from 1-2 lines after closing phrase
+- If no closing phrase, use last non-empty line with a name
+- Fall back to FROM field only if no signature found
+
+DATE PARSING RULES:
+- Convert all dates to YYYY-MM-DD format
+- "17th of March 2026" → "2026-03-17"
+- "March 17, 2026" → "2026-03-17"
+- European format default: DD/MM/YYYY (01/03/2026 = March 1st)
+- Date must be future (after ${currentDate})
+- If ambiguous or unparseable, return null
+
+RETURN JSON FORMAT:
 {
-  "clientName": "name from signature",
-  "clientEmail": "email address",
-  "clientPhone": "phone number",
-  "eventDate": "YYYY-MM-DD",
-  "eventTime": "HH:MM",
-  "eventEndTime": "HH:MM",
-  "venue": "venue name",
-  "venueAddress": "location",
-  "eventType": "type of event",
-  "fee": number,
-  "deposit": number,
-  "specialRequirements": "special notes",
-  "confidence": 0.1 to 1.0
-}
+  "clientName": "string or null",
+  "clientEmail": "string or null",
+  "clientPhone": "string or null", 
+  "eventDate": "YYYY-MM-DD or null",
+  "eventTime": "HH:MM or null",
+  "venue": "string or null",
+  "venueAddress": "string or null",
+  "eventType": "string or null",
+  "confidence": number between 0.1 and 1.0
+}`;
 
-Use null for missing fields.`;
+    const userPrompt = `FROM: ${clientContact || 'Unknown'}
+SUBJECT: ${subject || 'No subject'}
+BODY: ${messageText}
 
-    const userPrompt = `Extract date, venue and client name from this message:
-
-${messageText}`;
+Extract client name (from signature first), event date (YYYY-MM-DD), venue, and event type. Return JSON only:`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
@@ -212,21 +221,19 @@ ${messageText}`;
       bodyLength: messageText.length
     });
     
-    // Clean JSON response (remove markdown code blocks if present)
+    // Simple JSON parsing with robust cleaning
     let jsonContent = rawContent.trim();
-    if (jsonContent.startsWith('```json')) {
-      jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*$/, '');
-    } else if (jsonContent.startsWith('```')) {
-      jsonContent = jsonContent.replace(/```\s*/g, '').replace(/```\s*$/, '');
-    }
+    // Remove markdown code blocks if present
+    jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').replace(/```$/g, '');
     
     let parsed;
     try {
       parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      console.error('Raw content:', rawContent);
-      throw new Error('Invalid JSON response from OpenAI');
+      console.error('❌ GPT-5 JSON parse error:', parseError);
+      console.error('❌ Raw response:', rawContent);
+      console.error('❌ Cleaned content:', jsonContent);
+      throw new Error('GPT-5 returned invalid JSON - sending to review queue');
     }
     
     // Log what GPT-5 extracted
