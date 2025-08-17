@@ -137,7 +137,7 @@ class EmailQueue {
         const cleanedSubject = cleanEncoreTitle(subjectField);
 
         await storage.createUnparseableMessage({
-          userId: targetUserId || "43963086", // Use target user ID or fallback to admin
+          userId: targetUserId || "1754488522516", // Use target user ID or fallback to correct user
           source: 'email',
           fromContact: `${clientName} <${clientEmail}>`,
           rawMessage: bodyField || 'No message content',
