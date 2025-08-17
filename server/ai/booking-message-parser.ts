@@ -125,48 +125,27 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
+    const systemPrompt = `You are a booking information extractor for musicians. Today's date is ${currentDate}.
 
-TODAY'S DATE: ${currentDate}
-CURRENT YEAR: ${currentYear}
+TASK: Extract booking details from the email and return them in the specified JSON format.
 
-IMPORTANT DATE RESOLUTION RULES:
-- Convert relative dates to specific YYYY-MM-DD format
-- "January 30th 2026" → "2026-01-30"
-- "next year" + month/day → resolve to next year's date
-- "this October" → resolve to current/next October depending on current date
-- Only extract dates you can resolve with confidence
-- If uncertain about year (e.g., "March 15th" with no year context), leave eventDate as null
+PRIORITY ORDER:
+1. If information is in the email BODY (message content), use that
+2. If not in body, fall back to email headers (From, To fields)
 
-Extract information naturally from the message text using your understanding.
+WHAT TO EXTRACT:
+- clientName: Person's name from email signature/content (e.g., "John Davies")
+- clientEmail: Email address from content or sender
+- clientPhone: Phone number if mentioned
+- eventDate: Convert dates to YYYY-MM-DD format ("January 30th 2026" → "2026-01-30")
+- eventTime: Start time if mentioned
+- venue: Venue name ("The Savoy Grill", "church hall", etc.)
+- venueAddress: City/location ("London", "Birmingham", etc.)
+- eventType: Type of event ("wedding", "party", "corporate", etc.)
+- fee/deposit: Any amounts mentioned
+- confidence: How confident you are (0.1 to 1.0)
 
-VENUE vs LOCATION DISTINCTION:
-- VENUE NAME: The actual name/description of the place (e.g., "our garden", "my home", "the church hall", "St. Mary's Church", "The Royal Albert Hall", "our backyard", "Ronnie Scott's Jazz Club")
-- VENUE ADDRESS: The city, town, area, or region - SIMPLIFY TO JUST THE TOWN/CITY NAME
-- LOCATION SIMPLIFICATION RULES:
-  • "near Swindon" → "Swindon"
-  • "just outside Manchester" → "Manchester"
-  • "in the Bristol area" → "Bristol"
-  • "close to Oxford" → "Oxford"
-  • "outskirts of London" → "London"
-- EXAMPLES:
-  • "our wedding in our garden which is just outside Swindon" → venue: "Our Garden", venueAddress: "Swindon"
-  • "playing at the church in Birmingham" → venue: "The Church", venueAddress: "Birmingham"
-  • "event at Sky Garden in London" → venue: "Sky Garden", venueAddress: "London"
-  • "party at home near Oxford" → venue: "Home", venueAddress: "Oxford"
-  • "Ronnie Scott's Jazz Club" → venue: "Ronnie Scott's Jazz Club", venueAddress: null (let Google Maps find it)
-- DO NOT assume a location name is a venue name (e.g., "Swindon" is a location, not a venue)
-- For well-known venues (Ronnie Scott's, Royal Albert Hall, etc.), leave venueAddress null to let Google Maps autocomplete handle it
-
-- IGNORE company signatures, footers, and "sent from" addresses - only extract EVENT information
-- For event types: wedding, party, corporate, pub, restaurant, festival, birthday, anniversary, etc.
-- Extract client names, emails, phone numbers from the message or context
-- Return HIGH confidence (0.8-1.0) if you extract date + venue + event type
-- Return MEDIUM confidence (0.5-0.7) if you extract 2+ key details
-- Return LOW confidence (0.1-0.4) for vague or minimal information
-- Return VERY LOW confidence (0.1-0.2) if no specific date is provided
-
-REQUIRED JSON FORMAT:
+RETURN THIS EXACT JSON FORMAT:
 {
   "clientName": "string or null",
   "clientEmail": "string or null", 
@@ -183,7 +162,7 @@ REQUIRED JSON FORMAT:
   "confidence": number between 0.1 and 1.0
 }
 
-RESPOND WITH VALID JSON ONLY - NO EXPLANATIONS OR MARKDOWN.`;
+Return only valid JSON, no explanations.`;
 
     const userPrompt = `Parse this booking message and extract all available information:
 
