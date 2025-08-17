@@ -113,9 +113,9 @@ export async function parseBookingMessage(
   subject?: string  // Added subject parameter for Encore area extraction
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 Claude: Parsing booking message with enhanced AI for better cost efficiency...');
-    console.log('🤖 Claude: Message length:', messageText?.length || 0);
-    console.log('🤖 Claude: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 GPT-5: Parsing booking message with enhanced AI for better accuracy...');
+    console.log('🤖 GPT-5: Message length:', messageText?.length || 0);
+    console.log('🤖 GPT-5: First 200 chars:', messageText?.substring(0, 200) || 'No content');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -193,7 +193,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
 
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-5',
       max_tokens: 800,
       temperature: 0.1,
       messages: [
@@ -215,7 +215,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
       throw new Error('No response from OpenAI');
     }
 
-    console.log('🤖 GPT-5 nano raw response:', rawContent);
+    console.log('🤖 GPT-5 raw response:', rawContent);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();

@@ -44,7 +44,6 @@ Invoice CC functionality: CC recipients are supported for invoice emails only (c
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
-Launch timeline: Few days for bug fixes → next week for landing page → beta testing with 4-5 users (2-3 weeks starting ~22nd/23rd) → full launch mid-to-end September. Primary concern: scalability during beta testing phase.
 Admin database access: Read-only database administration panel added as submenu in admin section. Includes table browsing, filtering, search, and CSV export with strict admin-only access controls. Enhanced frontend security protection prevents non-admin users from accessing admin panel even in development cross-session scenarios. Fixed table name mapping for underscore database tables (compliance_documents, email_templates, etc.) and enhanced search functionality across all database tables.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
 Mileage calculation optimization: Fixed wasteful API calls. System now skips mileage calculation for existing bookings that already have saved mileage data, only calculates for new bookings or manual address changes.
@@ -55,7 +54,7 @@ Forgot password system: Complete email-based password reset functionality implem
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Duplicate email processing fix: Resolved critical duplication issue caused by multiple Mailgun routes with same priority processing identical emails. Fixed by removing duplicate specific match_recipient routes for timfulkermusic@enquiries.musobuddy.com, keeping only the catch_all route. This eliminated duplicate bookings and review messages from single email submissions.
 Email extraction priority fix: Fixed critical issue where system used sender email addresses (like no-reply@weebly.com) instead of actual client emails from form content. Implemented intelligent email extraction that prioritizes form content emails over sender addresses, with fallback logic that skips service emails. Applied to all processing paths including AI parsing, Weebly fallback, and review message saving.
-AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 nano for email parsing. Cost analysis showed GPT-5 nano at ~$8/month for 100k emails vs. Claude at ~$13/month, with superior parsing accuracy. Fixed critical "logParsingFailure is not defined" error in email queue system that was preventing AI parsing from executing properly.
+AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing (August 17, 2025). Initial testing with GPT-5 nano showed date detection issues on complex dates like "October 13th", so upgraded to full GPT-5 model for superior accuracy. Cost analysis: GPT-5 at ~$197/month for 100k emails is viable with $9.99/user pricing model. Fixed critical "logParsingFailure is not defined" error in email queue system that was preventing AI parsing from executing properly.
 
 ## System Architecture
 
@@ -64,7 +63,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 nano for email pa
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) are supported. Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -73,12 +72,12 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 nano for email pa
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 nano for email parsing and enhanced venue extraction to distinguish between venue names (e.g., "our garden", "the church hall") and location/city names (e.g., "Swindon", "London").
+- **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 nano for email parsing and enhanced venue extraction.
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms, allowing users to control which specific fields clients can edit on a per-field basis.
-    - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting that combines new multi-document system with legacy single-document support.
-    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system that creates new contracts while preserving originals.
+    - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms.
+    - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting.
+    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
     - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid" for bank transfers), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
@@ -86,7 +85,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 nano for email pa
     - **Deployment**: Node.js server serving built frontend.
     - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
     - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
-    - **Onboarding Wizard**: Multi-step wizard for new users covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding, ensuring proper system setup.
+    - **Onboarding Wizard**: Multi-step wizard for new users covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
     - **Email Processing**: Comprehensive queue system to eliminate race conditions, processing emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
 
 ## External Dependencies
