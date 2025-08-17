@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
-import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, MessageCircle, AlertTriangle, Bell, Clock, Zap } from "lucide-react";
+import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, MessageCircle, AlertTriangle, Bell, Clock, Zap, CheckSquare, Square } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,8 @@ interface UnparseableMessage {
 
 export default function Messages() {
   const [selectedUnparseableMessage, setSelectedUnparseableMessage] = useState<UnparseableMessage | null>(null);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<Set<number>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -200,6 +202,89 @@ export default function Messages() {
     },
   });
 
+  // Bulk reprocess with AI
+  const bulkReprocessWithAI = async () => {
+    if (selectedMessageIds.size === 0) {
+      toast({
+        title: "No messages selected",
+        description: "Please select messages to reprocess",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsBulkProcessing(true);
+    const total = selectedMessageIds.size;
+    let processed = 0;
+    let successful = 0;
+    let failed = 0;
+
+    toast({
+      title: "Processing messages",
+      description: `Starting to process ${total} message${total > 1 ? 's' : ''}...`,
+    });
+
+    for (const messageId of selectedMessageIds) {
+      try {
+        const response = await apiRequest(`/api/unparseable-messages/${messageId}/reprocess`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        
+        if (data.bookingId) {
+          successful++;
+        }
+        processed++;
+
+        // Update progress
+        if (processed % 3 === 0 || processed === total) {
+          toast({
+            title: "Processing progress",
+            description: `Processed ${processed}/${total} messages (${successful} successful)`,
+          });
+        }
+      } catch (error) {
+        failed++;
+        processed++;
+        console.error(`Failed to process message ${messageId}:`, error);
+      }
+    }
+
+    setIsBulkProcessing(false);
+    setSelectedMessageIds(new Set());
+    
+    queryClient.invalidateQueries({ queryKey: ['/api/unparseable-messages'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+
+    toast({
+      title: "Bulk processing complete",
+      description: `Processed ${total} messages: ${successful} converted to bookings, ${failed} failed`,
+      variant: successful > 0 ? "default" : "destructive",
+      duration: 5000
+    });
+  };
+
+  const toggleMessageSelection = (id: number) => {
+    const newSelection = new Set(selectedMessageIds);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedMessageIds(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedMessageIds.size === unparseableMessages.length) {
+      setSelectedMessageIds(new Set());
+    } else {
+      const allIds = new Set(unparseableMessages.map((m: UnparseableMessage) => m.id));
+      setSelectedMessageIds(allIds);
+    }
+  };
+
   const handleViewClientMessage = async (message: MessageNotification) => {
     // Mark as read if not already read
     if (!message.isRead) {
@@ -354,6 +439,50 @@ export default function Messages() {
               <p className="text-muted-foreground">
                 Messages that couldn't be automatically processed into bookings
               </p>
+              
+              {/* Bulk Action Bar */}
+              {unparseableMessages && unparseableMessages.length > 0 && (
+                <div className="mt-4 flex items-center justify-between border-t pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="text-xs"
+                  >
+                    {selectedMessageIds.size === unparseableMessages.length ? (
+                      <>
+                        <CheckSquare className="h-3 w-3 mr-1" />
+                        Deselect All
+                      </>
+                    ) : (
+                      <>
+                        <Square className="h-3 w-3 mr-1" />
+                        Select All
+                      </>
+                    )}
+                  </Button>
+                  
+                  {selectedMessageIds.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {selectedMessageIds.size} selected
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={bulkReprocessWithAI}
+                        disabled={isBulkProcessing}
+                        className="text-xs"
+                      >
+                        <Zap className="h-3 w-3 mr-1" />
+                        {isBulkProcessing 
+                          ? `Processing...` 
+                          : `Reprocess ${selectedMessageIds.size} with AI`}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
                 {unparseableLoading ? (
@@ -373,16 +502,37 @@ export default function Messages() {
                       <div
                         key={message.id}
                         className={cn(
-                          "p-4 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                          "p-4 border rounded-lg transition-colors hover:bg-muted/50",
                           message.status === 'new' 
                             ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800' 
                             : 'bg-background border-border',
                           selectedUnparseableMessage?.id === message.id && 'ring-2 ring-primary'
                         )}
-                        onClick={() => setSelectedUnparseableMessage(message)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-start gap-3">
+                          {/* Checkbox */}
+                          <div className="pt-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMessageSelection(message.id);
+                              }}
+                              className="hover:opacity-80 transition-opacity"
+                            >
+                              {selectedMessageIds.has(message.id) ? (
+                                <CheckSquare className="h-5 w-5 text-primary" />
+                              ) : (
+                                <Square className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Message content - now clickable */}
+                          <div 
+                            className="flex-1 flex items-start justify-between cursor-pointer"
+                            onClick={() => setSelectedUnparseableMessage(message)}
+                          >
+                            <div className="flex-1 min-w-0 space-y-2">
                             <div className="flex items-center gap-2">
                               <Badge variant={message.status === 'new' ? 'destructive' : 'secondary'}>
                                 {message.status}
@@ -430,6 +580,7 @@ export default function Messages() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                          </div>
                           </div>
                         </div>
                       </div>
