@@ -52,6 +52,27 @@ export default function Messages() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
 
+  // Force white text on reprocess button
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .reprocess-button-override {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      .reprocess-button-override:hover {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      .reprocess-button-override:disabled {
+        color: rgba(255, 255, 255, 0.5) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   // More robust user ID detection
   const userId = user?.id || user?.userId || (user as any)?.user_id;
   
@@ -472,8 +493,7 @@ export default function Messages() {
                         variant="secondary"
                         onClick={bulkReprocessWithAI}
                         disabled={isBulkProcessing}
-                        className="text-xs text-white"
-                        style={{ color: 'white' }}
+                        className="text-xs reprocess-button-override"
                       >
                         <Zap className="h-3 w-3 mr-1" />
                         {isBulkProcessing 

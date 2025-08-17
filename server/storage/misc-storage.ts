@@ -349,7 +349,7 @@ export class MiscStorage {
   // ===== NOTIFICATION COUNT METHODS =====
   
   async getUnparseableMessagesCount(userId: string) {
-    // Count unparseable messages with status 'new' for the user
+    // Count only 'new' unparseable messages that need attention
     const result = await db
       .select({ count: sql<string>`count(*)` })
       .from(unparseableMessages)
