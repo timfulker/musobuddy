@@ -125,16 +125,12 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `You are reading emails sent to a musician for booking inquiries. Extract the following information:
+    const systemPrompt = `Extract date, venue, and client name from this booking inquiry email.
 
-1. Client Name: Who is SENDING the email (look for the signature at the bottom like "Kind Regards, John Smith")
-2. Event Date: When is the event? (format as YYYY-MM-DD, today is ${currentDate})
-3. Venue: Where is the event?
-4. Contact details: Email and phone if provided
+The client name is who SIGNED the email (at the bottom), not who it's addressed to.
+Format any date as YYYY-MM-DD. Today is ${currentDate}.
 
-IMPORTANT: "Dear Tim" is who they're writing TO (the musician), not the client. The client signs at the bottom.
-
-Return as JSON with these exact fields:
+Return JSON:
 {
   "clientName": "name from signature",
   "clientEmail": "email address",
@@ -153,13 +149,9 @@ Return as JSON with these exact fields:
 
 Use null for missing fields.`;
 
-    const userPrompt = `Here's an email:
+    const userPrompt = `Extract date, venue and client name from this message:
 
-From field: ${clientContact || 'Unknown'}
-Email body:
-${messageText}
-
-Extract the booking details as JSON.`;
+${messageText}`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
@@ -181,7 +173,7 @@ Extract the booking details as JSON.`;
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
       max_tokens: 800,
-      temperature: 0.3, // Increased from 0.1 for better interpretation flexibility
+      temperature: 0, // Zero temperature for most deterministic extraction
       messages: [
         { 
           role: 'system', 
@@ -263,10 +255,101 @@ Extract the booking details as JSON.`;
       }
     }
     
-    // 2. DO NOT auto-fix missing dates - let them go to review
-    // This is intentional: if GPT-5 can't find a date, the message needs manual review
-    if (!parsed.eventDate) {
-      console.log('⚠️ [POST-PROCESS] No date found - message will go to review');
+    // 2. Last-chance date extraction before sending to review
+    if (!parsed.eventDate && messageText) {
+      console.log('🔧 [POST-PROCESS] GPT-5 missed date, attempting extraction...');
+      
+      const months: Record<string, number> = {
+        january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+        july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+        jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12
+      };
+      
+      // Try multiple date patterns
+      const datePatterns = [
+        // "September 10th 2025" or "September 10th, 2025"
+        /(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/gi,
+        // "September 10th" or "September 10"
+        /(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d)/gi,
+        // "10th September 2025" or "10th of September 2025"
+        /(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)\s+(\d{4})/gi,
+        // "10th September" or "10th of September"
+        /(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?!\s+\d{4})/gi,
+        // Standard formats like "10/09/2025" or "10-09-2025"
+        /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/g
+      ];
+      
+      for (const pattern of datePatterns) {
+        const matches = [...messageText.matchAll(pattern)];
+        if (matches.length > 0) {
+          const match = matches[0];
+          let parsedDate: string | null = null;
+          
+          // Pattern with year included
+          if (match[3] && match[3].length === 4) {
+            if (isNaN(Number(match[1]))) {
+              // Month name first: "September 10th 2025"
+              const monthName = match[1].toLowerCase();
+              const day = parseInt(match[2]);
+              const year = parseInt(match[3]);
+              if (months[monthName] && day && year) {
+                parsedDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              }
+            } else {
+              // Day first: "10th September 2025"
+              const day = parseInt(match[1]);
+              const monthName = match[2].toLowerCase();
+              const year = parseInt(match[3]);
+              if (months[monthName] && day && year) {
+                parsedDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              }
+            }
+          }
+          // Pattern without year
+          else if (match[1] && match[2]) {
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+            
+            if (isNaN(Number(match[1]))) {
+              // Month name first: "September 10th"
+              const monthName = match[1].toLowerCase();
+              const day = parseInt(match[2]);
+              if (months[monthName] && day) {
+                let year = currentYear;
+                // If the month has passed this year, use next year
+                if (months[monthName] < currentMonth || 
+                    (months[monthName] === currentMonth && day < new Date().getDate())) {
+                  year = currentYear + 1;
+                }
+                parsedDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              }
+            } else {
+              // Day first: "10th September"
+              const day = parseInt(match[1]);
+              const monthName = match[2].toLowerCase();
+              if (months[monthName] && day) {
+                let year = currentYear;
+                // If the month has passed this year, use next year
+                if (months[monthName] < currentMonth || 
+                    (months[monthName] === currentMonth && day < new Date().getDate())) {
+                  year = currentYear + 1;
+                }
+                parsedDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              }
+            }
+          }
+          
+          if (parsedDate) {
+            console.log('✅ [POST-PROCESS] Successfully extracted date:', parsedDate);
+            parsed.eventDate = parsedDate;
+            break;
+          }
+        }
+      }
+      
+      if (!parsed.eventDate) {
+        console.log('⚠️ [POST-PROCESS] No date found after all attempts - message will go to review');
+      }
     }
     
     // Clean and validate the parsed data
