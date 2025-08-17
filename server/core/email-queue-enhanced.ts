@@ -212,18 +212,30 @@ class EnhancedEmailQueue {
       };
     }
     
-    // Extract user ID from recipient email
+    // Extract user ID from recipient email and look up actual database user ID
     const recipientField = requestData.To || requestData.recipient || '';
     const recipientMatch = recipientField.match(/([^@]+)@/);
-    const emailPrefix = recipientMatch ? recipientMatch[1] : 'unknown';
+    const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : 'unknown';
     
     if (!emailPrefix || emailPrefix === 'unknown') {
       console.error(`📧 [GLOBAL] Cannot determine user from recipient: ${recipientField}`);
       throw new Error(`Invalid recipient format: ${recipientField}`);
     }
     
-    // Get or create user queue
-    const userQueue = this.getUserQueue(emailPrefix);
+    // CRITICAL FIX: Look up actual database user ID, not just email prefix
+    const { storage } = await import('./storage');
+    const user = await storage.getUserByEmailPrefix(emailPrefix);
+    
+    if (!user) {
+      console.error(`📧 [GLOBAL] No user found for email prefix: ${emailPrefix}`);
+      throw new Error(`No user found for email prefix: ${emailPrefix}`);
+    }
+    
+    const actualUserId = user.id;
+    console.log(`📧 [USER-LOOKUP] Email prefix "${emailPrefix}" → User ID "${actualUserId}"`);
+    
+    // Get or create user queue using actual user ID
+    const userQueue = this.getUserQueue(actualUserId);
     
     const job: EmailJob = {
       id: jobId,
@@ -232,23 +244,23 @@ class EnhancedEmailQueue {
       status: 'pending',
       retries: 0,
       maxRetries: this.maxRetries,
-      userId: emailPrefix,
+      userId: actualUserId, // FIXED: Use actual database user ID
       duplicateCheckHash: duplicateHash
     };
 
     userQueue.jobs.push(job);
-    console.log(`📧 [USER:${emailPrefix}] Added email job ${jobId} to user queue (position: ${userQueue.jobs.length})`);
+    console.log(`📧 [USER:${actualUserId}] Added email job ${jobId} to user queue (position: ${userQueue.jobs.length})`);
 
     // Start processing for this user if not already running
     if (!userQueue.processing) {
-      this.startUserProcessing(emailPrefix);
+      this.startUserProcessing(actualUserId);
     }
 
     return {
       jobId,
       queuePosition: userQueue.jobs.length,
       isDuplicate: false,
-      userId: emailPrefix
+      userId: actualUserId
     };
   }
 
