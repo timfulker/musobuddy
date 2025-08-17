@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, empowering musicians to focus more on their craft by handling administrative burdens.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, empowering musicians to focus more on their craft by handling administrative burdens. The business vision is to provide a single, indispensable tool that covers all administrative aspects of a musician's career, leveraging technology to reduce overhead and increase efficiency, thereby tapping into the growing market of independent artists seeking professional management tools.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -55,6 +55,7 @@ Forgot password system: Complete email-based password reset functionality implem
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Duplicate email processing fix: Resolved critical duplication issue caused by multiple Mailgun routes with same priority processing identical emails. Fixed by removing duplicate specific match_recipient routes for timfulkermusic@enquiries.musobuddy.com, keeping only the catch_all route. This eliminated duplicate bookings and review messages from single email submissions.
 Email extraction priority fix: Fixed critical issue where system used sender email addresses (like no-reply@weebly.com) instead of actual client emails from form content. Implemented intelligent email extraction that prioritizes form content emails over sender addresses, with fallback logic that skips service emails. Applied to all processing paths including AI parsing, Weebly fallback, and review message saving.
+AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 nano for email parsing. Cost analysis showed GPT-5 nano at ~$8/month for 100k emails vs. Claude at ~$13/month, with superior parsing accuracy. Fixed critical "logParsingFailure is not defined" error in email queue system that was preventing AI parsing from executing properly.
 
 ## System Architecture
 
@@ -63,7 +64,7 @@ Email extraction priority fix: Fixed critical issue where system used sender ema
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) are supported. Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -72,11 +73,11 @@ Email extraction priority fix: Fixed critical issue where system used sender ema
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Claude Haiku for contract parsing, email parsing, price enquiry detection, message categorization, and intelligent date logic. Enhanced venue extraction to distinguish between venue names (e.g., "our garden", "the church hall") and location/city names (e.g., "Swindon", "London").
+- **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 nano for email parsing and enhanced venue extraction to distinguish between venue names (e.g., "our garden", "the church hall") and location/city names (e.g., "Swindon", "London").
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms, allowing users to control which specific fields clients can edit on a per-field basis.
-    - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting that combines new multi-document system with legacy single-document support. Fixed document count display issue where API response parsing was incorrect.
+    - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting that combines new multi-document system with legacy single-document support.
     - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system that creates new contracts while preserving originals.
     - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid" for bank transfers), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
@@ -98,8 +99,8 @@ Email extraction priority fix: Fixed critical issue where system used sender ema
 - **APIs and Services**:
     - Anthropic Claude Haiku
     - Google Maps API
+    - OpenAI GPT-5 nano
     - Puppeteer
     - Stripe (for user subscriptions)
     - Twilio
     - what3words API
-```

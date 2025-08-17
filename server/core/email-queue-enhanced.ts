@@ -471,7 +471,8 @@ class EnhancedEmailQueue {
                               bodyField.includes('apply now');
 
       if (!parsedData.eventDate && !(isEncoreMessage && parsedData.venue && parsedData.eventType)) {
-        logParsingFailure('No valid event date found', 'Message requires manual review');
+        console.log(`❌ [${requestId}] PARSING FAILED: No valid event date found - saving to review messages`);
+        await saveToReviewMessages('No valid event date found', 'Message requires manual review');
         return;
       }
 
