@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { trackApiCall } from '../middleware/api-usage-tracker';
 
 // Helper function to enrich venue data using Google Places API
@@ -181,34 +181,41 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
 
     // Track API usage if userId is provided
     if (userId) {
-      const canProceed = await trackApiCall(userId, 'claude', 'booking-message-parser');
+      const canProceed = await trackApiCall(userId, 'openai', 'booking-message-parser');
       if (!canProceed) {
-        throw new Error('API usage limit exceeded for Claude service');
+        throw new Error('API usage limit exceeded for OpenAI service');
       }
     }
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const startTime = Date.now();
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-nano',
       max_tokens: 800,
       temperature: 0.1,
       messages: [
-        { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
+        { 
+          role: 'system', 
+          content: systemPrompt 
+        },
+        { 
+          role: 'user', 
+          content: userPrompt 
+        }
       ]
     });
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = (response.content[0] as any)?.text;
+    const rawContent = response.choices[0]?.message?.content;
     if (!rawContent) {
-      throw new Error('No response from Claude');
+      throw new Error('No response from OpenAI');
     }
 
-    console.log('🤖 Claude raw response:', rawContent);
+    console.log('🤖 GPT-5 nano raw response:', rawContent);
     
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
@@ -224,7 +231,7 @@ Analyze and extract ALL booking details. Return valid JSON only:`;
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Raw content:', rawContent);
-      throw new Error('Invalid JSON response from Claude');
+      throw new Error('Invalid JSON response from OpenAI');
     }
     
     // Clean and validate the parsed data
