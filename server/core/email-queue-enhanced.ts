@@ -197,6 +197,10 @@ class EnhancedEmailQueue {
     const jobId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const duplicateHash = this.generateDuplicateHash(requestData);
     
+    console.log(`📧 [${jobId}] ADDING EMAIL TO QUEUE - Hash: ${duplicateHash}`);
+    console.log(`📧 [${jobId}] From: ${requestData.From || requestData.from}`);
+    console.log(`📧 [${jobId}] Subject: ${requestData.Subject || requestData.subject}`);
+    
     // Check for duplicate
     if (this.isDuplicateEmail(duplicateHash)) {
       console.log(`📧 [GLOBAL] Duplicate email detected (hash: ${duplicateHash}), skipping`);
