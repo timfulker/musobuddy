@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
 
 interface NotificationCounts {
   newBookings: number;
@@ -20,12 +21,22 @@ export function useNotifications() {
     total: 0
   });
 
-  // Real-time polling for notification counts
+  const { isAuthenticated } = useAuth();
+
+  // Only poll when authenticated to prevent 401 errors
   const { data: notificationData } = useQuery({
     queryKey: ['/api/notifications/counts'],
-    refetchInterval: 30000, // Poll every 30 seconds for real-time updates
-    refetchIntervalInBackground: true, // Keep polling even when tab not active
-    staleTime: 25000, // Consider data stale after 25 seconds
+    enabled: isAuthenticated, // Only run when authenticated
+    refetchInterval: isAuthenticated ? 30000 : false, // Only poll when authenticated
+    refetchIntervalInBackground: true,
+    staleTime: 25000,
+    retry: (failureCount, error: any) => {
+      // Don't retry on auth errors to prevent infinite loops
+      if (error?.message?.includes('401')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   useEffect(() => {
