@@ -4,6 +4,9 @@ import { storage } from '../core/storage';
 
 export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
+  
+  // Import AI parser for reprocessing
+  const { parseBookingMessage } = require('../ai/booking-message-parser');
 
   // Get all unparseable messages
   app.get('/api/unparseable-messages', requireAuth, async (req, res) => {
@@ -66,7 +69,7 @@ export function registerUnparseableRoutes(app: Express) {
     }
   });
 
-  // Convert message to booking
+  // Convert message to booking (manual)
   app.post('/api/unparseable-messages/:id/convert', requireAuth, async (req, res) => {
     try {
       const userId = req.user?.userId;
@@ -125,7 +128,102 @@ export function registerUnparseableRoutes(app: Express) {
       // Update message as converted
       await storage.updateUnparseableMessage(messageId, {
         status: 'converted',
-        reviewNotes,
+        reviewNotes: reviewNotes || 'Manually converted to booking',
+        reviewedAt: new Date()
+      });
+      
+      res.json({ 
+        success: true,
+        booking,
+        message: 'Message converted to booking successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error converting message:', error);
+      res.status(500).json({ error: 'Failed to convert message' });
+    }
+  });
+
+  // Reprocess message through AI
+  app.post('/api/unparseable-messages/:id/reprocess', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.userId;
+      const messageId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`🤖 Reprocessing message #${messageId} through AI for user ${userId}`);
+      
+      // Get the message details
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+      
+      // Get user for AI context
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      console.log(`🤖 Parsing message content: ${message.rawMessage?.substring(0, 100)}...`);
+      
+      // Parse through AI with improved prompting
+      const parsedData = await parseBookingMessage(
+        message.rawMessage || '',
+        message.fromContact,
+        null,
+        userId,
+        message.subject || ''
+      );
+      
+      console.log(`✅ AI parsing complete:`, {
+        hasEventDate: !!parsedData.eventDate,
+        eventDateValue: parsedData.eventDate,
+        clientName: parsedData.clientName,
+        venue: parsedData.venue,
+        confidence: parsedData.confidence
+      });
+      
+      // Create booking from parsed data
+      const booking = await storage.createBooking({
+        userId: userId,
+        title: parsedData.eventType || "Booking from Review Message",
+        clientName: parsedData.clientName || message.fromContact.replace(/<.*>/, '').trim(),
+        clientEmail: parsedData.clientEmail || (message.fromContact.match(/<(.+)>/)?.[1] || message.fromContact),
+        clientPhone: parsedData.clientPhone || null,
+        eventDate: parsedData.eventDate || null,
+        eventTime: parsedData.eventTime || null,
+        eventEndTime: parsedData.eventEndTime || null,
+        performanceDuration: parsedData.performanceDuration || null,
+        venue: parsedData.venue || null,
+        venueAddress: parsedData.venueAddress || null,
+        clientAddress: parsedData.clientAddress || null,
+        eventType: parsedData.eventType || null,
+        gigType: parsedData.gigType || null,
+        fee: parsedData.fee || null,
+        equipmentRequirements: parsedData.equipmentRequirements || null,
+        specialRequirements: parsedData.specialRequirements || null,
+        estimatedValue: parsedData.estimatedValue || null,
+        status: parsedData.isPriceEnquiry ? "quoted" : "new",
+        notes: parsedData.message || message.rawMessage,
+        originalEmailContent: message.rawMessage,
+        applyNowLink: parsedData.applyNowLink || null,
+        responseNeeded: true,
+        lastContactedAt: null,
+        hasConflicts: false,
+        conflictCount: 0,
+        quotedAmount: parsedData.quotedPrice || null,
+        depositAmount: parsedData.deposit || null,
+        finalAmount: parsedData.fee || null
+      });
+      
+      // Update message as converted
+      await storage.updateUnparseableMessage(messageId, {
+        status: 'converted',
+        reviewNotes: `AI reprocessed and converted to booking #${booking.id}`,
         convertedToBookingId: booking.id,
         reviewedAt: new Date()
       });
