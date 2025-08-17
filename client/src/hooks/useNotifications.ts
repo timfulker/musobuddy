@@ -30,9 +30,6 @@ export function useNotifications() {
 
   useEffect(() => {
     if (notificationData?.counts) {
-      console.log('🔍 [NOTIFICATIONS] Received counts:', notificationData.counts);
-      console.log('🔍 [NOTIFICATIONS] Messages calculation:', 
-        `${notificationData.counts.unparseableMessages || 0} + ${notificationData.counts.clientMessages || 0} = ${(notificationData.counts.unparseableMessages || 0) + (notificationData.counts.clientMessages || 0)}`);
       setCounts(notificationData.counts);
     }
   }, [notificationData]);
