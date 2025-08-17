@@ -136,11 +136,39 @@ class EnhancedEmailQueue {
 
   /**
    * Generate a hash for duplicate detection
+   * Enhanced for Weebly forms to use actual form content instead of generic sender
    */
   private generateDuplicateHash(requestData: any): string {
     const from = requestData.From || requestData.from || '';
     const subject = requestData.Subject || requestData.subject || '';
-    const bodyStart = (requestData['body-plain'] || requestData.text || '').substring(0, 100);
+    const body = requestData['body-plain'] || requestData.text || '';
+    
+    // For Weebly forms, use form content for duplicate detection instead of sender
+    if (from.toLowerCase().includes('weebly') || body.toLowerCase().includes('contact form')) {
+      // Extract key form data for duplicate detection
+      const nameMatch = body.match(/Name\s*([^\n]+)/i);
+      const emailMatch = body.match(/Email\s*([^\n]+)/i);
+      const phoneMatch = body.match(/Phone\s*([^\n]+)/i);
+      const dateMatch = body.match(/Date and type of event\s*([^\n]+)/i);
+      
+      const formData = [
+        nameMatch?.[1]?.trim() || '',
+        emailMatch?.[1]?.trim() || '',
+        phoneMatch?.[1]?.trim() || '',
+        dateMatch?.[1]?.trim() || ''
+      ].join('|');
+      
+      console.log(`📧 [DUPLICATE-CHECK] Weebly form hash based on form data: ${formData}`);
+      return formData;
+    }
+    
+    // Default duplicate detection for regular emails
+    const bodyStart = body.substring(0, 100);
+    return `${from}|${subject}|${bodyStart}`;
+  }
+    
+    // Default duplicate detection for regular emails
+    const bodyStart = body.substring(0, 100);
     return `${from}|${subject}|${bodyStart}`;
   }
 
