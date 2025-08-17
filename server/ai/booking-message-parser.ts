@@ -120,7 +120,23 @@ export async function parseBookingMessage(
     console.log('🤖 GPT-5: Client Contact:', clientContact || 'None');
     console.log('🤖 GPT-5: Client Address:', clientAddress || 'None');
     
+    // Get current date for context
+    const today = new Date();
+    const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const currentYear = today.getFullYear();
+    
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
+
+TODAY'S DATE: ${currentDate}
+CURRENT YEAR: ${currentYear}
+
+IMPORTANT DATE RESOLUTION RULES:
+- Convert relative dates to specific YYYY-MM-DD format
+- "January 30th 2026" → "2026-01-30"
+- "next year" + month/day → resolve to next year's date
+- "this October" → resolve to current/next October depending on current date
+- Only extract dates you can resolve with confidence
+- If uncertain about year (e.g., "March 15th" with no year context), leave eventDate as null
 
 Extract information naturally from the message text using your understanding.
 
@@ -177,6 +193,7 @@ ${clientAddress ? `VENUE/LOCATION: "${clientAddress}"` : ''}
 
 Analyze and extract ALL booking details. Return valid JSON only:`;
 
+    console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
     console.log('🤖 GPT-5: User prompt:', userPrompt);
 
