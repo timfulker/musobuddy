@@ -155,7 +155,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <MessageSquare className="w-5 h-5" />
             <span>Messages</span>
-            <NotificationBadge count={(counts.unparseableMessages || 0) + (counts.clientMessages || 0)} />
+            <NotificationBadge count={counts.clientMessages || 0} />
           </Link>
           
           <Link 

@@ -349,19 +349,8 @@ export class MiscStorage {
   // ===== NOTIFICATION COUNT METHODS =====
   
   async getUnparseableMessagesCount(userId: string) {
-    try {
-      // Count unparseable messages that are pending review
-      const result = await db.select({ count: sql<number>`count(*)` })
-        .from(unparseableMessages)
-        .where(and(
-          eq(unparseableMessages.userId, userId),
-          eq(unparseableMessages.status, 'pending')
-        ));
-      return result[0]?.count || 0;
-    } catch (error) {
-      console.error('🔥 SQL Error in getUnparseableMessagesCount:', error);
-      return 0; // Return 0 if query fails
-    }
+    // Unparseable messages system removed - always return 0
+    return 0;
   }
 
   async getExpiringDocumentsCount(userId: string) {

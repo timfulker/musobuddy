@@ -469,7 +469,7 @@ class EnhancedEmailQueue {
                               bodyField.includes('apply now');
 
       if (!parsedData.eventDate && !(isEncoreMessage && parsedData.venue && parsedData.eventType)) {
-        await saveToReviewMessages('No valid event date found', 'Message requires manual review');
+        logParsingFailure('No valid event date found', 'Message requires manual review');
         return;
       }
 
