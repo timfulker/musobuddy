@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
-import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, MessageCircle, AlertTriangle, Bell, Clock } from "lucide-react";
+import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, MessageCircle, AlertTriangle, Bell, Clock, Zap } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -150,6 +150,39 @@ export default function Messages() {
       if (data.bookingId) {
         navigate(`/bookings?highlight=${data.bookingId}`);
       }
+    }
+  });
+
+  // Reprocess with AI mutation
+  const reprocessWithAIMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest(`/api/unparseable-messages/${id}/reprocess`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/unparseable-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      setSelectedUnparseableMessage(null);
+      setReviewNotes("");
+      toast({
+        title: "AI Processing Complete",
+        description: `Message successfully processed and converted to booking #${data.bookingId}`,
+        duration: 5000
+      });
+      if (data.bookingId) {
+        navigate(`/bookings?highlight=${data.bookingId}`);
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "AI Processing Failed",
+        description: error.message || "Failed to process message with AI. Please try manual conversion.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -482,6 +515,15 @@ export default function Messages() {
                       variant="outline"
                     >
                       Mark as Reviewed
+                    </Button>
+                    <Button
+                      onClick={() => reprocessWithAIMutation.mutate(selectedUnparseableMessage.id)}
+                      disabled={reprocessWithAIMutation.isPending}
+                      variant="secondary"
+                      className="flex items-center gap-2"
+                    >
+                      <Zap className="w-4 h-4" />
+                      {reprocessWithAIMutation.isPending ? "Processing..." : "Reprocess with AI"}
                     </Button>
                     <Button
                       onClick={() => convertToBookingMutation.mutate({ 

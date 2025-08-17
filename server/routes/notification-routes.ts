@@ -21,16 +21,19 @@ export function registerNotificationRoutes(app: Express) {
         unparseableMessages, 
         overdueInvoices,
         expiringDocuments,
-        unreadClientMessages
+        unreadClientMessages,
+        reviewMessages
       ] = await Promise.all([
         storage.getNewBookingsCount(userId),
         storage.getUnparseableMessagesCount(userId),
         storage.getOverdueInvoicesCount(userId),
         storage.getExpiringDocumentsCount(userId),
-        storage.getUnreadMessageNotificationsCount(userId)
+        storage.getUnreadMessageNotificationsCount(userId),
+        storage.getUnparseableMessagesCount(userId) // Review messages that need attention
       ]);
 
-      const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
+      const totalMessages = unreadClientMessages + reviewMessages;
+      const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + totalMessages;
 
       res.json({
         counts: {
@@ -39,6 +42,8 @@ export function registerNotificationRoutes(app: Express) {
           overdueInvoices,
           expiringDocuments,
           clientMessages: unreadClientMessages,
+          reviewMessages: reviewMessages,
+          totalMessages: totalMessages, // Combined count for sidebar badge
           total: totalCount
         }
       });
