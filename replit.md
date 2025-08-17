@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline tasks such as bookings, contracts, invoices, and compliance. It aims to be a user-friendly, reliable, and scalable centralized solution, initially targeting the UK market with plans for international expansion, empowering musicians to focus more on their craft by handling administrative burdens. The business vision is to provide a single, indispensable tool that covers all administrative aspects of a musician's career, leveraging technology to reduce overhead and increase efficiency, thereby tapping into the growing market of independent artists seeking professional management tools.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to provide a user-friendly, reliable, and scalable centralized solution, empowering musicians to focus on their craft by reducing administrative burdens. The vision is to become an indispensable tool covering all administrative aspects of a musician's career, leveraging technology to increase efficiency and tap into the growing market of independent artists.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -54,7 +54,7 @@ Forgot password system: Complete email-based password reset functionality implem
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Duplicate email processing fix: Resolved critical duplication issue caused by multiple Mailgun routes with same priority processing identical emails. Fixed by removing duplicate specific match_recipient routes for timfulkermusic@enquiries.musobuddy.com, keeping only the catch_all route. This eliminated duplicate bookings and review messages from single email submissions.
 Email extraction priority fix: Fixed critical issue where system used sender email addresses (like no-reply@weebly.com) instead of actual client emails from form content. Implemented intelligent email extraction that prioritizes form content emails over sender addresses, with fallback logic that skips service emails. Applied to all processing paths including AI parsing, Weebly fallback, and review message saving.
-AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing (August 17, 2025). Initial testing with GPT-5 nano showed date detection issues on complex dates like "October 13th", so upgraded to full GPT-5 model for superior accuracy. Cost analysis: GPT-5 at ~$197/month for 100k emails is viable with $9.99/user pricing model. Fixed critical "logParsingFailure is not defined" error in email queue system that was preventing AI parsing from executing properly.
+AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing. Initial testing with GPT-5 nano showed date detection issues on complex dates like "October 13th", so upgraded to full GPT-5 model for superior accuracy.
 
 ## System Architecture
 
@@ -72,7 +72,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management, with professional email styling.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 nano for email parsing and enhanced venue extraction.
+- **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 for email parsing and enhanced venue extraction.
 - **System Design Choices**:
     - **User Management**: Two-tier system (Admin Accounts, User Accounts).
     - **Booking Management**: Unified system with conflict detection, calendar integration (.ics), status tracking, comprehensive forms (including venue auto-population via Google Maps API, mileage calculation, what3words integration), and a standalone, token-based booking widget that can parse dates from text. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking for collaborative forms.
@@ -98,7 +98,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing
 - **APIs and Services**:
     - Anthropic Claude Haiku
     - Google Maps API
-    - OpenAI GPT-5 nano
+    - OpenAI GPT-5
     - Puppeteer
     - Stripe (for user subscriptions)
     - Twilio
