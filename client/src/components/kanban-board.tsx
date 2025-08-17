@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2 } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
@@ -37,6 +37,30 @@ export default function ActionableEnquiries() {
       toast({
         title: "Error",
         description: "Failed to reject booking",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for deleting bookings
+  const deleteBookingMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Booking Deleted",
+        description: "The booking has been permanently deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete booking",
         variant: "destructive",
       });
     },
@@ -293,10 +317,26 @@ export default function ActionableEnquiries() {
                           rejectBookingMutation.mutate(enquiry.id);
                         }}
                         disabled={rejectBookingMutation.isPending}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
                         title="Reject booking"
                       >
                         <X className="w-3 h-3" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Are you sure you want to permanently delete this booking? This action cannot be undone.')) {
+                            deleteBookingMutation.mutate(enquiry.id);
+                          }
+                        }}
+                        disabled={deleteBookingMutation.isPending}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        title="Delete booking permanently"
+                      >
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
