@@ -55,6 +55,7 @@ Messages centralization: Reorganized message system into centralized "Messages" 
 Duplicate email processing fix: Resolved critical duplication issue caused by multiple Mailgun routes with same priority processing identical emails. Fixed by removing duplicate specific match_recipient routes for timfulkermusic@enquiries.musobuddy.com, keeping only the catch_all route. This eliminated duplicate bookings and review messages from single email submissions.
 Email extraction priority fix: Fixed critical issue where system used sender email addresses (like no-reply@weebly.com) instead of actual client emails from form content. Implemented intelligent email extraction that prioritizes form content emails over sender addresses, with fallback logic that skips service emails. Applied to all processing paths including AI parsing, Weebly fallback, and review message saving.
 AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing. Initial testing with GPT-5 nano showed date detection issues on complex dates like "October 13th", so upgraded to full GPT-5 model for superior accuracy.
+GPT-5 external issue resolution: Fixed three critical external factors causing parsing failures: (1) artificial rate limiting reduced from 7 to 1,000 daily OpenAI calls to match user's massive 200k TPM limits, (2) temperature increased from 0 to 0.3 for parsing flexibility instead of rigid determinism, (3) enhanced email extraction to prefer HTML content with smart conversion for better signature detection. These combined fixes address the core issues where GPT-5 was extracting FROM field names instead of email signatures and failing to parse dates correctly.
 
 ## System Architecture
 
@@ -92,7 +93,7 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing
 
 - **Cloud Services**:
     - Cloudflare R2
-    - Mailgun (Production domain: `enquiries.musobuddy.com`)
+    - Mailgun
     - Neon Database (PostgreSQL)
     - Replit (Authentication and hosting)
 - **APIs and Services**:
@@ -100,6 +101,6 @@ AI model upgrade: Switched from Claude 3 Haiku to OpenAI GPT-5 for email parsing
     - Google Maps API
     - OpenAI GPT-5
     - Puppeteer
-    - Stripe (for user subscriptions)
+    - Stripe
     - Twilio
     - what3words API
