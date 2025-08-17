@@ -125,44 +125,45 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `You are an email parser that extracts booking details. Today's date is ${currentDate}.
+    const systemPrompt = `You are a booking information extractor for musicians. Today's date is ${currentDate}.
 
-CRITICAL RULES FOR CLIENT NAME:
-1. The client is the person who SIGNS the email at the bottom (e.g., "Kind Regards, Patrick Head")
-2. NEVER use the name after "Dear" - that's who they're writing TO
-3. ONLY use the From field name if there's no signature in the email body
+TASK: Extract booking details from the email and return them in the specified JSON format.
 
-EXAMPLE:
-Email: "Dear Tim, We are having our party on 17th March 2026... Kind Regards, Patrick Head"
+PRIORITY ORDER:
+1. If information is in the email BODY (message content), use that
+2. If not in body, fall back to email headers (From, To fields)
+
+EXAMPLES:
+Email body: "We are having our wedding on 17th of March 2026... Patrick Head"
 From: "Tim Fulker <tim@saxweddings.com>"
-CORRECT: clientName = "Patrick Head" (the signature)
-WRONG: clientName = "Tim Fulker" (that's who received it)
+→ clientName: "Patrick Head" (from signature), eventDate: "2026-03-17"
 
-DATE PARSING:
-Convert all dates to YYYY-MM-DD format:
-- "17th of March 2026" → "2026-03-17"
-- "March 17, 2026" → "2026-03-17"
-- "17/03/2026" → "2026-03-17" (assume DD/MM for UK)
-- "next March" → calculate from ${currentDate}
+WHAT TO EXTRACT:
+- clientName: Person's name from email signature/content (e.g., "John Davies")
+- clientEmail: Email address from content or sender
+- clientPhone: Phone number if mentioned
+- eventDate: Convert ALL date formats to YYYY-MM-DD format:
+  • "January 30th 2026" → "2026-01-30"
+  • "30th January 2026" → "2026-01-30"
+  • "2026-01-30" → "2026-01-30"
+  • "next March" → resolve to next March (consider today is ${currentDate})
+  • "this December" → resolve appropriately based on current date
+  • For ambiguous formats like "01/10/2025" or "01-10-2025":
+    - Assume European format (DD/MM/YYYY) unless context suggests US format
+    - US format indicators: US address, USD currency, US phone numbers
+    - European format indicators: UK address, GBP/EUR currency, UK phone numbers
+    - When uncertain, default to European format (DD/MM/YYYY)
+- eventTime: Start time if mentioned
+- venue: Venue name ("The Savoy Grill", "church hall", etc.)
+- venueAddress: City/location ("London", "Birmingham", etc.)
+- eventType: Type of event ("wedding", "party", "corporate", etc.)
+- fee/deposit: Any amounts mentioned
+- confidence: How confident you are (0.1 to 1.0)
 
-EXTRACT:
-- clientName: Person who SIGNED the email (bottom), NOT "Dear" name
-- clientEmail: Email from signature or sender
-- clientPhone: Phone if mentioned
-- eventDate: Date in YYYY-MM-DD format
-- eventTime: Time if mentioned (HH:MM)
-- venue: Venue name
-- venueAddress: Location/city
-- eventType: Type of event
-- fee: Amount if mentioned
-- deposit: Deposit if mentioned
-- specialRequirements: Any special requests
-- confidence: 0.1 to 1.0
-
-Return ONLY this JSON format, no explanations:
+RETURN THIS EXACT JSON FORMAT:
 {
   "clientName": "string or null",
-  "clientEmail": "string or null",
+  "clientEmail": "string or null", 
   "clientPhone": "string or null",
   "eventDate": "YYYY-MM-DD or null",
   "eventTime": "HH:MM or null",
@@ -174,22 +175,17 @@ Return ONLY this JSON format, no explanations:
   "deposit": number or null,
   "specialRequirements": "string or null",
   "confidence": number between 0.1 and 1.0
-}`;
+}
 
-    const userPrompt = `Parse this email for booking details:
+Return only valid JSON, no explanations.`;
 
-FULL EMAIL:
-From: ${clientContact || 'Unknown'}
-Body:
-${messageText}
-${clientAddress ? `\nVenue mentioned: ${clientAddress}` : ''}
+    const userPrompt = `Parse this booking inquiry and extract all available information:
 
-REMEMBER: 
-- The person who SIGNS at the bottom is the client (e.g., "Patrick Head" if signed)
-- "Dear Tim" means Tim is receiving the email, NOT the client
-- Look for phone numbers, emails, dates in the body text
+EMAIL BODY: "${messageText}"
+${clientContact ? `FROM: "${clientContact}"` : ''}
+${clientAddress ? `VENUE/LOCATION: "${clientAddress}"` : ''}
 
-Return JSON only:`;
+Extract client name from email signature/content first, then use From field as fallback. Return valid JSON only:`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
@@ -211,7 +207,7 @@ Return JSON only:`;
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
       max_tokens: 800,
-      temperature: 0.3, // Increased from 0.1 for better interpretation flexibility
+      temperature: 0.1,
       messages: [
         { 
           role: 'system', 
@@ -234,14 +230,6 @@ Return JSON only:`;
     console.log('🤖 GPT-5 raw response:', rawContent);
     console.log('🤖 GPT-5 response time:', `${responseTime}ms`);
     
-    // Log input vs output for debugging
-    console.log('🔍 [GPT-5 DEBUG] Input Analysis:', {
-      fromField: clientContact,
-      bodyPreview: messageText.substring(0, 150) + '...',
-      hasSignature: messageText.toLowerCase().includes('regards') || messageText.toLowerCase().includes('sincerely'),
-      bodyLength: messageText.length
-    });
-    
     // Clean JSON response (remove markdown code blocks if present)
     let jsonContent = rawContent.trim();
     if (jsonContent.startsWith('```json')) {
@@ -258,15 +246,6 @@ Return JSON only:`;
       console.error('Raw content:', rawContent);
       throw new Error('Invalid JSON response from OpenAI');
     }
-    
-    // Log what GPT-5 extracted
-    console.log('🔍 [GPT-5 DEBUG] Extracted Data:', {
-      clientName: parsed.clientName,
-      fromFieldName: clientContact ? clientContact.split('<')[0].trim() : null,
-      nameMatch: parsed.clientName === (clientContact ? clientContact.split('<')[0].trim() : null),
-      eventDate: parsed.eventDate,
-      confidence: parsed.confidence
-    })
     
     // Clean and validate the parsed data
     const cleanedData: ParsedBookingData = {
