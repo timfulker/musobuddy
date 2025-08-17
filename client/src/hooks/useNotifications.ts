@@ -8,6 +8,8 @@ interface NotificationCounts {
   overdueInvoices: number;
   expiringDocuments: number;
   clientMessages: number;
+  reviewMessages?: number;
+  totalMessages?: number;
   total: number;
 }
 

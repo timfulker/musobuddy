@@ -1,12 +1,10 @@
 import type { Express } from "express";
 import { requireAuth } from '../middleware/auth';
 import { storage } from '../core/storage';
+import { parseBookingMessage } from '../ai/booking-message-parser';
 
 export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
-  
-  // Import AI parser for reprocessing
-  const { parseBookingMessage } = require('../ai/booking-message-parser');
 
   // Get all unparseable messages
   app.get('/api/unparseable-messages', requireAuth, async (req, res) => {
@@ -231,8 +229,7 @@ export function registerUnparseableRoutes(app: Express) {
       res.json({ 
         message: 'Message converted to booking successfully',
         messageId,
-        bookingId: booking.id,
-        reviewNotes
+        bookingId: booking.id
       });
 
     } catch (error) {
