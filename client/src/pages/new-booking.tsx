@@ -763,12 +763,40 @@ export default function NewBookingPage() {
                       name="venue"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-gray-700">Venue Name *</FormLabel>
+                          <FormLabel className="text-sm font-medium text-gray-700">
+                            Venue Name *
+                            <span className="ml-2 text-xs text-blue-600 font-normal">(Type venue name then press Tab to search)</span>
+                          </FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Enter venue name... (e.g., Royal Albert Hall)"
-                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                            <AddressAutocomplete
+                              value={field.value}
+                              defaultValue={field.value}
+                              placeholder="Enter venue name... then press Tab (e.g., Royal Albert Hall)"
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 border rounded px-3 py-2 w-full"
+                              onSelect={(addressData) => {
+                                // Update venue name
+                                field.onChange(addressData.name || addressData.placeName || '');
+                                
+                                // Also update venue address if available
+                                if (addressData.formattedAddress) {
+                                  form.setValue('venueAddress', addressData.formattedAddress);
+                                  
+                                  // Trigger mileage calculation if address is complete
+                                  if (addressData.formattedAddress.length > 10) {
+                                    calculateMileage(addressData.formattedAddress);
+                                  }
+                                }
+                                
+                                // Update contact info if available
+                                if (addressData.contactInfo?.phone) {
+                                  form.setValue('venueContactInfo', addressData.contactInfo.phone);
+                                }
+                                
+                                // Update parking info if available
+                                if (addressData.businessInfo?.parking) {
+                                  form.setValue('parkingInfo', addressData.businessInfo.parking);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />

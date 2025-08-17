@@ -167,8 +167,15 @@ export default function AddressAutocomplete({
     if (!value.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
-    } else {
-      setShowSuggestions(true); // Show suggestions when typing
+    }
+  };
+
+  // Handle Tab key press to trigger search
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab' && inputValue.trim() && inputValue.length >= 3) {
+      e.preventDefault(); // Prevent default tab behavior
+      console.log("⌨️ Tab pressed, searching for:", inputValue);
+      await searchPlaces(inputValue);
     }
   };
 
@@ -189,6 +196,7 @@ export default function AddressAutocomplete({
         placeholder={placeholder}
         value={inputValue}
         onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         className={`${className} ${isLoading ? 'opacity-50' : ''}`}
         disabled={isLoading}
