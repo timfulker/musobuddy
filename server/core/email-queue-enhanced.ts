@@ -477,18 +477,20 @@ class EnhancedEmailQueue {
                               subjectField.toLowerCase().includes('encore') ||
                               bodyField.includes('apply now');
 
-      // FLEXIBLE VALIDATION: Accept emails with event details AND contact/venue info
-      const hasEventDetails = !!(parsedData.eventDate || parsedData.eventType);
+      // STRICT VALIDATION: Date is MANDATORY for all bookings
+      // Workflow: 1. Date (required) -> 2. Venue (preferred) -> 3. Client Name
+      const hasValidDate = !!parsedData.eventDate;
       const hasContactInfo = !!(parsedData.clientName || parsedData.clientEmail);
       const hasVenueInfo = !!(parsedData.venue || parsedData.venueAddress);
       
-      // Special handling for Encore bookings
-      const encoreValidation = isEncoreMessage && parsedData.venue && parsedData.eventType;
+      // Special handling for Encore bookings - but date still required
+      const encoreValidation = isEncoreMessage && parsedData.eventDate && parsedData.venue;
       
-      const isValidBooking = hasEventDetails && (hasContactInfo || hasVenueInfo) || encoreValidation;
+      // Date is MANDATORY - without it, message goes to review
+      const isValidBooking = hasValidDate && (hasContactInfo || hasVenueInfo);
       
       console.log(`🔍 [${requestId}] VALIDATION CHECK:`, {
-        hasEventDetails,
+        hasValidDate,
         hasContactInfo, 
         hasVenueInfo,
         encoreValidation,
@@ -501,8 +503,19 @@ class EnhancedEmailQueue {
       });
       
       if (!isValidBooking) {
-        console.log(`❌ [${requestId}] PARSING FAILED: Insufficient booking data - saving to review messages`);
-        await saveToReviewMessages('Insufficient booking data', 'Message requires manual review');
+        let failureReason = 'Insufficient booking data';
+        let details = [];
+        
+        if (!hasValidDate) {
+          failureReason = 'No event date found';
+          details.push('Missing required event date');
+        } else if (!hasContactInfo && !hasVenueInfo) {
+          failureReason = 'No contact or venue information';
+          details.push('Missing both client and venue details');
+        }
+        
+        console.log(`❌ [${requestId}] PARSING FAILED: ${failureReason} - saving to review messages`);
+        await saveToReviewMessages(failureReason, details.join('. ') || 'Message requires manual review');
         return;
       }
 

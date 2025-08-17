@@ -125,71 +125,41 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `You are an email parser that extracts booking details. Today's date is ${currentDate}.
+    const systemPrompt = `You are reading emails sent to a musician for booking inquiries. Extract the following information:
 
-CRITICAL RULES FOR CLIENT NAME:
-1. The client is the person who SIGNS the email at the bottom (e.g., "Kind Regards, Patrick Head")
-2. NEVER use the name after "Dear" - that's who they're writing TO
-3. ONLY use the From field name if there's no signature in the email body
+1. Client Name: Who is SENDING the email (look for the signature at the bottom like "Kind Regards, John Smith")
+2. Event Date: When is the event? (format as YYYY-MM-DD, today is ${currentDate})
+3. Venue: Where is the event?
+4. Contact details: Email and phone if provided
 
-EXAMPLE:
-Email: "Dear Tim, We are having our party on 17th March 2026... Kind Regards, Patrick Head"
-From: "Tim Fulker <tim@saxweddings.com>"
-CORRECT: clientName = "Patrick Head" (the signature)
-WRONG: clientName = "Tim Fulker" (that's who received it)
+IMPORTANT: "Dear Tim" is who they're writing TO (the musician), not the client. The client signs at the bottom.
 
-DATE PARSING:
-Convert all dates to YYYY-MM-DD format:
-- "17th of March 2026" → "2026-03-17"
-- "March 17, 2026" → "2026-03-17"
-- "17/03/2026" → "2026-03-17" (assume DD/MM for UK)
-- "next March" → calculate from ${currentDate}
-
-EXTRACT:
-- clientName: Person who SIGNED the email (bottom), NOT "Dear" name
-- clientEmail: Email from signature or sender
-- clientPhone: Phone if mentioned
-- eventDate: Date in YYYY-MM-DD format
-- eventTime: Time if mentioned (HH:MM)
-- venue: Venue name
-- venueAddress: Location/city
-- eventType: Type of event
-- fee: Amount if mentioned
-- deposit: Deposit if mentioned
-- specialRequirements: Any special requests
-- confidence: 0.1 to 1.0
-
-Return ONLY this JSON format, no explanations:
+Return as JSON with these exact fields:
 {
-  "clientName": "string or null",
-  "clientEmail": "string or null",
-  "clientPhone": "string or null",
-  "eventDate": "YYYY-MM-DD or null",
-  "eventTime": "HH:MM or null",
-  "eventEndTime": "HH:MM or null",
-  "venue": "string or null",
-  "venueAddress": "string or null",
-  "eventType": "string or null",
-  "fee": number or null,
-  "deposit": number or null,
-  "specialRequirements": "string or null",
-  "confidence": number between 0.1 and 1.0
-}`;
+  "clientName": "name from signature",
+  "clientEmail": "email address",
+  "clientPhone": "phone number",
+  "eventDate": "YYYY-MM-DD",
+  "eventTime": "HH:MM",
+  "eventEndTime": "HH:MM",
+  "venue": "venue name",
+  "venueAddress": "location",
+  "eventType": "type of event",
+  "fee": number,
+  "deposit": number,
+  "specialRequirements": "special notes",
+  "confidence": 0.1 to 1.0
+}
 
-    const userPrompt = `Parse this email for booking details:
+Use null for missing fields.`;
 
-FULL EMAIL:
-From: ${clientContact || 'Unknown'}
-Body:
+    const userPrompt = `Here's an email:
+
+From field: ${clientContact || 'Unknown'}
+Email body:
 ${messageText}
-${clientAddress ? `\nVenue mentioned: ${clientAddress}` : ''}
 
-REMEMBER: 
-- The person who SIGNS at the bottom is the client (e.g., "Patrick Head" if signed)
-- "Dear Tim" means Tim is receiving the email, NOT the client
-- Look for phone numbers, emails, dates in the body text
-
-Return JSON only:`;
+Extract the booking details as JSON.`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
@@ -267,6 +237,37 @@ Return JSON only:`;
       eventDate: parsed.eventDate,
       confidence: parsed.confidence
     })
+    
+    // POST-PROCESSING VALIDATION: Fix common GPT-5 mistakes
+    // 1. Check if GPT-5 incorrectly used the From field as client name
+    const fromFieldName = clientContact ? clientContact.split('<')[0].trim() : null;
+    if (parsed.clientName === fromFieldName && messageText) {
+      // Look for actual signature in email body
+      const signaturePatterns = [
+        /(?:kind regards|best regards|regards|sincerely|best wishes|thanks|thank you),?\s*\n+([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)+)/gi,
+        /\n([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)+)\s*\n[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+        /\n([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)+)\s*\n\d{10,11}/g
+      ];
+      
+      for (const pattern of signaturePatterns) {
+        const match = messageText.match(pattern);
+        if (match && match[1]) {
+          const extractedName = match[1].trim();
+          // Make sure it's not "Dear X" or "Hi X"
+          if (!messageText.includes(`Dear ${extractedName}`) && !messageText.includes(`Hi ${extractedName}`)) {
+            console.log('🔧 [POST-PROCESS] Correcting client name from signature:', extractedName);
+            parsed.clientName = extractedName;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 2. DO NOT auto-fix missing dates - let them go to review
+    // This is intentional: if GPT-5 can't find a date, the message needs manual review
+    if (!parsed.eventDate) {
+      console.log('⚠️ [POST-PROCESS] No date found - message will go to review');
+    }
     
     // Clean and validate the parsed data
     const cleanedData: ParsedBookingData = {

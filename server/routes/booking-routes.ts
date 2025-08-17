@@ -318,7 +318,8 @@ export function registerBookingRoutes(app: Express) {
       
       // Parse the message using AI to extract additional details
       const { parseBookingMessage } = await import('../ai/booking-message-parser');
-      const parsedData = await parseBookingMessage(messageText, clientContact, venue, user.id);
+      // Fix parameter order: messageText, clientContact, clientAddress (venue), userId, subject
+      const parsedData = await parseBookingMessage(messageText, clientContact, venue, user.id, undefined);
       
       // Determine contact details (email vs phone) - FIXED: Ensure widget form data is captured
       let clientEmail = parsedData.clientEmail;
