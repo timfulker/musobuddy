@@ -30,7 +30,7 @@ class EnhancedEmailQueue {
   private readonly maxRetries = 3;
   private processingDelay = 1000; // Dynamic delay based on system load (API can handle 300+ RPM)
   private processedEmails = new Map<string, Date>(); // Track recently processed emails
-  private readonly duplicateWindowMs = 10000; // 10 second window for duplicate detection
+  private readonly duplicateWindowMs = 60000; // 60 second window for duplicate detection (increased to prevent Mailgun retries)
   private apiCallCount = 0; // Track API calls per minute
   private lastMinuteReset = Date.now();
   
@@ -217,13 +217,14 @@ class EnhancedEmailQueue {
       throw new Error(`Invalid recipient format: ${recipientField}`);
     }
     
-    // CRITICAL FIX: Look up actual database user ID, not just email prefix
+    // Look up user by email prefix - MUST match exactly
     const { storage } = await import('./storage');
     const user = await storage.getUserByEmailPrefix(emailPrefix);
     
     if (!user) {
-      console.error(`📧 [GLOBAL] No user found for email prefix: ${emailPrefix}`);
-      throw new Error(`No user found for email prefix: ${emailPrefix}`);
+      console.error(`📧 [GLOBAL] REJECTED: No user found for email prefix "${emailPrefix}"`);
+      console.error(`📧 [GLOBAL] Email sent to: ${recipientField}`);
+      throw new Error(`Email rejected - no user configured for prefix "${emailPrefix}". Please ensure emails are sent to a valid user address.`);
     }
     
     const actualUserId = user.id;
@@ -412,12 +413,14 @@ class EnhancedEmailQueue {
     const emailPrefix = recipientMatch[1].toLowerCase(); // Make case-insensitive
     console.log(`📧 [${requestId}] Email prefix: ${emailPrefix}`);
 
-    // Find user by email prefix
+    // Find user by email prefix - MUST match exactly
     const { storage } = await import('./storage');
     const user = await storage.getUserByEmailPrefix(emailPrefix);
     
     if (!user) {
-      await saveToReviewMessages('User not found', `No user found for email prefix: ${emailPrefix}`);
+      console.error(`📧 [${requestId}] REJECTED: No user found for email prefix "${emailPrefix}"`);
+      console.error(`📧 [${requestId}] Email was sent to: ${recipientField}`);
+      await saveToReviewMessages('Invalid recipient', `Email rejected - no user configured for prefix "${emailPrefix}". Email was sent to: ${recipientField}`);
       return;
     }
 
