@@ -133,6 +133,11 @@ PRIORITY ORDER:
 1. If information is in the email BODY (message content), use that
 2. If not in body, fall back to email headers (From, To fields)
 
+EXAMPLES:
+Email body: "We are having our wedding on 17th of March 2026... Patrick Head"
+From: "Tim Fulker <tim@saxweddings.com>"
+→ clientName: "Patrick Head" (from signature), eventDate: "2026-03-17"
+
 WHAT TO EXTRACT:
 - clientName: Person's name from email signature/content (e.g., "John Davies")
 - clientEmail: Email address from content or sender
@@ -174,13 +179,13 @@ RETURN THIS EXACT JSON FORMAT:
 
 Return only valid JSON, no explanations.`;
 
-    const userPrompt = `Parse this booking message and extract all available information:
+    const userPrompt = `Parse this booking inquiry and extract all available information:
 
-MESSAGE: "${messageText}"
-${clientContact ? `CONTACT: "${clientContact}"` : ''}
+EMAIL BODY: "${messageText}"
+${clientContact ? `FROM: "${clientContact}"` : ''}
 ${clientAddress ? `VENUE/LOCATION: "${clientAddress}"` : ''}
 
-Analyze and extract ALL booking details. Return valid JSON only:`;
+Extract client name from email signature/content first, then use From field as fallback. Return valid JSON only:`;
 
     console.log('🤖 GPT-5: Current date context provided:', currentDate);
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
