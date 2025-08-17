@@ -49,6 +49,7 @@ Document count indicators: Removed from booking cards due to persistent accuracy
 Mileage calculation optimization: Fixed wasteful API calls. System now skips mileage calculation for existing bookings that already have mileage data, only calculates for new bookings or manual address changes.
 AI venue parsing improvement: Enhanced AI to properly distinguish between venue names and location names. System now correctly identifies "our garden" as venue name and "Swindon" as location, preventing Google Maps from suggesting unrelated venues like "Sky Garden" in London when parsing booking emails. AI also simplifies location descriptions ("near Swindon" → "Swindon") for better Google Maps compatibility.
 Encore booking location extraction: Fixed critical issue where Encore bookings weren't extracting location from email titles. System now properly extracts area from Encore email subjects (e.g., "Saxophonist needed for wedding in Rock" → area = "Rock") and prevents Google Places enrichment for all Encore bookings.
+Booking form map integration: Added permanent map display on booking forms showing venue locations. Cost-effective approach using single Google Maps API call per booking form view (~$0.012) instead of expensive hover maps. Map appears when venue/address is entered, includes geocoding cache, and provides visual context to mileage calculations. Integrated into venue section with blue theme matching.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted, instead of just going to generic bookings page.
 Forgot password system: Complete email-based password reset functionality implemented with secure crypto-generated tokens, 1-hour expiration, professional email templates using existing Mailgun infrastructure, and user-friendly frontend flow including dedicated forgot password and reset password pages.
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
@@ -69,7 +70,7 @@ GPT-5 parsing system fully fixed: Resolved critical API compatibility issues pre
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
-- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset. Uses unified middleware. Production URLs are hardcoded for Stripe redirects.
+- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset. Uses unified middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.

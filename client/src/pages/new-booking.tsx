@@ -21,6 +21,7 @@ import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
 import BookingDocumentsManager from "@/components/booking-documents-manager";
 import IndividualFieldLock from "@/components/individual-field-lock";
+import BookingMap from "@/components/BookingMap";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -1063,6 +1064,14 @@ export default function NewBookingPage() {
                         </div>
                       )}
                     </div>
+                    
+                    {/* Venue Location Map */}
+                    {(watchedVenue || watchedVenueAddress) && (
+                      <BookingMap
+                        venue={watchedVenueAddress || watchedVenue}
+                        className="mt-4"
+                      />
+                    )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField

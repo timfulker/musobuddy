@@ -3,14 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2, MapPin } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2 } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import HoverMap from "@/components/HoverMap";
 
 import { findActiveAuthToken } from '@/utils/authToken';
 
@@ -230,17 +229,13 @@ export default function ActionableEnquiries() {
                     
                     {(enquiry.venue || enquiry.venueAddress) && (
                       <div className="flex items-center">
-                        <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                        <HoverMap 
-                          venue={enquiry.applyNowLink && enquiry.venueAddress ? enquiry.venueAddress : enquiry.venue}
-                        >
-                          <span className="truncate">
-                            {/* Show area for Encore bookings, venue for others */}
-                            {enquiry.applyNowLink && enquiry.venueAddress 
-                              ? enquiry.venueAddress 
-                              : enquiry.venue}
-                          </span>
-                        </HoverMap>
+                        <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {/* Show area for Encore bookings, venue for others */}
+                          {enquiry.applyNowLink && enquiry.venueAddress 
+                            ? enquiry.venueAddress 
+                            : enquiry.venue}
+                        </span>
                       </div>
                     )}
                     
