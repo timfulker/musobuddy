@@ -509,10 +509,10 @@ class EnhancedEmailQueue {
       // Create booking with cleaned title - WITH DATABASE TRANSACTION
       const bookingData = {
         userId: user.id,
-        title: cleanedSubject || `Email Booking - ${fromField.split('<')[0].trim() || 'Unknown'}`,
-        clientName: fromField.split('<')[0].trim() || 'Unknown Client',
-        clientEmail: fromField.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || null,
-        clientPhone: null,
+        title: cleanedSubject || `Email Booking - ${parsedData.clientName || fromField.split('<')[0].trim() || 'Unknown'}`,
+        clientName: parsedData.clientName || fromField.split('<')[0].trim() || 'Unknown Client',
+        clientEmail: parsedData.clientEmail || fromField.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || null,
+        clientPhone: parsedData.clientPhone || null,
         venue: parsedData.venue || null,
         venueAddress: parsedData.venueAddress || null,
         eventDate: parsedData.eventDate || null,
@@ -531,10 +531,15 @@ class EnhancedEmailQueue {
         processedAt: new Date()
       };
 
-      console.log(`📧 [${requestId}] RACE CONDITION DEBUG: Creating booking with data:`, {
+      console.log(`📧 [${requestId}] BOOKING DATA MAPPING:`, {
         title: bookingData.title,
+        clientName: bookingData.clientName,
         clientEmail: bookingData.clientEmail,
+        venue: bookingData.venue,
+        venueAddress: bookingData.venueAddress,
         eventDate: bookingData.eventDate,
+        eventTime: bookingData.eventTime,
+        gigType: bookingData.gigType,
         userId: user.id,
         emailHash: bookingData.emailHash
       });
