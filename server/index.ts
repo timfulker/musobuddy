@@ -241,7 +241,12 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
         
       } catch (error: any) {
         logWebhookActivity('Failed to store client reply', { error: error.message });
-        // Fall through to normal processing if storage fails
+        // CRITICAL: Don't fall through - return error to prevent duplicate processing
+        return res.status(200).json({ 
+          status: 'error', 
+          type: 'booking_reply_failed',
+          message: error.message 
+        });
       }
     }
 
