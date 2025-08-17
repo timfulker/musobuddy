@@ -10,11 +10,23 @@ export function registerUnparseableRoutes(app: Express) {
     try {
       const userId = req.user?.userId;
       
+      console.log('🔍 [UNPARSEABLE-API] API called for user:', userId);
+      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const messages = await storage.getUnparseableMessages(userId);
+      
+      console.log('🔍 [UNPARSEABLE-API] Retrieved', messages?.length || 0, 'messages');
+      if (messages && messages.length > 0) {
+        console.log('🔍 [UNPARSEABLE-API] First message:', {
+          id: messages[0].id,
+          status: messages[0].status,
+          from: messages[0].fromContact
+        });
+      }
+      
       res.json(messages);
 
     } catch (error) {
