@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, such as bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -33,7 +33,7 @@ Force Text Color Injection Technique: When CSS complexity makes simple color cha
       }
     `;
     document.head.appendChild(style);
-    return () => document.head.removeChild(style);
+    return () => document.removeChild(style);
   }, []);
   ```
   Then apply class: `<div className="new-badge-override">New</div>`
@@ -66,10 +66,10 @@ Venue name vs location distinction: Fixed critical issue where location names li
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, featuring clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Features clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).

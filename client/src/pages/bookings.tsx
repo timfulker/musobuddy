@@ -33,6 +33,7 @@ import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
+import { BookingActionsDialog } from "@/components/booking-actions-dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Enquiry } from "@shared/schema";
