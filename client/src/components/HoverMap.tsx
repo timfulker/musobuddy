@@ -5,6 +5,9 @@ interface HoverMapProps {
   children: React.ReactNode;
 }
 
+// Simple in-memory cache for geocoded locations
+const locationCache = new Map<string, google.maps.LatLngLiteral>();
+
 const HoverMap: React.FC<HoverMapProps> = ({ venue, children }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
