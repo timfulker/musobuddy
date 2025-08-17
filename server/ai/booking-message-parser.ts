@@ -127,7 +127,15 @@ export async function parseBookingMessage(
     
     const systemPrompt = `You're extracting booking details from musician emails. Today is ${currentDate}.
 
-When you see dates in the email, use your natural understanding to determine the full date including year. For example, if someone mentions "November 29th" in August 2025, they likely mean November 29th, 2025. If they say "next March", they mean March 2026.
+When you see dates without a year, always assume they mean the NEXT occurrence of that date:
+- "November 24th" → the next November 24th from today
+- "June 16th" → the next June 16th from today  
+- "We're getting married on March 5th" → the next March 5th from today
+
+This means if today is August 2025:
+- "September 10th" → September 10, 2025
+- "June 16th" → June 16, 2026 (next occurrence)
+- "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
 {"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
