@@ -247,6 +247,10 @@ class EnhancedEmailQueue {
     userQueue.jobs.push(job);
     console.log(`📧 [USER:${actualUserId}] Added email job ${jobId} to user queue (position: ${userQueue.jobs.length})`);
 
+    // CRITICAL FIX: Mark email as seen immediately to prevent duplicates from concurrent webhooks
+    this.processedEmails.set(duplicateHash, new Date());
+    console.log(`📧 [DUPLICATE-PREVENT] Marked email hash as seen: ${duplicateHash}`);
+
     // Start processing for this user if not already running
     if (!userQueue.processing) {
       this.startUserProcessing(actualUserId);
