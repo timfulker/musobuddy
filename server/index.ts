@@ -335,8 +335,16 @@ app.get('/api/email-queue/status', async (req, res) => {
         bookingId = invoiceMatch[1]; // Invoice replies also link to booking
         replyType = 'invoice';
       } else {
-        logReplyWebhookActivity('No booking/invoice ID found in recipient', { recipientEmail });
-        return res.status(200).json({ status: 'ignored', reason: 'no_id_found' });
+        logReplyWebhookActivity('No booking/invoice ID found in recipient - NOT A REPLY', { recipientEmail });
+        
+        // CRITICAL: This webhook should ONLY handle replies with booking/invoice IDs
+        // If no ID is found, this is likely a new inquiry that should go to main webhook
+        // Return 200 to acknowledge but don't process it here
+        return res.status(200).json({ 
+          status: 'ignored', 
+          reason: 'not_a_reply_email',
+          note: 'This webhook only processes booking/invoice replies'
+        });
       }
       
       // Find the booking to get user ID

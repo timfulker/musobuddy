@@ -122,14 +122,8 @@ export async function parseBookingMessage(
 CRITICAL INSTRUCTIONS:
 - Extract ALL available information from the message text ONLY
 - Each message must be parsed independently - do not use any external context or previous messages
-- DATE PARSING RULES (current date context: August 2025):
-  • "October 13th next year" = "2026-10-13" (explicit "next year")
-  • "October 13th" without year = "2025-10-13" if Oct hasn't passed, otherwise "2026-10-13" 
-  • "next October" = ambiguous, but assume next occurrence after current month
-  • "March 15th 2026" = "2026-03-15" (explicit year)
-  • "June 23rd" = "2025-06-23" (if current month is before June) or "2026-06-23" (if after June)
-- INVALID DATES: "don't have the date", "no date yet", "TBC", "next year" without month/day = return null for eventDate
-- SPECIFIC DATES with explicit month+day+year are ALWAYS valid dates
+- DATE PARSING: Extract dates naturally from the message. Use your natural language understanding.
+- INVALID DATES: "don't have the date", "no date yet", "TBC" = return null for eventDate
 
 VENUE vs LOCATION DISTINCTION - CRITICAL:
 - VENUE NAME: The actual name/description of the place (e.g., "our garden", "my home", "the church hall", "St. Mary's Church", "The Royal Albert Hall", "our backyard", "Ronnie Scott's Jazz Club")
