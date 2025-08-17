@@ -18,27 +18,34 @@ export function registerNotificationRoutes(app: Express) {
       // Get all notification counts in parallel for efficiency
       const [
         newBookings,
-        unparseableMessages, 
+        reviewMessages,  // Changed to count review messages only once
         overdueInvoices,
         expiringDocuments,
-        unreadClientMessages,
-        reviewMessages
+        unreadClientMessages
       ] = await Promise.all([
         storage.getNewBookingsCount(userId),
-        storage.getUnparseableMessagesCount(userId),
+        storage.getUnparseableMessagesCount(userId), // These are the review messages
         storage.getOverdueInvoicesCount(userId),
         storage.getExpiringDocumentsCount(userId),
-        storage.getUnreadMessageNotificationsCount(userId),
-        storage.getUnparseableMessagesCount(userId) // Review messages that need attention
+        storage.getUnreadMessageNotificationsCount(userId)
       ]);
 
       const totalMessages = unreadClientMessages + reviewMessages;
-      const totalCount = newBookings + unparseableMessages + overdueInvoices + expiringDocuments + totalMessages;
+      const totalCount = newBookings + reviewMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
+
+      console.log(`📊 [NOTIFICATION-COUNTS] For user ${userId}:`, {
+        newBookings,
+        reviewMessages,
+        unreadClientMessages,
+        totalMessages,
+        overdueInvoices,
+        expiringDocuments
+      });
 
       res.json({
         counts: {
           newBookings,
-          unparseableMessages,
+          unparseableMessages: reviewMessages, // For backward compatibility
           overdueInvoices,
           expiringDocuments,
           clientMessages: unreadClientMessages,
