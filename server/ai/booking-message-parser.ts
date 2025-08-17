@@ -138,9 +138,15 @@ This means if today is August 2025:
 - "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
-{"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
+{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
 
-Important: Get the client's actual name from the email signature or body, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.`;
+CRITICAL EMAIL EXTRACTION RULES:
+- NEVER use service emails from FROM field (no-reply@weebly.com, noreply@, notifications@, etc.)
+- ALWAYS prioritize actual client emails from the email content (forms, signatures, contact info)
+- Look for email addresses in: contact forms, signatures, "reply to:", "email:", "contact:", etc.
+- If email contains "Email: tim@timfulker.com" use tim@timfulker.com, NOT the FROM address
+
+Important: Get the client's actual name AND email from the email signature or body content, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
