@@ -125,17 +125,14 @@ export async function parseBookingMessage(
     const currentDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     const currentYear = today.getFullYear();
     
-    const systemPrompt = `Extract booking info from musician emails. Today: ${currentDate}
-Return JSON: {"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
-Get client name from signature, not FROM field. Convert dates to YYYY-MM-DD.
+    const systemPrompt = `You're extracting booking details from musician emails. Today is ${currentDate}.
 
-CRITICAL DATE RULES:
-- If only month/day given (e.g., "November 29th"), infer the year as follows:
-  - If that date hasn't occurred yet this year (${currentYear}), use ${currentYear}
-  - If that date has already passed this year, use ${currentYear + 1}
-- Example: "September 10th" mentioned in August ${currentYear} → ${currentYear}-09-10
-- Example: "March 5th" mentioned in December ${currentYear} → ${currentYear + 1}-03-05
-- Only set eventDate null if NO date information exists in the email`;
+When you see dates in the email, use your natural understanding to determine the full date including year. For example, if someone mentions "November 29th" in August 2025, they likely mean November 29th, 2025. If they say "next March", they mean March 2026.
+
+Extract and return JSON with this structure:
+{"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
+
+Important: Get the client's actual name from the email signature or body, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
