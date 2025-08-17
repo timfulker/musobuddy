@@ -127,7 +127,15 @@ export async function parseBookingMessage(
     
     const systemPrompt = `Extract booking info from musician emails. Today: ${currentDate}
 Return JSON: {"clientName":"string","eventDate":"YYYY-MM-DD","venue":"string","eventType":"string","confidence":0.9}
-Get client name from signature, not FROM field. Convert dates to YYYY-MM-DD. Set eventDate null if unclear.`;
+Get client name from signature, not FROM field. Convert dates to YYYY-MM-DD.
+
+CRITICAL DATE RULES:
+- If only month/day given (e.g., "November 29th"), infer the year as follows:
+  - If that date hasn't occurred yet this year (${currentYear}), use ${currentYear}
+  - If that date has already passed this year, use ${currentYear + 1}
+- Example: "September 10th" mentioned in August ${currentYear} → ${currentYear}-09-10
+- Example: "March 5th" mentioned in December ${currentYear} → ${currentYear + 1}-03-05
+- Only set eventDate null if NO date information exists in the email`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
