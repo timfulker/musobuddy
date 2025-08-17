@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, MessageCircle, AlertTriangle, Bell, Clock } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,77 +43,8 @@ interface UnparseableMessage {
 }
 
 export default function Messages() {
-  // Force black text on all message cards and white text on new badges
-  React.useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .message-card-override,
-      .message-card-override * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-      }
-      
-      .new-badge-override {
-        background-color: #191970 !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
-      }
-      
-      /* Force unselected tabs to have white background with dark text and icons */
-      [role="tablist"] button[data-state="inactive"] {
-        background-color: white !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        border: 1px solid #e5e5e5 !important;
-      }
-      
-      [role="tablist"] button[data-state="inactive"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        fill: #000000 !important;
-      }
-      
-      /* Keep selected tab with theme color */
-      [role="tablist"] button[data-state="active"] {
-        background-color: #191970 !important;
-        color: white !important;
-        -webkit-text-fill-color: white !important;
-      }
-      
-      [role="tablist"] button[data-state="active"] * {
-        color: white !important;
-        -webkit-text-fill-color: white !important;
-        fill: white !important;
-      }
-      
-      /* Force visible text in unparseable message detail panel */
-      .unparseable-detail-panel,
-      .unparseable-detail-panel * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-      }
-      
-      .unparseable-detail-panel .bg-gray-50 {
-        background-color: #f9f9f9 !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-      }
-      
-      .unparseable-detail-panel .bg-red-50 {
-        background-color: #fef2f2 !important;
-        color: #dc2626 !important;
-        -webkit-text-fill-color: #dc2626 !important;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-  
   const [selectedUnparseableMessage, setSelectedUnparseableMessage] = useState<UnparseableMessage | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
-  const [activeTab, setActiveTab] = useState("client-messages");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
@@ -252,57 +183,46 @@ export default function Messages() {
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Messages</h1>
-          <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
+            <p className="text-muted-foreground">Manage client messages and email parsing</p>
+          </div>
+          <div className="flex items-center gap-3">
             {clientUnreadCount > 0 && (
-              <Badge className="text-xs bg-green-500 text-black hover:bg-green-600">
+              <Badge variant="secondary" className="text-sm">
                 {clientUnreadCount} unread client messages
               </Badge>
             )}
             {unparseableUnreadCount > 0 && (
-              <Badge className="text-xs bg-green-500 text-black hover:bg-green-600">
-                {unparseableUnreadCount} new unparseable messages
+              <Badge variant="secondary" className="text-sm">
+                {unparseableUnreadCount} need review
               </Badge>
             )}
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="client-messages" className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Client Messages
-              {clientUnreadCount > 0 && (
-                <Badge className="h-5 text-xs ml-1 bg-green-500 text-black hover:bg-green-600">
-                  {clientUnreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="unparseable" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Unparseable Messages
-              {unparseableUnreadCount > 0 && (
-                <Badge className="h-5 text-xs ml-1 bg-green-500 text-black hover:bg-green-600">
-                  {unparseableUnreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="client-messages" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  Client Messages
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Replies from clients to your booking-related emails
-                </p>
-              </CardHeader>
-              <CardContent>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Client Messages Card */}
+          <Card className="h-fit">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
+                Client Messages
+                {clientUnreadCount > 0 && (
+                  <Badge variant="default" className="ml-2">
+                    {clientUnreadCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Replies from clients to your booking-related emails
+              </p>
+            </CardHeader>
+            <CardContent>
                 {clientMessagesLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -319,49 +239,42 @@ export default function Messages() {
                     {clientMessages.map((message: MessageNotification) => (
                       <div
                         key={message.id}
-                        className={`message-card-override p-4 border rounded-lg ${
+                        className={cn(
+                          "p-4 border rounded-lg transition-colors hover:bg-muted/50",
                           message.isRead 
-                            ? 'bg-gray-50 border-gray-300' 
-                            : 'bg-blue-50 border-blue-200'
-                        }`}
-                        style={{ 
-                          color: '#000000 !important',
-                          '--tw-text-opacity': '1 !important'
-                        }}
+                            ? 'bg-background border-border' 
+                            : 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800'
+                        )}
                       >
                         <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-sm truncate" style={{ color: '#000000' }}>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-sm truncate">
                                 {message.subject || 'Client Reply Message'}
-                              </p>
+                              </h4>
                               {!message.isRead && (
-                                <div className="new-badge-override inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold h-4" 
-                                     style={{ 
-                                       fontSize: '11px',
-                                       lineHeight: '1'
-                                     }}>
+                                <Badge variant="secondary" className="h-5 text-xs">
                                   New
-                                </div>
+                                </Badge>
                               )}
                             </div>
-                            <p className="text-sm mb-1" style={{ color: '#333333' }}>
-                              From: {message.senderEmail}
-                            </p>
-                            {message.clientName && (
-                              <p className="text-sm font-medium mb-1" style={{ color: '#000000' }}>
-                                Client: {message.clientName}
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <p>From: {message.senderEmail}</p>
+                              {message.clientName && (
+                                <p className="font-medium text-foreground">
+                                  Client: {message.clientName}
+                                </p>
+                              )}
+                              {message.eventDate && (
+                                <p>
+                                  Booking: {new Date(message.eventDate).toLocaleDateString()} 
+                                  {message.venue && ` at ${message.venue}`}
+                                </p>
+                              )}
+                              <p className="text-xs">
+                                Booking #{message.bookingId} • {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
                               </p>
-                            )}
-                            {message.eventDate && (
-                              <p className="text-sm mb-1" style={{ color: '#333333' }}>
-                                Booking: {new Date(message.eventDate).toLocaleDateString()} 
-                                {message.venue && ` at ${message.venue}`}
-                              </p>
-                            )}
-                            <p className="text-xs" style={{ color: '#555555' }}>
-                              Booking #{message.bookingId} • Received: {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
-                            </p>
+                            </div>
                           </div>
                           
                           <div className="flex items-center gap-2 ml-4">
@@ -392,20 +305,24 @@ export default function Messages() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="unparseable" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
-                  Unparseable Messages
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Messages that couldn't be automatically processed into bookings
-                </p>
-              </CardHeader>
-              <CardContent>
+          {/* Review Queue Card */}
+          <Card className="h-fit">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                Review Queue
+                {unparseableUnreadCount > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {unparseableUnreadCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Messages that couldn't be automatically processed into bookings
+              </p>
+            </CardHeader>
+            <CardContent>
                 {unparseableLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
