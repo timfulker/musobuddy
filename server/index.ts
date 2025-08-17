@@ -12,6 +12,39 @@ const app = express();
 // Configure multer for handling multipart/form-data from Mailgun webhooks
 const upload = multer();
 
+// Email deduplication system to prevent duplicate processing
+const processedEmails = new Set<string>();
+const DEDUPLICATION_WINDOW = 30000; // 30 seconds
+
+function createEmailSignature(webhookData: any): string {
+  // Create unique signature based on sender, subject, and timestamp
+  const sender = webhookData.sender || webhookData.From || '';
+  const subject = webhookData.subject || webhookData.Subject || '';
+  const messageId = webhookData['message-id'] || webhookData['Message-Id'] || '';
+  const bodySnippet = (webhookData['body-plain'] || webhookData['body-html'] || '').substring(0, 100);
+  
+  return `${sender}:${subject}:${messageId}:${bodySnippet}`.replace(/\s+/g, '');
+}
+
+function isDuplicateEmail(webhookData: any): boolean {
+  const signature = createEmailSignature(webhookData);
+  
+  if (processedEmails.has(signature)) {
+    console.log('🔄 DUPLICATE EMAIL DETECTED - Skipping processing:', signature.substring(0, 50));
+    return true;
+  }
+  
+  processedEmails.add(signature);
+  console.log('📧 NEW EMAIL SIGNATURE ADDED:', signature.substring(0, 50));
+  
+  // Clean up old signatures after deduplication window
+  setTimeout(() => {
+    processedEmails.delete(signature);
+  }, DEDUPLICATION_WINDOW);
+  
+  return false;
+}
+
 // CORS middleware for R2-hosted collaborative forms
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev');
@@ -122,6 +155,14 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
   
   try {
     const webhookData = req.body;
+    
+    // Check for duplicate email processing
+    if (isDuplicateEmail(webhookData)) {
+      return res.status(200).json({ 
+        status: 'duplicate', 
+        message: 'Email already processed, skipping to prevent duplication' 
+      });
+    }
     
     // Log what type of webhook this is
     if (webhookData['body-plain'] || webhookData['body-html'] || webhookData['stripped-text']) {
@@ -321,6 +362,14 @@ app.get('/api/email-queue/status', async (req, res) => {
     
     try {
       const webhookData = req.body;
+      
+      // Check for duplicate email processing
+      if (isDuplicateEmail(webhookData)) {
+        return res.status(200).json({ 
+          status: 'duplicate', 
+          message: 'Email already processed, skipping to prevent duplication' 
+        });
+      }
       const recipientEmail = webhookData.recipient || webhookData.To || '';
       
       // Extract booking ID from email address 

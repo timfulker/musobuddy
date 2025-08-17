@@ -428,27 +428,20 @@ export class EmailProcessingEngine {
   }
 
   private isDataQualitySufficient(parsedData: any, emailData: EmailData, requestId: string): boolean {
-    console.log(`🔍 [${requestId}] DATA QUALITY CHECK:`, {
-      hasEventDate: !!parsedData.eventDate,
-      eventDateValue: parsedData.eventDate,
-      hasClientName: !!parsedData.clientName,
-      clientNameValue: parsedData.clientName,
-      hasVenue: !!parsedData.venue,
-      venueValue: parsedData.venue,
-      rawParsedData: parsedData
-    });
-    
     // For Weebly forms, we can work with less data
     if (this.isWeeblyForm(emailData)) {
       return !!parsedData.clientName || emailData.body.includes('Name');
     }
     
-    // TEMPORARY DEBUG: For other emails, accept if we have ANY useful data
-    // This bypasses the strict eventDate requirement to see what's actually being parsed
-    const hasAnyUsefulData = !!(parsedData.eventDate || parsedData.clientName || parsedData.venue || parsedData.eventType);
-    console.log(`🔍 [${requestId}] QUALITY DECISION: hasAnyUsefulData=${hasAnyUsefulData}`);
+    // FIXED: More flexible validation - accept emails with key booking information
+    // Previous logic was too strict, requiring eventDate even when other data was valid
+    const hasEventDetails = !!(parsedData.eventDate || parsedData.eventType);
+    const hasContactInfo = !!(parsedData.clientName || parsedData.clientEmail);
+    const hasVenueInfo = !!(parsedData.venue || parsedData.venueAddress);
     
-    return hasAnyUsefulData;
+    // Accept if we have event details AND (contact info OR venue info)
+    // This covers most legitimate booking inquiries while filtering out spam
+    return hasEventDetails && (hasContactInfo || hasVenueInfo);
   }
 
   private buildBookingData(parsedData: any, emailData: EmailData, userId: string): any {
