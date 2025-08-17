@@ -119,15 +119,9 @@ export async function parseBookingMessage(
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
-CRITICAL INSTRUCTIONS:
-- Extract ALL available information from the message text ONLY
-- Each message must be parsed independently - do not use any external context or previous messages
-- DATE PARSING: Extract dates naturally using your understanding
-- INVALID DATES: "don't have the date", "no date yet", "TBC" = return null for eventDate
-- EMAIL EXTRACTION: Always prioritize actual client emails from form content over service sender addresses (ignore no-reply@weebly.com, use the email mentioned in the message content instead)
-- ENCORE BOOKINGS: For emails from Encore platform, extract area/location from the email subject line if available
+Extract information naturally from the message text using your understanding.
 
-VENUE vs LOCATION DISTINCTION - CRITICAL:
+VENUE vs LOCATION DISTINCTION:
 - VENUE NAME: The actual name/description of the place (e.g., "our garden", "my home", "the church hall", "St. Mary's Church", "The Royal Albert Hall", "our backyard", "Ronnie Scott's Jazz Club")
 - VENUE ADDRESS: The city, town, area, or region - SIMPLIFY TO JUST THE TOWN/CITY NAME
 - LOCATION SIMPLIFICATION RULES:
