@@ -881,6 +881,7 @@ export default function NewBookingPage() {
                               defaultValue={field.value}
                               placeholder="Enter venue name... then press Tab (e.g., Royal Albert Hall)"
                               className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 border rounded px-3 py-2 w-full"
+                              searchOnTabOnly={true}
                               onSelect={(addressData) => {
                                 // Update venue name
                                 field.onChange(addressData.name || addressData.placeName || '');

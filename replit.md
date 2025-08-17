@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks like bookings, contracts, invoices, and compliance. Its purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -50,6 +50,7 @@ Mileage calculation optimization: Fixed wasteful API calls. System now skips mil
 AI venue parsing improvement: Enhanced AI to properly distinguish between venue names and location names. System now correctly identifies "our garden" as venue name and "Swindon" as location, preventing Google Maps from suggesting unrelated venues like "Sky Garden" in London when parsing booking emails. AI also simplifies location descriptions ("near Swindon" → "Swindon") for better Google Maps compatibility.
 Encore booking location extraction: Fixed critical issue where Encore bookings weren't extracting location from email titles. System now properly extracts area from Encore email subjects (e.g., "Saxophonist needed for wedding in Rock" → area = "Rock") and prevents Google Places enrichment for all Encore bookings.
 Booking form map integration: Added permanent map display on booking forms showing venue locations. Cost-effective approach using single Google Maps API call per booking form view (~$0.012) instead of expensive hover maps. Map appears when venue/address is entered, includes geocoding cache, and provides visual context to mileage calculations. Integrated into venue section with blue theme matching.
+Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on explicit user action. No automatic searches occur when opening booking forms or typing in venue name field. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted, instead of just going to generic bookings page.
 Forgot password system: Complete email-based password reset functionality implemented with secure crypto-generated tokens, 1-hour expiration, professional email templates using existing Mailgun infrastructure, and user-friendly frontend flow including dedicated forgot password and reset password pages.
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
@@ -108,3 +109,4 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - Stripe
     - Twilio
     - what3words API
+```

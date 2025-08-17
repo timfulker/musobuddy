@@ -25,6 +25,7 @@ interface AddressAutocompleteProps {
   defaultValue?: string;
   value?: string; // Add controlled value prop
   className?: string;
+  searchOnTabOnly?: boolean; // New prop to control search behavior
 }
 
 export default function AddressAutocomplete({
@@ -32,7 +33,8 @@ export default function AddressAutocomplete({
   placeholder = "Start typing venue name or address...",
   defaultValue = "",
   value, // Add value prop
-  className = "border rounded px-3 py-2 w-full min-w-[300px]"
+  className = "border rounded px-3 py-2 w-full min-w-[300px]",
+  searchOnTabOnly = false // New prop to control search behavior
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -99,8 +101,13 @@ export default function AddressAutocomplete({
     }
   };
 
-  // Debounce search requests with longer delay to prevent interrupting typing
+  // Debounce search requests - only run if not searchOnTabOnly mode
   useEffect(() => {
+    // Skip automatic search if searchOnTabOnly is enabled
+    if (searchOnTabOnly) {
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
       if (inputValue && inputValue.length >= 3) { // Only search after 3+ characters
         searchPlaces(inputValue);
@@ -108,7 +115,7 @@ export default function AddressAutocomplete({
     }, 800); // Longer delay to allow more typing
     
     return () => clearTimeout(timeoutId);
-  }, [inputValue]);
+  }, [inputValue, searchOnTabOnly]);
 
   const handleSelectSuggestion = async (suggestion: any) => {
     console.log("🔍 handleSelectSuggestion called");
