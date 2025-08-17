@@ -181,8 +181,8 @@ Extract client name (from signature first), event date (YYYY-MM-DD), venue, and 
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
-      max_tokens: 800,
-      temperature: 0.3, // Slight flexibility for better parsing adaptability
+      max_completion_tokens: 1500, // GPT-5 reasoning model needs extra tokens for internal reasoning + response
+      temperature: 1, // GPT-5 only supports default temperature
       messages: [
         { 
           role: 'system', 
