@@ -288,15 +288,34 @@ export default function UnifiedBookings() {
         // Set highlighting state
         setHighlightedBookingId(highlightId);
         
-        // Clean up URL parameter and highlighting after a short delay
-        setTimeout(() => {
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
-          setHighlightedBookingId(null);
-        }, 3000); // Keep highlight visible for 3 seconds
+        // Clean up URL parameter immediately
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        // Highlight will be cleared on calendar click (handled below)
       }
     }
   }, [bookings, navigate]); // Depend on bookings data and navigate
+
+  // Clear highlight on calendar click
+  useEffect(() => {
+    if (!highlightedBookingId || viewMode !== 'calendar') return;
+    
+    const handleCalendarClick = (e: MouseEvent) => {
+      // Clear the highlight when clicking anywhere on the calendar
+      setHighlightedBookingId(null);
+    };
+    
+    // Add click listener after a small delay to avoid immediate trigger
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleCalendarClick);
+    }, 100);
+    
+    // Cleanup
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleCalendarClick);
+    };
+  }, [highlightedBookingId, viewMode]);
 
   // OPTIMIZED: Memoized conflict detection with conflict groups to prevent excessive re-computation
   const { conflictsByBookingId, conflictGroups } = React.useMemo(() => {
