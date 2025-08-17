@@ -207,6 +207,70 @@ export default function NewBookingPage() {
     }
   };
 
+  // Calculate mileage to town center (for bookings with just a town name)
+  const calculateMileageToTownCenter = async (townName: string) => {
+    if (!townName || !userSettings) return;
+
+    // Always use address line 1 + postcode from business settings (most reliable)
+    const addressLine1 = (userSettings as any)?.addressLine1;
+    const postcode = (userSettings as any)?.postcode;
+    
+    // Simple concatenation of address line 1 and postcode
+    const businessAddress = `${addressLine1 || ''}, ${postcode || ''}`.trim();
+
+    if (!addressLine1 || !postcode) {
+      setMileageData(prev => ({ 
+        ...prev, 
+        error: "Please set your Address Line 1 and Postcode in Settings to calculate mileage" 
+      }));
+      return;
+    }
+
+    setMileageData(prev => ({ ...prev, isCalculating: true, error: null }));
+    console.log('🏘️ Calculating distance to town center:', townName);
+
+    try {
+      // Add "town center" or "city center" to get more accurate center point
+      const destination = `${townName} town center, UK`;
+      console.log('🏘️ Calculating mileage from:', businessAddress, 'to:', destination);
+      
+      const response = await apiRequest('/api/maps/travel-time', {
+        method: 'POST',
+        body: JSON.stringify({
+          origin: businessAddress,
+          destination: destination,
+          departureTime: null // Use current time
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.distance && data.duration) {
+        setMileageData({
+          distance: `~${data.distance} (to town center)`,
+          distanceValue: data.distanceValue,
+          duration: data.durationInTraffic || data.duration,
+          isCalculating: false,
+          error: null,
+          isTownCenter: true // Flag to indicate this is a town center calculation
+        });
+        setMileageCalculated(true); // Mark as calculated to prevent re-calculation
+        console.log('✅ Distance to town center calculated:', data);
+      } else {
+        throw new Error('No route found');
+      }
+    } catch (error: any) {
+      console.error('❌ Town center distance calculation failed:', error);
+      setMileageData({
+        distance: null,
+        distanceValue: null,
+        duration: null,
+        isCalculating: false,
+        error: "Could not calculate distance to town center"
+      });
+    }
+  };
+
   const form = useForm<FullBookingFormData>({
     resolver: zodResolver(fullBookingSchema),
     defaultValues: {
@@ -267,6 +331,7 @@ export default function NewBookingPage() {
 
   // Watch venue address changes to calculate mileage (only for new bookings or when user manually changes address)
   const watchedVenueAddress = form.watch('venueAddress');
+  const watchedVenue = form.watch('venue');
   const [formInitialized, setFormInitialized] = useState(false);
   
   // Load existing mileage data when editing
@@ -283,6 +348,62 @@ export default function NewBookingPage() {
       console.log('✅ Loaded existing mileage data for editing booking');
     }
   }, [isEditMode, editingBooking]);
+
+  // Monitor venue address changes for automatic mileage calculation
+  useEffect(() => {
+    // Skip if we're in edit mode and form hasn't been initialized yet
+    if (isEditMode && !formInitialized) return;
+    
+    // Skip if we've already calculated mileage
+    if (mileageCalculated) return;
+    
+    // Only calculate once when address is added/changed and is substantial
+    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
+      // Check if this looks like just a town name (no commas, no venue keywords)
+      const isTownOnly = !watchedVenueAddress.includes(',') && 
+                         !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
+      
+      if (isTownOnly) {
+        console.log(`🏘️ Detected town-only address: ${watchedVenueAddress}`);
+        // Delay calculation slightly to avoid rapid API calls
+        const timer = setTimeout(() => {
+          calculateMileageToTownCenter(watchedVenueAddress);
+        }, 1500);
+        return () => clearTimeout(timer);
+      } else {
+        // Normal venue address calculation
+        const timer = setTimeout(() => {
+          calculateMileage(watchedVenueAddress);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
+  
+  // Also monitor venue field for town-only entries
+  useEffect(() => {
+    // Skip if we're in edit mode and form hasn't been initialized yet
+    if (isEditMode && !formInitialized) return;
+    
+    // Skip if we've already calculated mileage or have a venue address
+    if (mileageCalculated || watchedVenueAddress) return;
+    
+    // Check if venue looks like just a town name
+    if (watchedVenue && watchedVenue.length > 3) {
+      const isTownOnly = !watchedVenue.includes(',') && 
+                         !watchedVenue.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
+      
+      if (isTownOnly) {
+        console.log(`🏘️ Venue field contains town name only: ${watchedVenue}`);
+        // Set venue address to the town name and calculate distance
+        form.setValue('venueAddress', watchedVenue);
+        const timer = setTimeout(() => {
+          calculateMileageToTownCenter(watchedVenue);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [watchedVenue, watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
 
   // Populate form with existing booking data when editing
   useEffect(() => {
@@ -376,6 +497,14 @@ export default function NewBookingPage() {
           distance: editingBooking.distance,
           duration: editingBooking.duration
         });
+      } else if (editingBooking.venueAddress && !editingBooking.venue?.includes(',') && !editingBooking.venue?.includes('Hall') && !editingBooking.venue?.includes('Hotel') && !editingBooking.venue?.includes('Club')) {
+        // If we have a venue address that looks like just a town name (no commas, no venue keywords)
+        // Calculate distance to town center
+        const townName = editingBooking.venueAddress;
+        console.log(`📍 Detected town-only location: ${townName}, calculating distance to town center...`);
+        setTimeout(() => {
+          calculateMileageToTownCenter(townName);
+        }, 1000);
       }
       
       console.log('✅ Form populated with booking data');
@@ -825,11 +954,24 @@ export default function NewBookingPage() {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => calculateMileage(watchedVenueAddress)}
+                                onClick={() => {
+                                  // Check if this looks like just a town name
+                                  const isTownOnly = !watchedVenueAddress.includes(',') && 
+                                                     !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
+                                  
+                                  if (isTownOnly) {
+                                    calculateMileageToTownCenter(watchedVenueAddress);
+                                  } else {
+                                    calculateMileage(watchedVenueAddress);
+                                  }
+                                }}
                                 className="h-8 px-3 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                               >
                                 <MapPin className="w-3 h-3 mr-1" />
-                                Calculate Mileage
+                                {!watchedVenueAddress.includes(',') && 
+                                 !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i) 
+                                  ? 'Calculate Distance to Town Center' 
+                                  : 'Calculate Mileage'}
                               </Button>
                             </div>
                           )}
@@ -844,7 +986,9 @@ export default function NewBookingPage() {
                             <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300 shadow-sm">
                               <div className="flex items-center gap-2 text-sm">
                                 <MapPin className="w-5 h-5 text-blue-600" />
-                                <span className="font-semibold text-blue-900">📍 Travel Distance Calculated:</span>
+                                <span className="font-semibold text-blue-900">
+                                  📍 {(mileageData as any).isTownCenter ? 'Distance to Town Center:' : 'Travel Distance Calculated:'}
+                                </span>
                               </div>
                               <div className="mt-2 text-lg font-bold text-blue-800">
                                 {mileageData.distance}
@@ -855,7 +999,9 @@ export default function NewBookingPage() {
                                 </div>
                               )}
                               <div className="mt-2 text-xs text-blue-600 italic">
-                                From your business address to venue • Add travel expense in Pricing section if needed
+                                {(mileageData as any).isTownCenter 
+                                  ? 'Approximate distance to town center • Final venue location may vary'
+                                  : 'From your business address to venue • Add travel expense in Pricing section if needed'}
                               </div>
                             </div>
                           )}
