@@ -237,7 +237,7 @@ class EmailQueue {
       user = users.find(u => u.email === 'timfulkermusic@gmail.com');
       if (!user) {
         console.log(`📧 [${requestId}] CRITICAL: Could not find primary user, using fallback`);
-        user = { id: "43963086", email: "timfulkermusic@gmail.com" };
+        user = { id: "1754488522516", email: "timfulkermusic@gmail.com" };
       }
     }
     
