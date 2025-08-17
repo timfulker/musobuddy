@@ -210,9 +210,13 @@ export class EmailProcessingEngine {
       
       console.log(`✅ [${requestId}] AI PARSING COMPLETE:`, {
         hasEventDate: !!parsedData.eventDate,
+        eventDateValue: parsedData.eventDate,
         hasVenue: !!parsedData.venue,
+        venueValue: parsedData.venue,
         hasClientName: !!parsedData.clientName,
-        confidence: parsedData.confidence
+        clientNameValue: parsedData.clientName,
+        confidence: parsedData.confidence,
+        fullParsedData: parsedData
       });
       
       // Validate parsed data quality
@@ -424,13 +428,27 @@ export class EmailProcessingEngine {
   }
 
   private isDataQualitySufficient(parsedData: any, emailData: EmailData, requestId: string): boolean {
+    console.log(`🔍 [${requestId}] DATA QUALITY CHECK:`, {
+      hasEventDate: !!parsedData.eventDate,
+      eventDateValue: parsedData.eventDate,
+      hasClientName: !!parsedData.clientName,
+      clientNameValue: parsedData.clientName,
+      hasVenue: !!parsedData.venue,
+      venueValue: parsedData.venue,
+      rawParsedData: parsedData
+    });
+    
     // For Weebly forms, we can work with less data
     if (this.isWeeblyForm(emailData)) {
       return !!parsedData.clientName || emailData.body.includes('Name');
     }
     
-    // For other emails, require event date
-    return !!parsedData.eventDate;
+    // TEMPORARY DEBUG: For other emails, accept if we have ANY useful data
+    // This bypasses the strict eventDate requirement to see what's actually being parsed
+    const hasAnyUsefulData = !!(parsedData.eventDate || parsedData.clientName || parsedData.venue || parsedData.eventType);
+    console.log(`🔍 [${requestId}] QUALITY DECISION: hasAnyUsefulData=${hasAnyUsefulData}`);
+    
+    return hasAnyUsefulData;
   }
 
   private buildBookingData(parsedData: any, emailData: EmailData, userId: string): any {
