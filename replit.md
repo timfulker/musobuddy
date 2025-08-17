@@ -61,10 +61,10 @@ GPT-5 external issue resolution: Fixed three critical external factors causing p
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue).
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Clean white cards, gradient forms, responsive layouts, consistent sidebar navigation. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
+- **UI/UX Decisions**: Features QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming (invoices and contracts) with WCAG 2.0 luminance for text contrast and consistent logo branding. Initial default booking view is list-based, with calendar as an option.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
