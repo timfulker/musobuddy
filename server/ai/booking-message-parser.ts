@@ -116,6 +116,9 @@ export async function parseBookingMessage(
     console.log('🤖 GPT-5: Parsing booking message with enhanced AI for better accuracy...');
     console.log('🤖 GPT-5: Message length:', messageText?.length || 0);
     console.log('🤖 GPT-5: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 GPT-5: Subject:', subject || 'No subject');
+    console.log('🤖 GPT-5: Client Contact:', clientContact || 'None');
+    console.log('🤖 GPT-5: Client Address:', clientAddress || 'None');
     
     const systemPrompt = `You are an expert booking assistant for musicians. Parse booking inquiries and extract structured information.
 
@@ -173,6 +176,9 @@ ${clientContact ? `CONTACT: "${clientContact}"` : ''}
 ${clientAddress ? `VENUE/LOCATION: "${clientAddress}"` : ''}
 
 Analyze and extract ALL booking details. Return valid JSON only:`;
+
+    console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
+    console.log('🤖 GPT-5: User prompt:', userPrompt);
 
     // Track API usage if userId is provided
     if (userId) {
