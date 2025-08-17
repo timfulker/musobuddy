@@ -149,6 +149,23 @@ app.get('/api/webhook/logs', (req, res) => {
   });
 });
 
+// Initialize booking reply routes endpoint
+app.post('/api/admin/init-booking-routes', async (req, res) => {
+  try {
+    const { mailgunRoutes } = await import('./core/mailgun-routes');
+    const result = await mailgunRoutes.ensureBookingReplyRoutes();
+    
+    if (result.success) {
+      res.json({ success: true, message: 'Booking reply routes ensured' });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to initialize booking routes:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Enhanced Mailgun webhook handler with multipart support
 app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
   logWebhookActivity('Received Mailgun webhook', { keys: Object.keys(req.body || {}) });

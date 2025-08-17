@@ -103,6 +103,65 @@ export class MailgunRouteManager {
 
     return { valid: true };
   }
+
+  // Create high-priority routes for booking/invoice replies
+  async ensureBookingReplyRoutes(): Promise<{ success: boolean; error?: string }> {
+    if (!this.mg) {
+      return { success: false, error: 'Mailgun not configured' };
+    }
+
+    try {
+      console.log('📧 Ensuring booking reply routes exist...');
+      
+      // Check existing routes first
+      const existingRoutes = await this.listRoutes();
+      const hasBookingRoute = existingRoutes.some(route => 
+        route.expression?.includes('booking') && route.expression?.includes(this.domain)
+      );
+      const hasInvoiceRoute = existingRoutes.some(route => 
+        route.expression?.includes('invoice') && route.expression?.includes(this.domain)
+      );
+
+      const repliesWebhookUrl = `https://musobuddy.replit.app/api/webhook/mailgun-replies`;
+      let createdRoutes = [];
+
+      // Create booking reply route if it doesn't exist
+      if (!hasBookingRoute) {
+        const bookingRoute = await this.mg.routes.create({
+          priority: 0, // Higher priority than user routes (priority 1)
+          description: 'MusoBuddy booking replies - high priority',
+          expression: `match_recipient("*booking*@${this.domain}")`,
+          action: [`forward("${repliesWebhookUrl}")`]
+        });
+        createdRoutes.push(`booking replies (${bookingRoute.id})`);
+        console.log(`✅ Created booking reply route: ${bookingRoute.id}`);
+      }
+
+      // Create invoice reply route if it doesn't exist  
+      if (!hasInvoiceRoute) {
+        const invoiceRoute = await this.mg.routes.create({
+          priority: 0, // Higher priority than user routes (priority 1)
+          description: 'MusoBuddy invoice replies - high priority',
+          expression: `match_recipient("*invoice*@${this.domain}")`,
+          action: [`forward("${repliesWebhookUrl}")`]
+        });
+        createdRoutes.push(`invoice replies (${invoiceRoute.id})`);
+        console.log(`✅ Created invoice reply route: ${invoiceRoute.id}`);
+      }
+
+      if (createdRoutes.length > 0) {
+        console.log(`✅ Created ${createdRoutes.length} reply routes: ${createdRoutes.join(', ')}`);
+      } else {
+        console.log('✅ Booking reply routes already exist');
+      }
+
+      return { success: true };
+      
+    } catch (error: any) {
+      console.error(`❌ Failed to ensure booking reply routes:`, error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 export const mailgunRoutes = new MailgunRouteManager();

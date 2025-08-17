@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed for musicians to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its primary purpose is to provide a user-friendly, reliable, and scalable centralized solution that reduces administrative burdens, allowing musicians to focus on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its core purpose is to provide a user-friendly, reliable, and scalable centralized solution, reducing administrative burdens and enabling musicians to concentrate on their creative work. The project aims to become an indispensable tool covering all administrative aspects of a musician's career, increasing efficiency and capitalizing on the independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -61,6 +61,7 @@ GPT-5 parsing system fully fixed: Resolved critical API compatibility issues pre
 GPT-5 email extraction system prompt fix: Resolved persistent issue where Weebly form submissions showed sender email (no-reply@weebly.com) instead of actual client email from form content. Updated GPT-5 system prompt with specific instructions to NEVER use service emails from FROM field and ALWAYS prioritize actual client emails found in contact forms, signatures, or email body content. System now correctly extracts emails like "tim@timfulker.com" from form data instead of using automated sender addresses.
 Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary Google Maps API calls. AI parser now sets venue as empty string for Encore bookings instead of placeholder text, preventing wasteful API usage while maintaining proper booking form functionality.
 Venue name vs location distinction: Fixed critical issue where location names like "Glasgow" were incorrectly treated as venue names, triggering unnecessary Google API calls. Updated both GPT-5 system prompt and fallback parser to distinguish between actual venue names (e.g., "Glasgow City Hall") and general locations (e.g., "Glasgow"). Venue name field now stays blank unless we actually know the specific venue name. Location information goes in venueAddress field. Removed booking form logic that auto-triggered API calls for town-only entries, significantly reducing API usage and improving accuracy per user preference.
+Email routing priority fix: Resolved critical issue where client replies containing booking IDs (e.g., user17544892251e-booking748@enquiries.musobuddy.com) were being routed to main webhook instead of replies webhook. Root cause: user-specific Mailgun routes (priority 1) were catching booking replies before dedicated reply routes could process them. Solution: Implemented high-priority routes (priority 0) that intercept booking/invoice reply patterns (*booking*@enquiries.musobuddy.com, *invoice*@enquiries.musobuddy.com) and route them to /api/webhook/mailgun-replies before user-specific routes. Added ensureBookingReplyRoutes() method to MailgunRouteManager with automatic integration into email prefix setup process.
 
 ## System Architecture
 
@@ -86,7 +87,7 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
     - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
     - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
-    **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
+    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
     - **System Health Monitoring**: Real-time dashboard (`/system-health`).
     - **Deployment**: Node.js server serving built frontend.
     - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
@@ -109,4 +110,3 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - Stripe
     - Twilio
     - what3words API
-```
