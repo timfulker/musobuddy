@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
-import { clientCommunications, bookings } from '@shared/schema';
+import { clientCommunications, bookings, settings } from '@shared/schema';
 import { requireAuth } from '../middleware/auth';
 import { eq, desc, and } from 'drizzle-orm';
+import { mailgun } from '../core/services';
 
 export function setupCommunicationRoutes(app: any) {
   // Save a communication record when an email/SMS is sent
@@ -423,24 +424,86 @@ export function setupCommunicationRoutes(app: any) {
         return res.status(404).json({ error: 'Booking not found' });
       }
 
-      // Record the communication
-      const [communication] = await db.insert(clientCommunications).values({
-        userId,
-        bookingId,
-        clientName: booking[0].clientName,
-        clientEmail: recipientEmail,
-        communicationType: 'email',
-        direction: 'outbound',
-        subject: `Re: ${booking[0].title}`,
-        messageBody: content,
-        deliveryStatus: 'sent'
-      }).returning();
+      // Get user settings for sender info and email template
+      const userSettings = await db
+        .select()
+        .from(settings)
+        .where(eq(settings.userId, userId))
+        .limit(1);
 
-      // TODO: Actually send the email via Mailgun here
-      // For now, we're just recording the communication
-      
-      console.log(`✅ Conversation reply recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
-      res.json({ success: true, communication });
+      const userSetting = userSettings[0];
+      if (!userSetting?.senderEmail) {
+        return res.status(400).json({ error: 'Sender email not configured in settings' });
+      }
+
+      // Create unique reply-to address with user ID and booking ID for proper routing
+      const replyToAddress = `${userId}-${bookingId}@enquiries.musobuddy.com`;
+      const subject = `Re: ${booking[0].title}`;
+
+      // Get enhanced email template with the reply content
+      const { createEmailTemplate } = require('../core/services');
+      const emailTemplate = await createEmailTemplate({
+        userId,
+        subject,
+        emailBody: content,
+        senderName: userSetting.senderName,
+        senderEmail: userSetting.senderEmail,
+        themeColor: userSetting.themeColor || '#1e3a8a'
+      });
+
+      // Send email via Mailgun with proper reply-to routing
+      try {
+        const mailgunData = {
+          from: `${userSetting.senderName || 'MusoBuddy'} <${userSetting.senderEmail}>`,
+          to: recipientEmail,
+          'reply-to': replyToAddress,
+          subject: subject,
+          html: emailTemplate,
+          'h:X-Mailgun-Variables': JSON.stringify({
+            userId: userId,
+            bookingId: bookingId,
+            type: 'conversation_reply'
+          })
+        };
+
+        const mailgunResponse = await mailgun.messages.create('enquiries.musobuddy.com', mailgunData);
+        console.log(`✅ Conversation reply email sent via Mailgun:`, mailgunResponse.id);
+        
+        // Record the communication with successful delivery
+        const [communication] = await db.insert(clientCommunications).values({
+          userId,
+          bookingId,
+          clientName: booking[0].clientName,
+          clientEmail: recipientEmail,
+          communicationType: 'email',
+          direction: 'outbound',
+          subject: subject,
+          messageBody: content,
+          deliveryStatus: 'delivered',
+          mailgunId: mailgunResponse.id
+        }).returning();
+
+        console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
+        res.json({ success: true, communication, mailgunId: mailgunResponse.id });
+
+      } catch (mailgunError) {
+        console.error('❌ Mailgun error sending conversation reply:', mailgunError);
+        
+        // Record the communication with failed delivery
+        const [communication] = await db.insert(clientCommunications).values({
+          userId,
+          bookingId,
+          clientName: booking[0].clientName,
+          clientEmail: recipientEmail,
+          communicationType: 'email',
+          direction: 'outbound',
+          subject: subject,
+          messageBody: content,
+          deliveryStatus: 'failed'
+        }).returning();
+
+        return res.status(500).json({ error: 'Failed to send email via Mailgun', communication });
+      }
 
     } catch (error) {
       console.error('❌ Error sending conversation reply:', error);
