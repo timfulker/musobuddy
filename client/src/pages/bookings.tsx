@@ -269,7 +269,7 @@ export default function UnifiedBookings() {
         
         // Navigate to edit booking after a short delay
         setTimeout(() => {
-          navigate(`/new-booking?edit=${targetBooking.id}`);
+          navigateToEditBooking(targetBooking);
         }, 300);
         
         // Clean up URL parameter
@@ -305,7 +305,7 @@ export default function UnifiedBookings() {
     }
   }, [bookings, navigate]); // Depend on bookings data and navigate
 
-  // Auto-scroll to next upcoming booking on page arrival
+  // Auto-scroll behavior based on sort criteria
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const hasUrlParams = urlParams.has('id') || urlParams.has('highlight');
@@ -314,29 +314,48 @@ export default function UnifiedBookings() {
     if (hasUrlParams || viewMode !== 'list' || !bookings || bookings.length === 0) {
       return;
     }
-    
-    // Find next upcoming booking (earliest future date)
-    const now = new Date();
-    const validBookings = validateBookingArray(bookings) ? bookings : [];
-    const upcomingBookings = validBookings
-      .filter(booking => booking.eventDate && new Date(booking.eventDate) >= now)
-      .sort((a, b) => new Date(a.eventDate!).getTime() - new Date(b.eventDate!).getTime());
-    
-    if (upcomingBookings.length > 0) {
-      const nextBooking = upcomingBookings[0];
-      
-      // Scroll to the booking card after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        const bookingElement = document.querySelector(`[data-booking-id="${nextBooking.id}"]`);
+
+    // Get the booking ID we might be returning from (if any)
+    const returningFromBookingId = localStorage.getItem('bookingReturnToId');
+    const returningFromBooking = returningFromBookingId ? 
+      bookings.find(b => b.id.toString() === returningFromBookingId) : null;
+
+    setTimeout(() => {
+      if (sortField === 'eventDate' && !returningFromBooking) {
+        // For date sorting: scroll to next upcoming booking (current behavior)
+        const now = new Date();
+        const validBookings = validateBookingArray(bookings) ? bookings : [];
+        const upcomingBookings = validBookings
+          .filter(booking => booking.eventDate && new Date(booking.eventDate) >= now)
+          .sort((a, b) => new Date(a.eventDate!).getTime() - new Date(b.eventDate!).getTime());
+        
+        if (upcomingBookings.length > 0) {
+          const nextBooking = upcomingBookings[0];
+          const bookingElement = document.querySelector(`[data-booking-id="${nextBooking.id}"]`);
+          if (bookingElement) {
+            bookingElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }
+      } else if (returningFromBooking) {
+        // If returning from viewing a specific booking, scroll back to it
+        const bookingElement = document.querySelector(`[data-booking-id="${returningFromBooking.id}"]`);
         if (bookingElement) {
           bookingElement.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'center' 
           });
         }
-      }, 500);
-    }
-  }, [bookings, viewMode]); // Depend on bookings data and view mode
+        // Clear the return ID after using it
+        localStorage.removeItem('bookingReturnToId');
+      } else {
+        // For other sort criteria: scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 500);
+  }, [bookings, viewMode, sortField]); // Added sortField dependency
 
   // Clear highlight on calendar click
   useEffect(() => {
@@ -533,6 +552,13 @@ export default function UnifiedBookings() {
   // Navigation to conversation page - replaces old dialog
   const openConversation = (booking: any) => {
     navigate(`/conversation/${booking.id}`);
+  };
+
+  // Helper function to navigate to edit booking and remember position
+  const navigateToEditBooking = (booking: any) => {
+    // Store the booking ID so we can return to it later
+    localStorage.setItem('bookingReturnToId', booking.id.toString());
+    navigate(`/new-booking?edit=${booking.id}`);
   };
   
   // Enhanced sorting function
@@ -1056,7 +1082,7 @@ export default function UnifiedBookings() {
       const validBookings = validateBookingArray(bookings) ? bookings : [];
       const booking = validBookings.find((b) => b.id === firstEvent.id);
       if (booking) {
-        navigate(`/new-booking?edit=${booking.id}`);
+        navigateToEditBooking(booking);
       }
     } else {
       // Open full-screen calendar modal for empty dates
@@ -1068,19 +1094,19 @@ export default function UnifiedBookings() {
 
   const handleBookingClick = (booking: any) => {
     // Navigate to new-booking page with booking ID for editing
-    navigate(`/new-booking?edit=${booking.id}`);
+    navigateToEditBooking(booking);
   };
 
   // Handler for editing booking from conflict resolution dialog
   const handleEditBookingFromConflict = (booking: any) => {
     console.log('handleEditBookingFromConflict called with booking:', booking);
     // Navigate to new-booking page with booking ID for editing
-    navigate(`/new-booking?edit=${booking.id}`);
+    navigateToEditBooking(booking);
   };
 
   // Handler for editing booking from action menu
   const handleEditBooking = (booking: any) => {
-    navigate(`/new-booking?edit=${booking.id}`);
+    navigateToEditBooking(booking);
   };
 
   // Get calendar data for the current view
@@ -1875,7 +1901,7 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/new-booking?edit=${groupBooking.id}`);
+                                                  navigateToEditBooking(groupBooking);
                                                 }}
                                                 className="text-purple-600 hover:bg-purple-50"
                                               >
@@ -2171,7 +2197,7 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/new-booking?edit=${booking.id}`);
+                                  navigateToEditBooking(booking);
                                 }}
                                 className="text-purple-600 hover:bg-purple-50"
                               >
@@ -2394,7 +2420,7 @@ export default function UnifiedBookings() {
                                       className={`p-3 border rounded-lg cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(event.status || 'new')}`}
                                       onClick={() => {
                                         if (booking) {
-                                          navigate(`/new-booking?edit=${booking.id}`);
+                                          navigateToEditBooking(booking);
                                         }
                                       }}
                                     >
@@ -2465,7 +2491,7 @@ export default function UnifiedBookings() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (booking) {
-                                            navigate(`/new-booking?edit=${booking.id}`);
+                                            navigateToEditBooking(booking);
                                           }
                                         }}
                                       >
@@ -2628,7 +2654,7 @@ export default function UnifiedBookings() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (booking) {
-                                              navigate(`/new-booking?edit=${booking.id}`);
+                                              navigateToEditBooking(booking);
                                             }
                                           }}
                                         >
@@ -3099,7 +3125,7 @@ export default function UnifiedBookings() {
                           const booking = validBookings.find((b) => b.id === firstEvent.id);
                           if (booking) {
                             setFullScreenCalendarOpen(false);
-                            navigate(`/new-booking?edit=${booking.id}`);
+                            navigateToEditBooking(booking);
                           }
                         } else {
                           // Create new booking for this date
@@ -3150,7 +3176,7 @@ export default function UnifiedBookings() {
                                 e.stopPropagation();
                                 if (booking) {
                                   setFullScreenCalendarOpen(false);
-                                  navigate(`/new-booking?edit=${booking.id}`);
+                                  navigateToEditBooking(booking);
                                 }
                               }}
                               onMouseEnter={(e) => {
@@ -3331,7 +3357,7 @@ export default function UnifiedBookings() {
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
                           console.log('Navigating to edit booking:', booking.id);
-                          navigate(`/new-booking?edit=${booking.id}`);
+                          navigateToEditBooking(booking);
                         }, 200);
                         break;
                       case 'delete':
