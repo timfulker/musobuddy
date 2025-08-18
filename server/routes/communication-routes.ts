@@ -503,35 +503,34 @@ export function setupCommunicationRoutes(app: any) {
         </html>
       `;
 
-      // Send email via Mailgun with proper reply-to routing
+      // Send email via centralized email service with proper reply-to routing
       try {
-        const { mailgun } = services;
-        const mailgunData = {
+        const emailResult = await services.sendEmail({
           from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <${userSetting.businessEmail}>`,
           to: recipientEmail,
-          'reply-to': replyToAddress,
+          replyTo: replyToAddress,
           subject: subject,
           html: emailBody,
-          'h:X-Mailgun-Variables': JSON.stringify({
-            userId: userId,
-            bookingId: bookingId,
-            type: 'conversation_reply'
-          })
-        };
+          headers: {
+            'X-Mailgun-Variables': JSON.stringify({
+              userId: userId,
+              bookingId: bookingId,
+              type: 'conversation_reply'
+            })
+          }
+        });
 
-        console.log(`📧 Mailgun conversation reply data:`, {
-          from: mailgunData.from,
-          to: mailgunData.to,
-          replyTo: mailgunData['reply-to'],
-          subject: mailgunData.subject,
-          variables: mailgunData['h:X-Mailgun-Variables']
+        console.log(`📧 Conversation reply email data:`, {
+          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <${userSetting.businessEmail}>`,
+          to: recipientEmail,
+          replyTo: replyToAddress,
+          subject: subject
         });
         
         console.log(`🔍 [DEBUG] Expected reply-to format: User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`);
-        console.log(`🔍 [DEBUG] Actual reply-to being sent: ${mailgunData['reply-to']}`);
+        console.log(`🔍 [DEBUG] Actual reply-to being sent: ${replyToAddress}`);
 
-        const mailgunResponse = await mailgun.messages.create('enquiries.musobuddy.com', mailgunData);
-        console.log(`✅ Conversation reply email sent via Mailgun:`, mailgunResponse.id);
+        console.log(`✅ Conversation reply email sent via email service:`, emailResult.messageId);
         
         // Record the communication with successful delivery
         const [communication] = await db.insert(clientCommunications).values({
@@ -544,7 +543,7 @@ export function setupCommunicationRoutes(app: any) {
           subject: subject,
           messageBody: content,
           deliveryStatus: 'delivered',
-          mailgunId: mailgunResponse.id
+          mailgunId: emailResult.messageId
         }).returning();
 
         // Mark all message notifications for this booking as read (user has responded)
