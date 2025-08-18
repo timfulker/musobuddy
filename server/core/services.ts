@@ -49,9 +49,7 @@ export class EmailService {
         messageData.text = emailData.text;
       }
 
-      // Force HTML content type headers for better email client rendering
-      messageData['h:Content-Type'] = 'text/html; charset=UTF-8';
-      messageData['h:MIME-Version'] = '1.0';
+      // Let Mailgun handle MIME headers automatically for proper multipart emails
 
       // Add CC support for invoices (contracts remain single-recipient only)
       if (emailData.cc) {

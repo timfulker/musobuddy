@@ -773,7 +773,7 @@ export async function registerSettingsRoutes(app: Express) {
           .join('');
       };
 
-      // Create warm, professional HTML email content
+      // Create simple, compatible HTML email content
       const professionalEmailHtml = `
 <!DOCTYPE html>
 <html>
@@ -781,16 +781,43 @@ export async function registerSettingsRoutes(app: Express) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${template.subject}</title>
-    <style>
-        /* Warm, musician-friendly email styling */
-        body { 
-          font-family: 'Georgia', 'Times New Roman', serif; 
-          line-height: 1.7; 
-          margin: 0; 
-          padding: 20px; 
-          background: linear-gradient(135deg, #f7f3f0 0%, #fdfbf7 100%);
-          color: #2c3e50;
-        }
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%); padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; color: ${textColor}; font-size: 24px; font-weight: normal;">${template.subject}</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #333333; line-height: 1.6;">
+                            ${formatEmailContent(template.emailBody)}
+                            
+                            <table style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; width: 100%;" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">${senderName || 'MusoBuddy'}</p>
+                                        <p style="margin: 0 0 8px 0; color: #666; font-style: italic;">Professional Music Services</p>
+                                        <p style="margin: 0; color: ${themeColor};">${senderEmail}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #333; padding: 20px; text-align: center;">
+                            <p style="margin: 0; color: #999; font-size: 12px;">Sent via MusoBuddy Music Management</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
         .email-container {
           max-width: 580px;
           margin: 0 auto;
@@ -952,12 +979,11 @@ ${senderEmail}
 This email was sent via MusoBuddy Professional Music Management Platform
       `.trim();
 
-      // Send the email with both HTML and text versions
+      // Send HTML-only email to force HTML rendering
       const emailSent = await services.sendEmail({
         to: recipientEmail,
         subject: template.subject,
         html: professionalEmailHtml,
-        text: textVersion,
         replyTo: replyToAddress
       });
 
