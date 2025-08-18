@@ -234,41 +234,29 @@ export default function Contracts() {
     }
   }, [enquiries, contracts, form, isLoading, dataLoaded, toast]); // Removed isDialogOpen from dependencies to prevent circular reopening
 
-  // Fixed dialog close handler - prevent infinite loops
-  const [isClosing, setIsClosing] = useState(false);
-  
+  // Simple dialog close handler without complex state management
   const handleDialogClose = (open: boolean) => {
-    console.log('🔄 handleDialogClose called with:', open, 'isClosing:', isClosing);
-    
-    // Prevent infinite loops
-    if (!open && isClosing) {
-      console.log('🛑 Already closing, ignoring duplicate call');
-      return;
-    }
+    console.log('🔄 handleDialogClose called with:', open);
     
     if (!open) {
-      setIsClosing(true);
       console.log('🚪 Closing dialog - cleaning up state');
       
-      // Clean up URL when closing dialog - do this first
+      // Clean up URL when closing dialog
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
         console.log('🧹 Cleaning up URL params');
         window.history.replaceState({}, '', window.location.pathname);
       }
       
-      // Clear all form and component state
+      // Clear all form and component state immediately
       setEditingContract(null);
-      setDataLoaded(false); // Reset data loaded flag to allow future URL-based opens
+      setDataLoaded(false);
+      form.reset();
       
-      // Reset form with a slight delay to ensure state updates are complete
-      setTimeout(() => {
-        form.reset();
-        setIsClosing(false); // Reset closing flag
-        console.log('✅ Dialog cleanup complete');
-      }, 50);
+      console.log('✅ Dialog cleanup complete');
     }
     
+    // Always update the dialog state
     setIsDialogOpen(open);
   };
 
