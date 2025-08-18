@@ -1,5 +1,5 @@
-import { db } from '../db';
-import { users } from '@shared/schema';
+import { db } from '../core/database';
+import { users } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 
 export interface TokenUsageResult {

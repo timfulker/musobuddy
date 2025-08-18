@@ -48,6 +48,8 @@ export default function Conversation() {
   const [replyContent, setReplyContent] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [contextInput, setContextInput] = useState('');
+  const [showContextInput, setShowContextInput] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [tokenUsage, setTokenUsage] = useState<{
     percentage: number;
@@ -158,10 +160,8 @@ export default function Conversation() {
           ).join('\n')}`
         : '';
 
-      // Allow user to add manual context if needed
-      const customContext = replyContent.includes('[CONTEXT:') 
-        ? replyContent.match(/\[CONTEXT:(.*?)\]/)?.[1] || ''
-        : '';
+      // Use context input field instead of parsing from message
+      const customContext = contextInput.trim();
 
       const response = await apiRequest('/api/ai/generate-response', {
         method: 'POST',
@@ -206,6 +206,9 @@ export default function Conversation() {
       
       if (content) {
         setReplyContent(content);
+        // Clear context input after successful generation
+        setContextInput('');
+        setShowContextInput(false);
         // Refresh token usage after successful generation
         fetchTokenUsage();
         toast({
@@ -474,6 +477,17 @@ export default function Conversation() {
           </CardContent>
         </Card>
 
+        {/* Token Usage Display */}
+        <AITokenUsage 
+          usage={tokenUsage} 
+          onUpgrade={() => {
+            toast({
+              title: "Upgrade Available",
+              description: "Contact support to increase your monthly AI response limit.",
+            });
+          }}
+        />
+
         {/* Reply Form */}
         <Card>
           <CardHeader>
@@ -483,6 +497,9 @@ export default function Conversation() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded">
+              💡 AI uses the last 4 messages for context. Use "Add Context" button for extra information.
+            </div>
             <div className="text-sm text-gray-600">
               Replying to: <span className="font-medium">{booking.clientEmail}</span>
             </div>
@@ -528,7 +545,47 @@ export default function Conversation() {
                   </>
                 )}
               </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowContextInput(!showContextInput)}
+                className={showContextInput ? 'bg-blue-50 border-blue-200' : ''}
+              >
+                💡 Add Context
+              </Button>
             </div>
+
+            {/* AI Context Input */}
+            {showContextInput && (
+              <div className="mb-4 p-4 border rounded-lg bg-blue-50">
+                <div className="mb-2">
+                  <h4 className="font-medium text-sm text-blue-800">Additional Context for AI</h4>
+                  <p className="text-xs text-blue-600">
+                    Provide extra information to help AI generate a better response (e.g., "Client wants to discuss equipment requirements", "This is a follow-up to our phone call")
+                  </p>
+                </div>
+                <Textarea
+                  placeholder="Add context about the situation, client needs, or any specific requirements..."
+                  value={contextInput}
+                  onChange={(e) => setContextInput(e.target.value)}
+                  rows={2}
+                  className="resize-none bg-white"
+                />
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setShowContextInput(false);
+                      setContextInput('');
+                    }}
+                    variant="ghost"
+                  >
+                    Clear & Close
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Template Selection */}
             {showTemplates && templates.length > 0 && (
