@@ -49,7 +49,7 @@ import GoogleCalendarCallback from "@/pages/google-calendar-callback";
 import OnboardingWrapper from "@/components/onboarding-wrapper";
 
 
-import { useEffect } from "react";
+import { useEffect, lazy } from "react";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
