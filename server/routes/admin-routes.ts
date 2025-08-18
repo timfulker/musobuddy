@@ -723,6 +723,7 @@ export function registerAdminRoutes(app: Express) {
       
       // Get all users for admin overview  
       const allUsers = await db.select().from(users);
+      console.log(`🔍 [API-USAGE-DATA] Found ${allUsers.length} users in database`);
       
       // Get usage data for the last 30 days
       const thirtyDaysAgo = new Date();
@@ -743,6 +744,8 @@ export function registerAdminRoutes(app: Express) {
 
       // Get security status for users
       const securityStatuses = await db.select().from(userSecurityStatus);
+      console.log(`🔍 [API-USAGE-DATA] Found ${securityStatuses.length} security statuses`);
+      console.log(`🔍 [API-USAGE-DATA] Found ${recentUsage.length} usage records`);
 
       const usageData = allUsers.map(user => {
         const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
@@ -789,6 +792,7 @@ export function registerAdminRoutes(app: Express) {
         }
       });
 
+      console.log(`🔍 [API-USAGE-DATA] Returning ${usageData.length} user records`);
       res.json(usageData);
 
     } catch (error) {

@@ -88,9 +88,14 @@ export function ApiUsageManager() {
   });
 
   // Fetch user usage data with sorting
-  const { data: usageData, isLoading: usageLoading } = useQuery({
+  const { data: usageData, isLoading: usageLoading, error: usageError } = useQuery({
     queryKey: ['/api/admin/api-usage-data', sortBy, sortOrder],
-    queryFn: () => apiRequest(`/api/admin/api-usage-data?sortBy=${sortBy}&sortOrder=${sortOrder}`),
+    queryFn: async () => {
+      console.log('🔍 [FRONTEND] Fetching API usage data...');
+      const result = await apiRequest(`/api/admin/api-usage-data?sortBy=${sortBy}&sortOrder=${sortOrder}`);
+      console.log('🔍 [FRONTEND] API usage data result:', result);
+      return result;
+    },
     refetchInterval: 30000,
   });
 
@@ -274,91 +279,96 @@ export function ApiUsageManager() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.entries(usageData || {}).map(([userId, userData]: [string, any]) => (
-              <div key={userId} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold">{userData.userName || userId}</h3>
-                    <p className="text-sm text-gray-600">User ID: {userId}</p>
+            {usageError && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Error loading user data: {usageError instanceof Error ? usageError.message : 'Unknown error'}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {usageLoading && (
+              <div className="text-center py-4">
+                <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+                <p className="mt-2 text-sm text-gray-600">Loading user data...</p>
+              </div>
+            )}
+            {Array.isArray(usageData) && usageData.length > 0 ? (
+              usageData.map((userData: ApiUsageData) => (
+                <div key={userData.userId} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold">{userData.userName}</h3>
+                      <p className="text-sm text-gray-600">User ID: {userData.userId}</p>
+                      <div className="flex gap-4 mt-2 text-sm">
+                        <span>Total Requests: <span className="font-medium">{userData.totalRequests}</span></span>
+                        <span>Total Cost: <span className="font-medium">${userData.totalCost.toFixed(4)}</span></span>
+                        <span>Risk Score: <span className="font-medium">{userData.riskScore}</span></span>
+                      </div>
+                      {userData.lastActivity && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Last Activity: {new Date(userData.lastActivity).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {userData.isBlocked ? (
+                        <Badge variant="destructive">Blocked</Badge>
+                      ) : (
+                        <Badge variant="default">Active</Badge>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedUserToBlock(userData.userId)}
+                      >
+                        {userData.isBlocked ? 'Unblock' : 'Block'}
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {Object.entries(userData.services || {}).map(([service, serviceData]: [string, any]) => (
-                    <div key={service} className="border rounded p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium capitalize">{service}</span>
-                        {serviceData.isBlocked && (
-                          <Badge variant="destructive">Blocked</Badge>
-                        )}
-                      </div>
-
-                      {/* Daily Usage */}
-                      <div className="mb-2">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Daily</span>
-                          <span className={getUsageColor(serviceData.dailyUsage, serviceData.dailyLimit)}>
-                            {serviceData.dailyUsage}/{serviceData.dailyLimit}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={getUsagePercentage(serviceData.dailyUsage, serviceData.dailyLimit)}
-                          className="h-2"
-                        />
-                      </div>
-
-                      {/* Monthly Usage */}
-                      <div className="mb-3">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Monthly</span>
-                          <span className={getUsageColor(serviceData.monthlyUsage, serviceData.monthlyLimit)}>
-                            {serviceData.monthlyUsage}/{serviceData.monthlyLimit}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={getUsagePercentage(serviceData.monthlyUsage, serviceData.monthlyLimit)}
-                          className="h-2"
-                        />
-                      </div>
-
-                      {/* Cost & Actions */}
-                      <div className="flex justify-between items-center text-sm">
-                        <span>Cost: ${typeof serviceData.totalCost === 'number' ? serviceData.totalCost.toFixed(4) : '0.0000'}</span>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(userId);
-                                setSelectedService(service);
-                              }}
-                            >
-                              Manage
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Manage API Limits - {service}</DialogTitle>
-                            </DialogHeader>
-                            <UserApiLimitsDialog 
-                              userId={userId}
-                              userName={userData.userName}
-                              service={service}
-                              serviceData={serviceData}
-                              onUpdateLimits={(data) => updateLimitsMutation.mutate(data)}
-                              onBlockUser={(data) => blockUserMutation.mutate(data)}
-                              onResetUsage={(data) => resetUsageMutation.mutate(data)}
-                            />
-                          </DialogContent>
-                        </Dialog>
+                  {/* Service Breakdown */}
+                  {Object.keys(userData.services || {}).length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Service Usage</h4>
+                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                        {Object.entries(userData.services || {}).map(([service, serviceData]: [string, any]) => (
+                          <div key={service} className="border rounded p-3 bg-gray-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium capitalize">{service}</span>
+                            </div>
+                            <div className="text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Requests:</span>
+                                <span className="font-medium">{serviceData.requests || 0}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Cost:</span>
+                                <span className="font-medium">${(serviceData.cost || 0).toFixed(4)}</span>
+                              </div>
+                              {serviceData.lastActivity && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Last: {new Date(serviceData.lastActivity).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              !usageLoading && (
+                <div className="text-center py-8 text-gray-500">
+                  <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No user activity data available</p>
+                  <p className="text-sm">Users will appear here after making API requests</p>
+                </div>
+              )
+            )}
           </div>
         </CardContent>
       </Card>
