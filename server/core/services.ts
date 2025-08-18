@@ -44,6 +44,11 @@ export class EmailService {
         html: emailData.html
       };
 
+      // Add text version if provided (ensures proper display across email clients)
+      if (emailData.text) {
+        messageData.text = emailData.text;
+      }
+
       // Add CC support for invoices (contracts remain single-recipient only)
       if (emailData.cc) {
         messageData.cc = emailData.cc;
@@ -604,11 +609,38 @@ export class EmailService {
 </html>
       `;
 
+      // Create text version for better email client compatibility
+      const textVersion = `
+${subject}
+
+Dear ${contract.clientName},
+
+${customMessage ? customMessage + '\n\n' : ''}Your contract for the event on ${new Date(contract.eventDate).toLocaleDateString('en-GB')} is ready for signing.
+
+Event Details:
+- Date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
+- Time: ${contract.eventTime} - ${contract.eventEndTime}
+- Venue: ${contract.venue}
+- Fee: £${contract.fee}
+
+To view and sign your contract, please visit: ${contractUrl}
+
+Please review and sign the contract at your earliest convenience.
+
+Best regards,
+${userSettings?.businessName || 'MusoBuddy'}
+Professional Music Services
+${userSettings?.businessEmail || ''}
+
+---
+This email was sent via MusoBuddy Professional Music Management Platform
+      `.trim();
+
       const emailData = {
         to: contract.clientEmail,
         subject: subject,
-        html: emailHtml
-        // Remove custom 'from' field - use same working logic as invoices
+        html: emailHtml,
+        text: textVersion
       };
 
       return await this.sendEmail(emailData);

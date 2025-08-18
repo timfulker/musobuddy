@@ -847,11 +847,29 @@ export async function registerSettingsRoutes(app: Express) {
 </body>
 </html>`;
 
-      // Send the email with professional HTML formatting
+      // Create a clean text version for email clients that prefer text
+      const textVersion = `
+${template.subject}
+
+Dear ${recipientName || 'Client'},
+
+${template.emailBody}
+
+Best regards,
+${senderName || 'MusoBuddy'}
+Professional Music Services
+${senderEmail}
+
+---
+This email was sent via MusoBuddy Professional Music Management Platform
+      `.trim();
+
+      // Send the email with both HTML and text versions
       const emailSent = await services.sendEmail({
         to: recipientEmail,
         subject: template.subject,
         html: professionalEmailHtml,
+        text: textVersion,
         replyTo: replyToAddress
       });
 
