@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
@@ -45,6 +46,8 @@ export default function Conversation() {
   const { user } = useAuth();
   const [replyContent, setReplyContent] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
@@ -67,6 +70,15 @@ export default function Conversation() {
       return await response.json();
     },
     enabled: !!bookingId,
+  });
+
+  // Fetch email templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ['/api/templates', 'email'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/templates?type=email');
+      return await response.json();
+    },
   });
 
   // Auto-scroll to bottom when new messages arrive
@@ -119,6 +131,73 @@ export default function Conversation() {
       bookingId,
       content: replyContent.trim(),
       recipientEmail: booking.clientEmail,
+    });
+  };
+
+  // Generate AI response based on booking context
+  const generateAIResponse = async () => {
+    if (!booking) return;
+    
+    setIsGeneratingAI(true);
+    try {
+      const contextData = {
+        clientName: booking.clientName,
+        eventDate: booking.eventDate,
+        venue: booking.venue,
+        venueAddress: booking.venueAddress,
+        eventType: booking.eventType,
+        status: booking.status,
+        conversationHistory: messages.slice(-3).map(m => ({
+          type: m.messageType,
+          content: m.content
+        }))
+      };
+
+      const response = await apiRequest('/api/ai/generate-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingContext: contextData,
+          messageType: 'conversation_reply'
+        }),
+      });
+      
+      const aiResponse = await response.json();
+      if (aiResponse.content) {
+        setReplyContent(aiResponse.content);
+        toast({
+          title: "AI response generated",
+          description: "The message has been generated. Feel free to edit before sending.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to generate response",
+        description: error.message || "Could not generate AI response",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  // Apply template to reply content
+  const handleTemplateSelect = (template: any) => {
+    if (!booking) return;
+    
+    // Replace template variables with booking data
+    let content = template.content || '';
+    content = content.replace(/\{clientName\}/g, booking.clientName || '');
+    content = content.replace(/\{eventDate\}/g, formatDate(booking.eventDate) || '');
+    content = content.replace(/\{venue\}/g, booking.venue || '');
+    content = content.replace(/\{eventType\}/g, booking.eventType || '');
+    
+    setReplyContent(content);
+    setShowTemplates(false);
+    
+    toast({
+      title: "Template applied",
+      description: `"${template.name}" template has been applied. Feel free to customize.`,
     });
   };
 
