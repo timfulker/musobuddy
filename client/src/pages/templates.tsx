@@ -816,8 +816,8 @@ export default function Templates() {
                   </h3>
                   <p className="text-green-700 mb-4 text-lg">
                     {action === 'thankyou' 
-                      ? '👇 Click "📧 Select & Send" on any template below to send a customized thank you email'
-                      : '👇 Click "📧 Select & Send" on any template below to send a customized response email'}
+                      ? '👇 Click "📧 Preview & Send" on any template below to preview and send a customized thank you email'
+                      : '👇 Click "📧 Preview & Send" on any template below to preview and send a customized response email'}
                   </p>
                   {bookingData && (
                     <div className="text-left bg-white p-4 rounded-lg mb-4">
@@ -853,7 +853,7 @@ export default function Templates() {
                     📧 {action === 'compose' ? 'Compose Email' : 'Send Response Email'}
                   </h3>
                   <p className="text-blue-700 mb-4 text-lg">
-                    👇 Click "📧 Select & Send" on any template below to send a customized {action === 'compose' ? 'email' : 'response'}
+                    👇 Click "📧 Preview & Send" on any template below to preview and send a customized {action === 'compose' ? 'email' : 'response'}
                   </p>
                   {messageData && (
                     <div className="text-left bg-white p-4 rounded-lg mb-4">
@@ -903,7 +903,7 @@ export default function Templates() {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {template.name}
                       {((bookingId && (action === 'respond' || action === 'thankyou')) || (messageId && action === 'respond') || (action === 'compose' && clientEmail)) && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">👆 Click to use</span>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">👆 Click to preview</span>
                       )}
                     </CardTitle>
                     <Badge variant="outline" className="mt-1">
@@ -939,7 +939,7 @@ export default function Templates() {
                         }}
                         className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg border-0 transition-all duration-200 transform hover:scale-105"
                       >
-                        📧 Select & Send
+                        📧 Preview & Send
                       </Button>
                     )}
                     <Button
