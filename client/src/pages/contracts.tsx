@@ -141,9 +141,10 @@ export default function Contracts() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     const bookingId = urlParams.get('bookingId');
+    const isNewContractUrl = window.location.pathname === '/contracts/new';
     
     // Only run once when component mounts and data is loaded, and not already processed
-    if ((action === 'new' || action === 'create') && !isLoading && !isDialogOpen && !dataLoaded) {
+    if ((action === 'new' || action === 'create' || isNewContractUrl) && !isLoading && !isDialogOpen && !dataLoaded) {
       setIsDialogOpen(true);
       setDataLoaded(true); // CRITICAL FIX: Mark as loaded to prevent infinite loop
 
