@@ -234,13 +234,20 @@ export default function Contracts() {
     }
   }, [enquiries, contracts, form, isLoading, dataLoaded, toast]); // Removed isDialogOpen from dependencies to prevent circular reopening
 
-  // Improved dialog close handler with better state management
+  // Fixed dialog close handler - prevent infinite loops
+  const [isClosing, setIsClosing] = useState(false);
+  
   const handleDialogClose = (open: boolean) => {
-    console.log('🔄 handleDialogClose called with:', open);
+    console.log('🔄 handleDialogClose called with:', open, 'isClosing:', isClosing);
     
-    setIsDialogOpen(open);
+    // Prevent infinite loops
+    if (!open && isClosing) {
+      console.log('🛑 Already closing, ignoring duplicate call');
+      return;
+    }
     
     if (!open) {
+      setIsClosing(true);
       console.log('🚪 Closing dialog - cleaning up state');
       
       // Clean up URL when closing dialog - do this first
@@ -257,9 +264,12 @@ export default function Contracts() {
       // Reset form with a slight delay to ensure state updates are complete
       setTimeout(() => {
         form.reset();
+        setIsClosing(false); // Reset closing flag
         console.log('✅ Dialog cleanup complete');
       }, 50);
     }
+    
+    setIsDialogOpen(open);
   };
 
   const createContractMutation = useMutation({
