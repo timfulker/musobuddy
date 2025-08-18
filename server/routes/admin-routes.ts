@@ -61,6 +61,7 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
           venue: booking.venue,
           eventDate: booking.eventDate,
           eventTime: booking.eventTime,
+          clientName: booking.clientName,
           clientEmail: booking.clientEmail,
           clientPhone: booking.clientPhone,
           fee: booking.fee,
@@ -71,17 +72,18 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
         const { parseBookingMessage } = await import('../ai/booking-message-parser');
         const { cleanEncoreTitle } = await import('../core/booking-formatter');
         
-        // Extract email data from the original notes
+        // Extract email data from the original notes - FORCE FRESH PARSING
         const emailBody = booking.notes;
-        const fromField = `${booking.clientName} <${booking.clientEmail}>`;
+        // DON'T use existing wrong client data - let AI extract fresh from email content
         
-        console.log(`🤖 [ADMIN] Running AI re-parsing for booking #${booking.id}`);
-        const parsedData = await parseBookingMessage(emailBody, fromField, null, booking.userId);
+        console.log(`🤖 [ADMIN] Running FRESH AI re-parsing for booking #${booking.id} (ignoring existing data)`);
+        console.log(`🤖 [ADMIN] Email content to re-parse:`, emailBody.substring(0, 200));
+        const parsedData = await parseBookingMessage(emailBody, null, null, booking.userId);
         
         // Apply title cleanup for Encore bookings
         const cleanedTitle = cleanEncoreTitle(parsedData.eventTitle || parsedData.title || booking.title);
         
-        // Build updated booking data, keeping existing data if AI didn't find better info
+        // Build updated booking data, PRIORITIZING AI parsed data over existing wrong data
         const updatedData = {
           title: parsedData.eventTitle || parsedData.title || cleanedTitle || booking.title,
           venue: parsedData.venue || booking.venue,
@@ -89,6 +91,8 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
           eventDate: parsedData.eventDate || booking.eventDate,
           eventTime: parsedData.eventTime || booking.eventTime,
           eventEndTime: parsedData.eventEndTime || booking.eventEndTime,
+          // CRITICAL: Use AI parsed client data (don't fall back to existing wrong data)
+          clientName: parsedData.clientName || booking.clientName,
           clientEmail: parsedData.clientEmail || booking.clientEmail,
           clientPhone: parsedData.clientPhone || booking.clientPhone,
           fee: parsedData.fee || booking.fee,
@@ -119,6 +123,16 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
         if (updatedData.eventDate !== originalData.eventDate && updatedData.eventDate) {
           hasImprovement = true;
           improvements.push(`Event Date: "${originalData.eventDate || 'None'}" → "${updatedData.eventDate}"`);
+        }
+        
+        if (updatedData.clientName !== originalData.clientName && updatedData.clientName) {
+          hasImprovement = true;
+          improvements.push(`Client Name: "${originalData.clientName || 'None'}" → "${updatedData.clientName}"`);
+        }
+        
+        if (updatedData.clientEmail !== originalData.clientEmail && updatedData.clientEmail) {
+          hasImprovement = true;
+          improvements.push(`Client Email: "${originalData.clientEmail || 'None'}" → "${updatedData.clientEmail}"`);
         }
         
         if (updatedData.applyNowLink !== originalData.applyNowLink && updatedData.applyNowLink) {
