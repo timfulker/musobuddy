@@ -182,11 +182,14 @@ export function setupCommunicationRoutes(app: any) {
           if (downloadResult.success && downloadResult.content) {
             // Extract text content from HTML and parse to get only the new reply
             const htmlContent = downloadResult.content;
+            console.log(`🔍 Raw HTML content (first 500 chars): ${htmlContent.substring(0, 500)}`);
             
             // Remove HTML tags and decode entities
             let rawText = htmlContent
               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+              .replace(/<br\s*\/?>/gi, '\n')
+              .replace(/<\/p>/gi, '\n\n')
               .replace(/<[^>]*>/g, '')
               .replace(/&nbsp;/g, ' ')
               .replace(/&amp;/g, '&')
@@ -196,6 +199,8 @@ export function setupCommunicationRoutes(app: any) {
               .replace(/&#39;/g, "'")
               .replace(/\s+/g, ' ')
               .trim();
+            
+            console.log(`🔍 After HTML removal (first 500 chars): ${rawText.substring(0, 500)}`);
             
             // Remove common email headers and footers first
             rawText = rawText
@@ -208,29 +213,68 @@ export function setupCommunicationRoutes(app: any) {
               .replace(/^Booking ID: .+$/gm, '')
               .trim();
             
-            // Try to extract only the new reply content by removing quoted text
-            // Look for common email reply patterns
+            console.log(`🔍 After header removal: ${rawText.substring(0, 500)}`);
+            
+            // More aggressive patterns to find the actual reply content
             const replyPatterns = [
-              /^(.*?)(?:On .+? wrote:|From: .+?|Date: .+?|\d+\/\d+\/\d+.+?wrote:)/s,
+              // Look for content before "On [date/time] ... wrote:"
+              /^(.*?)(?:On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:|On \d{1,2} \w+ \d{4}.+?wrote:)/s,
+              // Look for content before quoted reply indicators
+              /^(.*?)(?:> .+)/s,
+              // Look for content before original message markers
               /^(.*?)(?:-----Original Message-----)/s,
-              /^(.*?)(?:> .+)/s,  // Lines starting with >
-              /^(.*?)(?:\n\n.+? <.+?@.+?> wrote:)/s,
-              /^(.*?)(?:On \d+\/\d+\/\d+.+?wrote:)/s
+              // Look for content before "From:" headers
+              /^(.*?)(?:From: .+@.+)/s,
+              // Look for content before timestamp patterns
+              /^(.*?)(?:\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2})/s,
+              // Simple pattern: everything before quoted content
+              /^([^>]+?)(?:>.+)/s
             ];
             
             let foundMatch = false;
             for (const pattern of replyPatterns) {
               const match = rawText.match(pattern);
-              if (match && match[1].trim().length > 5) {
+              if (match && match[1].trim().length > 3) {
                 content = match[1].trim();
                 foundMatch = true;
+                console.log(`✅ Found match with pattern: ${pattern.toString()}`);
+                console.log(`✅ Extracted content: ${content}`);
                 break;
               }
             }
             
-            // If no pattern matched, use the full text but clean it up
+            // If no pattern matched, check if there's meaningful content at the beginning
             if (!foundMatch) {
-              content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
+              // Split by common separators and take the first meaningful part
+              const lines = rawText.split(/\n+/);
+              const meaningfulLines = [];
+              
+              for (const line of lines) {
+                const cleanLine = line.trim();
+                // Skip if line looks like headers, footers, or quoted content
+                if (cleanLine && 
+                    !cleanLine.startsWith('>') && 
+                    !cleanLine.startsWith('From:') &&
+                    !cleanLine.startsWith('Subject:') &&
+                    !cleanLine.startsWith('Date:') &&
+                    !cleanLine.startsWith('On ') &&
+                    !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
+                    cleanLine.length > 3) {
+                  meaningfulLines.push(cleanLine);
+                }
+                // Stop if we hit quoted content
+                if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
+                  break;
+                }
+              }
+              
+              if (meaningfulLines.length > 0) {
+                content = meaningfulLines.join('\n\n');
+                console.log(`✅ Extracted meaningful lines: ${content}`);
+              } else {
+                content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
+                console.log(`⚠️ Using raw text: ${content}`);
+              }
             }
             
             // Add proper formatting
