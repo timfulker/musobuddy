@@ -171,6 +171,10 @@ export class Storage {
     return bookingStorage.addBookingDocument(id, cloudUrl, storageKey, filename, documentType);
   }
 
+  async getBookingDocuments(bookingId: number, userId: string) {
+    return bookingStorage.getBookingDocuments(bookingId, userId);
+  }
+
   async getAllBookings() {
     return bookingStorage.getAllBookings();
   }
