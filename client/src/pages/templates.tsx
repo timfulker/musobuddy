@@ -65,6 +65,27 @@ export default function Templates() {
   const [testCc, setTestCc] = useState('');
   
   const { toast } = useToast();
+
+  // Force white text on AI response button for proper luminance contrast
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .ai-response-button-override {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      .ai-response-button-override:hover {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      .ai-response-button-override:disabled {
+        color: rgba(255, 255, 255, 0.5) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
   
   // Check if we're responding to a specific booking or message
   const urlParams = new URLSearchParams(window.location.search);
@@ -1288,7 +1309,7 @@ export default function Templates() {
                 </div>
                 
                 <div className="flex space-x-2 mt-4">
-                  <Button onClick={handleUseAIGenerated} className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={handleUseAIGenerated} className="bg-green-600 hover:bg-green-700 ai-response-button-override">
                     <Edit3 className="w-4 h-4 mr-2" />
                     Edit & Use Response
                   </Button>
