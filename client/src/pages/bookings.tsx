@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign } from "lucide-react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, useRoute } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -53,6 +53,11 @@ interface CalendarEvent {
 export default function UnifiedBookings() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  
+  // Simple navigation function using window.location
+  const navigate = (path: string) => {
+    window.location.href = path;
+  };
   
   // Fetch user settings for theme color
   const { data: settings } = useQuery({
@@ -181,7 +186,6 @@ export default function UnifiedBookings() {
 
   
   const { isDesktop } = useResponsive();
-  const [location, navigate] = useLocation();
   const { toast } = useToast();
 
   // Fetch data for both views
@@ -522,9 +526,9 @@ export default function UnifiedBookings() {
     setDocumentUploadDialogOpen(true);
   };
   
-  const openCommunicationHistoryDialog = (booking: any) => {
-    setSelectedBookingForCommunications(booking);
-    setCommunicationHistoryDialogOpen(true);
+  // Navigation to conversation page - replaces old dialog
+  const openConversation = (booking: any) => {
+    navigate(`/conversation/${booking.id}`);
   };
   
   // Enhanced sorting function
@@ -1795,7 +1799,7 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  openCommunicationHistoryDialog(groupBooking);
+                                                  openConversation(groupBooking);
                                                 }}
                                                 className="text-indigo-600 hover:bg-indigo-50"
                                               >
@@ -2091,7 +2095,7 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openCommunicationHistoryDialog(booking);
+                                  openConversation(booking);
                                 }}
                                 className="text-indigo-600 hover:bg-indigo-50"
                               >
