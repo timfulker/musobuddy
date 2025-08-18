@@ -76,9 +76,7 @@ export async function generateInvoicePDF(
       '--disable-extensions'
     ],
     defaultViewport: chromium.defaultViewport,
-    executablePath: process.env.NODE_ENV === 'production' 
-      ? await chromium.executablePath() 
-      : '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    executablePath: await chromium.executablePath(),
     headless: chromium.headless,
   });
   
