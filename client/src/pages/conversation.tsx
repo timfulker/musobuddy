@@ -142,14 +142,28 @@ export default function Conversation() {
     try {
       console.log('🤖 Starting AI response generation...');
       
+      // Get recent conversation context
+      const recentMessages = messages.slice(-5).map(msg => ({
+        type: msg.messageType,
+        content: msg.content,
+        timestamp: msg.createdAt
+      }));
+
+      const conversationContext = recentMessages.length > 0 
+        ? `Recent conversation history:\n${recentMessages.map(msg => 
+            `${msg.type === 'incoming' ? 'Client' : 'You'}: ${msg.content}`
+          ).join('\n')}`
+        : '';
+
       const response = await apiRequest('/api/ai/generate-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: booking.id,
           action: 'respond',
-          customPrompt: `Generate a professional response for this conversation with ${booking.clientName} regarding their ${booking.eventType} booking.`,
-          tone: 'professional'
+          customPrompt: `Generate a contextually appropriate response for this ongoing conversation with ${booking.clientName} regarding their ${booking.eventType} booking. Consider the conversation history and respond appropriately to their latest message.`,
+          tone: 'professional',
+          contextualInfo: conversationContext
         }),
       });
       
