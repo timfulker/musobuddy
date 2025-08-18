@@ -506,7 +506,7 @@ export function setupCommunicationRoutes(app: any) {
       // Send email via centralized email service with proper reply-to routing
       try {
         const emailResult = await services.sendEmail({
-          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <${userSetting.businessEmail}>`,
+          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <noreply@enquiries.musobuddy.com>`,
           to: recipientEmail,
           replyTo: replyToAddress,
           subject: subject,
@@ -521,7 +521,7 @@ export function setupCommunicationRoutes(app: any) {
         });
 
         console.log(`📧 Conversation reply email data:`, {
-          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <${userSetting.businessEmail}>`,
+          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <noreply@enquiries.musobuddy.com>`,
           to: recipientEmail,
           replyTo: replyToAddress,
           subject: subject
