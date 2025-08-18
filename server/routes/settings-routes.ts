@@ -950,7 +950,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
         return res.status(429).json({ 
           error: 'Monthly AI response limit exceeded',
           usage: {
-            responsesUsed: tokenUsage.tokensUsed, // Actually response count
+            responsesUsed: tokenUsage.responsesUsed,
             monthlyLimit: tokenUsage.monthlyLimit,
             resetDate: tokenUsage.resetDate
           },

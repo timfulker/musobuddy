@@ -4,8 +4,8 @@ import { eq } from 'drizzle-orm';
 
 export interface TokenUsageResult {
   canUseAI: boolean;
-  tokensUsed: number;
-  tokensRemaining: number;
+  responsesUsed: number;
+  responsesRemaining: number;
   monthlyLimit: number;
   limitExceeded: boolean;
   resetDate: Date;
@@ -54,9 +54,9 @@ export async function checkTokenUsage(userId: string): Promise<TokenUsageResult>
     const [updatedUser] = await db.select().from(users).where(eq(users.id, userId));
     return {
       canUseAI: true,
-      tokensUsed: 0,
-      tokensRemaining: updatedUser.aiTokenMonthlyLimit || 50000,
-      monthlyLimit: updatedUser.aiTokenMonthlyLimit || 50000,
+      responsesUsed: 0,
+      responsesRemaining: updatedUser.aiTokenMonthlyLimit || 200,
+      monthlyLimit: updatedUser.aiTokenMonthlyLimit || 200,
       limitExceeded: false,
       resetDate: now
     };
@@ -69,8 +69,8 @@ export async function checkTokenUsage(userId: string): Promise<TokenUsageResult>
 
   return {
     canUseAI: !limitExceeded,
-    tokensUsed: responsesUsed, // Actually response count
-    tokensRemaining: responsesRemaining,
+    responsesUsed: responsesUsed,
+    responsesRemaining: responsesRemaining,
     monthlyLimit,
     limitExceeded,
     resetDate: new Date(user.aiTokenResetDate || now)
@@ -102,19 +102,19 @@ export async function updateTokenUsage(userId: string, responsesGenerated: numbe
   }
 }
 
-// Get token usage status for UI display
+// Get response usage status for UI display
 export async function getTokenUsageForUI(userId: string): Promise<{
   percentage: number;
   status: 'good' | 'warning' | 'exceeded';
   message: string;
-  tokensUsed: number;
+  responsesUsed: number;
   monthlyLimit: number;
 }> {
   const usage = await checkTokenUsage(userId);
-  const percentage = (usage.tokensUsed / usage.monthlyLimit) * 100;
+  const percentage = (usage.responsesUsed / usage.monthlyLimit) * 100;
   
   let status: 'good' | 'warning' | 'exceeded' = 'good';
-  let message = `${usage.tokensUsed.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()} AI responses used this month`;
+  let message = `${usage.responsesUsed.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()} AI responses used this month`;
   
   if (percentage >= 100) {
     status = 'exceeded';
@@ -128,7 +128,7 @@ export async function getTokenUsageForUI(userId: string): Promise<{
     percentage: Math.min(100, percentage),
     status,
     message,
-    tokensUsed: usage.tokensUsed,
+    responsesUsed: usage.responsesUsed,
     monthlyLimit: usage.monthlyLimit
   };
 }

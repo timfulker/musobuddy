@@ -9,7 +9,7 @@ interface AITokenUsageProps {
     percentage: number;
     status: 'good' | 'warning' | 'exceeded';
     message: string;
-    tokensUsed: number;
+    responsesUsed: number;
     monthlyLimit: number;
   } | null;
   onUpgrade?: () => void;
@@ -61,7 +61,7 @@ export function AITokenUsage({ usage, onUpgrade }: AITokenUsageProps) {
         />
         
         <p className="text-xs text-muted-foreground">
-          {usage.tokensUsed.toLocaleString()} / {usage.monthlyLimit.toLocaleString()} tokens
+          {usage.responsesUsed.toLocaleString()} / {usage.monthlyLimit.toLocaleString()} responses
         </p>
         
         {usage.status !== 'good' && (
