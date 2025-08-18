@@ -141,5 +141,100 @@ export function setupCommunicationRoutes(app: any) {
     }
   });
 
+  // New endpoint for conversation page - get messages formatted for UI
+  app.get('/api/conversations/:bookingId', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const bookingId = parseInt(req.params.bookingId);
+      console.log(`🔍 Fetching conversation for booking ${bookingId}, user ${userId}`);
+      
+      const communications = await db
+        .select()
+        .from(clientCommunications)
+        .where(and(
+          eq(clientCommunications.userId, userId),
+          eq(clientCommunications.bookingId, bookingId)
+        ))
+        .orderBy(clientCommunications.sentAt);
+
+      // Transform to conversation message format
+      const messages = communications.map(comm => ({
+        id: comm.id,
+        bookingId: comm.bookingId,
+        fromEmail: comm.direction === 'outbound' ? 'performer' : comm.clientEmail,
+        toEmail: comm.direction === 'outbound' ? comm.clientEmail : 'performer',
+        subject: comm.subject,
+        content: comm.messageBody,
+        messageType: comm.direction === 'outbound' ? 'outgoing' : 'incoming',
+        sentAt: comm.sentAt,
+        isRead: true
+      }));
+
+      console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId}`);
+      res.json(messages);
+
+    } catch (error) {
+      console.error('❌ Error fetching conversation:', error);
+      res.status(500).json({ error: 'Failed to fetch conversation' });
+    }
+  });
+
+  // New endpoint for sending replies in conversation
+  app.post('/api/conversations/reply', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { bookingId, content, recipientEmail } = req.body;
+
+      if (!bookingId || !content || !recipientEmail) {
+        return res.status(400).json({ error: 'Missing required fields: bookingId, content, recipientEmail' });
+      }
+
+      // Get booking details for client name
+      const booking = await db
+        .select({ clientName: bookings.clientName, title: bookings.title })
+        .from(bookings)
+        .where(and(
+          eq(bookings.id, bookingId),
+          eq(bookings.userId, userId)
+        ))
+        .limit(1);
+
+      if (!booking.length) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Record the communication
+      const [communication] = await db.insert(clientCommunications).values({
+        userId,
+        bookingId,
+        clientName: booking[0].clientName,
+        clientEmail: recipientEmail,
+        communicationType: 'email',
+        direction: 'outbound',
+        subject: `Re: ${booking[0].title}`,
+        messageBody: content,
+        deliveryStatus: 'sent'
+      }).returning();
+
+      // TODO: Actually send the email via Mailgun here
+      // For now, we're just recording the communication
+      
+      console.log(`✅ Conversation reply recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
+      res.json({ success: true, communication });
+
+    } catch (error) {
+      console.error('❌ Error sending conversation reply:', error);
+      res.status(500).json({ error: 'Failed to send reply' });
+    }
+  });
+
   console.log('✅ Communication routes configured');
 }

@@ -312,9 +312,8 @@ export default function Messages() {
       markClientMessageAsReadMutation.mutate(message.id);
     }
     
-    // Open the message in a new tab (stored in cloud storage)
-    const messageUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${message.messageUrl}`;
-    window.open(messageUrl, '_blank');
+    // Navigate to conversation page instead of opening dead URL
+    navigate(`/conversation/${message.bookingId}`);
   };
 
   const clientUnreadCount = Array.isArray(clientMessages) ? clientMessages.filter((m: MessageNotification) => !m.isRead).length : 0;
