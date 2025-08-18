@@ -30,6 +30,7 @@ Email template display: Enhanced HTML email templates work correctly in Gmail an
 Mobile strategy: Implementing enhanced responsive design (Option 1) - single app that adapts intelligently to mobile vs desktop. Essential mobile features: invoice sending, booking list view, client lookup, basic booking entry. Complex features hidden on mobile: contract creation, detailed settings, complex forms. Future roadmap includes native mobile apps (Android/iOS) and desktop applications (Mac/PC) in coming months.
 Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
 Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings get AI re-processing rather than automatic detection of problematic bookings.
+Bookings page sort persistence: Sort criteria (field and direction) are saved to localStorage and restored when returning to bookings page, providing intuitive UX where users don't need to re-select their preferred sort order after editing bookings.
 
 ## System Architecture
 

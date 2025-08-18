@@ -109,8 +109,12 @@ export default function UnifiedBookings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previousStatusFilter, setPreviousStatusFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState<string>('eventDate');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField, setSortField] = useState<string>(() => {
+    return localStorage.getItem('bookingSortField') || 'eventDate';
+  });
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() => {
+    return (localStorage.getItem('bookingSortDirection') as 'asc' | 'desc') || 'desc';
+  });
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [conflictFilter, setConflictFilter] = useState<boolean>(false);
   
@@ -534,10 +538,14 @@ export default function UnifiedBookings() {
   // Enhanced sorting function
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      setSortDirection(newDirection);
+      localStorage.setItem('bookingSortDirection', newDirection);
     } else {
       setSortField(field);
       setSortDirection('desc');
+      localStorage.setItem('bookingSortField', field);
+      localStorage.setItem('bookingSortDirection', 'desc');
     }
   };
 
@@ -1444,6 +1452,8 @@ export default function UnifiedBookings() {
                         setConflictFilter(false);
                         setSortField('eventDate');
                         setSortDirection('desc');
+                        localStorage.setItem('bookingSortField', 'eventDate');
+                        localStorage.setItem('bookingSortDirection', 'desc');
                       }}
                       className="h-8"
                     >
