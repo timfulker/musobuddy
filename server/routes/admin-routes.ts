@@ -6,9 +6,9 @@ import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { db } from "../core/database";
-import { users, apiUsageTracking, apiUsageLimits } from '../../shared/schema';
+import { users } from '../../shared/schema';
 import { eq, and, desc, sql, gte, inArray } from 'drizzle-orm';
-import { DEFAULT_LIMITS } from '../middleware/api-usage-tracker';
+// API usage tracking removed - unlimited AI usage for all users
 
 export function registerAdminRoutes(app: Express) {
   console.log('🔧 Setting up admin routes...');
@@ -760,21 +760,7 @@ export function registerAdminRoutes(app: Express) {
           return serviceAcc;
         }, {} as Record<string, any>);
 
-        // Add services with default limits if not found
-        Object.keys(DEFAULT_LIMITS).forEach(service => {
-          if (!services[service]) {
-            const usage = userUsage.find(u => u.apiService === service);
-            services[service] = {
-              dailyUsage: 0,
-              dailyLimit: DEFAULT_LIMITS[service as keyof typeof DEFAULT_LIMITS].daily,
-              monthlyUsage: 0,
-              monthlyLimit: DEFAULT_LIMITS[service as keyof typeof DEFAULT_LIMITS].monthly,
-              isBlocked: false,
-              totalCost: usage?.totalCost || 0,
-              lastActivity: usage?.lastActivity || null
-            };
-          }
-        });
+        // API usage limits removed - unlimited AI usage for all users
 
         acc[user.id] = {
           userId: user.id,

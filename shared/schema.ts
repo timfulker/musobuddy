@@ -64,54 +64,12 @@ export const users = pgTable("users", {
   passwordResetToken: varchar("password_reset_token", { length: 128 }),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
-  // AI Token Limits
-  aiTokenMonthlyLimit: integer("ai_token_monthly_limit").default(80), // 80 AI responses per month for Core tier (~20 bookings)
-  aiTokensUsedThisMonth: integer("ai_tokens_used_this_month").default(0),
-  aiTokenResetDate: timestamp("ai_token_reset_date").defaultNow(),
-  aiLimitExceeded: boolean("ai_limit_exceeded").default(false),
+  // AI usage tracking removed - unlimited AI usage for all users
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// API Usage Tracking - Individual API calls per user
-export const apiUsageTracking = pgTable("api_usage_tracking", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  apiService: varchar("api_service", { length: 50 }).notNull(), // claude, googlemaps, mailgun, stripe, etc.
-  endpoint: varchar("endpoint", { length: 100 }), // specific endpoint called
-  requestType: varchar("request_type", { length: 50 }), // email_parse, booking_conflict, address_lookup, etc.
-  tokensUsed: integer("tokens_used").default(0), // for AI services
-  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 6 }).default("0"), // cost in USD
-  responseTime: integer("response_time"), // milliseconds
-  success: boolean("success").default(true),
-  errorMessage: text("error_message"),
-  ipAddress: varchar("ip_address"),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("idx_api_usage_user_service").on(table.userId, table.apiService),
-  index("idx_api_usage_created_at").on(table.createdAt),
-]);
-
-// API Usage Limits - Per-user limits for each service
-export const apiUsageLimits = pgTable("api_usage_limits", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  apiService: varchar("api_service", { length: 50 }).notNull(),
-  dailyLimit: integer("daily_limit").default(100), // calls per day
-  monthlyLimit: integer("monthly_limit").default(3000), // calls per month
-  dailyUsage: integer("daily_usage").default(0),
-  monthlyUsage: integer("monthly_usage").default(0),
-  lastResetDaily: timestamp("last_reset_daily").defaultNow(),
-  lastResetMonthly: timestamp("last_reset_monthly").defaultNow(),
-  isBlocked: boolean("is_blocked").default(false), // manual block override
-  blockReason: text("block_reason"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  index("idx_api_limits_user_service").on(table.userId, table.apiService),
-  // Unique constraint to prevent duplicate limits per user/service
-  index("unique_user_service_limit").on(table.userId, table.apiService),
-]);
+// API usage tracking tables removed - unlimited AI usage for all users
 
 // User activity tracking table
 export const userActivity = pgTable("user_activity", {
@@ -1006,16 +964,7 @@ export const insertUnparseableMessageSchema = createInsertSchema(unparseableMess
   reviewedAt: true,
 });
 
-export const insertApiUsageTrackingSchema = createInsertSchema(apiUsageTracking).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertApiUsageLimitsSchema = createInsertSchema(apiUsageLimits).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// API usage tracking schemas removed - unlimited AI usage for all users
 
 export const insertMessageNotificationSchema = createInsertSchema(messageNotifications).omit({
   id: true,

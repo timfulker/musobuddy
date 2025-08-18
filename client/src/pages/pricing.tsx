@@ -183,7 +183,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Up to 20 bookings/month
+                  Unlimited AI-powered bookings
                 </li>
               </ul>
               <Button 
@@ -213,7 +213,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Up to 35 bookings/month (vs 20)
+                  All Core features included
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />

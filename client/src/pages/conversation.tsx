@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles } from "lucide-react";
-import { AITokenUsage } from "@/components/ai-token-usage";
+// AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
@@ -51,13 +51,7 @@ export default function Conversation() {
   const [contextInput, setContextInput] = useState('');
   const [showContextInput, setShowContextInput] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [tokenUsage, setTokenUsage] = useState<{
-    percentage: number;
-    status: 'good' | 'warning' | 'exceeded';
-    message: string;
-    tokensUsed: number;
-    monthlyLimit: number;
-  } | null>(null);
+  // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
@@ -478,15 +472,7 @@ export default function Conversation() {
         </Card>
 
         {/* Token Usage Display */}
-        <AITokenUsage 
-          usage={tokenUsage} 
-          onUpgrade={() => {
-            toast({
-              title: "Upgrade Available",
-              description: "Contact support to increase your monthly AI response limit.",
-            });
-          }}
-        />
+        {/* AI token usage removed - unlimited AI usage for all users */}
 
         {/* Reply Form */}
         <Card>

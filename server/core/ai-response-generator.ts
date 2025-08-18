@@ -119,10 +119,10 @@ export class AIResponseGenerator {
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
       
-      console.log('🤖 Making Claude API call for cost efficiency...');
+      console.log('🤖 Making Claude API call with Sonnet 4 for superior quality...');
       
       const response = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 1500,
         temperature: 0.7,
         system: systemPrompt,
@@ -562,7 +562,7 @@ Generate variations with different approaches while keeping the essential messag
 Please respond with valid JSON format only.`;
 
       const response = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307",
+        model: "claude-3-5-sonnet-20241022", 
         max_tokens: 1500,
         temperature: 0.8,
         system: systemPrompt,

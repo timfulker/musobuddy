@@ -18,7 +18,7 @@ Invoice CC functionality: CC recipients are supported for invoice emails only (c
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
-Pricing model reconsideration: User questioning whether AI usage limitations and artificial premium tiers are necessary. May be "making a rod for our own back" since AI costs are minimal (£0.80/month) and most musicians do 10-30 bookings/month. Preference to save Premium tier for actual premium features in future rollouts rather than artificial usage limits.
+AI Usage Model: Removed all AI usage limitations and artificial premium tiers as "making a rod for our own back" since AI costs are minimal (£0.74/month even for super-heavy users with 50 bookings). System now provides unlimited AI-powered email parsing and response generation for all users. Uses dual AI models: GPT-5 for email parsing, Claude Sonnet 4 for response generation.
 Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
 Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on explicit user action. No automatic searches occur when opening booking forms or typing in venue name field. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
@@ -45,7 +45,7 @@ Mobile strategy: Implementing enhanced responsive design (Option 1) - single app
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management. Handles multiple CC recipients for invoices. Critical issue of duplicate email processing from multiple Mailgun routes has been fixed. Email extraction prioritizes form content over sender addresses.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: OpenAI GPT-5 for email parsing and enhanced venue extraction, distinguishing between venue names and location names. AI is optimized to prevent unnecessary Google Maps API calls for placeholder venues or general locations.
+- **AI Integration**: Dual AI models for comprehensive automation: GPT-5 for intelligent email parsing and venue extraction (optimized to prevent unnecessary Google Maps API calls), and Claude Sonnet 4 for high-quality response generation. All AI usage is unlimited for all users.
 - **Admin Database Access**: Read-only database administration panel with table browsing, filtering, search, and CSV export (admin-only access).
 
 ### System Design Choices

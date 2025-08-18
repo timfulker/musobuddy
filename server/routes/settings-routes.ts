@@ -937,26 +937,13 @@ This email was sent via MusoBuddy Professional Music Management Platform
       }
 
       // Import token management utilities
-      const { checkTokenUsage, updateTokenUsage } = await import('../utils/ai-token-manager');
+      // AI token management removed - unlimited AI usage for all users
 
       const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo, clientHistory } = req.body;
 
       console.log(`🔍 AI response request by user ${userId}`);
 
-      // Check if user has sufficient response allowance
-      const tokenUsage = await checkTokenUsage(userId);
-      if (!tokenUsage.canUseAI) {
-        console.log(`⚠️ User ${userId} has exceeded monthly AI response limit`);
-        return res.status(429).json({ 
-          error: 'Monthly AI response limit exceeded',
-          usage: {
-            responsesUsed: tokenUsage.responsesUsed,
-            monthlyLimit: tokenUsage.monthlyLimit,
-            resetDate: tokenUsage.resetDate
-          },
-          suggestUpgrade: true
-        });
-      }
+      // AI usage limits removed - unlimited AI usage for all users
 
       // No need to limit context since we track responses, not tokens
 
@@ -1035,14 +1022,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
         clientHistory: clientHistory || null
       });
 
-      // Record AI response usage (simplified tracking - 1 response generated)
-      try {
-        await updateTokenUsage(userId, 1);
-        console.log(`📊 Recorded 1 AI response for user ${userId}`);
-      } catch (tokenError) {
-        console.error('⚠️ Failed to record response usage:', tokenError);
-        // Don't fail the request if usage tracking fails
-      }
+      // AI usage tracking removed - unlimited AI usage for all users
 
       console.log('✅ AI response generated successfully');
       res.json(response);

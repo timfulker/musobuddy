@@ -24,7 +24,7 @@ import { messageNotificationRoutes } from "./message-notification-routes";
 import { setupCommunicationRoutes } from "./communication-routes";
 import bookingDocumentRoutes from "./booking-document-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
-import { registerTokenRoutes } from "./ai-token-routes";
+// AI token routes removed - unlimited AI usage for all users
 
 import { requireAuth } from '../middleware/auth';
 import { storage } from "../core/storage";
@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express) {
   app.use('/api/blocked-dates', blockedDatesRoutes);
   
   // Register AI token management routes
-  registerTokenRoutes(app);
+  // AI token routes removed - unlimited AI usage for all users
   
   // Conflict management endpoints
   app.get('/api/conflicts', requireAuth, async (req: any, res) => {

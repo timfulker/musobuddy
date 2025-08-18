@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { trackApiCall } from '../middleware/api-usage-tracker';
+// API usage tracking removed - unlimited AI usage for all users
 
 // Helper function to enrich venue data using Google Places API
 async function enrichVenueData(venueName: string): Promise<any> {
@@ -163,13 +163,7 @@ JSON:`;
     console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
     console.log('🤖 GPT-5: User prompt:', userPrompt);
 
-    // Track API usage if userId is provided
-    if (userId) {
-      const canProceed = await trackApiCall(userId, 'openai', 'booking-message-parser');
-      if (!canProceed) {
-        throw new Error('API usage limit exceeded for OpenAI service');
-      }
-    }
+    // AI usage limits removed - unlimited AI usage for all users
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
