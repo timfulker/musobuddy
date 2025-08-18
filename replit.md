@@ -66,7 +66,7 @@ Bookings page auto-scroll: Page automatically scrolls to the next upcoming booki
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Features clean cards, gradient forms, responsive layouts, consistent sidebar, and multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue). Includes WCAG 2.0 luminance for text contrast.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, including WCAG 2.0 luminance for text contrast and various theme options.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
 - **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option.
