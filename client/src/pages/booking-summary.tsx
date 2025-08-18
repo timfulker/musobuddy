@@ -441,14 +441,25 @@ export default function BookingSummary() {
             <CardContent>
               {showMap && (
                 <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY}&q=${encodeURIComponent(booking.venueAddress)}`}
-                    allowFullScreen
-                    className="rounded-lg"
-                  />
+                  {(() => {
+                    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+                    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(booking.venueAddress)}`;
+                    console.log('🗺️ Google Maps Debug:', {
+                      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET',
+                      venue: booking.venueAddress,
+                      mapUrl: mapUrl.substring(0, 100) + '...'
+                    });
+                    return (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        src={mapUrl}
+                        allowFullScreen
+                        className="rounded-lg"
+                      />
+                    );
+                  })()}
                 </div>
               )}
               {!showMap && (
