@@ -408,18 +408,26 @@ export function setupCommunicationRoutes(app: any) {
   // New endpoint for sending replies in conversation
   app.post('/api/conversations/reply', requireAuth, async (req: Request & { user?: any }, res: Response) => {
     try {
+      console.log('📧 [CONVERSATION-REPLY] Starting conversation reply process...');
+      
       const userId = req.user?.userId;
+      console.log('📧 [CONVERSATION-REPLY] User ID from token:', userId);
+      
       if (!userId) {
+        console.log('❌ [CONVERSATION-REPLY] No user ID found in token');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const { bookingId, content, recipientEmail } = req.body;
+      console.log('📧 [CONVERSATION-REPLY] Request body:', { bookingId, content: content?.substring(0, 50) + '...', recipientEmail });
 
       if (!bookingId || !content || !recipientEmail) {
+        console.log('❌ [CONVERSATION-REPLY] Missing required fields:', { bookingId: !!bookingId, content: !!content, recipientEmail: !!recipientEmail });
         return res.status(400).json({ error: 'Missing required fields: bookingId, content, recipientEmail' });
       }
 
       // Get booking details for client name
+      console.log('📧 [CONVERSATION-REPLY] Fetching booking details...');
       const booking = await db
         .select({ clientName: bookings.clientName, title: bookings.title })
         .from(bookings)
@@ -429,19 +437,27 @@ export function setupCommunicationRoutes(app: any) {
         ))
         .limit(1);
 
+      console.log('📧 [CONVERSATION-REPLY] Booking query result:', booking.length > 0 ? { clientName: booking[0].clientName, title: booking[0].title } : 'No booking found');
+
       if (!booking.length) {
+        console.log('❌ [CONVERSATION-REPLY] Booking not found for ID:', bookingId, 'and user:', userId);
         return res.status(404).json({ error: 'Booking not found' });
       }
 
       // Get user settings for sender info and email template
+      console.log('📧 [CONVERSATION-REPLY] Fetching user settings...');
       const userSettingsResults = await db
         .select()
         .from(userSettings)
         .where(eq(userSettings.userId, userId))
         .limit(1);
 
+      console.log('📧 [CONVERSATION-REPLY] User settings query result:', userSettingsResults.length > 0 ? 'Found' : 'Not found');
       const userSetting = userSettingsResults[0];
+      console.log('📧 [CONVERSATION-REPLY] Business email:', userSetting?.businessEmail || 'Not configured');
+      
       if (!userSetting?.businessEmail) {
+        console.log('❌ [CONVERSATION-REPLY] Business email not configured for user:', userId);
         return res.status(400).json({ error: 'Business email not configured in settings' });
       }
 
