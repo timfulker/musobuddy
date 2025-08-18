@@ -140,37 +140,49 @@ export default function Conversation() {
     
     setIsGeneratingAI(true);
     try {
-      const contextData = {
-        clientName: booking.clientName,
-        eventDate: booking.eventDate,
-        venue: booking.venue,
-        venueAddress: booking.venueAddress,
-        eventType: booking.eventType,
-        status: booking.status,
-        conversationHistory: messages.slice(-3).map(m => ({
-          type: m.messageType,
-          content: m.content
-        }))
-      };
-
-      const response = await apiRequest('/api/ai/generate-response', {
+      console.log('🤖 Starting AI response generation...');
+      
+      const response = await apiRequest('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookingContext: contextData,
-          messageType: 'conversation_reply'
+          bookingId: booking.id,
+          action: 'respond',
+          customPrompt: `Generate a professional response for this conversation with ${booking.clientName} regarding their ${booking.eventType} booking.`
         }),
       });
       
+      console.log('🤖 AI response received:', response);
+      
       const aiResponse = await response.json();
-      if (aiResponse.content) {
-        setReplyContent(aiResponse.content);
+      console.log('🤖 AI response data:', aiResponse);
+      
+      // Try different possible field names for the content
+      const content = aiResponse.emailBody || 
+                     aiResponse.content || 
+                     aiResponse.message || 
+                     aiResponse.text || 
+                     aiResponse.body ||
+                     aiResponse.response ||
+                     '';
+
+      console.log('🤖 Extracted content:', content);
+      
+      if (content) {
+        setReplyContent(content);
         toast({
           title: "AI response generated",
           description: "The message has been generated. Feel free to edit before sending.",
         });
+      } else {
+        toast({
+          title: "AI response empty",
+          description: "The AI generated a response but it appears to be empty.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
+      console.error('🤖 AI generation error:', error);
       toast({
         title: "Failed to generate response",
         description: error.message || "Could not generate AI response",
