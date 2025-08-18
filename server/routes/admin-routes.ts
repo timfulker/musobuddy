@@ -146,8 +146,8 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
         }
         
         if (hasImprovement) {
-          // Update the booking with improved data
-          await storage.updateBooking(booking.id, updatedData);
+          // Update the booking with improved data (FIXED: Added missing userId parameter)
+          await storage.updateBooking(booking.id, updatedData, booking.userId);
           console.log(`✅ [ADMIN] Improved booking #${booking.id}:`, improvements);
           results.improved++;
         } else {

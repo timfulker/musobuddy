@@ -763,10 +763,11 @@ export default function UnifiedBookings() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      queryClient.refetchQueries({ queryKey: ["/api/bookings"] }); // Force immediate refetch
       setSelectedBookings([]);
       toast({
-        title: "Re-processing Complete",
-        description: `Processed ${data.results.total} bookings, improved ${data.results.improved}`,
+        title: "Re-processing Complete", 
+        description: `Processed ${data.results.total} bookings, improved ${data.results.improved}. Please refresh if needed.`,
       });
     },
     onError: (error: any) => {
