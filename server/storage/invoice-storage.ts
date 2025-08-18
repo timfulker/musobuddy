@@ -221,7 +221,8 @@ export class InvoiceStorage {
         lte(invoices.dueDate, today), // Due date has passed
         sql`${invoices.paidAt} IS NULL` // Not paid yet
       ));
-    return result[0]?.count || 0;
+    // Ensure we return a number, not a string
+    return parseInt(String(result[0]?.count || 0), 10);
   }
 }
 

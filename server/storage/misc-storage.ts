@@ -376,7 +376,8 @@ export class MiscStorage {
         lte(complianceDocuments.expiryDate, thirtyDaysFromNow),
         gte(complianceDocuments.expiryDate, new Date()) // Not already expired
       ));
-    return result[0]?.count || 0;
+    // Ensure we return a number, not a string
+    return parseInt(String(result[0]?.count || 0), 10);
   }
 
   // ===== MESSAGE NOTIFICATION METHODS =====
@@ -429,7 +430,8 @@ export class MiscStorage {
         eq(messageNotifications.userId, userId),
         eq(messageNotifications.isRead, false)
       ));
-    return result[0]?.count || 0;
+    // Ensure we return a number, not a string
+    return parseInt(String(result[0]?.count || 0), 10);
   }
 
   async markMessageNotificationAsRead(id: number) {

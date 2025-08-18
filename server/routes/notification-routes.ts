@@ -30,26 +30,33 @@ export function registerNotificationRoutes(app: Express) {
         storage.getUnreadMessageNotificationsCount(userId)
       ]);
 
-      const totalMessages = unreadClientMessages + reviewMessages;
-      const totalCount = newBookings + reviewMessages + overdueInvoices + expiringDocuments + unreadClientMessages;
+      // Ensure all values are numbers to prevent string concatenation
+      const numNewBookings = parseInt(newBookings) || 0;
+      const numReviewMessages = parseInt(reviewMessages) || 0;
+      const numUnreadClientMessages = parseInt(unreadClientMessages) || 0;
+      const numOverdueInvoices = parseInt(overdueInvoices) || 0;
+      const numExpiringDocuments = parseInt(expiringDocuments) || 0;
+      
+      const totalMessages = numUnreadClientMessages + numReviewMessages;
+      const totalCount = numNewBookings + numReviewMessages + numOverdueInvoices + numExpiringDocuments + numUnreadClientMessages;
 
       console.log(`📊 [NOTIFICATION-COUNTS] For user ${userId}:`, {
-        newBookings,
-        reviewMessages,
-        unreadClientMessages,
+        newBookings: numNewBookings,
+        reviewMessages: numReviewMessages,
+        unreadClientMessages: numUnreadClientMessages,
         totalMessages,
-        overdueInvoices,
-        expiringDocuments
+        overdueInvoices: numOverdueInvoices,
+        expiringDocuments: numExpiringDocuments
       });
 
       res.json({
         counts: {
-          newBookings,
-          unparseableMessages: reviewMessages, // For backward compatibility
-          overdueInvoices,
-          expiringDocuments,
-          clientMessages: unreadClientMessages,
-          reviewMessages: reviewMessages,
+          newBookings: numNewBookings,
+          unparseableMessages: numReviewMessages, // For backward compatibility
+          overdueInvoices: numOverdueInvoices,
+          expiringDocuments: numExpiringDocuments,
+          clientMessages: numUnreadClientMessages,
+          reviewMessages: numReviewMessages,
           totalMessages: totalMessages, // Combined count for sidebar badge
           total: totalCount
         }

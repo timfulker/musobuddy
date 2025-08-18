@@ -386,7 +386,8 @@ export class BookingStorage {
         eq(bookings.status, 'new'),
         gte(bookings.createdAt, oneDayAgo)
       ));
-    return result[0]?.count || 0;
+    // Ensure we return a number, not a string
+    return parseInt(String(result[0]?.count || 0), 10);
   }
 }
 
