@@ -450,8 +450,8 @@ export function setupCommunicationRoutes(app: any) {
       const subject = `Re: ${booking[0].title}`;
 
       // Get enhanced email template with the reply content
-      const { createEmailTemplate } = require('../core/services');
-      const emailTemplate = await createEmailTemplate({
+      const { storage } = await import('../core/storage');
+      const emailTemplate = await storage.createEmailTemplate({
         userId,
         subject,
         emailBody: content,
