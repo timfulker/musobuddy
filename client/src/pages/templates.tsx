@@ -695,22 +695,28 @@ export default function Templates() {
   const handleSaveEditedResponse = () => {
     if (!editingContent) return;
     
-    // Create a temporary template from edited content
+    // Convert edited content to template variables if booking data is available
+    const targetData = bookingData || messageData;
+    const convertedSubject = targetData ? convertToTemplateVariables(editingContent.subject, targetData) : editingContent.subject;
+    const convertedEmailBody = targetData ? convertToTemplateVariables(editingContent.emailBody, targetData) : editingContent.emailBody;
+    const convertedSmsBody = targetData && editingContent.smsBody ? convertToTemplateVariables(editingContent.smsBody, targetData) : (editingContent.smsBody || '');
+    
+    // Create a temporary template from converted content
     const aiTemplate: EmailTemplate = {
       id: -1,
       name: 'AI Generated Response (Edited)',
-      subject: editingContent.subject,
-      emailBody: editingContent.emailBody,
-      smsBody: editingContent.smsBody || '',
+      subject: convertedSubject,
+      emailBody: convertedEmailBody,
+      smsBody: convertedSmsBody,
       isDefault: false,
       isAutoRespond: false,
       createdAt: new Date().toISOString()
     };
 
-    // Show preview with edited content
+    // Show preview with converted content
     setPreviewData({
-      subject: editingContent.subject,
-      emailBody: editingContent.emailBody,
+      subject: convertedSubject,
+      emailBody: convertedEmailBody,
       template: aiTemplate
     });
     setShowPreview(true);
@@ -720,15 +726,73 @@ export default function Templates() {
     setCustomPrompt('');
   };
 
+  // Convert AI-generated response back to template variables
+  const convertToTemplateVariables = (text: string, bookingData?: any) => {
+    if (!bookingData) return text;
+    
+    let convertedText = text;
+    
+    // Convert specific booking details back to variables
+    if (bookingData.clientName) {
+      const nameRegex = new RegExp(bookingData.clientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(nameRegex, '[Client Name]');
+    }
+    
+    if (bookingData.venue) {
+      const venueRegex = new RegExp(bookingData.venue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(venueRegex, '[Venue]');
+    }
+    
+    if (bookingData.eventDate) {
+      const eventDate = new Date(bookingData.eventDate).toLocaleDateString('en-GB');
+      const dateRegex = new RegExp(eventDate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(dateRegex, '[Event Date]');
+    }
+    
+    if (bookingData.eventTime) {
+      const timeRegex = new RegExp(bookingData.eventTime.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(timeRegex, '[Event Time]');
+    }
+    
+    if (bookingData.clientEmail) {
+      const emailRegex = new RegExp(bookingData.clientEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(emailRegex, '[Client Email]');
+    }
+    
+    if (bookingData.venueAddress) {
+      const addressRegex = new RegExp(bookingData.venueAddress.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(addressRegex, '[Venue Address]');
+    }
+    
+    if (bookingData.fee) {
+      const feeStr = bookingData.fee.toString();
+      const feeRegex = new RegExp(`£${feeStr}`, 'gi');
+      convertedText = convertedText.replace(feeRegex, '£[Fee]');
+    }
+    
+    if (bookingData.styles) {
+      const stylesRegex = new RegExp(bookingData.styles.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      convertedText = convertedText.replace(stylesRegex, '[Styles]');
+    }
+    
+    return convertedText;
+  };
+
   const handleSaveAIAsTemplate = () => {
     if (!aiGenerated) return;
     
-    // Pre-fill the create template dialog with AI-generated content
+    // Convert AI-generated content back to template variables if booking data is available
+    const targetData = bookingData || messageData;
+    const convertedSubject = targetData ? convertToTemplateVariables(aiGenerated.subject, targetData) : aiGenerated.subject;
+    const convertedEmailBody = targetData ? convertToTemplateVariables(aiGenerated.emailBody, targetData) : aiGenerated.emailBody;
+    const convertedSmsBody = targetData && aiGenerated.smsBody ? convertToTemplateVariables(aiGenerated.smsBody, targetData) : (aiGenerated.smsBody || '');
+    
+    // Pre-fill the create template dialog with converted content
     setFormData({
       name: `AI Generated - ${action || 'Response'}`,
-      subject: aiGenerated.subject,
-      emailBody: aiGenerated.emailBody,
-      smsBody: aiGenerated.smsBody || '',
+      subject: convertedSubject,
+      emailBody: convertedEmailBody,
+      smsBody: convertedSmsBody,
       isAutoRespond: false
     });
     
