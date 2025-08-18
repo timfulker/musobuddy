@@ -241,4 +241,9 @@ router.get('/api/admin/problematic-bookings', async (req, res) => {
   }
 });
 
+// Export the registration function for the routes/index.ts file
+export async function registerAdminRoutes(app: any) {
+  app.use(router);
+}
+
 export default router;
