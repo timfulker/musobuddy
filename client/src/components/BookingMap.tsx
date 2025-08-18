@@ -91,11 +91,15 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
         return;
       }
 
-      // If not cached, geocode the address
+      // If not cached, geocode the address with multiple fallback strategies
       const geocoder = new google.maps.Geocoder();
       
+      console.log('🗺️ Attempting to geocode:', venue);
+      
+      // First attempt with exact venue string
       geocoder.geocode({ address: venue }, (results, status) => {
         if (status === 'OK' && results && results[0] && mapRef.current) {
+          console.log('🗺️ Geocoding successful on first attempt');
           const location = results[0].geometry.location.toJSON();
           
           // Cache the result
@@ -133,7 +137,53 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
 
           mapInstance.current = map;
         } else {
-          setError('Unable to find location on map');
+          console.log('🗺️ First geocoding attempt failed, trying fallback strategies');
+          
+          // Try fallback strategies if the exact address fails
+          // Strategy 1: Try adding ", UK" to improve geocoding
+          const venueWithCountry = `${venue}, UK`;
+          geocoder.geocode({ address: venueWithCountry }, (results2, status2) => {
+            if (status2 === 'OK' && results2 && results2[0] && mapRef.current) {
+              console.log('🗺️ Geocoding successful with UK suffix');
+              const location = results2[0].geometry.location.toJSON();
+              locationCache.set(cacheKey, location);
+              
+              const map = new google.maps.Map(mapRef.current, {
+                center: location,
+                zoom: 15,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                zoomControl: true,
+                styles: [
+                  {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'off' }]
+                  }
+                ]
+              });
+
+              new google.maps.Marker({
+                position: location,
+                map: map,
+                title: venue,
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: '#4F46E5',
+                  fillOpacity: 1,
+                  strokeColor: '#FFFFFF',
+                  strokeWeight: 2
+                }
+              });
+
+              mapInstance.current = map;
+            } else {
+              console.log('🗺️ All geocoding attempts failed:', status, status2);
+              setError('Unable to find location on map');
+            }
+          });
         }
       });
     } catch (error) {

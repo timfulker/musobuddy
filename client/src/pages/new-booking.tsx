@@ -1047,7 +1047,13 @@ export default function NewBookingPage() {
                     {/* Venue Location Map */}
                     {(watchedVenue || watchedVenueAddress) && (
                       <BookingMap
-                        venue={watchedVenueAddress || watchedVenue}
+                        venue={
+                          watchedVenueAddress 
+                            ? (watchedVenue 
+                                ? `${watchedVenue}, ${watchedVenueAddress}` 
+                                : watchedVenueAddress)
+                            : watchedVenue
+                        }
                         className="mt-4"
                       />
                     )}
