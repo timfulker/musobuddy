@@ -799,31 +799,7 @@ export default function Contracts() {
                 <p className="text-gray-600 dark:text-gray-400">Manage your performance contracts and agreements</p>
               </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                console.log('🔄 Dialog onOpenChange called with:', open);
-                setIsDialogOpen(open);
-                
-                if (!open) {
-                  console.log('🚪 Closing dialog - cleaning up state');
-                  
-                  // Clean up URL when closing dialog
-                  const urlParams = new URLSearchParams(window.location.search);
-                  if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
-                    console.log('🧹 Cleaning up URL params');
-                    window.history.replaceState({}, '', window.location.pathname);
-                  }
-                  
-                  // Clear all form and component state
-                  setEditingContract(null);
-                  setDataLoaded(false);
-                  
-                  // Reset form with a slight delay
-                  setTimeout(() => {
-                    form.reset();
-                    console.log('✅ Dialog cleanup complete');
-                  }, 50);
-                }
-              }}>
+              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
                 <DialogTrigger asChild>
                   <Button className="bg-primary hover:bg-primary/90">
                     <FileText className="w-4 h-4 mr-2" />
