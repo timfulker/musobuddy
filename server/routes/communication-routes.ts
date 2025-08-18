@@ -197,27 +197,48 @@ export function setupCommunicationRoutes(app: any) {
               .replace(/\s+/g, ' ')
               .trim();
             
+            // Remove common email headers and footers first
+            rawText = rawText
+              .replace(/^Client Reply - Re: .+$/gm, '')
+              .replace(/^BOOKING REPLY$/gm, '')
+              .replace(/^From: .+$/gm, '')
+              .replace(/^Subject: .+$/gm, '')
+              .replace(/^Date: .+$/gm, '')
+              .replace(/^To: .+$/gm, '')
+              .replace(/^Booking ID: .+$/gm, '')
+              .trim();
+            
             // Try to extract only the new reply content by removing quoted text
             // Look for common email reply patterns
             const replyPatterns = [
               /^(.*?)(?:On .+? wrote:|From: .+?|Date: .+?|\d+\/\d+\/\d+.+?wrote:)/s,
               /^(.*?)(?:-----Original Message-----)/s,
               /^(.*?)(?:> .+)/s,  // Lines starting with >
-              /^(.*?)(?:\n\n.+? <.+?@.+?> wrote:)/s
+              /^(.*?)(?:\n\n.+? <.+?@.+?> wrote:)/s,
+              /^(.*?)(?:On \d+\/\d+\/\d+.+?wrote:)/s
             ];
             
+            let foundMatch = false;
             for (const pattern of replyPatterns) {
               const match = rawText.match(pattern);
-              if (match && match[1].trim().length > 10) {
+              if (match && match[1].trim().length > 5) {
                 content = match[1].trim();
+                foundMatch = true;
                 break;
               }
             }
             
-            // If no pattern matched, use the full text but truncate if very long
-            if (content === 'Message content unavailable') {
+            // If no pattern matched, use the full text but clean it up
+            if (!foundMatch) {
               content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
             }
+            
+            // Add proper formatting
+            content = content
+              .replace(/([.!?])\s+/g, '$1\n\n')  // Add line breaks after sentences
+              .replace(/\s{2,}/g, ' ')  // Remove multiple spaces
+              .replace(/\n{3,}/g, '\n\n')  // Limit to double line breaks
+              .trim();
           }
           
           messages.push({
@@ -263,18 +284,21 @@ export function setupCommunicationRoutes(app: any) {
               const downloadResult = await downloadFile(r2Key);
               
               if (downloadResult.success && downloadResult.content) {
-                // Extract text content from HTML
+                // Extract text content from HTML and format properly
                 content = downloadResult.content
                   .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
                   .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                  .replace(/<[^>]*>/g, '')
+                  .replace(/<br\s*\/?>/gi, '\n')  // Convert <br> to line breaks
+                  .replace(/<\/p>/gi, '\n\n')     // Convert </p> to paragraph breaks
+                  .replace(/<[^>]*>/g, '')        // Remove remaining HTML tags
                   .replace(/&nbsp;/g, ' ')
                   .replace(/&amp;/g, '&')
                   .replace(/&lt;/g, '<')
                   .replace(/&gt;/g, '>')
                   .replace(/&quot;/g, '"')
                   .replace(/&#39;/g, "'")
-                  .replace(/\s+/g, ' ')
+                  .replace(/\s{2,}/g, ' ')        // Remove multiple spaces but keep line breaks
+                  .replace(/\n{3,}/g, '\n\n')    // Limit to double line breaks
                   .trim();
               }
             }
