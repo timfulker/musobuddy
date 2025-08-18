@@ -689,7 +689,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { template, bookingId, messageId, clientEmail, clientName } = req.body;
+      const { template, bookingId, messageId, clientEmail, clientName, testCc } = req.body;
       
       if (!template || !template.subject || !template.emailBody) {
         return res.status(400).json({ error: 'Invalid template data' });
@@ -836,7 +836,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
       `.trim();
 
       // Send HTML-only email with explicit headers to force HTML rendering
-      const emailSent = await services.sendEmail({
+      const emailData: any = {
         to: recipientEmail,
         subject: template.subject,
         html: professionalEmailHtml,
@@ -845,7 +845,15 @@ This email was sent via MusoBuddy Professional Music Management Platform
           'Content-Type': 'text/html; charset=UTF-8',
           'X-Content-Type-Options': 'nosniff'
         }
-      });
+      };
+
+      // Add CC for testing purposes (temporary feature)
+      if (testCc && typeof testCc === 'string' && testCc.includes('@')) {
+        emailData.cc = testCc;
+        console.log(`📧 Test CC added to booking response email: ${testCc}`);
+      }
+
+      const emailSent = await services.sendEmail(emailData);
 
       if (!emailSent) {
         throw new Error('Failed to send email');
