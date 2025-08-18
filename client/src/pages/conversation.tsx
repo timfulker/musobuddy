@@ -142,13 +142,14 @@ export default function Conversation() {
     try {
       console.log('🤖 Starting AI response generation...');
       
-      const response = await apiRequest('/api/ai/generate', {
+      const response = await apiRequest('/api/ai/generate-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: booking.id,
           action: 'respond',
-          customPrompt: `Generate a professional response for this conversation with ${booking.clientName} regarding their ${booking.eventType} booking.`
+          customPrompt: `Generate a professional response for this conversation with ${booking.clientName} regarding their ${booking.eventType} booking.`,
+          tone: 'professional'
         }),
       });
       
@@ -157,14 +158,8 @@ export default function Conversation() {
       const aiResponse = await response.json();
       console.log('🤖 AI response data:', aiResponse);
       
-      // Try different possible field names for the content
-      const content = aiResponse.emailBody || 
-                     aiResponse.content || 
-                     aiResponse.message || 
-                     aiResponse.text || 
-                     aiResponse.body ||
-                     aiResponse.response ||
-                     '';
+      // The AI response should contain emailBody field
+      const content = aiResponse.emailBody || '';
 
       console.log('🤖 Extracted content:', content);
       
