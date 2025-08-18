@@ -1865,7 +1865,7 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/bookings/edit/${groupBooking.id}`);
+                                                  navigate(`/new-booking?edit=${groupBooking.id}`);
                                                 }}
                                                 className="text-purple-600 hover:bg-purple-50"
                                               >
