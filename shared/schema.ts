@@ -1034,10 +1034,7 @@ export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertUserAuditLog = z.infer<typeof insertUserAuditLogSchema>;
 export type UserAuditLog = typeof userAuditLogs.$inferSelect;
-export type InsertApiUsageTracking = z.infer<typeof insertApiUsageTrackingSchema>;
-export type ApiUsageTracking = typeof apiUsageTracking.$inferSelect;
-export type InsertApiUsageLimits = z.infer<typeof insertApiUsageLimitsSchema>;
-export type ApiUsageLimits = typeof apiUsageLimits.$inferSelect;
+// API usage tracking types removed - unlimited AI usage for all users
 
 // NEW: Contract Learning System Tables
 
