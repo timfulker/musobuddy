@@ -462,7 +462,7 @@ export function setupCommunicationRoutes(app: any) {
       }
 
       // Create unique reply-to address with user ID and booking ID for proper routing
-      const replyToAddress = `${userId}-${bookingId}@enquiries.musobuddy.com`;
+      const replyToAddress = `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`;
       const subject = `Re: ${booking[0].title}`;
       
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
