@@ -189,8 +189,9 @@ export default function Conversation() {
     console.log('🔍 All template fields:', Object.keys(template));
     console.log('🔍 Booking data:', booking);
     
-    // Get the template content from the correct field (try multiple possible field names)
-    let content = template.content || 
+    // Get the template content from the correct field (emailBody is the main field)
+    let content = template.emailBody || 
+                  template.content || 
                   template.emailContent || 
                   template.template || 
                   template.body || 
@@ -202,6 +203,7 @@ export default function Conversation() {
     
     console.log('🔍 Original template content:', content);
     console.log('🔍 Content field used:', 
+      template.emailBody ? 'emailBody' :
       template.content ? 'content' :
       template.emailContent ? 'emailContent' :
       template.template ? 'template' :
