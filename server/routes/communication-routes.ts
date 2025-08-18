@@ -441,8 +441,8 @@ export function setupCommunicationRoutes(app: any) {
         .limit(1);
 
       const userSetting = userSettingsResults[0];
-      if (!userSetting?.senderEmail) {
-        return res.status(400).json({ error: 'Sender email not configured in settings' });
+      if (!userSetting?.businessEmail) {
+        return res.status(400).json({ error: 'Business email not configured in settings' });
       }
 
       // Create unique reply-to address with user ID and booking ID for proper routing
@@ -455,15 +455,15 @@ export function setupCommunicationRoutes(app: any) {
         userId,
         subject,
         emailBody: content,
-        senderName: userSetting.senderName,
-        senderEmail: userSetting.senderEmail,
-        themeColor: userSetting.themeColor || '#1e3a8a'
+        senderName: userSetting.emailFromName || userSetting.businessName,
+        senderEmail: userSetting.businessEmail,
+        themeColor: userSetting.themeAccentColor || '#1e3a8a'
       });
 
       // Send email via Mailgun with proper reply-to routing
       try {
         const mailgunData = {
-          from: `${userSetting.senderName || 'MusoBuddy'} <${userSetting.senderEmail}>`,
+          from: `${userSetting.emailFromName || userSetting.businessName || 'MusoBuddy'} <${userSetting.businessEmail}>`,
           to: recipientEmail,
           'reply-to': replyToAddress,
           subject: subject,
