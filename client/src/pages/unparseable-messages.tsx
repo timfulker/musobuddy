@@ -325,24 +325,40 @@ export default function UnparseableMessages() {
               
               <div className="flex gap-2 pt-4">
                 <Button
-                  onClick={() => convertToBookingMutation.mutate({ 
-                    id: selectedMessage.id, 
-                    notes: reviewNotes 
-                  })}
-                  disabled={convertToBookingMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  Convert to Booking
-                </Button>
-                <Button
                   variant="outline"
-                  onClick={() => {
-                    // Extract client email from fromContact (format: "Name <email>")
-                    const emailMatch = selectedMessage.fromContact.match(/<(.+)>/);
-                    const clientEmail = emailMatch ? emailMatch[1] : selectedMessage.fromContact;
-                    // Navigate to templates page with prefilled client info
-                    navigate(`/templates?clientEmail=${encodeURIComponent(clientEmail)}&context=reply&messageId=${selectedMessage.id}`);
+                  onClick={async () => {
+                    try {
+                      // Auto-convert to booking when replying
+                      const response = await apiRequest(`/api/unparseable-messages/${selectedMessage.id}/convert`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          reviewNotes: 'Auto-converted on reply'
+                        })
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        const bookingId = result.booking.id;
+                        
+                        // Navigate to conversation page with the new booking ID
+                        navigate(`/conversation/${bookingId}`);
+                        
+                        toast({
+                          title: "Converted to Dateless Booking",
+                          description: "Message converted to booking for easier conversation management"
+                        });
+                      } else {
+                        throw new Error('Failed to convert message');
+                      }
+                    } catch (error) {
+                      console.error('Error converting message:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to convert message to booking",
+                        variant: "destructive"
+                      });
+                    }
                   }}
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
                 >

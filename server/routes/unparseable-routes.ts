@@ -90,28 +90,28 @@ export function registerUnparseableRoutes(app: Express) {
       const clientEmail = emailMatch ? emailMatch[1] : message.fromContact;
       const clientName = message.fromContact.replace(/<.*>/, '').trim();
       
-      // Create booking from message
+      // Create dateless booking from message
       const booking = await storage.createBooking({
         userId: userId,
-        title: "Manual Entry from Review",
+        title: `${clientName} - Inquiry (Date TBC)`,
         clientName: clientName,
         clientEmail: clientEmail,
         clientPhone: null,
-        eventDate: null, // No date available
+        eventDate: null, // Dateless booking
         eventTime: null,
         eventEndTime: null,
         performanceDuration: null,
         venue: null,
         venueAddress: null,
         clientAddress: null,
-        eventType: null,
+        eventType: "inquiry", // Mark as inquiry type
         gigType: null,
         fee: null,
         equipmentRequirements: null,
         specialRequirements: null,
         estimatedValue: null,
         status: "new",
-        notes: message.rawMessage,
+        notes: `Original inquiry: ${message.rawMessage}`,
         originalEmailContent: message.rawMessage,
         applyNowLink: null,
         responseNeeded: true,

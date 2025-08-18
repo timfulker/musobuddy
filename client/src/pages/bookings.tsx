@@ -559,7 +559,9 @@ export default function UnifiedBookings() {
         booking.fee?.toString().includes(searchLower) ||
         booking.id?.toString().includes(searchLower);
       
-      const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || 
+        booking.status === statusFilter ||
+        (statusFilter === 'dateless' && !booking.eventDate);
       
       // Date filtering
       let matchesDate = true;
@@ -1234,6 +1236,7 @@ export default function UnifiedBookings() {
                           <SelectItem value="confirmed">Confirmed</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                           <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="dateless">Date TBC</SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -1284,6 +1287,7 @@ export default function UnifiedBookings() {
                       <SelectItem value="confirmed">Confirmed</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="dateless">Date TBC</SelectItem>
                     </SelectContent>
                   </Select>
 
