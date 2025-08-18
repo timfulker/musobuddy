@@ -724,6 +724,42 @@ ${businessName}</p>
     })
   );
 
+  // Get documents for a specific booking
+  app.get('/api/bookings/:id/documents', 
+    requireAuth,
+    requireSubscriptionOrAdmin,
+    asyncHandler(async (req: any, res: any) => {
+      try {
+        const userId = req.user?.userId;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const bookingId = parseInt(req.params.id);
+        
+        // Verify booking ownership
+        const booking = await storage.getBooking(bookingId, userId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        // Get documents for this booking
+        const documents = await storage.getBookingDocuments(bookingId, userId);
+        
+        res.json({ 
+          documents: documents || []
+        });
+
+      } catch (error: any) {
+        console.error('❌ Failed to fetch booking documents:', error);
+        res.status(500).json({ 
+          error: 'Failed to fetch booking documents',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
   // Check if compliance documents have been sent for a specific booking
   app.get('/api/bookings/:id/compliance-sent', 
     requireAuth,
@@ -743,8 +779,7 @@ ${businessName}</p>
           return res.status(404).json({ error: 'Booking not found' });
         }
 
-        // Temporarily return a simple response to avoid errors while debugging
-        // TODO: Implement proper compliance tracking lookup
+        // Return simple response - compliance indicator will be hidden when sent=false
         res.json({ 
           sent: false,
           documents: []

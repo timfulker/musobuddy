@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, enabling musicians to focus on their creative work. The project aims to be a user-friendly, reliable, and scalable solution, aspiring to become an indispensable tool for managing all administrative aspects of a musician's career, increasing efficiency and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, allowing musicians to focus on their creative work. The project aims to be a user-friendly, reliable, and scalable solution, aspiring to be an indispensable tool for managing all administrative aspects of a musician's career, increasing efficiency, and capitalizing on the growing independent artist market.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -89,9 +89,6 @@ Booking status validation: Implemented validation in the PATCH booking endpoint 
 - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-- **System Health Monitoring**: Real-time dashboard (`/system-health`).
-- **Deployment**: Node.js server serving built frontend.
-- **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
 - **Onboarding Wizard**: Multi-step wizard covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
 - **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.

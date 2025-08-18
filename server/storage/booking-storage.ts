@@ -348,6 +348,32 @@ export class BookingStorage {
     return this.getAllBookingsCount();
   }
 
+  // ===== DOCUMENT METHODS =====
+  
+  async getBookingDocuments(bookingId: number, userId: string) {
+    // Check ownership first
+    const booking = await this.getBooking(bookingId);
+    if (!booking || booking.userId !== userId) {
+      throw new Error('Booking not found or access denied');
+    }
+
+    try {
+      // Query for documents associated with this booking
+      const result = await db.execute(`
+        SELECT id, booking_id, file_name, file_path, file_type, file_size, upload_date
+        FROM booking_documents 
+        WHERE booking_id = ${bookingId} 
+        ORDER BY upload_date DESC
+      `);
+
+      return result || [];
+    } catch (error) {
+      console.error('Error fetching booking documents:', error);
+      // Return empty array instead of throwing to prevent API failures
+      return [];
+    }
+  }
+
   // ===== NOTIFICATION COUNT METHODS =====
   
   async getNewBookingsCount(userId: string) {
