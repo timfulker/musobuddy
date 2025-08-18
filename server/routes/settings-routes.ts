@@ -756,8 +756,8 @@ export async function registerSettingsRoutes(app: Express) {
 
       // Create reply-to address with user ID and booking ID for email routing
       const replyToAddress = bookingId 
-        ? `user${userId}-booking${bookingId}@mg.musobuddy.com`
-        : `user${userId}@mg.musobuddy.com`;
+        ? `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`
+        : `User${userId} <user${userId}@mg.musobuddy.com>`;
 
       // Function to convert text to properly formatted HTML paragraphs  
       const formatEmailContent = (text: string) => {
