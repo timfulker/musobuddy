@@ -7,45 +7,29 @@ import { storage } from '../core/storage';
 
 const router = Router();
 
-// Bulk re-process bookings endpoint
+// Manual re-process selected bookings endpoint  
 router.post('/api/admin/reprocess-bookings', async (req, res) => {
   try {
-    const { bookingIds, dateRange, allProblematic } = req.body;
+    const { bookingIds } = req.body;
     
-    console.log('🔄 [ADMIN] Starting bulk re-processing of bookings');
+    if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
+      return res.status(400).json({ 
+        error: 'bookingIds array is required and must not be empty' 
+      });
+    }
+    
+    console.log(`🔄 [ADMIN] Re-processing ${bookingIds.length} selected bookings: ${bookingIds.join(', ')}`);
     
     let bookingsToProcess = [];
     
-    if (bookingIds && Array.isArray(bookingIds)) {
-      // Re-process specific booking IDs
-      console.log(`🔄 [ADMIN] Re-processing specific bookings: ${bookingIds.join(', ')}`);
-      for (const id of bookingIds) {
-        const booking = await storage.getBooking(id);
-        if (booking) bookingsToProcess.push(booking);
+    // Re-process specific booking IDs
+    for (const id of bookingIds) {
+      const booking = await storage.getBooking(id);
+      if (booking) {
+        bookingsToProcess.push(booking);
+      } else {
+        console.log(`⚠️ [ADMIN] Booking #${id} not found`);
       }
-    } else if (dateRange) {
-      // Re-process bookings in date range
-      const { startDate, endDate } = dateRange;
-      console.log(`🔄 [ADMIN] Re-processing bookings from ${startDate} to ${endDate}`);
-      const allBookings = await storage.getAllBookings();
-      bookingsToProcess = allBookings.filter(booking => {
-        const createdAt = new Date(booking.createdAt);
-        return createdAt >= new Date(startDate) && createdAt <= new Date(endDate);
-      });
-    } else if (allProblematic) {
-      // Re-process all problematic bookings (generic titles, missing data, etc.)
-      console.log('🔄 [ADMIN] Re-processing all problematic bookings');
-      const allBookings = await storage.getAllBookings();
-      bookingsToProcess = allBookings.filter(booking => {
-        return (
-          booking.title === 'Event' || 
-          booking.title === 'Booking' ||
-          booking.title?.startsWith('Inquiry') ||
-          !booking.venue ||
-          !booking.eventDate ||
-          (booking.clientName === 'Encore Musicians' && !booking.applyNowLink)
-        );
-      });
     }
     
     console.log(`🔄 [ADMIN] Found ${bookingsToProcess.length} bookings to re-process`);

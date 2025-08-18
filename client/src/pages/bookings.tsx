@@ -717,18 +717,19 @@ export default function UnifiedBookings() {
     },
   });
 
-  // TEMPORARY: Bulk re-processing mutation for fixing pre-AI-fix bookings
+  // TEMPORARY: Manual re-processing mutation for selected bookings
   const reprocessMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (bookingIds: number[]) => {
       const response = await apiRequest('/api/admin/reprocess-bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allProblematic: true })
+        body: JSON.stringify({ bookingIds })
       });
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings([]);
       toast({
         title: "Re-processing Complete",
         description: `Processed ${data.results.total} bookings, improved ${data.results.improved}`,
@@ -1449,27 +1450,7 @@ export default function UnifiedBookings() {
                       Clear All Filters
                     </Button>
                   )}
-                  
-                  {/* TEMPORARY: Quick re-processing button for one-time cleanup */}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => reprocessMutation.mutate()}
-                    disabled={reprocessMutation.isPending}
-                    className="h-8 border-orange-300 text-orange-700 hover:bg-orange-50"
-                  >
-                    {reprocessMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-600 mr-2"></div>
-                        Re-processing...
-                      </>
-                    ) : (
-                      <>
-                        <Settings className="w-3 h-3 mr-2" />
-                        TEMP: Fix Old Bookings
-                      </>
-                    )}
-                  </Button>
+
                 </div>
               </div>
 
@@ -1520,20 +1501,9 @@ export default function UnifiedBookings() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                         <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={handleBulkDelete}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Selected
-                        </Button>
-                        
-                        {/* TEMPORARY: Re-processing button for one-time cleanup */}
-                        <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => reprocessMutation.mutate()}
+                          onClick={() => reprocessMutation.mutate(selectedBookings)}
                           disabled={reprocessMutation.isPending}
                           className="border-orange-300 text-orange-700 hover:bg-orange-50"
                         >
@@ -1545,9 +1515,18 @@ export default function UnifiedBookings() {
                           ) : (
                             <>
                               <Settings className="w-4 h-4 mr-2" />
-                              TEMP: Re-process All
+                              Re-process Selected
                             </>
                           )}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Selected
                         </Button>
                       </div>
                     </div>
