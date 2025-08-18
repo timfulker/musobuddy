@@ -1,6 +1,6 @@
 // cloud-storage.ts - Fixed uploadInvoiceToCloud function
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 import type { Invoice, Contract, UserSettings } from '@shared/schema';
 
@@ -285,6 +285,41 @@ export async function uploadToCloudflareR2(
     return {
       success: false,
       error: error.message || 'Upload failed'
+    };
+  }
+}
+
+// Download file from R2 storage
+export async function downloadFile(key: string): Promise<{ success: boolean; content?: string; error?: string }> {
+  try {
+    console.log(`📥 Downloading file from R2: ${key}`);
+    
+    const getCommand = new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
+      Key: key,
+    });
+    
+    const response = await r2Client.send(getCommand);
+    
+    if (!response.Body) {
+      throw new Error('No content received from R2');
+    }
+    
+    // Convert the ReadableStream to string
+    const content = await response.Body.transformToString();
+    
+    console.log(`✅ File downloaded successfully, size: ${content.length} characters`);
+    
+    return {
+      success: true,
+      content
+    };
+    
+  } catch (error: any) {
+    console.error('❌ Failed to download file from R2:', error);
+    return {
+      success: false,
+      error: error.message || 'Download failed'
     };
   }
 }

@@ -152,6 +152,15 @@ export function setupCommunicationRoutes(app: any) {
       const bookingId = parseInt(req.params.bookingId);
       console.log(`🔍 Fetching conversation for booking ${bookingId}, user ${userId}`);
       
+      // Import storage and cloud storage
+      const { storage } = await import('../storage');
+      const { downloadFile } = await import('../core/cloud-storage');
+      
+      // Get message notifications for this booking (these have messageUrl fields)
+      const messageNotifications = await storage.getMessageNotifications(userId);
+      const bookingMessages = messageNotifications.filter(msg => msg.bookingId === bookingId);
+      
+      // Also get communications from clientCommunications table (outbound messages)
       const communications = await db
         .select()
         .from(clientCommunications)
@@ -161,20 +170,80 @@ export function setupCommunicationRoutes(app: any) {
         ))
         .orderBy(clientCommunications.sentAt);
 
-      // Transform to conversation message format
-      const messages = communications.map(comm => ({
-        id: comm.id,
-        bookingId: comm.bookingId,
-        fromEmail: comm.direction === 'outbound' ? 'performer' : comm.clientEmail,
-        toEmail: comm.direction === 'outbound' ? comm.clientEmail : 'performer',
-        subject: comm.subject,
-        content: comm.messageBody,
-        messageType: comm.direction === 'outbound' ? 'outgoing' : 'incoming',
-        sentAt: comm.sentAt,
-        isRead: true
-      }));
+      const messages: any[] = [];
+      
+      // Process message notifications (incoming messages with HTML content in R2)
+      for (const msg of bookingMessages) {
+        try {
+          // Download and parse HTML content from R2
+          const downloadResult = await downloadFile(msg.messageUrl);
+          let content = 'Message content unavailable';
+          
+          if (downloadResult.success && downloadResult.content) {
+            // Extract text content from HTML
+            const htmlContent = downloadResult.content;
+            // Simple HTML text extraction - remove tags and decode entities
+            content = htmlContent
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+          
+          messages.push({
+            id: `msg_${msg.id}`,
+            bookingId: msg.bookingId,
+            fromEmail: msg.senderEmail,
+            toEmail: 'performer',
+            subject: msg.subject,
+            content: content,
+            messageType: 'incoming',
+            sentAt: msg.createdAt,
+            isRead: msg.isRead
+          });
+        } catch (error) {
+          console.error(`❌ Error processing message ${msg.id}:`, error);
+          // Add message with error content instead of failing completely
+          messages.push({
+            id: `msg_${msg.id}`,
+            bookingId: msg.bookingId,
+            fromEmail: msg.senderEmail,
+            toEmail: 'performer',
+            subject: msg.subject,
+            content: 'Error loading message content',
+            messageType: 'incoming',
+            sentAt: msg.createdAt,
+            isRead: msg.isRead
+          });
+        }
+      }
 
-      console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId}`);
+      // Process outbound communications
+      communications.forEach(comm => {
+        messages.push({
+          id: `comm_${comm.id}`,
+          bookingId: comm.bookingId,
+          fromEmail: 'performer',
+          toEmail: comm.clientEmail,
+          subject: comm.subject,
+          content: comm.messageBody || 'No content',
+          messageType: 'outgoing',
+          sentAt: comm.sentAt,
+          isRead: true
+        });
+      });
+
+      // Sort all messages by date
+      messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+
+      console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId} (${bookingMessages.length} incoming, ${communications.length} outgoing)`);
       res.json(messages);
 
     } catch (error) {
