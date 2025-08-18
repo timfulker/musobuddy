@@ -42,6 +42,7 @@ Invoice CC functionality: CC recipients are supported for invoice emails only (c
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment. Changes to external integration handling require deployment to take effect because external services cannot reach local development servers and webhook URLs point to production domains.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
+Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter. Previous 9-button approach was "horrible" and overwhelming.
 Admin database access: Read-only database administration panel added as submenu in admin section. Includes table browsing, filtering, search, and CSV export with strict admin-only access controls.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
 Mileage calculation optimization: Fixed wasteful API calls. System now skips mileage calculation for existing bookings that already have mileage data, only calculates for new bookings or manual address changes.
@@ -108,3 +109,4 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - Stripe
     - Twilio
     - what3words API
+```

@@ -1761,12 +1761,12 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/bookings/edit/${groupBooking.id}`);
+                                                  openCommunicationHistoryDialog(groupBooking);
                                                 }}
-                                                className="text-purple-600 hover:bg-purple-50"
+                                                className="text-indigo-600 hover:bg-indigo-50"
                                               >
-                                                <Eye className="w-4 h-4 mr-1" />
-                                                View
+                                                <MessageCircle className="w-4 h-4 mr-1" />
+                                                Conversation
                                               </Button>
                                               
                                               <Button
@@ -1774,12 +1774,12 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/bookings/edit/${groupBooking.id}?edit=true`);
+                                                  navigate(`/bookings/edit/${groupBooking.id}`);
                                                 }}
-                                                className="text-orange-600 hover:bg-orange-50"
+                                                className="text-purple-600 hover:bg-purple-50"
                                               >
-                                                <Edit className="w-4 h-4 mr-1" />
-                                                Edit
+                                                <Eye className="w-4 h-4 mr-1" />
+                                                View
                                               </Button>
                                               
                                               {/* Secondary Actions - Dropdown Menu */}
@@ -1804,15 +1804,7 @@ export default function UnifiedBookings() {
                                                     <ThumbsUp className="w-4 h-4 mr-2" />
                                                     Send Thank You
                                                   </DropdownMenuItem>
-                                                  <DropdownMenuItem
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      openCommunicationHistoryDialog(groupBooking);
-                                                    }}
-                                                  >
-                                                    <MessageCircle className="w-4 h-4 mr-2" />
-                                                    View Messages
-                                                  </DropdownMenuItem>
+
                                                   <DropdownMenuItem
                                                     onClick={(e) => {
                                                       e.stopPropagation();
@@ -2064,12 +2056,12 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/bookings/edit/${booking.id}`);
+                                  openCommunicationHistoryDialog(booking);
                                 }}
-                                className="text-purple-600 hover:bg-purple-50"
+                                className="text-indigo-600 hover:bg-indigo-50"
                               >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                Conversation
                               </Button>
                               
                               <Button
@@ -2077,12 +2069,12 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/bookings/edit/${booking.id}?edit=true`);
+                                  navigate(`/bookings/edit/${booking.id}`);
                                 }}
-                                className="text-orange-600 hover:bg-orange-50"
+                                className="text-purple-600 hover:bg-purple-50"
                               >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
                               </Button>
                               
                               {/* Secondary Actions - Dropdown Menu */}
@@ -2107,15 +2099,7 @@ export default function UnifiedBookings() {
                                     <ThumbsUp className="w-4 h-4 mr-2" />
                                     Send Thank You
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openCommunicationHistoryDialog(booking);
-                                    }}
-                                  >
-                                    <MessageCircle className="w-4 h-4 mr-2" />
-                                    View Messages
-                                  </DropdownMenuItem>
+
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
