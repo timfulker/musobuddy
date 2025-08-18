@@ -451,15 +451,15 @@ export function setupCommunicationRoutes(app: any) {
       
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 
-      // Get enhanced email template with the reply content
-      const { storage } = await import('../core/storage');
-      const emailTemplate = await storage.createEmailTemplate({
-        userId,
+      // Generate styled email HTML with MusoBuddy branding
+      const emailTemplate = generateStyledEmailHTML({
         subject,
-        emailBody: content,
+        content,
         senderName: userSetting.emailFromName || userSetting.businessName,
         senderEmail: userSetting.businessEmail,
-        themeColor: userSetting.themeAccentColor || '#1e3a8a'
+        phone: userSetting.phone,
+        website: userSetting.website,
+        themeColor: userSetting.themeAccentColor || '#191970' // Default to midnight blue
       });
 
       // Send email via Mailgun with proper reply-to routing
