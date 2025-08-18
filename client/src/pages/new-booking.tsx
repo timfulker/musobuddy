@@ -862,7 +862,7 @@ export default function NewBookingPage() {
                               searchOnTabOnly={true}
                               onSelect={(addressData) => {
                                 // Update venue name
-                                field.onChange(addressData.name || addressData.placeName || '');
+                                field.onChange(addressData.name || addressData.placeName || addressData.address || '');
                                 
                                 // Also update venue address if available
                                 if (addressData.formattedAddress) {
