@@ -61,6 +61,9 @@ export default function Templates() {
     smsBody?: string;
   } | null>(null);
   
+  // CC testing state
+  const [testCc, setTestCc] = useState('');
+  
   const { toast } = useToast();
   
   // Check if we're responding to a specific booking or message
@@ -473,15 +476,22 @@ export default function Templates() {
 
     try {
       // Send the email using the template
+      const requestBody: any = {
+        template: customizedTemplate,
+        bookingId: bookingId,
+        messageId: messageId,
+        clientEmail: targetData.clientEmail,
+        clientName: targetData.clientName
+      };
+      
+      // Add CC for testing if provided
+      if (testCc && testCc.trim()) {
+        requestBody.testCc = testCc.trim();
+      }
+      
       const response = await apiRequest('/api/templates/send-email', {
         method: 'POST',
-        body: {
-          template: customizedTemplate,
-          bookingId: bookingId,
-          messageId: messageId,
-          clientEmail: targetData.clientEmail,
-          clientName: targetData.clientName
-        }
+        body: requestBody
       });
       
       const result = await response.json();
@@ -1133,23 +1143,43 @@ export default function Templates() {
                 </div>
               </div>
               
-              {/* Fixed Action Buttons */}
-              <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 border-t mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowPreview(false);
-                    setPreviewData(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSendEmail}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  Send Email
-                </Button>
+              {/* CC Testing Field */}
+              <div className="flex-shrink-0 border-t pt-4 space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="test-cc" className="text-sm text-gray-600">
+                    CC for Testing (Optional)
+                  </Label>
+                  <Input
+                    id="test-cc"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={testCc}
+                    onChange={(e) => setTestCc(e.target.value)}
+                    className="max-w-md"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Get a copy of this email for testing formatting
+                  </p>
+                </div>
+                
+                {/* Fixed Action Buttons */}
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowPreview(false);
+                      setPreviewData(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSendEmail}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    Send Email
+                  </Button>
+                </div>
               </div>
             </>
           )}
