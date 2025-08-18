@@ -831,12 +831,16 @@ ${senderEmail}
 This email was sent via MusoBuddy Professional Music Management Platform
       `.trim();
 
-      // Send HTML-only email to force HTML rendering
+      // Send HTML-only email with explicit headers to force HTML rendering
       const emailSent = await services.sendEmail({
         to: recipientEmail,
         subject: template.subject,
         html: professionalEmailHtml,
-        replyTo: replyToAddress
+        replyTo: replyToAddress,
+        headers: {
+          'Content-Type': 'text/html; charset=UTF-8',
+          'X-Content-Type-Options': 'nosniff'
+        }
       });
 
       if (!emailSent) {

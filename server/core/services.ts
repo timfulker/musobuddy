@@ -44,9 +44,20 @@ export class EmailService {
         html: emailData.html
       };
 
-      // Add text version if provided (ensures proper display across email clients)
+      // Force HTML-only emails - don't add text version to prevent email clients from preferring text
+      // This ensures our beautiful HTML templates are displayed properly
+      
+      // Set explicit Content-Type headers for HTML emails
+      if (emailData.html && !emailData.text) {
+        messageData['h:Content-Type'] = 'text/html; charset=UTF-8';
+        messageData['h:X-Content-Type-Options'] = 'nosniff';
+        console.log('📧 Forcing HTML-only display with explicit headers');
+      }
+
+      // Only add text version if explicitly provided (for compatibility)
       if (emailData.text) {
         messageData.text = emailData.text;
+        console.log('📧 Adding text version for multipart email');
       }
 
       // Let Mailgun handle MIME headers automatically for proper multipart emails
