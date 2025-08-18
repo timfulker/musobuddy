@@ -42,7 +42,7 @@ export function AITokenUsage({ usage, onUpgrade }: AITokenUsageProps) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             {getStatusIcon()}
-            <span className="text-sm font-medium">AI Usage This Month</span>
+            <span className="text-sm font-medium">Bookings This Month</span>
           </div>
           {usage.status === 'exceeded' && onUpgrade && (
             <Button size="sm" onClick={onUpgrade} className="h-7">
@@ -61,7 +61,7 @@ export function AITokenUsage({ usage, onUpgrade }: AITokenUsageProps) {
         />
         
         <p className="text-xs text-muted-foreground">
-          {usage.responsesUsed.toLocaleString()} / {usage.monthlyLimit.toLocaleString()} responses
+          {Math.floor(usage.responsesUsed / 4)} / {Math.floor(usage.monthlyLimit / 4)} bookings (~{usage.responsesUsed.toLocaleString()} responses)
         </p>
         
         {usage.status !== 'good' && (

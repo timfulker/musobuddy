@@ -181,6 +181,10 @@ export default function PricingPage() {
                   <Check className="w-4 h-4 text-green-500 mr-2" />
                   Cloud document storage
                 </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Up to 75 bookings/month
+                </li>
               </ul>
               <Button 
                 className="w-full bg-primary hover:bg-primary/90"
@@ -195,11 +199,11 @@ export default function PricingPage() {
           </Card>
 
           {/* Premium Plan */}
-          <Card className="border-2">
+          <Card className="border-2 border-amber-400">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Premium</CardTitle>
-              <div className="text-2xl font-semibold text-gray-600">Coming Soon</div>
-              <p className="text-gray-500">Advanced features in development</p>
+              <div className="text-3xl font-bold">£12.99</div>
+              <p className="text-gray-500">per month</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
@@ -209,19 +213,19 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Up to 125 bookings/month (vs 75)
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Enhanced AI assistance
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Priority email processing
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
                   Advanced booking analytics
-                </li>
-                <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Calendar integrations
-                </li>
-                <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Client booking portal
-                </li>
-                <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Enhanced AI parsing
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
@@ -229,12 +233,12 @@ export default function PricingPage() {
                 </li>
               </ul>
               <Button 
-                variant="outline" 
-                className="w-full"
-                disabled
+                className="w-full bg-amber-600 hover:bg-amber-700"
+                onClick={() => handleSubscribe('PREMIUM_PRICE_ID_PLACEHOLDER')}
+                disabled={loading || currentPlan === 'premium'}
               >
-                <Zap className="w-4 h-4 mr-2" />
-                Coming Soon
+                {loading ? 'Processing...' : 
+                 currentPlan === 'premium' ? 'Current Plan' : 'Upgrade to Premium'}
               </Button>
             </CardContent>
           </Card>
