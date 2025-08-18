@@ -350,30 +350,11 @@ export default function NewBookingPage() {
     }
   }, [isEditMode, editingBooking]);
 
-  // Monitor venue address changes for automatic mileage calculation with enhanced logic
-  useEffect(() => {
-    // Skip if we're in edit mode and form hasn't been initialized yet
-    if (isEditMode && !formInitialized) return;
-    
-    // Skip if we've already calculated mileage
-    if (mileageCalculated) return;
-    
-    // Scenario 3: Both venue name AND address are provided - automatic calculation
-    if (watchedVenue && watchedVenueAddress && watchedVenue.length > 3 && watchedVenueAddress.length > 10) {
-      console.log(`🏢 Both venue name and address provided - automatic calculation:`, { venue: watchedVenue, address: watchedVenueAddress });
-      const timer = setTimeout(() => {
-        calculateMileage(watchedVenueAddress);
-      }, 800); // Shorter delay for automatic calculation
-      return () => clearTimeout(timer);
-    }
-    
-    // Scenario 2: Only address provided and it's substantial - allow manual calculation
-    // (Manual calculation is handled by the button in the UI)
-    
-    // Scenario 1: Only venue name provided - no automatic calculation
-    // (Tab-based autocomplete is already handled in the AddressAutocomplete component)
-    
-  }, [watchedVenue, watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
+  // No automatic mileage calculation - all calculations are manual via user action
+  // Scenarios:
+  // 1. Venue name only (e.g., "Royal Albert Hall") → Tab-based autocomplete to get full address
+  // 2. Location only (e.g., "Central London") → Manual "Calculate Mileage" button
+  // 3. Both provided → Manual "Calculate Mileage" button (user maintains full control)
   
   // Removed: No longer auto-populate venue address from venue field to prevent unnecessary API calls
   // User preference: Keep venue name blank unless we actually know the venue name
