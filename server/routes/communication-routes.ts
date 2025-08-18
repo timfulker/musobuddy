@@ -526,6 +526,9 @@ export function setupCommunicationRoutes(app: any) {
           subject: mailgunData.subject,
           variables: mailgunData['h:X-Mailgun-Variables']
         });
+        
+        console.log(`🔍 [DEBUG] Expected reply-to format: User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`);
+        console.log(`🔍 [DEBUG] Actual reply-to being sent: ${mailgunData['reply-to']}`);
 
         const mailgunResponse = await mailgun.messages.create('enquiries.musobuddy.com', mailgunData);
         console.log(`✅ Conversation reply email sent via Mailgun:`, mailgunResponse.id);
