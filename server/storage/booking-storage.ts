@@ -148,10 +148,22 @@ export class BookingStorage {
       updatedAt: new Date(),
     };
 
+    console.log(`🔍 [ADMIN] Updating booking #${id} for userId ${userId}`);
+    console.log(`🔍 [ADMIN] Update data:`, JSON.stringify(setData, null, 2));
+    
     const result = await db.update(bookings)
       .set(setData)
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
+    
+    console.log(`🔍 [ADMIN] Database update result:`, result.length > 0 ? 'SUCCESS' : 'NO ROWS UPDATED');
+    console.log(`🔍 [ADMIN] Updated booking data:`, result[0] ? {
+      id: result[0].id,
+      clientName: result[0].clientName,
+      clientEmail: result[0].clientEmail,
+      eventDate: result[0].eventDate,
+      venue: result[0].venue
+    } : 'No data returned');
     
     return result[0];
   }

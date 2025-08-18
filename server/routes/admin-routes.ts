@@ -80,6 +80,13 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
         console.log(`🤖 [ADMIN] Email content to re-parse:`, emailBody.substring(0, 200));
         const parsedData = await parseBookingMessage(emailBody, null, null, booking.userId);
         
+        console.log(`🔍 [ADMIN] AI parsed data for booking #${booking.id}:`, {
+          clientName: parsedData.clientName,
+          clientEmail: parsedData.clientEmail,
+          eventDate: parsedData.eventDate,
+          venue: parsedData.venue
+        });
+        
         // Apply title cleanup for Encore bookings
         const cleanedTitle = cleanEncoreTitle(parsedData.eventTitle || parsedData.title || booking.title);
         

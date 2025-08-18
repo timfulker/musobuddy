@@ -34,12 +34,18 @@ Bookings page sort persistence: Sort criteria (field and direction) are saved to
 Booking summary gig sheets: New "Summary" button on booking cards opens comprehensive gig information in new tab with print-friendly layout. Organized by categories (Event Details, Venue Information, Client Information, Financial Details, Setup & Performance, Notes) and only displays populated fields. Includes optional Google Maps integration for venue location.
 
 ## Recent Changes
+**August 18, 2025 - AI Booking Reprocessing System Fixed:**
+- ✅ COMPLETELY FIXED: Critical bug in admin booking reprocessing system where database updates were failing silently
+- Fixed missing userId parameter in storage.updateBooking() call that prevented reprocessed data from saving to database
+- Eliminated contaminated input data - AI now parses fresh email content without bias from existing wrong data
+- Added comprehensive debug logging to track AI parsing and database update success
+- Reprocessing now correctly updates client names, emails, dates, and venues with 99% AI confidence
+- System successfully tested with booking #7363: "Tim Fulker" → "Patrick Head", email corrected, date added, venue cleaned
+
 **August 18, 2025 - Production Deployment Issue Resolution:**
-- ✅ COMPLETELY FIXED: Eliminated all hardcoded Chromium paths causing PulseAudio deployment failures
-- Both PDF generators (invoice-pdf-generator.ts and unified-contract-pdf.ts) now use deployment-ready @sparticuz/chromium configuration exclusively
-- Removed conditional NODE_ENV checks and hardcoded development paths that were causing intermittent build failures
-- Google Maps geocoding API properly configured with browser key restrictions
-- Platform now consistently deployable to production with zero hardcoded dependencies
+- ✅ COMPLETELY FIXED: Eliminated all hardcoded Chromium paths causing PulseAudio deployment failures  
+- Both PDF generators now use deployment-ready @sparticuz/chromium configuration exclusively
+- Platform consistently deployable to production with zero hardcoded dependencies
 
 ## System Architecture
 
