@@ -234,7 +234,7 @@ export function registerHealthRoutes(app: Express) {
             </div>
         </div>
         <div style="background-color: #333; color: #999; padding: 15px; text-align: center; font-size: 11px;">
-            Sent via MusoBuddy Music Management
+            Sent via MusoBuddy
         </div>
     </div>
 </body>
