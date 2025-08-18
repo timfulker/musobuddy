@@ -19,7 +19,7 @@ Force Text Color Injection Technique: When CSS complexity makes simple color cha
   1. Create a useEffect hook that injects a <style> element into document head
   2. Define CSS class with both `color: [desired-color] !important` AND `-webkit-text-fill-color: [desired-color] !important`
   3. Apply the custom class to the problematic element
-Example implementation that fixed the "New" badge text visibility:
+  Example implementation that fixed the "New" badge text visibility:
   ```javascript
   React.useEffect(() => {
     const style = document.createElement('style');

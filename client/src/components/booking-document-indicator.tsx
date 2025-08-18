@@ -11,22 +11,26 @@ interface BookingDocumentIndicatorProps {
 }
 
 export function BookingDocumentIndicator({ bookingId, booking, onClick }: BookingDocumentIndicatorProps) {
-  // Use React Query to fetch documents with better error handling
-  const { data: documentsData, isLoading } = useQuery({
-    queryKey: ['booking-documents', bookingId],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
-        return await response.json();
-      } catch (error) {
-        console.error('📄 Error fetching documents for booking', bookingId, ':', error);
-        // Return empty result on error instead of throwing
-        return { documents: [] };
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
+  // TEMPORARILY DISABLE API CALLS to prevent resource exhaustion
+  // TODO: Implement batch API or lazy loading when cards become visible
+  const documentsData = { documents: [] };
+  const isLoading = false;
+  
+  // Previous code kept for future reference:
+  // const { data: documentsData, isLoading } = useQuery({
+  //   queryKey: ['booking-documents', bookingId],
+  //   queryFn: async () => {
+  //     try {
+  //       const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
+  //       return await response.json();
+  //     } catch (error) {
+  //       console.error('📄 Error fetching documents for booking', bookingId, ':', error);
+  //       return { documents: [] };
+  //     }
+  //   },
+  //   staleTime: 5 * 60 * 1000,
+  //   gcTime: 10 * 60 * 1000,
+  // });
   
   // Check if any documents exist
   const documents = documentsData?.documents || [];

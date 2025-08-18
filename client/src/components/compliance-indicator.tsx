@@ -11,21 +11,26 @@ interface ComplianceIndicatorProps {
 }
 
 export function ComplianceIndicator({ bookingId, booking, onClick }: ComplianceIndicatorProps) {
-  // Check if compliance documents have been sent for this specific booking
-  const { data: sentData, isLoading } = useQuery({
-    queryKey: ['compliance-sent', bookingId],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest(`/api/bookings/${bookingId}/compliance-sent`);
-        return await response.json();
-      } catch (error) {
-        console.error('📋 Error checking compliance sent status:', error);
-        return { sent: false, documents: [] };
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
+  // TEMPORARILY DISABLE API CALLS to prevent resource exhaustion
+  // TODO: Implement batch API or lazy loading when cards become visible
+  const sentData = { sent: false, documents: [] };
+  const isLoading = false;
+  
+  // Previous code kept for future reference:
+  // const { data: sentData, isLoading } = useQuery({
+  //   queryKey: ['compliance-sent', bookingId],
+  //   queryFn: async () => {
+  //     try {
+  //       const response = await apiRequest(`/api/bookings/${bookingId}/compliance-sent`);
+  //       return await response.json();
+  //     } catch (error) {
+  //       console.error('📋 Error checking compliance sent status:', error);
+  //       return { sent: false, documents: [] };
+  //     }
+  //   },
+  //   staleTime: 5 * 60 * 1000,
+  //   gcTime: 10 * 60 * 1000,
+  // });
   
   // Don't show indicator if loading or no compliance has been sent for this booking
   if (isLoading || !sentData?.sent) {

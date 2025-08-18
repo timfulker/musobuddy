@@ -360,10 +360,10 @@ export class BookingStorage {
     try {
       // Query for documents associated with this booking
       const result = await db.execute(`
-        SELECT id, booking_id, file_name, file_path, file_type, file_size, upload_date
+        SELECT id, booking_id, document_name, document_url, document_key, document_type, uploaded_at
         FROM booking_documents 
         WHERE booking_id = ${bookingId} 
-        ORDER BY upload_date DESC
+        ORDER BY uploaded_at DESC
       `);
 
       return result || [];
