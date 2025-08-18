@@ -350,7 +350,7 @@ export default function NewBookingPage() {
     }
   }, [isEditMode, editingBooking]);
 
-  // Monitor venue address changes for automatic mileage calculation
+  // Monitor venue address changes for automatic mileage calculation with enhanced logic
   useEffect(() => {
     // Skip if we're in edit mode and form hasn't been initialized yet
     if (isEditMode && !formInitialized) return;
@@ -358,28 +358,22 @@ export default function NewBookingPage() {
     // Skip if we've already calculated mileage
     if (mileageCalculated) return;
     
-    // Only calculate once when address is added/changed and is substantial
-    if (watchedVenueAddress && watchedVenueAddress.length > 10) {
-      // Check if this looks like just a town name (no commas, no venue keywords)
-      const isTownOnly = !watchedVenueAddress.includes(',') && 
-                         !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
-      
-      if (isTownOnly) {
-        console.log(`🏘️ Detected town-only address: ${watchedVenueAddress}`);
-        // Delay calculation slightly to avoid rapid API calls
-        const timer = setTimeout(() => {
-          calculateMileageToTownCenter(watchedVenueAddress);
-        }, 1500);
-        return () => clearTimeout(timer);
-      } else {
-        // Normal venue address calculation
-        const timer = setTimeout(() => {
-          calculateMileage(watchedVenueAddress);
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
+    // Scenario 3: Both venue name AND address are provided - automatic calculation
+    if (watchedVenue && watchedVenueAddress && watchedVenue.length > 3 && watchedVenueAddress.length > 10) {
+      console.log(`🏢 Both venue name and address provided - automatic calculation:`, { venue: watchedVenue, address: watchedVenueAddress });
+      const timer = setTimeout(() => {
+        calculateMileage(watchedVenueAddress);
+      }, 800); // Shorter delay for automatic calculation
+      return () => clearTimeout(timer);
     }
-  }, [watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
+    
+    // Scenario 2: Only address provided and it's substantial - allow manual calculation
+    // (Manual calculation is handled by the button in the UI)
+    
+    // Scenario 1: Only venue name provided - no automatic calculation
+    // (Tab-based autocomplete is already handled in the AddressAutocomplete component)
+    
+  }, [watchedVenue, watchedVenueAddress, mileageCalculated, isEditMode, formInitialized]);
   
   // Removed: No longer auto-populate venue address from venue field to prevent unnecessary API calls
   // User preference: Keep venue name blank unless we actually know the venue name
