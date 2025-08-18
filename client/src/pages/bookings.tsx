@@ -1740,8 +1740,9 @@ export default function UnifiedBookings() {
                                                 🎵 Apply on Encore
                                               </Button>
                                             )}
-                                            {/* Action Buttons Row */}
-                                            <div className="flex items-center gap-2 flex-wrap">
+                                            {/* Primary Action Buttons - Clean Hybrid Approach */}
+                                            <div className="flex items-center gap-2">
+                                              {/* Most Important Actions - Direct Access */}
                                               <Button
                                                 variant="outline"
                                                 size="sm"
@@ -1753,32 +1754,6 @@ export default function UnifiedBookings() {
                                               >
                                                 <MessageSquare className="w-4 h-4 mr-1" />
                                                 Respond
-                                              </Button>
-                                              
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  navigate(`/templates?bookingId=${groupBooking.id}&action=thankyou`);
-                                                }}
-                                                className="text-green-600 hover:bg-green-50"
-                                              >
-                                                <ThumbsUp className="w-4 h-4 mr-1" />
-                                                Thank You
-                                              </Button>
-                                              
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  openCommunicationHistoryDialog(groupBooking);
-                                                }}
-                                                className="text-indigo-600 hover:bg-indigo-50"
-                                              >
-                                                <MessageCircle className="w-4 h-4 mr-1" />
-                                                Messages
                                               </Button>
                                               
                                               <Button
@@ -1807,74 +1782,93 @@ export default function UnifiedBookings() {
                                                 Edit
                                               </Button>
                                               
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  navigate(`/invoices/new?bookingId=${groupBooking.id}`);
-                                                }}
-                                                className="text-yellow-600 hover:bg-yellow-50"
-                                              >
-                                                <DollarSign className="w-4 h-4 mr-1" />
-                                                Invoice
-                                              </Button>
-                                              
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  navigate(`/contracts/new?bookingId=${groupBooking.id}`);
-                                                }}
-                                                className="text-red-600 hover:bg-red-50"
-                                              >
-                                                <FileText className="w-4 h-4 mr-1" />
-                                                Contract
-                                              </Button>
-                                              
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  openComplianceDialog(groupBooking);
-                                                }}
-                                                className="text-teal-600 hover:bg-teal-50"
-                                              >
-                                                <Shield className="w-4 h-4 mr-1" />
-                                                Compliance
-                                              </Button>
-                                              
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={async (e) => {
-                                                  e.stopPropagation();
-                                                  try {
-                                                    await apiRequest(`/api/bookings/${groupBooking.id}`, {
-                                                      method: 'PATCH',
-                                                      body: JSON.stringify({ status: 'rejected' }),
-                                                      headers: { 'Content-Type': 'application/json' }
-                                                    });
-                                                    queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-                                                    toast({
-                                                      title: "Booking rejected",
-                                                      description: "Status updated successfully",
-                                                    });
-                                                  } catch (error) {
-                                                    toast({
-                                                      title: "Error",
-                                                      description: "Failed to reject booking",
-                                                      variant: "destructive",
-                                                    });
-                                                  }
-                                                }}
-                                                className="text-gray-600 hover:bg-gray-50"
-                                              >
-                                                <XCircle className="w-4 h-4 mr-1" />
-                                                Reject
-                                              </Button>
+                                              {/* Secondary Actions - Dropdown Menu */}
+                                              <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-gray-600 hover:bg-gray-50"
+                                                  >
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                  </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48">
+                                                  <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/templates?bookingId=${groupBooking.id}&action=thankyou`);
+                                                    }}
+                                                  >
+                                                    <ThumbsUp className="w-4 h-4 mr-2" />
+                                                    Send Thank You
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openCommunicationHistoryDialog(groupBooking);
+                                                    }}
+                                                  >
+                                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                                    View Messages
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/invoices/new?bookingId=${groupBooking.id}`);
+                                                    }}
+                                                  >
+                                                    <DollarSign className="w-4 h-4 mr-2" />
+                                                    Create Invoice
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/contracts/new?bookingId=${groupBooking.id}`);
+                                                    }}
+                                                  >
+                                                    <FileText className="w-4 h-4 mr-2" />
+                                                    Create Contract
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openComplianceDialog(groupBooking);
+                                                    }}
+                                                  >
+                                                    <Shield className="w-4 h-4 mr-2" />
+                                                    Send Compliance
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={async (e) => {
+                                                      e.stopPropagation();
+                                                      try {
+                                                        await apiRequest(`/api/bookings/${groupBooking.id}`, {
+                                                          method: 'PATCH',
+                                                          body: JSON.stringify({ status: 'rejected' }),
+                                                          headers: { 'Content-Type': 'application/json' }
+                                                        });
+                                                        queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                                        toast({
+                                                          title: "Booking rejected",
+                                                          description: "Status updated successfully",
+                                                        });
+                                                      } catch (error) {
+                                                        toast({
+                                                          title: "Error",
+                                                          description: "Failed to reject booking",
+                                                          variant: "destructive",
+                                                        });
+                                                      }
+                                                    }}
+                                                    className="text-red-600 focus:text-red-600"
+                                                  >
+                                                    <XCircle className="w-4 h-4 mr-2" />
+                                                    Reject Booking
+                                                  </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                              </DropdownMenu>
                                             </div>
                                           </div>
                                         </CardContent>
