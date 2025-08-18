@@ -77,20 +77,21 @@ Venue name vs location distinction: Fixed critical issue where location names li
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
 - **AI Integration**: Claude Haiku for contract parsing, price enquiry detection, message categorization, and intelligent date logic. OpenAI GPT-5 for email parsing and enhanced venue extraction.
-- **System Design Choices**:
-    - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API for venue auto-population, mileage, what3words), and a standalone, token-based booking widget that parses dates. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking.
-    - **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting.
-    - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
-    - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
-    - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
-    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-    - **System Health Monitoring**: Real-time dashboard (`/system-health`).
-    - **Deployment**: Node.js server serving built frontend.
-    - **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
-    - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
-    - **Onboarding Wizard**: Multi-step wizard covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
-    - **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
+
+### System Design Choices
+- **User Management**: Two-tier system (Admin Accounts, User Accounts).
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API for venue auto-population, mileage, what3words), and a standalone, token-based booking widget that parses dates. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking.
+- **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
+- **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
+- **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
+- **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
+- **System Health Monitoring**: Real-time dashboard (`/system-health`).
+- **Deployment**: Node.js server serving built frontend.
+- **API Design**: RESTful, consistent JSON responses, and comprehensive error handling.
+- **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
+- **Onboarding Wizard**: Multi-step wizard covering business info, contact details, email prefix setup, pricing rates, service areas, and theme branding.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
 
 ## External Dependencies
 
