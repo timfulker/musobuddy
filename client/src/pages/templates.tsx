@@ -386,10 +386,12 @@ export default function Templates() {
     };
     
     let processedText = text
-      // Basic fields
+      // Basic fields with better fallbacks
       .replace(/\[Client Name\]/g, booking.clientName || '[Client Name]')
       .replace(/\[client name\]/g, booking.clientName || '[Client Name]')
       .replace(/\[CLIENT NAME\]/g, (booking.clientName || '[Client Name]').toUpperCase())
+      .replace(/\[Client's Name\]/g, booking.clientName || '[Client\'s Name]')
+      .replace(/\[client's name\]/g, booking.clientName || '[Client\'s Name]')
       .replace(/\[Event Date\]/g, eventDate)
       .replace(/\[event date\]/g, eventDate)
       .replace(/\[date\]/g, eventDate)
@@ -476,13 +478,29 @@ export default function Templates() {
     const customizedSubject = replaceTemplateVariables(template.subject, targetData, userSettings);
     const customizedEmailBody = replaceTemplateVariables(template.emailBody, targetData, userSettings);
 
+    // Check for unpopulated variables in preview
+    const previewText = `${customizedSubject} ${customizedEmailBody}`;
+    const unpopulatedVars = findUnpopulatedVariables(previewText);
+    
     // Show preview dialog first
     setPreviewData({
       subject: customizedSubject,
       emailBody: customizedEmailBody,
-      template: template
+      template: template,
+      unpopulatedVariables: unpopulatedVars // Add this to show in preview
     });
     setShowPreview(true);
+  };
+
+  // Function to detect unpopulated variables
+  const findUnpopulatedVariables = (text: string) => {
+    const variablePattern = /\[([^\]]+)\]/g;
+    const matches = [];
+    let match;
+    while ((match = variablePattern.exec(text)) !== null) {
+      matches.push(match[1]);
+    }
+    return [...new Set(matches)]; // Remove duplicates
   };
 
   const handleSendEmail = async () => {
@@ -494,6 +512,19 @@ export default function Templates() {
       emailBody: previewData.emailBody,
       smsBody: previewData.template.smsBody ? replaceTemplateVariables(previewData.template.smsBody, targetData) : ''
     };
+
+    // Check for unpopulated variables
+    const allText = `${customizedTemplate.subject} ${customizedTemplate.emailBody} ${customizedTemplate.smsBody}`;
+    const unpopulatedVars = findUnpopulatedVariables(allText);
+    
+    if (unpopulatedVars.length > 0) {
+      toast({
+        title: "Missing Information",
+        description: `Please complete these fields in the booking form before sending: ${unpopulatedVars.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Send the email using the template
@@ -1155,6 +1186,29 @@ export default function Templates() {
                   <div><strong>Subject:</strong> {previewData.subject}</div>
                   <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
                 </div>
+
+                {/* Missing Variables Warning */}
+                {previewData.unpopulatedVariables && previewData.unpopulatedVariables.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                    <div className="flex items-start">
+                      <div className="text-red-600 mr-2 mt-0.5">⚠️</div>
+                      <div>
+                        <h4 className="font-semibold text-red-800 mb-2">Missing Information</h4>
+                        <p className="text-red-700 text-sm mb-2">
+                          The following fields need to be completed in the booking form before sending:
+                        </p>
+                        <ul className="text-red-700 text-sm list-disc list-inside space-y-1">
+                          {previewData.unpopulatedVariables.map(variable => (
+                            <li key={variable}>{variable}</li>
+                          ))}
+                        </ul>
+                        <p className="text-red-600 text-xs mt-2 font-medium">
+                          Email cannot be sent until all fields are completed.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Email Body Preview */}
                 <div className="border rounded-lg p-4 bg-white">
