@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -1747,9 +1747,35 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  openCommunicationHistoryDialog(groupBooking);
+                                                  navigate(`/templates?bookingId=${groupBooking.id}&action=respond`);
                                                 }}
                                                 className="text-blue-600 hover:bg-blue-50"
+                                              >
+                                                <MessageSquare className="w-4 h-4 mr-1" />
+                                                Respond
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate(`/templates?bookingId=${groupBooking.id}&action=thankyou`);
+                                                }}
+                                                className="text-green-600 hover:bg-green-50"
+                                              >
+                                                <ThumbsUp className="w-4 h-4 mr-1" />
+                                                Thank You
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  openCommunicationHistoryDialog(groupBooking);
+                                                }}
+                                                className="text-indigo-600 hover:bg-indigo-50"
                                               >
                                                 <MessageCircle className="w-4 h-4 mr-1" />
                                                 Messages
@@ -1790,7 +1816,7 @@ export default function UnifiedBookings() {
                                                 }}
                                                 className="text-yellow-600 hover:bg-yellow-50"
                                               >
-                                                <Receipt className="w-4 h-4 mr-1" />
+                                                <DollarSign className="w-4 h-4 mr-1" />
                                                 Invoice
                                               </Button>
                                               
@@ -1805,6 +1831,49 @@ export default function UnifiedBookings() {
                                               >
                                                 <FileText className="w-4 h-4 mr-1" />
                                                 Contract
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  openComplianceDialog(groupBooking);
+                                                }}
+                                                className="text-teal-600 hover:bg-teal-50"
+                                              >
+                                                <Shield className="w-4 h-4 mr-1" />
+                                                Compliance
+                                              </Button>
+                                              
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={async (e) => {
+                                                  e.stopPropagation();
+                                                  try {
+                                                    await apiRequest(`/api/bookings/${groupBooking.id}`, {
+                                                      method: 'PATCH',
+                                                      body: JSON.stringify({ status: 'rejected' }),
+                                                      headers: { 'Content-Type': 'application/json' }
+                                                    });
+                                                    queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                                    toast({
+                                                      title: "Booking rejected",
+                                                      description: "Status updated successfully",
+                                                    });
+                                                  } catch (error) {
+                                                    toast({
+                                                      title: "Error",
+                                                      description: "Failed to reject booking",
+                                                      variant: "destructive",
+                                                    });
+                                                  }
+                                                }}
+                                                className="text-gray-600 hover:bg-gray-50"
+                                              >
+                                                <XCircle className="w-4 h-4 mr-1" />
+                                                Reject
                                               </Button>
                                             </div>
                                           </div>
@@ -1987,9 +2056,35 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openCommunicationHistoryDialog(booking);
+                                  navigate(`/templates?bookingId=${booking.id}&action=respond`);
                                 }}
                                 className="text-blue-600 hover:bg-blue-50"
+                              >
+                                <MessageSquare className="w-4 h-4 mr-1" />
+                                Respond
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+                                }}
+                                className="text-green-600 hover:bg-green-50"
+                              >
+                                <ThumbsUp className="w-4 h-4 mr-1" />
+                                Thank You
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCommunicationHistoryDialog(booking);
+                                }}
+                                className="text-indigo-600 hover:bg-indigo-50"
                               >
                                 <MessageCircle className="w-4 h-4 mr-1" />
                                 Messages
@@ -2030,7 +2125,7 @@ export default function UnifiedBookings() {
                                 }}
                                 className="text-yellow-600 hover:bg-yellow-50"
                               >
-                                <Receipt className="w-4 h-4 mr-1" />
+                                <DollarSign className="w-4 h-4 mr-1" />
                                 Invoice
                               </Button>
                               
@@ -2045,6 +2140,49 @@ export default function UnifiedBookings() {
                               >
                                 <FileText className="w-4 h-4 mr-1" />
                                 Contract
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openComplianceDialog(booking);
+                                }}
+                                className="text-teal-600 hover:bg-teal-50"
+                              >
+                                <Shield className="w-4 h-4 mr-1" />
+                                Compliance
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await apiRequest(`/api/bookings/${booking.id}`, {
+                                      method: 'PATCH',
+                                      body: JSON.stringify({ status: 'rejected' }),
+                                      headers: { 'Content-Type': 'application/json' }
+                                    });
+                                    queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                    toast({
+                                      title: "Booking rejected",
+                                      description: "Status updated successfully",
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to reject booking",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                                className="text-gray-600 hover:bg-gray-50"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
                               </Button>
                             </div>
                           </CardContent>
