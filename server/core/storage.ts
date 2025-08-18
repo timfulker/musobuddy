@@ -159,6 +159,10 @@ export class Storage {
     return bookingStorage.resolveBookingConflict(id, resolution, notes);
   }
 
+  async getAllUserConflicts(userId: string) {
+    return bookingStorage.getAllUserConflicts(userId);
+  }
+
   async updateBookingContractDocument(id: number, cloudUrl: string, storageKey: string, filename: string) {
     return bookingStorage.updateBookingContractDocument(id, cloudUrl, storageKey, filename);
   }
