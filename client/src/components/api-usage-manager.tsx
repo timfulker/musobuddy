@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, Shield, Activity, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Shield, Activity, TrendingUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -26,6 +26,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 interface ApiUsageData {
   userId: string;
@@ -71,6 +79,7 @@ export function ApiUsageManager() {
   const [showBlockDialog, setShowBlockDialog] = useState<boolean>(false);
   const [selectedUserToBlock, setSelectedUserToBlock] = useState<string>('');
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch usage statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
