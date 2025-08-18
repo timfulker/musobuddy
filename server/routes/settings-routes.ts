@@ -773,7 +773,7 @@ export async function registerSettingsRoutes(app: Express) {
           .join('');
       };
 
-      // Create ultra-simple HTML email content that works everywhere
+      // Create professional HTML email content with enhanced styling
       const professionalEmailHtml = `
 <!DOCTYPE html>
 <html>
@@ -781,22 +781,34 @@ export async function registerSettingsRoutes(app: Express) {
     <meta charset="UTF-8">
     <title>${template.subject}</title>
 </head>
-<body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-    <div style="max-width: 600px; margin: 0 auto; background: white; border: 1px solid #ddd;">
-        <div style="background-color: ${themeColor}; color: ${textColor}; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 22px;">${template.subject}</h1>
+<body style="margin: 0; padding: 20px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); line-height: 1.6;">
+    <div style="max-width: 650px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.08);">
+        
+        <!-- Header with music note accent -->
+        <div style="background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%); color: ${textColor}; padding: 32px 28px; text-align: center; position: relative;">
+            <div style="position: absolute; top: 16px; right: 24px; font-size: 20px; opacity: 0.7;">♪</div>
+            <div style="background: rgba(255,255,255,0.15); color: ${textColor}; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-bottom: 12px; letter-spacing: 0.5px;">MusoBuddy</div>
+            <h1 style="margin: 0; font-size: 26px; font-weight: 400; line-height: 1.3; font-family: Georgia, 'Times New Roman', serif;">${template.subject}</h1>
         </div>
-        <div style="padding: 30px;">
-            ${formatEmailContent(template.emailBody)}
+        
+        <!-- Main content -->
+        <div style="padding: 40px 36px;">
+            <div style="font-size: 16px; color: #2c3e50; line-height: 1.7;">
+                ${formatEmailContent(template.emailBody)}
+            </div>
             
-            <div style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee;">
-                <p style="margin: 0; text-align: center;"><strong>${senderName || 'MusoBuddy'}</strong></p>
-                <p style="margin: 5px 0 0 0; text-align: center; color: #666;">Professional Music Services</p>
-                <p style="margin: 5px 0 0 0; text-align: center; color: ${themeColor};">${senderEmail}</p>
+            <!-- Professional signature card -->
+            <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #fafbfc 0%, #f1f3f4 100%); border-radius: 12px; text-align: center; border: 1px solid #e8eaed;">
+                <div style="width: 60px; height: 3px; background: ${themeColor}; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+                <div style="font-size: 20px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; font-family: Georgia, serif;">${senderName || 'MusoBuddy'}</div>
+                <div style="color: #5f6368; font-size: 14px; margin-bottom: 16px; font-style: italic;">Professional Music Services</div>
+                <div style="color: ${themeColor}; font-weight: 500; font-size: 15px; text-decoration: none;">${senderEmail}</div>
             </div>
         </div>
-        <div style="background-color: #333; color: #999; padding: 15px; text-align: center; font-size: 11px;">
-            Sent via MusoBuddy
+        
+        <!-- Clean footer -->
+        <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #95a5a6; padding: 20px; text-align: center;">
+            <div style="font-size: 12px; opacity: 0.8;">Sent with ♪ via <span style="color: ${themeColor}; font-weight: 500;">MusoBuddy</span></div>
         </div>
     </div>
 </body>
