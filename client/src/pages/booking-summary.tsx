@@ -235,6 +235,98 @@ export default function BookingSummary() {
           </CardContent>
         </Card>
 
+        {/* Technical Details */}
+        {(booking.soundTechContact || booking.venueContact || booking.venueContactInfo || booking.soundCheckTime) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Technical Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {booking.venueContact && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Venue On-Site Contact:</h4>
+                    <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">{booking.venueContact}</p>
+                  </div>
+                )}
+                {booking.soundTechContact && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Sound Tech Contact:</h4>
+                    <p className="text-gray-700 bg-green-50 p-3 rounded-lg">{booking.soundTechContact}</p>
+                  </div>
+                )}
+                {booking.venueContactInfo && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Additional Venue Contact Info:</h4>
+                    <p className="text-gray-700 bg-purple-50 p-3 rounded-lg">{booking.venueContactInfo}</p>
+                  </div>
+                )}
+                {booking.soundCheckTime && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Sound Check Time:</h4>
+                    <p className="text-gray-700 bg-orange-50 p-3 rounded-lg">{booking.soundCheckTime}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Special Moments & Music */}
+        {(booking.firstDanceSong || booking.processionalSong || booking.recessionalSong || booking.signingRegisterSong || booking.mustPlaySongs || booking.avoidSongs) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Special Moments & Music Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {booking.firstDanceSong && (
+                  <div>
+                    <h4 className="font-semibold mb-2">First Dance Song:</h4>
+                    <p className="text-gray-700 bg-pink-50 p-3 rounded-lg">{booking.firstDanceSong}</p>
+                  </div>
+                )}
+                {booking.processionalSong && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Processional Music:</h4>
+                    <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">{booking.processionalSong}</p>
+                  </div>
+                )}
+                {booking.recessionalSong && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Recessional Music:</h4>
+                    <p className="text-gray-700 bg-green-50 p-3 rounded-lg">{booking.recessionalSong}</p>
+                  </div>
+                )}
+                {booking.signingRegisterSong && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Register Signing Music:</h4>
+                    <p className="text-gray-700 bg-purple-50 p-3 rounded-lg">{booking.signingRegisterSong}</p>
+                  </div>
+                )}
+                {booking.mustPlaySongs && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Must-Play Songs:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-yellow-50 p-3 rounded-lg">{booking.mustPlaySongs}</p>
+                  </div>
+                )}
+                {booking.avoidSongs && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Songs to Avoid:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-red-50 p-3 rounded-lg">{booking.avoidSongs}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Musical Style & Requirements */}
         {(booking.styles || booking.whatsIncluded) && (
           <Card>
