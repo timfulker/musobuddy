@@ -102,8 +102,10 @@ export async function registerRoutes(app: Express) {
       
       console.log(`🔍 Fetching conflicts for user ${userId}`);
       
-      // For now, return empty array to fix 500 error - will implement conflict detection later
-      res.json([]);
+      // Get real conflicts from booking storage
+      const conflicts = await storage.getAllUserConflicts(userId);
+      console.log(`✅ Found ${conflicts.length} conflicts for user ${userId}`);
+      res.json(conflicts);
     } catch (error) {
       console.error('Error fetching conflicts:', error);
       res.status(500).json({ error: 'Failed to fetch conflicts' });

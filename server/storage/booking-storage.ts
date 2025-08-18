@@ -332,6 +332,61 @@ export class BookingStorage {
       .orderBy(desc(bookingConflicts.createdAt));
   }
 
+  // Get ALL conflicts for a user (for dashboard widget)
+  async getAllUserConflicts(userId: string) {
+    // Get unresolved booking conflicts from database
+    const storedConflicts = await db.select().from(bookingConflicts)
+      .where(and(
+        eq(bookingConflicts.userId, userId),
+        eq(bookingConflicts.isResolved, false)
+      ))
+      .orderBy(desc(bookingConflicts.createdAt));
+
+    // Also detect real-time conflicts by checking all bookings on same dates
+    const userBookings = await this.getBookingsByUser(userId);
+    const realTimeConflicts: any[] = [];
+
+    for (let i = 0; i < userBookings.length; i++) {
+      const booking1 = userBookings[i];
+      if (!booking1.eventDate || !booking1.eventTime || !booking1.eventEndTime) continue;
+
+      for (let j = i + 1; j < userBookings.length; j++) {
+        const booking2 = userBookings[j];
+        if (!booking2.eventDate || !booking2.eventTime || !booking2.eventEndTime) continue;
+
+        // Check if bookings are on same date
+        const date1 = new Date(booking1.eventDate).toDateString();
+        const date2 = new Date(booking2.eventDate).toDateString();
+        
+        if (date1 === date2) {
+          const booking1Start = new Date(`${date1} ${booking1.eventTime}`);
+          const booking1End = new Date(`${date1} ${booking1.eventEndTime}`);
+          const booking2Start = new Date(`${date2} ${booking2.eventTime}`);
+          const booking2End = new Date(`${date2} ${booking2.eventEndTime}`);
+          
+          // Check for time overlap
+          if (booking1Start < booking2End && booking1End > booking2Start) {
+            realTimeConflicts.push({
+              bookingId: booking1.id,
+              withBookingId: booking2.id,
+              severity: 'hard',
+              clientName: booking1.clientName || 'Unknown',
+              status: booking1.status,
+              time: booking1.eventTime,
+              canEdit: true,
+              canReject: true,
+              type: 'same_time_same_day',
+              message: `Time conflict between "${booking1.clientName}" and "${booking2.clientName}"`,
+              date: booking1.eventDate
+            });
+          }
+        }
+      }
+    }
+
+    return realTimeConflicts;
+  }
+
   async resolveBookingConflict(id: number, resolution: string, notes?: string) {
     const result = await db.update(bookingConflicts)
       .set({
