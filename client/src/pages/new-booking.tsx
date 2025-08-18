@@ -111,6 +111,9 @@ export default function NewBookingPage() {
   // Track if mileage has been calculated to prevent re-calculation
   const [mileageCalculated, setMileageCalculated] = useState(false);
   
+  // Control map display manually
+  const [showMap, setShowMap] = useState(false);
+  
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
@@ -902,32 +905,51 @@ export default function NewBookingPage() {
                               placeholder="Enter full venue address (e.g., 123 Main St, London, UK) to calculate mileage"
                             />
                           </FormControl>
-                          {/* Manual mileage calculation button */}
-                          {watchedVenueAddress && watchedVenueAddress.length > 10 && !mileageData.distance && !mileageData.isCalculating && (
-                            <div className="mt-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Check if this looks like just a town name
-                                  const isTownOnly = !watchedVenueAddress.includes(',') && 
-                                                     !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
-                                  
-                                  if (isTownOnly) {
-                                    calculateMileageToTownCenter(watchedVenueAddress);
-                                  } else {
-                                    calculateMileage(watchedVenueAddress);
-                                  }
-                                }}
-                                className="h-8 px-3 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                              >
-                                <MapPin className="w-3 h-3 mr-1" />
-                                {!watchedVenueAddress.includes(',') && 
-                                 !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i) 
-                                  ? 'Calculate Distance to Town Center' 
-                                  : 'Calculate Mileage'}
-                              </Button>
+                          {/* Manual mileage calculation and map generation buttons */}
+                          {watchedVenueAddress && watchedVenueAddress.length > 10 && !mileageData.isCalculating && (
+                            <div className="mt-2 flex gap-2">
+                              {!mileageData.distance && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Check if this looks like just a town name
+                                    const isTownOnly = !watchedVenueAddress.includes(',') && 
+                                                       !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i);
+                                    
+                                    if (isTownOnly) {
+                                      calculateMileageToTownCenter(watchedVenueAddress);
+                                    } else {
+                                      calculateMileage(watchedVenueAddress);
+                                    }
+                                  }}
+                                  className="h-8 px-3 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                                >
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  {!watchedVenueAddress.includes(',') && 
+                                   !watchedVenueAddress.match(/\b(Hall|Hotel|Club|Centre|Center|Church|School|Park|Theatre|Theater|Stadium|Arena|Pavilion|House|Court|Lodge|Manor|Castle|Museum|Gallery|Library|Inn|Venue|Building)\b/i) 
+                                    ? 'Calculate Distance to Town Center' 
+                                    : 'Calculate Mileage'}
+                                </Button>
+                              )}
+                              
+                              {/* Generate Map button - only show when both venue name and address are present */}
+                              {(watchedVenue && watchedVenue.length > 3) && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Trigger map generation by setting a state
+                                    setShowMap(true);
+                                  }}
+                                  className="h-8 px-3 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                >
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  Generate Map
+                                </Button>
+                              )}
                             </div>
                           )}
                           
@@ -1019,18 +1041,34 @@ export default function NewBookingPage() {
                       )}
                     </div>
                     
-                    {/* Venue Location Map */}
-                    {(watchedVenue || watchedVenueAddress) && (
-                      <BookingMap
-                        venue={
-                          watchedVenueAddress 
-                            ? (watchedVenue 
-                                ? `${watchedVenue}, ${watchedVenueAddress}` 
-                                : watchedVenueAddress)
-                            : watchedVenue
-                        }
-                        className="mt-4"
-                      />
+                    {/* Venue Location Map - Only displayed when manually generated */}
+                    {showMap && (watchedVenue || watchedVenueAddress) && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-green-700">
+                            📍 Venue Location Map
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowMap(false)}
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                        <BookingMap
+                          venue={
+                            watchedVenueAddress 
+                              ? (watchedVenue 
+                                  ? `${watchedVenue}, ${watchedVenueAddress}` 
+                                  : watchedVenueAddress)
+                              : watchedVenue
+                          }
+                          className=""
+                        />
+                      </div>
                     )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
