@@ -53,11 +53,6 @@ export default function Conversation() {
   const [showTemplates, setShowTemplates] = useState(false);
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Extract messages and unread notification IDs from response
-  const messages = conversationData?.messages || [];
-  const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
-  const hasUnreadNotifications = unreadNotificationIds.length > 0;
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
 
@@ -80,6 +75,11 @@ export default function Conversation() {
     },
     enabled: !!bookingId,
   });
+
+  // Extract messages and unread notification IDs from response
+  const messages = conversationData?.messages || [];
+  const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
+  const hasUnreadNotifications = unreadNotificationIds.length > 0;
 
   // Fetch email templates
   const { data: templates = [] } = useQuery({
