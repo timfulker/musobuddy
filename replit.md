@@ -19,7 +19,7 @@ Force Text Color Injection Technique: When CSS complexity makes simple color cha
   1. Create a useEffect hook that injects a <style> element into document head
   2. Define CSS class with both `color: [desired-color] !important` AND `-webkit-text-fill-color: [desired-color] !important`
   3. Apply the custom class to the problematic element
-  Example implementation that fixed the "New" badge text visibility:
+Example implementation that fixed the "New" badge text visibility:
   ```javascript
   React.useEffect(() => {
     const style = document.createElement('style');
@@ -61,6 +61,7 @@ GPT-5 email extraction system prompt fix: Resolved persistent issue where Weebly
 Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary Google Maps API calls. AI parser now sets venue as empty string for Encore bookings instead of placeholder text, preventing wasteful API usage while maintaining proper booking form functionality.
 Venue name vs location distinction: Fixed critical issue where location names like "Glasgow" were incorrectly treated as venue names, triggering unnecessary Google API calls. Updated both GPT-5 system prompt and fallback parser to distinguish between actual venue names (e.g., "Glasgow City Hall") and general locations (e.g., "Glasgow"). Venue name field now stays blank unless we actually know the specific venue name. Location information goes in venueAddress field. Removed booking form logic that auto-triggered API calls for town-only entries, significantly reducing API usage and improving accuracy per user preference.
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
+Booking status validation: Implemented validation in the PATCH booking endpoint to prevent future bookings from being marked as "completed". System now blocks any attempt to mark a booking with a future event date as completed, preventing data integrity issues where future events show as finished.
 
 ## System Architecture
 

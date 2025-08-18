@@ -140,6 +140,21 @@ export function registerBookingRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
       
+      // PREVENT INVALID STATUS TRANSITIONS: Check if trying to mark future booking as completed
+      if (req.body.status === 'completed' && existingBooking.eventDate) {
+        const eventDate = new Date(existingBooking.eventDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        
+        if (eventDate > today) {
+          console.warn(`❌ Blocked attempt to mark future booking ${bookingId} (${eventDate.toDateString()}) as completed`);
+          return res.status(400).json({ 
+            error: 'Cannot mark future bookings as completed',
+            details: `Booking is scheduled for ${eventDate.toDateString()}, which is in the future`
+          });
+        }
+      }
+      
       const updatedBooking = await storage.updateBooking(bookingId, req.body, userId);
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
       res.json(updatedBooking);
