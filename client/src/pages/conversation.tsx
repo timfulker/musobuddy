@@ -142,15 +142,10 @@ export default function Conversation() {
     try {
       console.log('🤖 Starting AI response generation...');
       
-      // Get minimal conversation context (just last 2 messages to save tokens)
-      const recentMessages = messages.slice(-2).map(msg => ({
-        type: msg.messageType,
-        content: msg.content.substring(0, 200) // Limit content length to reduce tokens
-      }));
-
-      const conversationContext = recentMessages.length > 0 
-        ? `Latest exchange:\n${recentMessages.map(msg => 
-            `${msg.type === 'incoming' ? 'Client' : 'You'}: ${msg.content}${msg.content.length > 200 ? '...' : ''}`
+      // Get full conversation context for best AI results (users pay $9.99/month, they want quality)
+      const conversationContext = messages.length > 0 
+        ? `Full conversation history:\n${messages.map(msg => 
+            `${msg.type === 'incoming' ? 'Client' : 'You'}: ${msg.content}`
           ).join('\n')}`
         : '';
 
