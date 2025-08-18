@@ -247,42 +247,40 @@ export function setupCommunicationRoutes(app: any) {
               
               if (!foundMatch) {
                 console.log(`⚠️ No patterns matched, using manual line extraction`);
+                
+                // If no pattern matched, check if there's meaningful content at the beginning
+                const lines = rawText.split(/\n+/);
+                const meaningfulLines = [];
+                
+                for (const line of lines) {
+                  const cleanLine = line.trim();
+                  // Skip if line looks like headers, footers, or quoted content
+                  if (cleanLine && 
+                      !cleanLine.startsWith('>') && 
+                      !cleanLine.startsWith('From:') &&
+                      !cleanLine.startsWith('Subject:') &&
+                      !cleanLine.startsWith('Date:') &&
+                      !cleanLine.startsWith('On ') &&
+                      !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
+                      cleanLine.length > 3) {
+                    meaningfulLines.push(cleanLine);
+                  }
+                  // Stop if we hit quoted content
+                  if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
+                    break;
+                  }
+                }
+                
+                if (meaningfulLines.length > 0) {
+                  content = meaningfulLines.join('\n\n');
+                  console.log(`✅ Extracted meaningful lines: ${content}`);
+                } else {
+                  content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
+                  console.log(`⚠️ Using raw text: ${content}`);
+                }
               }
             }
-            
-            // If no pattern matched, check if there's meaningful content at the beginning
-            if (!foundMatch) {
-              // Split by common separators and take the first meaningful part
-              const lines = rawText.split(/\n+/);
-              const meaningfulLines = [];
-              
-              for (const line of lines) {
-                const cleanLine = line.trim();
-                // Skip if line looks like headers, footers, or quoted content
-                if (cleanLine && 
-                    !cleanLine.startsWith('>') && 
-                    !cleanLine.startsWith('From:') &&
-                    !cleanLine.startsWith('Subject:') &&
-                    !cleanLine.startsWith('Date:') &&
-                    !cleanLine.startsWith('On ') &&
-                    !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
-                    cleanLine.length > 3) {
-                  meaningfulLines.push(cleanLine);
-                }
-                // Stop if we hit quoted content
-                if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
-                  break;
-                }
-              }
-              
-              if (meaningfulLines.length > 0) {
-                content = meaningfulLines.join('\n\n');
-                console.log(`✅ Extracted meaningful lines: ${content}`);
-              } else {
-                content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
-                console.log(`⚠️ Using raw text: ${content}`);
-              }
-            }
+
             
             // Add proper formatting
             content = content
