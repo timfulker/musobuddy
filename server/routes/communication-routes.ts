@@ -202,44 +202,51 @@ export function setupCommunicationRoutes(app: any) {
             
             console.log(`🔍 After HTML removal (first 500 chars): ${rawText.substring(0, 500)}`);
             
-            // Remove common email headers and footers first
-            rawText = rawText
-              .replace(/^Client Reply - Re: .+$/gm, '')
-              .replace(/^BOOKING REPLY$/gm, '')
-              .replace(/^From: .+$/gm, '')
-              .replace(/^Subject: .+$/gm, '')
-              .replace(/^Date: .+$/gm, '')
-              .replace(/^To: .+$/gm, '')
-              .replace(/^Booking ID: .+$/gm, '')
-              .trim();
+            // Extract the actual reply content using a specific pattern for this email format
+            // Look for content after "Booking ID: XXXX" and before "On [date] ... wrote:"
+            const bookingReplyPattern = /Booking ID: \d+\s*(.*?)(?:On \d{1,2} \w+ \d{4} at \d{1,2}:\d{2}.+?[,<]|On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:)/s;
+            const bookingMatch = rawText.match(bookingReplyPattern);
             
-            console.log(`🔍 After header removal: ${rawText.substring(0, 500)}`);
+            console.log(`🔍 Testing booking reply pattern: ${bookingReplyPattern.toString()}`);
+            console.log(`🔍 Pattern match result: ${bookingMatch ? 'FOUND' : 'NOT FOUND'}`);
+            if (bookingMatch) {
+              console.log(`🔍 Matched content: "${bookingMatch[1]}"`);
+            }
             
-            // More aggressive patterns to find the actual reply content
-            const replyPatterns = [
-              // Look for content before "On [date/time] ... wrote:"
-              /^(.*?)(?:On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:|On \d{1,2} \w+ \d{4}.+?wrote:)/s,
-              // Look for content before quoted reply indicators
-              /^(.*?)(?:> .+)/s,
-              // Look for content before original message markers
-              /^(.*?)(?:-----Original Message-----)/s,
-              // Look for content before "From:" headers
-              /^(.*?)(?:From: .+@.+)/s,
-              // Look for content before timestamp patterns
-              /^(.*?)(?:\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2})/s,
-              // Simple pattern: everything before quoted content
-              /^([^>]+?)(?:>.+)/s
-            ];
-            
-            let foundMatch = false;
-            for (const pattern of replyPatterns) {
-              const match = rawText.match(pattern);
-              if (match && match[1].trim().length > 3) {
-                content = match[1].trim();
-                foundMatch = true;
-                console.log(`✅ Found match with pattern: ${pattern.toString()}`);
-                console.log(`✅ Extracted content: ${content}`);
-                break;
+            if (bookingMatch && bookingMatch[1].trim().length > 3) {
+              content = bookingMatch[1].trim();
+              console.log(`✅ Found booking reply content: ${content}`);
+            } else {
+              // Fallback: Try other patterns
+              const replyPatterns = [
+                // Look for content before "On [date/time] ... wrote:"
+                /^(.*?)(?:On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:|On \d{1,2} \w+ \d{4}.+?wrote:)/s,
+                // Look for content before quoted reply indicators
+                /^(.*?)(?:> .+)/s,
+                // Look for content before original message markers
+                /^(.*?)(?:-----Original Message-----)/s,
+                // Look for content before "From:" headers
+                /^(.*?)(?:From: .+@.+)/s,
+                // Look for content before timestamp patterns
+                /^(.*?)(?:\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2})/s,
+                // Simple pattern: everything before quoted content
+                /^([^>]+?)(?:>.+)/s
+              ];
+              
+              let foundMatch = false;
+              for (const pattern of replyPatterns) {
+                const match = rawText.match(pattern);
+                if (match && match[1].trim().length > 3) {
+                  content = match[1].trim();
+                  foundMatch = true;
+                  console.log(`✅ Found match with pattern: ${pattern.toString()}`);
+                  console.log(`✅ Extracted content: ${content}`);
+                  break;
+                }
+              }
+              
+              if (!foundMatch) {
+                console.log(`⚠️ No patterns matched, using manual line extraction`);
               }
             }
             
