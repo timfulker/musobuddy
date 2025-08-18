@@ -144,7 +144,9 @@ export default function Contracts() {
     const isNewContractUrl = window.location.pathname === '/contracts/new';
     
     // Only run once when component mounts and data is loaded, and not already processed
-    if ((action === 'new' || action === 'create' || isNewContractUrl) && !isLoading && !isDialogOpen && !dataLoaded) {
+    // CRITICAL: Check dataLoaded FIRST to prevent reopening after manual close
+    if (!dataLoaded && (action === 'new' || action === 'create' || isNewContractUrl) && !isLoading) {
+      console.log('📂 Opening dialog from URL params');
       setIsDialogOpen(true);
       setDataLoaded(true); // CRITICAL FIX: Mark as loaded to prevent infinite loop
 
@@ -241,19 +243,23 @@ export default function Contracts() {
     if (!open) {
       console.log('🚪 Closing dialog - cleaning up state');
       
-      // Clean up URL when closing dialog
+      // CRITICAL: Clean up URL BEFORE updating state to prevent re-triggering
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create' || 
+          window.location.pathname === '/contracts/new') {
         console.log('🧹 Cleaning up URL params');
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, '', '/contracts');
       }
       
-      // Clear all form and component state immediately
+      // Clear all form and component state
       setEditingContract(null);
-      setDataLoaded(false);
       form.reset();
       
-      console.log('✅ Dialog cleanup complete');
+      // Reset dataLoaded after a small delay to prevent immediate re-trigger
+      setTimeout(() => {
+        setDataLoaded(false);
+        console.log('✅ Dialog cleanup complete - dataLoaded reset');
+      }, 100);
     }
     
     // Always update the dialog state
@@ -304,17 +310,29 @@ export default function Contracts() {
       return createdContract;
     },
     onSuccess: (contract) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      // Force dialog to close immediately
-      setIsDialogOpen(false);
-      setEditingContract(null);
-      setDataLoaded(false);
-      form.reset();
-      // Clean up URL
+      console.log('✅ Contract created successfully, closing dialog...');
+      
+      // Clean up URL FIRST to prevent re-triggering
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
-        window.history.replaceState({}, '', window.location.pathname);
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create' || 
+          window.location.pathname === '/contracts/new') {
+        window.history.replaceState({}, '', '/contracts');
       }
+      
+      // Clear form and state
+      setEditingContract(null);
+      form.reset();
+      
+      // Close dialog
+      setIsDialogOpen(false);
+      
+      // Reset dataLoaded after a delay to prevent re-triggering
+      setTimeout(() => {
+        setDataLoaded(false);
+      }, 200);
+      
+      // Invalidate queries and show success message
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Success",
         description: contract.cloudStorageUrl 
@@ -356,17 +374,29 @@ export default function Contracts() {
       return updatedContract;
     },
     onSuccess: (contract) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      // Force dialog to close immediately for updates too
-      setIsDialogOpen(false);
-      setEditingContract(null);
-      setDataLoaded(false);
-      form.reset();
-      // Clean up URL
+      console.log('✅ Contract updated successfully, closing dialog...');
+      
+      // Clean up URL FIRST to prevent re-triggering
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
-        window.history.replaceState({}, '', window.location.pathname);
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create' || 
+          window.location.pathname === '/contracts/new') {
+        window.history.replaceState({}, '', '/contracts');
       }
+      
+      // Clear form and state
+      setEditingContract(null);
+      form.reset();
+      
+      // Close dialog
+      setIsDialogOpen(false);
+      
+      // Reset dataLoaded after a delay to prevent re-triggering
+      setTimeout(() => {
+        setDataLoaded(false);
+      }, 200);
+      
+      // Invalidate queries and show success message
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Success",
         description: contract.cloudStorageUrl 

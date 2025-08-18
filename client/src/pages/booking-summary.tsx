@@ -45,6 +45,14 @@ interface BookingData {
   duration?: string;
   additionalInfo?: string;
   bookingSource?: string;
+  // Client portal fields
+  styles?: string;
+  equipmentRequirements?: string;
+  equipmentProvided?: string;
+  whatsIncluded?: string;
+  gigType?: string;
+  // Original email content (should NOT be displayed in summary)
+  originalEmailContent?: string;
 }
 
 export default function BookingSummary() {
@@ -99,6 +107,26 @@ export default function BookingSummary() {
   const formatTime = (timeString: string | undefined) => {
     if (!timeString) return null;
     return timeString;
+  };
+
+  // Filter function to exclude original email content from notes
+  const filterOriginalEmail = (text: string | undefined) => {
+    if (!text) return text;
+    
+    // If this text looks like it might be the original email content, exclude it
+    // Original emails typically contain "From:", "To:", "Subject:" headers
+    const emailHeaders = ['From:', 'To:', 'Subject:', 'Date:', 'Sent:', 'Reply-To:'];
+    const looksLikeEmail = emailHeaders.some(header => text.includes(header));
+    
+    // Also check for common email signature patterns
+    const hasEmailSignature = text.includes('@') && (text.includes('Kind regards') || text.includes('Best regards') || text.includes('Sincerely'));
+    
+    // If it looks like an email, don't display it in summary
+    if (looksLikeEmail || hasEmailSignature) {
+      return null;
+    }
+    
+    return text;
   };
 
   return (
@@ -189,6 +217,14 @@ export default function BookingSummary() {
                 </div>
               )}
               
+              {booking.gigType && (
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <span className="font-semibold">Gig Type:</span>
+                  <span>{booking.gigType}</span>
+                </div>
+              )}
+              
               {booking.status && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Status:</span>
@@ -198,6 +234,64 @@ export default function BookingSummary() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Musical Style & Requirements */}
+        {(booking.styles || booking.whatsIncluded) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Musical Style & Service Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {booking.styles && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Musical Styles Requested:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-blue-50 p-3 rounded-lg">{booking.styles}</p>
+                  </div>
+                )}
+                
+                {booking.whatsIncluded && (
+                  <div>
+                    <h4 className="font-semibold mb-2">What's Included in Service:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-green-50 p-3 rounded-lg">{booking.whatsIncluded}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Equipment Information */}
+        {(booking.equipmentRequirements || booking.equipmentProvided) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Equipment Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {booking.equipmentRequirements && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Equipment Required:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-orange-50 p-3 rounded-lg">{booking.equipmentRequirements}</p>
+                  </div>
+                )}
+                
+                {booking.equipmentProvided && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Equipment Provided by Musician:</h4>
+                    <p className="text-gray-700 whitespace-pre-line bg-blue-50 p-3 rounded-lg">{booking.equipmentProvided}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Venue Information */}
         {(booking.venue || booking.venueAddress || booking.what3words) && (
@@ -368,7 +462,7 @@ export default function BookingSummary() {
         )}
 
         {/* Notes & Additional Information */}
-        {(booking.notes || booking.clientNotes || booking.additionalInfo) && (
+        {(filterOriginalEmail(booking.notes) || filterOriginalEmail(booking.clientNotes) || filterOriginalEmail(booking.additionalInfo)) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -378,24 +472,24 @@ export default function BookingSummary() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {booking.notes && (
+                {filterOriginalEmail(booking.notes) && (
                   <div>
                     <h4 className="font-semibold mb-2">Internal Notes:</h4>
-                    <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-3 rounded-lg">{booking.notes}</p>
+                    <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-3 rounded-lg">{filterOriginalEmail(booking.notes)}</p>
                   </div>
                 )}
                 
-                {booking.clientNotes && (
+                {filterOriginalEmail(booking.clientNotes) && (
                   <div>
                     <h4 className="font-semibold mb-2">Client Notes:</h4>
-                    <p className="text-gray-700 whitespace-pre-line bg-blue-50 p-3 rounded-lg">{booking.clientNotes}</p>
+                    <p className="text-gray-700 whitespace-pre-line bg-blue-50 p-3 rounded-lg">{filterOriginalEmail(booking.clientNotes)}</p>
                   </div>
                 )}
                 
-                {booking.additionalInfo && (
+                {filterOriginalEmail(booking.additionalInfo) && (
                   <div>
                     <h4 className="font-semibold mb-2">Additional Information:</h4>
-                    <p className="text-gray-700 whitespace-pre-line">{booking.additionalInfo}</p>
+                    <p className="text-gray-700 whitespace-pre-line">{filterOriginalEmail(booking.additionalInfo)}</p>
                   </div>
                 )}
               </div>

@@ -35,6 +35,15 @@ Booking summary gig sheets: New "Summary" button on booking cards opens comprehe
 Conversation window original inquiry: Original client inquiry (stored in originalEmailContent field) displays as the first message in conversation threads with distinctive green styling and "Original Inquiry" badge. Provides complete conversation context from initial contact through all subsequent messages.
 
 ## Recent Changes
+**August 18, 2025 - Booking Summary Enhancement:**
+- ✅ COMPLETELY FIXED: Booking summary missing critical client portal information
+- Added "Musical Style & Service Details" section displaying song requests and service inclusions
+- Added "Equipment Details" section showing equipment requirements and what musician provides
+- Added gig type to main Event Details section (Sax, DJ, Band, etc.)
+- Implemented smart filtering to remove original email content from notes sections
+- Summary now includes all client portal data: styles, equipment details, setup requirements, service inclusions
+- Removed email headers, signatures, and original correspondence clutter from gig sheets
+
 **August 18, 2025 - AI Booking Reprocessing System Fixed:**
 - ✅ COMPLETELY FIXED: Critical bug in admin booking reprocessing system where database updates were failing silently
 - Fixed missing userId parameter in storage.updateBooking() call that prevented reprocessed data from saving to database
