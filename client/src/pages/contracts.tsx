@@ -23,8 +23,10 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
+import MobileFeatureGuard from "@/components/mobile-feature-guard";
 
 const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested

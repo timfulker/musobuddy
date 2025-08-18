@@ -139,9 +139,11 @@ function Router() {
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/bookings" component={Bookings} />
+      <Route path="/mobile-bookings" component={lazy(() => import('@/pages/mobile-bookings'))} />
       <Route path="/new-booking" component={NewBooking} />
 
       <Route path="/address-book" component={AddressBook} />
+      <Route path="/mobile-client-lookup" component={lazy(() => import('@/components/mobile-client-lookup'))} />
       <Route path="/contracts" component={Contracts} />
       <Route path="/invoices" component={Invoices} />
       <Route path="/compliance" component={Compliance} />
@@ -154,7 +156,7 @@ function Router() {
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />
-      <Route path="/mobile-send" component={MobileInvoiceSender} />
+      <Route path="/mobile-invoice-sender" component={MobileInvoiceSender} />
       <Route path="/google-calendar-callback" component={GoogleCalendarCallback} />
       {/* <Route path="/maps-test" component={GoogleMapsTest} /> */}
 

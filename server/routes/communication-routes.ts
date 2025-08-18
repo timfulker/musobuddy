@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
-import { clientCommunications, bookings, settings } from '@shared/schema';
+import { clientCommunications, bookings, userSettings } from '@shared/schema';
 import { requireAuth } from '../middleware/auth';
 import { eq, desc, and } from 'drizzle-orm';
-import { mailgun } from '../core/services';
+import { services } from '../core/services';
 
 export function setupCommunicationRoutes(app: any) {
   // Save a communication record when an email/SMS is sent
