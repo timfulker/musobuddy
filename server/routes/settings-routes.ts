@@ -936,7 +936,44 @@ This email was sent via MusoBuddy Professional Music Management Platform
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      // Import token management utilities
+      const { checkTokenUsage, updateTokenUsage, estimateTokens } = await import('../utils/ai-token-manager');
+
       const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo, clientHistory } = req.body;
+
+      // Estimate tokens for this request (rough approximation)
+      const estimatedInputTokens = estimateTokens([
+        customPrompt || '',
+        contextualInfo || '',
+        JSON.stringify(clientHistory || {})
+      ].join(' '));
+
+      console.log(`🔍 Estimated ${estimatedInputTokens} tokens for AI request by user ${userId}`);
+
+      // Check if user has sufficient token allowance
+      const tokenUsage = await checkTokenUsage(userId);
+      if (!tokenUsage.canUseAI) {
+        console.log(`⚠️ User ${userId} has exceeded monthly AI token limit`);
+        return res.status(429).json({ 
+          error: 'Monthly AI token limit exceeded',
+          usage: {
+            tokensUsed: tokenUsage.tokensUsed,
+            monthlyLimit: tokenUsage.monthlyLimit,
+            resetDate: tokenUsage.resetDate
+          },
+          suggestUpgrade: true
+        });
+      }
+
+      // If user is close to limit, suggest using limited context
+      const shouldUseLimitedContext = tokenUsage.tokensRemaining < 2000;
+      if (shouldUseLimitedContext && contextualInfo) {
+        console.log(`⚠️ User ${userId} has limited tokens remaining, using reduced context`);
+        // Truncate contextual info to save tokens
+        const maxContextLength = Math.min(500, tokenUsage.tokensRemaining * 0.3); // Use 30% of remaining tokens for context
+        const truncatedContext = contextualInfo.substring(0, maxContextLength);
+        req.body.contextualInfo = truncatedContext + (contextualInfo.length > maxContextLength ? '...' : '');
+      }
 
       console.log('🤖 AI generation request:', {
         action,
@@ -1012,6 +1049,20 @@ This email was sent via MusoBuddy Professional Music Management Platform
         contextualInfo: contextualInfo || null,
         clientHistory: clientHistory || null
       });
+
+      // Calculate actual tokens used (estimate based on response length)
+      const responseText = response.emailBody || '';
+      const outputTokens = estimateTokens(responseText);
+      const totalTokensUsed = estimatedInputTokens + outputTokens;
+
+      // Record token usage
+      try {
+        await updateTokenUsage(userId, totalTokensUsed);
+        console.log(`📊 Recorded ${totalTokensUsed} tokens (${estimatedInputTokens} input + ${outputTokens} output) for user ${userId}`);
+      } catch (tokenError) {
+        console.error('⚠️ Failed to record token usage:', tokenError);
+        // Don't fail the request if token tracking fails
+      }
 
       console.log('✅ AI response generated successfully');
       res.json(response);

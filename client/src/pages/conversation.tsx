@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles } from "lucide-react";
+import { AITokenUsage } from "@/components/ai-token-usage";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
@@ -48,6 +49,13 @@ export default function Conversation() {
   const [isReplying, setIsReplying] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [tokenUsage, setTokenUsage] = useState<{
+    percentage: number;
+    status: 'good' | 'warning' | 'exceeded';
+    message: string;
+    tokensUsed: number;
+    monthlyLimit: number;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
@@ -166,6 +174,25 @@ export default function Conversation() {
       const aiResponse = await response.json();
       console.log('🤖 AI response data:', aiResponse);
       
+      // Check if this was a token limit error
+      if (response.status === 429 && aiResponse.error?.includes('token limit')) {
+        setTokenUsage({
+          percentage: 100,
+          status: 'exceeded',
+          message: 'Monthly AI limit exceeded. Upgrade for unlimited responses.',
+          tokensUsed: aiResponse.usage?.tokensUsed || 0,
+          monthlyLimit: aiResponse.usage?.monthlyLimit || 50000
+        });
+        
+        toast({
+          title: "AI Token Limit Exceeded",
+          description: "You've reached your monthly AI usage limit. Contact support to upgrade your plan.",
+          variant: "destructive",
+        });
+        
+        return;
+      }
+      
       // The AI response should contain emailBody field
       const content = aiResponse.emailBody || '';
 
@@ -173,6 +200,8 @@ export default function Conversation() {
       
       if (content) {
         setReplyContent(content);
+        // Refresh token usage after successful generation
+        fetchTokenUsage();
         toast({
           title: "AI response generated",
           description: "The message has been generated. Feel free to edit before sending.",
@@ -195,6 +224,24 @@ export default function Conversation() {
       setIsGeneratingAI(false);
     }
   };
+
+  // Fetch current token usage
+  const fetchTokenUsage = async () => {
+    try {
+      const response = await apiRequest('/api/token-usage');
+      const data = await response.json();
+      setTokenUsage(data);
+    } catch (error) {
+      console.error('Failed to fetch token usage:', error);
+    }
+  };
+
+  // Fetch token usage on component mount
+  useEffect(() => {
+    if (user) {
+      fetchTokenUsage();
+    }
+  }, [user]);
 
   // Apply template to reply content
   const handleTemplateSelect = (template: any) => {

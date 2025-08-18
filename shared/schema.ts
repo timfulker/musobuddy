@@ -64,6 +64,11 @@ export const users = pgTable("users", {
   passwordResetToken: varchar("password_reset_token", { length: 128 }),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
+  // AI Token Limits
+  aiTokenMonthlyLimit: integer("ai_token_monthly_limit").default(50000), // ~$0.15/month limit for free tier
+  aiTokensUsedThisMonth: integer("ai_tokens_used_this_month").default(0),
+  aiTokenResetDate: timestamp("ai_token_reset_date").defaultNow(),
+  aiLimitExceeded: boolean("ai_limit_exceeded").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
