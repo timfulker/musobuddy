@@ -478,7 +478,7 @@ export function setupCommunicationRoutes(app: any) {
           to: recipientEmail,
           'reply-to': replyToAddress,
           subject: subject,
-          html: emailTemplate,
+          html: emailTemplate.emailBody,
           'h:X-Mailgun-Variables': JSON.stringify({
             userId: userId,
             bookingId: bookingId,
