@@ -42,6 +42,12 @@ interface BookingInfo {
 export default function Conversation() {
   const [match, params] = useRoute("/conversation/:bookingId");
   const [, navigate] = useLocation();
+  
+  // Force cache refresh for this component - remove after cache clear
+  useEffect(() => {
+    const timestamp = Date.now();
+    console.log(`🔄 Conversation component loaded at ${timestamp} - cache refresh`);
+  }, []);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
