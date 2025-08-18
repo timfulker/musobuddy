@@ -25,6 +25,7 @@ Address book navigation: "View Details" button on client cards in address book n
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
 Email footer branding: User prefers simple "Sent via MusoBuddy" footer text instead of "Music Management" which sounds too much like an agency.
+Email template display: Enhanced HTML email templates work correctly in Gmail and Apple Mail. Spark email client displays plain text version due to its security restrictions (normal behavior). Professional gradient headers, signature cards, and styling display properly in major email clients.
 
 ## System Architecture
 
