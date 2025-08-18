@@ -153,7 +153,7 @@ export function setupCommunicationRoutes(app: any) {
       console.log(`🔍 Fetching conversation for booking ${bookingId}, user ${userId}`);
       
       // Import storage and cloud storage
-      const { storage } = await import('../storage');
+      const { storage } = await import('../core/storage');
       const { downloadFile } = await import('../core/cloud-storage');
       
       // Get message notifications for this booking (these have messageUrl fields)
