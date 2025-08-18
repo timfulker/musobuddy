@@ -297,6 +297,39 @@ export default function UnifiedBookings() {
     }
   }, [bookings, navigate]); // Depend on bookings data and navigate
 
+  // Auto-scroll to next upcoming booking on page arrival
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasUrlParams = urlParams.has('id') || urlParams.has('highlight');
+    
+    // Only auto-scroll if no URL parameters (natural page arrival) and list view
+    if (hasUrlParams || viewMode !== 'list' || !bookings || bookings.length === 0) {
+      return;
+    }
+    
+    // Find next upcoming booking (earliest future date)
+    const now = new Date();
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    const upcomingBookings = validBookings
+      .filter(booking => booking.eventDate && new Date(booking.eventDate) >= now)
+      .sort((a, b) => new Date(a.eventDate!).getTime() - new Date(b.eventDate!).getTime());
+    
+    if (upcomingBookings.length > 0) {
+      const nextBooking = upcomingBookings[0];
+      
+      // Scroll to the booking card after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        const bookingElement = document.querySelector(`[data-booking-id="${nextBooking.id}"]`);
+        if (bookingElement) {
+          bookingElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 500);
+    }
+  }, [bookings, viewMode]); // Depend on bookings data and view mode
+
   // Clear highlight on calendar click
   useEffect(() => {
     if (!highlightedBookingId || viewMode !== 'calendar') return;
@@ -1585,6 +1618,7 @@ export default function UnifiedBookings() {
                                     return (
                                       <Card 
                                         key={groupBooking.id} 
+                                        data-booking-id={groupBooking.id}
                                         className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status)} ${
                                           selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                                         } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
@@ -1880,6 +1914,7 @@ export default function UnifiedBookings() {
                       elements.push(
                         <Card 
                           key={booking.id} 
+                          data-booking-id={booking.id}
                           className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
                             selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                           }`}

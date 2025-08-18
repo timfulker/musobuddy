@@ -60,6 +60,7 @@ GPT-5 parsing system fully fixed: Resolved critical API compatibility issues pre
 GPT-5 email extraction system prompt fix: Resolved persistent issue where Weebly form submissions showed sender email (no-reply@weebly.2com) instead of actual client email from form content. Updated GPT-5 system prompt with specific instructions to NEVER use service emails from FROM field and ALWAYS prioritize actual client emails found in contact forms, signatures, or email body content. System now correctly extracts emails like "tim@timfulker.com" from form data instead of using automated sender addresses.
 Encore venue placeholder optimization: Fixed "Venue TBC" triggering unnecessary Google Maps API calls. AI parser now sets venue as empty string for Encore bookings instead of placeholder text, preventing wasteful API usage while maintaining proper booking form functionality.
 Venue name vs location distinction: Fixed critical issue where location names like "Glasgow" were incorrectly treated as venue names, triggering unnecessary Google API calls. Updated both GPT-5 system prompt and fallback parser to distinguish between actual venue names (e.g., "Glasgow City Hall") and general locations (e.g., "Glasgow"). Venue name field now stays blank unless we actually know the specific venue name. Location information goes in venueAddress field. Removed booking form logic that auto-triggered API calls for town-only entries, significantly reducing API usage and improving accuracy per user preference.
+Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
 
 ## System Architecture
 
@@ -109,4 +110,3 @@ Venue name vs location distinction: Fixed critical issue where location names li
     - Stripe
     - Twilio
     - what3words API
-```
