@@ -448,6 +448,8 @@ export function setupCommunicationRoutes(app: any) {
       // Create unique reply-to address with user ID and booking ID for proper routing
       const replyToAddress = `${userId}-${bookingId}@enquiries.musobuddy.com`;
       const subject = `Re: ${booking[0].title}`;
+      
+      console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 
       // Get enhanced email template with the reply content
       const { storage } = await import('../core/storage');
@@ -474,6 +476,14 @@ export function setupCommunicationRoutes(app: any) {
             type: 'conversation_reply'
           })
         };
+
+        console.log(`📧 Mailgun conversation reply data:`, {
+          from: mailgunData.from,
+          to: mailgunData.to,
+          replyTo: mailgunData['reply-to'],
+          subject: mailgunData.subject,
+          variables: mailgunData['h:X-Mailgun-Variables']
+        });
 
         const mailgunResponse = await mailgun.messages.create('enquiries.musobuddy.com', mailgunData);
         console.log(`✅ Conversation reply email sent via Mailgun:`, mailgunResponse.id);
