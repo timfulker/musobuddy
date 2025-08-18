@@ -627,25 +627,19 @@ export default function BookingSummary() {
             <CardContent>
               {showMap && (
                 <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  {(() => {
-                    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
-                    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(booking.venueAddress)}`;
-                    console.log('🗺️ Google Maps Debug:', {
-                      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET',
-                      venue: booking.venueAddress,
-                      mapUrl: mapUrl.substring(0, 100) + '...'
-                    });
-                    return (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        src={mapUrl}
-                        allowFullScreen
-                        className="rounded-lg"
-                      />
-                    );
-                  })()}
+                  <div className="text-center p-4">
+                    <p className="text-gray-600 mb-3">📍 {booking.venue}</p>
+                    <p className="text-sm text-gray-500 mb-4">{booking.venueAddress}</p>
+                    <a 
+                      href={`https://www.google.com/maps/search/${encodeURIComponent(booking.venueAddress || booking.venue || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Open in Google Maps
+                    </a>
+                  </div>
                 </div>
               )}
               {!showMap && (
