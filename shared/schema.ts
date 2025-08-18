@@ -65,7 +65,7 @@ export const users = pgTable("users", {
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
   // AI Token Limits
-  aiTokenMonthlyLimit: integer("ai_token_monthly_limit").default(300), // 300 AI responses per month for Core tier
+  aiTokenMonthlyLimit: integer("ai_token_monthly_limit").default(80), // 80 AI responses per month for Core tier (~20 bookings)
   aiTokensUsedThisMonth: integer("ai_tokens_used_this_month").default(0),
   aiTokenResetDate: timestamp("ai_token_reset_date").defaultNow(),
   aiLimitExceeded: boolean("ai_limit_exceeded").default(false),
