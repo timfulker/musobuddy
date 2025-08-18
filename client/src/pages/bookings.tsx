@@ -1287,9 +1287,18 @@ export default function UnifiedBookings() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="All Status" />
+                      <Select 
+                        value={statusFilter} 
+                        onValueChange={(value) => {
+                          setStatusFilter(value);
+                          if (!conflictFilter) {
+                            setPreviousStatusFilter(value);
+                          }
+                        }}
+                        disabled={conflictFilter}
+                      >
+                        <SelectTrigger className={`w-40 ${conflictFilter ? 'opacity-50' : ''}`}>
+                          <SelectValue placeholder={conflictFilter ? "All Status" : "All Status"} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Status</SelectItem>
@@ -1302,12 +1311,37 @@ export default function UnifiedBookings() {
                         </SelectContent>
                       </Select>
 
+                      {/* Conflict Filter Toggle for List View */}
+                      <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
+                        <Switch
+                          id="conflict-filter-list"
+                          checked={conflictFilter}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setPreviousStatusFilter(statusFilter);
+                              setStatusFilter('all');
+                            } else {
+                              setStatusFilter(previousStatusFilter);
+                            }
+                            setConflictFilter(checked);
+                          }}
+                          className="data-[state=checked]:bg-red-500"
+                        />
+                        <label 
+                          htmlFor="conflict-filter-list" 
+                          className="text-xs font-medium cursor-pointer whitespace-nowrap"
+                        >
+                          Show Conflicts
+                        </label>
+                      </div>
+
                       <Button 
                         variant="outline" 
                         onClick={() => {
                           setSearchQuery("");
                           setStatusFilter("all");
                           setDateFilter("all");
+                          setConflictFilter(false);
                         }}
                         className="px-3"
                       >
