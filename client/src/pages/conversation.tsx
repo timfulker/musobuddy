@@ -383,6 +383,80 @@ export default function Conversation() {
               rows={4}
               className="resize-none"
             />
+            {/* Template and AI Helper Buttons */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTemplates(!showTemplates)}
+                disabled={!templates.length}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Use Template
+                {templates.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {templates.length}
+                  </Badge>
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateAIResponse}
+                disabled={isGeneratingAI || !booking}
+              >
+                {isGeneratingAI ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI Response
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Template Selection */}
+            {showTemplates && templates.length > 0 && (
+              <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+                <div className="mb-2">
+                  <h4 className="font-medium text-sm">Select a template:</h4>
+                </div>
+                <div className="space-y-2">
+                  {templates.map((template: any) => (
+                    <Button
+                      key={template.id}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleTemplateSelect(template)}
+                      className="w-full justify-start text-left h-auto p-3 hover:bg-white"
+                    >
+                      <div>
+                        <div className="font-medium">{template.name}</div>
+                        {template.description && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {template.description}
+                          </div>
+                        )}
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTemplates(false)}
+                  className="mt-2 w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-500">
                 {replyContent.length} characters
