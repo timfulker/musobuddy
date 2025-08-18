@@ -523,7 +523,7 @@ export default function Conversation() {
                       <div
                         className={`max-w-[70%] rounded-lg p-4 ${
                           message.messageType === 'outgoing'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-100 text-blue-900 border border-blue-200'
                             : 'bg-gray-100 border'
                         }`}
                       >
@@ -531,12 +531,12 @@ export default function Conversation() {
                           <span className="text-xs font-medium">
                             {message.messageType === 'outgoing' ? 'You' : booking.clientName}
                           </span>
-                          <span className={`text-xs ${message.messageType === 'outgoing' ? 'text-blue-100' : 'text-gray-500'}`}>
+                          <span className={`text-xs ${message.messageType === 'outgoing' ? 'text-blue-600' : 'text-gray-500'}`}>
                             {formatDate(message.sentAt, true)}
                           </span>
                         </div>
                         {message.subject && (
-                          <div className={`text-sm font-medium mb-2 ${message.messageType === 'outgoing' ? 'text-blue-100' : 'text-gray-700'}`}>
+                          <div className={`text-sm font-medium mb-2 ${message.messageType === 'outgoing' ? 'text-blue-700' : 'text-gray-700'}`}>
                             Re: {message.subject}
                           </div>
                         )}
