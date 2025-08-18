@@ -186,12 +186,43 @@ export default function Conversation() {
     if (!booking) return;
     
     console.log('🔍 Template selected:', template);
+    console.log('🔍 All template fields:', Object.keys(template));
     console.log('🔍 Booking data:', booking);
     
-    // Get the template content from the correct field
-    let content = template.content || template.emailContent || template.template || '';
+    // Get the template content from the correct field (try multiple possible field names)
+    let content = template.content || 
+                  template.emailContent || 
+                  template.template || 
+                  template.body || 
+                  template.text || 
+                  template.message || 
+                  template.emailTemplate ||
+                  template.htmlContent ||
+                  '';
     
     console.log('🔍 Original template content:', content);
+    console.log('🔍 Content field used:', 
+      template.content ? 'content' :
+      template.emailContent ? 'emailContent' :
+      template.template ? 'template' :
+      template.body ? 'body' :
+      template.text ? 'text' :
+      template.message ? 'message' :
+      template.emailTemplate ? 'emailTemplate' :
+      template.htmlContent ? 'htmlContent' :
+      'NONE FOUND'
+    );
+    
+    // If no content found, show a helpful message
+    if (!content) {
+      toast({
+        title: "Template has no content",
+        description: "This template appears to be empty. Please check the template in your settings.",
+        variant: "destructive",
+      });
+      setShowTemplates(false);
+      return;
+    }
     
     // Replace template variables with booking data
     content = content.replace(/\{clientName\}/g, booking.clientName || '');
