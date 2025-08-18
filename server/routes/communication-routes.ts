@@ -467,25 +467,35 @@ export function setupCommunicationRoutes(app: any) {
       
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 
-      // Use existing styled email generation system
-      const { aiResponseGenerator } = await import('../core/ai-response-generator');
-      
-      // Prepare user settings for email generation
-      const fullSettings = {
-        ...userSetting,
-        businessName: userSetting?.businessName || userSetting?.emailFromName || 'MusoBuddy User',
-        businessEmail: userSetting?.businessEmail || '',
-        phone: userSetting?.phone || undefined,
-        website: userSetting?.website || undefined
-      };
-
-      // Generate styled email response using existing system
-      const emailTemplate = await aiResponseGenerator.generateEmailResponse({
-        action: 'respond',
-        userSettings: fullSettings,
-        customPrompt: content, // Use the conversation reply content
-        tone: 'professional'
-      });
+      // Create simple HTML email template for conversation replies
+      // Don't use AI generation for direct replies - just send the user's message
+      const emailBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .message { margin: 20px 0; white-space: pre-wrap; }
+            .signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="message">${content.replace(/\n/g, '<br>')}</div>
+            ${userSetting?.businessName || userSetting?.emailFromName ? `
+            <div class="signature">
+              <strong>${userSetting.businessName || userSetting.emailFromName}</strong>
+              ${userSetting?.phone ? `<br>Phone: ${userSetting.phone}` : ''}
+              ${userSetting?.website ? `<br>Website: ${userSetting.website}` : ''}
+              ${userSetting?.businessEmail ? `<br>Email: ${userSetting.businessEmail}` : ''}
+            </div>
+            ` : ''}
+          </div>
+        </body>
+        </html>
+      `;
 
       // Send email via Mailgun with proper reply-to routing
       try {
@@ -494,7 +504,7 @@ export function setupCommunicationRoutes(app: any) {
           to: recipientEmail,
           'reply-to': replyToAddress,
           subject: subject,
-          html: emailTemplate.emailBody,
+          html: emailBody,
           'h:X-Mailgun-Variables': JSON.stringify({
             userId: userId,
             bookingId: bookingId,
