@@ -85,14 +85,15 @@ export default function Conversation() {
   const messages = [];
   
   // Add original client inquiry as first message if it exists
-  if (booking?.originalEmailContent) {
+  const originalInquiryContent = booking?.originalEmailContent || booking?.notes;
+  if (originalInquiryContent) {
     messages.push({
       id: 0, // Use ID 0 for the original inquiry
       bookingId: booking.id,
       fromEmail: booking.clientEmail,
       toEmail: '', // Not applicable for original inquiry
       subject: `Original Inquiry - ${booking.eventType || 'Booking Request'}`,
-      content: booking.originalEmailContent,
+      content: originalInquiryContent,
       messageType: 'incoming' as const,
       sentAt: booking.createdAt || new Date().toISOString(),
       isRead: true
