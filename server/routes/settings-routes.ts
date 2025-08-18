@@ -716,7 +716,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(400).json({ error: 'No recipient email found' });
       }
 
-      // Get user settings for sender info
+      // Get user settings for sender info and theme
       const userSettings = await storage.getSettings(userId);
       const user = await storage.getUserById(userId);
       
@@ -724,6 +724,35 @@ export async function registerSettingsRoutes(app: Express) {
                         `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 
                         user?.email;
       const senderEmail = userSettings?.businessEmail || user?.email;
+      
+      // Get theme color from settings (same logic as invoices/contracts)
+      const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#667eea';
+      
+      // Calculate contrast for header text
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+      };
+
+      const getLuminance = (r: number, g: number, b: number) => {
+        const rsRGB = r / 255;
+        const gsRGB = g / 255;
+        const bsRGB = b / 255;
+        
+        const rLinear = rsRGB <= 0.03928 ? rsRGB / 12.92 : Math.pow((rsRGB + 0.055) / 1.055, 2.4);
+        const gLinear = gsRGB <= 0.03928 ? gsRGB / 12.92 : Math.pow((gsRGB + 0.055) / 1.055, 2.4);
+        const bLinear = bsRGB <= 0.03928 ? bsRGB / 12.92 : Math.pow((bsRGB + 0.055) / 1.055, 2.4);
+        
+        return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+      };
+
+      const rgb = hexToRgb(themeColor);
+      const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+      const textColor = luminance > 0.5 ? '#000000' : '#ffffff';
 
       // Create reply-to address with user ID and booking ID for email routing
       const replyToAddress = bookingId 
@@ -770,8 +799,8 @@ export async function registerSettingsRoutes(app: Express) {
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .email-header { 
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+          background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%);
+          color: ${textColor};
           padding: 20px;
           text-align: center;
         }
