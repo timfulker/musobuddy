@@ -133,8 +133,9 @@ export default function NewBookingPage() {
     queryKey: ['/api/bookings', editBookingId],
     queryFn: async () => {
       if (!editBookingId) return null;
-      const response = await apiRequest(`/api/bookings/${editBookingId}`);
-      return await response.json();
+      const allBookings = await apiRequest('/api/bookings');
+      const bookingsData = await allBookings.json();
+      return bookingsData.find((b: any) => b.id === parseInt(editBookingId));
     },
     enabled: isEditMode
   });

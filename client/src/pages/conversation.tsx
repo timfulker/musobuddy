@@ -42,12 +42,6 @@ interface BookingInfo {
 export default function Conversation() {
   const [match, params] = useRoute("/conversation/:bookingId");
   const [, navigate] = useLocation();
-  
-  // Force cache refresh for this component - remove after cache clear
-  useEffect(() => {
-    const timestamp = Date.now();
-    console.log(`🔄 Conversation component loaded at ${timestamp} - cache refresh`);
-  }, []);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -59,6 +53,11 @@ export default function Conversation() {
   const [showTemplates, setShowTemplates] = useState(false);
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Extract messages and unread notification IDs from response
+  const messages = conversationData?.messages || [];
+  const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
+  const hasUnreadNotifications = unreadNotificationIds.length > 0;
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
 
@@ -90,11 +89,6 @@ export default function Conversation() {
       return await response.json();
     },
   });
-
-  // Extract messages and unread notification IDs from response
-  const messages = conversationData?.messages || [];
-  const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
-  const hasUnreadNotifications = unreadNotificationIds.length > 0;
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -225,7 +219,24 @@ export default function Conversation() {
       const aiResponse = await response.json();
       console.log('🤖 AI response data:', aiResponse);
       
-      // Unlimited AI usage - no token limits
+      // Check if this was a token limit error
+      if (response.status === 429 && aiResponse.error?.includes('token limit')) {
+        setTokenUsage({
+          percentage: 100,
+          status: 'exceeded',
+          message: 'Monthly AI limit exceeded. Upgrade for unlimited responses.',
+          tokensUsed: aiResponse.usage?.tokensUsed || 0,
+          monthlyLimit: aiResponse.usage?.monthlyLimit || 50000
+        });
+        
+        toast({
+          title: "AI Token Limit Exceeded",
+          description: "You've reached your monthly AI usage limit. Contact support to upgrade your plan.",
+          variant: "destructive",
+        });
+        
+        return;
+      }
       
       // The AI response should contain emailBody field
       const content = aiResponse.emailBody || '';
@@ -237,7 +248,8 @@ export default function Conversation() {
         // Clear context input after successful generation
         setContextInput('');
         setShowContextInput(false);
-        // AI usage is unlimited
+        // Refresh token usage after successful generation
+        fetchTokenUsage();
         toast({
           title: "AI response generated",
           description: "The message has been generated. Feel free to edit before sending.",
@@ -261,7 +273,23 @@ export default function Conversation() {
     }
   };
 
-  // Token usage tracking removed - unlimited AI usage for all users
+  // Fetch current token usage
+  const fetchTokenUsage = async () => {
+    try {
+      const response = await apiRequest('/api/token-usage');
+      const data = await response.json();
+      setTokenUsage(data);
+    } catch (error) {
+      console.error('Failed to fetch token usage:', error);
+    }
+  };
+
+  // Fetch token usage on component mount
+  useEffect(() => {
+    if (user) {
+      fetchTokenUsage();
+    }
+  }, [user]);
 
   // Apply template to reply content
   const handleTemplateSelect = (template: any) => {
