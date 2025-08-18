@@ -148,6 +148,8 @@ function Router() {
       <Route path="/contracts" component={Contracts} />
       <Route path="/contracts/new" component={Contracts} />
       <Route path="/invoices" component={Invoices} />
+      <Route path="/invoices/new" component={Invoices} />
+      <Route path="/invoices/new/bookings/:bookingId" component={Invoices} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/settings" component={Settings} />
       <Route path="/templates" component={Templates} />

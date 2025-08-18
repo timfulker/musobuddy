@@ -1230,13 +1230,13 @@ export default function Templates() {
         </DialogContent>
       </Dialog>
 
-      {/* Email Preview Dialog */}
+      {/* Editable Email Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Email Preview</DialogTitle>
+            <DialogTitle>Edit & Send Email</DialogTitle>
             <DialogDescription>
-              Review your email before sending to {(bookingData || messageData)?.clientName}. This preview shows exactly how your email will appear to the recipient.
+              Review and edit your email before sending to {(bookingData || messageData)?.clientName}. Make any final changes to personalize your message.
             </DialogDescription>
           </DialogHeader>
           
@@ -1247,7 +1247,6 @@ export default function Templates() {
                 {/* Email Header Info */}
                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                   <div><strong>To:</strong> {(bookingData || messageData)?.clientEmail}</div>
-                  <div><strong>Subject:</strong> {previewData.subject}</div>
                   <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
                 </div>
 
@@ -1274,15 +1273,40 @@ export default function Templates() {
                   </div>
                 )}
                 
-                {/* Email Body Preview */}
-                <div className="border rounded-lg p-4 bg-white">
-                  <div className="whitespace-pre-wrap font-sans leading-relaxed text-sm">
-                    {previewData.emailBody}
-                  </div>
+                {/* Editable Email Subject */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-subject" className="text-sm font-medium">
+                    Subject Line
+                  </Label>
+                  <Input
+                    id="edit-subject"
+                    value={previewData.subject}
+                    onChange={(e) => setPreviewData({...previewData, subject: e.target.value})}
+                    className="w-full"
+                    placeholder="Enter email subject"
+                  />
+                </div>
+                
+                {/* Editable Email Body */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-body" className="text-sm font-medium">
+                    Email Message
+                  </Label>
+                  <Textarea
+                    id="edit-body"
+                    value={previewData.emailBody}
+                    onChange={(e) => setPreviewData({...previewData, emailBody: e.target.value})}
+                    rows={12}
+                    className="w-full resize-none font-sans"
+                    placeholder="Enter your email message"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Edit the message as needed. Variable placeholders like [Client Name] will be automatically replaced when sent.
+                  </p>
                 </div>
               </div>
               
-              {/* CC Testing Field */}
+              {/* CC Testing Field and Actions */}
               <div className="flex-shrink-0 border-t pt-4 space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="test-cc" className="text-sm text-gray-600">
@@ -1301,23 +1325,47 @@ export default function Templates() {
                   </p>
                 </div>
                 
-                {/* Fixed Action Buttons */}
-                <div className="flex justify-end space-x-3">
+                {/* Action Buttons */}
+                <div className="flex justify-between">
                   <Button 
-                    variant="outline" 
+                    variant="outline"
                     onClick={() => {
+                      // Save edited content as new template
+                      const targetData = bookingData || messageData;
+                      const convertedSubject = targetData ? convertToTemplateVariables(previewData.subject, targetData) : previewData.subject;
+                      const convertedEmailBody = targetData ? convertToTemplateVariables(previewData.emailBody, targetData) : previewData.emailBody;
+                      
+                      setFormData({
+                        name: `Edited Template - ${new Date().toLocaleDateString()}`,
+                        subject: convertedSubject,
+                        emailBody: convertedEmailBody,
+                        smsBody: '',
+                        isAutoRespond: false
+                      });
                       setShowPreview(false);
-                      setPreviewData(null);
+                      setIsCreateDialogOpen(true);
                     }}
                   >
-                    Cancel
+                    Save as Template
                   </Button>
-                  <Button 
-                    onClick={handleSendEmail}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
-                    Send Email
-                  </Button>
+                  
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowPreview(false);
+                        setPreviewData(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSendEmail}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      Send Email
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
