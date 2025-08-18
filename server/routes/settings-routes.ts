@@ -730,15 +730,101 @@ export async function registerSettingsRoutes(app: Express) {
         ? `user${userId}-booking${bookingId}@mg.musobuddy.com`
         : `user${userId}@mg.musobuddy.com`;
 
-      // Send the email
-      const emailSent = await services.sendEmailSimple(
-        recipientEmail,
-        template.subject,
-        template.emailBody,
-        senderEmail || '',
-        senderName || undefined,
-        replyToAddress
-      );
+      // Function to convert text to properly formatted HTML paragraphs  
+      const formatEmailContent = (text: string) => {
+        return text
+          .split(/\n\s*\n/) // Split on double line breaks for paragraphs
+          .map(paragraph => paragraph.trim())
+          .filter(paragraph => paragraph.length > 0)
+          .map(paragraph => {
+            // Convert single line breaks within paragraphs to spaces
+            const cleanParagraph = paragraph.replace(/\n/g, ' ').trim();
+            return `<p style="margin: 0 0 16px 0; line-height: 1.6;">${cleanParagraph}</p>`;
+          })
+          .join('');
+      };
+
+      // Create professional HTML email content
+      const professionalEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${template.subject}</title>
+    <style>
+        /* Email-safe CSS - minimal and compatible */
+        body { 
+          font-family: Arial, sans-serif; 
+          line-height: 1.6; 
+          margin: 0; 
+          padding: 20px; 
+          background-color: #f8f9fa;
+          color: #333333;
+        }
+        .email-container {
+          max-width: 600px;
+          margin: 0 auto;
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .email-header { 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px;
+          text-align: center;
+        }
+        .email-content { 
+          padding: 30px;
+          background: white;
+        }
+        .signature {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e9ecef;
+          color: #6c757d;
+          font-size: 14px;
+        }
+        h1, h2 { margin: 0 0 16px 0; }
+        p { margin: 0 0 16px 0; line-height: 1.6; }
+        .footer {
+          background: #f8f9fa;
+          padding: 20px;
+          text-align: center;
+          font-size: 12px;
+          color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1 style="margin: 0; font-size: 24px; font-weight: 300;">${template.subject}</h1>
+        </div>
+        <div class="email-content">
+            ${formatEmailContent(template.emailBody)}
+            
+            <div class="signature">
+                <p><strong>${senderName || 'MusoBuddy'}</strong><br>
+                Professional Music Services<br>
+                ${senderEmail}</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>This email was sent via MusoBuddy Professional Music Management Platform</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+      // Send the email with professional HTML formatting
+      const emailSent = await services.sendEmail({
+        to: recipientEmail,
+        subject: template.subject,
+        html: professionalEmailHtml,
+        replyTo: replyToAddress
+      });
 
       if (!emailSent) {
         throw new Error('Failed to send email');
@@ -755,39 +841,8 @@ export async function registerSettingsRoutes(app: Express) {
 
       // Save communication history to cloud storage
       try {
-        // Create HTML content for the email
-        const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${template.subject}</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-        .email-header { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .email-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="email-header">
-        <h2>${template.subject}</h2>
-        <p><strong>To:</strong> ${recipientName || recipientEmail} (${recipientEmail})</p>
-        <p><strong>From:</strong> ${senderName || user?.email} (${senderEmail})</p>
-        <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</p>
-        <p><strong>Type:</strong> Template Email - ${isThankYouTemplate ? 'Thank You' : 'General'}</p>
-    </div>
-    <div class="email-content">
-        ${template.emailBody.replace(/\n/g, '<br>')}
-    </div>
-</body>
-</html>`;
+        // Create professional HTML content for storage (same as sent email)
+        const emailHtml = professionalEmailHtml;
 
         // Upload to R2 storage
         const { uploadToCloudflareR2 } = await import('../core/cloud-storage.js');
