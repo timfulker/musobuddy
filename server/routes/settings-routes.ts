@@ -773,49 +773,32 @@ export async function registerSettingsRoutes(app: Express) {
           .join('');
       };
 
-      // Create simple, compatible HTML email content
+      // Create ultra-simple HTML email content that works everywhere
       const professionalEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${template.subject}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td style="background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%); padding: 30px; text-align: center;">
-                            <h1 style="margin: 0; color: ${textColor}; font-size: 24px; font-weight: normal;">${template.subject}</h1>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-                            ${formatEmailContent(template.emailBody)}
-                            
-                            <table style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; width: 100%;" border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td style="text-align: center;">
-                                        <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">${senderName || 'MusoBuddy'}</p>
-                                        <p style="margin: 0 0 8px 0; color: #666; font-style: italic;">Professional Music Services</p>
-                                        <p style="margin: 0; color: ${themeColor};">${senderEmail}</p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background-color: #333; padding: 20px; text-align: center;">
-                            <p style="margin: 0; color: #999; font-size: 12px;">Sent via MusoBuddy Music Management</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+<body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border: 1px solid #ddd;">
+        <div style="background-color: ${themeColor}; color: ${textColor}; padding: 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 22px;">${template.subject}</h1>
+        </div>
+        <div style="padding: 30px;">
+            ${formatEmailContent(template.emailBody)}
+            
+            <div style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee;">
+                <p style="margin: 0; text-align: center;"><strong>${senderName || 'MusoBuddy'}</strong></p>
+                <p style="margin: 5px 0 0 0; text-align: center; color: #666;">Professional Music Services</p>
+                <p style="margin: 5px 0 0 0; text-align: center; color: ${themeColor};">${senderEmail}</p>
+            </div>
+        </div>
+        <div style="background-color: #333; color: #999; padding: 15px; text-align: center; font-size: 11px;">
+            Sent via MusoBuddy Music Management
+        </div>
+    </div>
 </body>
 </html>`;
         .email-container {
