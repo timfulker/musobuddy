@@ -49,6 +49,10 @@ export class EmailService {
         messageData.text = emailData.text;
       }
 
+      // Force HTML content type headers for better email client rendering
+      messageData['h:Content-Type'] = 'text/html; charset=UTF-8';
+      messageData['h:MIME-Version'] = '1.0';
+
       // Add CC support for invoices (contracts remain single-recipient only)
       if (emailData.cc) {
         messageData.cc = emailData.cc;
@@ -85,6 +89,9 @@ export class EmailService {
       if (messageData.cc) {
         console.log(`📧 CC: ${messageData.cc}`);
       }
+      console.log(`📧 HTML length: ${emailData.html?.length || 0}`);
+      console.log(`📧 Text length: ${emailData.text?.length || 0}`);
+      console.log(`📧 HTML preview: ${emailData.html?.substring(0, 100) || 'none'}...`);
       console.log(`📧 Domain: ${domain} (${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'})`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
