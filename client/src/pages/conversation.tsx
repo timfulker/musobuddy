@@ -53,6 +53,11 @@ export default function Conversation() {
   const [showTemplates, setShowTemplates] = useState(false);
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Extract messages and unread notification IDs from response
+  const messages = conversationData?.messages || [];
+  const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
+  const hasUnreadNotifications = unreadNotificationIds.length > 0;
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
 
@@ -67,7 +72,7 @@ export default function Conversation() {
   });
 
   // Fetch conversation messages
-  const { data: messages = [], isLoading: messagesLoading, refetch: refetchMessages } = useQuery({
+  const { data: conversationData, isLoading: messagesLoading, refetch: refetchMessages } = useQuery({
     queryKey: ['/api/conversations', bookingId],
     queryFn: async () => {
       const response = await apiRequest(`/api/conversations/${bookingId}`);
@@ -120,6 +125,46 @@ export default function Conversation() {
       });
     },
   });
+
+  // Ignore messages mutation
+  const ignoreMessagesMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      const response = await apiRequest('/api/conversations/ignore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Messages ignored",
+        description: `${data.markedAsRead || 0} message notifications have been marked as read.`,
+      });
+      refetchMessages();
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to ignore messages",
+        description: error.message || "Something went wrong while ignoring the messages.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleIgnoreMessages = () => {
+    if (!bookingId) {
+      toast({
+        title: "Cannot ignore messages",
+        description: "Booking ID is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    ignoreMessagesMutation.mutate(bookingId);
+  };
 
   const handleSendReply = () => {
     if (!replyContent.trim() || !booking?.clientEmail || !bookingId) {
@@ -374,6 +419,43 @@ export default function Conversation() {
           </Badge>
         </div>
 
+        {/* Unread Messages Notification */}
+        {hasUnreadNotifications && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                  <div>
+                    <p className="font-medium text-orange-800">
+                      You have {unreadNotificationIds.length} unread message{unreadNotificationIds.length > 1 ? 's' : ''} from this client
+                    </p>
+                    <p className="text-sm text-orange-600">
+                      Reply to the message or mark as ignored to remove from your notifications.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleIgnoreMessages}
+                  disabled={ignoreMessagesMutation.isPending}
+                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  {ignoreMessagesMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 animate-spin border-2 border-orange-600 border-t-transparent rounded-full" />
+                      Ignoring...
+                    </>
+                  ) : (
+                    'Ignore Messages'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Booking Summary */}
         <Card>
           <CardHeader>
@@ -615,6 +697,24 @@ export default function Conversation() {
                 {replyContent.length} characters
               </div>
               <div className="flex space-x-2">
+                {/* Show ignore button when there are unread notifications */}
+                {hasUnreadNotifications && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleIgnoreMessages}
+                    disabled={ignoreMessagesMutation.isPending}
+                    className="text-gray-600"
+                  >
+                    {ignoreMessagesMutation.isPending ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 animate-spin border-2 border-gray-600 border-t-transparent rounded-full" />
+                        Ignoring...
+                      </>
+                    ) : (
+                      'Ignore'
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {

@@ -388,7 +388,16 @@ export function setupCommunicationRoutes(app: any) {
       messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
 
       console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId} (${bookingMessages.length} incoming, ${communications.length} outgoing)`);
-      res.json(messages);
+      
+      // Include unread message notification IDs so frontend can show ignore button
+      const unreadNotificationIds = bookingMessages
+        .filter(msg => !msg.isRead)
+        .map(msg => msg.id);
+      
+      res.json({
+        messages,
+        unreadNotificationIds
+      });
 
     } catch (error) {
       console.error('❌ Error fetching conversation:', error);
@@ -483,6 +492,11 @@ export function setupCommunicationRoutes(app: any) {
           mailgunId: mailgunResponse.id
         }).returning();
 
+        // Mark all message notifications for this booking as read (user has responded)
+        const { storage } = await import('../core/storage');
+        await storage.markAllBookingMessageNotificationsAsRead(bookingId, userId);
+        console.log(`✅ Marked all message notifications as read for booking ${bookingId}`);
+
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
         res.json({ success: true, communication, mailgunId: mailgunResponse.id });
 
@@ -508,6 +522,33 @@ export function setupCommunicationRoutes(app: any) {
     } catch (error) {
       console.error('❌ Error sending conversation reply:', error);
       res.status(500).json({ error: 'Failed to send reply' });
+    }
+  });
+
+  // New endpoint for ignoring messages (marks them as read without responding)
+  app.post('/api/conversations/ignore', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { bookingId } = req.body;
+
+      if (!bookingId) {
+        return res.status(400).json({ error: 'Missing required field: bookingId' });
+      }
+
+      // Mark all message notifications for this booking as read (user has chosen to ignore)
+      const { storage } = await import('../core/storage');
+      const result = await storage.markAllBookingMessageNotificationsAsRead(bookingId, userId);
+      
+      console.log(`✅ Ignored messages for booking ${bookingId} - marked ${result.length} notifications as read`);
+      res.json({ success: true, markedAsRead: result.length });
+
+    } catch (error) {
+      console.error('❌ Error ignoring messages:', error);
+      res.status(500).json({ error: 'Failed to ignore messages' });
     }
   });
 

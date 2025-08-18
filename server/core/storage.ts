@@ -628,6 +628,10 @@ export class Storage {
     return miscStorage.markMessageNotificationAsRead(id);
   }
 
+  async markAllBookingMessageNotificationsAsRead(bookingId: number, userId: string) {
+    return miscStorage.markAllBookingMessageNotificationsAsRead(bookingId, userId);
+  }
+
   async deleteMessageNotification(id: number) {
     return miscStorage.deleteMessageNotification(id);
   }
