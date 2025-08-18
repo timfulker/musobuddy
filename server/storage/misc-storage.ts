@@ -442,6 +442,18 @@ export class MiscStorage {
     return result[0];
   }
 
+  async markAllBookingMessageNotificationsAsRead(bookingId: number, userId: string) {
+    const result = await db.update(messageNotifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(messageNotifications.bookingId, bookingId),
+        eq(messageNotifications.userId, userId),
+        eq(messageNotifications.isRead, false)
+      ))
+      .returning();
+    return result;
+  }
+
   async deleteMessageNotification(id: number) {
     const result = await db.delete(messageNotifications)
       .where(eq(messageNotifications.id, id))
