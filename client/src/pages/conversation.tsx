@@ -185,12 +185,21 @@ export default function Conversation() {
   const handleTemplateSelect = (template: any) => {
     if (!booking) return;
     
+    console.log('🔍 Template selected:', template);
+    console.log('🔍 Booking data:', booking);
+    
+    // Get the template content from the correct field
+    let content = template.content || template.emailContent || template.template || '';
+    
+    console.log('🔍 Original template content:', content);
+    
     // Replace template variables with booking data
-    let content = template.content || '';
     content = content.replace(/\{clientName\}/g, booking.clientName || '');
     content = content.replace(/\{eventDate\}/g, formatDate(booking.eventDate) || '');
     content = content.replace(/\{venue\}/g, booking.venue || '');
     content = content.replace(/\{eventType\}/g, booking.eventType || '');
+    
+    console.log('🔍 Processed template content:', content);
     
     setReplyContent(content);
     setShowTemplates(false);
