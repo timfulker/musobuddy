@@ -445,7 +445,7 @@ export default function BookingSummary() {
                     width="100%"
                     height="100%"
                     frameBorder="0"
-                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(booking.venueAddress)}`}
+                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY}&q=${encodeURIComponent(booking.venueAddress)}`}
                     allowFullScreen
                     className="rounded-lg"
                   />
@@ -465,31 +465,33 @@ export default function BookingSummary() {
       </div>
 
       {/* Print Styles */}
-      <style jsx>{`
-        @media print {
-          @page {
-            margin: 1in;
-            size: A4;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            @page {
+              margin: 1in;
+              size: A4;
+            }
+            
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+            
+            .print\\:break-inside-avoid {
+              break-inside: avoid;
+            }
+            
+            .print\\:hidden {
+              display: none !important;
+            }
+            
+            .print\\:block {
+              display: block !important;
+            }
           }
-          
-          body {
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-          }
-          
-          .print\\:break-inside-avoid {
-            break-inside: avoid;
-          }
-          
-          .print\\:hidden {
-            display: none !important;
-          }
-          
-          .print\\:block {
-            display: block !important;
-          }
-        }
-      `}</style>
+        `
+      }} />
     </div>
   );
 }

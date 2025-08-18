@@ -31,6 +31,7 @@ Mobile strategy: Implementing enhanced responsive design (Option 1) - single app
 Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
 Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings get AI re-processing rather than automatic detection of problematic bookings.
 Bookings page sort persistence: Sort criteria (field and direction) are saved to localStorage and restored when returning to bookings page, providing intuitive UX where users don't need to re-select their preferred sort order after editing bookings.
+Booking summary gig sheets: New "Summary" button on booking cards opens comprehensive gig information in new tab with print-friendly layout. Organized by categories (Event Details, Venue Information, Client Information, Financial Details, Setup & Performance, Notes) and only displays populated fields. Includes optional Google Maps integration for venue location.
 
 ## System Architecture
 
@@ -49,6 +50,7 @@ Bookings page sort persistence: Sort criteria (field and direction) are saved to
 - **Email Service**: Mailgun for transactional emails, parsing, and template management. Handles multiple CC recipients for invoices. Critical issue of duplicate email processing from multiple Mailgun routes has been fixed. Email extraction prioritizes form content over sender addresses.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
 - **AI Integration**: Dual AI models for comprehensive automation: GPT-5 for intelligent email parsing and venue extraction (optimized to prevent unnecessary Google Maps API calls), and Claude Sonnet 4 for high-quality response generation. All AI usage is unlimited for all users.
+- **Google Maps Integration**: Uses VITE_GOOGLE_MAPS_BROWSER_KEY for client-side Maps API integration including venue location display on booking forms and embedded maps in booking summary gig sheets.
 - **Admin Database Access**: Read-only database administration panel with table browsing, filtering, search, and CSV export (admin-only access).
 
 ### System Design Choices
