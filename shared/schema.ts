@@ -69,7 +69,37 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// API usage tracking tables removed - unlimited AI usage for all users
+// Security Monitoring - Track usage for spam/abuse protection (not artificial limits)
+export const securityMonitoring = pgTable("security_monitoring", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  apiService: varchar("api_service", { length: 50 }).notNull(), // 'openai', 'claude', 'googlemaps', etc.
+  endpoint: varchar("endpoint", { length: 100 }), // specific endpoint called
+  requestCount: integer("request_count").default(1), // number of requests in this entry
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 6 }).default("0"), // cost in USD
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  suspicious: boolean("suspicious").default(false), // flagged as potential abuse
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_security_user_service").on(table.userId, table.apiService),
+  index("idx_security_created_at").on(table.createdAt),
+  index("idx_security_suspicious").on(table.suspicious),
+]);
+
+// User Security Status - For blocking abusive users
+export const userSecurityStatus = pgTable("user_security_status", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  isBlocked: boolean("is_blocked").default(false),
+  blockReason: text("block_reason"),
+  riskScore: integer("risk_score").default(0), // 0-100 risk assessment
+  lastReviewAt: timestamp("last_review_at"),
+  blockedAt: timestamp("blocked_at"),
+  blockedBy: varchar("blocked_by"), // admin user id who blocked
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // User activity tracking table
 export const userActivity = pgTable("user_activity", {
@@ -964,7 +994,17 @@ export const insertUnparseableMessageSchema = createInsertSchema(unparseableMess
   reviewedAt: true,
 });
 
-// API usage tracking schemas removed - unlimited AI usage for all users
+// Security monitoring schemas
+export const insertSecurityMonitoringSchema = createInsertSchema(securityMonitoring).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserSecurityStatusSchema = createInsertSchema(userSecurityStatus).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const insertMessageNotificationSchema = createInsertSchema(messageNotifications).omit({
   id: true,
@@ -1034,7 +1074,11 @@ export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertUserAuditLog = z.infer<typeof insertUserAuditLogSchema>;
 export type UserAuditLog = typeof userAuditLogs.$inferSelect;
-// API usage tracking types removed - unlimited AI usage for all users
+// Security monitoring types
+export type InsertSecurityMonitoring = z.infer<typeof insertSecurityMonitoringSchema>;
+export type SecurityMonitoring = typeof securityMonitoring.$inferSelect;
+export type InsertUserSecurityStatus = z.infer<typeof insertUserSecurityStatusSchema>;
+export type UserSecurityStatus = typeof userSecurityStatus.$inferSelect;
 
 // NEW: Contract Learning System Tables
 

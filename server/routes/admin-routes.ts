@@ -6,7 +6,7 @@ import { sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { db } from "../core/database";
-import { users } from '../../shared/schema';
+import { users, securityMonitoring, userSecurityStatus } from '../../shared/schema';
 import { eq, and, desc, sql, gte, inArray } from 'drizzle-orm';
 // API usage tracking removed - unlimited AI usage for all users
 
@@ -634,21 +634,45 @@ export function registerAdminRoutes(app: Express) {
     }
   }));
 
-  // API Usage Statistics endpoint
+  // Security Monitoring Statistics endpoint  
   app.get('/api/admin/api-usage-stats', requireAdmin, async (req: any, res) => {
     try {
       // Get usage statistics from the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // API usage tracking removed - unlimited AI with basic spam protection
-      const totalStats = [{ totalRequests: 0, totalCost: 0 }];
+      // Get total usage stats from security monitoring
+      const totalStats = await db
+        .select({
+          totalRequests: sql<number>`sum(request_count)`,
+          totalCost: sql<number>`sum(estimated_cost)`
+        })
+        .from(securityMonitoring)
+        .where(gte(securityMonitoring.createdAt, thirtyDaysAgo));
 
-      // Service breakdown removed - unlimited AI usage
-      const serviceStats = [];
+      // Service breakdown
+      const serviceStats = await db
+        .select({
+          apiService: securityMonitoring.apiService,
+          requests: sql<number>`sum(request_count)`,
+          totalCost: sql<number>`sum(estimated_cost)`,
+        })
+        .from(securityMonitoring)
+        .where(gte(securityMonitoring.createdAt, thirtyDaysAgo))
+        .groupBy(securityMonitoring.apiService);
 
-      // Top users tracking removed - unlimited AI usage
-      const topUsers = [];
+      // Top users by usage (for admin monitoring)
+      const topUsers = await db
+        .select({
+          userId: securityMonitoring.userId,
+          requests: sql<number>`sum(request_count)`,
+          cost: sql<number>`sum(estimated_cost)`,
+        })
+        .from(securityMonitoring)
+        .where(gte(securityMonitoring.createdAt, thirtyDaysAgo))
+        .groupBy(securityMonitoring.userId)
+        .orderBy(desc(sql`sum(request_count)`))
+        .limit(10);
 
       // Get user names
       const userIds = topUsers.map(user => user.userId);
@@ -676,55 +700,100 @@ export function registerAdminRoutes(app: Express) {
         acc[service.apiService] = {
           requests: service.requests,
           cost: service.totalCost,
-          avgResponseTime: Math.round(service.avgResponseTime || 0)
         };
         return acc;
       }, {} as Record<string, any>);
 
       res.json({
-        totalRequests: totalStats[0]?.totalRequests || 0,
-        totalCost: totalStats[0]?.totalCost || 0,
-        topUsers: topUsersWithNames,
-        serviceBreakdown
+        totalStats: totalStats[0] || { totalRequests: 0, totalCost: 0 },
+        serviceBreakdown,
+        topUsers: topUsersWithNames
       });
 
     } catch (error) {
-      console.error('❌ Error fetching API usage stats:', error);
-      res.status(500).json({ error: 'Failed to fetch API usage statistics' });
+      console.error('❌ Error fetching security monitoring stats:', error);
+      res.status(500).json({ error: 'Failed to fetch usage statistics' });
     }
   });
 
-  // User API Usage Data endpoint
+  // User Security Data endpoint with sorting
   app.get('/api/admin/api-usage-data', requireAdmin, async (req: any, res) => {
     try {
+      const { sortBy = 'userName', sortOrder = 'asc' } = req.query;
+      
       // Get all users for admin overview  
       const allUsers = await db.select().from(users);
-      // API usage limits removed - unlimited AI usage with basic spam protection
       
-      // Get usage data for the last 30 days for cost calculation
+      // Get usage data for the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      // Recent usage tracking removed - unlimited AI usage
-      const recentUsage = [];
+      // Get recent usage from security monitoring
+      const recentUsage = await db
+        .select({
+          userId: securityMonitoring.userId,
+          apiService: securityMonitoring.apiService,
+          totalRequests: sql<number>`sum(request_count)`,
+          totalCost: sql<number>`sum(estimated_cost)`,
+          lastActivity: sql<Date>`max(created_at)`
+        })
+        .from(securityMonitoring)
+        .where(gte(securityMonitoring.createdAt, thirtyDaysAgo))
+        .groupBy(securityMonitoring.userId, securityMonitoring.apiService);
 
-      // Usage data simplified - unlimited AI for all users
-      const usageData = allUsers.reduce((acc, user) => {
+      // Get security status for users
+      const securityStatuses = await db.select().from(userSecurityStatus);
+
+      const usageData = allUsers.map(user => {
         const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+        const userUsage = recentUsage.filter(usage => usage.userId === user.id);
+        const securityStatus = securityStatuses.find(status => status.userId === user.id);
         
-        acc[user.id] = {
+        const totalRequests = userUsage.reduce((sum, usage) => sum + Number(usage.totalRequests || 0), 0);
+        const totalCost = userUsage.reduce((sum, usage) => sum + Number(usage.totalCost || 0), 0);
+        const lastActivity = userUsage.length > 0 ? Math.max(...userUsage.map(u => new Date(u.lastActivity || 0).getTime())) : null;
+
+        const services = userUsage.reduce((serviceAcc, usage) => {
+          serviceAcc[usage.apiService] = {
+            requests: Number(usage.totalRequests || 0),
+            cost: Number(usage.totalCost || 0),
+            lastActivity: usage.lastActivity
+          };
+          return serviceAcc;
+        }, {} as Record<string, any>);
+
+        return {
           userId: user.id,
           userName,
-          services: {} // No artificial limits - unlimited AI usage
+          totalRequests,
+          totalCost,
+          lastActivity: lastActivity ? new Date(lastActivity) : null,
+          isBlocked: securityStatus?.isBlocked || false,
+          riskScore: securityStatus?.riskScore || 0,
+          services
         };
-        return acc;
-      }, {} as Record<string, any>);
+      });
+
+      // Sort the data
+      usageData.sort((a, b) => {
+        let aVal = a[sortBy as keyof typeof a];
+        let bVal = b[sortBy as keyof typeof b];
+        
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+        
+        if (sortOrder === 'desc') {
+          return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+        } else {
+          return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        }
+      });
 
       res.json(usageData);
 
     } catch (error) {
-      console.error('❌ Error fetching API usage data:', error);
-      res.status(500).json({ error: 'Failed to fetch API usage data' });
+      console.error('❌ Error fetching user security data:', error);
+      res.status(500).json({ error: 'Failed to fetch user data' });
     }
   });
 
@@ -736,20 +805,97 @@ export function registerAdminRoutes(app: Express) {
     });
   });
 
-  // API blocking endpoint removed - unlimited AI usage for all users
-  app.post('/api/admin/block-user-api', requireAdmin, async (req: any, res) => {
-    res.json({ 
-      success: false, 
-      message: 'API blocking removed - all users have unlimited AI usage' 
-    });
+  // Block/unblock user for security reasons
+  app.post('/api/admin/block-user-security', requireAdmin, async (req: any, res) => {
+    try {
+      const { userId, isBlocked, blockReason } = req.body;
+      const adminId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'Missing userId' });
+      }
+
+      // Prevent admin from blocking themselves
+      if (userId === adminId) {
+        return res.status(400).json({ error: 'Cannot block your own account' });
+      }
+
+      await db
+        .insert(userSecurityStatus)
+        .values({
+          userId,
+          isBlocked: Boolean(isBlocked),
+          blockReason: isBlocked ? blockReason : null,
+          blockedAt: isBlocked ? new Date() : null,
+          blockedBy: isBlocked ? adminId : null,
+        })
+        .onConflictDoUpdate({
+          target: userSecurityStatus.userId,
+          set: {
+            isBlocked: Boolean(isBlocked),
+            blockReason: isBlocked ? blockReason : null,
+            blockedAt: isBlocked ? new Date() : null,
+            blockedBy: isBlocked ? adminId : null,
+            updatedAt: new Date(),
+          }
+        });
+
+      const action = isBlocked ? 'blocked' : 'unblocked';
+      console.log(`✅ ${action} user ${userId} for security reasons by admin ${adminId}${isBlocked ? `: ${blockReason}` : ''}`);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error('❌ Error updating user security status:', error);
+      res.status(500).json({ error: 'Failed to update user security status' });
+    }
   });
 
-  // Usage reset endpoint removed - unlimited AI usage for all users
-  app.post('/api/admin/reset-api-usage', requireAdmin, async (req: any, res) => {
-    res.json({ 
-      success: false, 
-      message: 'Usage counters removed - all users have unlimited AI usage' 
-    });
+  // Get security alerts for suspicious activity
+  app.get('/api/admin/security-alerts', requireAdmin, async (req: any, res) => {
+    try {
+      // Get suspicious activity flagged by security monitoring
+      const suspiciousActivity = await db
+        .select({
+          id: securityMonitoring.id,
+          userId: securityMonitoring.userId,
+          apiService: securityMonitoring.apiService,
+          endpoint: securityMonitoring.endpoint,
+          requestCount: securityMonitoring.requestCount,
+          ipAddress: securityMonitoring.ipAddress,
+          createdAt: securityMonitoring.createdAt,
+        })
+        .from(securityMonitoring)
+        .where(eq(securityMonitoring.suspicious, true))
+        .orderBy(desc(securityMonitoring.createdAt))
+        .limit(50);
+
+      // Get user details for alerts
+      if (suspiciousActivity.length > 0) {
+        const userIds = [...new Set(suspiciousActivity.map(activity => activity.userId))];
+        const usersData = await db
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+          .from(users)
+          .where(inArray(users.id, userIds));
+
+        const usersMap = usersData.reduce((acc, user) => {
+          acc[user.id] = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+          return acc;
+        }, {} as Record<string, string>);
+
+        const alertsWithUserNames = suspiciousActivity.map(alert => ({
+          ...alert,
+          userName: usersMap[alert.userId] || 'Unknown User'
+        }));
+
+        res.json(alertsWithUserNames);
+      } else {
+        res.json([]);
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching security alerts:', error);
+      res.status(500).json({ error: 'Failed to fetch security alerts' });
+    }
   });
 
   console.log('✅ Admin routes configured');

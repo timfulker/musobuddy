@@ -30,23 +30,25 @@ import {
 interface ApiUsageData {
   userId: string;
   userName: string;
+  totalRequests: number;
+  totalCost: number;
+  lastActivity: Date | null;
+  isBlocked: boolean;
+  riskScore: number;
   services: {
     [service: string]: {
-      dailyUsage: number;
-      dailyLimit: number;
-      monthlyUsage: number;
-      monthlyLimit: number;
-      isBlocked: boolean;
-      blockReason?: string;
-      totalCost: number;
-      lastActivity: string;
+      requests: number;
+      cost: number;
+      lastActivity: Date | null;
     };
   };
 }
 
 interface UsageStats {
-  totalRequests: number;
-  totalCost: number;
+  totalStats: {
+    totalRequests: number;
+    totalCost: number;
+  };
   topUsers: Array<{
     userId: string;
     userName: string;
@@ -57,25 +59,29 @@ interface UsageStats {
     [service: string]: {
       requests: number;
       cost: number;
-      avgResponseTime: number;
     };
   };
 }
 
 export function ApiUsageManager() {
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [selectedService, setSelectedService] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('userName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [blockReason, setBlockReason] = useState<string>('');
+  const [showBlockDialog, setShowBlockDialog] = useState<boolean>(false);
+  const [selectedUserToBlock, setSelectedUserToBlock] = useState<string>('');
   const queryClient = useQueryClient();
 
   // Fetch usage statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/api-usage-stats'],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  // Fetch user usage data
+  // Fetch user usage data with sorting
   const { data: usageData, isLoading: usageLoading } = useQuery({
-    queryKey: ['/api/admin/api-usage-data'],
+    queryKey: ['/api/admin/api-usage-data', sortBy, sortOrder],
+    queryFn: () => apiRequest(`/api/admin/api-usage-data?sortBy=${sortBy}&sortOrder=${sortOrder}`),
     refetchInterval: 30000,
   });
 
@@ -95,19 +101,21 @@ export function ApiUsageManager() {
     },
   });
 
-  // Block/unblock user
+  // Block/unblock user for security reasons
   const blockUserMutation = useMutation({
     mutationFn: (data: {
       userId: string;
-      service: string;
       isBlocked: boolean;
       blockReason?: string;
-    }) => apiRequest('/api/admin/block-user-api', {
+    }) => apiRequest('/api/admin/block-user-security', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/api-usage-data'] });
+      setShowBlockDialog(false);
+      setBlockReason('');
+      setSelectedUserToBlock('');
     },
   });
 
@@ -181,7 +189,7 @@ export function ApiUsageManager() {
               <Activity className="h-4 w-4 text-blue-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-600">Total API Calls</p>
-                <p className="text-2xl font-bold">{stats?.totalRequests?.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold">{stats?.totalStats?.totalRequests?.toLocaleString() || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -193,7 +201,7 @@ export function ApiUsageManager() {
               <TrendingUp className="h-4 w-4 text-green-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-600">Total Cost</p>
-                <p className="text-2xl font-bold">${typeof stats?.totalCost === 'number' ? stats.totalCost.toFixed(4) : '0.0000'}</p>
+                <p className="text-2xl font-bold">${typeof stats?.totalStats?.totalCost === 'number' ? stats.totalStats.totalCost.toFixed(4) : '0.0000'}</p>
               </div>
             </div>
           </CardContent>
@@ -205,7 +213,7 @@ export function ApiUsageManager() {
               <Shield className="h-4 w-4 text-purple-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold">{Object.keys(usageData || {}).length}</p>
+                <p className="text-2xl font-bold">{Array.isArray(usageData) ? usageData.length : 0}</p>
               </div>
             </div>
           </CardContent>
@@ -218,9 +226,7 @@ export function ApiUsageManager() {
               <div className="ml-2">
                 <p className="text-sm font-medium text-gray-600">Blocked Users</p>
                 <p className="text-2xl font-bold">
-                  {Object.values(usageData || {}).reduce((count, user: any) => {
-                    return count + Object.values(user.services || {}).filter((service: any) => service.isBlocked).length;
-                  }, 0)}
+                  {Array.isArray(usageData) ? usageData.filter((user: any) => user.isBlocked).length : 0}
                 </p>
               </div>
             </div>
@@ -228,10 +234,34 @@ export function ApiUsageManager() {
         </Card>
       </div>
 
-      {/* User Usage Table */}
+      {/* User Security Monitoring Table */}
       <Card>
         <CardHeader>
-          <CardTitle>User API Usage & Limits</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>User Security Monitoring</span>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="sort-by" className="text-sm">Sort by:</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="userName">Name</SelectItem>
+                  <SelectItem value="totalRequests">Requests</SelectItem>
+                  <SelectItem value="totalCost">Cost</SelectItem>
+                  <SelectItem value="lastActivity">Activity</SelectItem>
+                  <SelectItem value="riskScore">Risk Score</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              >
+                {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
