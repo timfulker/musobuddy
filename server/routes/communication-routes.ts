@@ -180,10 +180,11 @@ export function setupCommunicationRoutes(app: any) {
           let content = 'Message content unavailable';
           
           if (downloadResult.success && downloadResult.content) {
-            // Extract text content from HTML
+            // Extract text content from HTML and parse to get only the new reply
             const htmlContent = downloadResult.content;
-            // Simple HTML text extraction - remove tags and decode entities
-            content = htmlContent
+            
+            // Remove HTML tags and decode entities
+            let rawText = htmlContent
               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
               .replace(/<[^>]*>/g, '')
@@ -195,6 +196,28 @@ export function setupCommunicationRoutes(app: any) {
               .replace(/&#39;/g, "'")
               .replace(/\s+/g, ' ')
               .trim();
+            
+            // Try to extract only the new reply content by removing quoted text
+            // Look for common email reply patterns
+            const replyPatterns = [
+              /^(.*?)(?:On .+? wrote:|From: .+?|Date: .+?|\d+\/\d+\/\d+.+?wrote:)/s,
+              /^(.*?)(?:-----Original Message-----)/s,
+              /^(.*?)(?:> .+)/s,  // Lines starting with >
+              /^(.*?)(?:\n\n.+? <.+?@.+?> wrote:)/s
+            ];
+            
+            for (const pattern of replyPatterns) {
+              const match = rawText.match(pattern);
+              if (match && match[1].trim().length > 10) {
+                content = match[1].trim();
+                break;
+              }
+            }
+            
+            // If no pattern matched, use the full text but truncate if very long
+            if (content === 'Message content unavailable') {
+              content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
+            }
           }
           
           messages.push({
@@ -225,20 +248,53 @@ export function setupCommunicationRoutes(app: any) {
         }
       }
 
-      // Process outbound communications
-      communications.forEach(comm => {
+      // Process outbound communications - download content from R2 if messageBody is a URL
+      for (const comm of communications) {
+        let content = comm.messageBody || 'No content';
+        
+        // Check if messageBody contains an R2 URL and download the content
+        if (content.includes('r2.dev') || content.includes('https://')) {
+          try {
+            // Extract the R2 key from the URL
+            const urlMatch = content.match(/https:\/\/[^\/]+\.r2\.dev\/(.+?)(?:\s|$)/);
+            if (urlMatch) {
+              const r2Key = urlMatch[1];
+              console.log(`📥 Downloading outbound message content from R2: ${r2Key}`);
+              const downloadResult = await downloadFile(r2Key);
+              
+              if (downloadResult.success && downloadResult.content) {
+                // Extract text content from HTML
+                content = downloadResult.content
+                  .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                  .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                  .replace(/<[^>]*>/g, '')
+                  .replace(/&nbsp;/g, ' ')
+                  .replace(/&amp;/g, '&')
+                  .replace(/&lt;/g, '<')
+                  .replace(/&gt;/g, '>')
+                  .replace(/&quot;/g, '"')
+                  .replace(/&#39;/g, "'")
+                  .replace(/\s+/g, ' ')
+                  .trim();
+              }
+            }
+          } catch (error) {
+            console.error(`❌ Error downloading outbound message content:`, error);
+          }
+        }
+        
         messages.push({
           id: `comm_${comm.id}`,
           bookingId: comm.bookingId,
           fromEmail: 'performer',
           toEmail: comm.clientEmail,
           subject: comm.subject,
-          content: comm.messageBody || 'No content',
+          content: content,
           messageType: 'outgoing',
           sentAt: comm.sentAt,
           isRead: true
         });
-      });
+      }
 
       // Sort all messages by date
       messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
