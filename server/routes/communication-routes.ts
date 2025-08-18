@@ -434,13 +434,13 @@ export function setupCommunicationRoutes(app: any) {
       }
 
       // Get user settings for sender info and email template
-      const userSettingsData = await db
+      const userSettingsResults = await db
         .select()
         .from(userSettings)
         .where(eq(userSettings.userId, userId))
         .limit(1);
 
-      const userSetting = userSettingsData[0];
+      const userSetting = userSettingsResults[0];
       if (!userSetting?.senderEmail) {
         return res.status(400).json({ error: 'Sender email not configured in settings' });
       }
