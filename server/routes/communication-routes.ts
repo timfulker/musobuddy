@@ -334,7 +334,7 @@ export function setupCommunicationRoutes(app: any) {
               
               if (downloadResult.success && downloadResult.content) {
                 // Extract text content from HTML and format properly
-                content = downloadResult.content
+                let rawContent = downloadResult.content
                   .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
                   .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
                   .replace(/<br\s*\/?>/gi, '\n')  // Convert <br> to line breaks
@@ -349,6 +349,20 @@ export function setupCommunicationRoutes(app: any) {
                   .replace(/\s{2,}/g, ' ')        // Remove multiple spaces but keep line breaks
                   .replace(/\n{3,}/g, '\n\n')    // Limit to double line breaks
                   .trim();
+                
+                // Extract content starting from "Dear" to skip headers/metadata
+                const dearPattern = /(?:Dear\s+\w+|Hi\s+\w+|Hello\s+\w+),?\s*(.*)/s;
+                const dearMatch = rawContent.match(dearPattern);
+                
+                if (dearMatch) {
+                  // Include the greeting and the rest of the content
+                  const greeting = rawContent.match(/(Dear\s+\w+|Hi\s+\w+|Hello\s+\w+),?/i);
+                  content = greeting ? greeting[0] + ',\n\n' + dearMatch[1].trim() : dearMatch[0];
+                  console.log(`✅ Extracted content starting from greeting: ${content.substring(0, 100)}...`);
+                } else {
+                  content = rawContent;
+                  console.log(`⚠️ No greeting pattern found, using full content`);
+                }
               }
             }
           } catch (error) {
