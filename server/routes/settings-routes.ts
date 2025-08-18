@@ -773,75 +773,163 @@ export async function registerSettingsRoutes(app: Express) {
           .join('');
       };
 
-      // Create professional HTML email content
+      // Create warm, professional HTML email content
       const professionalEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${template.subject}</title>
     <style>
-        /* Email-safe CSS - minimal and compatible */
+        /* Warm, musician-friendly email styling */
         body { 
-          font-family: Arial, sans-serif; 
-          line-height: 1.6; 
+          font-family: 'Georgia', 'Times New Roman', serif; 
+          line-height: 1.7; 
           margin: 0; 
           padding: 20px; 
-          background-color: #f8f9fa;
-          color: #333333;
+          background: linear-gradient(135deg, #f7f3f0 0%, #fdfbf7 100%);
+          color: #2c3e50;
         }
         .email-container {
-          max-width: 600px;
+          max-width: 580px;
           margin: 0 auto;
           background: white;
-          border-radius: 8px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+          border: 1px solid rgba(0,0,0,0.05);
         }
         .email-header { 
-          background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%);
-          color: ${textColor};
-          padding: 20px;
+          background: linear-gradient(135deg, ${themeColor}15 0%, ${themeColor}25 100%);
+          padding: 32px 28px;
           text-align: center;
+          position: relative;
+        }
+        .email-header::before {
+          content: '♪';
+          position: absolute;
+          top: 12px;
+          right: 20px;
+          font-size: 18px;
+          color: ${themeColor};
+          opacity: 0.6;
+        }
+        .email-header h1 {
+          margin: 0;
+          font-size: 26px;
+          font-weight: 400;
+          color: #2c3e50;
+          font-family: 'Georgia', serif;
+        }
+        .brand-tag {
+          background: ${themeColor};
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 500;
+          display: inline-block;
+          margin-bottom: 8px;
+          font-family: Arial, sans-serif;
+          letter-spacing: 0.5px;
         }
         .email-content { 
-          padding: 30px;
+          padding: 36px 32px;
           background: white;
         }
-        .signature {
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 1px solid #e9ecef;
-          color: #6c757d;
-          font-size: 14px;
+        .content-highlight {
+          background: linear-gradient(135deg, ${themeColor}08 0%, ${themeColor}12 100%);
+          border-left: 3px solid ${themeColor};
+          padding: 18px 22px;
+          margin: 22px 0;
+          border-radius: 0 8px 8px 0;
+          font-style: italic;
         }
-        h1, h2 { margin: 0 0 16px 0; }
-        p { margin: 0 0 16px 0; line-height: 1.6; }
+        .signature {
+          margin-top: 36px;
+          padding: 24px;
+          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+          border-radius: 10px;
+          text-align: center;
+          border: 1px solid #eee;
+        }
+        .signature-name {
+          font-size: 18px;
+          font-weight: 500;
+          color: #2c3e50;
+          margin-bottom: 6px;
+          font-family: 'Georgia', serif;
+        }
+        .signature-title {
+          color: #7f8c8d;
+          font-size: 14px;
+          margin-bottom: 12px;
+          font-style: italic;
+        }
+        .contact-link {
+          color: ${themeColor};
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 14px;
+          font-family: Arial, sans-serif;
+        }
+        .contact-link:hover {
+          text-decoration: underline;
+        }
+        h2 { 
+          margin: 0 0 18px 0; 
+          color: #2c3e50;
+          font-size: 20px;
+          font-weight: 400;
+        }
+        p { 
+          margin: 0 0 18px 0; 
+          line-height: 1.7;
+          color: #34495e;
+        }
         .footer {
-          background: #f8f9fa;
+          background: #34495e;
           padding: 20px;
           text-align: center;
-          font-size: 12px;
-          color: #6c757d;
+          color: #ecf0f1;
+        }
+        .footer-text {
+          font-size: 11px;
+          opacity: 0.8;
+          font-family: Arial, sans-serif;
+        }
+        .footer-brand {
+          color: ${themeColor};
+          font-weight: 500;
+          text-decoration: none;
+        }
+        @media (max-width: 640px) {
+          body { padding: 10px; }
+          .email-container { border-radius: 8px; }
+          .email-content, .email-header { padding: 24px 20px; }
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="email-header">
-            <h1 style="margin: 0; font-size: 24px; font-weight: 300;">${template.subject}</h1>
+            <div class="brand-tag">MusoBuddy</div>
+            <h1>${template.subject}</h1>
         </div>
         <div class="email-content">
             ${formatEmailContent(template.emailBody)}
             
             <div class="signature">
-                <p><strong>${senderName || 'MusoBuddy'}</strong><br>
-                Professional Music Services<br>
-                ${senderEmail}</p>
+                <div class="signature-name">${senderName || 'MusoBuddy'}</div>
+                <div class="signature-title">Professional Music Services</div>
+                <a href="mailto:${senderEmail}" class="contact-link">${senderEmail}</a>
             </div>
         </div>
         <div class="footer">
-            <p>This email was sent via MusoBuddy Professional Music Management Platform</p>
+            <div class="footer-text">
+                Sent with ♪ via <a href="#" class="footer-brand">MusoBuddy</a> Music Management
+            </div>
         </div>
     </div>
 </body>
