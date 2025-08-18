@@ -77,9 +77,30 @@ export default function Conversation() {
   });
 
   // Extract messages and unread notification IDs from response
-  const messages = conversationData?.messages || [];
+  const conversationMessages = conversationData?.messages || [];
   const unreadNotificationIds = conversationData?.unreadNotificationIds || [];
   const hasUnreadNotifications = unreadNotificationIds.length > 0;
+
+  // Create full message list including original client inquiry
+  const messages = [];
+  
+  // Add original client inquiry as first message if it exists
+  if (booking?.originalEmailContent) {
+    messages.push({
+      id: 0, // Use ID 0 for the original inquiry
+      bookingId: booking.id,
+      fromEmail: booking.clientEmail,
+      toEmail: '', // Not applicable for original inquiry
+      subject: `Original Inquiry - ${booking.eventType || 'Booking Request'}`,
+      content: booking.originalEmailContent,
+      messageType: 'incoming' as const,
+      sentAt: booking.createdAt || new Date().toISOString(),
+      isRead: true
+    });
+  }
+  
+  // Add all other conversation messages after the original inquiry
+  messages.push(...conversationMessages);
 
   // Fetch email templates
   const { data: templates = [] } = useQuery({
@@ -515,37 +536,61 @@ export default function Conversation() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((message: ConversationMessage) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.messageType === 'outgoing' ? 'justify-end' : 'justify-start'}`}
-                    >
+                  {messages.map((message: ConversationMessage) => {
+                    const isOriginalInquiry = message.id === 0;
+                    return (
                       <div
-                        className={`max-w-[70%] rounded-lg p-4 ${
-                          message.messageType === 'outgoing'
-                            ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                            : 'bg-gray-100 border'
-                        }`}
+                        key={message.id}
+                        className={`flex ${message.messageType === 'outgoing' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium">
-                            {message.messageType === 'outgoing' ? 'You' : booking.clientName}
-                          </span>
-                          <span className={`text-xs ${message.messageType === 'outgoing' ? 'text-blue-600' : 'text-gray-500'}`}>
-                            {formatDate(message.sentAt, true)}
-                          </span>
-                        </div>
-                        {message.subject && (
-                          <div className={`text-sm font-medium mb-2 ${message.messageType === 'outgoing' ? 'text-blue-700' : 'text-gray-700'}`}>
-                            Re: {message.subject}
+                        <div
+                          className={`max-w-[70%] rounded-lg p-4 ${
+                            message.messageType === 'outgoing'
+                              ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                              : isOriginalInquiry
+                              ? 'bg-green-50 border border-green-200 relative'
+                              : 'bg-gray-100 border'
+                          }`}
+                        >
+                          {isOriginalInquiry && (
+                            <div className="absolute -top-2 -left-2">
+                              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 text-xs">
+                                Original Inquiry
+                              </Badge>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium">
+                              {message.messageType === 'outgoing' ? 'You' : booking.clientName}
+                            </span>
+                            <span className={`text-xs ${
+                              message.messageType === 'outgoing' 
+                                ? 'text-blue-600' 
+                                : isOriginalInquiry 
+                                ? 'text-green-600' 
+                                : 'text-gray-500'
+                            }`}>
+                              {formatDate(message.sentAt, true)}
+                            </span>
                           </div>
-                        )}
-                        <div className="text-sm whitespace-pre-wrap">
-                          {message.content}
+                          {message.subject && (
+                            <div className={`text-sm font-medium mb-2 ${
+                              message.messageType === 'outgoing' 
+                                ? 'text-blue-700' 
+                                : isOriginalInquiry 
+                                ? 'text-green-700' 
+                                : 'text-gray-700'
+                            }`}>
+                              {isOriginalInquiry ? message.subject : `Re: ${message.subject}`}
+                            </div>
+                          )}
+                          <div className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <div ref={messagesEndRef} />
                 </div>
               )}

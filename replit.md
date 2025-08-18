@@ -32,6 +32,7 @@ Unparseable message workflow: Streamlined approach where "Reply" button automati
 Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings get AI re-processing rather than automatic detection of problematic bookings.
 Bookings page sort persistence: Sort criteria (field and direction) are saved to localStorage and restored when returning to bookings page, providing intuitive UX where users don't need to re-select their preferred sort order after editing bookings.
 Booking summary gig sheets: New "Summary" button on booking cards opens comprehensive gig information in new tab with print-friendly layout. Organized by categories (Event Details, Venue Information, Client Information, Financial Details, Setup & Performance, Notes) and only displays populated fields. Includes optional Google Maps integration for venue location.
+Conversation window original inquiry: Original client inquiry (stored in originalEmailContent field) displays as the first message in conversation threads with distinctive green styling and "Original Inquiry" badge. Provides complete conversation context from initial contact through all subsequent messages.
 
 ## Recent Changes
 **August 18, 2025 - AI Booking Reprocessing System Fixed:**
