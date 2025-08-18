@@ -1,5 +1,6 @@
 // UNIFIED: contract-pdf-generator.ts - Single source of truth for contract PDF generation
 import puppeteer from 'puppeteer';
+import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '@shared/schema';
@@ -115,10 +116,24 @@ export async function generateContractPDF(
   console.log('🚀 UNIFIED: Contract status:', contract.status);
   console.log('🚀 UNIFIED: Has signature details:', !!signatureDetails);
   
+  // Deployment-ready Puppeteer configuration
   const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    args: [
+      ...chromium.args,
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-extensions'
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: process.env.NODE_ENV === 'production' 
+      ? await chromium.executablePath() 
+      : '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    headless: chromium.headless,
   });
   
   try {

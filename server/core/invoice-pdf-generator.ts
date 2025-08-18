@@ -5,6 +5,7 @@
 // ⚠️  Changes to this file could break invoice generation system ⚠️
 
 import puppeteer from 'puppeteer';
+import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Invoice, UserSettings } from '@shared/schema';
@@ -61,11 +62,24 @@ export async function generateInvoicePDF(
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
   
-  // Simple, reliable Puppeteer configuration - NO AI CALLS
+  // Deployment-ready Puppeteer configuration
   const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    args: [
+      ...chromium.args,
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-extensions'
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: process.env.NODE_ENV === 'production' 
+      ? await chromium.executablePath() 
+      : '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    headless: chromium.headless,
   });
   
   try {
