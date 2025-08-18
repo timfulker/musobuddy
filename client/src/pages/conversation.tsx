@@ -150,11 +150,17 @@ export default function Conversation() {
     try {
       console.log('🤖 Starting AI response generation...');
       
-      // Get full conversation context for best AI results (users pay $9.99/month, they want quality)
-      const conversationContext = messages.length > 0 
-        ? `Full conversation history:\n${messages.map(msg => 
-            `${msg.type === 'incoming' ? 'Client' : 'You'}: ${msg.content}`
+      // Get last 4 messages for context (cost-effective while maintaining quality)
+      const lastFourMessages = messages.slice(-4);
+      const conversationContext = lastFourMessages.length > 0 
+        ? `Recent conversation context:\n${lastFourMessages.map(msg => 
+            `${msg.messageType === 'incoming' ? 'Client' : 'You'}: ${msg.content}`
           ).join('\n')}`
+        : '';
+
+      // Allow user to add manual context if needed
+      const customContext = replyContent.includes('[CONTEXT:') 
+        ? replyContent.match(/\[CONTEXT:(.*?)\]/)?.[1] || ''
         : '';
 
       const response = await apiRequest('/api/ai/generate-response', {
@@ -163,7 +169,7 @@ export default function Conversation() {
         body: JSON.stringify({
           bookingId: booking.id,
           action: 'respond',
-          customPrompt: `Generate a contextually appropriate response for this ongoing conversation with ${booking.clientName} regarding their ${booking.eventType} booking. Consider the conversation history and respond appropriately to their latest message.`,
+          customPrompt: `Generate a contextually appropriate response for this ongoing conversation with ${booking.clientName} regarding their ${booking.eventType} booking. Consider the conversation history and respond appropriately to their latest message.${customContext ? ` Additional context: ${customContext}` : ''}`,
           tone: 'professional',
           contextualInfo: conversationContext
         }),

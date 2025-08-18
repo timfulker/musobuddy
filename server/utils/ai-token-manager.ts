@@ -62,43 +62,43 @@ export async function checkTokenUsage(userId: string): Promise<TokenUsageResult>
     };
   }
 
-  const tokensUsed = user.aiTokensUsedThisMonth || 0;
-  const monthlyLimit = user.aiTokenMonthlyLimit || 50000;
-  const tokensRemaining = Math.max(0, monthlyLimit - tokensUsed);
-  const limitExceeded = tokensUsed >= monthlyLimit;
+  const responsesUsed = user.aiTokensUsedThisMonth || 0; // Reusing field for response count
+  const monthlyLimit = user.aiTokenMonthlyLimit || 200; // Default 200 AI responses
+  const responsesRemaining = Math.max(0, monthlyLimit - responsesUsed);
+  const limitExceeded = responsesUsed >= monthlyLimit;
 
   return {
     canUseAI: !limitExceeded,
-    tokensUsed,
-    tokensRemaining,
+    tokensUsed: responsesUsed, // Actually response count
+    tokensRemaining: responsesRemaining,
     monthlyLimit,
     limitExceeded,
     resetDate: new Date(user.aiTokenResetDate || now)
   };
 }
 
-// Update token usage after AI API call
-export async function updateTokenUsage(userId: string, tokensUsed: number): Promise<void> {
-  console.log(`📊 Recording ${tokensUsed} tokens used for user ${userId}`);
+// Update response usage after AI generation  
+export async function updateTokenUsage(userId: string, responsesGenerated: number = 1): Promise<void> {
+  console.log(`📊 Recording ${responsesGenerated} AI response(s) generated for user ${userId}`);
   
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) {
     throw new Error('User not found');
   }
 
-  const newTokensUsed = (user.aiTokensUsedThisMonth || 0) + tokensUsed;
-  const limitExceeded = newTokensUsed >= (user.aiTokenMonthlyLimit || 50000);
+  const newResponsesUsed = (user.aiTokensUsedThisMonth || 0) + responsesGenerated;
+  const limitExceeded = newResponsesUsed >= (user.aiTokenMonthlyLimit || 200);
 
   await db.update(users)
     .set({
-      aiTokensUsedThisMonth: newTokensUsed,
+      aiTokensUsedThisMonth: newResponsesUsed,
       aiLimitExceeded: limitExceeded,
       updatedAt: new Date()
     })
     .where(eq(users.id, userId));
 
   if (limitExceeded) {
-    console.log(`⚠️ User ${userId} has exceeded monthly AI token limit`);
+    console.log(`⚠️ User ${userId} has exceeded monthly AI response limit`);
   }
 }
 
@@ -114,14 +114,14 @@ export async function getTokenUsageForUI(userId: string): Promise<{
   const percentage = (usage.tokensUsed / usage.monthlyLimit) * 100;
   
   let status: 'good' | 'warning' | 'exceeded' = 'good';
-  let message = `${usage.tokensUsed.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()} tokens used this month`;
+  let message = `${usage.tokensUsed.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()} AI responses used this month`;
   
   if (percentage >= 100) {
     status = 'exceeded';
-    message = `Monthly limit exceeded. Upgrade for unlimited AI responses.`;
+    message = `Monthly AI response limit exceeded. Contact support to upgrade.`;
   } else if (percentage >= 80) {
     status = 'warning';
-    message = `${Math.round(percentage)}% of monthly AI tokens used. Consider upgrading.`;
+    message = `${Math.round(percentage)}% of monthly AI responses used. Consider upgrading soon.`;
   }
   
   return {
