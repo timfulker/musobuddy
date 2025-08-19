@@ -34,61 +34,36 @@ Bookings page sort persistence: Sort criteria (field and direction) are saved to
 Booking summary gig sheets: New "Summary" button on booking cards opens comprehensive gig information in new tab with print-friendly layout. Organized by categories (Event Details, Venue Information, Client Information, Financial Details, Setup & Performance, Notes) and only displays populated fields. Includes optional Google Maps integration for venue location.
 Conversation window original inquiry: Original client inquiry (stored in originalEmailContent field) displays as the first message in conversation threads with distinctive green styling and "Original Inquiry" badge. Provides complete conversation context from initial contact through all subsequent messages.
 
-## Recent Changes
-**August 18, 2025 - Complete Booking Summary Enhancement:**
-- ✅ COMPLETELY FIXED: Booking summary now displays ALL completed booking form fields
-- Added "Technical Details" section: venue contacts, sound tech contact, sound check times, additional venue info
-- Added "Special Moments & Music" section: first dance song, processional/recessional music, register signing music, must-play/avoid songs
-- Added "Musical Style & Service Details" section displaying song requests and service inclusions
-- Added "Equipment Details" section showing equipment requirements and what musician provides
-- Fixed Google Maps API authorization issue by replacing embed iframe with "Open in Google Maps" button
-- Summary now comprehensively displays all client portal collaborative form data
-- Confirmed database properly saves all client portal fields (first_dance_song, processional_song, sound_tech_contact, etc.)
-- Booking summary provides complete gig sheet for professional use
-
-**August 18, 2025 - AI Booking Reprocessing System Fixed:**
-- ✅ COMPLETELY FIXED: Critical bug in admin booking reprocessing system where database updates were failing silently
-- Fixed missing userId parameter in storage.updateBooking() call that prevented reprocessed data from saving to database
-- Eliminated contaminated input data - AI now parses fresh email content without bias from existing wrong data
-- Added comprehensive debug logging to track AI parsing and database update success
-- Reprocessing now correctly updates client names, emails, dates, and venues with 99% AI confidence
-- System successfully tested with booking #7363: "Tim Fulker" → "Patrick Head", email corrected, date added, venue cleaned
-
-**August 18, 2025 - Production Deployment Issue Resolution:**
-- ✅ COMPLETELY FIXED: Eliminated all hardcoded Chromium paths causing PulseAudio deployment failures  
-- Both PDF generators now use deployment-ready @sparticuz/chromium configuration exclusively
-- Platform consistently deployable to production with zero hardcoded dependencies
-
 ## System Architecture
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, including WCAG 2.0 luminance for text contrast and various theme options. A global luminance-aware styling system automatically calculates optimal text colors based on background luminance. For stubborn text color overrides, a `useEffect` hook injects styles with `-webkit-text-fill-color` and `!important` into the document head.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI. Features WCAG 2.0 luminance for text contrast, various theme options, and a global luminance-aware styling system for optimal text colors.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming (invoices, contracts) with consistent logo branding. Default booking view is list-based, with calendar as an option. Onboarding wizard is an optional, dismissible tool for new users, focusing on essential setup. A permanent map display on booking forms shows venue locations.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming with consistent logo branding. Default booking view is list-based, with calendar as an option. Onboarding wizard is optional and dismissible. A permanent map display on booking forms shows venue locations.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
-- **Authentication**: JWT-based system with SMS/email/phone verification, and secure email-based password reset, using unified middleware.
+- **Authentication**: JWT-based system with SMS/email/phone verification and secure email-based password reset.
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, parsing, and template management. Handles multiple CC recipients for invoices. Critical issue of duplicate email processing from multiple Mailgun routes has been fixed. Email extraction prioritizes form content over sender addresses.
-- **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation of invoices and contracts.
-- **AI Integration**: Dual AI models for comprehensive automation: GPT-5 for intelligent email parsing and venue extraction (optimized to prevent unnecessary Google Maps API calls), and Claude Sonnet 4 for high-quality response generation. All AI usage is unlimited for all users.
-- **Google Maps Integration**: Uses VITE_GOOGLE_MAPS_BROWSER_KEY for client-side Maps API integration including venue location display on booking forms and embedded maps in booking summary gig sheets.
-- **Admin Database Access**: Read-only database administration panel with table browsing, filtering, search, and CSV export (admin-only access).
+- **Email Service**: Mailgun for transactional emails, parsing, and template management, supporting multiple CC recipients for invoices.
+- **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
+- **AI Integration**: Dual AI models: GPT-5 for email parsing and venue extraction; Claude Sonnet 4 for response generation. All AI usage is unlimited.
+- **Google Maps Integration**: Uses client-side Maps API for venue location display and embedded maps in booking summary gig sheets.
+- **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API for venue auto-population, mileage, what3words). Mileage calculation is optimized to skip existing data. Supports "TBC" times and "Actual Performance Time" fields. Features individual field locking. Booking status validation prevents marking future bookings as "completed".
-- **Document Management**: Multi-document upload system per booking with categorization (contract/invoice/other), secure R2 cloud storage, and automatic counting.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time". Features individual field locking and status validation.
+- **Document Management**: Multi-document upload system per booking with categorization, secure R2 cloud storage, and automatic counting.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
-- **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs for R2 file access.
+- **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection. Includes retry logic and queue status monitoring.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection, including retry logic and queue status monitoring.
 
 ## External Dependencies
 

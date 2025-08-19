@@ -759,6 +759,109 @@ export async function registerSettingsRoutes(app: Express) {
         ? `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`
         : `User${userId} <user${userId}@mg.musobuddy.com>`;
 
+      // Function to replace template variables with actual booking data
+      const replaceTemplateVariables = (text: string, bookingData: any = null, userSettings: any = null, userName: string = '') => {
+        if (!text) return '';
+        
+        let replacedText = text;
+        
+        // Complete mapping of all possible template variables
+        const variableMap: { [key: string]: string } = {};
+        
+        // Booking data variables
+        if (bookingData) {
+          variableMap['Venue'] = bookingData.venue || bookingData.venueName || '';
+          variableMap['Venue Name'] = bookingData.venue || bookingData.venueName || '';
+          variableMap['Client Name'] = bookingData.clientName || '';
+          variableMap['Client'] = bookingData.clientName || '';
+          variableMap['Client Email'] = bookingData.clientEmail || '';
+          variableMap['Client Phone'] = bookingData.clientPhone || '';
+          variableMap['Venue Address'] = bookingData.venueAddress || '';
+          variableMap['Event Type'] = bookingData.eventType || '';
+          variableMap['Performance Type'] = bookingData.performanceType || '';
+          variableMap['Styles'] = bookingData.styles || '';
+          variableMap['Equipment'] = bookingData.equipment || '';
+          variableMap['Special Requirements'] = bookingData.specialRequirements || '';
+          variableMap['Notes'] = bookingData.notes || '';
+          variableMap['Fee'] = bookingData.fee ? `£${bookingData.fee}` : '';
+          variableMap['Deposit'] = bookingData.deposit ? `£${bookingData.deposit}` : '';
+          variableMap['Duration'] = bookingData.duration || '';
+          variableMap['Guest Count'] = bookingData.guestCount || '';
+          variableMap['Setup Time'] = bookingData.setupTime || '';
+          variableMap['Sound Check'] = bookingData.soundCheck || '';
+          variableMap['Performance Time'] = bookingData.performanceTime || '';
+          variableMap['Actual Performance Time'] = bookingData.actualPerformanceTime || '';
+          variableMap['Finish Time'] = bookingData.finishTime || '';
+          variableMap['Travel Distance'] = bookingData.travelDistance || '';
+          variableMap['Mileage'] = bookingData.mileage || '';
+          
+          // Date and time formatting
+          if (bookingData.eventDate) {
+            const eventDate = new Date(bookingData.eventDate);
+            variableMap['Event Date'] = eventDate.toLocaleDateString('en-GB');
+            variableMap['Date'] = eventDate.toLocaleDateString('en-GB');
+            variableMap['Event Day'] = eventDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          }
+          if (bookingData.eventTime) {
+            variableMap['Event Time'] = bookingData.eventTime;
+            variableMap['Time'] = bookingData.eventTime;
+            variableMap['Start Time'] = bookingData.eventTime;
+          }
+          if (bookingData.endTime) {
+            variableMap['End Time'] = bookingData.endTime;
+          }
+        }
+        
+        // User and business variables
+        if (userSettings) {
+          variableMap['Your Name'] = userName || '';
+          variableMap['Artist Name'] = userName || '';
+          variableMap['Business Name'] = userSettings.businessName || '';
+          variableMap['Your Business Name'] = userSettings.businessName || '';
+          variableMap['Contact Details'] = userSettings.businessEmail || '';
+          variableMap['Your Email'] = userSettings.businessEmail || '';
+          variableMap['Your Phone'] = userSettings.businessPhone || '';
+        }
+        
+        // Replace all variables found in the text
+        Object.entries(variableMap).forEach(([variable, value]) => {
+          if (value) {
+            const regex = new RegExp(`\\[${variable}\\]`, 'gi');
+            replacedText = replacedText.replace(regex, value);
+          }
+        });
+        
+        // Dynamic fallback for unmapped variables - try to find matching data fields
+        const remainingVariables = replacedText.match(/\[[\w\s]+\]/g) || [];
+        remainingVariables.forEach(variable => {
+          const cleanVar = variable.replace(/[\[\]]/g, '').toLowerCase().replace(/\s+/g, '');
+          
+          // Try to match against booking data keys
+          if (bookingData) {
+            Object.keys(bookingData).forEach(key => {
+              const cleanKey = key.toLowerCase().replace(/([A-Z])/g, ' $1').trim().replace(/\s+/g, '');
+              if (cleanVar === cleanKey && bookingData[key]) {
+                const regex = new RegExp(`\\[${variable.replace(/[\[\]]/g, '')}\\]`, 'gi');
+                replacedText = replacedText.replace(regex, bookingData[key].toString());
+              }
+            });
+          }
+          
+          // Try to match against user settings
+          if (userSettings) {
+            Object.keys(userSettings).forEach(key => {
+              const cleanKey = key.toLowerCase().replace(/([A-Z])/g, ' $1').trim().replace(/\s+/g, '');
+              if (cleanVar === cleanKey && userSettings[key]) {
+                const regex = new RegExp(`\\[${variable.replace(/[\[\]]/g, '')}\\]`, 'gi');
+                replacedText = replacedText.replace(regex, userSettings[key].toString());
+              }
+            });
+          }
+        });
+        
+        return replacedText;
+      };
+
       // Function to convert text to properly formatted HTML paragraphs  
       const formatEmailContent = (text: string) => {
         return text
@@ -773,6 +876,30 @@ export async function registerSettingsRoutes(app: Express) {
           .join('');
       };
 
+      // Replace template variables with actual booking data
+      const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'MusoBuddy User';
+      const processedSubject = replaceTemplateVariables(template.subject, booking, userSettings, userName);
+      const processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings, userName);
+      
+      // Validate that no template variables remain unreplaced
+      const findUnreplacedVariables = (text: string) => {
+        const matches = text.match(/\[[\w\s]+\]/g);
+        return matches || [];
+      };
+      
+      const unreplacedInSubject = findUnreplacedVariables(processedSubject);
+      const unreplacedInBody = findUnreplacedVariables(processedEmailBody);
+      const allUnreplaced = [...new Set([...unreplacedInSubject, ...unreplacedInBody])];
+      
+      if (allUnreplaced.length > 0) {
+        console.log('❌ Template contains unreplaced variables:', allUnreplaced);
+        const fieldNames = allUnreplaced.map(v => v.replace(/[\[\]]/g, '')).join(', ');
+        return res.status(400).json({ 
+          error: 'Missing Information',
+          message: `Please complete these fields in the booking form before sending: ${fieldNames}`
+        });
+      }
+
       // Create professional HTML email content with enhanced styling
       const professionalEmailHtml = `
 <!DOCTYPE html>
@@ -782,7 +909,7 @@ export async function registerSettingsRoutes(app: Express) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="x-apple-disable-message-reformatting">
-    <title>${template.subject}</title>
+    <title>${processedSubject}</title>
     <!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 </head>
 <body style="margin: 0; padding: 20px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); line-height: 1.6;">
@@ -792,13 +919,13 @@ export async function registerSettingsRoutes(app: Express) {
         <div style="background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%); color: ${textColor}; padding: 32px 28px; text-align: center; position: relative;">
             <div style="position: absolute; top: 16px; right: 24px; font-size: 20px; opacity: 0.7;">♪</div>
             <div style="background: rgba(255,255,255,0.15); color: ${textColor}; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-bottom: 12px; letter-spacing: 0.5px;">MusoBuddy</div>
-            <h1 style="margin: 0; font-size: 26px; font-weight: 400; line-height: 1.3; font-family: Georgia, 'Times New Roman', serif;">${template.subject}</h1>
+            <h1 style="margin: 0; font-size: 26px; font-weight: 400; line-height: 1.3; font-family: Georgia, 'Times New Roman', serif;">${processedSubject}</h1>
         </div>
         
         <!-- Main content -->
         <div style="padding: 40px 36px;">
             <div style="font-size: 16px; color: #2c3e50; line-height: 1.7;">
-                ${formatEmailContent(template.emailBody)}
+                ${formatEmailContent(processedEmailBody)}
             </div>
             
             <!-- Professional signature card -->
@@ -820,11 +947,11 @@ export async function registerSettingsRoutes(app: Express) {
 
       // Create a clean text version for email clients that prefer text
       const textVersion = `
-${template.subject}
+${processedSubject}
 
 Dear ${recipientName || 'Client'},
 
-${template.emailBody}
+${processedEmailBody}
 
 Best regards,
 ${senderName || 'MusoBuddy'}
@@ -838,7 +965,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
       // Send HTML-only email with explicit headers to force HTML rendering
       const emailData: any = {
         to: recipientEmail,
-        subject: template.subject,
+        subject: processedSubject,
         html: professionalEmailHtml,
         replyTo: replyToAddress,
         headers: {
