@@ -29,6 +29,7 @@ import { ContractNotifications, useContractStatusMonitor } from "@/components/co
 import MobileFeatureGuard from "@/components/mobile-feature-guard";
 import { useTheme } from "@/hooks/useTheme";
 import { getContrastTextColor } from "@/lib/colorUtils";
+import { calculateContractTotals } from "@/utils/booking-calculations";
 
 const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested
@@ -44,6 +45,7 @@ const contractFormSchema = z.object({
   eventEndTime: z.string().optional(),
   performanceDuration: z.string().optional(),
   deposit: z.string().optional(),
+  travelExpenses: z.string().optional(), // Travel expenses field
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
   venueAddress: z.string().optional(),
@@ -114,6 +116,7 @@ export default function Contracts() {
       venueAddress: "",
       fee: "",
       deposit: "",
+      travelExpenses: "",
       paymentInstructions: "",
       equipmentRequirements: "",
       specialRequirements: "",
@@ -179,6 +182,7 @@ export default function Contracts() {
               form.setValue('eventEndTime', booking.eventEndTime || '');
               form.setValue('performanceDuration', booking.performanceDuration || '');
               form.setValue('fee', booking.fee || '');
+              form.setValue('travelExpenses', booking.travelExpense || '');
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
               
@@ -1085,6 +1089,28 @@ export default function Contracts() {
                             )}
                           />
                         </div>
+
+                        {/* Travel Expenses Field - Only show when user setting is to show travel separately */}
+                        {settings?.includeTravelInPerformanceFee === false && (
+                          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                            <FormField
+                              control={form.control}
+                              name="travelExpenses"
+                              render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                  <FormLabel className="text-red-600 font-medium">Travel Expenses (£)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="50" {...field} value={field.value || ""} />
+                                  </FormControl>
+                                  <div className="text-xs text-gray-500">
+                                    Shown separately from performance fee based on your settings
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                           <FormField

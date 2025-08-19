@@ -266,6 +266,7 @@ export const contracts = pgTable("contracts", {
   performanceDuration: varchar("performance_duration"), // Actual performance time (independent of event timeframe, e.g., "2 hours", "2 x 45 min sets")
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
+  travelExpenses: decimal("travel_expenses", { precision: 10, scale: 2 }).default("0.00"), // Travel expenses (when shown separately)
   
   // Essential rider/payment information
   paymentInstructions: text("payment_instructions"), // How payment should be made
