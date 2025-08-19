@@ -318,20 +318,11 @@ export default function Contracts() {
         toggleSetting: settings?.includeTravelInPerformanceFee
       });
       
-      // Always save the separate fee and travel values to database
+      // Always save the ACTUAL separate fee and travel values to database
       // The toggle only affects display, not storage
-      let feeToSave: number;
-      let travelToSave: number;
-      
-      if (settings?.includeTravelInPerformanceFee === true) {
-        // Toggle ON: The fee field contains combined amount, travel shown as 0
-        feeToSave = parseFloat(data.fee || '0'); // Use the combined amount from form
-        travelToSave = 0; // Don't show travel separately
-      } else {
-        // Toggle OFF: Fee and travel are shown separately
-        feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
-        travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
-      }
+      // Both toggle states should save the same base values
+      const feeToSave = parseFloat(originalFee || data.fee || '0'); // Always use base fee
+      const travelToSave = parseFloat(originalTravelExpenses || travelExpenses || '0'); // Always save actual travel expenses
       
       const contractData = {
         ...dataWithoutTravelExpenses,
@@ -339,7 +330,8 @@ export default function Contracts() {
         eventDate: data.eventDate || null,
         // Always save both fee and travel_expenses
         fee: feeToSave,
-        travelExpenses: travelToSave,  // Backend expects camelCase
+        travelExpenses: travelToSave,  // camelCase version
+        travel_expenses: travelToSave,  // snake_case version for compatibility
         // Fix enquiryId: make truly optional with null
         enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : null,
       };
