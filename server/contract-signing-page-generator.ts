@@ -38,6 +38,7 @@ export function generateContractSigningPage(
   const eventTime = escapeHtml(contract.eventTime || contract.event_time || 'TBD');
   const fee = escapeHtml((contract.fee || contract.total_fee)?.toString() || '0');
   const deposit = escapeHtml(contract.deposit?.toString() || '0.00');
+  const travelExpenses = escapeHtml(contract.travelExpenses?.toString() || '0.00');
   const paymentInstructions = escapeHtml(contract.paymentInstructions || contract.payment_instructions || 'Payment due on completion of performance');
   const equipmentRequirements = escapeHtml(contract.equipmentRequirements || contract.equipment_requirements || 'Standard performance setup as discussed');
   const specialRequirements = escapeHtml(contract.specialRequirements || contract.special_requirements || 'None specified');
@@ -610,10 +611,27 @@ export function generateContractSigningPage(
                     <div class="section">
                         <div class="section-title">Financial Terms</div>
                         <div class="financial-summary">
+                            ${userSettings?.includeTravelInPerformanceFee !== false ? `
                             <div class="fee-item">
                                 <span class="fee-label">Total Performance Fee:</span>
+                                <span class="fee-amount">£${(parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2)}</span>
+                            </div>
+                            ` : `
+                            <div class="fee-item">
+                                <span class="fee-label">Performance Fee:</span>
                                 <span class="fee-amount">£${fee}</span>
                             </div>
+                            ${parseFloat(travelExpenses) > 0 ? `
+                            <div class="fee-item">
+                                <span class="fee-label">Travel Expenses:</span>
+                                <span class="fee-amount">£${travelExpenses}</span>
+                            </div>
+                            <div class="fee-item" style="border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px; font-weight: bold;">
+                                <span class="fee-label">Total Fee:</span>
+                                <span class="fee-amount">£${(parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2)}</span>
+                            </div>
+                            ` : ''}
+                            `}
                             <div class="fee-item">
                                 <span class="fee-label">Deposit Required:</span>
                                 <span class="fee-amount">£${deposit}</span>
@@ -656,7 +674,7 @@ export function generateContractSigningPage(
                         <div class="terms-section">
                             <div class="terms-subtitle">Payment Terms & Conditions</div>
                             <div class="requirements-box">
-                                <strong>Payment Due Date:</strong> Full payment of £${fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                                <strong>Payment Due Date:</strong> Full payment of £${userSettings?.includeTravelInPerformanceFee !== false ? (parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2) : (parseFloat(travelExpenses) > 0 ? (parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2) : fee)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
 
                                 <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
 
