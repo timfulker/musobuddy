@@ -685,6 +685,8 @@ export async function registerSettingsRoutes(app: Express) {
     try {
       const userId = req.user?.userId;
       
+      console.log('🔧 TEMPLATE SEND EMAIL REQUEST RECEIVED:', { userId, body: req.body });
+      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
