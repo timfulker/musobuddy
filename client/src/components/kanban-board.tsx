@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2 } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2, MessageSquare } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
@@ -298,6 +298,21 @@ export default function ActionableEnquiries() {
                     </Badge>
                     
                     <div className="flex items-center space-x-1">
+                      {/* Respond Button - Primary Action */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation(`/templates?bookingId=${enquiry.id}&action=respond`);
+                        }}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-200"
+                        title="Respond to client"
+                      >
+                        <MessageSquare className="w-3 h-3 mr-1" />
+                        Respond
+                      </Button>
+                      
                       <Link href={`/bookings?id=${enquiry.id}`}>
                         <Button 
                           variant="outline" 
