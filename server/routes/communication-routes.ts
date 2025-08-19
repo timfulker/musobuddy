@@ -490,110 +490,97 @@ export function setupCommunicationRoutes(app: any) {
       
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 
-      // The content is already AI-generated and formatted from the frontend
-      // Wrap it in the professional styled email template matching the templates page
+      // Get theme color from settings (same logic as templates)
+      const themeColor = userSetting?.themeAccentColor || userSetting?.theme_accent_color || '#667eea';
+      
+      // Calculate contrast for header text
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+      };
+
+      const getLuminance = (r: number, g: number, b: number) => {
+        const rsRGB = r / 255;
+        const gsRGB = g / 255;
+        const bsRGB = b / 255;
+        
+        const rLinear = rsRGB <= 0.03928 ? rsRGB / 12.92 : Math.pow((rsRGB + 0.055) / 1.055, 2.4);
+        const gLinear = gsRGB <= 0.03928 ? gsRGB / 12.92 : Math.pow((gsRGB + 0.055) / 1.055, 2.4);
+        const bLinear = bsRGB <= 0.03928 ? bsRGB / 12.92 : Math.pow((bsRGB + 0.055) / 1.055, 2.4);
+        
+        return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+      };
+
+      const rgb = hexToRgb(themeColor);
+      const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+      const textColor = luminance > 0.5 ? '#000000' : '#ffffff';
+      
+      const senderName = userSetting?.businessName || 
+                        `${userSetting?.fullName || ''}`.trim() || 
+                        userSetting?.businessEmail;
+      
+      // Function to convert text to properly formatted HTML paragraphs  
+      const formatEmailContent = (text: string) => {
+        return text
+          .split(/\n\s*\n/) // Split on double line breaks for paragraphs
+          .map(paragraph => paragraph.trim())
+          .filter(paragraph => paragraph.length > 0)
+          .map(paragraph => {
+            // Convert single line breaks within paragraphs to spaces
+            const cleanParagraph = paragraph.replace(/\n/g, ' ').trim();
+            return `<p style="margin: 0 0 16px 0; line-height: 1.6;">${cleanParagraph}</p>`;
+          })
+          .join('');
+      };
+
+      // Use the exact same professional email template as the templates page
       const emailBody = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              margin: 0;
-              padding: 0;
-              background-color: #f5f5f5;
-            }
-            .email-container {
-              max-width: 600px;
-              margin: 0 auto;
-              background-color: #ffffff;
-              border-radius: 8px;
-              overflow: hidden;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            .header {
-              background: linear-gradient(135deg, #4c1d95 0%, #6366f1 50%, #8b5cf6 100%);
-              color: white;
-              padding: 30px 20px;
-              text-align: center;
-              position: relative;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 24px;
-              font-weight: 600;
-            }
-            .brand {
-              position: absolute;
-              top: 15px;
-              left: 20px;
-              font-size: 16px;
-              font-weight: 600;
-              color: rgba(255,255,255,0.9);
-            }
-            .music-note {
-              position: absolute;
-              top: 15px;
-              right: 20px;
-              font-size: 20px;
-            }
-            .content {
-              padding: 40px 30px;
-              background: white;
-            }
-            .message-content {
-              color: #374151;
-              line-height: 1.6;
-              white-space: pre-wrap;
-              word-wrap: break-word;
-            }
-            .footer {
-              padding: 20px 30px;
-              background: #f8f9fa;
-              border-top: 1px solid #e5e7eb;
-              text-align: center;
-              color: #6b7280;
-              font-size: 12px;
-            }
-            .signature {
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              color: #6b7280;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="header">
-              <div class="brand">MusoBuddy</div>
-              <div class="music-note">♪</div>
-              <h1>${booking[0].title || 'Music Services'}</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>${subject}</title>
+    <!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+</head>
+<body style="margin: 0; padding: 20px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); line-height: 1.6;">
+    <div style="max-width: 650px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.08);">
+        
+        <!-- Header with music note accent -->
+        <div style="background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%); color: ${textColor}; padding: 32px 28px; text-align: center; position: relative;">
+            <div style="position: absolute; top: 16px; right: 24px; font-size: 20px; opacity: 0.7;">♪</div>
+            <div style="background: rgba(255,255,255,0.15); color: ${textColor}; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; margin-bottom: 12px; letter-spacing: 0.5px;">MusoBuddy</div>
+            <h1 style="margin: 0; font-size: 26px; font-weight: 400; line-height: 1.3; font-family: Georgia, 'Times New Roman', serif;">${subject}</h1>
+        </div>
+        
+        <!-- Main content -->
+        <div style="padding: 40px 36px;">
+            <div style="font-size: 16px; color: #2c3e50; line-height: 1.7;">
+                ${formatEmailContent(content)}
             </div>
             
-            <div class="content">
-              <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
-              
-              <div class="signature">
-                <strong>${userSetting.businessName || userSetting.fullName || 'Professional Musician'}</strong><br>
-                ${userSetting.businessEmail}<br>
-                ${userSetting.phoneNumber ? userSetting.phoneNumber + '<br>' : ''}
-                ${userSetting.website ? userSetting.website : ''}
-              </div>
+            <!-- Professional signature card -->
+            <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #fafbfc 0%, #f1f3f4 100%); border-radius: 12px; text-align: center; border: 1px solid #e8eaed;">
+                <div style="width: 60px; height: 3px; background: ${themeColor}; margin: 0 auto 20px auto; border-radius: 2px;"></div>
+                <div style="font-size: 20px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; font-family: Georgia, serif;">${senderName || 'MusoBuddy'}</div>
+                <div style="color: #5f6368; font-size: 14px; margin-bottom: 16px; font-style: italic;">Professional Music Services</div>
+                <div style="color: ${themeColor}; font-weight: 500; font-size: 15px; text-decoration: none;">${userSetting.businessEmail}</div>
             </div>
-            
-            <div class="footer">
-              <p>Sent via MusoBuddy</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+        </div>
+        
+        <!-- Clean footer -->
+        <div style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #95a5a6; padding: 20px; text-align: center;">
+            <div style="font-size: 12px; opacity: 0.8;">Sent with ♪ via <span style="color: ${themeColor}; font-weight: 500;">MusoBuddy</span></div>
+        </div>
+    </div>
+</body>
+</html>`;
 
       // Send email via centralized email service with proper reply-to routing
       try {
