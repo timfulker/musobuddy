@@ -124,39 +124,20 @@ export function registerInvoiceRoutes(app: Express) {
         });
       }
 
-      // Generate sequential invoice number with retry logic for duplicates
+      // Generate sequential invoice number
       let invoiceNumber = req.body.invoiceNumber;
       
       if (!invoiceNumber) {
         const userSettings = await storage.getSettings(userId);
-        let nextNumber = userSettings?.nextInvoiceNumber || 1;
-        let retries = 0;
-        const maxRetries = 10;
+        const nextNumber = userSettings?.nextInvoiceNumber || 1;
         
-        while (retries < maxRetries) {
-          invoiceNumber = `INV-${String(nextNumber).padStart(3, '0')}`;
-          
-          // Check if invoice number already exists
-          const existingInvoices = await storage.getInvoicesByUser(userId);
-          const duplicateExists = existingInvoices.some((inv: any) => inv.invoiceNumber === invoiceNumber);
-          
-          if (!duplicateExists) {
-            // Update next number for future invoices
-            await storage.updateSettings(userId, {
-              nextInvoiceNumber: nextNumber + 1
-            });
-            break;
-          }
-          
-          // Try next number if duplicate exists
-          nextNumber++;
-          retries++;
-        }
+        // Create user-specific invoice number to avoid global conflicts
+        invoiceNumber = `INV-${userId}-${String(nextNumber).padStart(3, '0')}`;
         
-        if (retries >= maxRetries) {
-          // Fallback to timestamp-based number if all retries fail
-          invoiceNumber = `INV-${Date.now()}`;
-        }
+        // Update next number for future invoices
+        await storage.updateSettings(userId, {
+          nextInvoiceNumber: nextNumber + 1
+        });
       }
 
       const invoiceData = {

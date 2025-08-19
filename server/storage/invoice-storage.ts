@@ -39,31 +39,69 @@ export class InvoiceStorage {
     const { randomBytes } = await import('crypto');
     const shareToken = randomBytes(32).toString('hex'); // 64-character secure token
     
-    // FIXED: Align with actual schema fields from shared/schema.ts
-    const result = await db.insert(invoices).values({
-      userId: invoiceData.userId,
-      contractId: invoiceData.contractId || null,
-      bookingId: invoiceData.bookingId || null,
-      invoiceNumber: invoiceData.invoiceNumber,
-      clientName: invoiceData.clientName,
-      clientEmail: invoiceData.clientEmail || null,
-      ccEmail: invoiceData.ccEmail || null,
-      clientAddress: invoiceData.clientAddress || null,
-      venueAddress: invoiceData.venueAddress || null,
-      eventDate: invoiceData.eventDate ? new Date(invoiceData.eventDate) : null,
-      fee: invoiceData.fee || null,
-      depositPaid: invoiceData.depositPaid || "0",
-      amount: invoiceData.amount,
-      dueDate: new Date(invoiceData.dueDate),
-      status: invoiceData.status || "draft",
-      paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
-      cloudStorageUrl: invoiceData.cloudStorageUrl || null,
-      cloudStorageKey: invoiceData.cloudStorageKey || null,
-      shareToken: shareToken, // Secure token for public access
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
-    return result[0];
+    try {
+      // FIXED: Align with actual schema fields from shared/schema.ts
+      const result = await db.insert(invoices).values({
+        userId: invoiceData.userId,
+        contractId: invoiceData.contractId || null,
+        bookingId: invoiceData.bookingId || null,
+        invoiceNumber: invoiceData.invoiceNumber,
+        clientName: invoiceData.clientName,
+        clientEmail: invoiceData.clientEmail || null,
+        ccEmail: invoiceData.ccEmail || null,
+        clientAddress: invoiceData.clientAddress || null,
+        venueAddress: invoiceData.venueAddress || null,
+        eventDate: invoiceData.eventDate ? new Date(invoiceData.eventDate) : null,
+        fee: invoiceData.fee || null,
+        depositPaid: invoiceData.depositPaid || "0",
+        amount: invoiceData.amount,
+        dueDate: new Date(invoiceData.dueDate),
+        status: invoiceData.status || "draft",
+        paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
+        cloudStorageUrl: invoiceData.cloudStorageUrl || null,
+        cloudStorageKey: invoiceData.cloudStorageKey || null,
+        shareToken: shareToken, // Secure token for public access
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      return result[0];
+    } catch (error: any) {
+      // If duplicate invoice number, generate a new one with timestamp
+      if (error.code === '23505' && error.constraint === 'invoices_invoice_number_unique') {
+        console.log('⚠️ Duplicate invoice number detected, generating unique one...');
+        const uniqueInvoiceData = {
+          ...invoiceData,
+          invoiceNumber: `${invoiceData.invoiceNumber}-${Date.now()}`
+        };
+        
+        // Retry with unique invoice number
+        const result = await db.insert(invoices).values({
+          userId: uniqueInvoiceData.userId,
+          contractId: uniqueInvoiceData.contractId || null,
+          bookingId: uniqueInvoiceData.bookingId || null,
+          invoiceNumber: uniqueInvoiceData.invoiceNumber,
+          clientName: uniqueInvoiceData.clientName,
+          clientEmail: uniqueInvoiceData.clientEmail || null,
+          ccEmail: uniqueInvoiceData.ccEmail || null,
+          clientAddress: uniqueInvoiceData.clientAddress || null,
+          venueAddress: uniqueInvoiceData.venueAddress || null,
+          eventDate: uniqueInvoiceData.eventDate ? new Date(uniqueInvoiceData.eventDate) : null,
+          fee: uniqueInvoiceData.fee || null,
+          depositPaid: uniqueInvoiceData.depositPaid || "0",
+          amount: uniqueInvoiceData.amount,
+          dueDate: new Date(uniqueInvoiceData.dueDate),
+          status: uniqueInvoiceData.status || "draft",
+          paidAt: uniqueInvoiceData.paidAt ? new Date(uniqueInvoiceData.paidAt) : null,
+          cloudStorageUrl: uniqueInvoiceData.cloudStorageUrl || null,
+          cloudStorageKey: uniqueInvoiceData.cloudStorageKey || null,
+          shareToken: shareToken,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).returning();
+        return result[0];
+      }
+      throw error;
+    }
   }
 
   async updateInvoice(id: number, userId: string, updates: any) {
