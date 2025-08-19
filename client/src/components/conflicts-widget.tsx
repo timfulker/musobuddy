@@ -26,6 +26,8 @@ interface ConflictsWidgetProps {
 export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
   const { data: conflicts = [], isLoading } = useQuery({
     queryKey: ['/api/conflicts'],
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time conflict detection
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 
   const { data: resolutions = [] } = useQuery({

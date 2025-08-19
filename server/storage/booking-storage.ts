@@ -348,38 +348,75 @@ export class BookingStorage {
 
     for (let i = 0; i < userBookings.length; i++) {
       const booking1 = userBookings[i];
-      if (!booking1.eventDate || !booking1.eventTime || !booking1.eventEndTime) continue;
+      if (!booking1.eventDate) continue;
 
       for (let j = i + 1; j < userBookings.length; j++) {
         const booking2 = userBookings[j];
-        if (!booking2.eventDate || !booking2.eventTime || !booking2.eventEndTime) continue;
+        if (!booking2.eventDate) continue;
 
-        // Check if bookings are on same date
+        // Check if bookings are on same date using ISO date comparison
         const date1 = new Date(booking1.eventDate).toDateString();
         const date2 = new Date(booking2.eventDate).toDateString();
         
         if (date1 === date2) {
-          const booking1Start = new Date(`${date1} ${booking1.eventTime}`);
-          const booking1End = new Date(`${date1} ${booking1.eventEndTime}`);
-          const booking2Start = new Date(`${date2} ${booking2.eventTime}`);
-          const booking2End = new Date(`${date2} ${booking2.eventEndTime}`);
+          let severity = 'soft'; // Default to soft conflict for same day
+          let hasTimeOverlap = false;
           
-          // Check for time overlap
-          if (booking1Start < booking2End && booking1End > booking2Start) {
-            realTimeConflicts.push({
-              bookingId: booking1.id,
-              withBookingId: booking2.id,
-              severity: 'hard',
-              clientName: booking1.clientName || 'Unknown',
-              status: booking1.status,
-              time: booking1.eventTime,
-              canEdit: true,
-              canReject: true,
-              type: 'same_time_same_day',
-              message: `Time conflict between "${booking1.clientName}" and "${booking2.clientName}"`,
-              date: booking1.eventDate
-            });
+          // If both bookings have complete time info, check for overlap
+          if (booking1.eventTime && booking1.eventEndTime && 
+              booking2.eventTime && booking2.eventEndTime &&
+              booking1.eventTime !== '' && booking1.eventEndTime !== '' &&
+              booking2.eventTime !== '' && booking2.eventEndTime !== '') {
+            
+            try {
+              // Helper function to parse time with the booking date
+              const parseTimeWithDate = (dateStr: string, timeStr: string): number => {
+                const date = new Date(dateStr);
+                const [hours, minutes] = timeStr.split(':').map(h => parseInt(h.replace(/[^\d]/g, ''), 10));
+                let normalizedHours = hours;
+                
+                // Handle PM/AM if present
+                if (timeStr.toLowerCase().includes('pm') && hours < 12) normalizedHours += 12;
+                if (timeStr.toLowerCase().includes('am') && hours === 12) normalizedHours = 0;
+                
+                date.setHours(normalizedHours, minutes || 0, 0, 0);
+                return date.getTime();
+              };
+              
+              const booking1Start = parseTimeWithDate(booking1.eventDate, booking1.eventTime);
+              const booking1End = parseTimeWithDate(booking1.eventDate, booking1.eventEndTime);
+              const booking2Start = parseTimeWithDate(booking2.eventDate, booking2.eventTime);
+              const booking2End = parseTimeWithDate(booking2.eventDate, booking2.eventEndTime);
+              
+              // Check for time overlap: start1 < end2 && end1 > start2
+              hasTimeOverlap = booking1Start < booking2End && booking1End > booking2Start;
+              severity = hasTimeOverlap ? 'hard' : 'soft';
+              
+            } catch (error) {
+              console.warn('Error parsing booking times for conflict detection:', error);
+              // If time parsing fails, treat as hard conflict for safety
+              severity = 'hard';
+            }
+          } else {
+            // If either booking lacks complete time info, it's a hard conflict
+            severity = 'hard';
           }
+          
+          realTimeConflicts.push({
+            bookingId: booking1.id,
+            withBookingId: booking2.id,
+            severity,
+            clientName: booking1.clientName || 'Unknown',
+            status: booking1.status,
+            time: booking1.eventTime || 'Time not specified',
+            canEdit: true,
+            canReject: true,
+            type: hasTimeOverlap ? 'same_time_same_day' : 'same_day',
+            message: hasTimeOverlap 
+              ? `Time overlap between "${booking1.clientName}" and "${booking2.clientName}"`
+              : `Same day booking with "${booking2.clientName}"`,
+            date: booking1.eventDate
+          });
         }
       }
     }
