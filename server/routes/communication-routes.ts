@@ -552,7 +552,7 @@ export function setupCommunicationRoutes(app: any) {
         console.log(`✅ Marked all message notifications as read for booking ${bookingId}`);
 
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
-        res.json({ success: true, communication, mailgunId: mailgunResponse.id });
+        res.json({ success: true, communication, mailgunId: emailResult.messageId });
 
       } catch (mailgunError) {
         console.error('❌ Mailgun error sending conversation reply:', mailgunError);
