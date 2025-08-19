@@ -770,6 +770,9 @@ export async function registerSettingsRoutes(app: Express) {
         
         // Booking data variables
         if (bookingData) {
+          console.log('🔧 BOOKING DATA KEYS:', Object.keys(bookingData));
+          console.log('🔧 VENUE VALUE:', bookingData.venue);
+          
           variableMap['Venue'] = bookingData.venue || bookingData.venueName || '';
           variableMap['Venue Name'] = bookingData.venue || bookingData.venueName || '';
           variableMap['Client Name'] = bookingData.clientName || '';
@@ -824,10 +827,16 @@ export async function registerSettingsRoutes(app: Express) {
         }
         
         // Replace all variables found in the text
+        console.log('🔧 VARIABLE MAP:', variableMap);
         Object.entries(variableMap).forEach(([variable, value]) => {
           if (value) {
             const regex = new RegExp(`\\[${variable}\\]`, 'gi');
+            const beforeReplace = replacedText.includes(`[${variable}]`);
             replacedText = replacedText.replace(regex, value);
+            const afterReplace = replacedText.includes(`[${variable}]`);
+            if (beforeReplace && !afterReplace) {
+              console.log(`✅ Replaced [${variable}] with "${value}"`);
+            }
           }
         });
         
@@ -878,8 +887,24 @@ export async function registerSettingsRoutes(app: Express) {
 
       // Replace template variables with actual booking data
       const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'MusoBuddy User';
+      
+      console.log('🔧 TEMPLATE REPLACEMENT DEBUG:', {
+        bookingId,
+        bookingVenue: booking?.venue,
+        templateSubject: template.subject,
+        templateBodyPreview: template.emailBody?.substring(0, 200) + '...'
+      });
+      
       const processedSubject = replaceTemplateVariables(template.subject, booking, userSettings, userName);
       const processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings, userName);
+      
+      console.log('🔧 TEMPLATE REPLACEMENT RESULT:', {
+        originalHadVenue: template.subject?.includes('[Venue]') || template.emailBody?.includes('[Venue]'),
+        processedSubjectHasVenue: processedSubject?.includes('[Venue]'),
+        processedBodyHasVenue: processedEmailBody?.includes('[Venue]'),
+        processedSubject,
+        processedBodyPreview: processedEmailBody?.substring(0, 200) + '...'
+      });
       
       // Validate that no template variables remain unreplaced
       const findUnreplacedVariables = (text: string) => {
