@@ -213,13 +213,15 @@ export default function Invoices() {
           form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
         }
         if (!form.getValues("amount") && selectedContract.fee) {
-          // Set the performance fee and calculate amount due (fee minus any deposit)
-          const fee = Number(selectedContract.fee);
+          // Calculate total fee including travel expenses
+          const baseFee = Number(selectedContract.fee);
+          const travelExpenses = Number(selectedContract.travelExpenses || 0);
+          const totalFee = baseFee + travelExpenses;
           const deposit = Number(selectedContract.deposit) || 0;
-          const amountDue = fee - deposit;
+          const amountDue = totalFee - deposit;
           form.setValue("amount", amountDue.toString());
           // Store fee and deposit for backend
-          form.setValue("performanceFee", fee.toString());
+          form.setValue("performanceFee", totalFee.toString());
           form.setValue("depositPaid", deposit.toString());
         }
       }
