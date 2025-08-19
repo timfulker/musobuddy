@@ -21,6 +21,7 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { calculateBookingDisplayTotal, getBookingAmountDisplayText } from "@/utils/booking-calculations";
 // BookingDetailsDialog removed - using new-booking page for all editing
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
@@ -1843,7 +1844,12 @@ export default function UnifiedBookings() {
                                                   {groupBooking.fee && (
                                                     <span className="flex items-center gap-1 font-medium text-green-600">
                                                       <PoundSterling className="w-4 h-4" />
-                                                      {groupBooking.fee}
+                                                      {(() => {
+                                                        const amountDisplay = getBookingAmountDisplayText(groupBooking, settings);
+                                                        return amountDisplay.subtitle 
+                                                          ? `${amountDisplay.main} ${amountDisplay.subtitle}`
+                                                          : amountDisplay.main;
+                                                      })()}
                                                     </span>
                                                   )}
                                                   {groupBooking.applyNowLink && (

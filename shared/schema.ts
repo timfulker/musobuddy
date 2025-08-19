@@ -627,6 +627,9 @@ export const userSettings = pgTable("user_settings", {
   specialOffers: text("special_offers"), // Current special offers for AI to mention
   seasonalPricing: jsonb("seasonal_pricing").default('{}'), // Seasonal pricing adjustments {summer: 1.1, winter: 0.9}
   
+  // Travel Expense Integration Settings
+  includeTravelInPerformanceFee: boolean("include_travel_in_performance_fee").default(true), // Include travel in performance fee vs. separate line item
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

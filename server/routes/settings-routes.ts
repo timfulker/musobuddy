@@ -685,13 +685,12 @@ export async function registerSettingsRoutes(app: Express) {
     try {
       const userId = req.user?.userId;
       
-      console.log('🔧 TEMPLATE SEND EMAIL REQUEST RECEIVED:', { userId, body: req.body });
-      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const { template, bookingId, messageId, clientEmail, clientName, testCc } = req.body;
+      
       
       if (!template || !template.subject || !template.emailBody) {
         return res.status(400).json({ error: 'Invalid template data' });
@@ -702,17 +701,23 @@ export async function registerSettingsRoutes(app: Express) {
       let recipientEmail: string | null = null;
       let recipientName: string | null = null;
       
-      console.log('🔧 TEMPLATE SEND REQUEST:', { bookingId, messageId, clientEmail, userId });
-      
       if (bookingId) {
-        booking = await storage.getBooking(bookingId);
-        console.log('🔧 RETRIEVED BOOKING:', booking ? { id: booking.id, venue: booking.venue, clientName: booking.clientName, userId: booking.userId } : 'NULL');
+        // Ensure bookingId is a number (it might come as a string from the request)
+        const bookingIdNum = typeof bookingId === 'string' ? parseInt(bookingId, 10) : bookingId;
         
-        if (booking && booking.userId === userId) {
+        if (isNaN(bookingIdNum)) {
+          console.log('❌ Invalid booking ID provided:', bookingId);
+          return res.status(400).json({ error: 'Invalid booking ID' });
+        }
+        
+        const retrievedBooking = await storage.getBooking(bookingIdNum);
+        
+        
+        if (retrievedBooking && retrievedBooking.userId === userId) {
+          booking = retrievedBooking; // Only set booking if user has access
           recipientEmail = booking.clientEmail;
           recipientName = booking.clientName;
         } else {
-          console.log('❌ BOOKING ACCESS DENIED:', { bookingExists: !!booking, userIdMatch: booking?.userId === userId });
         }
       } else if (messageId && clientEmail) {
         // Handle message reply - use provided client info
@@ -770,6 +775,7 @@ export async function registerSettingsRoutes(app: Express) {
       // Function to replace template variables with actual booking data
       const replaceTemplateVariables = (text: string, bookingData: any = null, userSettings: any = null, userName: string = '') => {
         if (!text) return '';
+        
         
         let replacedText = text;
         
@@ -832,10 +838,15 @@ export async function registerSettingsRoutes(app: Express) {
         }
         
         // Replace all variables found in the text
+        let replacementCount = 0;
         Object.entries(variableMap).forEach(([variable, value]) => {
           if (value) {
             const regex = new RegExp(`\\[${variable}\\]`, 'gi');
+            const before = replacedText;
             replacedText = replacedText.replace(regex, value);
+            if (before !== replacedText) {
+              replacementCount++;
+            }
           }
         });
         
@@ -859,23 +870,21 @@ export async function registerSettingsRoutes(app: Express) {
       // Replace template variables with actual booking data
       const userName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'MusoBuddy User';
       
-      console.log('🔧 TEMPLATE REPLACEMENT DEBUG:', {
-        bookingId,
-        bookingVenue: booking?.venue,
-        templateSubject: template.subject,
-        templateBodyPreview: template.emailBody?.substring(0, 200) + '...'
-      });
+      // Check if template has any placeholders that need replacement
+      const hasPlaceholders = (text: string) => {
+        return /\[[\w\s]+\]/g.test(text);
+      };
       
-      const processedSubject = replaceTemplateVariables(template.subject, booking, userSettings, userName);
-      const processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings, userName);
+      // Only attempt replacement if there are placeholders
+      // The frontend may have already replaced them
+      let processedSubject = template.subject;
+      let processedEmailBody = template.emailBody;
       
-      console.log('🔧 TEMPLATE REPLACEMENT RESULT:', {
-        originalHadVenue: template.subject?.includes('[Venue]') || template.emailBody?.includes('[Venue]'),
-        processedSubjectHasVenue: processedSubject?.includes('[Venue]'),
-        processedBodyHasVenue: processedEmailBody?.includes('[Venue]'),
-        processedSubject,
-        processedBodyPreview: processedEmailBody?.substring(0, 200) + '...'
-      });
+      if (hasPlaceholders(template.subject) || hasPlaceholders(template.emailBody)) {
+        processedSubject = replaceTemplateVariables(template.subject, booking, userSettings, userName);
+        processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings, userName);
+      } else {
+      }
       
       // Validate that no template variables remain unreplaced
       const findUnreplacedVariables = (text: string) => {

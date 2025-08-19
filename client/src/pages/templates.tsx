@@ -114,6 +114,19 @@ export default function Templates() {
     fetchUserSettings();
   }, [bookingId, messageId, action, clientName, clientEmail]);
   
+  // Update preview when booking data loads
+  useEffect(() => {
+    if (bookingData && previewData && previewData.subject.includes('[')) {
+      const updatedSubject = replaceTemplateVariables(previewData.template.subject, bookingData, userSettings);
+      const updatedBody = replaceTemplateVariables(previewData.template.emailBody, bookingData, userSettings);
+      setPreviewData({
+        ...previewData,
+        subject: updatedSubject,
+        emailBody: updatedBody
+      });
+    }
+  }, [bookingData]);
+  
   // Use centralized auth token system
   const getAuthToken = () => {
     return findActiveAuthToken(); // Returns the token string directly
@@ -360,6 +373,7 @@ export default function Templates() {
   const replaceTemplateVariables = (text: string, booking: any, userSettings?: any) => {
     if (!booking) return text;
     
+    
     const eventDate = booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : 'TBD';
     const eventTime = booking.eventTime || 'TBD';
     const eventEndTime = booking.eventEndTime || '';
@@ -378,11 +392,35 @@ export default function Templates() {
       return `${hours} hour${hours > 1 ? 's' : ''} ${mins} minutes`;
     };
 
-    // Format fee with proper currency
-    const formatFee = (fee: any) => {
+    // Format fee with proper currency, handling travel expense integration
+    const formatFee = (fee: any, travelExpenses?: any, userSettings?: any) => {
       if (!fee) return '[Fee]';
       const numericFee = typeof fee === 'string' ? parseFloat(fee) : fee;
-      return numericFee.toFixed(2); // Return just the number, £ sign added in template
+      const numericTravel = travelExpenses ? (typeof travelExpenses === 'string' ? parseFloat(travelExpenses) : travelExpenses) : 0;
+      
+      // Check if travel expenses should be included in performance fee
+      const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false; // Default to true
+      
+      if (includeTravelInPerformanceFee && numericTravel > 0) {
+        return (numericFee + numericTravel).toFixed(2);
+      } else {
+        return numericFee.toFixed(2);
+      }
+    };
+
+    // Format travel expenses for separate display
+    const formatTravelExpenses = (travelExpenses: any, userSettings?: any) => {
+      if (!travelExpenses) return '';
+      const numericTravel = typeof travelExpenses === 'string' ? parseFloat(travelExpenses) : travelExpenses;
+      
+      // Only show as separate line if setting is false
+      const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
+      
+      if (!includeTravelInPerformanceFee && numericTravel > 0) {
+        return numericTravel.toFixed(2);
+      } else {
+        return ''; // Don't show separately if included in performance fee
+      }
     };
     
     let processedText = text
@@ -403,10 +441,30 @@ export default function Templates() {
       .replace(/\[Client Email\]/g, booking.clientEmail || '[Client Email]')
       .replace(/\[Venue Address\]/g, booking.venueAddress || '[Venue Address]')
       
-      // Financial fields
-      .replace(/\[Fee\]/g, formatFee(booking.fee))
-      .replace(/\[fee\]/g, formatFee(booking.fee))
-      .replace(/\[FEE\]/g, formatFee(booking.fee))
+      // Financial fields with travel expense integration
+      .replace(/\[Fee\]/g, formatFee(booking.fee, booking.travelExpenses, userSettings))
+      .replace(/\[fee\]/g, formatFee(booking.fee, booking.travelExpenses, userSettings))
+      .replace(/\[FEE\]/g, formatFee(booking.fee, booking.travelExpenses, userSettings))
+      .replace(/\[Performance Fee\]/g, formatFee(booking.fee, booking.travelExpenses, userSettings))
+      .replace(/\[performance fee\]/g, formatFee(booking.fee, booking.travelExpenses, userSettings))
+      
+      // Travel expense fields (only show separately if setting is false)
+      .replace(/\[Travel Expenses\]/g, formatTravelExpenses(booking.travelExpenses, userSettings) || '0.00')
+      .replace(/\[travel expenses\]/g, formatTravelExpenses(booking.travelExpenses, userSettings) || '0.00')
+      .replace(/\[Travel Fee\]/g, formatTravelExpenses(booking.travelExpenses, userSettings) || '0.00')
+      .replace(/\[travel fee\]/g, formatTravelExpenses(booking.travelExpenses, userSettings) || '0.00')
+      
+      // Total amount calculation
+      .replace(/\[Total Amount\]/g, (() => {
+        const fee = booking.fee ? (typeof booking.fee === 'string' ? parseFloat(booking.fee) : booking.fee) : 0;
+        const travel = booking.travelExpenses ? (typeof booking.travelExpenses === 'string' ? parseFloat(booking.travelExpenses) : booking.travelExpenses) : 0;
+        return (fee + travel).toFixed(2);
+      })())
+      .replace(/\[total amount\]/g, (() => {
+        const fee = booking.fee ? (typeof booking.fee === 'string' ? parseFloat(booking.fee) : booking.fee) : 0;
+        const travel = booking.travelExpenses ? (typeof booking.travelExpenses === 'string' ? parseFloat(booking.travelExpenses) : booking.travelExpenses) : 0;
+        return (fee + travel).toFixed(2);
+      })())
       
       // NEW Performance fields
       .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
@@ -464,6 +522,16 @@ export default function Templates() {
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
+    // If we're expecting booking data but it's not loaded yet, wait or show error
+    if (bookingId && !bookingData) {
+      toast({
+        title: "Loading...",
+        description: "Booking data is still loading. Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const targetData = bookingData || messageData;
     if (!targetData) {
       toast({
@@ -473,6 +541,7 @@ export default function Templates() {
       });
       return;
     }
+
 
     // Replace template variables with actual booking/message data
     const customizedSubject = replaceTemplateVariables(template.subject, targetData, userSettings);
@@ -507,9 +576,20 @@ export default function Templates() {
     const targetData = bookingData || messageData;
     if (!previewData || !targetData) return;
 
+
+    // Check if the preview still has placeholders (meaning booking data wasn't loaded when preview was created)
+    // If so, re-do the replacement now with the loaded data
+    let finalSubject = previewData.subject;
+    let finalBody = previewData.emailBody;
+    
+    if (previewData.subject.includes('[') || previewData.emailBody.includes('[')) {
+      finalSubject = replaceTemplateVariables(previewData.subject, targetData, userSettings);
+      finalBody = replaceTemplateVariables(previewData.emailBody, targetData, userSettings);
+    }
+
     const customizedTemplate = {
-      subject: previewData.subject,
-      emailBody: previewData.emailBody,
+      subject: finalSubject,
+      emailBody: finalBody,
       smsBody: previewData.template.smsBody ? replaceTemplateVariables(previewData.template.smsBody, targetData) : ''
     };
 

@@ -58,6 +58,8 @@ interface UserSettings {
   djServiceRate?: number;
   pricingNotes?: string;
   specialOffers?: string;
+  // Travel expense integration setting
+  includeTravelInPerformanceFee?: boolean;
 }
 
 interface ClientHistory {
