@@ -7,6 +7,7 @@ export interface UserSettings {
 export interface Booking {
   fee?: number;
   travelExpenses?: number;
+  travel_expense?: number; // Database field name
 }
 
 /**
@@ -17,7 +18,7 @@ export function calculateBookingDisplayTotal(
   userSettings?: UserSettings
 ): number {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || 0;
+  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
   
   // If setting is true or undefined (default), include travel expenses in performance fee display
   const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
@@ -37,7 +38,7 @@ export function getBookingAmountDisplayText(
   userSettings?: UserSettings
 ): { main: string; subtitle?: string } {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || 0;
+  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
   const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
   
   if (includeTravelInPerformanceFee) {
@@ -69,7 +70,7 @@ export function calculateContractTotals(
   showSeparateTravel: boolean;
 } {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || 0;
+  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
   const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
   
   if (includeTravelInPerformanceFee) {
