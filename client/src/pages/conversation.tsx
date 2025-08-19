@@ -54,6 +54,26 @@ export default function Conversation() {
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fix luminance issues with Ignore button text
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .ignore-btn-luminance-fix {
+        -webkit-text-fill-color: rgb(75, 85, 99) !important;
+        color: rgb(75, 85, 99) !important;
+      }
+      .dark .ignore-btn-luminance-fix {
+        -webkit-text-fill-color: rgb(209, 213, 219) !important;
+        color: rgb(209, 213, 219) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
 
   // Fetch booking info
@@ -709,7 +729,7 @@ export default function Conversation() {
                     variant="secondary"
                     onClick={handleIgnoreMessages}
                     disabled={ignoreMessagesMutation.isPending}
-                    className="text-gray-600"
+                    className="text-gray-600 ignore-btn-luminance-fix"
                   >
                     {ignoreMessagesMutation.isPending ? (
                       <>
