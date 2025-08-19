@@ -700,11 +700,17 @@ export async function registerSettingsRoutes(app: Express) {
       let recipientEmail: string | null = null;
       let recipientName: string | null = null;
       
+      console.log('🔧 TEMPLATE SEND REQUEST:', { bookingId, messageId, clientEmail, userId });
+      
       if (bookingId) {
         booking = await storage.getBooking(bookingId);
+        console.log('🔧 RETRIEVED BOOKING:', booking ? { id: booking.id, venue: booking.venue, clientName: booking.clientName, userId: booking.userId } : 'NULL');
+        
         if (booking && booking.userId === userId) {
           recipientEmail = booking.clientEmail;
           recipientName = booking.clientName;
+        } else {
+          console.log('❌ BOOKING ACCESS DENIED:', { bookingExists: !!booking, userIdMatch: booking?.userId === userId });
         }
       } else if (messageId && clientEmail) {
         // Handle message reply - use provided client info
