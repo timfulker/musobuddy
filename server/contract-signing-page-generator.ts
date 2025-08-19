@@ -36,9 +36,13 @@ export function generateContractSigningPage(
   const clientEmail = escapeHtml(contract.clientEmail || contract.client_email || '');
   const venue = escapeHtml(contract.venue || 'TBD');
   const eventTime = escapeHtml(contract.eventTime || contract.event_time || 'TBD');
-  const fee = escapeHtml((contract.fee || contract.total_fee)?.toString() || '0');
+  // Calculate total fee including travel expenses for client-facing display
+  const baseFee = parseFloat(contract.fee?.toString() || '0');
+  const travelExpensesAmount = parseFloat(contract.travelExpenses?.toString() || contract.travel_expenses?.toString() || '0');
+  const totalFee = baseFee + travelExpensesAmount;
+  const fee = escapeHtml(totalFee.toFixed(2));
   const deposit = escapeHtml(contract.deposit?.toString() || '0.00');
-  const travelExpenses = escapeHtml(contract.travelExpenses?.toString() || '0.00');
+  const travelExpenses = escapeHtml(travelExpensesAmount.toFixed(2));
   const paymentInstructions = escapeHtml(contract.paymentInstructions || contract.payment_instructions || 'Payment due on completion of performance');
   const equipmentRequirements = escapeHtml(contract.equipmentRequirements || contract.equipment_requirements || 'Standard performance setup as discussed');
   const specialRequirements = escapeHtml(contract.specialRequirements || contract.special_requirements || 'None specified');

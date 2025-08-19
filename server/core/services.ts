@@ -600,7 +600,7 @@ export class EmailService {
               <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
               <p><strong>Time:</strong> ${contract.eventTime} - ${contract.eventEndTime}</p>
               <p><strong>Venue:</strong> ${contract.venue}</p>
-              <p><strong>Fee:</strong> £${contract.fee}</p>
+              <p><strong>Fee:</strong> £${(parseFloat(contract.fee || '0') + parseFloat(contract.travelExpenses || contract.travel_expenses || '0')).toFixed(2)}</p>
             </div>
             
             <div class="cta-section">
@@ -637,7 +637,7 @@ Event Details:
 - Date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
 - Time: ${contract.eventTime} - ${contract.eventEndTime}
 - Venue: ${contract.venue}
-- Fee: £${contract.fee}
+- Fee: £${(parseFloat(contract.fee || '0') + parseFloat(contract.travelExpenses || contract.travel_expenses || '0')).toFixed(2)}
 
 To view and sign your contract, please visit: ${contractUrl}
 
