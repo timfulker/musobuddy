@@ -54,29 +54,7 @@ export default function Conversation() {
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fix luminance issues with Ignore button text
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .ignore-btn-luminance-fix {
-        color: rgb(75, 85, 99) !important;
-      }
-      .dark .ignore-btn-luminance-fix {
-        color: rgb(209, 213, 219) !important;
-      }
-      .ignore-btn-luminance-fix:hover {
-        color: rgb(55, 65, 81) !important;
-      }
-      .dark .ignore-btn-luminance-fix:hover {
-        color: rgb(229, 231, 235) !important;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+
 
   const bookingId = params?.bookingId ? parseInt(params.bookingId) : null;
 
@@ -733,7 +711,7 @@ export default function Conversation() {
                     variant="secondary"
                     onClick={handleIgnoreMessages}
                     disabled={ignoreMessagesMutation.isPending}
-                    className="ignore-btn-luminance-fix border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
                   >
                     {ignoreMessagesMutation.isPending ? (
                       <>
