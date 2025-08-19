@@ -238,10 +238,33 @@ export function setupCommunicationRoutes(app: any) {
               for (const pattern of replyPatterns) {
                 const match = rawText.match(pattern);
                 if (match && match[1].trim().length > 3) {
-                  content = match[1].trim();
+                  let extractedContent = match[1].trim();
+                  
+                  // Clean up the extracted content to remove metadata and improve formatting
+                  extractedContent = extractedContent
+                    .replace(/^Client Reply - .+?\s+/i, '') // Remove "Client Reply - Subject" prefix
+                    .replace(/^BOOKING REPLY\s+/i, '') // Remove "BOOKING REPLY" prefix  
+                    .replace(/From: .+?\s+/gi, '') // Remove "From:" lines
+                    .replace(/Subject: .+?\s+/gi, '') // Remove "Subject:" lines
+                    .replace(/Date: .+?\s+/gi, '') // Remove "Date:" lines
+                    .replace(/Booking ID: \d+\s+/gi, '') // Remove "Booking ID:" lines
+                    .replace(/^Re: .+?\s+/gi, '') // Remove "Re:" subject lines at start
+                    .trim();
+                  
+                  // Find the actual message content after greeting
+                  const greetingMatch = extractedContent.match(/(Hi|Hello|Dear)\s+\w+[,\s]*(.*)/si);
+                  if (greetingMatch) {
+                    // Format with greeting on new line and proper spacing
+                    const greeting = greetingMatch[1] + ' ' + extractedContent.match(/(Hi|Hello|Dear)\s+(\w+)/i)?.[2] + ',';
+                    const messageContent = greetingMatch[2].trim();
+                    content = greeting + '\n\n' + messageContent;
+                  } else {
+                    content = extractedContent;
+                  }
+                  
                   foundMatch = true;
                   console.log(`✅ Found match with pattern: ${pattern.toString()}`);
-                  console.log(`✅ Extracted content: ${content}`);
+                  console.log(`✅ Extracted and formatted content: ${content}`);
                   break;
                 }
               }
