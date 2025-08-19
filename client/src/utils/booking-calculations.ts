@@ -42,16 +42,16 @@ export function getBookingAmountDisplayText(
   
   if (includeTravelInPerformanceFee) {
     // Show combined total
-    const total = fee + travelExpenses;
+    const total = Number(fee) + Number(travelExpenses);
     return {
       main: `£${total.toFixed(2)}`,
-      subtitle: travelExpenses > 0 ? `(inc. £${travelExpenses.toFixed(2)} travel)` : undefined
+      subtitle: travelExpenses > 0 ? `(inc. £${Number(travelExpenses).toFixed(2)} travel)` : undefined
     };
   } else {
     // Show performance fee with separate travel line
     return {
-      main: `£${fee.toFixed(2)}`,
-      subtitle: travelExpenses > 0 ? `+ £${travelExpenses.toFixed(2)} travel` : undefined
+      main: `£${Number(fee).toFixed(2)}`,
+      subtitle: travelExpenses > 0 ? `+ £${Number(travelExpenses).toFixed(2)} travel` : undefined
     };
   }
 }
