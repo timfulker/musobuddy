@@ -705,8 +705,8 @@ export default function Conversation() {
                 {replyContent.length} characters
               </div>
               <div className="flex space-x-2">
-                {/* Show ignore button when there are unread notifications */}
-                {hasUnreadNotifications && (
+                {/* Show ignore button when there are conversations */}
+                {(hasUnreadNotifications || messages.length > 0) && (
                   <Button
                     variant="secondary"
                     onClick={handleIgnoreMessages}
