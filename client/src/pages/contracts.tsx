@@ -28,6 +28,7 @@ import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
 import MobileFeatureGuard from "@/components/mobile-feature-guard";
 import { useTheme } from "@/hooks/useTheme";
+import { getBookingAmountDisplayText } from "@/utils/booking-calculations";
 import { getContrastTextColor } from "@/lib/colorUtils";
 import { calculateContractTotals } from "@/utils/booking-calculations";
 
@@ -46,6 +47,8 @@ const contractFormSchema = z.object({
   performanceDuration: z.string().optional(),
   deposit: z.string().optional(),
   travelExpenses: z.string().optional(), // Travel expenses field
+  originalFee: z.string().optional(), // Hidden field to track original fee when combined
+  originalTravelExpenses: z.string().optional(), // Hidden field to track original travel
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
   venueAddress: z.string().optional(),
@@ -142,6 +145,10 @@ export default function Contracts() {
     }
   }, [watchEventDate, watchClientName, editingContract, form]);
 
+  // Remove the toggle change handling - it's causing confusion
+  // The form should be filled correctly when loading from bookings/contracts
+  // Manual entry should work as expected based on what the user enters
+
   // Check URL params to auto-open form dialog and auto-fill with booking/enquiry data
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -181,8 +188,35 @@ export default function Contracts() {
               form.setValue('eventTime', booking.eventTime || '');
               form.setValue('eventEndTime', booking.eventEndTime || '');
               form.setValue('performanceDuration', booking.performanceDuration || '');
-              form.setValue('fee', booking.fee || '');
-              form.setValue('travelExpenses', booking.travelExpense || '');
+              const baseFee = booking.fee || '';
+              const travelFee = booking.travelExpense || '';
+              
+              // TEMPORARY: Force test values to verify system works
+              const TEST_BASE_FEE = '260';
+              const TEST_TRAVEL_FEE = '50';
+              console.log('🧪 Using test values - baseFee:', TEST_BASE_FEE, 'travel:', TEST_TRAVEL_FEE);
+              
+              form.setValue('originalFee', TEST_BASE_FEE);
+              form.setValue('originalTravelExpenses', TEST_TRAVEL_FEE);
+              form.setValue('travelExpenses', TEST_TRAVEL_FEE);
+              
+              // Adjust fee display based on toggle setting
+              console.log('🎛️ Form Loading Debug:', {
+                baseFee: TEST_BASE_FEE,
+                travelFee: TEST_TRAVEL_FEE,
+                settings: settings?.includeTravelInPerformanceFee,
+                settingsObj: settings
+              });
+              
+              if (settings?.includeTravelInPerformanceFee === true) {
+                const combinedFee = parseFloat(TEST_BASE_FEE) + parseFloat(TEST_TRAVEL_FEE || '0');
+                console.log('🔛 Toggle ON - Setting combined fee:', combinedFee);
+                form.setValue('fee', combinedFee.toString());
+              } else {
+                console.log('🔲 Toggle OFF - Setting base fee:', TEST_BASE_FEE);
+                form.setValue('fee', TEST_BASE_FEE);
+              }
+              
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
               
@@ -275,15 +309,49 @@ export default function Contracts() {
 
   const createContractMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
+      const { travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
+      
+      console.log('🐛 Debug contract creation values:', {
+        originalFee,
+        originalTravelExpenses, 
+        travelExpenses,
+        toggleSetting: settings?.includeTravelInPerformanceFee
+      });
+      
+      // Always save the separate fee and travel values to database
+      // The toggle only affects display, not storage
+      let feeToSave: number;
+      let travelToSave: number;
+      
+      if (settings?.includeTravelInPerformanceFee === true) {
+        // Toggle ON: The fee field contains combined amount, travel shown as 0
+        feeToSave = parseFloat(data.fee || '0'); // Use the combined amount from form
+        travelToSave = 0; // Don't show travel separately
+      } else {
+        // Toggle OFF: Fee and travel are shown separately
+        feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
+        travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
+      }
+      
       const contractData = {
-        ...data,
+        ...dataWithoutTravelExpenses,
         // Fix date format: backend expects YYYY-MM-DD, not ISO string
         eventDate: data.eventDate || null,
-        // Fix fee: convert string to number
-        fee: data.fee ? parseFloat(data.fee) : 0,
+        // Always save both fee and travel_expenses
+        fee: feeToSave,
+        travelExpenses: travelToSave,  // Backend expects camelCase
         // Fix enquiryId: make truly optional with null
         enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : null,
       };
+      
+      console.log('📋 Contract Data being sent:', {
+        fee: feeToSave,
+        travel_expenses: travelToSave,
+        originalFee,
+        originalTravelExpenses,
+        travelExpenses,
+        settings: settings?.includeTravelInPerformanceFee
+      });
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
       const response = await apiRequest("/api/contracts", {
@@ -546,7 +614,22 @@ export default function Contracts() {
     form.setValue('performanceDuration', contract.performanceDuration || '');
     form.setValue('venue', contract.venue || '');
     form.setValue('venueAddress', contract.venueAddress || '');
-    form.setValue('fee', contract.fee);
+    // Store original values for toggle handling
+    const baseFee = contract.fee || '';
+    const travelFee = contract.travel_expenses || contract.travelExpenses || '';
+    
+    form.setValue('originalFee', baseFee);
+    form.setValue('originalTravelExpenses', travelFee);
+    form.setValue('travelExpenses', travelFee);
+    
+    // Adjust fee display based on toggle setting
+    if (settings?.includeTravelInPerformanceFee === true) {
+      const combinedFee = parseFloat(baseFee) + parseFloat(travelFee || '0');
+      form.setValue('fee', combinedFee.toString());
+    } else {
+      form.setValue('fee', baseFee);
+    }
+    
     form.setValue('deposit', contract.deposit || '');
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
@@ -851,10 +934,29 @@ export default function Contracts() {
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
                       if (editingContract) {
+                        const { travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
+                        
+                        // Always save the separate fee and travel values to database
+                        // The toggle only affects display, not storage
+                        let feeToSave: number;
+                        let travelToSave: number;
+                        
+                        if (settings?.includeTravelInPerformanceFee === true) {
+                          // Toggle ON: The fee field contains combined amount, travel shown as 0
+                          feeToSave = parseFloat(data.fee || '0'); // Use the combined amount from form
+                          travelToSave = 0; // Don't show travel separately
+                        } else {
+                          // Toggle OFF: Fee and travel are shown separately
+                          feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
+                          travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
+                        }
+                        
                         const contractData = {
-                          ...data,
+                          ...dataWithoutTravelExpenses,
                           eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
                           enquiryId: data.enquiryId || null,
+                          fee: feeToSave,
+                          travelExpenses: travelToSave,  // Backend expects camelCase
                         };
                         updateContractMutation.mutate({ id: editingContract.id, contractData });
                       } else {
@@ -1448,7 +1550,17 @@ export default function Contracts() {
                                 </div>
                                 <div>
                                   <span className="font-medium">Fee:</span>
-                                  <p className="text-gray-900 dark:text-gray-100 font-semibold">£{contract.fee}</p>
+                                  <p className="text-gray-900 dark:text-gray-100 font-semibold">
+                                    {(() => {
+                                      const amountDisplay = getBookingAmountDisplayText(
+                                        { fee: parseFloat(contract.fee || '0'), travelExpenses: parseFloat(contract.travelExpenses || '0') }, 
+                                        settings
+                                      );
+                                      return amountDisplay.subtitle 
+                                        ? `${amountDisplay.main} ${amountDisplay.subtitle}`
+                                        : amountDisplay.main;
+                                    })()}
+                                  </p>
                                 </div>
                                 <div>
                                   <span className="font-medium">Date:</span>

@@ -4,6 +4,48 @@ import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '@shared/schema';
+// Import the booking calculation functions
+// Note: We'll inline the logic to avoid import issues between server and client
+
+// Inline contract totals calculation to match client logic
+function calculateContractTotals(contract: any, userSettings?: UserSettings) {
+  const fee = parseFloat(contract.fee || '0');
+  const travelExpenses = parseFloat(contract.travelExpenses || contract.travel_expenses || contract.travelExpense || contract.travel_expense || '0');
+  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
+  
+  console.log('💰 PDF Calculation Debug:', {
+    contractId: contract.id,
+    fee,
+    travelExpenses,
+    contractTravelFields: {
+      travel_expense: contract.travel_expense,
+      travel_expenses: contract.travel_expenses,
+      travelExpenses: contract.travelExpenses,
+      travelExpense: contract.travelExpense
+    },
+    includeTravelInPerformanceFee,
+    userSettings: userSettings?.includeTravelInPerformanceFee,
+    showSeparateTravel: !includeTravelInPerformanceFee && travelExpenses > 0
+  });
+  
+  if (includeTravelInPerformanceFee) {
+    // Include travel in performance fee
+    return {
+      performanceFee: fee + travelExpenses,
+      travelExpenses: 0, // Don't show separately
+      totalAmount: fee + travelExpenses,
+      showSeparateTravel: false
+    };
+  } else {
+    // Keep travel expenses separate
+    return {
+      performanceFee: fee,
+      travelExpenses: travelExpenses,
+      totalAmount: fee + travelExpenses,
+      showSeparateTravel: travelExpenses > 0
+    };
+  }
+}
 
 // Theme color mapping for PDF generation
 function getThemeColor(userSettings: UserSettings | null): string {
@@ -114,6 +156,12 @@ export async function generateContractPDF(
 ): Promise<Buffer> {
   console.log('🚀 UNIFIED: Starting contract PDF generation for:', contract.contractNumber);
   console.log('🚀 UNIFIED: Contract status:', contract.status);
+  console.log('🚀 UNIFIED: Contract data received:', {
+    id: contract.id,
+    fee: contract.fee,
+    travelExpenses: contract.travelExpenses,
+    userSettings: userSettings?.includeTravelInPerformanceFee
+  });
   console.log('🚀 UNIFIED: Has signature details:', !!signatureDetails);
   
   // Deployment-ready Puppeteer configuration
@@ -705,42 +753,49 @@ function generateUnifiedContractHTML(
                 <div class="payment-section">
                     <div class="payment-title">Performance Fee Structure</div>
                     <div class="payment-details">
-                        ${userSettings?.includeTravelInPerformanceFee !== false ? `
-                        <div class="payment-item">
-                            <div class="payment-label">Total Performance Fee</div>
-                            <div class="payment-amount">£${(parseFloat(contract.fee || '0') + parseFloat(contract.travel_expense || contract.travelExpenses || '0')).toFixed(2)}</div>
-                        </div>
-                        ` : `
+                        ${(() => {
+                            const totals = calculateContractTotals(contract, userSettings);
+                            const depositAmount = parseFloat(contract.deposit || '0');
+                            return totals.showSeparateTravel ? `
                         <div class="payment-item">
                             <div class="payment-label">Performance Fee</div>
-                            <div class="payment-amount">£${contract.fee}</div>
+                            <div class="payment-amount">£${totals.performanceFee.toFixed(2)}</div>
                         </div>
-                        ${(contract.travel_expense || contract.travelExpenses) && parseFloat(contract.travel_expense || contract.travelExpenses || '0') > 0 ? `
                         <div class="payment-item">
                             <div class="payment-label">Travel Expenses</div>
-                            <div class="payment-amount">£${contract.travel_expense || contract.travelExpenses}</div>
+                            <div class="payment-amount">£${totals.travelExpenses.toFixed(2)}</div>
                         </div>
                         <div class="payment-item" style="border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px; font-weight: bold;">
                             <div class="payment-label">Total Fee</div>
-                            <div class="payment-amount">£${(parseFloat(contract.fee || '0') + parseFloat(contract.travel_expense || contract.travelExpenses || '0')).toFixed(2)}</div>
+                            <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
                         </div>
-                        ` : ''}
-                        `}
-                        ${contract.deposit && parseFloat(contract.deposit) > 0 ? `
+                        ${depositAmount > 0 ? `
                         <div class="payment-item">
                             <div class="payment-label">Deposit Required</div>
-                            <div class="payment-amount">£${contract.deposit}</div>
+                            <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
                         </div>
                         <div class="payment-item">
                             <div class="payment-label">Balance Due</div>
-                            <div class="payment-amount">£${(parseFloat(contract.fee) - parseFloat(contract.deposit)).toFixed(2)}</div>
+                            <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
                         </div>
+                        ` : ''}
                         ` : `
                         <div class="payment-item">
-                            <div class="payment-label">Payment Due</div>
-                            <div class="payment-amount">On Completion</div>
+                            <div class="payment-label">Total Performance Fee</div>
+                            <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
                         </div>
-                        `}
+                        ${depositAmount > 0 ? `
+                        <div class="payment-item">
+                            <div class="payment-label">Deposit Required</div>
+                            <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
+                        </div>
+                        <div class="payment-item">
+                            <div class="payment-label">Balance Due</div>
+                            <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
+                        </div>
+                        ` : ''}
+                        `;
+                        })()}
                     </div>
                     
                     ${contract.paymentInstructions ? `
@@ -798,7 +853,7 @@ function generateUnifiedContractHTML(
                 <div class="terms-section">
                     <div class="terms-subtitle">Payment Terms & Conditions</div>
                     <div class="requirements-box">
-                        <strong>Payment Due Date:</strong> Full payment of £${userSettings?.includeTravelInPerformanceFee !== false ? (parseFloat(contract.fee || '0') + parseFloat(contract.travel_expense || contract.travelExpenses || '0')).toFixed(2) : ((contract.travel_expense || contract.travelExpenses) && parseFloat(contract.travel_expense || contract.travelExpenses || '0') > 0 ? (parseFloat(contract.fee || '0') + parseFloat(contract.travel_expense || contract.travelExpenses || '0')).toFixed(2) : (contract.fee || 'Amount TBC'))} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+                        <strong>Payment Due Date:</strong> Full payment of £${calculateContractTotals(contract, userSettings).totalAmount.toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
                         
                         <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
                         

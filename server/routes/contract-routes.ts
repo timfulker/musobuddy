@@ -12,6 +12,28 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
 
+  // Debug endpoint to check contract data
+  app.get('/api/contracts/:id/debug', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContract(contractId);
+      
+      res.json({
+        contractId,
+        fee: contract?.fee,
+        travelExpenses: contract?.travelExpenses,
+        allTravelFields: {
+          travelExpenses: contract?.travelExpenses,
+          travel_expenses: contract?.travel_expenses,
+          travelExpense: contract?.travelExpense,
+          travel_expense: contract?.travel_expense
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Add health check endpoint for contract service
   app.get('/api/contracts/health', async (req, res) => {
     try {
@@ -319,6 +341,17 @@ export function registerContractRoutes(app: Express) {
         });
       }
 
+      // Handle both travel_expenses and travelExpenses field names
+      const travelAmount = req.body.travel_expenses || req.body.travelExpenses || "0.00";
+      
+      console.log('📝 Backend Contract Creation Debug:', {
+        travelExpenses: travelAmount,
+        travel_expenses_field: req.body.travel_expenses,
+        travelExpenses_field: req.body.travelExpenses,
+        fee: req.body.fee,
+        fullBody: req.body
+      });
+
       const contractData = {
         userId: req.user.userId,
         contractNumber,
@@ -333,7 +366,7 @@ export function registerContractRoutes(app: Express) {
         eventEndTime: req.body.eventEndTime || "",
         fee: req.body.fee,
         deposit: req.body.deposit || "0.00",
-        travelExpenses: req.body.travelExpenses || "0.00",
+        travelExpenses: travelAmount,
         paymentInstructions: req.body.paymentInstructions || null,
         equipmentRequirements: req.body.equipmentRequirements || null,
         specialRequirements: req.body.specialRequirements || null,

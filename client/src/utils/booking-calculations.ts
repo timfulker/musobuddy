@@ -6,8 +6,10 @@ export interface UserSettings {
 
 export interface Booking {
   fee?: number;
-  travelExpenses?: number;
-  travel_expense?: number; // Database field name
+  travelExpenses?: number; // Contracts field
+  travelExpense?: number;  // Bookings field  
+  travel_expense?: number; // Database field name (bookings)
+  travel_expenses?: number; // Database field name (contracts)
 }
 
 /**
@@ -18,10 +20,10 @@ export function calculateBookingDisplayTotal(
   userSettings?: UserSettings
 ): number {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
+  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // If setting is true or undefined (default), include travel expenses in performance fee display
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
+  // Only include travel expenses in performance fee display if explicitly set to true
+  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
   if (includeTravelInPerformanceFee) {
     return fee + travelExpenses;
@@ -38,8 +40,8 @@ export function getBookingAmountDisplayText(
   userSettings?: UserSettings
 ): { main: string; subtitle?: string } {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
+  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
+  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
   if (includeTravelInPerformanceFee) {
     // Show combined total
@@ -70,8 +72,8 @@ export function calculateContractTotals(
   showSeparateTravel: boolean;
 } {
   const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travel_expense || 0;
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
+  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
+  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
   if (includeTravelInPerformanceFee) {
     // Include travel in performance fee
