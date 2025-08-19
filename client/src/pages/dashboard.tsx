@@ -115,8 +115,8 @@ export default function Dashboard() {
               </div>
               <div className="space-y-4">
                 <BookingCTAButtons />
-                <QuickActions />
                 <ConflictsWidget />
+                <QuickActions />
                 {user && <MessageNotifications userId={user.id} />}
                 <ComplianceAlerts />
                 <ContractNotifications />
