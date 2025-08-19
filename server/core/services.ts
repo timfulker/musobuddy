@@ -505,6 +505,18 @@ export class EmailService {
     // Get theme color from settings
     const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
     
+    // Calculate total fee including travel expenses
+    const baseFee = parseFloat(contract.fee || '0');
+    const travelExpenses = parseFloat(contract.travelExpenses || contract.travel_expenses || '0');
+    const totalFee = baseFee + travelExpenses;
+    
+    console.log('📧 Email fee calculation:', {
+      baseFee,
+      travelExpenses,
+      totalFee,
+      contractFields: Object.keys(contract)
+    });
+    
     if (!this.mailgun) {
       console.log('📧 Mailgun not configured, skipping contract email');
       return { success: false, error: 'Email service not configured' };
@@ -600,7 +612,7 @@ export class EmailService {
               <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
               <p><strong>Time:</strong> ${contract.eventTime} - ${contract.eventEndTime}</p>
               <p><strong>Venue:</strong> ${contract.venue}</p>
-              <p><strong>Fee:</strong> £${(parseFloat(contract.fee || '0') + parseFloat(contract.travelExpenses || contract.travel_expenses || '0')).toFixed(2)}</p>
+              <p><strong>Fee:</strong> £${totalFee.toFixed(2)}</p>
             </div>
             
             <div class="cta-section">
@@ -637,7 +649,7 @@ Event Details:
 - Date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
 - Time: ${contract.eventTime} - ${contract.eventEndTime}
 - Venue: ${contract.venue}
-- Fee: £${(parseFloat(contract.fee || '0') + parseFloat(contract.travelExpenses || contract.travel_expenses || '0')).toFixed(2)}
+- Fee: £${totalFee.toFixed(2)}
 
 To view and sign your contract, please visit: ${contractUrl}
 

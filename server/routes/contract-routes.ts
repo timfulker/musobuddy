@@ -466,6 +466,14 @@ export function registerContractRoutes(app: Express) {
         });
       }
       
+      // Debug contract data being sent to email
+      console.log('📧 Contract data for email:', {
+        fee: contract.fee,
+        travelExpenses: contract.travelExpenses,
+        travel_expenses: contract.travel_expenses,
+        allFields: Object.keys(contract)
+      });
+      
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       // Send email with the signing page URL, not the PDF URL
       await emailService.sendContractEmail(contract, userSettings, subject, signingPageResult.url || '', customMessage);
