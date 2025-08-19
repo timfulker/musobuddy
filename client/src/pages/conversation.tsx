@@ -59,12 +59,16 @@ export default function Conversation() {
     const style = document.createElement('style');
     style.textContent = `
       .ignore-btn-luminance-fix {
-        -webkit-text-fill-color: rgb(75, 85, 99) !important;
         color: rgb(75, 85, 99) !important;
       }
       .dark .ignore-btn-luminance-fix {
-        -webkit-text-fill-color: rgb(209, 213, 219) !important;
         color: rgb(209, 213, 219) !important;
+      }
+      .ignore-btn-luminance-fix:hover {
+        color: rgb(55, 65, 81) !important;
+      }
+      .dark .ignore-btn-luminance-fix:hover {
+        color: rgb(229, 231, 235) !important;
       }
     `;
     document.head.appendChild(style);
@@ -729,7 +733,7 @@ export default function Conversation() {
                     variant="secondary"
                     onClick={handleIgnoreMessages}
                     disabled={ignoreMessagesMutation.isPending}
-                    className="text-gray-600 ignore-btn-luminance-fix"
+                    className="ignore-btn-luminance-fix border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     {ignoreMessagesMutation.isPending ? (
                       <>
