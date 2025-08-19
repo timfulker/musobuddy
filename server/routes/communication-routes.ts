@@ -491,13 +491,14 @@ export function setupCommunicationRoutes(app: any) {
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 
       // The content is already AI-generated and formatted from the frontend
-      // Just wrap it in the standard email template
+      // Wrap it in the professional styled email template matching the templates page
       const emailBody = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
           <style>
             body { 
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -505,22 +506,90 @@ export function setupCommunicationRoutes(app: any) {
               color: #333;
               margin: 0;
               padding: 0;
+              background-color: #f5f5f5;
             }
-            .container { 
+            .email-container {
               max-width: 600px;
               margin: 0 auto;
-              padding: 20px;
+              background-color: #ffffff;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             }
-            .message {
-              margin: 20px 0;
+            .header {
+              background: linear-gradient(135deg, #4c1d95 0%, #6366f1 50%, #8b5cf6 100%);
+              color: white;
+              padding: 30px 20px;
+              text-align: center;
+              position: relative;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 600;
+            }
+            .brand {
+              position: absolute;
+              top: 15px;
+              left: 20px;
+              font-size: 16px;
+              font-weight: 600;
+              color: rgba(255,255,255,0.9);
+            }
+            .music-note {
+              position: absolute;
+              top: 15px;
+              right: 20px;
+              font-size: 20px;
+            }
+            .content {
+              padding: 40px 30px;
+              background: white;
+            }
+            .message-content {
+              color: #374151;
+              line-height: 1.6;
               white-space: pre-wrap;
               word-wrap: break-word;
+            }
+            .footer {
+              padding: 20px 30px;
+              background: #f8f9fa;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+            .signature {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              color: #6b7280;
             }
           </style>
         </head>
         <body>
-          <div class="container">
-            <div class="message">${content.replace(/\n/g, '<br>')}</div>
+          <div class="email-container">
+            <div class="header">
+              <div class="brand">MusoBuddy</div>
+              <div class="music-note">♪</div>
+              <h1>${booking[0].title || 'Music Services'}</h1>
+            </div>
+            
+            <div class="content">
+              <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+              
+              <div class="signature">
+                <strong>${userSetting.businessName || userSetting.fullName || 'Professional Musician'}</strong><br>
+                ${userSetting.businessEmail}<br>
+                ${userSetting.phoneNumber ? userSetting.phoneNumber + '<br>' : ''}
+                ${userSetting.website ? userSetting.website : ''}
+              </div>
+            </div>
+            
+            <div class="footer">
+              <p>Sent via MusoBuddy</p>
+            </div>
           </div>
         </body>
         </html>
