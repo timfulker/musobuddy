@@ -2483,7 +2483,14 @@ export default function UnifiedBookings() {
                                         <div className="text-sm mt-1 space-y-1">
                                           {booking.eventTime && <div>Time: {booking.eventTime}</div>}
                                           {booking.venue && <div>Venue: {booking.venue}</div>}
-                                          {booking.fee && <div>Fee: £{booking.fee}</div>}
+                                          {booking.fee && (
+                                            <div>Fee: {(() => {
+                                              const amountDisplay = getBookingAmountDisplayText(booking, settings);
+                                              return amountDisplay.subtitle 
+                                                ? `${amountDisplay.main} ${amountDisplay.subtitle}`
+                                                : amountDisplay.main;
+                                            })()}</div>
+                                          )}
                                         </div>
                                       )}
                                     </div>
@@ -2587,7 +2594,12 @@ export default function UnifiedBookings() {
                                               <div className="flex items-center gap-2">
                                                 <PoundSterling className="w-3 h-3 text-gray-500" />
                                                 <span className="font-medium">Fee:</span>
-                                                <span className="text-green-600">£{booking.fee}</span>
+                                                <span className="text-green-600">{(() => {
+                                                  const amountDisplay = getBookingAmountDisplayText(booking, settings);
+                                                  return amountDisplay.subtitle 
+                                                    ? `${amountDisplay.main} ${amountDisplay.subtitle}`
+                                                    : amountDisplay.main;
+                                                })()}</span>
                                               </div>
                                             )}
                                           </div>
@@ -2750,7 +2762,12 @@ export default function UnifiedBookings() {
                                                 <div className="flex items-center gap-2">
                                                   <PoundSterling className="w-3 h-3 text-gray-500" />
                                                   <span className="font-medium">Fee:</span>
-                                                  <span className="text-green-600">£{booking.fee}</span>
+                                                  <span className="text-green-600">{(() => {
+                                                    const amountDisplay = getBookingAmountDisplayText(booking, settings);
+                                                    return amountDisplay.subtitle 
+                                                      ? `${amountDisplay.main} ${amountDisplay.subtitle}`
+                                                      : amountDisplay.main;
+                                                  })()}</span>
                                                 </div>
                                               )}
                                             </div>
