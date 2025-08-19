@@ -571,6 +571,8 @@ export default function Settings() {
         themeCustomTitle: settings.themeCustomTitle || "",
         // Gig types
         customGigTypes: Array.isArray(settings.customGigTypes) ? settings.customGigTypes : [],
+        // Travel expense integration setting
+        includeTravelInPerformanceFee: settings.includeTravelInPerformanceFee !== false, // Default to true if not set
       };
       
       // Set up instrument state
