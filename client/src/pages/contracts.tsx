@@ -27,6 +27,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
 import MobileFeatureGuard from "@/components/mobile-feature-guard";
+import { useTheme } from "@/hooks/useTheme";
+import { getContrastTextColor } from "@/lib/colorUtils";
 
 const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested
@@ -73,6 +75,7 @@ export default function Contracts() {
   const [dataLoaded, setDataLoaded] = useState(false); // Track if auto-fill has been completed
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   
@@ -1631,7 +1634,12 @@ export default function Contracts() {
                     <Button
                       onClick={handleConfirmSendContract}
                       disabled={sendEmailMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      style={{
+                        backgroundColor: theme.colors.primary,
+                        color: getContrastTextColor(theme.colors.primary),
+                        border: 'none'
+                      }}
+                      className="hover:opacity-90 transition-opacity"
                     >
                       {sendEmailMutation.isPending ? "Sending..." : "Send Contract"}
                     </Button>
