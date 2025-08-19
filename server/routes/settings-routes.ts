@@ -776,9 +776,6 @@ export async function registerSettingsRoutes(app: Express) {
         
         // Booking data variables
         if (bookingData) {
-          console.log('🔧 BOOKING DATA KEYS:', Object.keys(bookingData));
-          console.log('🔧 VENUE VALUE:', bookingData.venue);
-          
           variableMap['Venue'] = bookingData.venue || bookingData.venueName || '';
           variableMap['Venue Name'] = bookingData.venue || bookingData.venueName || '';
           variableMap['Client Name'] = bookingData.clientName || '';
@@ -833,44 +830,10 @@ export async function registerSettingsRoutes(app: Express) {
         }
         
         // Replace all variables found in the text
-        console.log('🔧 VARIABLE MAP:', variableMap);
         Object.entries(variableMap).forEach(([variable, value]) => {
           if (value) {
             const regex = new RegExp(`\\[${variable}\\]`, 'gi');
-            const beforeReplace = replacedText.includes(`[${variable}]`);
             replacedText = replacedText.replace(regex, value);
-            const afterReplace = replacedText.includes(`[${variable}]`);
-            if (beforeReplace && !afterReplace) {
-              console.log(`✅ Replaced [${variable}] with "${value}"`);
-            }
-          }
-        });
-        
-        // Dynamic fallback for unmapped variables - try to find matching data fields
-        const remainingVariables = replacedText.match(/\[[\w\s]+\]/g) || [];
-        remainingVariables.forEach(variable => {
-          const cleanVar = variable.replace(/[\[\]]/g, '').toLowerCase().replace(/\s+/g, '');
-          
-          // Try to match against booking data keys
-          if (bookingData) {
-            Object.keys(bookingData).forEach(key => {
-              const cleanKey = key.toLowerCase().replace(/([A-Z])/g, ' $1').trim().replace(/\s+/g, '');
-              if (cleanVar === cleanKey && bookingData[key]) {
-                const regex = new RegExp(`\\[${variable.replace(/[\[\]]/g, '')}\\]`, 'gi');
-                replacedText = replacedText.replace(regex, bookingData[key].toString());
-              }
-            });
-          }
-          
-          // Try to match against user settings
-          if (userSettings) {
-            Object.keys(userSettings).forEach(key => {
-              const cleanKey = key.toLowerCase().replace(/([A-Z])/g, ' $1').trim().replace(/\s+/g, '');
-              if (cleanVar === cleanKey && userSettings[key]) {
-                const regex = new RegExp(`\\[${variable.replace(/[\[\]]/g, '')}\\]`, 'gi');
-                replacedText = replacedText.replace(regex, userSettings[key].toString());
-              }
-            });
           }
         });
         
