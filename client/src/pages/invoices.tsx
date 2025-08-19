@@ -98,7 +98,7 @@ export default function Invoices() {
       dueDate.setDate(dueDate.getDate() + (userSettings.defaultInvoiceDueDays || 7));
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
-  }, [userSettings]);
+  }, [userSettings, form]);
 
   // Check for URL parameters to auto-open dialog and pre-fill with booking/enquiry data
   useEffect(() => {
@@ -185,7 +185,7 @@ export default function Invoices() {
         }
       }
     }
-  }, [location, enquiries]);
+  }, [location, enquiries, userSettings, form, toast]);
 
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");

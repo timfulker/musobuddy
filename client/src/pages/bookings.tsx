@@ -1970,7 +1970,7 @@ export default function UnifiedBookings() {
                                                   <DropdownMenuItem
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      navigate(`/invoices/new?bookingId=${groupBooking.id}`);
+                                                      navigate(`/invoices?create=true&bookingId=${groupBooking.id}`);
                                                     }}
                                                   >
                                                     <DollarSign className="w-4 h-4 mr-2" />
@@ -2279,7 +2279,7 @@ export default function UnifiedBookings() {
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      navigate(`/invoices/new?bookingId=${booking.id}`);
+                                      navigate(`/invoices?create=true&bookingId=${booking.id}`);
                                     }}
                                   >
                                     <DollarSign className="w-4 h-4 mr-2" />
@@ -3429,7 +3429,7 @@ export default function UnifiedBookings() {
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
                           console.log('Navigating to invoices for creation:', booking.id);
-                          navigate(`/invoices?bookingId=${booking.id}&action=create`);
+                          navigate(`/invoices?create=true&bookingId=${booking.id}`);
                         }, 200);
                         break;
                       case 'thankyou':
