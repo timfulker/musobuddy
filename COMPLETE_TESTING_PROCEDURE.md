@@ -1,6 +1,23 @@
 # MusoBuddy Complete Testing Procedure
 *Comprehensive testing checklist for all application features*
 
+## Pre-Testing Setup
+
+### Environment Preparation
+- [ ] Clear browser cache and cookies
+- [ ] Open browser developer console to monitor errors
+- [ ] Enable network throttling to test slow connections
+- [ ] Have test credit card ready: 4242 4242 4242 4242
+- [ ] Prepare test email accounts for client simulation
+- [ ] Set up phone for SMS testing
+- [ ] Document testing device specs (browser, OS, screen size)
+
+### Performance Baseline
+- [ ] Record initial page load time (<3 seconds target)
+- [ ] Note initial database response times
+- [ ] Check memory usage baseline
+- [ ] Monitor network requests count
+
 ## Phase 1: Authentication & Account Setup
 
 ### 1.1 Account Registration
@@ -118,12 +135,20 @@
 - [ ] Send test booking inquiry to your MusoBuddy email
 - [ ] Verify email is received and parsed by AI
 - [ ] Check extracted information accuracy:
-  - [ ] Event date and time
-  - [ ] Venue name and location
-  - [ ] Performance fee details
-  - [ ] Client contact information
-  - [ ] Special requirements
+  - [ ] Event date and time (including TBC dates)
+  - [ ] Venue name and location (test with full addresses)
+  - [ ] Performance fee details (test with various formats £260, 260 pounds, etc.)
+  - [ ] Client contact information (phone, email, name)
+  - [ ] Special requirements (dietary, equipment, etc.)
 - [ ] Verify booking is created automatically
+- [ ] Test edge cases:
+  - [ ] Multiple dates in one email
+  - [ ] Ambiguous date formats (next Friday, 2nd March)
+  - [ ] Travel expense mentions (£50 travel, plus mileage)
+  - [ ] Foreign currency mentions
+  - [ ] Attachments in emails
+  - [ ] HTML formatted emails
+  - [ ] Reply chains with quoted text
 
 ### 4.2 Email Response Generation
 - [ ] Use AI to generate response to inquiry
