@@ -186,11 +186,11 @@ export function registerGoogleCalendarRoutes(app: Express) {
     }
   });
 
-  // Manual sync trigger (AI-powered with cost control)
+  // Manual sync trigger (ID-based with minimal AI)
   app.post('/api/google-calendar/sync', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
-      const { direction = 'export', useAI = false } = req.body;
+      const { direction = 'export', linkUnknownEvents = false } = req.body;
 
       const integration = await storage.getGoogleCalendarIntegration(userId);
       
@@ -198,69 +198,109 @@ export function registerGoogleCalendarRoutes(app: Express) {
         return res.status(404).json({ error: 'Google Calendar not connected' });
       }
 
-      console.log('🔄 Manual sync triggered for user:', userId, 'direction:', direction, 'AI:', useAI);
+      console.log('🔄 ID-based sync triggered for user:', userId, 'direction:', direction);
       
       const googleCalendarService = new GoogleCalendarService();
       await googleCalendarService.initializeForUser(integration.googleRefreshToken);
-      const aiMatcher = new AIEventMatcher();
       
       let exported = 0;
       let updated = 0;
       let imported = 0;
-      let matchingStats = { totalComparisons: 0, ruleBasedMatches: 0, aiComparisons: 0, estimatedCost: 0 };
+      let unlinkedGoogleEvents = 0;
+      let aiUsed = 0;
       
-      // Export MusoBuddy bookings to Google Calendar
+      // Get all current data
+      const bookings = await storage.getBookings(userId);
+      const eligibleBookings = bookings.filter(booking => 
+        booking.eventDate && 
+        booking.status !== 'cancelled' && 
+        booking.status !== 'rejected'
+      );
+      
+      const googleSync = await googleCalendarService.performFullSync('primary');
+      const googleEvents = googleSync.events || [];
+      
+      console.log(`🔄 Processing ${eligibleBookings.length} MusoBuddy bookings and ${googleEvents.length} Google events`);
+      
+      // Export MusoBuddy bookings to Google Calendar (ID-first approach)
       if (direction === 'export' || direction === 'bidirectional') {
-        try {
-          const bookings = await storage.getBookings(userId);
-          const eligibleBookings = bookings.filter(booking => 
-            booking.eventDate && 
-            booking.status !== 'cancelled' && 
-            booking.status !== 'rejected'
-          );
+        for (const booking of eligibleBookings) {
+          try {
+            // Look for existing Google event with this booking's ID
+            const linkedEvent = googleEvents.find(event => 
+              event.extendedProperties?.private?.musobuddyId === booking.id.toString()
+            );
+            
+            if (linkedEvent && linkedEvent.status !== 'cancelled') {
+              // Update existing linked event
+              await googleCalendarService.updateEventFromBooking(
+                linkedEvent.id, 
+                booking, 
+                'primary'
+              );
+              updated++;
+              console.log(`🔄 Updated linked Google event for booking ${booking.id}`);
+            } else {
+              // Create new event with embedded MusoBuddy ID
+              await googleCalendarService.createEventFromBooking(booking, 'primary');
+              exported++;
+              console.log(`➕ Created new Google event for booking ${booking.id}`);
+            }
+          } catch (eventError) {
+            console.error(`❌ Failed to sync booking ${booking.id}:`, eventError.message);
+          }
+        }
+      }
+      
+      // Handle unlinked Google Calendar events (optional AI matching)
+      if (direction === 'import' || direction === 'bidirectional') {
+        const unlinkedEvents = googleEvents.filter(event => 
+          !event.extendedProperties?.private?.musobuddyId &&
+          event.status !== 'cancelled' &&
+          event.start?.dateTime || event.start?.date // Has a valid date
+        );
+        
+        unlinkedGoogleEvents = unlinkedEvents.length;
+        
+        if (linkUnknownEvents && unlinkedEvents.length > 0) {
+          console.log(`🤖 Using AI to link ${unlinkedEvents.length} unlinked Google events`);
+          const aiMatcher = new AIEventMatcher();
           
-          console.log(`🔄 Found ${eligibleBookings.length} eligible bookings to sync out of ${bookings.length} total`);
-          
-          // Get existing Google Calendar events
-          const googleSync = await googleCalendarService.performFullSync('primary');
-          const existingEvents = googleSync.events || [];
-          
-          // Use AI-powered matching to find existing events
-          const matchingResult = await aiMatcher.findBestMatches(
-            eligibleBookings, 
-            existingEvents, 
-            useAI
-          );
-          
-          const matches = matchingResult.matches;
-          matchingStats = matchingResult.stats;
-          
-          for (const booking of eligibleBookings) {
+          for (const googleEvent of unlinkedEvents.slice(0, 10)) { // Limit to 10 for cost control
             try {
-              const matchedGoogleEventId = matches.get(booking.id.toString());
+              // Find unlinked MusoBuddy bookings
+              const unlinkedBookings = eligibleBookings.filter(booking => 
+                !googleEvents.some(ge => ge.extendedProperties?.private?.musobuddyId === booking.id.toString())
+              );
               
-              if (matchedGoogleEventId) {
-                // Update existing event
-                await googleCalendarService.updateEventFromBooking(
-                  matchedGoogleEventId, 
-                  booking, 
-                  'primary'
-                );
-                updated++;
-                console.log(`🔄 Updated Google Calendar event for booking ${booking.id}`);
-              } else {
-                // Create new event
-                await googleCalendarService.createEventFromBooking(booking, 'primary');
-                exported++;
-                console.log(`➕ Created new Google Calendar event for booking ${booking.id}`);
+              if (unlinkedBookings.length > 0) {
+                // Try to match this Google event to a MusoBuddy booking
+                let bestMatch = null;
+                let bestScore = 0;
+                
+                for (const booking of unlinkedBookings) {
+                  const matchResult = await aiMatcher.compareEvents(booking, googleEvent, true);
+                  if (matchResult.isMatch && matchResult.matchScore > bestScore && matchResult.matchScore > 0.8) {
+                    bestMatch = booking;
+                    bestScore = matchResult.matchScore;
+                  }
+                }
+                
+                if (bestMatch) {
+                  // Link them by updating the Google event with MusoBuddy ID
+                  await googleCalendarService.updateEventFromBooking(
+                    googleEvent.id,
+                    bestMatch,
+                    'primary'
+                  );
+                  console.log(`🔗 Linked Google event ${googleEvent.id} to MusoBuddy booking ${bestMatch.id}`);
+                  aiUsed++;
+                }
               }
-            } catch (eventError) {
-              console.error(`❌ Failed to sync booking ${booking.id}:`, eventError.message);
-              // Continue with other bookings
+            } catch (aiError) {
+              console.error(`❌ AI linking failed for event ${googleEvent.id}:`, aiError.message);
             }
           }
-        } catch (exportError) {
-          console.error('❌ Export phase failed:', exportError);
         }
       }
       
@@ -269,21 +309,25 @@ export function registerGoogleCalendarRoutes(app: Express) {
         lastSyncAt: new Date()
       });
       
-      const message = `Synced ${exported} new bookings, updated ${updated} existing events`;
-      const aiMessage = useAI ? ` (used AI for ${matchingStats.aiComparisons} uncertain matches, cost: $${matchingStats.estimatedCost.toFixed(3)})` : '';
+      let message = `Exported ${exported} new, updated ${updated} existing`;
+      if (unlinkedGoogleEvents > 0) {
+        message += `, found ${unlinkedGoogleEvents} unlinked Google events`;
+        if (aiUsed > 0) {
+          message += ` (linked ${aiUsed} using AI)`;
+        }
+      }
       
-      console.log(`✅ Sync completed: ${message}${aiMessage}`);
+      console.log(`✅ Sync completed: ${message}`);
       
       res.json({
         success: true,
         exported,
         updated,
         imported,
-        message: message + aiMessage,
-        stats: {
-          ...matchingStats,
-          eligibleBookings: exported + updated
-        }
+        unlinkedGoogleEvents,
+        aiLinksCreated: aiUsed,
+        message,
+        estimatedCost: aiUsed * 0.033
       });
 
     } catch (error) {
