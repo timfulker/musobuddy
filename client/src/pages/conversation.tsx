@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info } from "lucide-react";
 // AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +55,11 @@ export default function Conversation() {
   const [contextInput, setContextInput] = useState('');
   const [showContextInput, setShowContextInput] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showExtractDialog, setShowExtractDialog] = useState(false);
+  const [extractedDetails, setExtractedDetails] = useState<any>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ConversationMessage | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -274,6 +283,80 @@ export default function Conversation() {
   };
 
   // AI usage is unlimited - no token tracking needed
+
+  // Extract details from message
+  const handleExtractDetails = async (message: ConversationMessage) => {
+    setSelectedMessage(message);
+    setIsExtracting(true);
+    
+    try {
+      const response = await apiRequest(`/api/bookings/${bookingId}/extract-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageContent: message.content }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to extract details');
+      
+      const extracted = await response.json();
+      setExtractedDetails(extracted);
+      
+      // Pre-select all found fields
+      const fields = Object.keys(extracted).filter(key => extracted[key] !== null && extracted[key] !== '');
+      setSelectedFields(new Set(fields));
+      
+      setShowExtractDialog(true);
+    } catch (error) {
+      toast({
+        title: "Failed to extract details",
+        description: "Could not parse the message for booking information",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  // Apply extracted details to booking
+  const handleApplyExtractedDetails = async () => {
+    if (!extractedDetails || selectedFields.size === 0) return;
+    
+    try {
+      // Build update object with only selected fields
+      const updates: any = {};
+      selectedFields.forEach(field => {
+        if (extractedDetails[field] !== null && extractedDetails[field] !== '') {
+          updates[field] = extractedDetails[field];
+        }
+      });
+      
+      const response = await apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update booking');
+      
+      toast({
+        title: "Booking updated successfully",
+        description: `${selectedFields.size} field${selectedFields.size > 1 ? 's' : ''} updated from client message`,
+      });
+      
+      // Refresh booking data
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
+      
+      setShowExtractDialog(false);
+      setExtractedDetails(null);
+      setSelectedFields(new Set());
+    } catch (error) {
+      toast({
+        title: "Failed to update booking",
+        description: "Could not apply the extracted details",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Apply template to reply content
   const handleTemplateSelect = (template: any) => {
@@ -550,6 +633,30 @@ export default function Conversation() {
                           <div className="text-sm whitespace-pre-wrap">
                             {message.content}
                           </div>
+                          {/* Extract Details button for incoming messages (not original inquiry) */}
+                          {message.messageType === 'incoming' && message.id !== 0 && (
+                            <div className="mt-3 pt-3 border-t">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleExtractDetails(message)}
+                                disabled={isExtracting}
+                                className="text-xs"
+                              >
+                                {isExtracting && selectedMessage?.id === message.id ? (
+                                  <>
+                                    <div className="w-3 h-3 mr-1 animate-spin border-2 border-gray-500 border-t-transparent rounded-full" />
+                                    Extracting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileSearch className="w-3 h-3 mr-1" />
+                                    Extract Details
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -753,6 +860,98 @@ export default function Conversation() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Extract Details Review Dialog */}
+      <Dialog open={showExtractDialog} onOpenChange={setShowExtractDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Review Extracted Details</DialogTitle>
+            <DialogDescription>
+              AI has extracted the following information from the client's message. 
+              Please review and select which fields you want to update in the booking.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {extractedDetails && (
+            <div className="space-y-4 py-4">
+              {Object.entries(extractedDetails).map(([field, value]) => {
+                if (value === null || value === '') return null;
+                
+                const fieldLabels: Record<string, string> = {
+                  clientName: 'Client Name',
+                  clientEmail: 'Client Email',
+                  clientPhone: 'Client Phone',
+                  clientAddress: 'Client Address',
+                  venue: 'Venue Name',
+                  venueAddress: 'Venue Address',
+                  eventDate: 'Event Date',
+                  eventTime: 'Event Time',
+                  eventEndTime: 'End Time',
+                  eventType: 'Event Type',
+                  fee: 'Performance Fee',
+                  deposit: 'Deposit Amount',
+                  notes: 'Additional Notes',
+                  performanceDuration: 'Performance Duration',
+                  guestCount: 'Guest Count',
+                };
+                
+                return (
+                  <div key={field} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                    <Checkbox
+                      id={field}
+                      checked={selectedFields.has(field)}
+                      onCheckedChange={(checked) => {
+                        const newFields = new Set(selectedFields);
+                        if (checked) {
+                          newFields.add(field);
+                        } else {
+                          newFields.delete(field);
+                        }
+                        setSelectedFields(newFields);
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={field} className="font-medium">
+                        {fieldLabels[field] || field}
+                      </Label>
+                      <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
+                        {String(value)}
+                      </div>
+                      {booking[field] && booking[field] !== value && (
+                        <div className="mt-1 text-xs text-gray-500">
+                          Current value: {String(booking[field])}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {Object.keys(extractedDetails).filter(k => extractedDetails[k]).length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Info className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No booking details found in this message.</p>
+                  <p className="text-sm mt-2">
+                    The AI couldn't identify any specific booking information to extract.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowExtractDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleApplyExtractedDetails}
+              disabled={selectedFields.size === 0}
+            >
+              Update {selectedFields.size} Field{selectedFields.size !== 1 ? 's' : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

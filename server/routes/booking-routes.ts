@@ -6,6 +6,7 @@ import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { cleanEncoreTitle } from '../core/booking-formatter';
+import OpenAI from 'openai';
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
@@ -209,6 +210,91 @@ export function registerBookingRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Failed to fetch booking:', error);
       res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+  });
+
+  // Extract details from message content using AI
+  app.post('/api/bookings/:id/extract-details', requireAuth, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const userId = req.user?.userId;
+      const { messageContent } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Verify ownership
+      const booking = await storage.getBooking(bookingId);
+      if (!booking || booking.userId !== userId) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      if (!messageContent) {
+        return res.status(400).json({ error: 'Message content is required' });
+      }
+      
+      // Use OpenAI to extract booking details from the message
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const prompt = `Extract booking details from the following client message. Return a JSON object with any of these fields that can be found in the message:
+      - clientName: Full name of the client
+      - clientEmail: Email address 
+      - clientPhone: Phone number
+      - clientAddress: Client's address
+      - venue: Name of the venue
+      - venueAddress: Full address of the venue
+      - eventDate: Date of the event (format as YYYY-MM-DD)
+      - eventTime: Start time of the event (format as HH:MM)
+      - eventEndTime: End time of the event (format as HH:MM)
+      - eventType: Type of event (wedding, birthday, corporate, etc.)
+      - fee: Performance fee amount (numeric value only)
+      - deposit: Deposit amount (numeric value only)
+      - notes: Any additional notes or requirements
+      - performanceDuration: How long the performance should be
+      - guestCount: Number of guests expected
+      
+      Only include fields where information is clearly stated. Return null for fields not mentioned.
+      
+      Message:
+      ${messageContent}`;
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // Latest OpenAI model per blueprint
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.3, // Lower temperature for accuracy
+      });
+      
+      const extractedDetails = JSON.parse(response.choices[0].message.content);
+      
+      // Clean up the extracted data
+      const cleanedDetails: any = {};
+      for (const [key, value] of Object.entries(extractedDetails)) {
+        if (value !== null && value !== '' && value !== undefined) {
+          // Special handling for dates
+          if (key === 'eventDate' && typeof value === 'string') {
+            // Try to parse and format the date
+            try {
+              const date = new Date(value);
+              if (!isNaN(date.getTime())) {
+                cleanedDetails[key] = date.toISOString().split('T')[0];
+              }
+            } catch {
+              cleanedDetails[key] = value;
+            }
+          } else {
+            cleanedDetails[key] = value;
+          }
+        }
+      }
+      
+      console.log('📝 Extracted details from message:', cleanedDetails);
+      res.json(cleanedDetails);
+      
+    } catch (error) {
+      console.error('❌ Failed to extract details:', error);
+      res.status(500).json({ error: 'Failed to extract details from message' });
     }
   });
 
