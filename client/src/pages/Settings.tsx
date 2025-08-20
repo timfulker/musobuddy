@@ -862,29 +862,6 @@ export default function Settings() {
                       )}
                     />
                   </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="invoicePrefix"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Invoice Number Prefix</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            value={field.value || ""} 
-                            placeholder="e.g., JS or ABC (3-5 letters)" 
-                            maxLength={5}
-                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                          Set a custom prefix for your invoice numbers (e.g., JS-0001). Leave blank to auto-generate from your business name.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
@@ -999,6 +976,29 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="invoicePrefix"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Invoice Number Prefix</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            value={field.value || ""} 
+                            placeholder="e.g., JS or ABC (3-5 letters)" 
+                            maxLength={5}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                          Set a custom prefix for your invoice numbers (e.g., JS-0001). Leave blank to auto-generate from your business name.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="nextInvoiceNumber"
