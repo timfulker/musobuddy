@@ -62,9 +62,13 @@ export class GoogleCalendarService {
     }
 
     // Convert MusoBuddy booking to Google Calendar event
-    // Field mapping: Client name as title (per user preference)
+    // Field mapping: "Client name - Event type" format (per user preference)
+    const summary = booking.clientName && booking.eventType 
+      ? `${booking.clientName} - ${booking.eventType}`
+      : booking.clientName || booking.title || 'Music Booking';
+    
     const event = {
-      summary: booking.clientName || booking.title || 'Music Booking',
+      summary,
       description: this.buildEventDescription(booking),
       start: {
         dateTime: this.buildDateTime(booking.eventDate, booking.eventTime),
@@ -104,9 +108,13 @@ export class GoogleCalendarService {
       throw new Error('Calendar service not initialized');
     }
 
-    // Field mapping: Client name as title (per user preference)
+    // Field mapping: "Client name - Event type" format (per user preference)
+    const summary = booking.clientName && booking.eventType 
+      ? `${booking.clientName} - ${booking.eventType}`
+      : booking.clientName || booking.title || 'Music Booking';
+    
     const event = {
-      summary: booking.clientName || booking.title || 'Music Booking',
+      summary,
       description: this.buildEventDescription(booking),
       start: {
         dateTime: this.buildDateTime(booking.eventDate, booking.eventTime),
