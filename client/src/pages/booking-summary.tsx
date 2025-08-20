@@ -39,6 +39,8 @@ interface BookingData {
   specialRequirements?: string;
   travelDistance?: number;
   travelTime?: string;
+  distance?: string;
+  duration?: string;
   what3words?: string;
   setupTime?: string;
   packDownTime?: string;
@@ -423,19 +425,19 @@ export default function BookingSummary() {
                   </div>
                 )}
                 
-                {booking.travelDistance && (
+                {(booking.distance || booking.travelDistance) && (
                   <div className="flex items-center gap-2">
                     <Navigation className="w-4 h-4 text-gray-500" />
                     <span className="font-semibold">Distance:</span>
-                    <span>{booking.travelDistance} miles</span>
+                    <span>{booking.distance || `${booking.travelDistance} miles`}</span>
                   </div>
                 )}
                 
-                {booking.travelTime && (
+                {(booking.duration || booking.travelTime) && (
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
                     <span className="font-semibold">Travel Time:</span>
-                    <span>{booking.travelTime}</span>
+                    <span>{booking.duration || booking.travelTime}</span>
                   </div>
                 )}
               </div>
