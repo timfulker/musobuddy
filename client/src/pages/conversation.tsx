@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info, Edit } from "lucide-react";
 // AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -505,9 +505,20 @@ export default function Conversation() {
               </p>
             </div>
           </div>
-          <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-            {booking.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/booking/${bookingId}`)}
+              className="flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit Booking
+            </Button>
+            <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+              {booking.status}
+            </Badge>
+          </div>
         </div>
 
         {/* Unread Messages Notification */}
