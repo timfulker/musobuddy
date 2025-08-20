@@ -58,6 +58,7 @@ export default function Conversation() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExtractDialog, setShowExtractDialog] = useState(false);
   const [extractedDetails, setExtractedDetails] = useState<any>(null);
+  const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [selectedMessage, setSelectedMessage] = useState<ConversationMessage | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
@@ -303,6 +304,15 @@ export default function Conversation() {
       const extracted = await response.json();
       setExtractedDetails(extracted);
       
+      // Initialize edited values with extracted values
+      const initialEditedValues: Record<string, string> = {};
+      Object.keys(extracted).forEach(key => {
+        if (extracted[key] !== null && extracted[key] !== '') {
+          initialEditedValues[key] = String(extracted[key]);
+        }
+      });
+      setEditedValues(initialEditedValues);
+      
       // Pre-select all found fields and set default modes
       const fields = Object.keys(extracted).filter(key => extracted[key] !== null && extracted[key] !== '');
       setSelectedFields(new Set(fields));
@@ -334,9 +344,9 @@ export default function Conversation() {
       // Build update object with only selected fields
       const updates: any = {};
       selectedFields.forEach(field => {
-        if (extractedDetails[field] !== null && extractedDetails[field] !== '') {
+        const newValue = editedValues[field] || extractedDetails[field];
+        if (newValue !== null && newValue !== '') {
           const mode = fieldModes[field] || 'replace';
-          const newValue = extractedDetails[field];
           const currentValue = booking[field] || '';
           
           if (mode === 'append' && currentValue) {
@@ -934,14 +944,15 @@ export default function Conversation() {
                 const currentValue = booking[field] || '';
                 const appendableFields = ['notes', 'specialRequirements', 'equipmentRequirements', 'venueAddress', 'clientAddress'];
                 const showAppendOption = appendableFields.includes(field) && currentValue;
+                const editedValue = editedValues[field] || String(value);
                 
                 // Calculate preview value
-                let previewValue = value;
+                let previewValue = editedValue;
                 if (mode === 'append' && currentValue) {
                   if (appendableFields.includes(field)) {
-                    previewValue = `${currentValue}\n${value}`;
+                    previewValue = `${currentValue}\n${editedValue}`;
                   } else {
-                    previewValue = `${currentValue} ${value}`;
+                    previewValue = `${currentValue} ${editedValue}`;
                   }
                 }
                 
@@ -985,12 +996,24 @@ export default function Conversation() {
                         )}
                       </div>
                       
-                      {/* New Value */}
+                      {/* New Value - Editable */}
                       <div className="space-y-2">
-                        <div className="text-xs text-gray-500">New value from message:</div>
-                        <div className="p-2 bg-green-50 border border-green-200 rounded text-sm">
-                          {String(value)}
-                        </div>
+                        <div className="text-xs text-gray-500">New value from message (editable):</div>
+                        {(field === 'notes' || field === 'specialRequirements' || field === 'equipmentRequirements' || field === 'venueAddress' || field === 'clientAddress') ? (
+                          <Textarea
+                            value={editedValue}
+                            onChange={(e) => setEditedValues(prev => ({ ...prev, [field]: e.target.value }))}
+                            className="min-h-[80px] text-sm bg-green-50 border-green-200"
+                            placeholder="Enter value..."
+                          />
+                        ) : (
+                          <Input
+                            value={editedValue}
+                            onChange={(e) => setEditedValues(prev => ({ ...prev, [field]: e.target.value }))}
+                            className="text-sm bg-green-50 border-green-200"
+                            placeholder="Enter value..."
+                          />
+                        )}
                         
                         {/* Current Value (if exists) */}
                         {currentValue && (
