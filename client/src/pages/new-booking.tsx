@@ -710,6 +710,16 @@ export default function NewBookingPage() {
                     Conversation
                   </Button>
                   
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/booking-summary/${editBookingId}`, '_blank')}
+                    className="text-green-600 hover:bg-green-50"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    Summary
+                  </Button>
+                  
                   {/* Secondary Actions - Dropdown Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
