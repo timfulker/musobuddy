@@ -68,6 +68,12 @@ export class EmailService {
         console.log(`📧 CC: ${messageData.cc}`);
       }
 
+      // Add BCC support for testing/monitoring purposes
+      if (emailData.bcc) {
+        messageData.bcc = emailData.bcc;
+        console.log(`📧 BCC: ${messageData.bcc}`);
+      }
+
       // Add Reply-To support for booking-specific email routing
       if (emailData.replyTo) {
         messageData['h:Reply-To'] = emailData.replyTo;

@@ -979,10 +979,10 @@ This email was sent via MusoBuddy Professional Music Management Platform
         }
       };
 
-      // Add CC for testing purposes (temporary feature)
+      // Add BCC for testing purposes (temporary feature)
       if (testCc && typeof testCc === 'string' && testCc.includes('@')) {
-        emailData.cc = testCc;
-        console.log(`📧 Test CC added to booking response email: ${testCc}`);
+        emailData.bcc = testCc;
+        console.log(`📧 Test BCC added to booking response email: ${testCc}`);
       }
 
       const emailSent = await services.sendEmail(emailData);

@@ -1390,7 +1390,7 @@ export default function Templates() {
               <div className="flex-shrink-0 border-t pt-4 space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="test-cc" className="text-sm text-gray-600">
-                    CC for Testing (Optional)
+                    BCC for Testing (Optional)
                   </Label>
                   <Input
                     id="test-cc"
