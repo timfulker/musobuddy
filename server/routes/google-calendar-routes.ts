@@ -222,8 +222,11 @@ export function registerGoogleCalendarRoutes(app: Express) {
       
       console.log(`🔄 Processing ${eligibleBookings.length} MusoBuddy bookings and ${googleEvents.length} Google events`);
       
-      // Export MusoBuddy bookings to Google Calendar (ID-first approach)
+      // Export MusoBuddy bookings to Google Calendar (ID-first approach with duplicate prevention)
       if (direction === 'export' || direction === 'bidirectional') {
+        let processed = 0;
+        const batchSize = 50; // Process in batches to avoid timeout
+        
         for (const booking of eligibleBookings) {
           try {
             // Look for existing Google event with this booking's ID
@@ -241,10 +244,46 @@ export function registerGoogleCalendarRoutes(app: Express) {
               updated++;
               console.log(`🔄 Updated linked Google event for booking ${booking.id}`);
             } else {
-              // Create new event with embedded MusoBuddy ID
-              await googleCalendarService.createEventFromBooking(booking, 'primary');
-              exported++;
-              console.log(`➕ Created new Google event for booking ${booking.id}`);
+              // Check for potential duplicate by date/time/venue before creating
+              const bookingDate = new Date(booking.eventDate);
+              const bookingDateStr = bookingDate.toISOString().split('T')[0];
+              
+              const possibleDuplicate = googleEvents.find(event => {
+                if (event.status === 'cancelled') return false;
+                
+                const eventDate = new Date(event.start?.dateTime || event.start?.date);
+                const eventDateStr = eventDate.toISOString().split('T')[0];
+                
+                // Check if same date
+                if (bookingDateStr !== eventDateStr) return false;
+                
+                // Check if similar summary or location
+                const eventSummary = (event.summary || '').toLowerCase();
+                const eventLocation = (event.location || '').toLowerCase();
+                const bookingVenue = (booking.venue || '').toLowerCase();
+                const bookingClient = (booking.clientName || '').toLowerCase();
+                
+                // If summary contains client name or venue, it's likely the same event
+                return (eventSummary.includes(bookingClient) || eventSummary.includes(bookingVenue) ||
+                       eventLocation.includes(bookingVenue));
+              });
+              
+              if (possibleDuplicate) {
+                console.log(`⚠️ Skipping booking ${booking.id} - possible duplicate found in calendar`);
+                console.log(`   Existing event: ${possibleDuplicate.summary} on ${possibleDuplicate.start?.dateTime}`);
+              } else {
+                // Create new event with embedded MusoBuddy ID
+                await googleCalendarService.createEventFromBooking(booking, 'primary');
+                exported++;
+                console.log(`➕ Created new Google event for booking ${booking.id}`);
+              }
+            }
+            
+            processed++;
+            // Add small delay every batch to prevent overwhelming the API
+            if (processed % batchSize === 0) {
+              console.log(`⏸ Processed ${processed}/${eligibleBookings.length} bookings, pausing briefly...`);
+              await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second pause
             }
           } catch (eventError) {
             console.error(`❌ Failed to sync booking ${booking.id}:`, eventError.message);
