@@ -43,6 +43,7 @@ interface BookingData {
   setupTime?: string;
   packDownTime?: string;
   duration?: string;
+  performanceDuration?: string;
   additionalInfo?: string;
   bookingSource?: string;
   // Client portal fields
@@ -201,11 +202,11 @@ export default function BookingSummary() {
                 </div>
               )}
               
-              {booking.duration && (
+              {booking.performanceDuration && (
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="font-semibold">Duration:</span>
-                  <span>{booking.duration}</span>
+                  <span className="font-semibold">Performance Duration:</span>
+                  <span>{booking.performanceDuration}</span>
                 </div>
               )}
               
