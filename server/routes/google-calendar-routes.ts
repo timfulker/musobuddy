@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { GoogleCalendarService } from "../services/google-calendar";
+import { AIEventMatcher } from "../services/ai-event-matcher";
 import { requireAuth } from "../middleware/auth";
 import { storage } from "../core/storage";
 
@@ -185,11 +186,11 @@ export function registerGoogleCalendarRoutes(app: Express) {
     }
   });
 
-  // Manual sync trigger (full implementation)
+  // Manual sync trigger (AI-powered with cost control)
   app.post('/api/google-calendar/sync', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.userId;
-      const { direction = 'bidirectional' } = req.body;
+      const { direction = 'export', useAI = false } = req.body;
 
       const integration = await storage.getGoogleCalendarIntegration(userId);
       
@@ -197,49 +198,61 @@ export function registerGoogleCalendarRoutes(app: Express) {
         return res.status(404).json({ error: 'Google Calendar not connected' });
       }
 
-      console.log('🔄 Manual sync triggered for user:', userId, 'direction:', direction);
+      console.log('🔄 Manual sync triggered for user:', userId, 'direction:', direction, 'AI:', useAI);
       
       const googleCalendarService = new GoogleCalendarService();
       await googleCalendarService.initializeForUser(integration.googleRefreshToken);
+      const aiMatcher = new AIEventMatcher();
       
       let exported = 0;
+      let updated = 0;
       let imported = 0;
+      let matchingStats = { totalComparisons: 0, ruleBasedMatches: 0, aiComparisons: 0, estimatedCost: 0 };
       
       // Export MusoBuddy bookings to Google Calendar
       if (direction === 'export' || direction === 'bidirectional') {
         try {
           const bookings = await storage.getBookings(userId);
-          console.log(`🔄 Found ${bookings.length} MusoBuddy bookings to sync`);
+          const eligibleBookings = bookings.filter(booking => 
+            booking.eventDate && 
+            booking.status !== 'cancelled' && 
+            booking.status !== 'rejected'
+          );
           
-          // Get existing Google Calendar events to avoid duplicates
+          console.log(`🔄 Found ${eligibleBookings.length} eligible bookings to sync out of ${bookings.length} total`);
+          
+          // Get existing Google Calendar events
           const googleSync = await googleCalendarService.performFullSync('primary');
           const existingEvents = googleSync.events || [];
           
-          for (const booking of bookings) {
+          // Use AI-powered matching to find existing events
+          const matchingResult = await aiMatcher.findBestMatches(
+            eligibleBookings, 
+            existingEvents, 
+            useAI
+          );
+          
+          const matches = matchingResult.matches;
+          matchingStats = matchingResult.stats;
+          
+          for (const booking of eligibleBookings) {
             try {
-              // Skip if booking doesn't have required date/time info
-              if (!booking.eventDate || booking.status === 'cancelled' || booking.status === 'rejected') {
-                continue;
-              }
+              const matchedGoogleEventId = matches.get(booking.id.toString());
               
-              // Check if this booking already exists in Google Calendar
-              const existingEvent = existingEvents.find(event => 
-                event.extendedProperties?.private?.musobuddyId === booking.id.toString()
-              );
-              
-              if (existingEvent && !existingEvent.status === 'cancelled') {
+              if (matchedGoogleEventId) {
                 // Update existing event
                 await googleCalendarService.updateEventFromBooking(
-                  existingEvent.id, 
+                  matchedGoogleEventId, 
                   booking, 
                   'primary'
                 );
-                console.log(`✅ Updated Google Calendar event for booking ${booking.id}`);
-              } else if (!existingEvent) {
+                updated++;
+                console.log(`🔄 Updated Google Calendar event for booking ${booking.id}`);
+              } else {
                 // Create new event
                 await googleCalendarService.createEventFromBooking(booking, 'primary');
                 exported++;
-                console.log(`✅ Created Google Calendar event for booking ${booking.id}`);
+                console.log(`➕ Created new Google Calendar event for booking ${booking.id}`);
               }
             } catch (eventError) {
               console.error(`❌ Failed to sync booking ${booking.id}:`, eventError.message);
@@ -251,29 +264,26 @@ export function registerGoogleCalendarRoutes(app: Express) {
         }
       }
       
-      // Import Google Calendar events to MusoBuddy (if bidirectional)
-      if (direction === 'import' || direction === 'bidirectional') {
-        try {
-          // For now, skip import to avoid creating duplicate bookings
-          // This can be implemented later with user confirmation
-          console.log('📥 Import functionality available but skipped for safety');
-        } catch (importError) {
-          console.error('❌ Import phase failed:', importError);
-        }
-      }
-      
       // Update last sync time
       await storage.updateGoogleCalendarIntegration(userId, {
         lastSyncAt: new Date()
       });
       
-      console.log(`✅ Sync completed: exported ${exported}, imported ${imported}`);
+      const message = `Synced ${exported} new bookings, updated ${updated} existing events`;
+      const aiMessage = useAI ? ` (used AI for ${matchingStats.aiComparisons} uncertain matches, cost: $${matchingStats.estimatedCost.toFixed(3)})` : '';
+      
+      console.log(`✅ Sync completed: ${message}${aiMessage}`);
       
       res.json({
         success: true,
         exported,
+        updated,
         imported,
-        message: `Successfully synced ${exported} bookings to Google Calendar`
+        message: message + aiMessage,
+        stats: {
+          ...matchingStats,
+          eligibleBookings: exported + updated
+        }
       });
 
     } catch (error) {
