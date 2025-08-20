@@ -191,30 +191,30 @@ export default function Contracts() {
               const baseFee = booking.fee || '';
               const travelFee = booking.travelExpense || '';
               
-              // TEMPORARY: Force test values to verify system works
-              const TEST_BASE_FEE = '260';
-              const TEST_TRAVEL_FEE = '50';
-              console.log('🧪 Using test values - baseFee:', TEST_BASE_FEE, 'travel:', TEST_TRAVEL_FEE);
+              console.log('💰 Using actual booking data - baseFee:', baseFee, 'travel:', travelFee);
               
-              form.setValue('originalFee', TEST_BASE_FEE);
-              form.setValue('originalTravelExpenses', TEST_TRAVEL_FEE);
-              form.setValue('travelExpenses', TEST_TRAVEL_FEE);
-              
-              // Adjust fee display based on toggle setting
-              console.log('🎛️ Form Loading Debug:', {
-                baseFee: TEST_BASE_FEE,
-                travelFee: TEST_TRAVEL_FEE,
-                settings: settings?.includeTravelInPerformanceFee,
-                settingsObj: settings
-              });
-              
-              if (settings?.includeTravelInPerformanceFee === true) {
-                const combinedFee = parseFloat(TEST_BASE_FEE) + parseFloat(TEST_TRAVEL_FEE || '0');
-                console.log('🔛 Toggle ON - Setting combined fee:', combinedFee);
-                form.setValue('fee', combinedFee.toString());
+              // Handle case where booking has combined fee vs separate values
+              if (travelFee && parseFloat(travelFee) > 0) {
+                // Booking has separate travel expense
+                form.setValue('originalFee', baseFee);
+                form.setValue('originalTravelExpenses', travelFee);
+                form.setValue('travelExpenses', travelFee);
+                
+                if (settings?.includeTravelInPerformanceFee === true) {
+                  const combinedFee = parseFloat(baseFee) + parseFloat(travelFee);
+                  console.log('🔛 Toggle ON - Setting combined fee:', combinedFee);
+                  form.setValue('fee', combinedFee.toString());
+                } else {
+                  console.log('🔲 Toggle OFF - Setting base fee:', baseFee);
+                  form.setValue('fee', baseFee);
+                }
               } else {
-                console.log('🔲 Toggle OFF - Setting base fee:', TEST_BASE_FEE);
-                form.setValue('fee', TEST_BASE_FEE);
+                // Booking has fee only (possibly already combined)
+                form.setValue('originalFee', baseFee);
+                form.setValue('originalTravelExpenses', '0');
+                form.setValue('travelExpenses', '0');
+                form.setValue('fee', baseFee);
+                console.log('💼 Using booking fee as-is:', baseFee);
               }
               
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
