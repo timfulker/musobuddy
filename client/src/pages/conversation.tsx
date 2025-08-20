@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info } from "lucide-react";
 // AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
@@ -60,6 +61,7 @@ export default function Conversation() {
   const [selectedMessage, setSelectedMessage] = useState<ConversationMessage | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [fieldModes, setFieldModes] = useState<Record<string, 'replace' | 'append'>>({});
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -301,9 +303,16 @@ export default function Conversation() {
       const extracted = await response.json();
       setExtractedDetails(extracted);
       
-      // Pre-select all found fields
+      // Pre-select all found fields and set default modes
       const fields = Object.keys(extracted).filter(key => extracted[key] !== null && extracted[key] !== '');
       setSelectedFields(new Set(fields));
+      
+      // Set default modes (replace for most fields, append for notes)
+      const modes: Record<string, 'replace' | 'append'> = {};
+      fields.forEach(field => {
+        modes[field] = field === 'notes' ? 'append' : 'replace';
+      });
+      setFieldModes(modes);
       
       setShowExtractDialog(true);
     } catch (error) {
@@ -326,7 +335,21 @@ export default function Conversation() {
       const updates: any = {};
       selectedFields.forEach(field => {
         if (extractedDetails[field] !== null && extractedDetails[field] !== '') {
-          updates[field] = extractedDetails[field];
+          const mode = fieldModes[field] || 'replace';
+          const newValue = extractedDetails[field];
+          const currentValue = booking[field] || '';
+          
+          if (mode === 'append' && currentValue) {
+            // Append with separator for text fields
+            const appendableFields = ['notes', 'specialRequirements', 'equipmentRequirements', 'venueAddress', 'clientAddress'];
+            if (appendableFields.includes(field)) {
+              updates[field] = `${currentValue}\n${newValue}`;
+            } else {
+              updates[field] = `${currentValue} ${newValue}`;
+            }
+          } else {
+            updates[field] = newValue;
+          }
         }
       });
       
@@ -349,6 +372,7 @@ export default function Conversation() {
       setShowExtractDialog(false);
       setExtractedDetails(null);
       setSelectedFields(new Set());
+      setFieldModes({});
     } catch (error) {
       toast({
         title: "Failed to update booking",
@@ -895,6 +919,21 @@ export default function Conversation() {
                   guestCount: 'Guest Count',
                 };
                 
+                const mode = fieldModes[field] || 'replace';
+                const currentValue = booking[field] || '';
+                const appendableFields = ['notes', 'specialRequirements', 'equipmentRequirements', 'venueAddress', 'clientAddress'];
+                const showAppendOption = appendableFields.includes(field) && currentValue;
+                
+                // Calculate preview value
+                let previewValue = value;
+                if (mode === 'append' && currentValue) {
+                  if (appendableFields.includes(field)) {
+                    previewValue = `${currentValue}\n${value}`;
+                  } else {
+                    previewValue = `${currentValue} ${value}`;
+                  }
+                }
+                
                 return (
                   <div key={field} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
                     <Checkbox
@@ -911,17 +950,57 @@ export default function Conversation() {
                       }}
                     />
                     <div className="flex-1">
-                      <Label htmlFor={field} className="font-medium">
-                        {fieldLabels[field] || field}
-                      </Label>
-                      <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
-                        {String(value)}
+                      <div className="flex justify-between items-start mb-2">
+                        <Label htmlFor={field} className="font-medium">
+                          {fieldLabels[field] || field}
+                        </Label>
+                        {showAppendOption && selectedFields.has(field) && (
+                          <RadioGroup 
+                            value={mode} 
+                            onValueChange={(value: 'replace' | 'append') => {
+                              setFieldModes(prev => ({ ...prev, [field]: value }));
+                            }}
+                            className="flex space-x-3"
+                          >
+                            <div className="flex items-center space-x-1">
+                              <RadioGroupItem value="replace" id={`${field}-replace`} />
+                              <Label htmlFor={`${field}-replace`} className="text-xs cursor-pointer">Replace</Label>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <RadioGroupItem value="append" id={`${field}-append`} />
+                              <Label htmlFor={`${field}-append`} className="text-xs cursor-pointer">Append</Label>
+                            </div>
+                          </RadioGroup>
+                        )}
                       </div>
-                      {booking[field] && booking[field] !== value && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          Current value: {String(booking[field])}
+                      
+                      {/* New Value */}
+                      <div className="space-y-2">
+                        <div className="text-xs text-gray-500">New value from message:</div>
+                        <div className="p-2 bg-green-50 border border-green-200 rounded text-sm">
+                          {String(value)}
                         </div>
-                      )}
+                        
+                        {/* Current Value (if exists) */}
+                        {currentValue && (
+                          <>
+                            <div className="text-xs text-gray-500">Current value:</div>
+                            <div className="p-2 bg-gray-100 rounded text-sm">
+                              {String(currentValue)}
+                            </div>
+                          </>
+                        )}
+                        
+                        {/* Preview (if append mode) */}
+                        {mode === 'append' && currentValue && selectedFields.has(field) && (
+                          <>
+                            <div className="text-xs text-blue-600 font-medium">Final result after append:</div>
+                            <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm whitespace-pre-wrap">
+                              {previewValue}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
