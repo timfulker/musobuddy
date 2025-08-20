@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload, MessageSquare, MessageCircle, MoreHorizontal, ThumbsUp, DollarSign, FileText, Shield, XCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -631,24 +632,159 @@ export default function NewBookingPage() {
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
           <div className="relative bg-white/80 backdrop-blur-sm border border-primary/10 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <Link href="/bookings">
-                  <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Bookings
-                  </Button>
-                </Link>
-                <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
-                    {isEditMode ? 'Edit Booking' : 'New Booking'}
-                  </h1>
-                  <p className="text-gray-600 mt-1">{isEditMode ? 'Update booking details' : 'Create a new performance booking'}</p>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <Link href="/bookings">
+                    <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Bookings
+                    </Button>
+                  </Link>
+                  <div>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
+                      {isEditMode ? 'Edit Booking' : 'New Booking'}
+                    </h1>
+                    <p className="text-gray-600 mt-1">{isEditMode ? 'Update booking details' : 'Create a new performance booking'}</p>
+                  </div>
+                </div>
+                <div className="hidden md:flex items-center space-x-2 text-primary">
+                  <Calendar className="w-8 h-8" />
                 </div>
               </div>
-              <div className="hidden md:flex items-center space-x-2 text-primary">
-                <Calendar className="w-8 h-8" />
-              </div>
+              
+              {/* Booking Actions - Only show in edit mode */}
+              {isEditMode && editingBooking && (
+                <div className="flex items-center justify-end gap-2 border-t pt-4">
+                  {/* Apply on Encore button if applicable */}
+                  {editingBooking.applyNowLink && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        // Update booking status to "In progress"
+                        try {
+                          const response = await apiRequest(`/api/bookings/${editBookingId}`, {
+                            method: "PATCH",
+                            body: JSON.stringify({ status: 'in_progress' }),
+                          });
+                          
+                          if (response.ok) {
+                            queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                            toast({
+                              title: "Application submitted",
+                              description: "Booking status updated to In Progress",
+                            });
+                          }
+                        } catch (error) {
+                          console.error('Error updating booking status:', error);
+                        }
+                        
+                        // Open Encore link in new tab
+                        window.open(editingBooking.applyNowLink, '_blank');
+                      }}
+                      className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                    >
+                      🎵 Apply on Encore
+                    </Button>
+                  )}
+                  
+                  {/* Primary Action Buttons */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/templates?bookingId=${editBookingId}&action=respond`)}
+                    className="text-blue-600 hover:bg-blue-50"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    Respond
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/conversation/${editBookingId}`)}
+                    className="text-indigo-600 hover:bg-indigo-50"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1" />
+                    Conversation
+                  </Button>
+                  
+                  {/* Secondary Actions - Dropdown Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-gray-600 hover:bg-gray-50"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/templates?bookingId=${editBookingId}&action=thankyou`)}
+                      >
+                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        Send Thank You
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/invoices?create=true&bookingId=${editBookingId}`)}
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Create Invoice
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/contracts/new?bookingId=${editBookingId}`)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Create Contract
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/compliance?bookingId=${editBookingId}`)}
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Compliance
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          if (confirm("Are you sure you want to reject this booking?")) {
+                            try {
+                              const response = await apiRequest(`/api/bookings/${editBookingId}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ status: 'rejected' }),
+                              });
+                              
+                              if (response.ok) {
+                                queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+                                toast({
+                                  title: "Booking rejected",
+                                  description: "The booking has been marked as rejected",
+                                });
+                                navigate('/bookings');
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to reject booking",
+                                variant: "destructive",
+                              });
+                            }
+                          }
+                        }}
+                        className="text-red-600"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject Booking
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </div>
         </div>
