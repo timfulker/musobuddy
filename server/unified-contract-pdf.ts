@@ -389,6 +389,7 @@ function generateUnifiedContractHTML(
         
         .section {
             margin-bottom: 35px;
+            break-inside: avoid-page;
         }
         
         .section-title {
@@ -442,6 +443,8 @@ function generateUnifiedContractHTML(
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 25px;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
         
         .detail-card {
@@ -450,6 +453,8 @@ function generateUnifiedContractHTML(
             border-radius: 10px;
             border-left: 4px solid \${primaryColor};
             border: 1px solid #e2e8f0;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
         
         .detail-label {
@@ -465,6 +470,13 @@ function generateUnifiedContractHTML(
             font-size: 18px;
             font-weight: 700;
             color: #2d3748;
+        }
+        
+        /* Venue Details Group - Keep venue fields together */
+        .venue-details-group {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            break-before: avoid;
         }
         
         /* Payment Section - Updated to remove red and match invoice style */
@@ -736,13 +748,19 @@ function generateUnifiedContractHTML(
                         <div class="detail-label">Performance Time</div>
                         <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
                     </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Venue</div>
-                        <div class="detail-value">${contract.venue || 'TBC'}</div>
-                    </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Venue Address</div>
-                        <div class="detail-value">${contract.venueAddress || 'See venue name'}</div>
+                </div>
+                
+                <!-- Venue details in separate group to avoid page breaks -->
+                <div class="venue-details-group">
+                    <div class="event-details">
+                        <div class="detail-card">
+                            <div class="detail-label">Venue</div>
+                            <div class="detail-value">${contract.venue || 'TBC'}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Venue Address</div>
+                            <div class="detail-value">${contract.venueAddress || 'See venue name'}</div>
+                        </div>
                     </div>
                 </div>
             </div>
