@@ -894,21 +894,44 @@ export default function UnifiedBookings() {
 
   // Get events for a specific date
   const getEventsForDate = (date: Date): CalendarEvent[] => {
+    // Create date string for comparison - use local date to avoid timezone issues
     const dateStr = date.getFullYear() + '-' + 
       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
       String(date.getDate()).padStart(2, '0');
     const events: CalendarEvent[] = [];
+    const seenBookingIds = new Set(); // Track seen booking IDs to prevent duplicates
 
     const validBookings = validateBookingArray(bookings) ? bookings : [];
     validBookings.forEach((booking) => {
       // Exclude rejected bookings from calendar view but keep them in storage for reference
       if (booking.eventDate && booking.status !== 'rejected') {
-        const bookingDate = new Date(booking.eventDate);
+        // Skip if we've already seen this booking ID
+        if (seenBookingIds.has(booking.id)) {
+          console.warn(`🔄 Duplicate booking ID detected: ${booking.id} for ${booking.clientName}`);
+          return;
+        }
+        
+        // Parse the eventDate properly to handle timezone issues
+        let bookingDate: Date;
+        if (typeof booking.eventDate === 'string') {
+          // If it's an ISO date string, extract just the date part to avoid timezone shifts
+          if (booking.eventDate.includes('T')) {
+            const datePart = booking.eventDate.split('T')[0];
+            const [year, month, day] = datePart.split('-').map(Number);
+            bookingDate = new Date(year, month - 1, day); // Create local date
+          } else {
+            bookingDate = new Date(booking.eventDate);
+          }
+        } else {
+          bookingDate = new Date(booking.eventDate);
+        }
+        
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
           String(bookingDate.getMonth() + 1).padStart(2, '0') + '-' + 
           String(bookingDate.getDate()).padStart(2, '0');
         
         if (bookingDateStr === dateStr) {
+          seenBookingIds.add(booking.id); // Mark as seen
           events.push({
             id: booking.id,
             title: booking.title || booking.clientName || 'Booking',
