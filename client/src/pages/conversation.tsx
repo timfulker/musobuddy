@@ -509,7 +509,7 @@ export default function Conversation() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/booking/${bookingId}`)}
+              onClick={() => navigate(`/new-booking?edit=${bookingId}`)}
               className="flex items-center gap-2"
             >
               <Edit className="w-4 h-4" />
