@@ -66,6 +66,31 @@ export default function ActionableEnquiries() {
     },
   });
 
+  // Mutation for marking Encore bookings as applied
+  const markAppliedMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'in_progress' }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Application Recorded",
+        description: "The Encore booking has been marked as applied and moved to In Progress",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
@@ -254,7 +279,7 @@ export default function ActionableEnquiries() {
                     )}
                     
                     {enquiry.applyNowLink && (
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
                           🎵 ENCORE
                         </Badge>
@@ -268,6 +293,19 @@ export default function ActionableEnquiries() {
                           className="text-xs bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                         >
                           Apply on Encore
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAppliedMutation.mutate(enquiry.id);
+                          }}
+                          disabled={markAppliedMutation.isPending}
+                          className="text-xs bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+                          title="Mark as applied - moves to In Progress"
+                        >
+                          {markAppliedMutation.isPending ? 'Applying...' : 'Applied'}
                         </Button>
                       </div>
                     )}
