@@ -124,15 +124,16 @@ export function registerInvoiceRoutes(app: Express) {
         });
       }
 
-      // Generate sequential invoice number
+      // Generate sequential invoice number with year prefix
       let invoiceNumber = req.body.invoiceNumber;
       
       if (!invoiceNumber) {
         const userSettings = await storage.getSettings(userId);
+        const currentYear = new Date().getFullYear();
         const nextNumber = userSettings?.nextInvoiceNumber || 1;
         
-        // Create user-specific invoice number to avoid global conflicts
-        invoiceNumber = `INV-${userId}-${String(nextNumber).padStart(3, '0')}`;
+        // Create year-based invoice number for professional appearance
+        invoiceNumber = `INV-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
         
         // Update next number for future invoices
         await storage.updateSettings(userId, {
