@@ -124,16 +124,41 @@ export function registerInvoiceRoutes(app: Express) {
         });
       }
 
-      // Generate sequential invoice number with year prefix
+      // Generate sequential invoice number with custom prefix
       let invoiceNumber = req.body.invoiceNumber;
       
       if (!invoiceNumber) {
         const userSettings = await storage.getSettings(userId);
-        const currentYear = new Date().getFullYear();
         const nextNumber = userSettings?.nextInvoiceNumber || 1;
         
-        // Create year-based invoice number for professional appearance
-        invoiceNumber = `INV-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
+        // Use custom prefix if set, otherwise generate from business name or user email
+        let prefix = userSettings?.invoicePrefix;
+        
+        if (!prefix) {
+          // Auto-generate prefix from business name or email
+          if (userSettings?.businessName) {
+            // Take first letters of business name (e.g., "Jake Stanley Music" -> "JSM")
+            prefix = userSettings.businessName
+              .split(' ')
+              .map((word: string) => word[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 3);
+          } else {
+            // Use first 3 letters of email username
+            const email = req.user?.email || '';
+            prefix = email.split('@')[0].slice(0, 3).toUpperCase();
+          }
+          
+          // If still no prefix, use a random 3-letter code
+          if (!prefix || prefix.length < 2) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            prefix = Array(3).fill(0).map(() => chars[Math.floor(Math.random() * 26)]).join('');
+          }
+        }
+        
+        // Create professional invoice number with custom prefix
+        invoiceNumber = `${prefix}-${String(nextNumber).padStart(4, '0')}`;
         
         // Update next number for future invoices
         await storage.updateSettings(userId, {

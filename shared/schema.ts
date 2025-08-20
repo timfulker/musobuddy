@@ -572,6 +572,7 @@ export const userSettings = pgTable("user_settings", {
   bankDetails: text("bank_details"),
   defaultTerms: text("default_terms"),
   emailFromName: varchar("email_from_name"),
+  invoicePrefix: varchar("invoice_prefix"), // Custom invoice prefix (e.g., "JS" for Jake Stanley)
   nextInvoiceNumber: integer("next_invoice_number").default(1),
   // Conflict detection settings
   defaultSetupTime: integer("default_setup_time").default(60), // minutes
