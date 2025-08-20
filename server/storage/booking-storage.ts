@@ -495,8 +495,9 @@ export class BookingStorage {
 
   async getMonthlyRevenue(userId: string): Promise<number> {
     // Get total revenue for current month using SQL date functions
+    // Use finalAmount if set, otherwise fee
     const result = await db.select({ 
-      total: sql<number>`COALESCE(SUM(CAST(agreed_quote AS DECIMAL)), 0)` 
+      total: sql<number>`COALESCE(SUM(CAST(COALESCE(final_amount, fee) AS DECIMAL)), 0)` 
     })
       .from(bookings)
       .where(and(
