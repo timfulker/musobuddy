@@ -668,8 +668,8 @@ export default function Conversation() {
                           <div className="text-sm whitespace-pre-wrap">
                             {message.content}
                           </div>
-                          {/* Extract Details button for incoming messages (not original inquiry) */}
-                          {message.messageType === 'incoming' && message.id !== 0 && (
+                          {/* Extract Details button for all messages (except original inquiry) */}
+                          {message.id !== 0 && (
                             <div className="mt-3 pt-3 border-t">
                               <Button
                                 size="sm"
