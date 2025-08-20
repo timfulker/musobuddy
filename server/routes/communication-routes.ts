@@ -530,8 +530,8 @@ export function setupCommunicationRoutes(app: any) {
           .map(paragraph => paragraph.trim())
           .filter(paragraph => paragraph.length > 0)
           .map(paragraph => {
-            // Convert single line breaks within paragraphs to spaces
-            const cleanParagraph = paragraph.replace(/\n/g, ' ').trim();
+            // Convert single line breaks within paragraphs to <br> tags to preserve formatting
+            const cleanParagraph = paragraph.replace(/\n/g, '<br>').trim();
             return `<p style="margin: 0 0 16px 0; line-height: 1.6;">${cleanParagraph}</p>`;
           })
           .join('');
