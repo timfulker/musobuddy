@@ -779,6 +779,31 @@ export default function UnifiedBookings() {
       });
     },
   });
+
+  // Mutation for marking Encore bookings as applied
+  const markAppliedMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'in_progress' }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Application Recorded",
+        description: "The Encore booking has been marked as applied and moved to In Progress",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    },
+  });
   
   const handleBulkDelete = () => {
     if (selectedBookings.length > 0) {
@@ -1870,43 +1895,32 @@ export default function UnifiedBookings() {
                                           </div>
                                           <div className="flex items-center justify-end gap-3 mt-4">
                                             {groupBooking.applyNowLink && (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={async (e) => {
-                                                  e.stopPropagation();
-                                                  
-                                                  // Update booking status to "In progress"
-                                                  try {
-                                                    const token = getAuthToken();
-                                                    const response = await fetch(`/api/bookings/${groupBooking.id}`, {
-                                                      method: "PATCH",
-                                                      headers: { 
-                                                        "Content-Type": "application/json",
-                                                        "Authorization": `Bearer ${token}`,
-                                                      },
-                                                      body: JSON.stringify({ status: 'in_progress' }),
-                                                    });
-
-                                                    if (response.ok) {
-                                                      // Refresh the bookings list
-                                                      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-                                                      toast({
-                                                        title: "Application submitted",
-                                                        description: "Booking status updated to In Progress",
-                                                      });
-                                                    }
-                                                  } catch (error) {
-                                                    console.error('Error updating booking status:', error);
-                                                  }
-                                                  
-                                                  // Open Encore link in new tab
-                                                  window.open(groupBooking.applyNowLink, '_blank');
-                                                }}
-                                                className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                              >
-                                                🎵 Apply on Encore
-                                              </Button>
+                                              <div className="flex items-center gap-2">
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(groupBooking.applyNowLink, '_blank');
+                                                  }}
+                                                  className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                                >
+                                                  🎵 Apply on Encore
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    markAppliedMutation.mutate(groupBooking.id);
+                                                  }}
+                                                  disabled={markAppliedMutation.isPending}
+                                                  className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+                                                  title="Mark as applied - moves to In Progress"
+                                                >
+                                                  {markAppliedMutation.isPending ? 'Applying...' : 'Applied'}
+                                                </Button>
+                                              </div>
                                             )}
                                             {/* Primary Action Buttons - Clean Hybrid Approach */}
                                             <div className="flex items-center gap-2">
