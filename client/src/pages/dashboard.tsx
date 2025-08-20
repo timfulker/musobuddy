@@ -18,6 +18,8 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest } from "@/lib/queryClient";
 import MobileDashboard from "@/components/mobile-dashboard";
+import { notificationSounds } from "@/utils/notificationSounds";
+import { NotificationSoundManager } from "@/components/NotificationSoundManager";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -97,6 +99,7 @@ export default function Dashboard() {
   if (isDesktop) {
     return (
       <div className="min-h-screen bg-background flex">
+        <NotificationSoundManager />
         {/* Desktop Sidebar - Always visible */}
         <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
           <Sidebar isOpen={true} onClose={() => {}} />
@@ -132,6 +135,7 @@ export default function Dashboard() {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
+        <NotificationSoundManager />
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="p-4 space-y-6">
           <MobileDashboard />
@@ -143,6 +147,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <NotificationSoundManager />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
