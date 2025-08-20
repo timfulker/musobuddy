@@ -481,13 +481,12 @@ export class BookingStorage {
   // ===== NOTIFICATION COUNT METHODS =====
   
   async getNewBookingsCount(userId: string) {
-    // Count bookings created in last 24 hours with status 'new'
+    // Count ALL bookings with status 'new' (not just last 24 hours)
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(bookings)
       .where(and(
         eq(bookings.userId, userId),
-        eq(bookings.status, 'new'),
-        sql`${bookings.createdAt} >= NOW() - INTERVAL '24 hours'`
+        eq(bookings.status, 'new')
       ));
     // Ensure we return a number, not a string
     return parseInt(String(result[0]?.count || 0), 10);
