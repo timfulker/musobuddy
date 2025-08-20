@@ -482,33 +482,26 @@ export class BookingStorage {
   
   async getNewBookingsCount(userId: string) {
     // Count bookings created in last 24 hours with status 'new'
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const oneDayAgoStr = oneDayAgo.toISOString();
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(bookings)
       .where(and(
         eq(bookings.userId, userId),
         eq(bookings.status, 'new'),
-        gte(bookings.createdAt, oneDayAgoStr)
+        sql`${bookings.createdAt} >= NOW() - INTERVAL '24 hours'`
       ));
     // Ensure we return a number, not a string
     return parseInt(String(result[0]?.count || 0), 10);
   }
 
   async getMonthlyRevenue(userId: string): Promise<number> {
-    // Get total revenue for current month
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+    // Get total revenue for current month using SQL date functions
     const result = await db.select({ 
       total: sql<number>`COALESCE(SUM(CAST(agreed_quote AS DECIMAL)), 0)` 
     })
       .from(bookings)
       .where(and(
         eq(bookings.userId, userId),
-        gte(bookings.eventDate, startOfMonth.toISOString().split('T')[0]),
-        lte(bookings.eventDate, endOfMonth.toISOString().split('T')[0]),
+        sql`DATE_TRUNC('month', ${bookings.eventDate}::date) = DATE_TRUNC('month', CURRENT_DATE)`,
         notInArray(bookings.status, ['cancelled', 'rejected'])
       ));
     

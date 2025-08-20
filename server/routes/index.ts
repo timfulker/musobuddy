@@ -182,24 +182,56 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // Get actual stats from storage
-      const [
-        newBookings,
-        reviewMessages,
-        overdueInvoices,
-        unreadClientMessages,
-        monthlyRevenue,
-        activeBookings,
-        pendingInvoices
-      ] = await Promise.all([
-        storage.getNewBookingsCount(userId),
-        storage.getUnparseableMessagesCount(userId),
-        storage.getOverdueInvoicesCount(userId),
-        storage.getUnreadMessageNotificationsCount(userId),
-        storage.getMonthlyRevenue(userId),
-        storage.getActiveBookingsCount(userId),
-        storage.getPendingInvoicesAmount(userId)
-      ]);
+      // Get actual stats from storage - wrapping each in try/catch to handle failures gracefully
+      let newBookings = 0;
+      let reviewMessages = 0;
+      let overdueInvoices = 0;
+      let unreadClientMessages = 0;
+      let monthlyRevenue = 0;
+      let activeBookings = 0;
+      let pendingInvoices = 0;
+      
+      try {
+        newBookings = await storage.getNewBookingsCount(userId);
+      } catch (e) {
+        console.error('Error getting new bookings count:', e);
+      }
+      
+      try {
+        reviewMessages = await storage.getUnparseableMessagesCount(userId);
+      } catch (e) {
+        console.error('Error getting review messages count:', e);
+      }
+      
+      try {
+        overdueInvoices = await storage.getOverdueInvoicesCount(userId);
+      } catch (e) {
+        console.error('Error getting overdue invoices count:', e);
+      }
+      
+      try {
+        unreadClientMessages = await storage.getUnreadMessageNotificationsCount(userId);
+      } catch (e) {
+        console.error('Error getting unread messages count:', e);
+      }
+      
+      try {
+        monthlyRevenue = await storage.getMonthlyRevenue(userId);
+      } catch (e) {
+        console.error('Error getting monthly revenue:', e);
+      }
+      
+      try {
+        activeBookings = await storage.getActiveBookingsCount(userId);
+      } catch (e) {
+        console.error('Error getting active bookings count:', e);
+      }
+      
+      try {
+        pendingInvoices = await storage.getPendingInvoicesAmount(userId);
+      } catch (e) {
+        console.error('Error getting pending invoices amount:', e);
+      }
       
       const totalMessages = (parseInt(unreadClientMessages) || 0) + (parseInt(reviewMessages) || 0);
       
