@@ -262,6 +262,21 @@ export class InvoiceStorage {
     // Ensure we return a number, not a string
     return parseInt(String(result[0]?.count || 0), 10);
   }
+
+  async getPendingInvoicesAmount(userId: string): Promise<number> {
+    // Get total amount of unpaid invoices
+    const result = await db.select({ 
+      total: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` 
+    })
+      .from(invoices)
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.status, 'sent'),
+        sql`${invoices.paidAt} IS NULL`
+      ));
+    
+    return Number(result[0]?.total || 0);
+  }
 }
 
 export const invoiceStorage = new InvoiceStorage();

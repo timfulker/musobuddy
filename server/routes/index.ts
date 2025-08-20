@@ -182,12 +182,35 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // Return basic stats - implement as needed
+      // Get actual stats from storage
+      const [
+        newBookings,
+        reviewMessages,
+        overdueInvoices,
+        unreadClientMessages,
+        monthlyRevenue,
+        activeBookings,
+        pendingInvoices
+      ] = await Promise.all([
+        storage.getNewBookingsCount(userId),
+        storage.getUnparseableMessagesCount(userId),
+        storage.getOverdueInvoicesCount(userId),
+        storage.getUnreadMessageNotificationsCount(userId),
+        storage.getMonthlyRevenue(userId),
+        storage.getActiveBookingsCount(userId),
+        storage.getPendingInvoicesAmount(userId)
+      ]);
+      
+      const totalMessages = (parseInt(unreadClientMessages) || 0) + (parseInt(reviewMessages) || 0);
+      
       res.json({
-        totalBookings: 0,
-        totalContracts: 0,
-        totalInvoices: 0,
-        revenue: 0
+        monthlyRevenue: monthlyRevenue || 0,
+        activeBookings: activeBookings || 0,
+        pendingInvoices: pendingInvoices || 0,
+        overdueInvoices: overdueInvoices || 0,
+        enquiriesRequiringResponse: parseInt(newBookings) || 0,
+        totalMessages: totalMessages,
+        unreadMessages: parseInt(unreadClientMessages) || 0
       });
     } catch (error) {
       console.error('Dashboard stats error:', error);

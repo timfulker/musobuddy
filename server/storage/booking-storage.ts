@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { bookings, bookingConflicts } from "../../shared/schema";
-import { eq, and, desc, or, sql, gte, lte } from "drizzle-orm";
+import { eq, and, desc, or, sql, gte, lte, notInArray, inArray } from "drizzle-orm";
 
 export class BookingStorage {
   private db = db;
@@ -491,6 +491,38 @@ export class BookingStorage {
         gte(bookings.createdAt, oneDayAgo)
       ));
     // Ensure we return a number, not a string
+    return parseInt(String(result[0]?.count || 0), 10);
+  }
+
+  async getMonthlyRevenue(userId: string): Promise<number> {
+    // Get total revenue for current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const result = await db.select({ 
+      total: sql<number>`COALESCE(SUM(CAST(agreed_quote AS DECIMAL)), 0)` 
+    })
+      .from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        gte(bookings.eventDate, startOfMonth.toISOString().split('T')[0]),
+        lte(bookings.eventDate, endOfMonth.toISOString().split('T')[0]),
+        notInArray(bookings.status, ['cancelled', 'rejected'])
+      ));
+    
+    return Number(result[0]?.total || 0);
+  }
+
+  async getActiveBookingsCount(userId: string): Promise<number> {
+    // Count bookings that are confirmed and awaiting signature
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        inArray(bookings.status, ['confirmed', 'contract_sent', 'awaiting_signature'])
+      ));
+    
     return parseInt(String(result[0]?.count || 0), 10);
   }
 }

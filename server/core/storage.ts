@@ -639,6 +639,19 @@ export class Storage {
   async deleteMessageNotification(id: number) {
     return miscStorage.deleteMessageNotification(id);
   }
+
+  // ===== DASHBOARD STATS METHODS =====
+  async getMonthlyRevenue(userId: string): Promise<number> {
+    return bookingStorage.getMonthlyRevenue(userId);
+  }
+
+  async getActiveBookingsCount(userId: string): Promise<number> {
+    return bookingStorage.getActiveBookingsCount(userId);
+  }
+
+  async getPendingInvoicesAmount(userId: string): Promise<number> {
+    return invoiceStorage.getPendingInvoicesAmount(userId);
+  }
 }
 
 export const storage = new Storage();
