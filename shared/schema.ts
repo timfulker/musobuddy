@@ -610,6 +610,9 @@ export const userSettings = pgTable("user_settings", {
   themeShowTerms: boolean("theme_show_terms").default(true), // Show terms and conditions
   themeCustomTitle: varchar("theme_custom_title"), // Custom title instead of "Invoice"
   
+  // Email signature settings
+  emailSignature: text("email_signature"), // Custom email signature for templates
+  
   // Invoice Settings
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
   

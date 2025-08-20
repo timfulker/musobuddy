@@ -77,6 +77,7 @@ const settingsFormSchema = z.object({
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
+  emailSignature: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
   aiPricingEnabled: z.boolean().default(true),
@@ -141,6 +142,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     website: data.website || "",
     taxNumber: data.tax_number || data.taxNumber || "",
     emailFromName: data.email_from_name || data.emailFromName || "",
+    emailSignature: data.email_signature || data.emailSignature || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     defaultTerms: data.default_terms || data.defaultTerms || "",
     bankDetails: data.bank_details || data.bankDetails || "",
@@ -540,6 +542,7 @@ export default function Settings() {
         website: settings.website || "",
         taxNumber: settings.taxNumber || "",
         emailFromName: settings.emailFromName || "",
+        emailSignature: settings.emailSignature || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: settings.bankDetails || "",
@@ -748,6 +751,28 @@ export default function Settings() {
                           <FormControl>
                             <Input {...field} value={field.value || ""} placeholder="Your Name" />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="emailSignature"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
+                          <FormControl>
+                            <textarea 
+                              {...field} 
+                              value={field.value || ""} 
+                              placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
+                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              rows={4}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Your custom email signature that will appear at the end of all template emails
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}

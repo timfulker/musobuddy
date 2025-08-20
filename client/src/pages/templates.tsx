@@ -497,11 +497,15 @@ export default function Templates() {
       
       // Business signature and individual business details
       .replace(/\[Business Signature\]/g, userSettings ? 
-        `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
-        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+        (userSettings.emailSignature ? 
+          userSettings.emailSignature.replace(/\n/g, '<br>') : 
+          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}<br>${userSettings.businessEmail || ''}<br>${userSettings.phone || ''}`.trim()) : 
+        'Best regards,<br>[Business Name]<br>[Business Email]<br>[Business Phone]')
       .replace(/\[business signature\]/g, userSettings ? 
-        `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
-        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+        (userSettings.emailSignature ? 
+          userSettings.emailSignature.replace(/\n/g, '<br>') : 
+          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}<br>${userSettings.businessEmail || ''}<br>${userSettings.phone || ''}`.trim()) : 
+        'Best regards,<br>[Business Name]<br>[Business Email]<br>[Business Phone]')
       .replace(/\[Your Name\]/g, userSettings?.businessName || '[Business Name]')
       .replace(/\[Your Business Name\]/g, userSettings?.businessName || '[Business Name]')
       .replace(/\[Business Name\]/g, userSettings?.businessName || '[Business Name]')
