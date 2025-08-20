@@ -160,6 +160,34 @@ export default function Contracts() {
     // CRITICAL: Check dataLoaded FIRST to prevent reopening after manual close
     if (!dataLoaded && (action === 'new' || action === 'create' || isNewContractUrl) && !isLoading) {
       console.log('📂 Opening dialog from URL params');
+      
+      // FORCE FORM RESET to prevent cached values
+      form.reset({
+        enquiryId: 0,
+        contractNumber: "",
+        clientName: "",
+        clientEmail: "",
+        clientPhone: "",
+        clientAddress: "",
+        eventDate: "",
+        eventTime: "",
+        eventEndTime: "",
+        performanceDuration: "",
+        venue: "",
+        venueAddress: "",
+        fee: "",
+        deposit: "",
+        travelExpenses: "",
+        originalFee: "",
+        originalTravelExpenses: "",
+        paymentInstructions: "",
+        equipmentRequirements: "",
+        specialRequirements: "",
+        status: "draft",
+        template: "professional",
+      });
+      console.log('🔄 Form reset to clear any cached values');
+      
       setIsDialogOpen(true);
       setDataLoaded(true); // CRITICAL FIX: Mark as loaded to prevent infinite loop
 
@@ -172,8 +200,8 @@ export default function Contracts() {
 
       // Auto-fill with booking data if bookingId is provided
       if (bookingId) {
-        // Fetch booking data and auto-fill form  
-        apiRequest(`/api/bookings/${bookingId}`, { method: 'GET' })
+        // Fetch booking data and auto-fill form with cache-busting
+        apiRequest(`/api/bookings/${bookingId}?t=${Date.now()}`, { method: 'GET' })
           .then(response => response.json())
           .then(booking => {
             if (booking) {
@@ -192,6 +220,9 @@ export default function Contracts() {
               const travelFee = booking.travelExpense || '';
               
               console.log('💰 Using actual booking data - baseFee:', baseFee, 'travel:', travelFee);
+              console.log('🔍 Raw booking object:', booking);
+              console.log('🔍 Booking fee field types:', typeof booking.fee, booking.fee);
+              console.log('🔍 Booking travel field types:', typeof booking.travelExpense, booking.travelExpense);
               
               // Handle case where booking has combined fee vs separate values
               if (travelFee && parseFloat(travelFee) > 0) {
@@ -215,6 +246,11 @@ export default function Contracts() {
                 form.setValue('travelExpenses', '0');
                 form.setValue('fee', baseFee);
                 console.log('💼 Using booking fee as-is:', baseFee);
+                console.log('🎯 FINAL VALUES SET IN FORM:', {
+                  fee: baseFee,
+                  originalFee: baseFee,
+                  travelExpenses: '0'
+                });
               }
               
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
