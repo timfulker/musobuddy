@@ -483,12 +483,13 @@ export class BookingStorage {
   async getNewBookingsCount(userId: string) {
     // Count bookings created in last 24 hours with status 'new'
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const oneDayAgoStr = oneDayAgo.toISOString();
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(bookings)
       .where(and(
         eq(bookings.userId, userId),
         eq(bookings.status, 'new'),
-        gte(bookings.createdAt, oneDayAgo)
+        gte(bookings.createdAt, oneDayAgoStr)
       ));
     // Ensure we return a number, not a string
     return parseInt(String(result[0]?.count || 0), 10);

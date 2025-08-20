@@ -369,12 +369,14 @@ export class MiscStorage {
   async getExpiringDocumentsCount(userId: string) {
     // Count compliance documents expiring in next 30 days
     const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysFromNowStr = thirtyDaysFromNow.toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(complianceDocuments)
       .where(and(
         eq(complianceDocuments.userId, userId),
-        lte(complianceDocuments.expiryDate, thirtyDaysFromNow),
-        gte(complianceDocuments.expiryDate, new Date()) // Not already expired
+        lte(complianceDocuments.expiryDate, thirtyDaysFromNowStr),
+        gte(complianceDocuments.expiryDate, todayStr) // Not already expired
       ));
     // Ensure we return a number, not a string
     return parseInt(String(result[0]?.count || 0), 10);

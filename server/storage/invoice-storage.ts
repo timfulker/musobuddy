@@ -250,7 +250,7 @@ export class InvoiceStorage {
   
   async getOverdueInvoicesCount(userId: string) {
     // Count invoices that are overdue and not paid
-    const today = new Date();
+    const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
     const result = await db.select({ count: sql<number>`count(*)` })
       .from(invoices)
       .where(and(
