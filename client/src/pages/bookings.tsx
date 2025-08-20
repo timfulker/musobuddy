@@ -780,20 +780,22 @@ export default function UnifiedBookings() {
     },
   });
 
-  // Mutation for marking Encore bookings as applied
+  // Mutation for toggling Encore booking application status
   const markAppliedMutation = useMutation({
-    mutationFn: async (bookingId: number) => {
+    mutationFn: async ({ bookingId, status }: { bookingId: number, status: string }) => {
       return apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'in_progress' }),
+        body: JSON.stringify({ status }),
         headers: { 'Content-Type': 'application/json' }
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       toast({
-        title: "Application Recorded",
-        description: "The Encore booking has been marked as applied and moved to In Progress",
+        title: variables.status === 'in_progress' ? "Application Recorded" : "Application Removed",
+        description: variables.status === 'in_progress' 
+          ? "The Encore booking has been marked as applied and moved to In Progress"
+          : "The Encore booking has been moved back to New status",
       });
     },
     onError: () => {
@@ -1895,7 +1897,7 @@ export default function UnifiedBookings() {
                                           </div>
                                           <div className="flex items-center justify-end gap-3 mt-4">
                                             {groupBooking.applyNowLink && (
-                                              <div className="flex items-center gap-2">
+                                              <div className="flex items-center gap-3">
                                                 <Button
                                                   variant="outline"
                                                   size="sm"
@@ -1907,19 +1909,18 @@ export default function UnifiedBookings() {
                                                 >
                                                   🎵 Apply on Encore
                                                 </Button>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    markAppliedMutation.mutate(groupBooking.id);
-                                                  }}
-                                                  disabled={markAppliedMutation.isPending}
-                                                  className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
-                                                  title="Mark as applied - moves to In Progress"
-                                                >
-                                                  {markAppliedMutation.isPending ? 'Applying...' : 'Applied'}
-                                                </Button>
+                                                <div className="flex items-center gap-2 text-sm">
+                                                  <span className="text-gray-600">Applied:</span>
+                                                  <Switch
+                                                    checked={groupBooking.status === 'in_progress' || groupBooking.status === 'confirmed' || groupBooking.status === 'completed'}
+                                                    onCheckedChange={(checked) => {
+                                                      const newStatus = checked ? 'in_progress' : 'new';
+                                                      markAppliedMutation.mutate({ bookingId: groupBooking.id, status: newStatus });
+                                                    }}
+                                                    disabled={markAppliedMutation.isPending}
+                                                    className="data-[state=checked]:bg-green-600"
+                                                  />
+                                                </div>
                                               </div>
                                             )}
                                             {/* Primary Action Buttons - Clean Hybrid Approach */}

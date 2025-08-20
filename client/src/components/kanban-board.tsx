@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Link, useLocation } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2, MessageSquare } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
@@ -66,20 +67,22 @@ export default function ActionableEnquiries() {
     },
   });
 
-  // Mutation for marking Encore bookings as applied
+  // Mutation for toggling Encore booking application status
   const markAppliedMutation = useMutation({
-    mutationFn: async (bookingId: number) => {
+    mutationFn: async ({ bookingId, status }: { bookingId: number, status: string }) => {
       return apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'in_progress' }),
+        body: JSON.stringify({ status }),
         headers: { 'Content-Type': 'application/json' }
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       toast({
-        title: "Application Recorded",
-        description: "The Encore booking has been marked as applied and moved to In Progress",
+        title: variables.status === 'in_progress' ? "Application Recorded" : "Application Removed",
+        description: variables.status === 'in_progress' 
+          ? "The Encore booking has been marked as applied and moved to In Progress"
+          : "The Encore booking has been moved back to New status",
       });
     },
     onError: () => {
@@ -294,19 +297,18 @@ export default function ActionableEnquiries() {
                         >
                           Apply on Encore
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAppliedMutation.mutate(enquiry.id);
-                          }}
-                          disabled={markAppliedMutation.isPending}
-                          className="text-xs bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
-                          title="Mark as applied - moves to In Progress"
-                        >
-                          {markAppliedMutation.isPending ? 'Applying...' : 'Applied'}
-                        </Button>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-600">Applied:</span>
+                          <Switch
+                            checked={enquiry.status === 'in_progress' || enquiry.status === 'confirmed' || enquiry.status === 'completed'}
+                            onCheckedChange={(checked) => {
+                              const newStatus = checked ? 'in_progress' : 'new';
+                              markAppliedMutation.mutate({ bookingId: enquiry.id, status: newStatus });
+                            }}
+                            disabled={markAppliedMutation.isPending}
+                            className="data-[state=checked]:bg-green-600"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
