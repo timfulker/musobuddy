@@ -107,6 +107,9 @@ export function registerClientPortalRoutes(app: Express) {
 
       // Update associated booking with collaborative data
       if (contract.enquiryId) {
+        console.log(`🔄 [CLIENT-PORTAL] Updating booking ${contract.enquiryId} with client data from contract ${contractId}`);
+        console.log(`🔄 [CLIENT-PORTAL] Update data received:`, updates);
+        
         const bookingUpdates = {
           venue_contact: updates.venueContact,
           sound_tech_contact: updates.soundTechContact,
@@ -137,14 +140,22 @@ export function registerClientPortalRoutes(app: Express) {
           updated_at: new Date()
         };
 
-        // Remove undefined values
+        // Remove undefined values but keep empty strings and false values
         Object.keys(bookingUpdates).forEach(key => {
           if (bookingUpdates[key] === undefined) {
             delete bookingUpdates[key];
           }
         });
 
-        await storage.updateBooking(contract.enquiryId, bookingUpdates, contract.userId);
+        console.log(`🔄 [CLIENT-PORTAL] Processed booking updates:`, bookingUpdates);
+
+        try {
+          await storage.updateBooking(contract.enquiryId, bookingUpdates, contract.userId);
+          console.log(`✅ [CLIENT-PORTAL] Successfully updated booking ${contract.enquiryId}`);
+        } catch (bookingUpdateError: any) {
+          console.error(`❌ [CLIENT-PORTAL] Failed to update booking ${contract.enquiryId}:`, bookingUpdateError.message);
+          throw new Error(`Failed to update booking: ${bookingUpdateError.message}`);
+        }
 
         console.log(`✅ Client portal data updated for contract #${contractId} by ${contract.clientName}`);
         

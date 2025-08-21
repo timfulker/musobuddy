@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become the leading global solution for managing music careers, with ambitions to simplify music business administration worldwide and free musicians to focus on their art.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -53,7 +53,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms.
+- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms, and simplified action buttons on booking cards.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -62,19 +62,21 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage. Travel expenses are always included in the performance fee as a single amount.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
 - **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time", individual field locking, and status validation.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words), "TBC" times, "Actual Performance Time", individual field locking, status validation, and automated scrolling to next upcoming booking.
 - **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system. User-customizable contract terms.
-- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring. Invoice security via random 16-character tokens in URLs. Supports multiple CC recipients for invoice emails.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, and consistent 24-hour time formatting.
+- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, random 16-character token security for URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Includes queue status monitoring.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Includes queue status monitoring. Centralized "Messages" page with tabbed interface for client replies and unparseable messages.
+- **AI-powered Workflows**: Streamlined unparseable message workflow, manual booking re-processing, and manual detail extraction from messages with review dialog.
+- **Calendar Sync**: ID-based Google Calendar sync for efficiency.
 
 ## External Dependencies
 

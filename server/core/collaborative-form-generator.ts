@@ -60,9 +60,91 @@ class CollaborativeFormGenerator {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collaborative Event Planning - ${bookingData.clientName}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
+        /* Essential CSS for collaborative form styling */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; }
+        .bg-gradient-to-br { background: linear-gradient(to bottom right, #eef2ff, #ffffff, #faf5ff); }
+        .bg-gradient-to-r { background: linear-gradient(to right, var(--from), var(--to)); }
+        .bg-white { background-color: white; }
+        .bg-green-50 { background-color: #f0fdf4; }
+        .bg-indigo-50 { background-color: #eef2ff; }
+        .text-white { color: white; }
+        .text-slate-900 { color: #0f172a; }
+        .text-slate-600 { color: #475569; }
+        .text-slate-500 { color: #64748b; }
+        .text-indigo-100 { color: #e0e7ff; }
+        .text-indigo-200 { color: #c7d2fe; }
+        .text-green-700 { color: #15803d; }
+        .border { border-width: 1px; border-style: solid; }
+        .border-green-200 { border-color: #bbf7d0; }
+        .border-indigo-100 { border-color: #e0e7ff; }
+        .border-indigo-400 { border-color: #818cf8; }
+        .rounded-lg { border-radius: 8px; }
+        .rounded-xl { border-radius: 12px; }
+        .rounded-md { border-radius: 6px; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .p-1 { padding: 4px; } .p-2 { padding: 8px; } .p-3 { padding: 12px; } .p-4 { padding: 16px; } .p-6 { padding: 24px; }
+        .px-3 { padding-left: 12px; padding-right: 12px; } .px-4 { padding-left: 16px; padding-right: 16px; } .px-6 { padding-left: 24px; padding-right: 24px; }
+        .py-1 { padding-top: 4px; padding-bottom: 4px; } .py-3 { padding-top: 12px; padding-bottom: 12px; } .py-4 { padding-top: 16px; padding-bottom: 16px; } .py-8 { padding-top: 32px; padding-bottom: 32px; }
+        .pt-4 { padding-top: 16px; }
+        .mt-1 { margin-top: 4px; } .mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mt-6 { margin-top: 24px; } .mt-8 { margin-top: 32px; } .mt-12 { margin-top: 48px; }
+        .mb-2 { margin-bottom: 8px; } .mb-3 { margin-bottom: 12px; } .mb-4 { margin-bottom: 16px; } .mb-6 { margin-bottom: 24px; } .mb-8 { margin-bottom: 32px; }
+        .mr-1 { margin-right: 4px; } .mr-2 { margin-right: 8px; } .mr-3 { margin-right: 12px; }
+        .max-w-6xl { max-width: 72rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .flex { display: flex; }
+        .flex-1 { flex: 1 1 0%; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .space-x-3 > * + * { margin-left: 12px; }
+        .space-x-4 > * + * { margin-left: 16px; }
+        .space-y-6 > * + * { margin-top: 24px; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .gap-6 { gap: 24px; }
+        .text-sm { font-size: 14px; }
+        .text-lg { font-size: 18px; }
+        .text-xl { font-size: 20px; }
+        .text-2xl { font-size: 24px; }
+        .text-xs { font-size: 12px; }
+        .font-medium { font-weight: 500; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .text-center { text-align: center; }
+        .min-h-screen { min-height: 100vh; }
+        .w-3 { width: 12px; } .w-4 { width: 16px; } .w-5 { width: 20px; } .w-6 { width: 24px; }
+        .h-3 { height: 12px; } .h-4 { height: 16px; } .h-5 { height: 20px; } .h-6 { height: 24px; }
+        .sticky { position: sticky; }
+        .top-0 { top: 0; }
+        .z-50 { z-index: 50; }
+        .backdrop-blur-sm { backdrop-filter: blur(4px); }
+        .overflow-hidden { overflow: hidden; }
+        .hidden { display: none; }
+        .transition-all { transition: all 0.2s; }
+        .duration-200 { transition-duration: 200ms; }
+        .opacity-90 { opacity: 0.9; }
+        input, textarea, select { 
+            width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; 
+            font-size: 14px; line-height: 1.5; background: white;
+        }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        button { 
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; 
+            font-weight: 500; transition: all 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        label { display: block; margin-bottom: 4px; font-weight: 500; color: #374151; }
+        @media (min-width: 768px) {
+            .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .tab-button.active {
@@ -425,7 +507,7 @@ class CollaborativeFormGenerator {
                 // Use traditional form submission to bypass CORS
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = \`\${API_BASE}/api/collaborative-form/\${BOOKING_ID}/update\`;
+                form.action = \`\${API_BASE}/api/client-portal/\${CONTRACT_ID}/update\`;
                 form.target = 'save-frame';
                 form.style.display = 'none';
                 
