@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary goal is to reduce administrative burdens, enabling musicians to prioritize their creative work. The platform aims to be user-friendly, scalable, and a leading global solution for independent artists, enhancing their business efficiency and market potential.
+MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. It aims to reduce administrative burdens, enabling musicians to prioritize creative work. MusoBuddy is envisioned as a user-friendly, scalable, and leading global solution for independent artists, enhancing their business efficiency and market potential.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -51,7 +51,7 @@ User-customizable contract terms: Contract Terms & Conditions are now fully edit
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Features include QR code generation, widget URL creation, dynamic PDF theming with consistent logo branding, list-based booking view with calendar option, optional onboarding wizard, and permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens. Color schemes and templates adhere to professional aesthetic standards.
+- **UI/UX Decisions**: QR code generation, widget URL creation, dynamic PDF theming with consistent logo branding, list-based booking view with calendar option, optional onboarding wizard, and permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens. Color schemes and templates adhere to professional aesthetic standards.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).

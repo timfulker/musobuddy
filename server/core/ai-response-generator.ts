@@ -398,7 +398,7 @@ ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.spe
 PRICING POLICY:
 - Pricing information is handled separately - focus on availability and service details
 - Do not include specific pricing in your response unless specifically requested
-- Mention that detailed pricing can be provided separately`;
+- Mention that detailed pricing can be provided separately`};
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
