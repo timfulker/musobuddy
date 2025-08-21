@@ -152,7 +152,10 @@ export class AIResponseGenerator {
       }
       
       // POST-PROCESSING: Force correct pricing if AI ignores instructions
-      if (userSettings?.aiPricingEnabled !== false) {
+      // BUT SKIP if there's an agreed fee in booking context
+      const hasAgreedFee = bookingContext?.fee && parseFloat(bookingContext.fee) > 0;
+      
+      if (userSettings?.aiPricingEnabled !== false && !hasAgreedFee) {
         const BHR = Number(userSettings?.baseHourlyRate) || 125;
         const AHR = Number(userSettings?.additionalHourRate) || 60;
         const T = Number(bookingContext?.travelExpense) || 0;
@@ -188,6 +191,8 @@ export class AIResponseGenerator {
             }
           }
         });
+      } else if (hasAgreedFee) {
+        console.log('🎯 SKIPPING post-processing corrections - using agreed fee:', bookingContext.fee);
       }
 
       // Validate the response structure
