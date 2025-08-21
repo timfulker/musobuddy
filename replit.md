@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its core purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -62,7 +62,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage. AI response generator pricing calculations now use simplified travel expense integration. Travel expenses are always included in the performance fee as a single amount, eliminating calculation confusion. AI responses no longer mention "25% deposits" unless specifically requested by clients.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage. Travel expenses are always included in the performance fee as a single amount.
 - **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices

@@ -1108,8 +1108,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
           if (booking && booking.userId === userId) {
             // SIMPLIFIED: Always combine travel expense with performance fee
             const performanceFee = Number(booking.fee) || 0;
-            const travelExpense = Number(travelExpense || booking.travelExpense) || 0;
-            const totalFee = performanceFee + travelExpense;
+            const travelExpenseAmount = Number(travelExpense || booking.travelExpense) || 0;
+            const totalFee = performanceFee + travelExpenseAmount;
             
             bookingContext = {
               clientName: booking.clientName,
