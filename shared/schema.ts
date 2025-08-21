@@ -570,7 +570,9 @@ export const userSettings = pgTable("user_settings", {
   website: varchar("website"),
   taxNumber: varchar("tax_number"),
   bankDetails: text("bank_details"),
-  defaultTerms: text("default_terms"),
+  defaultTerms: text("default_terms"), // Legacy - kept for backward compatibility
+  contractClauses: jsonb("contract_clauses").default('{}'), // Standard contract clauses selection
+  customClauses: jsonb("custom_clauses").default('[]'), // Custom user-added clauses
   emailFromName: varchar("email_from_name"),
   invoicePrefix: varchar("invoice_prefix"), // Custom invoice prefix (e.g., "JS" for Jake Stanley)
   nextInvoiceNumber: integer("next_invoice_number").default(1),

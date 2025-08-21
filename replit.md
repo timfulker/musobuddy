@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, allowing musicians to focus on their creative work. The project aims to be a user-friendly, reliable, and scalable solution, aspiring to be an indispensable tool for managing all administrative aspects of a musician's career, increasing efficiency, and capitalizing on the growing independent artist market.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. The platform aims to reduce administrative burdens, allowing musicians to focus on creative work. It positions itself as a user-friendly, scalable, and indispensable tool to enhance efficiency and support independent artists in managing their careers. The business vision is to provide a comprehensive platform that empowers musicians to manage their careers efficiently, enabling them to focus on their creative work and become the leading solution for independent artists globally.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -48,10 +48,10 @@ User-customizable contract terms: Contract Terms & Conditions are now fully edit
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, featuring WCAG 2.0 luminance for text contrast and a global luminance-aware styling system.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming with consistent logo branding. Default booking view is list-based, with calendar as an option. Onboarding wizard is optional and dismissible. A permanent map display on booking forms shows venue locations. Enhanced responsive design for mobile adaptation, hiding complex features on mobile.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming with consistent logo branding. Features list-based booking view with calendar option, optional onboarding wizard, and permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens. Color schemes and templates adhere to professional aesthetic standards.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -60,19 +60,19 @@ User-customizable contract terms: Contract Terms & Conditions are now fully edit
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models: GPT-5 for email parsing and venue extraction; Claude Sonnet 4 for response generation. All AI usage is unlimited.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
 - **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time". Features individual field locking and status validation.
-- **Document Management**: Multi-document upload system per booking with categorization, secure R2 cloud storage, and automatic counting.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time", individual field locking, and status validation.
+- **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
 - **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs. Supports multiple CC recipients for invoice emails.
-- **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
+- **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking and duplicate detection, including retry logic and queue status monitoring.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Includes queue status monitoring.
 
 ## External Dependencies
 
@@ -88,4 +88,3 @@ User-customizable contract terms: Contract Terms & Conditions are now fully edit
     - Stripe
     - Twilio
     - what3words API
-```

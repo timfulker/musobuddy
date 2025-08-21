@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -51,6 +51,60 @@ const THEME_COLORS = [
   "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
 ];
 
+// Standard contract clauses that users can select
+const STANDARD_CONTRACT_CLAUSES = [
+  {
+    id: "payment30",
+    text: "Payment due within 30 days of performance",
+    description: "Standard net-30 payment terms"
+  },
+  {
+    id: "deposit50",
+    text: "50% deposit required to secure booking",
+    description: "Ensures commitment from client"
+  },
+  {
+    id: "cancellation7",
+    text: "Cancellations within 7 days forfeit deposit",
+    description: "Protects against last-minute cancellations"
+  },
+  {
+    id: "equipmentOwnership",
+    text: "All equipment remains property of performer",
+    description: "Clarifies ownership of musical instruments and equipment"
+  },
+  {
+    id: "powerSupply",
+    text: "Client must provide adequate power supply",
+    description: "Ensures necessary electrical requirements are met"
+  },
+  {
+    id: "venueAccess",
+    text: "Client must provide reasonable venue access for setup",
+    description: "Ensures performer can set up equipment properly"
+  },
+  {
+    id: "weatherProtection",
+    text: "Client must provide weather protection for outdoor events",
+    description: "Protects equipment and performance quality"
+  },
+  {
+    id: "finalNumbers",
+    text: "Final guest numbers must be confirmed 7 days prior",
+    description: "Helps with performance planning and setup"
+  },
+  {
+    id: "noRecording",
+    text: "No recording or broadcasting without written consent",
+    description: "Protects performer's intellectual property rights"
+  },
+  {
+    id: "forcemajeure",
+    text: "Performance may be cancelled due to circumstances beyond performer's control",
+    description: "Standard force majeure protection clause"
+  }
+];
+
 const CUSTOM_TITLES = [
   { id: "invoice", label: "Invoice" },
   { id: "performance-summary", label: "Performance Summary" },
@@ -76,7 +130,20 @@ const settingsFormSchema = z.object({
   taxNumber: z.string().optional().or(z.literal("")),
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
-  defaultTerms: z.string().optional().or(z.literal("")),
+  invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
+  contractClauses: z.object({
+    payment30: z.boolean().optional(),
+    deposit50: z.boolean().optional(),
+    cancellation7: z.boolean().optional(),
+    equipmentOwnership: z.boolean().optional(),
+    powerSupply: z.boolean().optional(),
+    venueAccess: z.boolean().optional(),
+    weatherProtection: z.boolean().optional(),
+    finalNumbers: z.boolean().optional(),
+    noRecording: z.boolean().optional(),
+    forcemajeure: z.boolean().optional(),
+  }).optional(),
+  customClauses: z.array(z.string()).optional().default([]), // Custom user-added clauses
   emailSignature: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
@@ -144,7 +211,23 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailFromName: data.email_from_name || data.emailFromName || "",
     emailSignature: data.email_signature || data.emailSignature || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
-    defaultTerms: data.default_terms || data.defaultTerms || "",
+    invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
+    contractClauses: {
+      payment30: data.contract_clauses?.payment30 || data.contractClauses?.payment30 || false,
+      deposit50: data.contract_clauses?.deposit50 || data.contractClauses?.deposit50 || false,
+      cancellation7: data.contract_clauses?.cancellation7 || data.contractClauses?.cancellation7 || false,
+      equipmentOwnership: data.contract_clauses?.equipmentOwnership || data.contractClauses?.equipmentOwnership || false,
+      powerSupply: data.contract_clauses?.powerSupply || data.contractClauses?.powerSupply || false,
+      venueAccess: data.contract_clauses?.venueAccess || data.contractClauses?.venueAccess || false,
+      weatherProtection: data.contract_clauses?.weatherProtection || data.contractClauses?.weatherProtection || false,
+      finalNumbers: data.contract_clauses?.finalNumbers || data.contractClauses?.finalNumbers || false,
+      noRecording: data.contract_clauses?.noRecording || data.contractClauses?.noRecording || false,
+      forcemajeure: data.contract_clauses?.forcemajeure || data.contractClauses?.forcemajeure || false,
+    },
+    customClauses: Array.isArray(data.custom_clauses || data.customClauses) ? 
+                   (data.custom_clauses || data.customClauses) : 
+                   (typeof (data.custom_clauses || data.customClauses) === 'string' ? 
+                    JSON.parse((data.custom_clauses || data.customClauses) || '[]') : []),
     bankDetails: data.bank_details || data.bankDetails || "",
     // Instrument settings
     primaryInstrument: data.primary_instrument || data.primaryInstrument || "",
@@ -1055,37 +1138,109 @@ export default function Settings() {
                       <div className="space-y-4">
                         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
                           <FileText className="w-4 h-4 mr-2" />
-                          Contract Terms
+                          Contract Terms & Conditions
                         </h3>
                         
-                        <FormField
-                          control={form.control}
-                          name="defaultTerms"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">Terms & Conditions</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  {...field} 
-                                  placeholder={`Enter your custom contract terms and conditions here...
+                        <div className="space-y-3">
+                          <FormLabel className="text-sm font-medium">Standard Clauses</FormLabel>
+                          <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                            {STANDARD_CONTRACT_CLAUSES.map((clause) => (
+                              <FormField
+                                key={clause.id}
+                                control={form.control}
+                                name={`contractClauses.${clause.id}`}
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel className="text-sm font-normal cursor-pointer">
+                                        {clause.text}
+                                      </FormLabel>
+                                      {clause.description && (
+                                        <FormDescription className="text-xs">
+                                          {clause.description}
+                                        </FormDescription>
+                                      )}
+                                    </div>
+                                  </FormItem>
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
 
-Example:
-• Payment due within 30 days of performance
-• 50% deposit required to secure booking
-• Cancellations within 7 days forfeit deposit
-• All equipment remains property of performer
-• Client must provide adequate power supply`} 
-                                  rows={8} 
-                                  className="font-mono text-sm"
-                                />
-                              </FormControl>
-                              <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                                These terms will appear in all generated contracts. Leave empty to use default professional terms. Supports line breaks for formatting.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Custom Clauses */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <FormLabel className="text-sm font-medium">Custom Clauses</FormLabel>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const current = form.getValues("customClauses") || [];
+                                form.setValue("customClauses", [...current, ""]);
+                              }}
+                              className="text-xs"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Add Clause
+                            </Button>
+                          </div>
+                          
+                          <FormField
+                            control={form.control}
+                            name="customClauses"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="space-y-2">
+                                    {(field.value || []).map((clause: string, index: number) => (
+                                      <div key={index} className="flex items-center space-x-2">
+                                        <Input
+                                          value={clause}
+                                          onChange={(e) => {
+                                            const newClauses = [...(field.value || [])];
+                                            newClauses[index] = e.target.value;
+                                            field.onChange(newClauses);
+                                          }}
+                                          placeholder="Enter custom contract clause..."
+                                          className="flex-1"
+                                        />
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            const newClauses = [...(field.value || [])];
+                                            newClauses.splice(index, 1);
+                                            field.onChange(newClauses);
+                                          }}
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                    {(!field.value || field.value.length === 0) && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                        No custom clauses added yet. Click "Add Clause" to create your own terms.
+                                      </p>
+                                    )}
+                                  </div>
+                                </FormControl>
+                                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                                  Add your own custom contract terms and conditions. These will appear alongside selected standard clauses.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                     </CardContent>
                   </CollapsibleContent>
