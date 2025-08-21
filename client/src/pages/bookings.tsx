@@ -21,6 +21,7 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { getOptimalTextColor, getMutedTextColor } from "@/lib/luminance";
 import { calculateBookingDisplayTotal, getBookingAmountDisplayText } from "@/utils/booking-calculations";
 // BookingDetailsDialog removed - using new-booking page for all editing
 import BookingStatusDialog from "@/components/BookingStatusDialog";
@@ -2430,7 +2431,7 @@ export default function UnifiedBookings() {
                       
                       {/* Date Display - Fixed Width */}
                       <div className="text-center">
-                        <h2 className="text-xl font-semibold min-w-[200px]" style={{color: 'var(--theme-text)'}}>
+                        <h2 className="text-xl font-semibold min-w-[200px]" style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                           {calendarView === 'day' && currentDate.toLocaleDateString('en-US', { 
                             weekday: 'long', 
                             year: 'numeric', 
@@ -2551,7 +2552,7 @@ export default function UnifiedBookings() {
                       <div className="grid grid-cols-7 gap-1 h-full">
                         {/* Week Day Headers */}
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: 'var(--theme-text)'}}>
+                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                             {day}
                           </div>
                         ))}
@@ -2704,7 +2705,7 @@ export default function UnifiedBookings() {
                       {/* Month Day Headers - Fixed Height */}
                       <div className="grid grid-cols-7 gap-1 flex-shrink-0">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: 'var(--theme-text)'}}>
+                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                             {day}
                           </div>
                         ))}
@@ -3125,7 +3126,19 @@ export default function UnifiedBookings() {
         >
 
           
-          <div className="flex-1 overflow-hidden p-4">
+          <div className="flex-1 overflow-hidden p-4 relative">
+            {/* Keyboard instructions in top left */}
+            <div className="absolute top-4 left-8 z-10">
+              <div className="text-xs font-medium" style={{
+                color: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary),
+                textShadow: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary) === '#ffffff' 
+                  ? '0 1px 3px rgba(0,0,0,0.4)' 
+                  : '0 1px 2px rgba(255,255,255,0.3)'
+              }}>
+                ← → months • ↑ ↓ years • Enter/Space today • Esc close
+              </div>
+            </div>
+            
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col">
               {/* Month Header - Bold Theme Background */}
@@ -3136,32 +3149,31 @@ export default function UnifiedBookings() {
                   boxShadow: `0 8px 32px ${settings?.themeAccentColor || theme.colors.primary}40`
                 }}></div>
                 <div className="relative z-10 py-6 px-8">
-                  <h2 className="text-5xl font-bold mb-4 text-center luminance-aware drop-shadow-lg">
+                  <h2 className="text-5xl font-bold mb-4 text-center drop-shadow-lg" style={{
+                    color: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary)
+                  }}>
                     {monthNames[fullScreenCurrentDate.getMonth()]} {fullScreenCurrentDate.getFullYear()}
                   </h2>
-                  <div className="flex items-center justify-center">
-                    <div className="text-xs font-medium px-4 py-2 rounded-full text-center luminance-aware-muted backdrop-blur-sm border border-white/20" style={{
-                      backgroundColor: 'rgba(255,255,255,0.15)',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-                    }}>
-                      ← → months • ↑ ↓ years • Enter/Space today • Esc close
-                    </div>
-                  </div>
                 </div>
               </div>
               
               {/* Day Headers - Full Theme Color Backgrounds with Luminance Aware Text */}
               <div className="grid grid-cols-7 gap-2 mb-3">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                  <div key={day} className="text-center font-bold py-4 text-sm rounded-lg shadow-md luminance-aware" style={{
-                    backgroundColor: settings?.themeAccentColor || theme.colors.primary,
-                    background: `linear-gradient(135deg, ${settings?.themeAccentColor || theme.colors.primary}, ${settings?.themeAccentColor || theme.colors.primary}dd)`,
-                    textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                    boxShadow: `0 4px 12px ${settings?.themeAccentColor || theme.colors.primary}30`
-                  }}>
-                    {day}
-                  </div>
-                ))}
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                  const bgColor = settings?.themeAccentColor || theme.colors.primary;
+                  const textColor = getOptimalTextColor(bgColor);
+                  return (
+                    <div key={day} className="text-center font-bold py-4 text-sm rounded-lg shadow-md" style={{
+                      backgroundColor: bgColor,
+                      background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)`,
+                      color: textColor,
+                      textShadow: textColor === '#ffffff' ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 2px rgba(255,255,255,0.3)',
+                      boxShadow: `0 4px 12px ${bgColor}30`
+                    }}>
+                      {day}
+                    </div>
+                  );
+                })}
               </div>
               
               {/* Calendar Grid - 6 Weeks (42 days) with Equal Row Heights */}

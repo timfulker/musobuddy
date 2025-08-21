@@ -225,6 +225,22 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   --theme-accent-text: white;
 }
 
+/* Midnight Blue Theme Dark Mode */
+.theme-midnight-blue.dark {
+  --theme-primary: #191970;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #0a0a1a;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
 .theme-custom-dark {
   --theme-primary: #161537;
   --theme-secondary: #1e1e3f;
@@ -687,6 +703,11 @@ body {
   /* Theme text colors for purple dark mode */
   --theme-text: hsl(210, 20%, 98%);
   --theme-text-secondary: hsl(215, 20.2%, 65.1%);
+}
+
+/* Calendar text visibility fix */
+.calendar-header-text {
+  color: var(--theme-text) !important;
 }
 
 @layer base {

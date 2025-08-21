@@ -49,15 +49,10 @@ export function getOptimalTextColor(backgroundColor: string): string {
 
   const backgroundLuminance = getLuminance(rgb.r, rgb.g, rgb.b);
   
-  // Calculate contrast ratios with black and white
-  const blackLuminance = 0; // Black has 0 luminance
-  const whiteLuminance = 1; // White has 1 luminance
-  
-  const contrastWithBlack = getContrastRatio(backgroundLuminance, blackLuminance);
-  const contrastWithWhite = getContrastRatio(backgroundLuminance, whiteLuminance);
-  
-  // Return the color with higher contrast ratio
-  return contrastWithBlack > contrastWithWhite ? '#000000' : '#ffffff';
+  // Use threshold of 0.179 based on W3C recommendations
+  // This is approximately the luminance of #808080 (50% gray)
+  // Colors darker than this should have white text, lighter should have black
+  return backgroundLuminance <= 0.179 ? '#ffffff' : '#000000';
 }
 
 /**
