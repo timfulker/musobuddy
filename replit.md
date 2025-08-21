@@ -88,4 +88,3 @@ User-customizable contract terms: Contract Terms & Conditions are now fully edit
     - Stripe
     - Twilio
     - what3words API
-```

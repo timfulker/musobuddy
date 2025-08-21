@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -256,6 +256,7 @@ export default function Settings() {
     contact: false,
     address: false,
     financial: false,
+    contract: false, // Contract & Invoice settings section
     bank: false,
     pricing: false, // AI Pricing Guide section
     gigTypes: false, // Custom gig types management section
@@ -982,17 +983,19 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
-              {/* Invoice Settings */}
+
+
+              {/* Contract & Invoice Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.financial} onOpenChange={() => toggleSection('financial')}>
+                <Collapsible open={expandedSections.contract} onOpenChange={() => toggleSection('contract')}>
                   <CollapsibleTrigger className="w-full">
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Hash className="w-5 h-5 text-primary" />
-                          <span>Invoice Settings</span>
+                          <FileText className="w-5 h-5 text-primary" />
+                          <span>Contract & Invoice Settings</span>
                         </div>
-                        {expandedSections.financial ? 
+                        {expandedSections.contract ? 
                           <ChevronDown className="w-5 h-5 text-gray-400" /> : 
                           <ChevronRight className="w-5 h-5 text-gray-400" />
                         }
@@ -1000,59 +1003,71 @@ export default function Settings() {
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="invoicePrefix"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Invoice Number Prefix</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            value={field.value || ""} 
-                            placeholder="e.g., JS or ABC (3-5 letters)" 
-                            maxLength={5}
-                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                    <CardContent className="p-6 space-y-6">
+                      {/* Invoice Settings */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Invoice Settings
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="invoicePrefix"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">Invoice Number Prefix</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    value={field.value || ""} 
+                                    placeholder="INV" 
+                                    maxLength={5}
+                                    onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                                  Set a custom prefix for your invoice numbers (e.g., JS-0001). Leave blank to auto-generate from your business name.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                        <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                          Set a custom prefix for your invoice numbers (e.g., JS-0001). Leave blank to auto-generate from your business name.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="nextInvoiceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="00001" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="defaultTerms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium flex items-center">
-                          Contract Terms & Conditions
-                          <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-                            Contract PDF
-                          </span>
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            placeholder={`Enter your custom contract terms and conditions here...
+                          
+                          <FormField
+                            control={form.control}
+                            name="nextInvoiceNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="00001" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Contract Terms */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Contract Terms
+                        </h3>
+                        
+                        <FormField
+                          control={form.control}
+                          name="defaultTerms"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Terms & Conditions</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  {...field} 
+                                  placeholder={`Enter your custom contract terms and conditions here...
 
 Example:
 • Payment due within 30 days of performance
@@ -1060,17 +1075,18 @@ Example:
 • Cancellations within 7 days forfeit deposit
 • All equipment remains property of performer
 • Client must provide adequate power supply`} 
-                            rows={8} 
-                            className="font-mono text-sm"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                          These terms will appear in all generated contracts. Leave empty to use default professional terms. Supports line breaks for formatting.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                                  rows={8} 
+                                  className="font-mono text-sm"
+                                />
+                              </FormControl>
+                              <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                                These terms will appear in all generated contracts. Leave empty to use default professional terms. Supports line breaks for formatting.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
