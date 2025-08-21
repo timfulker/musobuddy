@@ -82,6 +82,7 @@ interface AIResponseRequest {
   tone?: 'professional' | 'friendly' | 'formal' | 'casual';
   contextualInfo?: string; // Additional context when no booking is selected
   clientHistory?: ClientHistory; // Client's booking history for personalized emails
+  travelExpense?: number; // Travel expense from form when no booking context
 }
 
 export class AIResponseGenerator {
@@ -99,7 +100,7 @@ export class AIResponseGenerator {
     emailBody: string;
     smsBody?: string;
   }> {
-    const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo, clientHistory } = request;
+    const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo, clientHistory, travelExpense } = request;
     
     console.log('🤖 Starting AI response generation...');
     console.log('🤖 Request details:', {
@@ -114,7 +115,7 @@ export class AIResponseGenerator {
     try {
       const anthropic = this.getAnthropicClient();
       
-      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext);
+      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo, clientHistory);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
@@ -185,11 +186,11 @@ export class AIResponseGenerator {
             fourHoursPrice = bookingFee + (AHR * 2);
           }
         } else {
-          // No booking context - calculate from base rates
-          const travelExpense = 0; // Travel already included if from booking
-          twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + travelExpense;
-          threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + travelExpense;
-          fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + travelExpense;
+          // No booking context - use travel expense from form
+          const formTravelExpense = Number(travelExpense) || 0;
+          twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + formTravelExpense;
+          threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + formTravelExpense;
+          fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + formTravelExpense;
         }
         
         console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
@@ -273,7 +274,7 @@ export class AIResponseGenerator {
     }
   }
 
-  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext): string {
+  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext, formTravelExpense?: number): string {
     const businessName = userSettings?.businessName || "the performer";
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
@@ -369,8 +370,8 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
         fourHoursPrice = bookingFee + (AHR * 2);
       }
     } else {
-      // No booking context - calculate from base rates (includes travel if in settings)
-      const T = Number(bookingContext?.travelExpense) || 0;
+      // No booking context - use travel expense from form if provided
+      const T = Number(formTravelExpense) || 0;
       function calculatePrice(N: number): number {
         return (BHR * 2) + ((N - 2) * AHR) + T;
       }
@@ -384,6 +385,7 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       BHR: `${BHR} (type: ${typeof BHR})`,
       AHR: `${AHR} (type: ${typeof AHR})`,
       bookingFee: bookingContext?.fee || 'N/A',
+      travelExpense: bookingContext?.fee ? 'Included in fee' : (formTravelExpense || 0),
       calculations: {
         '2hrs': `£${twoHoursPrice}`,
         '3hrs': `£${threeHoursPrice}`,

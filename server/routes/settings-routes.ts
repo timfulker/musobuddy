@@ -1164,7 +1164,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
         customPrompt,
         tone: tone || 'professional',
         contextualInfo: contextualInfo || null,
-        clientHistory: clientHistory || null
+        clientHistory: clientHistory || null,
+        travelExpense: Number(travelExpense) || 0
       });
 
       // AI usage tracking removed - unlimited AI usage for all users
