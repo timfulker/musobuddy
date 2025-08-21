@@ -152,10 +152,7 @@ export class AIResponseGenerator {
       }
       
       // POST-PROCESSING: Force correct pricing if AI ignores instructions
-      // BUT SKIP if there's an agreed fee in booking context
-      const hasAgreedFee = bookingContext?.fee && parseFloat(bookingContext.fee) > 0;
-      
-      if (userSettings?.aiPricingEnabled !== false && !hasAgreedFee) {
+      if (userSettings?.aiPricingEnabled !== false) {
         const BHR = Number(userSettings?.baseHourlyRate) || 125;
         const AHR = Number(userSettings?.additionalHourRate) || 60;
         const T = Number(bookingContext?.travelExpense) || 0;
@@ -191,8 +188,6 @@ export class AIResponseGenerator {
             }
           }
         });
-      } else if (hasAgreedFee) {
-        console.log('🎯 SKIPPING post-processing corrections - using agreed fee:', bookingContext.fee);
       }
 
       // Validate the response structure
@@ -351,19 +346,7 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     
     const packages = [...basePackages, ...djPackages];
 
-    // Check if there's an agreed fee in booking context - if so, use that instead of calculated prices
-    const hasAgreedFee = bookingContext?.fee && parseFloat(bookingContext.fee) > 0;
-    
-    const pricingSection = pricingEnabled ? (hasAgreedFee ? `
-CRITICAL PRICING RULES - AGREED FEE:
-- THE CLIENT HAS AGREED TO A SPECIFIC FEE: £${bookingContext.fee}
-- USE THIS EXACT AMOUNT - DO NOT RECALCULATE OR CHANGE
-- This is the final agreed total that includes all costs
-- Do NOT offer other pricing options or packages - the fee is agreed
-- Focus on confirming the booking details and next steps
-- NEVER mention travel costs, expenses, or fee breakdowns
-- Present as: "2 hours saxophone: £${bookingContext.fee}" (or appropriate duration)
-- MANDATORY: Use the agreed fee of £${bookingContext.fee} exactly as stated` : `
+    const pricingSection = pricingEnabled ? `
 CRITICAL PRICING RULES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
@@ -398,7 +381,7 @@ ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.spe
 PRICING POLICY:
 - Pricing information is handled separately - focus on availability and service details
 - Do not include specific pricing in your response unless specifically requested
-- Mention that detailed pricing can be provided separately`};
+- Mention that detailed pricing can be provided separately`;
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
@@ -509,17 +492,13 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
-    // PRIORITY: If a specific fee has been agreed, use that exact amount
-    // Otherwise, add travel expense instruction if provided
-    let pricingInstruction = '';
-    if (context.fee) {
-      pricingInstruction = `\n\nCRITICAL PRICING INSTRUCTION: The agreed performance fee is £${context.fee}. Use this EXACT amount - do NOT recalculate or modify this price. This is the final agreed total that includes all costs.`;
-    } else if (context.travelExpense) {
-      pricingInstruction = `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`;
-    }
+    // Add travel expense instruction if provided, but never mention travel to client
+    const travelInstruction = context.travelExpense 
+      ? `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`
+      : '';
 
     return details.length > 0 
-      ? `BOOKING DETAILS:\n${details.join('\n')}${pricingInstruction}`
+      ? `BOOKING DETAILS:\n${details.join('\n')}${travelInstruction}`
       : "No specific booking details provided.";
   }
 
