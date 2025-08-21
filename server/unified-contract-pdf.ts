@@ -933,7 +933,7 @@ function generateUnifiedContractHTML(
                             <div class="signature-line"></div>
                             <div class="signature-name">${signatureName}</div>
                             <div class="signature-date">Digitally signed on ${signedAt.toLocaleDateString('en-GB')}</div>
-                            <div class="signature-status" style="color: \${primaryColor};">✓ Signed at ${signedAt.toLocaleTimeString('en-GB')}</div>
+                            <div class="signature-status" style="color: ${primaryColor};">✓ Signed at ${signedAt.toLocaleTimeString('en-GB')}</div>
                         ` : `
                             <div class="signature-line"></div>
                             <div class="signature-name">${contract.clientName}</div>
