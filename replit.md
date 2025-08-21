@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its core purpose is to reduce administrative burdens, enabling musicians to focus on their creative work. The platform aims to be user-friendly, scalable, and an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its core purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -41,7 +41,7 @@ Conversation to booking navigation: "Edit Booking" button added to conversation 
 Travel expense integration: User-configurable setting to include travel expenses in performance fee display vs. showing as separate line items. Default behavior combines travel expenses with performance fee (e.g., £260 + £50 = £310 "inc. travel"), while alternative setting shows separate amounts (£260 + £50 travel). This ensures AI calculations, booking card displays, and contract generation remain synchronized regardless of user preference. Client-facing fee displays (emails and contract headers) always show the total combined amount (£310) to avoid appearing "clandestine" about fees. Breakdown details only appear within contract body when appropriate.
 PDF contract page break handling: Enhanced CSS rules to prevent venue field titles and values from being separated across page breaks. Venue and venue address fields are grouped together with `break-inside: avoid` and `page-break-inside: avoid` CSS properties. If space is insufficient, the entire venue details group moves to the next page as a unit, maintaining professional layout integrity.
 Encore booking management: Added toggle switch for Encore bookings on both dashboard and bookings page that clearly shows current application status and allows toggling between "not applied" (new status) and "applied" (in_progress status). This replaces the confusing "Applied" button that looked identical before and after clicking. Toggle switch prevents dashboard clutter from applied-for jobs while maintaining booking records and providing clear visual feedback.
-Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings take precedence over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly. Implemented cache-busting API calls and complete form reset to prevent stale fee data from appearing in contract creation forms.
+Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings take precedence over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly. Implemented cache-bustings API calls and complete form reset to prevent stale fee data from appearing in contract creation forms.
 User-customizable contract terms: Contract Terms & Conditions are now fully editable at the user level through Settings page. Users can replace the default professional terms with their own custom terms and conditions, which will appear in all generated contract PDFs. The terms support line breaks for proper formatting and can be toggled on/off via the themeShowTerms setting. If no custom terms are provided, the system uses comprehensive default terms covering payment, cancellation, performance standards, and legal framework.
 Time format standardization: Both booking form and contract form now use identical 24-hour time format (input type="time") ensuring precise time auto-population. When contracts are generated from bookings with specific times like "16:03", the contract form correctly displays and pre-selects these exact times instead of showing blank fields. This eliminates the previous format mismatch between 24-hour booking times and predefined AM/PM contract options.
 Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contract PDFs now dynamically adjust color based on theme background luminance for optimal visibility. On dark themes like midnight blue, text appears in white/light colors; on light themes, it appears in dark colors. This ensures WCAG 2.0 compliant contrast ratios and professional branding visibility across all theme colors.
@@ -53,7 +53,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Incorporates QR code generation, widget URL creation, R2 storage integration, and dynamic PDF theming. Features a list-based booking view with a calendar option, an optional onboarding wizard, and permanent map display on booking forms. The enhanced responsive design adapts to mobile, hiding complex features on smaller screens while maintaining professional aesthetics.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -62,8 +62,8 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Utilizes dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
-- **Admin Database Access**: Provides a read-only administration panel with table browsing, filtering, search, and CSV export.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
+- **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
@@ -73,7 +73,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring. Invoice security via random 16-character tokens in URLs. Supports multiple CC recipients for invoice emails.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-- **System Isolation**: Critical components (invoice/contract generation) are designed as isolated systems.
+- **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems.
 - **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Includes queue status monitoring.
 
 ## External Dependencies

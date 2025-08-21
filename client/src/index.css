@@ -954,15 +954,24 @@ body {
   color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
-/* Force calendar text to be luminance-aware */
+/* Force calendar text to be luminance-aware - target all possible calendar text elements */
 .rdp-caption_label,
-.rdp-head_cell {
+.rdp-head_cell,
+[class*="caption_label"],
+[class*="head_cell"],
+.rdp-caption,
+.rdp-head,
+.rdp-head th,
+.rdp-caption_start,
+.rdp-caption_end,
+.rdp-nav_button_previous,
+.rdp-nav_button_next {
   color: var(--theme-text) !important;
 }
 
-/* Force calendar month and day headers to be theme-aware */
-[class*="caption_label"],
-[class*="head_cell"] {
+/* More comprehensive calendar text targeting */
+[data-testid*="calendar"] *:not([class*="bg-"]):not(button):not([role="button"]),
+.rdp * {
   color: var(--theme-text) !important;
 }
 

@@ -2430,7 +2430,7 @@ export default function UnifiedBookings() {
                       
                       {/* Date Display - Fixed Width */}
                       <div className="text-center">
-                        <h2 className="text-xl font-semibold min-w-[200px]">
+                        <h2 className="text-xl font-semibold min-w-[200px]" style={{color: 'var(--theme-text)'}}>
                           {calendarView === 'day' && currentDate.toLocaleDateString('en-US', { 
                             weekday: 'long', 
                             year: 'numeric', 
@@ -2551,7 +2551,7 @@ export default function UnifiedBookings() {
                       <div className="grid grid-cols-7 gap-1 h-full">
                         {/* Week Day Headers */}
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: 'var(--theme-text)'}}>
                             {day}
                           </div>
                         ))}
@@ -2704,7 +2704,7 @@ export default function UnifiedBookings() {
                       {/* Month Day Headers - Fixed Height */}
                       <div className="grid grid-cols-7 gap-1 flex-shrink-0">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: 'var(--theme-text)'}}>
                             {day}
                           </div>
                         ))}
