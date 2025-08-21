@@ -885,18 +885,35 @@ function generateUnifiedContractHTML(
                   const customClauses = userSettings?.customClauses || [];
                   const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
                   
+                  // Helper function to escape HTML and prevent template literal issues
+                  const escapeHtml = (text) => {
+                    return text
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/`/g, '&#96;')
+                      .replace(/\$/g, '&#36;');
+                  };
+                  
                   // If user has selected clauses or legacy defaultTerms, use them
                   if (allClauses.length > 0) {
+                    const escapedClauses = allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>');
                     termsHtml = `<div class="terms-section">
                       <div class="requirements-box">
-                        ${allClauses.map(clause => `• ${clause}`).join('<br>')}
+                        ${escapedClauses}
                       </div>
                     </div>`;
                   } else if (userSettings?.defaultTerms && userSettings.defaultTerms.trim()) {
                     // Fallback to legacy defaultTerms
+                    const escapedTerms = userSettings.defaultTerms
+                      .split('\n')
+                      .map(line => line.trim() ? `${escapeHtml(line)}<br>` : '<br>')
+                      .join('');
                     termsHtml = `<div class="terms-section">
                       <div class="requirements-box">
-                        ${userSettings.defaultTerms.split('\n').map(line => line.trim() ? `${line}<br>` : '<br>').join('')}
+                        ${escapedTerms}
                       </div>
                     </div>`;
                   }
