@@ -816,7 +816,8 @@ export function generateContractSigningPage(
                             signedAt: new Date().toISOString()
                         };
 
-                        fetch('https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev/api/contracts/sign/' + CONTRACT_ID, {
+                        var API_BASE = ${JSON.stringify(process.env.NODE_ENV === 'production' ? 'https://musobuddy.replit.app' : 'https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev')};
+                        fetch(API_BASE + '/api/contracts/sign/' + CONTRACT_ID, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
