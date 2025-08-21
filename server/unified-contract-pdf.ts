@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { Contract, UserSettings } from '@shared/schema';
+import type { Contract, UserSettings } from '../shared/schema';
 // Import the booking calculation functions
 // Note: We'll inline the logic to avoid import issues between server and client
 
@@ -70,6 +70,84 @@ function getSecondaryColor(primaryColor: string): string {
   };
   
   return colorMap[primaryColor] || primaryColor; // Fallback to same color
+}
+
+// Helper function to generate terms section (moved out of template literal to avoid parsing issues)
+function getTermsSection(userSettings: UserSettings | null): string {
+  // Standard clauses mapping
+  const clauseMap = {
+    payment30: "Payment due within 30 days of performance",
+    deposit50: "50% deposit required to secure booking", 
+    cancellation7: "Cancellations within 7 days forfeit deposit",
+    equipmentOwnership: "All equipment remains property of performer",
+    powerSupply: "Client must provide adequate power supply",
+    venueAccess: "Client must provide reasonable venue access for setup",
+    weatherProtection: "Client must provide weather protection for outdoor events",
+    finalNumbers: "Final guest numbers must be confirmed 7 days prior",
+    noRecording: "No recording or broadcasting without written consent",
+    forcemajeure: "Performance may be cancelled due to circumstances beyond performer's control"
+  };
+  
+  // Helper function to escape HTML
+  const escapeHtml = (text: string): string => {
+    return text
+      .split('&').join('&amp;')
+      .split('<').join('&lt;')
+      .split('>').join('&gt;')
+      .split('"').join('&quot;')
+      .split("'").join('&#39;')
+      .split('`').join('&#96;')
+      .split('$').join('&#36;');
+  };
+  
+  // Get selected standard clauses
+  const selectedClauses: string[] = [];
+  if (userSettings?.contractClauses) {
+    for (const [key, value] of Object.entries(userSettings.contractClauses)) {
+      if (value && clauseMap[key as keyof typeof clauseMap]) {
+        selectedClauses.push(clauseMap[key as keyof typeof clauseMap]);
+      }
+    }
+  }
+  
+  // Get custom clauses
+  const customClauses = userSettings?.customClauses || [];
+  const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
+  
+  let termsHtml = '';
+  
+  // If user has selected clauses or legacy defaultTerms, use them
+  if (allClauses.length > 0) {
+    const escapedClauses = allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>');
+    termsHtml = `
+    <!-- Terms & Conditions -->
+    <div class="section">
+        <h2 class="section-title">Terms & Conditions</h2>
+        <div class="terms-section">
+          <div class="requirements-box">
+            ${escapedClauses}
+          </div>
+        </div>
+    </div>`;
+  } else if (userSettings?.defaultTerms && userSettings.defaultTerms.trim()) {
+    // Fallback to legacy defaultTerms
+    const escapedTerms = userSettings.defaultTerms
+      .split('\n')
+      .map(line => line.trim() ? `${escapeHtml(line)}<br>` : '<br>')
+      .join('');
+    termsHtml = `
+    <!-- Terms & Conditions -->
+    <div class="section">
+        <h2 class="section-title">Terms & Conditions</h2>
+        <div class="terms-section">
+          <div class="requirements-box">
+            ${escapedTerms}
+          </div>
+        </div>
+    </div>`;
+  }
+  
+  return termsHtml;
 }
 
 function getLogoBase64(): string {
@@ -848,80 +926,7 @@ function generateUnifiedContractHTML(
             </div>
             ` : ''}
 
-            ${userSettings?.themeShowTerms !== false ? `
-            <!-- Terms & Conditions -->
-            <div class="section">
-                <h2 class="section-title">Terms & Conditions</h2>
-                
-                ${(() => {
-                  // Build terms from selected clauses
-                  let termsHtml = '';
-                  
-                  // Standard clauses mapping
-                  const clauseMap = {
-                    payment30: "Payment due within 30 days of performance",
-                    deposit50: "50% deposit required to secure booking", 
-                    cancellation7: "Cancellations within 7 days forfeit deposit",
-                    equipmentOwnership: "All equipment remains property of performer",
-                    powerSupply: "Client must provide adequate power supply",
-                    venueAccess: "Client must provide reasonable venue access for setup",
-                    weatherProtection: "Client must provide weather protection for outdoor events",
-                    finalNumbers: "Final guest numbers must be confirmed 7 days prior",
-                    noRecording: "No recording or broadcasting without written consent",
-                    forcemajeure: "Performance may be cancelled due to circumstances beyond performer's control"
-                  };
-                  
-                  // Get selected standard clauses
-                  const selectedClauses = [];
-                  if (userSettings?.contractClauses) {
-                    for (const [key, value] of Object.entries(userSettings.contractClauses)) {
-                      if (value && clauseMap[key]) {
-                        selectedClauses.push(clauseMap[key]);
-                      }
-                    }
-                  }
-                  
-                  // Get custom clauses
-                  const customClauses = userSettings?.customClauses || [];
-                  const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
-                  
-                  // Helper function to escape HTML and prevent template literal issues
-                  const escapeHtml = (text) => {
-                    return text
-                      .replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&#39;')
-                      .replace(/`/g, '&#96;')
-                      .replace(/\$/g, '&#36;');
-                  };
-                  
-                  // If user has selected clauses or legacy defaultTerms, use them
-                  if (allClauses.length > 0) {
-                    const escapedClauses = allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>');
-                    termsHtml = `<div class="terms-section">
-                      <div class="requirements-box">
-                        ${escapedClauses}
-                      </div>
-                    </div>`;
-                  } else if (userSettings?.defaultTerms && userSettings.defaultTerms.trim()) {
-                    // Fallback to legacy defaultTerms
-                    const escapedTerms = userSettings.defaultTerms
-                      .split('\n')
-                      .map(line => line.trim() ? `${escapeHtml(line)}<br>` : '<br>')
-                      .join('');
-                    termsHtml = `<div class="terms-section">
-                      <div class="requirements-box">
-                        ${escapedTerms}
-                      </div>
-                    </div>`;
-                  }
-                  
-                  return termsHtml;
-                })()
-            </div>
-            ` : ''}
+${userSettings?.themeShowTerms !== false ? getTermsSection(userSettings) : ''}
             </div>
 
             <!-- Signature Section -->
