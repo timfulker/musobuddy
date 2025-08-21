@@ -346,7 +346,19 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     
     const packages = [...basePackages, ...djPackages];
 
-    const pricingSection = pricingEnabled ? `
+    // Check if there's an agreed fee in booking context - if so, use that instead of calculated prices
+    const hasAgreedFee = bookingContext?.fee && parseFloat(bookingContext.fee) > 0;
+    
+    const pricingSection = pricingEnabled ? (hasAgreedFee ? `
+CRITICAL PRICING RULES - AGREED FEE:
+- THE CLIENT HAS AGREED TO A SPECIFIC FEE: £${bookingContext.fee}
+- USE THIS EXACT AMOUNT - DO NOT RECALCULATE OR CHANGE
+- This is the final agreed total that includes all costs
+- Do NOT offer other pricing options or packages - the fee is agreed
+- Focus on confirming the booking details and next steps
+- NEVER mention travel costs, expenses, or fee breakdowns
+- Present as: "2 hours saxophone: £${bookingContext.fee}" (or appropriate duration)
+- MANDATORY: Use the agreed fee of £${bookingContext.fee} exactly as stated` : `
 CRITICAL PRICING RULES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
@@ -372,7 +384,7 @@ CRITICAL PRICING RULES:
 - Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
 - Always mention that packages can be customized to client requirements
-- Include payment terms and booking process information
+- Include payment terms and booking process information`) 
 - Present pricing confidently as the professional standard for the services offered
 - CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
 - Use simple text formatting for pricing: "2 hours saxophone: £290" without asterisks, bold markup, or excessive punctuation
@@ -492,13 +504,17 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
-    // Add travel expense instruction if provided, but never mention travel to client
-    const travelInstruction = context.travelExpense 
-      ? `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`
-      : '';
+    // PRIORITY: If a specific fee has been agreed, use that exact amount
+    // Otherwise, add travel expense instruction if provided
+    let pricingInstruction = '';
+    if (context.fee) {
+      pricingInstruction = `\n\nCRITICAL PRICING INSTRUCTION: The agreed performance fee is £${context.fee}. Use this EXACT amount - do NOT recalculate or modify this price. This is the final agreed total that includes all costs.`;
+    } else if (context.travelExpense) {
+      pricingInstruction = `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`;
+    }
 
     return details.length > 0 
-      ? `BOOKING DETAILS:\n${details.join('\n')}${travelInstruction}`
+      ? `BOOKING DETAILS:\n${details.join('\n')}${pricingInstruction}`
       : "No specific booking details provided.";
   }
 
