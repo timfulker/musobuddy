@@ -155,12 +155,42 @@ export class AIResponseGenerator {
         const BHR = Number(userSettings?.baseHourlyRate) || 125;
         const AHR = Number(userSettings?.additionalHourRate) || 60;
         
-        // SIMPLIFIED: Travel is always included in bookingContext.fee, don't add separately
-        const travelExpense = 0; // Travel already included in booking fee total
+        // CRITICAL FIX: Use the same pricing logic as main calculation
+        let twoHoursPrice: number;
+        let threeHoursPrice: number;
+        let fourHoursPrice: number;
         
-        const twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + travelExpense;
-        const threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + travelExpense;
-        const fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + travelExpense;
+        if (bookingContext?.fee && bookingContext.performanceDuration) {
+          // Use the actual booking fee which already includes travel
+          const bookingFee = Number(bookingContext.fee);
+          const duration = bookingContext.performanceDuration;
+          
+          // Set prices based on the booking's actual fee
+          if (duration.includes('2')) {
+            twoHoursPrice = bookingFee;
+            threeHoursPrice = bookingFee + AHR;
+            fourHoursPrice = bookingFee + (AHR * 2);
+          } else if (duration.includes('3')) {
+            twoHoursPrice = bookingFee - AHR;
+            threeHoursPrice = bookingFee;
+            fourHoursPrice = bookingFee + AHR;
+          } else if (duration.includes('4')) {
+            twoHoursPrice = bookingFee - (AHR * 2);
+            threeHoursPrice = bookingFee - AHR;
+            fourHoursPrice = bookingFee;
+          } else {
+            // Default case - use booking fee for 2 hours
+            twoHoursPrice = bookingFee;
+            threeHoursPrice = bookingFee + AHR;
+            fourHoursPrice = bookingFee + (AHR * 2);
+          }
+        } else {
+          // No booking context - calculate from base rates
+          const travelExpense = 0; // Travel already included if from booking
+          twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + travelExpense;
+          threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + travelExpense;
+          fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + travelExpense;
+        }
         
         console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
           correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
@@ -306,27 +336,58 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     // Build pricing structure from user settings - FORCE NUMBER CONVERSION
     const BHR = Number(userSettings?.baseHourlyRate) || 125; // Basic Hourly Rate
     const AHR = Number(userSettings?.additionalHourRate) || 60; // Additional Hourly Rate  
-    const T = Number(bookingContext?.travelExpense) || 0; // Total travel cost (already includes round trip)
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
-    // HARD-CODED PRICE CALCULATION: P = (BHR*2) + ((N-2) x AHR) + T
-    function calculatePrice(N: number): number {
-      return (BHR * 2) + ((N - 2) * AHR) + T;
+    // CRITICAL FIX: If we have a booking fee, use it directly (includes travel)
+    // Otherwise calculate from user settings
+    let twoHoursPrice: number;
+    let threeHoursPrice: number;
+    let fourHoursPrice: number;
+    
+    if (bookingContext?.fee && bookingContext.performanceDuration) {
+      // Use the actual booking fee which already includes travel
+      const bookingFee = Number(bookingContext.fee);
+      const duration = bookingContext.performanceDuration;
+      
+      // Set prices based on the booking's actual fee
+      if (duration.includes('2')) {
+        twoHoursPrice = bookingFee;
+        threeHoursPrice = bookingFee + AHR; // Add AHR for extra hour
+        fourHoursPrice = bookingFee + (AHR * 2); // Add AHR for 2 extra hours
+      } else if (duration.includes('3')) {
+        twoHoursPrice = bookingFee - AHR; // Subtract AHR for one less hour
+        threeHoursPrice = bookingFee;
+        fourHoursPrice = bookingFee + AHR; // Add AHR for extra hour
+      } else if (duration.includes('4')) {
+        twoHoursPrice = bookingFee - (AHR * 2); // Subtract AHR for 2 less hours
+        threeHoursPrice = bookingFee - AHR; // Subtract AHR for one less hour
+        fourHoursPrice = bookingFee;
+      } else {
+        // Default case - use booking fee for 2 hours
+        twoHoursPrice = bookingFee;
+        threeHoursPrice = bookingFee + AHR;
+        fourHoursPrice = bookingFee + (AHR * 2);
+      }
+    } else {
+      // No booking context - calculate from base rates (includes travel if in settings)
+      const T = Number(bookingContext?.travelExpense) || 0;
+      function calculatePrice(N: number): number {
+        return (BHR * 2) + ((N - 2) * AHR) + T;
+      }
+      twoHoursPrice = calculatePrice(2);   // (125*2) + ((2-2)*60) + T = 250 + 0 + T
+      threeHoursPrice = calculatePrice(3); // (125*2) + ((3-2)*60) + T = 250 + 60 + T  
+      fourHoursPrice = calculatePrice(4);  // (125*2) + ((4-2)*60) + T = 250 + 120 + T
     }
     
-    const twoHoursPrice = calculatePrice(2);   // (125*2) + ((2-2)*60) + T = 250 + 0 + T
-    const threeHoursPrice = calculatePrice(3); // (125*2) + ((3-2)*60) + T = 250 + 60 + T  
-    const fourHoursPrice = calculatePrice(4);  // (125*2) + ((4-2)*60) + T = 250 + 120 + T
-    
-    console.log('🎵 HARD-CODED PRICING CALCULATION:', {
-      formula: 'P = (BHR*2) + ((N-2) × AHR) + T',
+    console.log('🎵 PRICING CALCULATION:', {
+      source: bookingContext?.fee ? 'Using booking fee (includes travel)' : 'Calculated from base rates',
       BHR: `${BHR} (type: ${typeof BHR})`,
       AHR: `${AHR} (type: ${typeof AHR})`,
-      T: `${T} (total travel expense from booking field)`,
+      bookingFee: bookingContext?.fee || 'N/A',
       calculations: {
-        '2hrs': `(${BHR}*2) + ((2-2)*${AHR}) + ${T} = ${twoHoursPrice}`,
-        '3hrs': `(${BHR}*2) + ((3-2)*${AHR}) + ${T} = ${threeHoursPrice}`,
-        '4hrs': `(${BHR}*2) + ((4-2)*${AHR}) + ${T} = ${fourHoursPrice}`
+        '2hrs': `£${twoHoursPrice}`,
+        '3hrs': `£${threeHoursPrice}`,
+        '4hrs': `£${fourHoursPrice}`
       }
     });
     
