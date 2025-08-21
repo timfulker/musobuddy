@@ -903,8 +903,6 @@ function generateUnifiedContractHTML(
                   
                   return termsHtml;
                 })()
-
-}`
             </div>
             ` : ''}
             </div>
