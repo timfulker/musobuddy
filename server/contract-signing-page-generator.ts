@@ -714,6 +714,26 @@ export function generateContractSigningPage(
                             <input type="email" id="emailAddress" value="${clientEmail}" placeholder="Enter your email address">
                         </div>
 
+                        ${(!contract.clientPhone || contract.clientPhone === 'To be provided') ? `
+                            <div class="form-group" style="border: 2px solid #dc3545; padding: 10px; border-radius: 8px; background: #ffebee;">
+                                <label for="clientPhone" style="color: #dc3545; font-weight: bold;">Phone Number <span style="color: red;">* Required</span></label>
+                                <input type="tel" id="clientPhone" placeholder="07123 456789" required>
+                                <small style="color: #dc3545;">This field is required to sign the contract</small>
+                            </div>
+                        ` : `
+                            <input type="hidden" id="clientPhone" value="${escapeHtml(contract.clientPhone || '')}">
+                        `}
+
+                        ${(!contract.clientAddress || contract.clientAddress === 'To be provided') ? `
+                            <div class="form-group" style="border: 2px solid #dc3545; padding: 10px; border-radius: 8px; background: #ffebee;">
+                                <label for="clientAddress" style="color: #dc3545; font-weight: bold;">Address <span style="color: red;">* Required</span></label>
+                                <input type="text" id="clientAddress" placeholder="123 Main Street, London, SW1A 1AA" required>
+                                <small style="color: #dc3545;">This field is required to sign the contract</small>
+                            </div>
+                        ` : `
+                            <input type="hidden" id="clientAddress" value="${escapeHtml(contract.clientAddress || '')}">
+                        `}
+
                         <div class="form-group">
                             <label for="signatureDate">Signature Date</label>
                             <input type="text" id="signatureDate" value="${todayFormatted}" readonly style="background: #f8f9fa;">
@@ -752,6 +772,8 @@ export function generateContractSigningPage(
 
                         var emailAddress = document.getElementById('emailAddress').value;
                         var agreeTerms = document.getElementById('agreeTerms').checked;
+                        var clientPhone = document.getElementById('clientPhone') ? document.getElementById('clientPhone').value : null;
+                        var clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value : null;
 
                         if (!agreeTerms) {
                             errorText.textContent = 'Please agree to the terms and conditions';
@@ -761,6 +783,20 @@ export function generateContractSigningPage(
 
                         if (!emailAddress || emailAddress.indexOf('@') === -1) {
                             errorText.textContent = 'Please enter a valid email address';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        // Validate required phone field
+                        if (clientPhone !== null && (!clientPhone || clientPhone.trim() === '')) {
+                            errorText.textContent = 'Phone number is required to sign the contract';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        // Validate required address field
+                        if (clientAddress !== null && (!clientAddress || clientAddress.trim() === '')) {
+                            errorText.textContent = 'Address is required to sign the contract';
                             errorMessage.style.display = 'block';
                             return;
                         }
@@ -775,6 +811,8 @@ export function generateContractSigningPage(
                             clientSignature: ${clientNameJs},
                             clientEmail: emailAddress,
                             clientIP: '0.0.0.0',
+                            clientPhone: clientPhone,
+                            clientAddress: clientAddress,
                             signedAt: new Date().toISOString()
                         };
 
