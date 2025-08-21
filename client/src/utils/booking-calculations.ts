@@ -1,7 +1,8 @@
-// Utility functions for calculating booking totals based on user settings
+// Utility functions for calculating booking totals - SIMPLIFIED SYSTEM
+// Travel expenses are always included in the performance fee display
 
 export interface UserSettings {
-  includeTravelInPerformanceFee?: boolean;
+  // Travel integration setting removed - always include travel in performance fee
 }
 
 export interface Booking {
@@ -13,7 +14,8 @@ export interface Booking {
 }
 
 /**
- * Calculate the total amount to display for a booking based on user settings
+ * Calculate the total amount to display for a booking - SIMPLIFIED
+ * Travel expenses are always included in the total display
  */
 export function calculateBookingDisplayTotal(
   booking: Booking, 
@@ -22,18 +24,13 @@ export function calculateBookingDisplayTotal(
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Only include travel expenses in performance fee display if explicitly set to true
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
-  
-  if (includeTravelInPerformanceFee) {
-    return fee + travelExpenses;
-  } else {
-    return fee; // Show only performance fee, travel listed separately
-  }
+  // Always include travel expenses in the total display
+  return fee + travelExpenses;
 }
 
 /**
- * Get the display text for booking amount based on user settings
+ * Get the display text for booking amount - SIMPLIFIED
+ * Always show combined total with travel included
  */
 export function getBookingAmountDisplayText(
   booking: Booking,
@@ -41,26 +38,18 @@ export function getBookingAmountDisplayText(
 ): { main: string; subtitle?: string } {
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
-  if (includeTravelInPerformanceFee) {
-    // Show combined total
-    const total = Number(fee) + Number(travelExpenses);
-    return {
-      main: `£${total.toFixed(2)}`,
-      subtitle: travelExpenses > 0 ? `(inc. £${Number(travelExpenses).toFixed(2)} travel)` : undefined
-    };
-  } else {
-    // Show performance fee with separate travel line
-    return {
-      main: `£${Number(fee).toFixed(2)}`,
-      subtitle: travelExpenses > 0 ? `+ £${Number(travelExpenses).toFixed(2)} travel` : undefined
-    };
-  }
+  // Always show combined total with optional travel subtitle
+  const total = Number(fee) + Number(travelExpenses);
+  return {
+    main: `£${total.toFixed(2)}`,
+    subtitle: travelExpenses > 0 ? `(inc. £${Number(travelExpenses).toFixed(2)} travel)` : undefined
+  };
 }
 
 /**
- * Calculate contract totals based on user settings
+ * Calculate contract totals - SIMPLIFIED
+ * Travel is always included in performance fee, never shown separately
  */
 export function calculateContractTotals(
   booking: Booking,
@@ -73,23 +62,12 @@ export function calculateContractTotals(
 } {
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
-  if (includeTravelInPerformanceFee) {
-    // Include travel in performance fee
-    return {
-      performanceFee: fee + travelExpenses,
-      travelExpenses: 0, // Don't show separately
-      totalAmount: fee + travelExpenses,
-      showSeparateTravel: false
-    };
-  } else {
-    // Keep travel expenses separate
-    return {
-      performanceFee: fee,
-      travelExpenses: travelExpenses,
-      totalAmount: fee + travelExpenses,
-      showSeparateTravel: travelExpenses > 0
-    };
-  }
+  // Always include travel in performance fee - no separate display
+  return {
+    performanceFee: fee + travelExpenses,
+    travelExpenses: 0, // Never show separately
+    totalAmount: fee + travelExpenses,
+    showSeparateTravel: false // Never show travel separately
+  };
 }

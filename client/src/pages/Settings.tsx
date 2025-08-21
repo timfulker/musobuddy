@@ -155,8 +155,7 @@ const settingsFormSchema = z.object({
   pricingNotes: z.string().optional().or(z.literal("")),
   specialOffers: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
-  // Travel expense integration setting
-  includeTravelInPerformanceFee: z.boolean().default(true),
+  // Travel expense integration removed - always include travel in performance fee
   // Instrument and gig type settings  
   primaryInstrument: z.string().optional().or(z.literal("")),
   secondaryInstruments: z.array(z.string()).optional().default([]),
@@ -264,8 +263,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     djServiceRate: data.dj_service_rate || data.djServiceRate || 300,
     pricingNotes: data.pricing_notes || data.pricingNotes || "",
     specialOffers: data.special_offers || data.specialOffers || "",
-    // Travel expense integration setting
-    includeTravelInPerformanceFee: data.include_travel_in_performance_fee ?? data.includeTravelInPerformanceFee ?? true,
+    // Travel expense integration removed - always include travel in performance fee
   };
 };
 
@@ -658,8 +656,7 @@ export default function Settings() {
         themeCustomTitle: settings.themeCustomTitle || "",
         // Gig types
         customGigTypes: Array.isArray(settings.customGigTypes) ? settings.customGigTypes : [],
-        // Travel expense integration setting
-        includeTravelInPerformanceFee: settings.includeTravelInPerformanceFee !== false, // Default to true if not set
+        // Travel expense integration removed - always include travel in performance fee
       };
       
       // Set up instrument state
@@ -1503,31 +1500,7 @@ export default function Settings() {
                         </div>
                       </div>
                       
-                      {/* Travel Expense Integration Setting */}
-                      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <FormField
-                          control={form.control}
-                          name="includeTravelInPerformanceFee"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base font-medium">
-                                  Include Travel in Performance Fee
-                                </FormLabel>
-                                <div className="text-sm text-muted-foreground">
-                                  Combine travel expenses with performance fee vs. show as separate line items on contracts and invoices
-                                </div>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      {/* Travel expenses are now always included in performance fee - toggle removed for simplicity */}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

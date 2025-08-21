@@ -7,44 +7,26 @@ import type { Contract, UserSettings } from '../shared/schema';
 // Import the booking calculation functions
 // Note: We'll inline the logic to avoid import issues between server and client
 
-// Inline contract totals calculation to match client logic
+// Simplified contract totals calculation - TRAVEL ALWAYS INCLUDED IN PERFORMANCE FEE
 function calculateContractTotals(contract: any, userSettings?: UserSettings) {
   const fee = parseFloat(contract.fee || '0');
   const travelExpenses = parseFloat(contract.travelExpenses || contract.travel_expenses || contract.travelExpense || contract.travel_expense || '0');
-  const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee === true;
   
-  console.log('💰 PDF Calculation Debug:', {
+  console.log('💰 PDF Calculation Debug (SIMPLIFIED):', {
     contractId: contract.id,
     fee,
     travelExpenses,
-    contractTravelFields: {
-      travel_expense: contract.travel_expense,
-      travel_expenses: contract.travel_expenses,
-      travelExpenses: contract.travelExpenses,
-      travelExpense: contract.travelExpense
-    },
-    includeTravelInPerformanceFee,
-    userSettings: userSettings?.includeTravelInPerformanceFee,
-    showSeparateTravel: !includeTravelInPerformanceFee && travelExpenses > 0
+    totalAmount: fee + travelExpenses,
+    note: 'Travel always included in performance fee - no separate display'
   });
   
-  if (includeTravelInPerformanceFee) {
-    // Include travel in performance fee
-    return {
-      performanceFee: fee + travelExpenses,
-      travelExpenses: 0, // Don't show separately
-      totalAmount: fee + travelExpenses,
-      showSeparateTravel: false
-    };
-  } else {
-    // Keep travel expenses separate
-    return {
-      performanceFee: fee,
-      travelExpenses: travelExpenses,
-      totalAmount: fee + travelExpenses,
-      showSeparateTravel: travelExpenses > 0
-    };
-  }
+  // Always include travel in performance fee - no separate display
+  return {
+    performanceFee: fee + travelExpenses,
+    travelExpenses: 0, // Never show separately
+    totalAmount: fee + travelExpenses,
+    showSeparateTravel: false // Never show travel separately
+  };
 }
 
 // Theme color mapping for PDF generation
@@ -238,7 +220,7 @@ export async function generateContractPDF(
     id: contract.id,
     fee: contract.fee,
     travelExpenses: contract.travelExpenses,
-    userSettings: userSettings?.includeTravelInPerformanceFee
+    note: 'Travel expenses always included in performance fee'
   });
   console.log('🚀 UNIFIED: Has signature details:', !!signatureDetails);
   
