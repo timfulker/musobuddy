@@ -90,4 +90,3 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
     - Stripe
     - Twilio
     - what3words API
-```
