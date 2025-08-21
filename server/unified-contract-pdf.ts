@@ -317,12 +317,12 @@ function generateUnifiedContractHTML(
   const headerTextColor = getContrastTextColor(primaryColor);
   const luminanceValue = getLuminance(primaryColor);
   
-  // For logo visibility: use midnight blue when theme is too light
-  const logoColor = luminanceValue > 0.7 ? '#191970' : '#191970'; // Always midnight blue for consistency
+  // Make logo text luminance-aware for better visibility
+  const logoColor = headerTextColor; // Use same luminance logic as header text
   
   console.log(`🎨 CONTRACT PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
   console.log(`🎨 LUMINANCE: Color ${primaryColor} has luminance ${luminanceValue.toFixed(3)} → Text color: ${headerTextColor}`);
-  console.log(`🎨 LOGO: Using consistent midnight blue logo for branding`);
+  console.log(`🎨 LOGO: Using luminance-aware logo text (${logoColor}) for optimal visibility`);
 
   return `
 <!DOCTYPE html>
@@ -414,7 +414,8 @@ function generateUnifiedContractHTML(
         
         .tagline {
             font-size: 18px;
-            color: #64748b;
+            color: ${headerTextColor};
+            opacity: 0.8;
             font-style: italic;
             font-weight: 500;
         }
