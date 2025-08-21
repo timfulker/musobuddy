@@ -612,6 +612,37 @@ export function registerContractRoutes(app: Express) {
         throw new Error('Failed to update contract after retries');
       }
 
+      // Step 4.5: Update related booking with client information (if contract is linked to a booking)
+      if (updateResult.enquiryId) {
+        try {
+          console.log(`🔗 [CONTRACT-SIGN] Updating booking ${updateResult.enquiryId} with client info from contract`);
+          
+          const bookingUpdateData: any = {};
+          
+          // Update client contact information if provided during signing
+          if (finalClientPhone && finalClientPhone !== contract.clientPhone) {
+            bookingUpdateData.clientPhone = finalClientPhone;
+          }
+          if (finalClientAddress && finalClientAddress !== contract.clientAddress) {
+            bookingUpdateData.clientAddress = finalClientAddress;
+          }
+          if (venueAddress && venueAddress !== contract.venueAddress) {
+            bookingUpdateData.venueAddress = venueAddress;
+          }
+          
+          // Only update if there are changes to make
+          if (Object.keys(bookingUpdateData).length > 0) {
+            await storage.updateBooking(updateResult.enquiryId, bookingUpdateData, contract.userId);
+            console.log(`✅ [CONTRACT-SIGN] Booking ${updateResult.enquiryId} updated with client contact info:`, bookingUpdateData);
+          } else {
+            console.log(`ℹ️ [CONTRACT-SIGN] No booking updates needed - client info already current`);
+          }
+        } catch (bookingUpdateError: any) {
+          console.error(`⚠️ [CONTRACT-SIGN] Failed to update booking ${updateResult.enquiryId} (non-critical):`, bookingUpdateError.message);
+          // Continue - contract signing is still successful even if booking update fails
+        }
+      }
+
       // Step 5: Generate PDF with error handling (non-critical)
       let pdfUrl = null;
       try {

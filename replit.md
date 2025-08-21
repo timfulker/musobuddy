@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
+MusoBuddy is a comprehensive music business management platform for musicians, designed to streamline administrative tasks such as bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become an indispensable tool for enhancing efficiency and supporting independent artists, with the ambition to become the leading global solution for managing music careers.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -53,7 +53,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens. Calendar luminance issues resolved with proper CSS variable usage for theme compatibility.
+- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -69,7 +69,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time", individual field locking, and status validation.
 - **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system. User-customizable contract terms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring. Invoice security via random 16-character tokens in URLs. Supports multiple CC recipients for invoice emails.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
