@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become the leading global solution for managing music careers, with ambitions to simplify music business administration worldwide and free musicians to focus on their art.
+MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become the leading global solution for managing music careers, simplifying music business administration worldwide and freeing musicians to focus on their art.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -29,7 +29,7 @@ Messages centralization: Reorganized message system into centralized "Messages" 
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
 Edit booking page sidebar: Added sidebar navigation to the edit booking page (new-booking.tsx) for consistent navigation experience. Sidebar appears on desktop devices, matching the dashboard layout and providing quick access to all system sections while editing bookings.
 Email footer branding: User prefers simple "Sent via MusoBuddy" footer text instead of "Music Management" which sounds too much like an agency.
-Email template display: Enhanced HTML email templates work correctly in Gmail and Apple Mail. Spark email client displays plain text version due to its security restrictions (normal behavior). Professional gradient headers, signature cards, and styling display properly in major email clients.
+Email template display: Enhanced HTML email templates work correctly in Gmail and and Apple Mail. Spark email client displays plain text version due to its security restrictions (normal behavior). Professional gradient headers, signature cards, and styling display properly in major email clients.
 Mobile strategy: Implementing enhanced responsive design (Option 1) - single app that adapts intelligently to mobile vs desktop. Essential mobile features: invoice sending, booking list view, client lookup, basic booking entry. Complex features hidden on mobile: contract creation, detailed settings, complex forms. Future roadmap includes native mobile apps (Android/iOS) and desktop applications (Mac/PC) in coming months.
 Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
 Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings get AI re-processing rather than automatic detection of problematic bookings.
@@ -74,7 +74,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Includes queue status monitoring. Centralized "Messages" page with tabbed interface for client replies and unparseable messages.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with tabbed interface for client replies and unparseable messages.
 - **AI-powered Workflows**: Streamlined unparseable message workflow, manual booking re-processing, and manual detail extraction from messages with review dialog.
 - **Calendar Sync**: ID-based Google Calendar sync for efficiency.
 
