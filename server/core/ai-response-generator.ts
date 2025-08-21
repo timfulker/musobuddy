@@ -389,7 +389,7 @@ CRITICAL PRICING RULES:
 - Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
 - Always mention that packages can be customized to client requirements
-- Include payment terms and booking process information`) 
+- Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
 - CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
 - Use simple text formatting for pricing: "2 hours saxophone: £290" without asterisks, bold markup, or excessive punctuation
