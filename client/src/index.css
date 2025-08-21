@@ -954,6 +954,18 @@ body {
   color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
+/* Force calendar text to be luminance-aware */
+.rdp-caption_label,
+.rdp-head_cell {
+  color: var(--theme-text) !important;
+}
+
+/* Force calendar month and day headers to be theme-aware */
+[class*="caption_label"],
+[class*="head_cell"] {
+  color: var(--theme-text) !important;
+}
+
 /* Loading states */
 .loading-skeleton {
   @apply animate-pulse bg-muted rounded;
