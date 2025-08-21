@@ -436,13 +436,18 @@ class CollaborativeFormGenerator {
                 tokenInput.value = PORTAL_TOKEN;
                 form.appendChild(tokenInput);
                 
-                // Add form data
+                // Add form data - include all fields, even empty ones
                 document.querySelectorAll('input, textarea, select').forEach(field => {
-                    if (field.name && field.value) {
+                    if (field.name) {
                         const input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = field.name;
-                        input.value = field.value;
+                        // For select fields, use the selected value or empty string
+                        if (field.tagName === 'SELECT') {
+                            input.value = field.value || '';
+                        } else {
+                            input.value = field.value || '';
+                        }
                         form.appendChild(input);
                     }
                 });
@@ -626,10 +631,11 @@ class CollaborativeFormGenerator {
   async uploadCollaborativeForm(
     bookingData: BookingData, 
     apiEndpoint: string, 
-    fieldLocks: FieldLockSettings = {}
+    fieldLocks: FieldLockSettings = {},
+    existingToken?: string
   ): Promise<{ url: string; token: string }> {
-    // Generate portal token
-    const portalToken = clientPortalService.generatePortalToken();
+    // Use existing token if provided (for regeneration), otherwise generate new one
+    const portalToken = existingToken || clientPortalService.generatePortalToken();
     
     // Generate the HTML form
     const formHtml = this.generateStandaloneForm(bookingData, apiEndpoint, portalToken, fieldLocks);

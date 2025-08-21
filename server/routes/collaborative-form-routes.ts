@@ -39,41 +39,42 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // Prepare booking data for form generation
+      // Note: Database columns use snake_case, so we need to access them properly
       const bookingData = {
         id: booking.id,
         contractId: contract.id,
         clientName: contract.clientName || 'Client',
         venue: booking.venue || contract.venue || 'TBC',
         eventDate: booking.eventDate?.toISOString() || contract.eventDate?.toISOString() || new Date().toISOString(),
-        eventTime: booking.eventTime || contract.eventTime,
-        eventEndTime: booking.eventEndTime || contract.eventEndTime,
-        performanceDuration: booking.performanceDuration || contract.performanceDuration,
-        // Include all collaborative fields from booking
-        venueContact: booking.venueContact,
-        soundTechContact: booking.soundTechContact,
-        stageSize: booking.stageSize,
-        powerEquipment: booking.powerEquipment,
-        styleMood: booking.styleMood,
-        mustPlaySongs: booking.mustPlaySongs,
-        avoidSongs: booking.avoidSongs,
-        setOrder: booking.setOrder,
-        firstDanceSong: booking.firstDanceSong,
-        processionalSong: booking.processionalSong,
-        signingRegisterSong: booking.signingRegisterSong,
-        recessionalSong: booking.recessionalSong,
-        specialDedications: booking.specialDedications,
-        guestAnnouncements: booking.guestAnnouncements,
-        loadInInfo: booking.loadInInfo,
-        soundCheckTime: booking.soundCheckTime,
-        weatherContingency: booking.weatherContingency,
-        parkingPermitRequired: booking.parkingPermitRequired,
-        mealProvided: booking.mealProvided,
-        dietaryRequirements: booking.dietaryRequirements,
-        sharedNotes: booking.sharedNotes,
-        referenceTracks: booking.referenceTracks,
-        photoPermission: booking.photoPermission,
-        encoreAllowed: booking.encoreAllowed,
-        encoreSuggestions: booking.encoreSuggestions
+        eventTime: booking.event_time || contract.eventTime,
+        eventEndTime: booking.event_end_time || contract.eventEndTime,
+        performanceDuration: booking.performance_duration || contract.performanceDuration,
+        // Include all collaborative fields from booking - using snake_case from database
+        venueContact: booking.venue_contact,
+        soundTechContact: booking.sound_tech_contact,
+        stageSize: booking.stage_size,
+        powerEquipment: booking.power_equipment,
+        styleMood: booking.style_mood,
+        mustPlaySongs: booking.must_play_songs,
+        avoidSongs: booking.avoid_songs,
+        setOrder: booking.set_order,
+        firstDanceSong: booking.first_dance_song,
+        processionalSong: booking.processional_song,
+        signingRegisterSong: booking.signing_register_song,
+        recessionalSong: booking.recessional_song,
+        specialDedications: booking.special_dedications,
+        guestAnnouncements: booking.guest_announcements,
+        loadInInfo: booking.load_in_info,
+        soundCheckTime: booking.sound_check_time,
+        weatherContingency: booking.weather_contingency,
+        parkingPermitRequired: booking.parking_permit_required,
+        mealProvided: booking.meal_provided,
+        dietaryRequirements: booking.dietary_requirements,
+        sharedNotes: booking.shared_notes,
+        referenceTracks: booking.reference_tracks,
+        photoPermission: booking.photo_permission,
+        encoreAllowed: booking.encore_allowed,
+        encoreSuggestions: booking.encore_suggestions
       };
 
       // API endpoint for the form to communicate with
@@ -153,12 +154,45 @@ export function setupCollaborativeFormRoutes(app: Express) {
         return res.status(404).json({ error: 'Associated booking not found' });
       }
 
-      // Update booking with collaborative data
+      // Update booking with collaborative data - map camelCase to snake_case for database
+      const dbUpdateData: any = {
+        venue_contact: updateData.venueContact,
+        sound_tech_contact: updateData.soundTechContact,
+        stage_size: updateData.stageSize,
+        power_equipment: updateData.powerEquipment,
+        style_mood: updateData.styleMood,
+        must_play_songs: updateData.mustPlaySongs,
+        avoid_songs: updateData.avoidSongs,
+        set_order: updateData.setOrder,
+        first_dance_song: updateData.firstDanceSong,
+        processional_song: updateData.processionalSong,
+        signing_register_song: updateData.signingRegisterSong,
+        recessional_song: updateData.recessionalSong,
+        special_dedications: updateData.specialDedications,
+        guest_announcements: updateData.guestAnnouncements,
+        load_in_info: updateData.loadInInfo,
+        sound_check_time: updateData.soundCheckTime,
+        weather_contingency: updateData.weatherContingency,
+        parking_permit_required: updateData.parkingPermitRequired,
+        meal_provided: updateData.mealProvided,
+        dietary_requirements: updateData.dietaryRequirements,
+        shared_notes: updateData.sharedNotes,
+        reference_tracks: updateData.referenceTracks,
+        photo_permission: updateData.photoPermission,
+        encore_allowed: updateData.encoreAllowed,
+        encore_suggestions: updateData.encoreSuggestions,
+        updatedAt: new Date()
+      };
+
+      // Remove undefined values but keep empty strings and false values
+      Object.keys(dbUpdateData).forEach(key => {
+        if (dbUpdateData[key] === undefined) {
+          delete dbUpdateData[key];
+        }
+      });
+
       await db.update(bookings)
-        .set({
-          ...updateData,
-          updatedAt: new Date()
-        })
+        .set(dbUpdateData)
         .where(eq(bookings.id, targetBookingId));
 
       console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);

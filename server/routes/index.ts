@@ -14,6 +14,7 @@ import { registerComplianceRoutes } from "./compliance-routes";
 import { registerHealthRoutes } from "./health-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
+import { setupRegeneratePortalRoutes } from "./regenerate-portal";
 import { registerMapsRoutes } from "./maps-routes";
 import { setupWhat3WordsRoutes } from "./what3words-routes";
 import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
@@ -55,6 +56,7 @@ export async function registerRoutes(app: Express) {
   registerUnparseableRoutes(app);
   registerClientPortalRoutes(app);
   setupCollaborativeFormRoutes(app);
+  setupRegeneratePortalRoutes(app);
   
   // Register isolated routes for cloud compatibility  
   registerIsolatedRoutes(app);
