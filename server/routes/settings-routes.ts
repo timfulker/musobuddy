@@ -1106,6 +1106,11 @@ This email was sent via MusoBuddy Professional Music Management Platform
         try {
           const booking = await storage.getBooking(bookingId);
           if (booking && booking.userId === userId) {
+            // SIMPLIFIED: Always combine travel expense with performance fee
+            const performanceFee = Number(booking.fee) || 0;
+            const travelExpense = Number(travelExpense || booking.travelExpense) || 0;
+            const totalFee = performanceFee + travelExpense;
+            
             bookingContext = {
               clientName: booking.clientName,
               eventDate: booking.eventDate,
@@ -1114,8 +1119,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
               venue: booking.venue,
               eventType: booking.eventType,
               gigType: booking.gigType,
-              fee: booking.fee,
-              travelExpense: travelExpense || booking.travelExpense,
+              fee: totalFee, // Always pass combined total to AI
+              travelExpense: 0, // No separate travel expense - included in fee
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
               equipment: (booking as any).equipment || '',

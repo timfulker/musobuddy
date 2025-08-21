@@ -53,7 +53,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms. Enhanced responsive design adapts to mobile, hiding complex features on smaller screens. Calendar luminance issues resolved with proper CSS variable usage for theme compatibility.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -62,7 +62,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage. AI response generator pricing calculations now use simplified travel expense integration. Travel expenses are always included in the performance fee as a single amount, eliminating calculation confusion. AI responses no longer mention "25% deposits" unless specifically requested by clients.
 - **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices

@@ -154,11 +154,13 @@ export class AIResponseGenerator {
       if (userSettings?.aiPricingEnabled !== false) {
         const BHR = Number(userSettings?.baseHourlyRate) || 125;
         const AHR = Number(userSettings?.additionalHourRate) || 60;
-        const T = Number(bookingContext?.travelExpense) || 0;
         
-        const twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + T;
-        const threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + T;
-        const fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + T;
+        // SIMPLIFIED: Travel is always included in bookingContext.fee, don't add separately
+        const travelExpense = 0; // Travel already included in booking fee total
+        
+        const twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + travelExpense;
+        const threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + travelExpense;
+        const fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + travelExpense;
         
         console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
           correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
@@ -377,6 +379,9 @@ CRITICAL PRICING RULES:
 - Present pricing confidently as the professional standard for the services offered
 - CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
 - Use simple text formatting for pricing: "2 hours saxophone: £290" without asterisks, bold markup, or excessive punctuation
+- PAYMENT TERMS: Standard payment terms are full payment on completion of performance (NOT deposits or advance payments)
+- DO NOT mention deposits, advance payments, or percentages (e.g., "25% deposit") unless specifically requested by client
+- Standard business practice: payment in full on day of performance via cash or bank transfer
 ${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
 ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
 PRICING POLICY:
@@ -493,13 +498,14 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
-    // Add travel expense instruction if provided, but never mention travel to client
-    const travelInstruction = context.travelExpense 
-      ? `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`
+    // SIMPLIFIED: No travel expense instructions needed - fee already includes everything
+    // Travel expenses are now always included in the performance fee display
+    const simplifiedInstruction = context.fee 
+      ? `\n\nPRICING INSTRUCTION: Use £${context.fee} as the base fee for this booking. This amount already includes all costs. Present as clean total prices without breakdown.`
       : '';
 
     return details.length > 0 
-      ? `BOOKING DETAILS:\n${details.join('\n')}${travelInstruction}`
+      ? `BOOKING DETAILS:\n${details.join('\n')}${simplifiedInstruction}`
       : "No specific booking details provided.";
   }
 

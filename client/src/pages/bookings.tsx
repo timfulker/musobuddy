@@ -2689,7 +2689,7 @@ export default function UnifiedBookings() {
                                 );
                               })}
                               {day.events.length > 4 && (
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                   +{day.events.length - 4} more
                                 </div>
                               )}
@@ -2872,7 +2872,7 @@ export default function UnifiedBookings() {
                                   );
                                 })}
                                 {day.events.length > 2 && (
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-muted-foreground">
                                     +{day.events.length - 2} more
                                   </div>
                                 )}
@@ -2906,7 +2906,7 @@ export default function UnifiedBookings() {
                               <div className="text-2xl font-bold text-gray-700 mb-2">
                                 {month.bookingCount}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 booking{month.bookingCount !== 1 ? 's' : ''}
                               </div>
                               {month.bookingCount > 0 && (
@@ -2920,7 +2920,7 @@ export default function UnifiedBookings() {
                                     </div>
                                   ))}
                                   {month.bookingCount > 3 && (
-                                    <div className="text-xs text-gray-500">
+                                    <div className="text-xs text-muted-foreground">
                                       +{month.bookingCount - 3} more
                                     </div>
                                   )}
