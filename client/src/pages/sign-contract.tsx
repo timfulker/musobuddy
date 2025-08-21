@@ -130,10 +130,30 @@ export default function SignContract() {
       return;
     }
 
-    // Check for missing required client-fillable fields
+    // CRITICAL: Validate required fields (phone and address are always mandatory)
+    const finalPhone = clientPhone.trim() || contract?.clientPhone || '';
+    const finalAddress = clientAddress.trim() || contract?.clientAddress || '';
+    
+    if (!finalPhone || finalPhone === 'To be provided') {
+      toast({
+        title: "Error",
+        description: "Phone number is required to sign the contract",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!finalAddress || finalAddress === 'To be provided') {
+      toast({
+        title: "Error",
+        description: "Address is required to sign the contract",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check for any additional missing client-fillable fields
     const requiredMissingFields = missingFields.filter(field => {
-      if (field === 'clientPhone' && !clientPhone.trim()) return true;
-      if (field === 'clientAddress' && !clientAddress.trim()) return true;
       if (field === 'venueAddress' && !venueAddress.trim()) return true;
       return false;
     });
@@ -227,12 +247,16 @@ export default function SignContract() {
 
       console.log('🔥 FRONTEND: Contract signing completed successfully - staying on page');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing contract:", error);
-      setError("Failed to sign contract. Please try again.");
+      
+      // Show specific error message from backend
+      const errorMessage = error.message || "Failed to sign contract. Please try again.";
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "Failed to sign contract. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -468,17 +492,18 @@ export default function SignContract() {
                   <CardTitle>Sign Contract</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                {/* Client-fillable fields section */}
-                {missingFields.length > 0 && (
-                  <div className="space-y-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
-                    <h3 className="font-semibold text-blue-900 text-sm">
-                      Please complete your information:
+                {/* Client-fillable fields section - ALWAYS show if empty or "To be provided" */}
+                {((!contract.clientPhone || contract.clientPhone === 'To be provided' || 
+                   !contract.clientAddress || contract.clientAddress === 'To be provided')) && (
+                  <div className="space-y-4 p-4 border border-red-200 rounded-lg bg-red-50">
+                    <h3 className="font-semibold text-red-900 text-sm">
+                      Required Information (must be completed to sign):
                     </h3>
                     
-                    {missingFields.includes('clientPhone') && (
+                    {(!contract.clientPhone || contract.clientPhone === 'To be provided') && (
                       <div>
-                        <Label htmlFor="clientPhone" className="text-blue-700 font-medium">
-                          Phone Number
+                        <Label htmlFor="clientPhone" className="text-red-700 font-medium">
+                          Phone Number <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="clientPhone"
@@ -487,14 +512,15 @@ export default function SignContract() {
                           onChange={(e) => setClientPhone(e.target.value)}
                           placeholder="07123 456789"
                           className="mt-1"
+                          required
                         />
                       </div>
                     )}
                     
-                    {missingFields.includes('clientAddress') && (
+                    {(!contract.clientAddress || contract.clientAddress === 'To be provided') && (
                       <div>
-                        <Label htmlFor="clientAddress" className="text-blue-700 font-medium">
-                          Address
+                        <Label htmlFor="clientAddress" className="text-red-700 font-medium">
+                          Address <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="clientAddress"
@@ -503,6 +529,7 @@ export default function SignContract() {
                           onChange={(e) => setClientAddress(e.target.value)}
                           placeholder="123 Main Street, London, SW1A 1AA"
                           className="mt-1"
+                          required
                         />
                       </div>
                     )}

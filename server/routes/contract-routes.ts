@@ -549,11 +549,31 @@ export function registerContractRoutes(app: Express) {
         return res.status(400).json({ error: 'Missing client signature' });
       }
 
+      // CRITICAL: Validate required fields before signing
+      const finalClientPhone = clientPhone || contract.clientPhone;
+      const finalClientAddress = clientAddress || contract.clientAddress;
+      
+      if (!finalClientPhone || finalClientPhone === '' || finalClientPhone === 'To be provided') {
+        console.log('❌ [CONTRACT-SIGN] Missing required field: clientPhone');
+        return res.status(400).json({ 
+          error: 'Phone number is required to sign the contract',
+          field: 'clientPhone'
+        });
+      }
+      
+      if (!finalClientAddress || finalClientAddress === '' || finalClientAddress === 'To be provided') {
+        console.log('❌ [CONTRACT-SIGN] Missing required field: clientAddress');
+        return res.status(400).json({ 
+          error: 'Address is required to sign the contract',
+          field: 'clientAddress'
+        });
+      }
+
       const signatureData: any = {
         status: 'signed' as const,
         clientSignature: clientSignature || req.body.signatureName,
-        clientPhone: clientPhone || contract.clientPhone,
-        clientAddress: clientAddress || contract.clientAddress,
+        clientPhone: finalClientPhone,
+        clientAddress: finalClientAddress,
         venueAddress: venueAddress || contract.venueAddress,
         clientIpAddress: clientIP || req.ip || req.connection?.remoteAddress || 'Unknown',
         signedAt: new Date(),
