@@ -149,6 +149,10 @@ export default function Contracts() {
   // The form should be filled correctly when loading from bookings/contracts
   // Manual entry should work as expected based on what the user enters
 
+  // State to store dynamic time options from booking data
+  const [dynamicStartTimes, setDynamicStartTimes] = useState<string[]>([]);
+  const [dynamicEndTimes, setDynamicEndTimes] = useState<string[]>([]);
+
   // Check URL params to auto-open form dialog and auto-fill with booking/enquiry data
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -213,8 +217,30 @@ export default function Contracts() {
               form.setValue('venue', booking.venue || '');
               form.setValue('venueAddress', booking.venueAddress || '');
               form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
-              form.setValue('eventTime', booking.eventTime || '');
-              form.setValue('eventEndTime', booking.eventEndTime || '');
+              // Handle time fields with dynamic options
+              const startTime = booking.eventTime || '';
+              const endTime = booking.eventEndTime || '';
+              
+              form.setValue('eventTime', startTime);
+              form.setValue('eventEndTime', endTime);
+              
+              // Add booking-specific times to dynamic options if they don't exist in predefined options
+              const predefinedStartTimes = ['TBC', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'];
+              const predefinedEndTimes = ['TBC', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '00:00'];
+              
+              const additionalStartTimes = [];
+              const additionalEndTimes = [];
+              
+              if (startTime && !predefinedStartTimes.includes(startTime)) {
+                additionalStartTimes.push(startTime);
+              }
+              
+              if (endTime && !predefinedEndTimes.includes(endTime)) {
+                additionalEndTimes.push(endTime);
+              }
+              
+              setDynamicStartTimes(additionalStartTimes);
+              setDynamicEndTimes(additionalEndTimes);
               form.setValue('performanceDuration', booking.performanceDuration || '');
               const baseFee = booking.fee || '';
               const travelFee = booking.travelExpense || '';
@@ -1075,6 +1101,12 @@ export default function Contracts() {
                                   </FormControl>
                                   <SelectContent className="max-h-60">
                                     <SelectItem value="TBC">TBC (To Be Confirmed)</SelectItem>
+                                    {/* Dynamic times from booking data */}
+                                    {dynamicStartTimes.map(time => (
+                                      <SelectItem key={`dynamic-${time}`} value={time}>
+                                        {time} (From Booking)
+                                      </SelectItem>
+                                    ))}
                                     <SelectItem value="10:00">10:00 AM</SelectItem>
                                     <SelectItem value="10:30">10:30 AM</SelectItem>
                                     <SelectItem value="11:00">11:00 AM</SelectItem>
@@ -1120,6 +1152,12 @@ export default function Contracts() {
                                   </FormControl>
                                   <SelectContent className="max-h-60">
                                     <SelectItem value="TBC">TBC (To Be Confirmed)</SelectItem>
+                                    {/* Dynamic times from booking data */}
+                                    {dynamicEndTimes.map(time => (
+                                      <SelectItem key={`dynamic-end-${time}`} value={time}>
+                                        {time} (From Booking)
+                                      </SelectItem>
+                                    ))}
                                     <SelectItem value="11:00">11:00 AM</SelectItem>
                                     <SelectItem value="11:30">11:30 AM</SelectItem>
                                     <SelectItem value="12:00">12:00 PM</SelectItem>
