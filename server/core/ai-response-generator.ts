@@ -225,6 +225,8 @@ export class AIResponseGenerator {
         throw new Error('OpenAI API key is invalid. Please check your API key configuration.');
       } else if (error.status === 429) {
         throw new Error('OpenAI API rate limit exceeded. Please try again in a moment.');
+      } else if (error.status === 529 || (error.error?.error?.type === 'overloaded_error')) {
+        throw new Error('AI service temporarily overloaded (529). This usually resolves quickly - please try again in a moment.');
       } else if (error.status === 502 || error.status === 503) {
         throw new Error('OpenAI API is temporarily unavailable. Please try again later.');
       } else if (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
