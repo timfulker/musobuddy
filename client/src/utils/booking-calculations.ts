@@ -30,7 +30,7 @@ export function calculateBookingDisplayTotal(
 
 /**
  * Get the display text for booking amount - SIMPLIFIED
- * Always show combined total with travel included
+ * Always show combined total - user decides manually if they want to mention travel breakdown
  */
 export function getBookingAmountDisplayText(
   booking: Booking,
@@ -39,11 +39,12 @@ export function getBookingAmountDisplayText(
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Always show combined total with optional travel subtitle
+  // Always show combined total - no automatic travel breakdown subtitle
+  // Users can manually explain travel breakdown to clients if they choose
   const total = Number(fee) + Number(travelExpenses);
   return {
     main: `£${total.toFixed(2)}`,
-    subtitle: travelExpenses > 0 ? `(inc. £${Number(travelExpenses).toFixed(2)} travel)` : undefined
+    subtitle: undefined // Users control travel breakdown communication manually
   };
 }
 
