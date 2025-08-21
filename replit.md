@@ -18,12 +18,12 @@ Invoice CC functionality: CC recipients are supported for invoice emails only (c
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
-AI Usage Model: Removed all AI usage limitations and artificial premium tiers as "making a rod for our own back" since AI costs are minimal (£0.74/month even for super-heavy users with 50 bookings). System now provides unlimited AI-powered email parsing and response generation for all users.
+AI Usage Model: Removed all AI usage limitations and artificial premium tiers as "making a rod for our own own back" since AI costs are minimal (£0.74/month even for super-heavy users with 50 bookings). System now provides unlimited AI-powered email parsing and response generation for all users.
 Google Calendar Sync Strategy: Implemented ID-based sync approach to minimize AI costs. Every MusoBuddy booking synced to Google Calendar gets permanent ID link embedded in event metadata. Future syncs use ID links for direct updates (zero AI cost). AI only used optionally for linking pre-existing Google Calendar events without MusoBuddy IDs.
 Google Calendar field mapping: Event titles display as "Client Name - Event Type" format (e.g., "Susan Davis - Wedding") per user preference, providing clear identification of both client and event type in calendar view.
 Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
-Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on explicit user action. No automatic searches occur when opening booking forms or typing in venue name field. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
+Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on explicit user action. No automatic searches occur when opening booking forms or typing in venue name. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted, instead of just going to generic bookings page.
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
@@ -41,7 +41,8 @@ Conversation to booking navigation: "Edit Booking" button added to conversation 
 Travel expense integration: User-configurable setting to include travel expenses in performance fee display vs. showing as separate line items. Default behavior combines travel expenses with performance fee (e.g., £260 + £50 = £310 "inc. travel"), while alternative setting shows separate amounts (£260 + £50 travel). This ensures AI calculations, booking card displays, and contract generation remain synchronized regardless of user preference. Client-facing fee displays (emails and contract headers) always show the total combined amount (£310) to avoid appearing "clandestine" about fees. Breakdown details only appear within contract body when appropriate.
 PDF contract page break handling: Enhanced CSS rules to prevent venue field titles and values from being separated across page breaks. Venue and venue address fields are grouped together with `break-inside: avoid` and `page-break-inside: avoid` CSS properties. If space is insufficient, the entire venue details group moves to the next page as a unit, maintaining professional layout integrity.
 Encore booking management: Added toggle switch for Encore bookings on both dashboard and bookings page that clearly shows current application status and allows toggling between "not applied" (new status) and "applied" (in_progress status). This replaces the confusing "Applied" button that looked identical before and after clicking. Toggle switch prevents dashboard clutter from applied-for jobs while maintaining booking records and providing clear visual feedback.
-Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings take precedence over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly.
+Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings take precedence over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly. Implemented cache-busting API calls and complete form reset to prevent stale fee data from appearing in contract creation forms.
+User-customizable contract terms: Contract Terms & Conditions are now fully editable at the user level through Settings page. Users can replace the default professional terms with their own custom terms and conditions, which will appear in all generated contract PDFs. The terms support line breaks for proper formatting and can be toggled on/off via the themeShowTerms setting. If no custom terms are provided, the system uses comprehensive default terms covering payment, cancellation, performance standards, and legal framework.
 
 ## System Architecture
 
@@ -50,17 +51,16 @@ Contract fee data priority: Booking form data always overrides travel expense se
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, featuring WCAG 2.0 luminance for text contrast and a global luminance-aware styling system.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming with consistent logo branding. Default booking view is list-based, with calendar as an option. Onboarding wizard is optional and dismissible. A permanent map display on booking forms shows venue locations.
+- **UI/UX Decisions**: QR code generation, widget URL creation, R2 storage integration, dynamic PDF theming with consistent logo branding. Default booking view is list-based, with calendar as an option. Onboarding wizard is optional and dismissible. A permanent map display on booking forms shows venue locations. Enhanced responsive design for mobile adaptation, hiding complex features on mobile.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Core Structure**: Modular route architecture.
 - **Authentication**: JWT-based system with SMS/email/phone verification and secure email-based password reset.
 - **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, parsing, and template management, supporting multiple CC recipients for invoices.
+- **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
 - **AI Integration**: Dual AI models: GPT-5 for email parsing and venue extraction; Claude Sonnet 4 for response generation. All AI usage is unlimited.
-- **Google Maps Integration**: Uses client-side Maps API for venue location display and embedded maps in booking summary gig sheets.
 - **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
@@ -68,7 +68,7 @@ Contract fee data priority: Booking form data always overrides travel expense se
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words). Supports "TBC" times and "Actual Performance Time". Features individual field locking and status validation.
 - **Document Management**: Multi-document upload system per booking with categorization, secure R2 cloud storage, and automatic counting.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, and legally compliant amendment system.
-- **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs.
+- **Invoice Management**: Professional invoice generation, payment tracking (manual "Mark as Paid"), overdue monitoring. Invoice security via random 16-character tokens in URLs. Supports multiple CC recipients for invoice emails.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts, and automated sharing.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated systems.

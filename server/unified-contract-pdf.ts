@@ -848,11 +848,21 @@ function generateUnifiedContractHTML(
             </div>
             ` : ''}
 
-            <!-- Standard Terms -->
+            ${userSettings?.themeShowTerms !== false ? `
+            <!-- Terms & Conditions -->
             <div class="section">
                 <h2 class="section-title">Terms & Conditions</h2>
                 
-                <!-- Professional Standards - What they're getting -->
+                ${userSettings?.defaultTerms && userSettings.defaultTerms.trim() ? 
+                  // Use custom user terms if provided
+                  `<div class="terms-section">
+                    <div class="requirements-box">
+                        ${userSettings.defaultTerms.split('\n').map(line => line.trim() ? `${line}<br>` : '<br>').join('')}
+                    </div>
+                </div>`
+                  :
+                  // Use default terms if no custom terms provided
+                  `<!-- Professional Standards - What they're getting -->
                 <div class="terms-section">
                     <div class="terms-subtitle">Professional Performance Standards</div>
                     <ul class="terms-list">
@@ -922,7 +932,10 @@ function generateUnifiedContractHTML(
                         <li>This contract constitutes the entire agreement between parties</li>
                         <li>Both parties confirm they have authority to enter this agreement</li>
                     </ul>
-                </div>
+                </div>`
+                }
+            </div>
+            ` : ''}
             </div>
 
             <!-- Signature Section -->

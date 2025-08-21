@@ -1043,10 +1043,30 @@ export default function Settings() {
                     name="defaultTerms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Default Terms</FormLabel>
+                        <FormLabel className="text-sm font-medium flex items-center">
+                          Contract Terms & Conditions
+                          <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                            Contract PDF
+                          </span>
+                        </FormLabel>
                         <FormControl>
-                          <Textarea {...field} placeholder="Payment due within 30 days" rows={3} />
+                          <Textarea 
+                            {...field} 
+                            placeholder={`Enter your custom contract terms and conditions here...
+
+Example:
+• Payment due within 30 days of performance
+• 50% deposit required to secure booking
+• Cancellations within 7 days forfeit deposit
+• All equipment remains property of performer
+• Client must provide adequate power supply`} 
+                            rows={8} 
+                            className="font-mono text-sm"
+                          />
                         </FormControl>
+                        <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                          These terms will appear in all generated contracts. Leave empty to use default professional terms. Supports line breaks for formatting.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
