@@ -246,6 +246,14 @@ class EnhancedEmailQueue {
    * Add email to per-user processing queue with duplicate detection
    */
   async addEmail(requestData: any): Promise<{ jobId: string; queuePosition: number; isDuplicate?: boolean; userId?: string }> {
+    const fromField = requestData.From || requestData.from || requestData.sender || '';
+    const subjectField = requestData.Subject || requestData.subject || '';
+    console.log(`🎯 [JOSEPH-DEBUG] EMAIL QUEUE addEmail() called:`, {
+      from: fromField,
+      subject: subjectField,
+      recipient: requestData.recipient || requestData.To || ''
+    });
+    
     const jobId = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const duplicateHash = this.generateDuplicateHash(requestData);
     
@@ -463,7 +471,9 @@ class EnhancedEmailQueue {
           source: 'email',
           fromContact: `${clientName} <${clientEmail}>`,
           subject: cleanedSubject,
-          content: `${reason}${errorDetails ? `: ${errorDetails}` : ''}\n\n---\nOriginal message:\n${bodyField || 'No message content'}`,
+          rawMessage: `${reason}${errorDetails ? `: ${errorDetails}` : ''}\n\n---\nOriginal message:\n${bodyField || 'No message content'}`,
+          parsingErrorDetails: reason,
+          messageType: 'follow_up',
           createdAt: new Date()
         });
         

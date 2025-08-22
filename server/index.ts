@@ -594,6 +594,17 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
 
     // Process as new inquiry (no booking ID detected)
     logWebhookActivity(`[${webhookId}] Processing as new inquiry - no booking ID detected`);
+    
+    // JOSEPH DEBUG: Log exactly what's being queued
+    console.log(`🎯 [JOSEPH-DEBUG] ABOUT TO QUEUE EMAIL:`, {
+      from: fromField,
+      subject: subjectField,
+      hasBodyPlain: !!(emailData['body-plain']),
+      hasBodyHtml: !!(emailData['body-html']),
+      bodyLength: (emailData['body-plain'] || '').length,
+      isEncoreFollowup: isEncoreFollowup
+    });
+    
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
     
     try {
@@ -613,6 +624,34 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       
     } catch (queueError: any) {
       console.error(`❌ [${webhookId}] QUEUE ERROR:`, queueError);
+      
+      // FAILSAFE: If queue fails, force save to unparseable
+      console.log(`🆘 [${webhookId}] QUEUE FAILED - SAVING TO UNPARSEABLE AS FAILSAFE`);
+      try {
+        const { storage } = await import('./core/storage');
+        const recipient = emailData.recipient || emailData.To || '';
+        const recipientMatch = recipient.match(/([^@]+)@/);
+        const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        
+        if (emailPrefix) {
+          const user = await storage.getUserByEmailPrefix(emailPrefix);
+          if (user) {
+            await storage.createUnparseableMessage({
+              userId: user.id,
+              source: 'email',
+              fromContact: fromField,
+              subject: subjectField,
+              rawMessage: emailData['body-plain'] || emailData['body-html'] || 'No content',
+              parsingErrorDetails: `Queue failed: ${queueError.message}`,
+              messageType: 'queue_failure',
+              createdAt: new Date()
+            });
+            console.log(`🆘 [${webhookId}] FAILSAFE SAVE SUCCESSFUL - email in unparseable`);
+          }
+        }
+      } catch (failsafeError: any) {
+        console.error(`💀 [${webhookId}] TOTAL FAILURE:`, failsafeError.message);
+      }
       logWebhookActivity(`[${webhookId}] Queue processing failed`, { error: queueError.message });
       
       // For Encore emails that fail queue processing, log specifically
