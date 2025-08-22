@@ -137,6 +137,11 @@ function logReplyWebhookActivity(message: string, data?: any) {
 
 // Endpoint to view webhook logs
 app.get('/api/webhook/logs', (req, res) => {
+  const encoreLogs = webhookLogs.filter(log => 
+    log.message.toLowerCase().includes('encore') || 
+    log.data?.toLowerCase()?.includes('encore')
+  );
+  
   res.json({
     mainWebhook: {
       logs: webhookLogs.slice(-20), // Last 20 logs
@@ -145,22 +150,114 @@ app.get('/api/webhook/logs', (req, res) => {
     replyWebhook: {
       logs: replyWebhookLogs.slice(-20), // Last 20 logs
       total: replyWebhookLogs.length
+    },
+    encoreSpecific: {
+      logs: encoreLogs.slice(-10), // Last 10 Encore logs
+      total: encoreLogs.length
+    },
+    summary: {
+      totalWebhooks: webhookLogs.length,
+      encoreEmails: encoreLogs.length,
+      lastProcessed: webhookLogs.length > 0 ? webhookLogs[webhookLogs.length - 1].timestamp : 'None'
     }
   });
 });
 
+// DEBUG: Special endpoint to test Encore email processing
+app.post('/api/debug/encore-email', async (req, res) => {
+  try {
+    console.log('🧪 DEBUG: Testing Encore email processing simulation');
+    
+    const testEmailData = {
+      From: req.body.from || 'Joseph <no-reply-messages@encoremusicians.com>',
+      To: req.body.to || 'timfulkermusic@enquiries.musobuddy.com',
+      Subject: req.body.subject || 'Test Encore Follow-up',
+      'body-plain': req.body.body || 'Congratulations! You have been selected for this booking.',
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('🧪 Test email data:', testEmailData);
+    
+    // Simulate the same processing as the webhook
+    const fromField = testEmailData.From;
+    const toField = testEmailData.To;
+    const subjectField = testEmailData.Subject;
+    const bodyField = testEmailData['body-plain'];
+    
+    const isEncoreFollowup = (
+      fromField.toLowerCase().includes('encore') && 
+      !subjectField.toLowerCase().includes('job alert') &&
+      !bodyField.toLowerCase().includes('apply now') &&
+      (bodyField.toLowerCase().includes('congratulations') ||
+       bodyField.toLowerCase().includes('you have been selected'))
+    );
+    
+    console.log('🧪 Classification result:', { isEncoreFollowup });
+    
+    res.json({
+      success: true,
+      testData: testEmailData,
+      classification: {
+        isFromEncore: fromField.toLowerCase().includes('encore'),
+        isJobAlert: subjectField.toLowerCase().includes('job alert'),
+        isEncoreFollowup: isEncoreFollowup
+      },
+      message: 'Debug test completed - check server logs for detailed processing'
+    });
+    
+  } catch (error: any) {
+    console.error('🧪 DEBUG ERROR:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Enhanced Mailgun webhook handler with multipart support
 app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
-  logWebhookActivity('Received Mailgun webhook', { keys: Object.keys(req.body || {}) });
+  const webhookId = `webhook_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  
+  // ENHANCED LOGGING: Track ALL webhook attempts
+  console.log(`🔍 [${webhookId}] WEBHOOK RECEIVED`);
+  console.log(`🔍 [${webhookId}] Headers:`, JSON.stringify(req.headers, null, 2));
+  console.log(`🔍 [${webhookId}] Body keys:`, Object.keys(req.body || {}));
+  console.log(`🔍 [${webhookId}] Full body:`, JSON.stringify(req.body, null, 2).substring(0, 500));
+  
+  logWebhookActivity(`[${webhookId}] Received Mailgun webhook`, { 
+    keys: Object.keys(req.body || {}),
+    userAgent: req.headers['user-agent'],
+    contentType: req.headers['content-type']
+  });
   
   try {
     const webhookData = req.body;
     
+    // ENHANCED: Log sender and recipient before duplicate check
+    const fromField = webhookData.sender || webhookData.From || webhookData.from || 'UNKNOWN_SENDER';
+    const toField = webhookData.recipient || webhookData.To || webhookData.to || 'UNKNOWN_RECIPIENT';
+    const subjectField = webhookData.subject || webhookData.Subject || 'UNKNOWN_SUBJECT';
+    
+    console.log(`🔍 [${webhookId}] FROM: ${fromField}`);
+    console.log(`🔍 [${webhookId}] TO: ${toField}`);
+    console.log(`🔍 [${webhookId}] SUBJECT: ${subjectField}`);
+    
+    // SPECIAL: Check for Encore emails specifically
+    if (fromField.toLowerCase().includes('encore')) {
+      console.log(`🎵 [${webhookId}] ENCORE EMAIL DETECTED!`);
+      logWebhookActivity(`[${webhookId}] ENCORE EMAIL PROCESSING`, {
+        from: fromField,
+        to: toField,
+        subject: subjectField,
+        isJobAlert: subjectField.toLowerCase().includes('job alert')
+      });
+    }
+    
     // Check for duplicate email processing
     if (isDuplicateEmail(webhookData)) {
+      console.log(`🔄 [${webhookId}] DUPLICATE DETECTED - but still logging for analysis`);
+      logWebhookActivity(`[${webhookId}] DUPLICATE EMAIL`, { from: fromField, subject: subjectField });
       return res.status(200).json({ 
         status: 'duplicate', 
-        message: 'Email already processed, skipping to prevent duplication' 
+        message: 'Email already processed, skipping to prevent duplication',
+        webhookId: webhookId
       });
     }
     
@@ -420,16 +517,51 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
     }
 
     // Process as new inquiry (no booking ID detected)
-    logWebhookActivity('Processing as new inquiry - no booking ID detected');
+    logWebhookActivity(`[${webhookId}] Processing as new inquiry - no booking ID detected`);
     const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-    await enhancedEmailQueue.addEmail(emailData);
     
-    logWebhookActivity('Email added to queue successfully');
-    res.status(200).json({ status: 'ok' });
+    try {
+      await enhancedEmailQueue.addEmail(emailData);
+      logWebhookActivity(`[${webhookId}] Email added to queue successfully`);
+      
+      // SPECIAL: Final check for Encore emails
+      if (fromField.toLowerCase().includes('encore')) {
+        console.log(`🎵 [${webhookId}] ENCORE EMAIL QUEUED SUCCESSFULLY`);
+      }
+      
+      res.status(200).json({ 
+        status: 'ok', 
+        webhookId: webhookId,
+        processedAs: 'new_inquiry'
+      });
+      
+    } catch (queueError: any) {
+      console.error(`❌ [${webhookId}] QUEUE ERROR:`, queueError);
+      logWebhookActivity(`[${webhookId}] Queue processing failed`, { error: queueError.message });
+      
+      // For Encore emails that fail queue processing, log specifically
+      if (fromField.toLowerCase().includes('encore')) {
+        console.error(`🎵 [${webhookId}] ENCORE EMAIL FAILED QUEUE PROCESSING:`, {
+          error: queueError.message,
+          from: fromField,
+          to: toField,
+          subject: subjectField
+        });
+      }
+      
+      // Still return 200 to prevent Mailgun retries
+      res.status(200).json({ 
+        status: 'error', 
+        webhookId: webhookId,
+        message: 'Queue processing failed but webhook acknowledged',
+        error: queueError.message 
+      });
+    }
     
   } catch (error: any) {
-    console.error('📧 WEBHOOK: Error processing webhook:', error);
-    console.error('📧 WEBHOOK: Error stack:', error.stack);
+    console.error(`❌ [${webhookId}] WEBHOOK ERROR:`, error);
+    console.error(`❌ [${webhookId}] WEBHOOK ERROR STACK:`, error.stack);
+    logWebhookActivity(`[${webhookId}] Webhook processing failed`, { error: error.message });
     
     // Return 200 anyway to prevent Mailgun retries that could duplicate emails
     res.status(200).json({ 
