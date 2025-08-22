@@ -23,6 +23,7 @@ import { setupAuthRoutes } from "./auth-clean";
 import { registerNotificationRoutes } from "./notification-routes";
 import { messageNotificationRoutes } from "./message-notification-routes";
 import { setupCommunicationRoutes } from "./communication-routes";
+import { setupBookingCollaborationRoutes } from "./booking-collaboration-routes";
 import bookingDocumentRoutes from "./booking-document-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
 // AI token routes removed - unlimited AI usage for all users
@@ -84,6 +85,9 @@ export async function registerRoutes(app: Express) {
   
   // Register communication history routes
   setupCommunicationRoutes(app);
+  
+  // Register booking collaboration routes
+  setupBookingCollaborationRoutes(app);
   
   // Register booking document routes
   app.use(bookingDocumentRoutes);

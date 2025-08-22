@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload, MessageSquare, MessageCircle, MoreHorizontal, ThumbsUp, DollarSign, FileText, Shield, XCircle } from "lucide-react";
+import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload, MessageSquare, MessageCircle, MoreHorizontal, ThumbsUp, DollarSign, FileText, Shield, XCircle, Users, Music } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -84,15 +84,28 @@ const fullBookingSchema = z.object({
 
 type FullBookingFormData = z.infer<typeof fullBookingSchema>;
 
-export default function NewBookingPage() {
+interface NewBookingProps {
+  clientMode?: boolean;
+  collaborationToken?: string;
+  editBookingId?: number;
+  clientInfo?: any;
+}
+
+export default function NewBookingPage({ 
+  clientMode = false, 
+  collaborationToken, 
+  editBookingId: propEditBookingId,
+  clientInfo 
+}: NewBookingProps = {}) {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const { gigTypes } = useGigTypes();
   
-  // Check if we're editing an existing booking
+  // Check if we're editing an existing booking - support both URL param and prop
   const urlParams = new URLSearchParams(window.location.search);
-  const editBookingId = urlParams.get('edit');
+  const urlEditBookingId = urlParams.get('edit');
+  const editBookingId = propEditBookingId?.toString() || urlEditBookingId;
   const isEditMode = !!editBookingId;
   const [mileageData, setMileageData] = useState<{
     distance: string | null;

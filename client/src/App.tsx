@@ -48,6 +48,7 @@ import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
 import GoogleCalendarCallback from "@/pages/google-calendar-callback";
 import OnboardingWrapper from "@/components/onboarding-wrapper";
 import BookingSummary from "@/pages/booking-summary";
+import BookingCollaborate from "@/pages/booking-collaborate";
 
 
 import { useEffect, lazy } from "react";
@@ -156,6 +157,7 @@ function Router() {
       <Route path="/messages" component={Messages} />
       <Route path="/conversation/:bookingId" component={Conversation} />
       <Route path="/booking-summary/:bookingId" component={BookingSummary} />
+      <Route path="/booking/:bookingId/collaborate" component={BookingCollaborate} />
       <Route path="/unparseable-messages" component={UnparseableMessages} />
       <Route path="/user-guide" component={UserGuide} />
       <Route path="/system-health" component={SystemHealth} />
