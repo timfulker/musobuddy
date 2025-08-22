@@ -828,10 +828,17 @@ export default function Messages() {
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium">{booking.clientName || 'No name'}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{booking.clientName || 'No name'}</p>
+                              <span className="text-xs bg-gray-200 px-2 py-1 rounded">ID: {booking.id}</span>
+                            </div>
                             <p className="text-sm text-gray-600">{booking.venue || 'No venue'}</p>
                             <p className="text-sm text-gray-500">
                               {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'} • {booking.eventType || 'No event type'}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Created: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() + ' ' + new Date(booking.createdAt).toLocaleTimeString() : 'Unknown'} 
+                              {booking.clientEmail && ` • ${booking.clientEmail}`}
                             </p>
                           </div>
                           <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
