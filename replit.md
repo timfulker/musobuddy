@@ -45,6 +45,7 @@ Contract fee data priority: Booking form data always overrides travel expense se
 User-customizable contract terms: Contract Terms & Conditions are now fully editable at the user level through Settings page. Users can replace the default professional terms with their own custom terms and conditions, which will appear in all generated contract PDFs. The terms support line breaks for proper formatting and can be toggled on/off via the themeShowTerms setting. If no custom terms are provided, the system uses comprehensive default terms covering payment, cancellation, performance standards, and legal framework.
 Time format standardization: Both booking form and contract form now use identical 24-hour time format (input type="time") ensuring precise time auto-population. When contracts are generated from bookings with specific times like "16:03", the contract form correctly displays and pre-selects these exact times instead of showing blank fields. This eliminates the previous format mismatch between 24-hour booking times and predefined AM/PM contract options.
 Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contract PDFs now dynamically adjust color based on theme background luminance for optimal visibility. On dark themes like midnight blue, text appears in white/light colors; on light themes, it appears in dark colors. This ensures WCAG 2.0 compliant contrast ratios and professional branding visibility across all theme colors.
+Client portal system architecture: Implemented dual-portal system with clear separation of concerns. React Client Portal handles mandatory contract signing fields (client phone, address, venue address) before signing, while R2 Collaborative Form manages post-signing event planning collaboration (venue contacts, music preferences, logistics). Fixed critical SQL syntax errors in collaborative form updates by implementing fallback from Drizzle ORM to raw SQL with proper string escaping. All collaborative fields now save correctly to the database, resolving the fundamental client portal data flow issues.
 
 ## System Architecture
 
@@ -53,7 +54,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms, and simplified action buttons on booking cards.
+- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms, simplified action buttons on booking cards, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display across clients, and dual client portal system.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -69,7 +70,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words), "TBC" times, "Actual Performance Time", individual field locking, status validation, and automated scrolling to next upcoming booking.
 - **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, and consistent 24-hour time formatting.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, and consistent 24-hour time formatting, luminance-aware branding.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, random 16-character token security for URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
@@ -77,6 +78,8 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with tabbed interface for client replies and unparseable messages.
 - **AI-powered Workflows**: Streamlined unparseable message workflow, manual booking re-processing, and manual detail extraction from messages with review dialog.
 - **Calendar Sync**: ID-based Google Calendar sync for efficiency.
+- **Travel Expense Management**: Simplified system where travel expenses are always included in the performance fee display as a single amount.
+- **Encore Booking Management**: Toggle switch for clear application status.
 
 ## External Dependencies
 
@@ -92,3 +95,4 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
     - Stripe
     - Twilio
     - what3words API
+```

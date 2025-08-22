@@ -212,20 +212,46 @@ export function setupCollaborativeFormRoutes(app: Express) {
       
       console.log(`🔨 [COLLABORATIVE-FORM] Executing update with data:`, Object.entries(dbUpdateData).map(([k,v]) => `${k}=${typeof v === 'string' ? v.substring(0,20) : v}`).join(', '));
       
+      // Build SQL update query dynamically for better reliability
+      const updateFields = [];
+      const values = [];
+      
+      Object.entries(dbUpdateData).forEach(([key, value]) => {
+        if (key !== 'updated_at') {
+          updateFields.push(`${key} = $${values.length + 1}`);
+          values.push(value);
+        }
+      });
+      
+      // Always update timestamp
+      updateFields.push(`updated_at = NOW()`);
+      
+      const updateQuery = `UPDATE bookings SET ${updateFields.join(', ')} WHERE id = $${values.length + 1}`;
+      values.push(targetBookingId);
+      
+      console.log(`🔧 [COLLABORATIVE-FORM] Executing parameterized query:`, updateQuery);
+      
       try {
-        const result = await db.update(bookings)
-          .set(dbUpdateData)
-          .where(eq(bookings.id, targetBookingId))
-          .returning();
-        
-        console.log(`✅ [COLLABORATIVE-FORM] Update successful, returned ${result.length} rows`);
+        const result = await db.execute(updateQuery, values);
+        console.log(`✅ [COLLABORATIVE-FORM] Parameterized update successful`);
       } catch (updateError: any) {
-        console.error(`❌ [COLLABORATIVE-FORM] Direct update error:`, updateError.message);
-        // Try without returning clause
-        await db.update(bookings)
-          .set(dbUpdateData)
-          .where(eq(bookings.id, targetBookingId));
-        console.log(`✅ [COLLABORATIVE-FORM] Update successful without returning`);
+        console.error(`❌ [COLLABORATIVE-FORM] Parameterized update failed:`, updateError.message);
+        
+        // Fallback to simple string interpolation (for non-sensitive data)
+        const simpleFields = [];
+        Object.entries(dbUpdateData).forEach(([key, value]) => {
+          if (key !== 'updated_at') {
+            const escapedValue = typeof value === 'string' ? value.replace(/'/g, "''") : value;
+            simpleFields.push(`${key} = '${escapedValue}'`);
+          }
+        });
+        simpleFields.push(`updated_at = NOW()`);
+        
+        const simpleQuery = `UPDATE bookings SET ${simpleFields.join(', ')} WHERE id = ${targetBookingId}`;
+        console.log(`🔧 [COLLABORATIVE-FORM] Fallback to simple query`);
+        
+        await db.execute(simpleQuery);
+        console.log(`✅ [COLLABORATIVE-FORM] Fallback update successful`);
       }
 
       console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);
