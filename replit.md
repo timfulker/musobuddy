@@ -80,7 +80,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Calendar Sync**: ID-based Google Calendar sync for efficiency.
 - **Travel Expense Management**: Simplified system where travel expenses are always included in the performance fee display as a single amount.
 - **Encore Booking Management**: Toggle switch for clear application status.
-- **Client Portal**: Dual-portal system with React client portal for contract signing and R2 collaborative form for post-signing event planning.
+- **Client Portal**: Dual-portal system with React client portal for contract signing and dynamic collaborative form for post-signing event planning.
 
 ## External Dependencies
 

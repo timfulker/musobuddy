@@ -258,12 +258,8 @@ export function setupCollaborativeFormRoutes(app: Express) {
 
       console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);
 
-      // Update the booking timestamp to trigger cache invalidation in frontend
-      await db.update(bookings)
-        .set({ updated_at: new Date() })
-        .where(eq(bookings.id, targetBookingId));
-        
-      console.log(`🔄 [COLLABORATIVE-FORM] Cache invalidation: Updated booking ${targetBookingId} timestamp`);
+      // Timestamp already updated in the main query above, no need for additional update
+      console.log(`🔄 [COLLABORATIVE-FORM] Cache invalidation: Booking ${targetBookingId} timestamp updated`);
       
       res.json({
         success: true,
@@ -363,33 +359,35 @@ export function setupCollaborativeFormRoutes(app: Express) {
         eventTime: booking.event_time || contract.eventTime,
         eventEndTime: booking.event_end_time || contract.eventEndTime,
         performanceDuration: booking.performance_duration || contract.performanceDuration,
-        // Include all collaborative fields with current data (using snake_case from database)
-        venueContact: booking.venue_contact,
-        soundTechContact: booking.sound_tech_contact,
-        stageSize: booking.stage_size,
-        powerEquipment: booking.power_equipment,
-        styleMood: booking.style_mood,
-        mustPlaySongs: booking.must_play_songs,
-        avoidSongs: booking.avoid_songs,
-        setOrder: booking.set_order,
-        firstDanceSong: booking.first_dance_song,
-        processionalSong: booking.processional_song,
-        signingRegisterSong: booking.signing_register_song,
-        recessionalSong: booking.recessional_song,
-        specialDedications: booking.special_dedications,
-        guestAnnouncements: booking.guest_announcements,
-        loadInInfo: booking.load_in_info,
-        soundCheckTime: booking.sound_check_time,
-        weatherContingency: booking.weather_contingency,
-        parkingPermitRequired: booking.parking_permit_required,
-        mealProvided: booking.meal_provided,
-        dietaryRequirements: booking.dietary_requirements,
-        sharedNotes: booking.shared_notes,
-        referenceTracks: booking.reference_tracks,
-        photoPermission: booking.photo_permission,
-        encoreAllowed: booking.encore_allowed,
-        encoreSuggestions: booking.encore_suggestions
+        // Include all collaborative fields with current data (using camelCase from Drizzle ORM)
+        venueContact: booking.venueContact,
+        soundTechContact: booking.soundTechContact,
+        stageSize: booking.stageSize,
+        powerEquipment: booking.powerEquipment,
+        styleMood: booking.styleMood,
+        mustPlaySongs: booking.mustPlaySongs,
+        avoidSongs: booking.avoidSongs,
+        setOrder: booking.setOrder,
+        firstDanceSong: booking.firstDanceSong,
+        processionalSong: booking.processionalSong,
+        signingRegisterSong: booking.signingRegisterSong,
+        recessionalSong: booking.recessionalSong,
+        specialDedications: booking.specialDedications,
+        guestAnnouncements: booking.guestAnnouncements,
+        loadInInfo: booking.loadInInfo,
+        soundCheckTime: booking.soundCheckTime,
+        weatherContingency: booking.weatherContingency,
+        parkingPermitRequired: booking.parkingPermitRequired,
+        mealProvided: booking.mealProvided,
+        dietaryRequirements: booking.dietaryRequirements,
+        sharedNotes: booking.sharedNotes,
+        referenceTracks: booking.referenceTracks,
+        photoPermission: booking.photoPermission,
+        encoreAllowed: booking.encoreAllowed,
+        encoreSuggestions: booking.encoreSuggestions
       };
+
+
 
       // API endpoint for the form to communicate with
       const apiEndpoint = process.env.REPLIT_DEPLOYMENT 

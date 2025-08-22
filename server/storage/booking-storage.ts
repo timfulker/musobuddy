@@ -13,15 +13,16 @@ export class BookingStorage {
     
     if (!booking) return null;
     
+
     // Convert date strings to Date objects and apply field mapping (same as getBookingsByUser)
     return {
       ...booking,
       venueAddress: (booking as any).venue_address || booking.venueAddress,
       applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
-      venueContact: (booking as any).venue_contact || booking.venueContact,
-      soundTechContact: (booking as any).sound_tech_contact || booking.soundTechContact,
-      soundCheckTime: (booking as any).sound_check_time || booking.soundCheckTime,
-      stageSize: (booking as any).stage_size || booking.stageSize,
+      venueContact: booking.venueContact,
+      soundTechContact: booking.soundTechContact,
+      soundCheckTime: booking.soundCheckTime,
+      stageSize: booking.stageSize,
       powerEquipment: (booking as any).power_equipment || booking.powerEquipment,
       styleMood: (booking as any).style_mood || booking.styleMood,
       mustPlaySongs: (booking as any).must_play_songs || booking.mustPlaySongs,
