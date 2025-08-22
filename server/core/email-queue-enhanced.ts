@@ -410,10 +410,9 @@ class EnhancedEmailQueue {
           userId: job.userId, // Save under the actual user who should see it
           source: 'email',
           fromContact: `${clientName} <${clientEmail}>`,
-          rawMessage: bodyField || 'No message content',
-          clientAddress: null,
-          messageType: 'parsing_failed',
-          parsingErrorDetails: `${reason}${errorDetails ? `: ${errorDetails}` : ''}`
+          subject: cleanedSubject,
+          content: `${reason}${errorDetails ? `: ${errorDetails}` : ''}\n\n---\nOriginal message:\n${bodyField || 'No message content'}`,
+          createdAt: new Date()
         });
         
         console.log(`📋 [${requestId}] Saved to Review Messages - ${reason}`);
