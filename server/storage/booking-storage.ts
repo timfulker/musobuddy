@@ -13,17 +13,6 @@ export class BookingStorage {
     
     if (!booking) return null;
     
-    // TEMPORARY DEBUG: Return raw booking object to see actual field structure
-    if (id === 7600) {
-      return {
-        ...booking,
-        DEBUG_RAW_KEYS: Object.keys(booking),
-        DEBUG_VENUE_CONTACT: booking.venueContact,
-        DEBUG_STAGE_SIZE: booking.stageSize,
-        DEBUG_SOUND_CHECK_TIME: booking.soundCheckTime,
-      };
-    }
-    
     // Convert date strings to Date objects and apply field mapping (same as getBookingsByUser)
     return {
       ...booking,

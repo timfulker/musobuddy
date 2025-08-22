@@ -256,11 +256,18 @@ export function setupCollaborativeFormRoutes(app: Express) {
 
       console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);
 
-      // TODO: Send notification to user about updated collaborative form
+      // Update the booking timestamp to trigger cache invalidation in frontend
+      await db.update(bookings)
+        .set({ updated_at: new Date() })
+        .where(eq(bookings.id, targetBookingId));
+        
+      console.log(`🔄 [COLLABORATIVE-FORM] Cache invalidation: Updated booking ${targetBookingId} timestamp`);
       
       res.json({
         success: true,
-        message: 'Collaborative form updated successfully'
+        message: 'Collaborative form updated successfully',
+        bookingId: targetBookingId,
+        timestamp: new Date().toISOString()
       });
 
     } catch (error) {

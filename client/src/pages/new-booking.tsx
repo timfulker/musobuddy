@@ -131,16 +131,12 @@ export default function NewBookingPage() {
   
   const bookingDocuments = documentsResponse?.documents || [];
   
-  // Fetch specific booking if in edit mode
+  // Fetch specific booking if in edit mode - use direct endpoint for proper field mapping
   const { data: editingBooking, isLoading: isLoadingBooking } = useQuery({
-    queryKey: ['/api/bookings', editBookingId],
-    queryFn: async () => {
-      if (!editBookingId) return null;
-      const allBookings = await apiRequest('/api/bookings');
-      const bookingsData = await allBookings.json();
-      return bookingsData.find((b: any) => b.id === parseInt(editBookingId));
-    },
-    enabled: isEditMode
+    queryKey: [`/api/bookings/${editBookingId}`],
+    enabled: isEditMode && !!editBookingId,
+    refetchInterval: 5000, // Poll every 5 seconds for collaborative form updates
+    refetchOnWindowFocus: true, // Refresh when user returns to tab
   });
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
