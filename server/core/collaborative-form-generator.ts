@@ -47,11 +47,10 @@ interface FieldLockSettings {
 }
 
 class CollaborativeFormGenerator {
-  generateStandaloneForm(
-    bookingData: BookingData, 
-    apiEndpoint: string, 
+  generateDynamicForm(
+    contractId: number,
     portalToken: string,
-    fieldLocks: FieldLockSettings = {}
+    apiEndpoint: string
   ): string {
     const formHtml = `
 <!DOCTYPE html>
@@ -59,7 +58,7 @@ class CollaborativeFormGenerator {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collaborative Event Planning - ${bookingData.clientName}</title>
+    <title>Event Planning Collaboration</title>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         /* Essential CSS for collaborative form styling */
@@ -73,6 +72,8 @@ class CollaborativeFormGenerator {
         .text-white { color: white; }
         .text-slate-900 { color: #0f172a; }
         .text-slate-600 { color: #475569; }
+        .loading { opacity: 0.6; pointer-events: none; }
+        .error { color: #dc2626; background-color: #fef2f2; padding: 0.5rem; border-radius: 0.25rem; margin-bottom: 1rem; }
         .text-slate-500 { color: #64748b; }
         .text-indigo-100 { color: #e0e7ff; }
         .text-indigo-200 { color: #c7d2fe; }
