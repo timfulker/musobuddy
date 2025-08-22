@@ -794,16 +794,29 @@ export default function Messages() {
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-2">
                   {bookings
+                    .sort((a: any, b: any) => {
+                      // Sort by event date (newest first), then by ID (newest first)
+                      if (a.eventDate && b.eventDate) {
+                        return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
+                      }
+                      if (a.eventDate && !b.eventDate) return -1;
+                      if (!a.eventDate && b.eventDate) return 1;
+                      return b.id - a.id;
+                    })
                     .filter((booking: any) => {
                       if (!bookingSearch) return true;
                       const search = bookingSearch.toLowerCase();
                       return (
                         booking.clientName?.toLowerCase().includes(search) ||
                         booking.venue?.toLowerCase().includes(search) ||
-                        booking.eventType?.toLowerCase().includes(search)
+                        booking.eventType?.toLowerCase().includes(search) ||
+                        booking.id?.toString().includes(search) ||
+                        booking.status?.toLowerCase().includes(search) ||
+                        booking.clientEmail?.toLowerCase().includes(search) ||
+                        booking.clientPhone?.toLowerCase().includes(search)
                       );
                     })
-                    .slice(0, 50)
+                    .slice(0, 200)
                     .map((booking: any) => (
                       <div
                         key={booking.id}
