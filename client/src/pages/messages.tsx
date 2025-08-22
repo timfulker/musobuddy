@@ -727,6 +727,7 @@ export default function Messages() {
                       })}
                       disabled={markAsReviewedMutation.isPending}
                       variant="outline"
+                      className="bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                     >
                       Mark as Reviewed
                     </Button>
@@ -738,7 +739,7 @@ export default function Messages() {
                         setSelectedBookingId(null);
                         setSelectedUnparseableMessage(null);
                       }}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                     >
                       <Link2 className="w-4 h-4" />
                       Link to Booking
@@ -747,7 +748,7 @@ export default function Messages() {
                       onClick={() => reprocessWithAIMutation.mutate(selectedUnparseableMessage.id)}
                       disabled={reprocessWithAIMutation.isPending}
                       variant="secondary"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                     >
                       <Zap className="w-4 h-4" />
                       {reprocessWithAIMutation.isPending ? "Processing..." : "Reprocess with AI"}
@@ -758,7 +759,7 @@ export default function Messages() {
                         notes: reviewNotes 
                       })}
                       disabled={convertToBookingMutation.isPending}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                     >
                       <Calendar className="w-4 h-4" />
                       Convert to Booking
@@ -840,7 +841,7 @@ export default function Messages() {
                     }
                   }}
                   disabled={!selectedBookingId || linkToBookingMutation.isPending}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                 >
                   <Link2 className="w-4 h-4" />
                   {linkToBookingMutation.isPending ? 'Linking...' : 'Link to Selected Booking'}
@@ -848,6 +849,7 @@ export default function Messages() {
                 <Button
                   variant="outline"
                   onClick={() => setLinkingMessage(null)}
+                  className="bg-gray-100 text-black border-gray-300 hover:bg-gray-200"
                 >
                   Cancel
                 </Button>
