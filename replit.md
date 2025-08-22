@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive music business management platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its purpose is to reduce administrative burdens, enabling musicians to focus on creative work. The platform aims to be user-friendly, scalable, and become the leading global solution for managing music careers, simplifying music business administration worldwide and freeing musicians to focus on their art.
+MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burdens, allowing musicians to concentrate on their creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and freeing artists to focus on their craft.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -54,7 +54,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design for mobile and desktop, QR code generation, widget URL creation, dynamic PDF theming, list-based booking view with calendar option, optional onboarding wizard, permanent map display on booking forms, simplified action buttons on booking cards, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display across clients, and dual client portal system.
+- **UI/UX Decisions**: Enhanced responsive design, QR code generation, widget URL creation, dynamic PDF theming, simplified action buttons, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display, and dual client portal system.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -70,7 +70,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms (Google Maps API auto-population, mileage, what3words), "TBC" times, "Actual Performance Time", individual field locking, status validation, and automated scrolling to next upcoming booking.
 - **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, and consistent 24-hour time formatting, luminance-aware branding.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, random 16-character token security for URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
@@ -96,3 +96,4 @@ Client portal system architecture: Implemented dual-portal system with clear sep
     - Stripe
     - Twilio
     - what3words API
+```
