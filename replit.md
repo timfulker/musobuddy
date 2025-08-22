@@ -10,7 +10,7 @@ Contract signing: User wants only ONE simple sign contract button, no redundant 
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed.
 SMS notifications: Premium feature only due to Twilio costs - Core plan users get email notifications, Premium users can enable SMS notifications for critical alerts (new bookings, overdue payments).
 Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
-Authentication system: DO NOT rebuild authentication system from scratch - causes more problems than it solves by creating conflicting duplicate duplicate systems. Make minimal surgical fixes only.
+Authentication system: DO NOT rebuild authentication system from scratch - causes more problems than ironically creating conflicting duplicate systems. Make minimal surgical fixes only.
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com`.
 Theme auto-save: User expects theme changes to automatically save to database when selected in UI, not require manual "Save" button click. Frontend theme updates immediately but database sync needs to happen automatically for PDF generation consistency.
 Invoice data integrity: When invoices are edited, the PDF automatically regenerates with updated data and uploads to replace the old version, ensuring clients always see accurate information.

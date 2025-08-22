@@ -596,12 +596,12 @@ class EnhancedEmailQueue {
       });
 
       // ENCORE FALLBACK PARSING: If AI failed to extract date from Encore email, use regex
-      const isEncoreMessage = bodyField.toLowerCase().includes('encore') || 
-                              fromField.toLowerCase().includes('encore') ||
-                              subjectField.toLowerCase().includes('encore') ||
-                              bodyField.includes('apply now');
+      const isEncoreEmail = bodyField.toLowerCase().includes('encore') || 
+                            fromField.toLowerCase().includes('encore') ||
+                            subjectField.toLowerCase().includes('encore') ||
+                            bodyField.includes('apply now');
 
-      if (isEncoreMessage && !parsedData.eventDate) {
+      if (isEncoreEmail && !parsedData.eventDate) {
         console.log(`🎵 [${requestId}] ENCORE FALLBACK: AI failed to extract date, trying regex parsing`);
         
         // Extract date from Encore format: "Date: Saturday 30 Aug 2025"
@@ -673,7 +673,7 @@ class EnhancedEmailQueue {
       const hasVenueInfo = !!(parsedData.venue || parsedData.venueAddress);
       
       // Special handling for Encore bookings - but date still required
-      const encoreValidation = isEncoreMessage && parsedData.eventDate && parsedData.venue;
+      const encoreValidation = isEncoreEmail && parsedData.eventDate && parsedData.venue;
       
       // Date is MANDATORY - without it, message goes to review
       const isValidBooking = hasValidDate && (hasContactInfo || hasVenueInfo);
