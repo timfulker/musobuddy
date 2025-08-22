@@ -783,6 +783,55 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
+  // Public endpoint for client access to contracts (for signing page)
+  app.get('/api/contracts/public/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      console.log(`📄 Fetching public contract #${contractId} for signing page`);
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        console.error(`❌ Contract #${contractId} not found`);
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      // Only allow access to contracts that are sent or signed (not drafts)
+      if (contract.status !== 'sent' && contract.status !== 'signed') {
+        console.error(`❌ Contract #${contractId} not available - status: ${contract.status}`);
+        return res.status(403).json({ error: 'Contract not available for public viewing' });
+      }
+      
+      // Get user settings for branding/theme
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      console.log(`✅ Returning public contract #${contractId} for client signing`);
+      
+      // Return contract data for the signing page
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json({
+        ...contract,
+        userSettings: {
+          businessName: userSettings?.businessName,
+          businessEmail: userSettings?.businessEmail,
+          themeAccentColor: userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a',
+          logoUrl: userSettings?.logoUrl
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to fetch public contract:', error);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ 
+        error: 'Internal server error while fetching contract',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Get individual contract - FIXED: Use standard auth middleware
   app.get('/api/contracts/:id', requireAuth, async (req: any, res) => {
     try {
