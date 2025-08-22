@@ -13,13 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info, Edit } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info, Edit, MoreVertical } from "lucide-react";
 // AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/lib/utils";
+import { BookingActionMenu } from "@/components/booking-action-menu";
 
 interface ConversationMessage {
   id: number;
@@ -719,10 +720,16 @@ export default function Conversation() {
         {/* Reply Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Send className="w-5 h-5" />
-              <span>Send Reply</span>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <Send className="w-5 h-5" />
+                <span>Send Reply</span>
+              </CardTitle>
+              <BookingActionMenu 
+                booking={booking}
+                onEditBooking={() => navigate(`/new-booking?edit=${bookingId}`)}
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded">
