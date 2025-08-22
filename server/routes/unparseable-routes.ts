@@ -275,15 +275,7 @@ export function registerUnparseableRoutes(app: Express) {
         clientName = clientEmail.split('@')[0];
       }
 
-      // Create a client reply for the booking
-      await storage.createCommunication({
-        bookingId: bookingId,
-        messageType: 'client_reply',
-        messageBody: message.content || message.rawMessage || 'No message content',
-        senderName: clientName,
-        senderEmail: clientEmail,
-        sentAt: message.createdAt || new Date()
-      });
+      // Note: Message is now linked to booking and can be accessed via the unparseable messages system
 
       // Update the unparseable message as converted
       await storage.updateUnparseableMessage(messageId, {
