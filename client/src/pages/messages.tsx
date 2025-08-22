@@ -834,7 +834,7 @@ export default function Messages() {
                               <p className="font-medium">{booking.clientName || 'No name'}</p>
                               <span className="text-xs bg-gray-200 px-2 py-1 rounded">ID: {booking.id}</span>
                             </div>
-                            <p className="text-sm text-gray-600">{booking.venue || 'No venue'}</p>
+                            <p className="text-sm text-gray-600">{booking.clientAddress || booking.venue || 'No location'}</p>
                             <p className="text-sm text-gray-500">
                               {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'} • {booking.eventType || 'No event type'}
                             </p>
