@@ -4,6 +4,7 @@ import { collaborativeFormGenerator } from "../core/collaborative-form-generator
 import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";
 import { eq, and } from "drizzle-orm";
+import crypto from 'crypto';
 
 export function setupCollaborativeFormRoutes(app: Express) {
   // Generate collaborative form after contract signing
@@ -85,26 +86,27 @@ export function setupCollaborativeFormRoutes(app: Express) {
       // Get field locks from booking
       const fieldLocks = booking.fieldLocks || {};
 
-      // Upload collaborative form to Cloudflare R2
-      const result = await collaborativeFormGenerator.uploadCollaborativeForm(
-        bookingData,
-        apiEndpoint,
-        fieldLocks
-      );
+      // Generate a unique token for this collaborative form
+      const portalToken = crypto.randomBytes(32).toString('hex');
+      
+      // Build the dynamic collaborative form URL (not R2 static storage)
+      const dynamicFormUrl = process.env.REPLIT_DEPLOYMENT 
+        ? `https://www.musobuddy.com/api/collaborative-form/${portalToken}`
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev/api/collaborative-form/${portalToken}`;
 
-      // Update contract with collaborative form details
+      // Update contract with collaborative form details (dynamic URL, not static R2)
       await db.update(contracts)
         .set({
-          clientPortalUrl: result.url,
-          clientPortalToken: result.token,
+          clientPortalUrl: dynamicFormUrl,
+          clientPortalToken: portalToken,
           updatedAt: new Date()
         })
         .where(eq(contracts.id, contract.id));
 
       res.json({
         success: true,
-        collaborativeFormUrl: result.url,
-        message: 'Collaborative form generated and uploaded successfully'
+        collaborativeFormUrl: dynamicFormUrl,
+        message: 'Collaborative form generated successfully (dynamic serving)'
       });
 
     } catch (error) {

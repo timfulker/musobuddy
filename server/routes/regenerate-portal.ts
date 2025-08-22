@@ -76,28 +76,18 @@ export function setupRegeneratePortalRoutes(app: Express) {
         encoreSuggestions: booking.encore_suggestions
       };
 
-      // API endpoint for the form
-      const apiEndpoint = process.env.REPLIT_DEPLOYMENT 
-        ? `https://www.musobuddy.com`
-        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
+      // Build the dynamic collaborative form URL (not R2 static storage)
+      const dynamicFormUrl = process.env.REPLIT_DEPLOYMENT 
+        ? `https://www.musobuddy.com/api/collaborative-form/${contract.clientPortalToken}`
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev/api/collaborative-form/${contract.clientPortalToken}`;
 
-      // Get field locks from booking
-      const fieldLocks = booking.fieldLocks || {};
-
-      // Regenerate and upload collaborative form with latest data
-      const result = await collaborativeFormGenerator.uploadCollaborativeForm(
-        bookingData,
-        apiEndpoint,
-        fieldLocks,
-        contract.clientPortalToken // Use existing token
-      );
-
-      console.log(`✅ [PORTAL-REGENERATE] Regenerated portal for contract ${contractId} with latest booking data`);
+      // No need to re-upload - the dynamic endpoint will always serve fresh data
+      console.log(`✅ [PORTAL-REGENERATE] Portal URL updated for contract ${contractId} (dynamic serving)`);
 
       res.json({
         success: true,
-        collaborativeFormUrl: result.url,
-        message: 'Portal regenerated with latest data'
+        collaborativeFormUrl: dynamicFormUrl,
+        message: 'Portal URL updated with dynamic serving'
       });
 
     } catch (error) {
