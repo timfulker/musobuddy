@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/lib/utils";
-import { BookingActionMenu } from "@/components/booking-action-menu";
+import BookingActionMenu from "@/components/booking-action-menu";
 
 interface ConversationMessage {
   id: number;
