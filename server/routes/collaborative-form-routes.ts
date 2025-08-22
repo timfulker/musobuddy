@@ -123,6 +123,7 @@ export function setupCollaborativeFormRoutes(app: Express) {
       const { token, fieldLocks, ...updateData } = req.body;
 
       console.log(`📝 [COLLABORATIVE-FORM] Update request for booking ${bookingId} with token ${token?.substring(0, 8)}...`);
+      console.log(`📦 [COLLABORATIVE-FORM] Raw update data received:`, JSON.stringify(updateData));
 
       if (!token) {
         return res.status(401).json({ error: 'Portal token required' });
@@ -160,6 +161,7 @@ export function setupCollaborativeFormRoutes(app: Express) {
         sound_tech_contact: updateData.soundTechContact,
         stage_size: updateData.stageSize,
         power_equipment: updateData.powerEquipment,
+        dress_code: updateData.dressCode,  // Fixed: was missing
         style_mood: updateData.styleMood,
         must_play_songs: updateData.mustPlaySongs,
         avoid_songs: updateData.avoidSongs,
@@ -181,7 +183,7 @@ export function setupCollaborativeFormRoutes(app: Express) {
         photo_permission: updateData.photoPermission,
         encore_allowed: updateData.encoreAllowed,
         encore_suggestions: updateData.encoreSuggestions,
-        updatedAt: new Date()
+        updated_at: new Date()
       };
 
       // Remove undefined values but keep empty strings and false values
@@ -191,9 +193,40 @@ export function setupCollaborativeFormRoutes(app: Express) {
         }
       });
 
-      await db.update(bookings)
-        .set(dbUpdateData)
-        .where(eq(bookings.id, targetBookingId));
+      console.log(`🔄 [COLLABORATIVE-FORM] Updating booking ${targetBookingId} with ${Object.keys(dbUpdateData).length} fields`);
+      
+      // Check if there's anything to update besides updated_at
+      const fieldsToUpdate = Object.keys(dbUpdateData).filter(key => key !== 'updated_at');
+      console.log(`📊 [COLLABORATIVE-FORM] Fields to update: ${fieldsToUpdate.join(', ')}`);
+      
+      if (fieldsToUpdate.length === 0) {
+        console.log(`⚠️ [COLLABORATIVE-FORM] No fields to update, only updating timestamp`);
+        // At least update the timestamp
+        await db.update(bookings)
+          .set({ updated_at: new Date() })
+          .where(eq(bookings.id, targetBookingId));
+        
+        console.log(`✅ [COLLABORATIVE-FORM] Updated timestamp for booking ${targetBookingId}`);
+        return res.json({ success: true, message: 'No data to update, timestamp updated' });
+      }
+      
+      console.log(`🔨 [COLLABORATIVE-FORM] Executing update with data:`, Object.entries(dbUpdateData).map(([k,v]) => `${k}=${typeof v === 'string' ? v.substring(0,20) : v}`).join(', '));
+      
+      try {
+        const result = await db.update(bookings)
+          .set(dbUpdateData)
+          .where(eq(bookings.id, targetBookingId))
+          .returning();
+        
+        console.log(`✅ [COLLABORATIVE-FORM] Update successful, returned ${result.length} rows`);
+      } catch (updateError: any) {
+        console.error(`❌ [COLLABORATIVE-FORM] Direct update error:`, updateError.message);
+        // Try without returning clause
+        await db.update(bookings)
+          .set(dbUpdateData)
+          .where(eq(bookings.id, targetBookingId));
+        console.log(`✅ [COLLABORATIVE-FORM] Update successful without returning`);
+      }
 
       console.log(`✅ [COLLABORATIVE-FORM] Updated booking ${targetBookingId} with collaborative data`);
 

@@ -561,25 +561,14 @@ export default function ClientPortal() {
             <Separator className="my-6" />
 
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Clock className="h-4 w-4 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-700">Last Updated</p>
-                    <p className="text-xs text-slate-500">
-                      {clientData.updatedAt ? new Date(clientData.updatedAt).toLocaleDateString('en-GB') : 'Never'}
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-end">
                 <Button
                   onClick={handleSave}
                   disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}
-                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md"
+                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md text-white font-medium"
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  {updatePortalMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  <Save className="h-4 w-4 mr-2 text-white" />
+                  <span className="text-white">{updatePortalMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
                 </Button>
               </div>
             </div>

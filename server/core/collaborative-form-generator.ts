@@ -507,7 +507,7 @@ class CollaborativeFormGenerator {
                 // Use traditional form submission to bypass CORS
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = \`\${API_BASE}/api/client-portal/\${CONTRACT_ID}/update\`;
+                form.action = \`\${API_BASE}/api/collaborative-form/\${BOOKING_ID}/update\`;
                 form.target = 'save-frame';
                 form.style.display = 'none';
                 
@@ -726,11 +726,19 @@ class CollaborativeFormGenerator {
     const formKey = `collaborative-forms/booking-${bookingData.id}-${Date.now()}.html`;
     
     // Upload to Cloudflare R2
+    console.log(`📤 Uploading form to R2: ${formKey}`);
     const uploadResult = await uploadToCloudflareR2(
       Buffer.from(formHtml, 'utf8'),
       formKey,
       'text/html'
     );
+    
+    if (!uploadResult.success) {
+      console.error('❌ R2 upload failed:', uploadResult.error);
+      throw new Error(`Failed to upload form: ${uploadResult.error}`);
+    }
+    
+    console.log(`✅ Form uploaded successfully to: ${uploadResult.url}`);
     
     return {
       url: uploadResult.url,
