@@ -238,6 +238,73 @@ export function registerUnparseableRoutes(app: Express) {
     }
   });
 
+  // Link message to existing booking
+  app.post('/api/unparseable-messages/:id/link', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.userId;
+      const messageId = parseInt(req.params.id);
+      const { bookingId } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Get the unparseable message
+      const message = await storage.getUnparseableMessage(messageId);
+      
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      // Verify the booking belongs to the user
+      const booking = await storage.getBookingById(bookingId);
+      
+      if (!booking || booking.userId !== userId) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Extract client info from the message
+      const emailMatch = message.fromContact?.match(/[\w.-]+@[\w.-]+\.\w+/);
+      const clientEmail = emailMatch ? emailMatch[0] : '';
+      
+      let clientName = 'Unknown';
+      if (message.fromContact?.includes('<')) {
+        const nameMatch = message.fromContact.match(/^([^<]+)/);
+        if (nameMatch) clientName = nameMatch[1].trim();
+      } else if (clientEmail) {
+        clientName = clientEmail.split('@')[0];
+      }
+
+      // Create a client reply for the booking
+      await storage.createCommunication({
+        bookingId: bookingId,
+        messageType: 'client_reply',
+        messageBody: message.content || message.rawMessage || 'No message content',
+        senderName: clientName,
+        senderEmail: clientEmail,
+        sentAt: message.createdAt || new Date()
+      });
+
+      // Update the unparseable message as converted
+      await storage.updateUnparseableMessage(messageId, {
+        status: 'converted',
+        convertedToBookingId: bookingId,
+        reviewNotes: `Manually linked to booking #${bookingId}`,
+        reviewedAt: new Date()
+      });
+
+      res.json({ 
+        message: 'Message successfully linked to booking',
+        bookingId,
+        messageId
+      });
+
+    } catch (error) {
+      console.error('❌ Error linking message to booking:', error);
+      res.status(500).json({ error: 'Failed to link message to booking' });
+    }
+  });
+
   // Delete message
   app.delete('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
     try {

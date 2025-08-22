@@ -192,6 +192,7 @@ export class MiscStorage {
     userId: string;
     source: string;
     fromContact?: string;
+    subject?: string;
     rawMessage: string;
     clientAddress?: string;
     messageType?: string;

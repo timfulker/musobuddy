@@ -775,6 +775,7 @@ export const unparseableMessages = pgTable("unparseable_messages", {
   userId: varchar("user_id").notNull(),
   source: varchar("source").notNull(), // 'widget', 'email', 'manual'
   fromContact: varchar("from_contact"), // Email, phone, or name of sender
+  subject: varchar("subject"), // Email subject line for matching to bookings
   rawMessage: text("raw_message").notNull(), // The original unparsed message
   clientAddress: text("client_address"), // Optional address if provided
   parsingErrorDetails: text("parsing_error_details"), // Why AI couldn't parse it

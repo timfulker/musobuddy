@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MessageSquare, Eye, Trash2, ArrowRight, Calendar, Reply, Link2, Search } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -15,6 +17,7 @@ interface UnparseableMessage {
   id: number;
   source: string;
   fromContact: string;
+  subject?: string;
   rawMessage: string;
   clientAddress?: string;
   parsingErrorDetails?: string;
@@ -25,8 +28,20 @@ interface UnparseableMessage {
   reviewedAt?: string;
 }
 
+interface Booking {
+  id: number;
+  clientName?: string;
+  venue?: string;
+  eventDate?: string;
+  eventType?: string;
+  status?: string;
+}
+
 export default function UnparseableMessages() {
   const [selectedMessage, setSelectedMessage] = useState<UnparseableMessage | null>(null);
+  const [linkingMessage, setLinkingMessage] = useState<UnparseableMessage | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [bookingSearch, setBookingSearch] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,6 +53,15 @@ export default function UnparseableMessages() {
       const response = await apiRequest('/api/unparseable-messages');
       return await response.json();
     }
+  });
+
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['/api/bookings'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/bookings');
+      return await response.json();
+    },
+    enabled: !!linkingMessage
   });
 
   const markAsReviewedMutation = useMutation({
@@ -99,6 +123,30 @@ export default function UnparseableMessages() {
         title: "Message Deleted",
         description: "Message deleted successfully"
       });
+    }
+  });
+
+  const linkToBookingMutation = useMutation({
+    mutationFn: async ({ messageId, bookingId }: { messageId: number; bookingId: number }) => {
+      const response = await apiRequest(`/api/unparseable-messages/${messageId}/link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId })
+      });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/unparseable-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/communication'] });
+      setLinkingMessage(null);
+      setSelectedBookingId(null);
+      setBookingSearch("");
+      toast({
+        title: "Message Linked",
+        description: "Message successfully linked to booking"
+      });
+      // Navigate to the conversation page for the booking
+      navigate(`/conversation/${data.bookingId}`);
     }
   });
 
@@ -275,6 +323,19 @@ export default function UnparseableMessages() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          setLinkingMessage(message);
+                          setBookingSearch("");
+                          setSelectedBookingId(null);
+                        }}
+                        className="flex items-center gap-2 text-purple-600 hover:text-purple-700"
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Link to Booking
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => deleteMutation.mutate(message.id)}
                         className="flex items-center gap-2 text-red-600 hover:text-red-700"
                       >
@@ -388,6 +449,122 @@ export default function UnparseableMessages() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Link to Booking Modal */}
+      {linkingMessage && (
+        <Dialog open={!!linkingMessage} onOpenChange={() => setLinkingMessage(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Link Message to Existing Booking</DialogTitle>
+              {linkingMessage.subject && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">Subject line clue:</p>
+                  <Badge variant="outline" className="mt-1 text-sm">
+                    {linkingMessage.subject}
+                  </Badge>
+                </div>
+              )}
+            </DialogHeader>
+            
+            <div className="flex-1 overflow-y-auto space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Message from: {linkingMessage.fromContact}</p>
+                <div className="bg-gray-50 p-3 rounded-lg text-sm max-h-32 overflow-y-auto">
+                  {linkingMessage.rawMessage}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Search className="w-4 h-4 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Search bookings by client name, venue, or event type..."
+                    value={bookingSearch}
+                    onChange={(e) => setBookingSearch(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
+
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  {bookings
+                    .filter((booking: Booking) => {
+                      if (!bookingSearch) return true;
+                      const search = bookingSearch.toLowerCase();
+                      return (
+                        booking.clientName?.toLowerCase().includes(search) ||
+                        booking.venue?.toLowerCase().includes(search) ||
+                        booking.eventType?.toLowerCase().includes(search)
+                      );
+                    })
+                    .map((booking: Booking) => (
+                      <div
+                        key={booking.id}
+                        className={cn(
+                          "p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors",
+                          selectedBookingId === booking.id && "bg-blue-50 hover:bg-blue-100"
+                        )}
+                        onClick={() => setSelectedBookingId(booking.id)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{booking.clientName || 'Unknown Client'}</p>
+                            <p className="text-sm text-gray-600">
+                              {booking.eventType || 'Event'} 
+                              {booking.venue && ` at ${booking.venue}`}
+                            </p>
+                            {booking.eventDate && (
+                              <p className="text-sm text-gray-500">
+                                {new Date(booking.eventDate).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          {booking.status && (
+                            <Badge variant="outline" className="text-xs">
+                              {booking.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => {
+                    if (selectedBookingId && linkingMessage) {
+                      linkToBookingMutation.mutate({
+                        messageId: linkingMessage.id,
+                        bookingId: selectedBookingId
+                      });
+                    }
+                  }}
+                  disabled={!selectedBookingId || linkToBookingMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  <Link2 className="w-4 h-4" />
+                  Link to Selected Booking
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLinkingMessage(null);
+                    setSelectedBookingId(null);
+                    setBookingSearch("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
       </div>
     </Layout>
