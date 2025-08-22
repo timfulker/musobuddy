@@ -191,6 +191,58 @@ class EnhancedEmailQueue {
   }
 
   /**
+   * Detect if an email is a follow-up message rather than a new enquiry
+   * Specifically handles Encore follow-ups from Joseph and others
+   */
+  private detectFollowUpMessage(fromField: string, subjectField: string, bodyField: string): boolean {
+    // Check for common follow-up indicators
+    const followUpIndicators = [
+      // Joseph from Encore specific patterns
+      fromField.toLowerCase().includes('joseph') && fromField.toLowerCase().includes('encore'),
+      
+      // Subject line patterns
+      subjectField.toLowerCase().includes('re:'),
+      subjectField.toLowerCase().includes('fwd:'),
+      subjectField.toLowerCase().includes('follow'),
+      subjectField.toLowerCase().includes('following up'),
+      subjectField.toLowerCase().includes('checking in'),
+      subjectField.toLowerCase().includes('update'),
+      
+      // Body content patterns for follow-ups
+      bodyField.toLowerCase().includes('as discussed'),
+      bodyField.toLowerCase().includes('as mentioned'),
+      bodyField.toLowerCase().includes('following up'),
+      bodyField.toLowerCase().includes('just checking'),
+      bodyField.toLowerCase().includes('wanted to check'),
+      bodyField.toLowerCase().includes('any update'),
+      bodyField.toLowerCase().includes('have you had a chance'),
+      bodyField.toLowerCase().includes('did you receive'),
+      bodyField.toLowerCase().includes('reminder about'),
+      
+      // Encore-specific follow-up patterns
+      (fromField.toLowerCase().includes('encore') && 
+       !bodyField.toLowerCase().includes('new enquiry') &&
+       !bodyField.toLowerCase().includes('apply now') &&
+       !bodyField.toLowerCase().includes('job alert')),
+       
+      // Personal greetings suggesting existing relationship
+      bodyField.toLowerCase().match(/^(hi|hello|hey)\s+[a-z]+[,!]/i) && 
+      !bodyField.toLowerCase().includes('date:') // But not if it has event details
+    ];
+    
+    // Count how many indicators are present
+    const indicatorCount = followUpIndicators.filter(indicator => indicator).length;
+    
+    // If this is from Joseph at Encore specifically, lower the threshold
+    if (fromField.toLowerCase().includes('joseph') && fromField.toLowerCase().includes('encore')) {
+      return indicatorCount >= 1;
+    }
+    
+    // For other messages, require at least 2 indicators
+    return indicatorCount >= 2;
+  }
+
+  /**
    * Add email to per-user processing queue with duplicate detection
    */
   async addEmail(requestData: any): Promise<{ jobId: string; queuePosition: number; isDuplicate?: boolean; userId?: string }> {
@@ -469,6 +521,45 @@ class EnhancedEmailQueue {
     }
 
     console.log(`📧 [${requestId}] Found user: ${user.id} (${user.email})`);
+
+    // DETECT FOLLOW-UP MESSAGES: Check if this is a follow-up rather than a new enquiry
+    const isFollowUp = this.detectFollowUpMessage(fromField, subjectField, bodyField);
+    
+    if (isFollowUp) {
+      console.log(`📧 [${requestId}] FOLLOW-UP DETECTED: Routing to unparseable messages`);
+      console.log(`📧 [${requestId}] From: ${fromField}, Subject: ${subjectField}`);
+      
+      // Extract client info from the message
+      let clientName = 'Unknown';
+      let clientEmail = fromField;
+      
+      // Try to extract name from the email
+      const nameMatch = bodyField.match(/(?:from|name|regards|sincerely|best|thanks)[,:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+      if (nameMatch) {
+        clientName = nameMatch[1];
+      } else if (fromField.includes('<')) {
+        // Extract name from "Name <email>" format
+        const parts = fromField.split('<');
+        if (parts[0].trim()) {
+          clientName = parts[0].trim();
+        }
+      } else if (fromField.includes('@')) {
+        // Use email prefix as fallback
+        clientName = fromField.split('@')[0];
+      }
+      
+      // Apply title cleanup for Encore emails
+      const { cleanEncoreTitle } = await import('./booking-formatter');
+      const cleanedSubject = cleanEncoreTitle(subjectField);
+      
+      await saveToReviewMessages(
+        'Follow-up message (not a new enquiry)', 
+        `This appears to be a follow-up or reply to an existing conversation. From: ${fromField}`
+      );
+      
+      console.log(`✅ [${requestId}] Follow-up message saved to unparseable messages for manual review`);
+      return;
+    }
 
     // Process the email using existing widget logic
     const { parseBookingMessage } = await import('../ai/booking-message-parser');
