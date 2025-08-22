@@ -387,6 +387,12 @@ export default function UnparseableMessages() {
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
+                  onClick={() => alert('TEST BUTTON WORKS!')}
+                >
+                  TEST BUTTON
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={async () => {
                     try {
                       // Auto-convert to booking when replying
