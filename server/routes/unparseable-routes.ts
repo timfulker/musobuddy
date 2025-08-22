@@ -257,7 +257,7 @@ export function registerUnparseableRoutes(app: Express) {
       }
 
       // Verify the booking belongs to the user
-      const booking = await storage.getBookingById(bookingId);
+      const booking = await storage.getBooking(bookingId);
       
       if (!booking || booking.userId !== userId) {
         return res.status(404).json({ error: 'Booking not found' });
