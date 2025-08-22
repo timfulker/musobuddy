@@ -184,12 +184,46 @@ app.post('/api/debug/encore-email', async (req, res) => {
     const subjectField = testEmailData.Subject;
     const bodyField = testEmailData['body-plain'];
     
+    // Use the same enhanced detection logic as the main webhook
+    const isFromEncoreService = (
+      fromField.toLowerCase().includes('encore') || 
+      fromField.includes('@encoremusicians.com') ||
+      fromField.includes('no-reply-message@encoremusicians.com')
+    );
+    
+    const hasJobAlertIndicators = (
+      subjectField.toLowerCase().includes('job alert') ||
+      bodyField.toLowerCase().includes('apply now') ||
+      bodyField.toLowerCase().includes('new gig') ||
+      bodyField.toLowerCase().includes('gig opportunity')
+    );
+    
+    const hasFollowupIndicators = (
+      // Direct follow-up keywords
+      bodyField.toLowerCase().includes('congratulations') ||
+      bodyField.toLowerCase().includes('you have been selected') ||
+      bodyField.toLowerCase().includes('client has chosen') ||
+      bodyField.toLowerCase().includes('booking confirmed') ||
+      bodyField.toLowerCase().includes('booking update') ||
+      bodyField.toLowerCase().includes('payment') ||
+      bodyField.toLowerCase().includes('cancelled') ||
+      bodyField.toLowerCase().includes('rescheduled') ||
+      
+      // Conversation patterns (like Joseph's message)
+      bodyField.toLowerCase().includes('sorry to chase') ||
+      bodyField.toLowerCase().includes('sent over the booking') ||
+      bodyField.toLowerCase().includes('booking request') ||
+      bodyField.toLowerCase().includes('check all was good') ||
+      bodyField.toLowerCase().includes('confirming to play') ||
+      bodyField.toLowerCase().includes('your current quote') ||
+      bodyField.toLowerCase().includes('reply to this email to respond') ||
+      bodyField.toLowerCase().includes('new message from')
+    );
+    
     const isEncoreFollowup = (
-      fromField.toLowerCase().includes('encore') && 
-      !subjectField.toLowerCase().includes('job alert') &&
-      !bodyField.toLowerCase().includes('apply now') &&
-      (bodyField.toLowerCase().includes('congratulations') ||
-       bodyField.toLowerCase().includes('you have been selected'))
+      isFromEncoreService && 
+      !hasJobAlertIndicators &&
+      hasFollowupIndicators
     );
     
     console.log('🧪 Classification result:', { isEncoreFollowup });
@@ -198,8 +232,9 @@ app.post('/api/debug/encore-email', async (req, res) => {
       success: true,
       testData: testEmailData,
       classification: {
-        isFromEncore: fromField.toLowerCase().includes('encore'),
-        isJobAlert: subjectField.toLowerCase().includes('job alert'),
+        isFromEncoreService,
+        hasJobAlertIndicators,
+        hasFollowupIndicators,
         isEncoreFollowup: isEncoreFollowup
       },
       message: 'Debug test completed - check server logs for detailed processing'
@@ -231,9 +266,9 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
     const webhookData = req.body;
     
     // ENHANCED: Log sender and recipient before duplicate check
-    const fromField = webhookData.sender || webhookData.From || webhookData.from || 'UNKNOWN_SENDER';
-    const toField = webhookData.recipient || webhookData.To || webhookData.to || 'UNKNOWN_RECIPIENT';
-    const subjectField = webhookData.subject || webhookData.Subject || 'UNKNOWN_SUBJECT';
+    let fromField = webhookData.sender || webhookData.From || webhookData.from || 'UNKNOWN_SENDER';
+    let toField = webhookData.recipient || webhookData.To || webhookData.to || 'UNKNOWN_RECIPIENT';
+    let subjectField = webhookData.subject || webhookData.Subject || 'UNKNOWN_SUBJECT';
     
     console.log(`🔍 [${webhookId}] FROM: ${fromField}`);
     console.log(`🔍 [${webhookId}] TO: ${toField}`);
@@ -317,29 +352,59 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
     
     // Check if this is a reply to a booking-specific email
     const recipient = emailData.recipient || emailData.To || '';
-    const fromField = emailData.sender || emailData.From || '';
-    const subjectField = emailData.subject || emailData.Subject || '';
+    // Update variables with final email data
+    fromField = emailData.sender || emailData.From || fromField;
+    subjectField = emailData.subject || emailData.Subject || subjectField;
     const bodyField = emailData['body-plain'] || emailData['stripped-text'] || '';
     
     // SPECIAL HANDLING: Encore follow-up emails detection
+    const isFromEncoreService = (
+      fromField.toLowerCase().includes('encore') || 
+      fromField.includes('@encoremusicians.com') ||
+      fromField.includes('no-reply-message@encoremusicians.com')
+    );
+    
+    const hasJobAlertIndicators = (
+      subjectField.toLowerCase().includes('job alert') ||
+      bodyField.toLowerCase().includes('apply now') ||
+      bodyField.toLowerCase().includes('new gig') ||
+      bodyField.toLowerCase().includes('gig opportunity')
+    );
+    
+    // Enhanced follow-up detection - includes conversation patterns
+    const hasFollowupIndicators = (
+      // Direct follow-up keywords
+      bodyField.toLowerCase().includes('congratulations') ||
+      bodyField.toLowerCase().includes('you have been selected') ||
+      bodyField.toLowerCase().includes('client has chosen') ||
+      bodyField.toLowerCase().includes('booking confirmed') ||
+      bodyField.toLowerCase().includes('booking update') ||
+      bodyField.toLowerCase().includes('payment') ||
+      bodyField.toLowerCase().includes('cancelled') ||
+      bodyField.toLowerCase().includes('rescheduled') ||
+      
+      // Conversation patterns (like Joseph's message)
+      bodyField.toLowerCase().includes('sorry to chase') ||
+      bodyField.toLowerCase().includes('sent over the booking') ||
+      bodyField.toLowerCase().includes('booking request') ||
+      bodyField.toLowerCase().includes('check all was good') ||
+      bodyField.toLowerCase().includes('confirming to play') ||
+      bodyField.toLowerCase().includes('your current quote') ||
+      bodyField.toLowerCase().includes('reply to this email to respond') ||
+      bodyField.toLowerCase().includes('new message from')
+    );
+    
     const isEncoreFollowup = (
-      fromField.toLowerCase().includes('encore') && 
-      !subjectField.toLowerCase().includes('job alert') &&
-      !bodyField.toLowerCase().includes('apply now') &&
-      (bodyField.toLowerCase().includes('congratulations') ||
-       bodyField.toLowerCase().includes('you have been selected') ||
-       bodyField.toLowerCase().includes('client has chosen') ||
-       bodyField.toLowerCase().includes('booking confirmed') ||
-       bodyField.toLowerCase().includes('booking update') ||
-       bodyField.toLowerCase().includes('payment') ||
-       bodyField.toLowerCase().includes('cancelled') ||
-       bodyField.toLowerCase().includes('rescheduled'))
+      isFromEncoreService && 
+      !hasJobAlertIndicators &&
+      hasFollowupIndicators
     );
     
     logWebhookActivity('Email classification check', {
       recipient: recipient.substring(0, 50),
-      isFromEncore: fromField.toLowerCase().includes('encore'),
-      isJobAlert: subjectField.toLowerCase().includes('job alert'),
+      isFromEncoreService,
+      hasJobAlertIndicators,
+      hasFollowupIndicators,
       isEncoreFollowup
     });
     
