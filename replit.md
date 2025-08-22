@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burden, enabling musicians to focus on their creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists, with a vision for significant market potential.
+MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burden, enabling musicians to focus on their creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists, with significant market potential.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
