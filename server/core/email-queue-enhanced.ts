@@ -223,11 +223,48 @@ class EnhancedEmailQueue {
     
     // Look up user by email prefix - MUST match exactly
     const { storage } = await import('./storage');
-    const user = await storage.getUserByEmailPrefix(emailPrefix);
+    let user = await storage.getUserByEmailPrefix(emailPrefix);
     
     if (!user) {
       console.error(`📧 [GLOBAL] REJECTED: No user found for email prefix "${emailPrefix}"`);
       console.error(`📧 [GLOBAL] Email sent to: ${recipientField}`);
+      
+      // CRITICAL FIX: Instead of throwing error, save to unparseable messages for manual review
+      try {
+        // Get the default/admin user to save the message under
+        const allUsers = await storage.getAllUsers();
+        const fallbackUser = allUsers.find(u => u.email.includes('jake') || u.email.includes('admin')) || allUsers[0];
+        
+        if (fallbackUser) {
+          console.log(`📧 [FALLBACK] Saving email to unparseable messages under fallback user: ${fallbackUser.id}`);
+          
+          // Save to unparseable messages with clear indication of the issue
+          const fromField = requestData.From || requestData.from || requestData.sender || '';
+          const subjectField = requestData.Subject || requestData.subject || '';
+          const bodyField = requestData['body-plain'] || requestData.text || requestData['stripped-text'] || '';
+          
+          await storage.createUnparseableMessage({
+            userId: fallbackUser.id,
+            source: 'email',
+            fromContact: fromField,
+            subject: `[USER LOOKUP FAILED: ${emailPrefix}] ${subjectField}`,
+            content: `⚠️ EMAIL ROUTING ERROR:\nThis email was sent to "${recipientField}" but no user found for prefix "${emailPrefix}".\n\nOriginal email content:\n---\n${bodyField}`,
+            createdAt: new Date()
+          });
+          
+          console.log(`✅ [FALLBACK] Email saved to unparseable messages for manual review`);
+          return {
+            jobId,
+            queuePosition: 0,
+            isDuplicate: false,
+            userId: fallbackUser.id,
+            fallbackProcessed: true
+          };
+        }
+      } catch (fallbackError: any) {
+        console.error(`❌ [FALLBACK] Failed to save email to unparseable messages:`, fallbackError.message);
+      }
+      
       throw new Error(`Email rejected - no user configured for prefix "${emailPrefix}". Please ensure emails are sent to a valid user address.`);
     }
     
