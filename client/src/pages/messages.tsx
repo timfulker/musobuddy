@@ -813,7 +813,9 @@ export default function Messages() {
                         booking.id?.toString().includes(search) ||
                         booking.status?.toLowerCase().includes(search) ||
                         booking.clientEmail?.toLowerCase().includes(search) ||
-                        booking.clientPhone?.toLowerCase().includes(search)
+                        booking.clientPhone?.toLowerCase().includes(search) ||
+                        booking.what3words?.toLowerCase().includes(search) ||
+                        booking.clientAddress?.toLowerCase().includes(search)
                       );
                     })
                     .slice(0, 200)
@@ -836,6 +838,11 @@ export default function Messages() {
                             <p className="text-sm text-gray-500">
                               {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'} • {booking.eventType || 'No event type'}
                             </p>
+                            {(booking.what3words || booking.clientAddress) && (
+                              <p className="text-sm text-blue-600 font-medium">
+                                📍 {booking.what3words || booking.clientAddress}
+                              </p>
+                            )}
                             <p className="text-xs text-gray-400">
                               Created: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() + ' ' + new Date(booking.createdAt).toLocaleTimeString() : 'Unknown'} 
                               {booking.clientEmail && ` • ${booking.clientEmail}`}
