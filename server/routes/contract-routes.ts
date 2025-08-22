@@ -441,18 +441,20 @@ export function registerContractRoutes(app: Express) {
       });
       
       const emailService = new EmailService();
+      const { uploadContractSigningPage } = await import('../core/cloud-storage');
       
-      // FIXED: Generate dynamic signing page URL served from server (not R2)
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://www.musobuddy.com' 
-        : `http://localhost:${process.env.PORT || 5000}`;
-      const signingPageUrl = `${baseUrl}/sign-contract/${parsedContractId}`;
+      // Upload the HTML signing page with the latest template
+      const signingPageResult = await uploadContractSigningPage(contract, userSettings);
       
-      console.log('🔗 FIXED: Using dynamic signing page URL:', signingPageUrl);
+      if (!signingPageResult.success) {
+        console.error('❌ Failed to upload signing page to R2:', signingPageResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract signing page' });
+      }
       
       await storage.updateContract(parsedContractId, {
         status: 'sent',
-        signingPageUrl: signingPageUrl,
+        signingPageUrl: signingPageResult.url,
+        cloudStorageKey: signingPageResult.key,
         updatedAt: new Date()
       });
       
@@ -460,7 +462,7 @@ export function registerContractRoutes(app: Express) {
         return res.json({ 
           success: true, 
           message: 'Contract signing page created successfully (email skipped - no client email provided)',
-          signingPageUrl: signingPageUrl 
+          signingPageUrl: signingPageResult.url 
         });
       }
       
@@ -473,8 +475,8 @@ export function registerContractRoutes(app: Express) {
       });
       
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      // Send email with the dynamic signing page URL
-      await emailService.sendContractEmail(contract, userSettings, subject, signingPageUrl, customMessage);
+      // Send email with the signing page URL, not the PDF URL
+      await emailService.sendContractEmail(contract, userSettings, subject, signingPageResult.url || '', customMessage);
       
       res.json({ success: true, message: 'Contract sent successfully' });
       
