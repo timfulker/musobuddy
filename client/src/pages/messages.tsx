@@ -809,6 +809,7 @@ export default function Messages() {
                       return (
                         booking.clientName?.toLowerCase().includes(search) ||
                         booking.venue?.toLowerCase().includes(search) ||
+                        booking.venueAddress?.toLowerCase().includes(search) ||
                         booking.eventType?.toLowerCase().includes(search) ||
                         booking.id?.toString().includes(search) ||
                         booking.status?.toLowerCase().includes(search) ||
@@ -834,7 +835,7 @@ export default function Messages() {
                               <p className="font-medium">{booking.clientName || 'No name'}</p>
                               <span className="text-xs bg-gray-200 px-2 py-1 rounded">ID: {booking.id}</span>
                             </div>
-                            <p className="text-sm text-gray-600">{booking.venue || booking.clientAddress || 'No location'}</p>
+                            <p className="text-sm text-gray-600">{booking.venueAddress || booking.venue || booking.clientAddress || 'No location'}</p>
                             <p className="text-sm text-gray-500">
                               {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'} • {booking.eventType || 'No event type'}
                             </p>
