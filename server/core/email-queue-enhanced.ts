@@ -664,10 +664,7 @@ class EnhancedEmailQueue {
       const cleanedSubject = cleanEncoreTitle(subjectField);
       
       // Create booking or save to review based on parsed data quality
-      const isEncoreMessage = bodyField.toLowerCase().includes('encore') || 
-                              fromField.toLowerCase().includes('encore') ||
-                              subjectField.toLowerCase().includes('encore') ||
-                              bodyField.includes('apply now');
+      // (isEncoreMessage already declared above for fallback parsing)
 
       // STRICT VALIDATION: Date is MANDATORY for all bookings
       // Workflow: 1. Date (required) -> 2. Venue (preferred) -> 3. Client Name
