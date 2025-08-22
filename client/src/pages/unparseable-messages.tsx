@@ -315,7 +315,7 @@ export default function UnparseableMessages() {
                           // Navigate to templates page with message data for direct reply
                           navigate(`/templates?action=respond&messageId=${message.id}&clientEmail=${encodeURIComponent(clientEmail)}&clientName=${encodeURIComponent(message.fromContact.replace(/<[^>]*>/g, '').trim())}`);
                         }}
-                        className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                        className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
                       >
                         <Reply className="w-4 h-4" />
                         Reply
@@ -328,7 +328,7 @@ export default function UnparseableMessages() {
                           setBookingSearch("");
                           setSelectedBookingId(null);
                         }}
-                        className="flex items-center gap-2 text-purple-600 hover:text-purple-700"
+                        className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
                       >
                         <Link2 className="w-4 h-4" />
                         Link to Booking
@@ -337,7 +337,7 @@ export default function UnparseableMessages() {
                         size="sm"
                         variant="outline"
                         onClick={() => deleteMutation.mutate(message.id)}
-                        className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                        className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete
@@ -421,10 +421,23 @@ export default function UnparseableMessages() {
                       });
                     }
                   }}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-2"
                 >
                   <Reply className="w-4 h-4" />
                   Reply
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLinkingMessage(selectedMessage);
+                    setBookingSearch("");
+                    setSelectedBookingId(null);
+                    setSelectedMessage(null);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Link2 className="w-4 h-4" />
+                  Link to Booking
                 </Button>
                 <Button
                   variant="outline"
@@ -437,7 +450,7 @@ export default function UnparseableMessages() {
                   Mark as Reviewed
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => {
                     setSelectedMessage(null);
                     setReviewNotes("");
