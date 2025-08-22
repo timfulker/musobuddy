@@ -429,10 +429,10 @@ export default function UnparseableMessages() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setLinkingMessage(selectedMessage);
-                    setBookingSearch("");
-                    setSelectedBookingId(null);
-                    setSelectedMessage(null);
+                    toast({
+                      title: "Link to Booking",
+                      description: "This feature will search for existing bookings to link this message"
+                    });
                   }}
                   className="flex items-center gap-2"
                 >
