@@ -316,5 +316,96 @@ export function setupCollaborativeFormRoutes(app: Express) {
     }
   });
 
+  // Serve dynamic collaborative form with live data
+  app.get('/api/collaborative-form/:token', async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).send('<h1>Error: No portal token provided</h1>');
+      }
+
+      // Find contract with this token
+      const contract = await db.select().from(contracts)
+        .where(eq(contracts.clientPortalToken, token))
+        .then(results => results[0]);
+
+      if (!contract) {
+        return res.status(404).send('<h1>Error: Invalid portal token</h1>');
+      }
+
+      // Get the associated booking with current data
+      const targetBookingId = contract.enquiryId;
+      const booking = await db.select().from(bookings)
+        .where(eq(bookings.id, targetBookingId))
+        .then(results => results[0]);
+
+      if (!booking) {
+        return res.status(404).send('<h1>Error: No booking found for this contract</h1>');
+      }
+
+      // Prepare current booking data for form generation
+      const bookingData = {
+        id: booking.id,
+        contractId: contract.id,
+        clientName: contract.clientName || 'Client',
+        venue: booking.venue || contract.venue || 'TBC',
+        eventDate: booking.eventDate?.toISOString() || contract.eventDate?.toISOString() || new Date().toISOString(),
+        eventTime: booking.event_time || contract.eventTime,
+        eventEndTime: booking.event_end_time || contract.eventEndTime,
+        performanceDuration: booking.performance_duration || contract.performanceDuration,
+        // Include all collaborative fields with current data
+        venueContact: booking.venue_contact,
+        soundTechContact: booking.sound_tech_contact,
+        stageSize: booking.stage_size,
+        powerEquipment: booking.power_equipment,
+        styleMood: booking.style_mood,
+        mustPlaySongs: booking.must_play_songs,
+        avoidSongs: booking.avoid_songs,
+        setOrder: booking.set_order,
+        firstDanceSong: booking.first_dance_song,
+        processionalSong: booking.processional_song,
+        signingRegisterSong: booking.signing_register_song,
+        recessionalSong: booking.recessional_song,
+        specialDedications: booking.special_dedications,
+        guestAnnouncements: booking.guest_announcements,
+        loadInInfo: booking.load_in_info,
+        soundCheckTime: booking.sound_check_time,
+        weatherContingency: booking.weather_contingency,
+        parkingPermitRequired: booking.parking_permit_required,
+        mealProvided: booking.meal_provided,
+        dietaryRequirements: booking.dietary_requirements,
+        sharedNotes: booking.shared_notes,
+        referenceTracks: booking.reference_tracks,
+        photoPermission: booking.photo_permission,
+        encoreAllowed: booking.encore_allowed,
+        encoreSuggestions: booking.encore_suggestions
+      };
+
+      // API endpoint for the form to communicate with
+      const apiEndpoint = process.env.REPLIT_DEPLOYMENT 
+        ? `https://www.musobuddy.com`
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
+
+      // Get field locks from booking
+      const fieldLocks = booking.fieldLocks || {};
+
+      // Generate dynamic form HTML with current data
+      const formHtml = collaborativeFormGenerator.generateStandaloneForm(
+        bookingData,
+        apiEndpoint,
+        token,
+        fieldLocks
+      );
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(formHtml);
+
+    } catch (error) {
+      console.error('❌ Error serving dynamic collaborative form:', error);
+      res.status(500).send('<h1>Error: Failed to load collaborative form</h1>');
+    }
+  });
+
   console.log('✅ Collaborative form routes configured');
 }
