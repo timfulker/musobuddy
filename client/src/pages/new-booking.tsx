@@ -823,8 +823,26 @@ export default function NewBookingPage({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Client & Contact Information */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
+            {/* Client Mode Header */}
+            {clientMode && (
+              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-green-800">Collaboration Portal</h2>
+                      <p className="text-green-700">Help plan your event by filling in the details below</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Client & Contact Information - Hide in client mode */}
+            {!clientMode && (
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-primary-50 rounded-t-lg border-b border-primary/10">
                 <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -944,6 +962,7 @@ export default function NewBookingPage({
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Event Date & Venue */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-blue-100">
