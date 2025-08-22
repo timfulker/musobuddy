@@ -220,6 +220,134 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
     
     // Check if this is a reply to a booking-specific email
     const recipient = emailData.recipient || emailData.To || '';
+    const fromField = emailData.sender || emailData.From || '';
+    const subjectField = emailData.subject || emailData.Subject || '';
+    const bodyField = emailData['body-plain'] || emailData['stripped-text'] || '';
+    
+    // SPECIAL HANDLING: Encore follow-up emails detection
+    const isEncoreFollowup = (
+      fromField.toLowerCase().includes('encore') && 
+      !subjectField.toLowerCase().includes('job alert') &&
+      !bodyField.toLowerCase().includes('apply now') &&
+      (bodyField.toLowerCase().includes('congratulations') ||
+       bodyField.toLowerCase().includes('you have been selected') ||
+       bodyField.toLowerCase().includes('client has chosen') ||
+       bodyField.toLowerCase().includes('booking confirmed') ||
+       bodyField.toLowerCase().includes('booking update') ||
+       bodyField.toLowerCase().includes('payment') ||
+       bodyField.toLowerCase().includes('cancelled') ||
+       bodyField.toLowerCase().includes('rescheduled'))
+    );
+    
+    logWebhookActivity('Email classification check', {
+      recipient: recipient.substring(0, 50),
+      isFromEncore: fromField.toLowerCase().includes('encore'),
+      isJobAlert: subjectField.toLowerCase().includes('job alert'),
+      isEncoreFollowup
+    });
+    
+    // Handle Encore follow-up emails by converting to conversation
+    if (isEncoreFollowup) {
+      logWebhookActivity('ENCORE FOLLOW-UP DETECTED - searching for related booking');
+      
+      try {
+        const { storage } = await import('./core/storage');
+        
+        // Extract user from recipient email prefix
+        const recipientMatch = recipient.match(/([^@]+)@/);
+        const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        
+        if (emailPrefix) {
+          const user = await storage.getUserByEmailPrefix(emailPrefix);
+          
+          if (user) {
+            // Look for recent Encore bookings for this user
+            const userBookings = await storage.getBookingsByUser(user.id);
+            const encoreBookings = userBookings
+              .filter(b => 
+                b.title?.toLowerCase().includes('encore') || 
+                b.originalEmailContent?.toLowerCase().includes('encore') ||
+                b.venue?.toLowerCase().includes('encore')
+              )
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .slice(0, 5); // Get 5 most recent Encore bookings
+            
+            if (encoreBookings.length > 0) {
+              const targetBooking = encoreBookings[0]; // Use most recent
+              logWebhookActivity('Found target Encore booking for follow-up', { 
+                bookingId: targetBooking.id,
+                bookingTitle: targetBooking.title
+              });
+              
+              // Store as conversation message for the booking
+              const { cloudStorage } = await import('./core/cloud-storage');
+              
+              const messageHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Encore Follow-up - ${subjectField}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .message-header { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .message-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .metadata { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        .encore-badge { background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <div class="message-header">
+        <div class="metadata">
+            <strong>🎵 Encore Follow-up Message</strong> <span class="encore-badge">AUTO-LINKED</span><br>
+            <strong>From:</strong> ${fromField}<br>
+            <strong>Subject:</strong> ${subjectField}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
+            <strong>Linked to Booking:</strong> #${targetBooking.id} - ${targetBooking.title}
+        </div>
+    </div>
+    <div class="message-content">
+        ${emailData['body-html'] || bodyField?.replace(/\n/g, '<br>') || 'No content'}
+    </div>
+</body>
+</html>`;
+
+              const fileName = `user${user.id}/booking${targetBooking.id}/messages/encore_followup_${Date.now()}.html`;
+              await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+              
+              // Create message notification
+              await storage.createMessageNotification({
+                userId: user.id,
+                bookingId: targetBooking.id,
+                senderEmail: fromField,
+                subject: `[Encore] ${subjectField}`,
+                messageUrl: fileName,
+                isRead: false,
+                createdAt: new Date()
+              });
+              
+              logWebhookActivity('Encore follow-up stored as conversation', { 
+                fileName, 
+                userId: user.id, 
+                bookingId: targetBooking.id 
+              });
+              
+              return res.status(200).json({ 
+                status: 'ok', 
+                type: 'encore_followup', 
+                bookingId: targetBooking.id,
+                message: 'Encore follow-up linked to booking conversation'
+              });
+            } else {
+              logWebhookActivity('No Encore bookings found - treating as unparseable');
+            }
+          }
+        }
+      } catch (error: any) {
+        logWebhookActivity('Error processing Encore follow-up', { error: error.message });
+      }
+    }
+    
     const bookingIdMatch = recipient.match(/user(\d+)-booking(\d+)@/);
     
     if (bookingIdMatch) {
