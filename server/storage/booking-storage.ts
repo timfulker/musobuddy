@@ -105,52 +105,6 @@ export class BookingStorage {
       cleanData.title = 'Booking Request';
     }
 
-    // Map camelCase fields from frontend to snake_case for database
-    const mapToSnakeCase = (data: any) => {
-      const mapped = { ...data };
-      
-      // Define the field mappings from camelCase to snake_case
-      const fieldMappings: Record<string, string> = {
-        venueAddress: 'venue_address',
-        applyNowLink: 'apply_now_link',
-        venueContact: 'venue_contact',
-        soundTechContact: 'sound_tech_contact',
-        soundCheckTime: 'sound_check_time',
-        stageSize: 'stage_size',
-        powerEquipment: 'power_equipment',
-        styleMood: 'style_mood',
-        mustPlaySongs: 'must_play_songs',
-        avoidSongs: 'avoid_songs',
-        setOrder: 'set_order',
-        firstDanceSong: 'first_dance_song',
-        processionalSong: 'processional_song',
-        signingRegisterSong: 'signing_register_song',
-        recessionalSong: 'recessional_song',
-        specialDedications: 'special_dedications',
-        guestAnnouncements: 'guest_announcements',
-        loadInInfo: 'load_in_info',
-        weatherContingency: 'weather_contingency',
-        parkingPermitRequired: 'parking_permit_required',
-        mealProvided: 'meal_provided',
-        dietaryRequirements: 'dietary_requirements',
-        sharedNotes: 'shared_notes',
-        referenceTracks: 'reference_tracks',
-        photoPermission: 'photo_permission',
-        encoreAllowed: 'encore_allowed',
-        encoreSuggestions: 'encore_suggestions'
-      };
-      
-      // Apply the mapping
-      Object.entries(fieldMappings).forEach(([camelCase, snakeCase]) => {
-        if (camelCase in mapped) {
-          mapped[snakeCase] = mapped[camelCase];
-          delete mapped[camelCase];
-        }
-      });
-      
-      return mapped;
-    };
-
     // Apply the same sanitization to create operations
     const sanitizeNumericFields = (data: any) => {
       const numericFields = [
@@ -182,9 +136,7 @@ export class BookingStorage {
       return sanitized;
     };
 
-    // First map camelCase to snake_case, then sanitize
-    const mappedData = mapToSnakeCase(cleanData);
-    const sanitizedData = sanitizeNumericFields(mappedData);
+    const sanitizedData = sanitizeNumericFields(cleanData);
 
     const result = await db.insert(bookings).values({
       ...sanitizedData,
@@ -199,52 +151,6 @@ export class BookingStorage {
     if (!currentBooking) {
       throw new Error('Booking not found');
     }
-
-    // Map camelCase fields from frontend to snake_case for database
-    const mapToSnakeCase = (data: any) => {
-      const mapped = { ...data };
-      
-      // Define the field mappings from camelCase to snake_case
-      const fieldMappings: Record<string, string> = {
-        venueAddress: 'venue_address',
-        applyNowLink: 'apply_now_link',
-        venueContact: 'venue_contact',
-        soundTechContact: 'sound_tech_contact',
-        soundCheckTime: 'sound_check_time',
-        stageSize: 'stage_size',
-        powerEquipment: 'power_equipment',
-        styleMood: 'style_mood',
-        mustPlaySongs: 'must_play_songs',
-        avoidSongs: 'avoid_songs',
-        setOrder: 'set_order',
-        firstDanceSong: 'first_dance_song',
-        processionalSong: 'processional_song',
-        signingRegisterSong: 'signing_register_song',
-        recessionalSong: 'recessional_song',
-        specialDedications: 'special_dedications',
-        guestAnnouncements: 'guest_announcements',
-        loadInInfo: 'load_in_info',
-        weatherContingency: 'weather_contingency',
-        parkingPermitRequired: 'parking_permit_required',
-        mealProvided: 'meal_provided',
-        dietaryRequirements: 'dietary_requirements',
-        sharedNotes: 'shared_notes',
-        referenceTracks: 'reference_tracks',
-        photoPermission: 'photo_permission',
-        encoreAllowed: 'encore_allowed',
-        encoreSuggestions: 'encore_suggestions'
-      };
-      
-      // Apply the mapping
-      Object.entries(fieldMappings).forEach(([camelCase, snakeCase]) => {
-        if (camelCase in mapped) {
-          mapped[snakeCase] = mapped[camelCase];
-          delete mapped[camelCase];
-        }
-      });
-      
-      return mapped;
-    };
 
     // Sanitize numeric fields - convert empty strings to null and strip currency symbols
     const sanitizeNumericFields = (data: any) => {
@@ -282,9 +188,7 @@ export class BookingStorage {
       return sanitized;
     };
 
-    // First map camelCase to snake_case, then sanitize
-    const mappedUpdates = mapToSnakeCase(updates);
-    const sanitizedUpdates = sanitizeNumericFields(mappedUpdates);
+    const sanitizedUpdates = sanitizeNumericFields(updates);
 
     const setData = {
       ...sanitizedUpdates,
