@@ -494,6 +494,10 @@ export const bookings = pgTable("bookings", {
   emailHash: varchar("email_hash").unique(), // Unique hash to prevent duplicate email processing
   processedAt: timestamp("processed_at"), // When email was processed into booking
   
+  // Client collaboration access
+  collaborationToken: varchar("collaboration_token").unique(), // Token for client access to collaborative form
+  collaborationTokenGeneratedAt: timestamp("collaboration_token_generated_at"), // When token was generated
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
