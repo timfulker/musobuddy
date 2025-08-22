@@ -1,7 +1,7 @@
 # MusoBuddy - Music Business Management Platform
 
 ## Overview
-MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burden, enabling musicians to focus on their creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists.
+MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, invoices, and compliance. Its primary purpose is to reduce administrative burden, enabling musicians to focus on their creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists, with a vision for significant market potential.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -54,7 +54,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design, QR code generation, widget URL creation, dynamic PDF theming, simplified action buttons, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display, and dual client portal system.
+- **UI/UX Decisions**: Enhanced responsive design (mobile/desktop adaptation), QR code generation, widget URL creation, dynamic PDF theming, simplified action buttons, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display, and a dual client portal system.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -96,4 +96,3 @@ Client portal system architecture: Implemented dual-portal system with clear sep
     - Stripe
     - Twilio
     - what3words API
-```
