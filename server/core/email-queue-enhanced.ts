@@ -758,7 +758,31 @@ class EnhancedEmailQueue {
         subjectField: subjectField?.substring(0, 100),
         bodyLength: bodyField?.length || 0
       });
-      await saveToReviewMessages('Email parsing failed', parseError.message);
+      
+      try {
+        await saveToReviewMessages('Email parsing failed', parseError.message);
+        console.log(`✅ [${requestId}] FAILSAFE: Error email saved to review messages`);
+      } catch (saveError: any) {
+        console.error(`🚨 [${requestId}] CRITICAL: Failed to save error email to review:`, saveError.message);
+        
+        // ABSOLUTE FAILSAFE: Direct database insert if saveToReviewMessages fails
+        try {
+          const { storage } = await import('./storage');
+          await storage.createUnparseableMessage({
+            userId: job.userId,
+            source: 'email',
+            fromContact: fromField || 'Unknown sender',
+            subject: subjectField || 'No subject',
+            rawMessage: bodyField || 'No content',
+            parsingErrorDetails: `CRITICAL SAVE FAILURE: ${saveError.message}. Original error: ${parseError.message}`,
+            messageType: 'system_error',
+            createdAt: new Date()
+          });
+          console.log(`🆘 [${requestId}] ABSOLUTE FAILSAFE: Saved via direct database insert`);
+        } catch (dbError: any) {
+          console.error(`💀 [${requestId}] TOTAL FAILURE: Cannot save email anywhere:`, dbError.message);
+        }
+      }
     }
   }
 

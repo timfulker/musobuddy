@@ -248,6 +248,17 @@ app.post('/api/debug/encore-email', async (req, res) => {
 
 // Enhanced Mailgun webhook handler with multipart support
 app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
+  // JOSEPH DEBUG: Log ALL incoming webhook data
+  const fromField = req.body.From || req.body.from || req.body.sender || '';
+  const subjectField = req.body.Subject || req.body.subject || '';
+  console.log(`🎯 [JOSEPH-DEBUG] WEBHOOK RECEIVED:`, {
+    from: fromField,
+    subject: subjectField,
+    recipient: req.body.To || req.body.recipient || '',
+    timestamp: new Date().toISOString(),
+    hasBody: !!(req.body['body-plain'] || req.body.text),
+    messageId: req.body['message-id'] || req.body['Message-Id'] || ''
+  });
   const webhookId = `webhook_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
   
   // ENHANCED LOGGING: Track ALL webhook attempts
