@@ -503,6 +503,71 @@ class EnhancedEmailQueue {
         hasVenue: !!parsedData.venue,
         eventType: parsedData.eventType
       });
+
+      // ENCORE FALLBACK PARSING: If AI failed to extract date from Encore email, use regex
+      const isEncoreMessage = bodyField.toLowerCase().includes('encore') || 
+                              fromField.toLowerCase().includes('encore') ||
+                              subjectField.toLowerCase().includes('encore') ||
+                              bodyField.includes('apply now');
+
+      if (isEncoreMessage && !parsedData.eventDate) {
+        console.log(`🎵 [${requestId}] ENCORE FALLBACK: AI failed to extract date, trying regex parsing`);
+        
+        // Extract date from Encore format: "Date: Saturday 30 Aug 2025"
+        const dateMatch = bodyField.match(/Date:\s*([^\n\r]+)/i);
+        if (dateMatch) {
+          const dateStr = dateMatch[1].trim();
+          const parsedDate = new Date(dateStr);
+          if (!isNaN(parsedDate.getTime())) {
+            parsedData.eventDate = parsedDate.toISOString().split('T')[0];
+            console.log(`✅ [${requestId}] ENCORE FALLBACK: Extracted date: ${parsedData.eventDate}`);
+          }
+        }
+        
+        // Extract venue from "Location: City, Area (Postcode)"
+        if (!parsedData.venue) {
+          const venueMatch = bodyField.match(/Location:\s*([^\n\r]+)/i);
+          if (venueMatch) {
+            parsedData.venue = venueMatch[1].trim();
+            console.log(`✅ [${requestId}] ENCORE FALLBACK: Extracted venue: ${parsedData.venue}`);
+          }
+        }
+        
+        // Extract event type from subject/title
+        if (!parsedData.eventType) {
+          const titleMatch = bodyField.match(/Urgent:\s*([^\n\r]+)|([^\n\r]+needed for[^\n\r]+)/i);
+          if (titleMatch) {
+            const eventType = (titleMatch[1] || titleMatch[2] || '').replace(/needed for.*/, '').trim();
+            if (eventType.toLowerCase().includes('wedding')) parsedData.eventType = 'Wedding';
+            else if (eventType.toLowerCase().includes('party')) parsedData.eventType = 'Party';
+            else if (eventType.toLowerCase().includes('corporate')) parsedData.eventType = 'Corporate';
+            else parsedData.eventType = 'Performance';
+            console.log(`✅ [${requestId}] ENCORE FALLBACK: Extracted event type: ${parsedData.eventType}`);
+          }
+        }
+        
+        // Extract fee range
+        if (!parsedData.fee) {
+          const feeMatch = bodyField.match(/£(\d+)\s*-\s*£(\d+)/);
+          if (feeMatch) {
+            const minFee = parseInt(feeMatch[1]);
+            const maxFee = parseInt(feeMatch[2]);
+            parsedData.fee = Math.round((minFee + maxFee) / 2); // Use average
+            console.log(`✅ [${requestId}] ENCORE FALLBACK: Extracted fee: £${parsedData.fee} (avg of £${minFee}-£${maxFee})`);
+          }
+        }
+        
+        // Set client info for Encore bookings
+        if (!parsedData.clientName) {
+          parsedData.clientName = 'Encore Client';
+        }
+        
+        // Boost confidence for successful fallback
+        if (parsedData.eventDate && parsedData.venue) {
+          parsedData.confidence = Math.max(0.7, parsedData.confidence || 0);
+          console.log(`✅ [${requestId}] ENCORE FALLBACK: Boosted confidence to ${parsedData.confidence}`);
+        }
+      }
       
       // Apply title cleanup
       const cleanedSubject = cleanEncoreTitle(subjectField);
