@@ -83,7 +83,7 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 - **Cloud Services**:
     - Cloudflare R2
     - Neon Database (PostgreSQL)
-    - Replit (Authentication and hosting)
+    - Replit
 - **APIs and Services**:
     - Google Maps API
     - Mailgun
