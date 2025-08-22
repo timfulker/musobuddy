@@ -446,7 +446,7 @@ export function registerContractRoutes(app: Express) {
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://www.musobuddy.com' 
         : `http://localhost:${process.env.PORT || 5000}`;
-      const signingPageUrl = `${baseUrl}/contracts/${parsedContractId}/sign`;
+      const signingPageUrl = `${baseUrl}/sign-contract/${parsedContractId}`;
       
       console.log('🔗 FIXED: Using dynamic signing page URL:', signingPageUrl);
       
