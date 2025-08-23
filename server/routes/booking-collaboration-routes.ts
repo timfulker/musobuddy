@@ -169,10 +169,33 @@ export function setupBookingCollaborationRoutes(app: Express) {
         return res.status(403).json({ error: 'Invalid collaboration link' });
       }
 
-      // Update the booking with collaborative fields
+      // Only allow updating specific collaborative fields
+      const allowedFields = [
+        'venueContact',
+        'specialGuests', 
+        'musicPreferences',
+        'equipmentRequirements',
+        'equipmentProvided',
+        'whatsIncluded',
+        'contactPerson',
+        'referenceTracksExamples',
+        'sharedNotes'
+      ];
+
+      // Filter updates to only include allowed fields
+      const filteredUpdates: any = {};
+      for (const field of allowedFields) {
+        if (field in updates) {
+          filteredUpdates[field] = updates[field];
+        }
+      }
+
+      console.log('📝 [COLLABORATION] Filtered updates:', filteredUpdates);
+
+      // Update the booking with collaborative fields only
       const updatedBooking = await db.update(bookings)
         .set({
-          ...updates,
+          ...filteredUpdates,
           updatedAt: new Date()
         })
         .where(eq(bookings.id, parseInt(bookingId)))
