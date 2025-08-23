@@ -7,8 +7,9 @@ import NewBooking from "./new-booking";
 interface CollaborationPageProps {}
 
 export default function BookingCollaborate({}: CollaborationPageProps) {
-  // Use useParams to get the bookingId from the route
-  const { bookingId } = useParams();
+  // Use useParams to get the bookingId from the route (same pattern as booking-summary.tsx)
+  const params = useParams();
+  const bookingId = params.bookingId; // Extract bookingId explicitly
   const [location] = useLocation();
   
   // Extract query parameters for the token
