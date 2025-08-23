@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import NewBooking from "./new-booking";
@@ -7,34 +7,61 @@ import NewBooking from "./new-booking";
 interface CollaborationPageProps {}
 
 export default function BookingCollaborate({}: CollaborationPageProps) {
-  // Use proper wouter hooks to extract route params
-  const [match, params] = useRoute("/booking/:bookingId/collaborate");
+  // Use useParams to get the bookingId from the route
+  const { bookingId } = useParams();
   const [location] = useLocation();
   
-  // Extract query parameters
+  // Extract query parameters for the token
   const queryString = location.includes('?') ? location.split('?')[1] : '';
   const urlParams = new URLSearchParams(queryString);
   const token = urlParams.get('token');
-  
-  // Get bookingId from route params
-  const bookingId = params?.bookingId || null;
+
+  // Comprehensive debug logging
+  console.log('[COLLABORATION DEBUG] Component rendered');
+  console.log('[COLLABORATION DEBUG] Location:', location);
+  console.log('[COLLABORATION DEBUG] Booking ID from params:', bookingId);
+  console.log('[COLLABORATION DEBUG] Token from query:', token);
+  console.log('[COLLABORATION DEBUG] Query will be enabled:', !!(bookingId && token));
 
   // Verify collaboration token and get booking access
   const { data: collaborationData, isLoading, error } = useQuery({
     queryKey: ['/api/booking-collaboration/verify', bookingId, token],
     queryFn: async () => {
+      console.log('[COLLABORATION DEBUG] queryFn executing...');
+      console.log('[COLLABORATION DEBUG] BookingId:', bookingId, 'Token:', token);
+      
       if (!bookingId || !token) {
+        console.log('[COLLABORATION DEBUG] Missing data - bookingId:', bookingId, 'token:', token);
         throw new Error('Missing booking ID or token');
       }
       
-      const response = await fetch(`/api/booking-collaboration/${bookingId}/verify?token=${token}`);
-      if (!response.ok) {
-        throw new Error('Invalid collaboration link');
+      const url = `/api/booking-collaboration/${bookingId}/verify?token=${token}`;
+      console.log('[COLLABORATION DEBUG] Fetching:', url);
+      
+      try {
+        const response = await fetch(url);
+        console.log('[COLLABORATION DEBUG] Response status:', response.status);
+        console.log('[COLLABORATION DEBUG] Response ok:', response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('[COLLABORATION DEBUG] Error response:', errorText);
+          throw new Error('Invalid collaboration link');
+        }
+        
+        const data = await response.json();
+        console.log('[COLLABORATION DEBUG] Success! Data:', data);
+        return data;
+      } catch (err) {
+        console.error('[COLLABORATION DEBUG] Fetch error:', err);
+        throw err;
       }
-      return response.json();
     },
     enabled: !!(bookingId && token),
+    retry: false, // Disable retry for clearer debugging
   });
+
+  console.log('[COLLABORATION DEBUG] Query state - isLoading:', isLoading, 'error:', error, 'data:', collaborationData);
 
   if (isLoading) {
     return (
