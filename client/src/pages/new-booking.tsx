@@ -1342,7 +1342,8 @@ export default function NewBookingPage({
               </CardContent>
             </Card>
             
-            {/* Pricing & Commercial */}
+            {/* Pricing & Commercial - Hide in client mode */}
+            {!clientMode && (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-yellow-100">
               <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-t-lg border-b border-yellow-100">
                 <CardTitle className="text-xl font-semibold text-yellow-800 flex items-center gap-2">
@@ -1387,6 +1388,7 @@ export default function NewBookingPage({
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Performance Details */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
@@ -1998,8 +2000,8 @@ export default function NewBookingPage({
             </Card>
 
 
-            {/* Document Management Section - Always show for existing bookings */}
-            {editingBooking && (
+            {/* Document Management Section - Hide in client mode */}
+            {editingBooking && !clientMode && (
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
                 <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
                   <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
