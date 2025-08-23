@@ -95,7 +95,7 @@ export function useAuth() {
     }
     
     // Check if we're on a collaboration page where auth is not required
-    const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+    const isCollaborationPage = (window.location.pathname.includes('/booking/') && window.location.pathname.includes('/collaborate')) || 
                                 window.location.pathname.includes('/view-contract');
     
     if (!isCollaborationPage) {
@@ -137,7 +137,7 @@ export function useAuth() {
     retry: (failureCount, error: any) => {
       // CRITICAL FIX: Never retry when no token exists
       if (error?.message === 'No auth token') {
-        const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+        const isCollaborationPage = (window.location.pathname.includes('/booking/') && window.location.pathname.includes('/collaborate')) || 
                                     window.location.pathname.includes('/view-contract');
         if (!isCollaborationPage) {
           console.log('🚫 No auth token - stopping retries to prevent infinite loop');
@@ -170,7 +170,7 @@ export function useAuth() {
     
     // CRITICAL FIX: Don't process "No auth token" errors to prevent loops
     if (error?.message === 'No auth token') {
-      const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+      const isCollaborationPage = (window.location.pathname.includes('/booking/') && window.location.pathname.includes('/collaborate')) || 
                                   window.location.pathname.includes('/view-contract');
       if (!isCollaborationPage) {
         console.log('🔍 No auth token error - skipping cleanup to prevent loops');

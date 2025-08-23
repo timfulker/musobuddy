@@ -264,10 +264,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, 10);
 
     // Only save to localStorage for authenticated pages
-    const publicPaths = ['/', '/login', '/signup', '/start-trial', '/trial-success', '/sign-contract', '/view-contract', '/booking'];
+    const publicPaths = ['/', '/login', '/signup', '/start-trial', '/trial-success', '/sign-contract', '/view-contract'];
     const currentPath = window.location.pathname;
     const isPublicPage = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/')) || 
-                         currentPath.includes('/collaborate'); // Include collaboration pages
+                         (currentPath.includes('/booking/') && currentPath.includes('/collaborate')); // Include collaboration pages
     
     if (!isPublicPage) {
       localStorage.setItem('musobuddy-theme', currentTheme);

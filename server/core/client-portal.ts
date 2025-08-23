@@ -27,7 +27,7 @@ class ClientPortalService {
     return `${baseUrl}/api/portal/${contractId}?token=${token}`;
   }
 
-  // Setup client portal for contract using R2-hosted collaborative forms
+  // Setup client portal for contract using React booking collaboration page
   async setupClientPortal(contractId: number): Promise<{
     portalToken: string;
     portalUrl: string;
@@ -36,7 +36,6 @@ class ClientPortalService {
     try {
       // Import required modules
       const { storage } = await import('../core/storage');
-      const { collaborativeFormGenerator } = await import('./collaborative-form-generator');
 
       // Get contract data
       const contract = await storage.getContract(contractId);
@@ -45,36 +44,63 @@ class ClientPortalService {
       }
 
       // Get associated booking data if it exists
-      let bookingData = null;
-      if (contract.enquiryId) {
-        bookingData = await storage.getBooking(contract.enquiryId);
-      }
-
-      // Convert contract to booking data format
-      // For standalone contracts, we'll create a virtual booking ID using the contract ID
-      const bookingId = contract.enquiryId || contract.id;
+      let bookingId = contract.enquiryId;
       
-      const formData = {
-        id: bookingId,
-        contractId: contract.id,
-        clientName: contract.clientName,
-        venue: contract.venue,
-        eventDate: contract.eventDate,
-        eventTime: contract.eventTime,
-        eventEndTime: contract.eventEndTime,
-        performanceDuration: contract.performanceDuration,
-        // Include existing booking data if available
-        ...bookingData
-      };
+      // If no booking exists yet, we need to create one for collaboration
+      if (!bookingId) {
+        console.log(`📝 [CLIENT-PORTAL] No booking found for contract ${contractId}, creating one for collaboration`);
+        const { bookings } = await import('../../shared/schema');
+        const { db } = await import('../core/database');
+        
+        // Create a minimal booking record for collaboration
+        const [newBooking] = await db.insert(bookings).values({
+          userId: contract.userId,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail || '',
+          venue: contract.venue,
+          eventDate: contract.eventDate,
+          eventType: contract.eventType || 'Performance',
+          status: 'draft',
+          collaborationToken: this.generatePortalToken(),
+          contractId: contract.id
+        }).returning();
+        
+        bookingId = newBooking.id;
+        console.log(`✅ [CLIENT-PORTAL] Created booking ${bookingId} for contract ${contractId}`);
+      }
+      
+      // Get or generate collaboration token
+      const { bookings } = await import('../../shared/schema');
+      const { db } = await import('../core/database');
+      const { eq } = await import('drizzle-orm');
+      
+      // Get existing booking to check for token
+      const [existingBooking] = await db.select()
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+        .limit(1);
+      
+      let token = existingBooking?.collaborationToken;
+      
+      // Generate new token if none exists
+      if (!token) {
+        token = this.generatePortalToken();
+        await db.update(bookings)
+          .set({ collaborationToken: token })
+          .where(eq(bookings.id, bookingId));
+        console.log(`📝 [CLIENT-PORTAL] Generated new collaboration token for booking ${bookingId}`);
+      } else {
+        console.log(`✅ [CLIENT-PORTAL] Using existing collaboration token for booking ${bookingId}`);
+      }
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://musobuddy.replit.app'
+        : 'http://localhost:5173';
+      
+      // Generate the correct booking collaboration URL
+      const portalUrl = `${baseUrl}/booking/${bookingId}/collaborate?token=${token}`;
 
-      // Upload collaborative form to R2 (bypasses routing issues)
-      const result = await collaborativeFormGenerator.uploadCollaborativeForm(
-        formData,
-        'https://musobuddy.replit.app' // API endpoint for form submissions
-      );
-
-      // Generate proper QR code for the R2-hosted form
-      const qrCodeDataUrl = await QRCode.toDataURL(result.url, {
+      // Generate QR code for the collaboration URL
+      const qrCodeDataUrl = await QRCode.toDataURL(portalUrl, {
         width: 200,
         margin: 2,
         color: {
@@ -83,31 +109,37 @@ class ClientPortalService {
         }
       });
 
-      console.log(`✅ [CLIENT-PORTAL] Generated R2-hosted collaborative form: ${result.url}`);
+      console.log(`✅ [CLIENT-PORTAL] Generated booking collaboration URL: ${portalUrl}`);
       
       return {
-        portalToken: result.token,
-        portalUrl: result.url,
+        portalToken: token,
+        portalUrl: portalUrl,
         qrCode: qrCodeDataUrl
       };
     } catch (error) {
       console.error('❌ Error setting up client portal:', error);
       
-      // Fallback to a basic portal if collaborative form generation fails
+      // Fallback: Try to use contract's booking ID if available
       const token = this.generatePortalToken();
-      const fallbackUrl = `https://musobuddy.replit.app/client-error?contract=${contractId}`;
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://musobuddy.replit.app'
+        : 'http://localhost:5173';
       
-      const fallbackQr = `data:image/svg+xml;base64,${Buffer.from(`
-        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-          <rect width="200" height="200" fill="white"/>
-          <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="12" fill="black">
-            Portal Error
-          </text>
-          <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="10" fill="gray">
-            Contact performer
-          </text>
-        </svg>
-      `).toString('base64')}`;
+      // Try to at least generate a collaboration URL even if setup failed
+      // This assumes the contract has an associated booking
+      const fallbackBookingId = (error as any)?.bookingId || contractId;
+      const fallbackUrl = `${baseUrl}/booking/${fallbackBookingId}/collaborate?token=${token}`;
+      
+      console.warn(`⚠️ [CLIENT-PORTAL] Using fallback URL for contract ${contractId}: ${fallbackUrl}`);
+      
+      const fallbackQr = await QRCode.toDataURL(fallbackUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
       
       return {
         portalToken: token,

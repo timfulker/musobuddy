@@ -4,7 +4,9 @@
 // Helper to check if current page is a collaboration page that doesn't require auth
 const isCollaborationPage = (): boolean => {
   const pathname = window.location.pathname;
-  return pathname.includes('/collaborate') || pathname.includes('/view-contract');
+  // Check for booking collaboration pages or contract viewing pages
+  return pathname.includes('/booking/') && pathname.includes('/collaborate') || 
+         pathname.includes('/view-contract');
 };
 
 export const getAuthTokenKey = (userEmail?: string): string => {
