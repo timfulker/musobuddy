@@ -12,19 +12,31 @@ export default function BookingCollaborate({}: CollaborationPageProps) {
   const bookingId = location.split('/')[2]; // Extract booking ID from URL
   const token = urlParams.get('token');
 
+  // Debug logging
+  console.log('[COLLABORATION] Location:', location);
+  console.log('[COLLABORATION] Booking ID:', bookingId);
+  console.log('[COLLABORATION] Token:', token);
+  console.log('[COLLABORATION] Query enabled:', !!(bookingId && token));
+
   // Verify collaboration token and get booking access
   const { data: collaborationData, isLoading, error } = useQuery({
     queryKey: ['/api/booking-collaboration/verify', bookingId, token],
     queryFn: async () => {
+      console.log('[COLLABORATION] Executing queryFn...');
       if (!bookingId || !token) {
+        console.log('[COLLABORATION] Missing booking ID or token');
         throw new Error('Missing booking ID or token');
       }
       
+      console.log(`[COLLABORATION] Fetching /api/booking-collaboration/${bookingId}/verify?token=${token}`);
       const response = await fetch(`/api/booking-collaboration/${bookingId}/verify?token=${token}`);
       if (!response.ok) {
+        console.log('[COLLABORATION] Response not OK:', response.status);
         throw new Error('Invalid collaboration link');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('[COLLABORATION] Verification successful:', data);
+      return data;
     },
     enabled: !!(bookingId && token),
   });
