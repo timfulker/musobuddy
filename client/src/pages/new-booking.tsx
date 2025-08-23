@@ -1786,7 +1786,7 @@ export default function NewBookingPage({
                               />
                             )}
                           </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger className="bg-purple-50/30 border-purple-200">
                                 <SelectValue placeholder="Select music style" />
@@ -1811,7 +1811,7 @@ export default function NewBookingPage({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Set Order Preferences</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger className="bg-purple-50/30 border-purple-200">
                                 <SelectValue placeholder="Preferred energy flow" />

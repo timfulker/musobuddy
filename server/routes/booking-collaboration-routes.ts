@@ -172,8 +172,10 @@ export function setupBookingCollaborationRoutes(app: Express) {
       // Only allow updating specific collaborative fields
       const allowedFields = [
         'venueContact',
+        'soundTechContact',
         'specialGuests', 
         'musicPreferences',
+        'setOrder',
         'equipmentRequirements',
         'equipmentProvided',
         'whatsIncluded',
