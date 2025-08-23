@@ -1014,7 +1014,8 @@ export default function NewBookingPage({
             </Card>
             )}
 
-            {/* Event Date & Venue */}
+            {/* Event Date & Venue - Hide in client mode */}
+            {!clientMode && (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-blue-100">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-lg border-b border-blue-100">
                 <CardTitle className="text-xl font-semibold text-blue-800 flex items-center gap-2">
@@ -1341,6 +1342,7 @@ export default function NewBookingPage({
                 </div>
               </CardContent>
             </Card>
+            )}
             
             {/* Pricing & Commercial - Hide in client mode */}
             {!clientMode && (
@@ -1390,7 +1392,8 @@ export default function NewBookingPage({
             </Card>
             )}
 
-            {/* Performance Details */}
+            {/* Performance Details - Hide in client mode */}
+            {!clientMode && (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
               <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
                 <CardTitle className="text-xl font-semibold text-green-800 flex items-center gap-2">
@@ -1555,8 +1558,10 @@ export default function NewBookingPage({
                 />
               </CardContent>
             </Card>
+            )}
 
-            {/* Event Requirements & Notes */}
+            {/* Event Requirements & Notes - Hide in client mode */}
+            {!clientMode && (
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-orange-100">
               <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-lg border-b border-orange-100">
                 <CardTitle className="text-xl font-semibold text-orange-800 flex items-center gap-2">
@@ -1610,6 +1615,7 @@ export default function NewBookingPage({
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Collaborative Planning Section */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-purple-100">
