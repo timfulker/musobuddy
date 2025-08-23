@@ -280,6 +280,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
+      // Additional check: Ensure we have an auth token before attempting to save
+      const { findActiveAuthToken } = await import('../utils/authToken');
+      const token = findActiveAuthToken();
+      
+      if (!token) {
+        console.log('🎨 Skipping theme save - no auth token found');
+        return;
+      }
+      
       try {
         const colorToSave = currentTheme === 'custom' && customColor ? customColor : theme.colors.primary;
         console.log('🎨 Attempting to save theme color to database:', colorToSave);
