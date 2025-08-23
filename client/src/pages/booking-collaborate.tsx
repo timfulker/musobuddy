@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import NewBooking from "./new-booking";
@@ -7,36 +7,31 @@ import NewBooking from "./new-booking";
 interface CollaborationPageProps {}
 
 export default function BookingCollaborate({}: CollaborationPageProps) {
+  // Use proper wouter hooks to extract route params
+  const [match, params] = useRoute("/booking/:bookingId/collaborate");
   const [location] = useLocation();
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
-  const bookingId = location.split('/')[2]; // Extract booking ID from URL
+  
+  // Extract query parameters
+  const queryString = location.includes('?') ? location.split('?')[1] : '';
+  const urlParams = new URLSearchParams(queryString);
   const token = urlParams.get('token');
-
-  // Debug logging
-  console.log('[COLLABORATION] Location:', location);
-  console.log('[COLLABORATION] Booking ID:', bookingId);
-  console.log('[COLLABORATION] Token:', token);
-  console.log('[COLLABORATION] Query enabled:', !!(bookingId && token));
+  
+  // Get bookingId from route params
+  const bookingId = params?.bookingId || null;
 
   // Verify collaboration token and get booking access
   const { data: collaborationData, isLoading, error } = useQuery({
     queryKey: ['/api/booking-collaboration/verify', bookingId, token],
     queryFn: async () => {
-      console.log('[COLLABORATION] Executing queryFn...');
       if (!bookingId || !token) {
-        console.log('[COLLABORATION] Missing booking ID or token');
         throw new Error('Missing booking ID or token');
       }
       
-      console.log(`[COLLABORATION] Fetching /api/booking-collaboration/${bookingId}/verify?token=${token}`);
       const response = await fetch(`/api/booking-collaboration/${bookingId}/verify?token=${token}`);
       if (!response.ok) {
-        console.log('[COLLABORATION] Response not OK:', response.status);
         throw new Error('Invalid collaboration link');
       }
-      const data = await response.json();
-      console.log('[COLLABORATION] Verification successful:', data);
-      return data;
+      return response.json();
     },
     enabled: !!(bookingId && token),
   });
@@ -71,7 +66,7 @@ export default function BookingCollaborate({}: CollaborationPageProps) {
     <NewBooking 
       clientMode={true}
       collaborationToken={token}
-      editBookingId={parseInt(bookingId)}
+      editBookingId={bookingId ? parseInt(bookingId) : undefined}
       clientInfo={collaborationData}
     />
   );
