@@ -94,10 +94,18 @@ export function useAuth() {
       token = findMobileAuthToken();
     }
     
-    console.log('🔍 Auth check - Token found:', !!token, isMobileDevice() ? '(Mobile)' : '(Desktop)');
+    // Check if we're on a collaboration page where auth is not required
+    const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+                                window.location.pathname.includes('/view-contract');
+    
+    if (!isCollaborationPage) {
+      console.log('🔍 Auth check - Token found:', !!token, isMobileDevice() ? '(Mobile)' : '(Desktop)');
+    }
     
     if (!token) {
-      console.log('❌ No auth token found');
+      if (!isCollaborationPage) {
+        console.log('❌ No auth token found');
+      }
       throw new Error('No auth token');
     }
 
@@ -129,7 +137,11 @@ export function useAuth() {
     retry: (failureCount, error: any) => {
       // CRITICAL FIX: Never retry when no token exists
       if (error?.message === 'No auth token') {
-        console.log('🚫 No auth token - stopping retries to prevent infinite loop');
+        const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+                                    window.location.pathname.includes('/view-contract');
+        if (!isCollaborationPage) {
+          console.log('🚫 No auth token - stopping retries to prevent infinite loop');
+        }
         recordAuthFailure(true); // Mark as no-token error
         return false; // Stop retrying immediately
       }
@@ -158,7 +170,11 @@ export function useAuth() {
     
     // CRITICAL FIX: Don't process "No auth token" errors to prevent loops
     if (error?.message === 'No auth token') {
-      console.log('🔍 No auth token error - skipping cleanup to prevent loops');
+      const isCollaborationPage = window.location.pathname.includes('/collaborate') || 
+                                  window.location.pathname.includes('/view-contract');
+      if (!isCollaborationPage) {
+        console.log('🔍 No auth token error - skipping cleanup to prevent loops');
+      }
     } else if (error?.message?.includes('User account no longer exists')) {
       console.log('🔄 User account deleted - redirecting to landing page');
       clearAllAuthTokens();

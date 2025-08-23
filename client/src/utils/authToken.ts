@@ -1,6 +1,12 @@
 // Centralized authentication token management
 // SECURITY FIX: User-specific token storage to prevent account switching
 
+// Helper to check if current page is a collaboration page that doesn't require auth
+const isCollaborationPage = (): boolean => {
+  const pathname = window.location.pathname;
+  return pathname.includes('/collaborate') || pathname.includes('/view-contract');
+};
+
 export const getAuthTokenKey = (userEmail?: string): string => {
   const hostname = window.location.hostname;
   
@@ -19,6 +25,11 @@ export const getAuthTokenKey = (userEmail?: string): string => {
 };
 
 export const findActiveAuthToken = (): string | null => {
+  // For collaboration pages, silently return null without logging
+  if (isCollaborationPage()) {
+    return null;
+  }
+  
   const hostname = window.location.hostname;
   const baseKey = hostname.includes('janeway.replit.dev') || hostname.includes('localhost') 
     ? 'authToken_dev' 

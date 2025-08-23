@@ -285,7 +285,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const token = findActiveAuthToken();
       
       if (!token) {
-        console.log('🎨 Skipping theme save - no auth token found');
+        // Silently skip theme save when no auth token (expected on collaboration pages)
         return;
       }
       
