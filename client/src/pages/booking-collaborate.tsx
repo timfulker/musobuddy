@@ -12,9 +12,9 @@ export default function BookingCollaborate({}: CollaborationPageProps) {
   const bookingId = params.bookingId; // Extract bookingId explicitly
   const [location] = useLocation();
   
-  // Extract query parameters for the token
-  const queryString = location.includes('?') ? location.split('?')[1] : '';
-  const urlParams = new URLSearchParams(queryString);
+  // Extract query parameters for the token from window.location
+  // (useLocation only returns the pathname, not query params)
+  const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
 
   // Comprehensive debug logging
