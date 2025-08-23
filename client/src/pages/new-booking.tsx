@@ -99,8 +99,13 @@ export default function NewBookingPage({
 }: NewBookingProps = {}) {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { gigTypes } = useGigTypes();
+  
+  // Conditional authentication - only use auth in musician mode
+  const authData = clientMode ? { user: null, isLoading: false, error: null } : useAuth();
+  const gigTypesData = clientMode ? { gigTypes: [] } : useGigTypes();
+  
+  const user = authData?.user || null;
+  const gigTypes = gigTypesData?.gigTypes || [];
   
   // Check if we're editing an existing booking - support both URL param and prop
   const urlParams = new URLSearchParams(window.location.search);
@@ -130,23 +135,42 @@ export default function NewBookingPage({
   // Control map display manually
   const [showMap, setShowMap] = useState(false);
   
-  // Get existing bookings for enquiry auto-fill
+  // Get existing bookings for enquiry auto-fill (only for musicians, not clients)
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
+    enabled: !clientMode, // Skip for client mode
   });
   
-  // Get documents for the booking being edited
+  // Get documents for the booking being edited (only for musicians, not clients)
   const { data: documentsResponse, isLoading: documentsLoading } = useQuery({
     queryKey: [`/api/bookings/${editBookingId}/documents`],
-    enabled: isEditMode && !!editBookingId,
+    enabled: isEditMode && !!editBookingId && !clientMode, // Skip for client mode
     retry: false,
   });
   
   const bookingDocuments = documentsResponse?.documents || [];
   
-  // Fetch specific booking if in edit mode - use direct endpoint for proper field mapping
+  // Fetch specific booking if in edit mode
+  // For client mode, use collaboration endpoint; for musician mode, use regular endpoint
   const { data: editingBooking, isLoading: isLoadingBooking } = useQuery({
-    queryKey: [`/api/bookings/${editBookingId}`],
+    queryKey: clientMode 
+      ? [`/api/booking-collaboration/${editBookingId}/details`, collaborationToken]
+      : [`/api/bookings/${editBookingId}`],
+    queryFn: async () => {
+      if (clientMode && collaborationToken) {
+        // Use collaboration endpoint for clients
+        const response = await fetch(`/api/booking-collaboration/${editBookingId}/details?token=${collaborationToken}`);
+        if (!response.ok) {
+          throw new Error('Failed to load booking details');
+        }
+        return response.json();
+      } else if (!clientMode) {
+        // Use regular endpoint for musicians  
+        const response = await apiRequest(`/api/bookings/${editBookingId}`);
+        return response.json();
+      }
+      return null;
+    },
     enabled: isEditMode && !!editBookingId,
     refetchInterval: 5000, // Poll every 5 seconds for collaborative form updates
     refetchOnWindowFocus: true, // Refresh when user returns to tab
@@ -154,9 +178,10 @@ export default function NewBookingPage({
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
-  // Fetch user's personalized gig types from settings
+  // Fetch user's personalized gig types from settings (only for musicians, not clients)
   const { data: userSettings } = useQuery({
-    queryKey: ['/api/settings']
+    queryKey: ['/api/settings'],
+    enabled: !clientMode, // Skip for client mode
   });
 
   // Extract gig types from user settings
@@ -600,20 +625,45 @@ export default function NewBookingPage({
         duration: mileageData.duration || null,
       };
       
-      const response = await apiRequest(`/api/bookings/${editBookingId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(bookingData),
-      });
-      return await response.json();
+      if (clientMode && collaborationToken) {
+        // Use collaboration endpoint for clients
+        const response = await fetch(`/api/booking-collaboration/${editBookingId}/update?token=${collaborationToken}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bookingData),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update booking via collaboration');
+        }
+        return await response.json();
+      } else {
+        // Use regular endpoint for musicians
+        const response = await apiRequest(`/api/bookings/${editBookingId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(bookingData),
+        });
+        return await response.json();
+      }
     },
     onSuccess: () => {
       console.log('✅ Booking update successful!');
-      toast({
-        title: "Success!",
-        description: "Booking updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      navigate('/bookings');
+      if (clientMode) {
+        toast({
+          title: "Success!",
+          description: "Your event details have been updated successfully. Thank you!",
+        });
+        // Don't navigate away for clients - they stay on the collaboration page
+        // Don't invalidate queries that require authentication
+      } else {
+        toast({
+          title: "Success!",
+          description: "Booking updated successfully",
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        navigate('/bookings');
+      }
     },
     onError: (error: any) => {
       console.error('❌ Booking update failed:', error);

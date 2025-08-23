@@ -106,4 +106,86 @@ export function setupBookingCollaborationRoutes(app: Express) {
       res.status(500).json({ error: 'Failed to generate collaboration token' });
     }
   });
+
+  // Get booking details for collaboration (authenticated via token)
+  app.get('/api/booking-collaboration/:bookingId/details', async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.params;
+      const token = req.query.token as string;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Collaboration token required' });
+      }
+
+      console.log(`🔐 [COLLABORATION] Getting booking details for ${bookingId} with token: ${token.substring(0, 8)}...`);
+
+      // Find booking with matching collaboration token
+      const booking = await db.select().from(bookings)
+        .where(and(
+          eq(bookings.id, parseInt(bookingId)),
+          eq(bookings.collaborationToken, token)
+        ))
+        .then(results => results[0]);
+
+      if (!booking) {
+        console.log(`❌ [COLLABORATION] Invalid token or booking not found for booking ${bookingId}`);
+        return res.status(403).json({ error: 'Invalid collaboration link' });
+      }
+
+      console.log(`✅ [COLLABORATION] Returning booking details for collaboration: ${booking.clientName}`);
+
+      // Return full booking details for collaborative editing
+      res.json(booking);
+
+    } catch (error: any) {
+      console.error('❌ [COLLABORATION] Failed to get booking details:', error);
+      res.status(500).json({ error: 'Failed to load booking details' });
+    }
+  });
+
+  // Update booking via collaboration (authenticated via token)
+  app.patch('/api/booking-collaboration/:bookingId/update', async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.params;
+      const token = req.query.token as string;
+      const updates = req.body;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Collaboration token required' });
+      }
+
+      console.log(`🔐 [COLLABORATION] Updating booking ${bookingId} via collaboration token`);
+
+      // Verify collaboration token
+      const booking = await db.select().from(bookings)
+        .where(and(
+          eq(bookings.id, parseInt(bookingId)),
+          eq(bookings.collaborationToken, token)
+        ))
+        .then(results => results[0]);
+
+      if (!booking) {
+        console.log(`❌ [COLLABORATION] Invalid token for booking update: ${bookingId}`);
+        return res.status(403).json({ error: 'Invalid collaboration link' });
+      }
+
+      // Update the booking with collaborative fields
+      const updatedBooking = await db.update(bookings)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(bookings.id, parseInt(bookingId)))
+        .returning()
+        .then(results => results[0]);
+
+      console.log(`✅ [COLLABORATION] Booking updated successfully: ${booking.clientName}`);
+
+      res.json(updatedBooking);
+
+    } catch (error: any) {
+      console.error('❌ [COLLABORATION] Failed to update booking:', error);
+      res.status(500).json({ error: 'Failed to update booking' });
+    }
+  });
 }
