@@ -485,8 +485,14 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
       </div>
       </div>
       
+      <!-- PAGE BREAK - START PAGE 2 -->
+      <div style="page-break-before: always;"></div>
+      
+      <!-- PAGE 2 CONTENT WRAPPER - Keep Payment and Terms together -->
+      <div class="page-two-content" style="page-break-inside: avoid;">
+      
       <!-- PAYMENT INFORMATION -->
-      <div class="payment-info keep-together">
+      <div class="payment-info">
         <h3>Payment Information</h3>
         <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
         <p><strong>Bank Details:</strong></p>
@@ -497,11 +503,14 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
       </div>
       
       <!-- TERMS & CONDITIONS -->
-      <div class="terms-section keep-together">
+      <div class="terms-section">
         <h3>Terms & Conditions</h3>
         <p>${userSettings?.defaultTerms || 'All invoices to be paid within seven days of receipt'}</p>
         <p><strong>VAT Status:</strong> I am not VAT registered and therefore no VAT is charged.</p>
       </div>
+      
+      </div>
+      <!-- END PAGE 2 CONTENT WRAPPER -->
       
       <!-- FOOTER -->
       <div class="footer">
