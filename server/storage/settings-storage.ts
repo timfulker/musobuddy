@@ -316,59 +316,7 @@ Best regards,
     }
   }
 
-  // ===== GLOBAL GIG TYPES METHODS =====
-  
-  async getGlobalGigTypes(userId: string) {
-    const result = await db.select().from(globalGigTypes)
-      .where(eq(globalGigTypes.userId, userId));
-    
-    if (result[0]) {
-      try {
-        return JSON.parse(result[0].gigTypes);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }
-
-  async setGlobalGigTypes(userId: string, gigTypes: string[]) {
-    const gigTypesJson = JSON.stringify(gigTypes);
-    
-    const existing = await db.select().from(globalGigTypes)
-      .where(eq(globalGigTypes.userId, userId));
-    
-    if (existing[0]) {
-      const result = await db.update(globalGigTypes)
-        .set({ 
-          gigTypes: gigTypesJson,
-          updatedAt: new Date()
-        })
-        .where(eq(globalGigTypes.userId, userId))
-        .returning();
-      return result[0];
-    } else {
-      const result = await db.insert(globalGigTypes).values({
-        userId,
-        gigTypes: gigTypesJson,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
-      return result[0];
-    }
-  }
-
-  async getAllUserSettingsForGigTypes() {
-    const result = await db.select({
-      userId: userSettings.userId,
-      gigTypes: userSettings.gigTypes,
-    }).from(userSettings);
-
-    return result.map(row => ({
-      userId: row.userId,
-      gigTypes: row.gigTypes || []
-    }));
-  }
+  // Removed redundant global gig types methods - now using only customGigTypes in userSettings
 }
 
 export const settingsStorage = new SettingsStorage();

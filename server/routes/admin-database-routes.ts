@@ -11,8 +11,7 @@ import {
   bookingConflicts,
   conflictResolutions,
   unparseableMessages,
-  emailTemplates,
-  globalGigTypes
+  emailTemplates
 } from '../../shared/schema.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 
@@ -27,8 +26,7 @@ const AVAILABLE_TABLES = {
   'bookingConflicts': bookingConflicts,
   'conflictResolutions': conflictResolutions,
   'unparseableMessages': unparseableMessages,
-  'emailTemplates': emailTemplates,
-  'globalGigTypes': globalGigTypes
+  'emailTemplates': emailTemplates
 } as const;
 
 // Map export names to actual database table names (for tables with naming mismatches)
@@ -39,7 +37,6 @@ const TABLE_NAME_MAPPING: Record<string, string> = {
   'conflictResolutions': 'conflict_resolutions',
   'unparseableMessages': 'unparseable_messages',
   'emailTemplates': 'email_templates',
-  'globalGigTypes': 'global_gig_types'
 };
 
 type TableName = keyof typeof AVAILABLE_TABLES;

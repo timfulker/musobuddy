@@ -420,17 +420,7 @@ export class Storage {
     return settingsStorage.setDefaultEmailTemplate(id, userId);
   }
 
-  async getGlobalGigTypes(userId: string) {
-    return settingsStorage.getGlobalGigTypes(userId);
-  }
-
-  async setGlobalGigTypes(userId: string, gigTypes: string[]) {
-    return settingsStorage.setGlobalGigTypes(userId, gigTypes);
-  }
-
-  async getAllUserSettingsForGigTypes() {
-    return settingsStorage.getAllUserSettingsForGigTypes();
-  }
+  // Removed redundant global gig types methods - now using only customGigTypes in userSettings
 
   async createDefaultTemplates(userId: string) {
     return settingsStorage.createDefaultTemplates(userId);

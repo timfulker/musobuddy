@@ -336,8 +336,7 @@ export default function Settings() {
   console.log('🎨 Settings component - current theme:', currentTheme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Instrument and gig type state
-  const [availableGigTypes, setAvailableGigTypes] = useState<string[]>([]);
+  // Instrument state
   const [selectedInstrument, setSelectedInstrument] = useState<string>("");
 
   // State for theme preview
@@ -708,25 +707,7 @@ export default function Settings() {
       if (settings.primaryInstrument) {
         setSelectedInstrument(settings.primaryInstrument);
         
-        // Use saved combined gig types from database, not just primary instrument
-        if (settings.customGigTypes && settings.customGigTypes.length > 0) {
-          // Use the saved combined gig types that include all instruments
-          setAvailableGigTypes(settings.customGigTypes);
-        } else {
-          // Fallback: Calculate combined gig types from all instruments
-          const allInstruments = [
-            settings.primaryInstrument, 
-            ...(Array.isArray(settings.secondaryInstruments) ? settings.secondaryInstruments : [])
-          ].filter(Boolean);
-          
-          const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
-            return [...acc, ...instrumentGigTypes];
-          }, [] as string[]);
-          
-          const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-          setAvailableGigTypes(uniqueGigTypes);
-        }
+        // Gig types are now managed through customGigTypes in the database
       }
       
       
@@ -1710,22 +1691,7 @@ export default function Settings() {
                         )}
                       />
 
-                      {/* Show available gig types when instruments are selected */}
-                      {(selectedInstrument || form.watch('secondaryInstruments')?.length > 0) && availableGigTypes.length > 0 && (
-                        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
-                          <h4 className="text-sm font-medium mb-2">Available Gig Types for Your Instruments</h4>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {availableGigTypes.map((gigType, index) => (
-                              <div key={index} className="bg-white dark:bg-slate-700 px-2 py-1 rounded border">
-                                {gigType}
-                              </div>
-                            ))}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-2">
-                            These gig types will be available in booking forms and AI will use them for contextual template generation.
-                          </div>
-                        </div>
-                      )}
+                      {/* Gig types are now managed in the custom gig types section below */}
 
                       {/* Custom Gig Types Management */}
                       <FormField

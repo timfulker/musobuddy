@@ -49,7 +49,7 @@ interface UserSettings {
   postcode?: string;
   primaryInstrument?: string;
   secondaryInstruments?: string[] | string;
-  availableGigTypes?: any;
+  customGigTypes?: any;
   // AI Pricing Guide fields
   aiPricingEnabled?: boolean;
   baseHourlyRate?: number;
@@ -279,17 +279,17 @@ export class AIResponseGenerator {
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
     
-    // Parse availableGigTypes - handle both string and array formats
+    // Parse customGigTypes - handle both string and array formats
     let gigTypes: string[] = [];
-    if (userSettings?.availableGigTypes) {
+    if (userSettings?.customGigTypes) {
       try {
-        if (typeof userSettings.availableGigTypes === 'string') {
-          gigTypes = JSON.parse(userSettings.availableGigTypes);
-        } else if (Array.isArray(userSettings.availableGigTypes)) {
-          gigTypes = userSettings.availableGigTypes;
+        if (typeof userSettings.customGigTypes === 'string') {
+          gigTypes = JSON.parse(userSettings.customGigTypes);
+        } else if (Array.isArray(userSettings.customGigTypes)) {
+          gigTypes = userSettings.customGigTypes;
         }
       } catch (e) {
-        console.warn('Failed to parse availableGigTypes:', userSettings.availableGigTypes);
+        console.warn('Failed to parse customGigTypes:', userSettings.customGigTypes);
         gigTypes = [];
       }
     }

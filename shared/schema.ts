@@ -592,12 +592,7 @@ export const userSettings = pgTable("user_settings", {
   // Instrument and gig type settings
   primaryInstrument: varchar("primary_instrument"), // saxophone, guitar, piano, violin, drums, dj, etc.
   secondaryInstruments: jsonb("secondary_instruments").default('[]'), // Array of additional instruments
-  availableGigTypes: jsonb("available_gig_types"), // Array of available gig types for this instrument
-  // AI-powered instrument and gig type system
-  selectedInstruments: text("selected_instruments"), // JSON array of selected instruments from CSV
-  aiGeneratedGigTypes: text("ai_generated_gig_types"), // JSON array of AI-generated gig types
-  customGigTypes: text("custom_gig_types"), // JSON array of user-added custom gig types  
-  gigTypes: text("gig_types"), // JSON array of final gig types (AI + custom combined)
+  customGigTypes: text("custom_gig_types"), // JSON array of combined gig types from instruments + custom types
   eventTypes: text("event_types"), // Custom event types for enquiry forms
   instrumentsPlayed: text("instruments_played"), // What instruments/services the user plays
   customInstruments: text("custom_instruments"), // User-added custom instruments JSON array
@@ -728,14 +723,7 @@ export const instrumentMappings = pgTable("instrument_mappings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Global gig types table - stores user's selected gig types for dropdown population
-export const globalGigTypes = pgTable("global_gig_types", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  gigTypes: text("gig_types").notNull(), // JSON array of gig types
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Removed globalGigTypes table - consolidated into customGigTypes field in userSettings
 
 // Booking conflicts table
 export const bookingConflicts = pgTable("booking_conflicts", {
