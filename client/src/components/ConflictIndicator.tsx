@@ -54,6 +54,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       const timer = setTimeout(() => {
         console.log('🚀 Opening conflict modal NOW for booking:', bookingId);
         setShowResolutionModal(true);
+        console.log('🚀 Modal state set to true');
         // Clean up after opening to prevent re-triggering
         localStorage.removeItem('openConflictForBooking');
       }, 2000); // Increased delay to ensure page is fully loaded
@@ -244,6 +245,12 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       </Dialog>
 
       {/* Full Conflict Resolution Modal */}
+      {console.log('🔵 Modal render check:', { 
+        showResolutionModal, 
+        bookingId,
+        hasCurrentBooking: !!currentBooking,
+        conflictingBookingsCount: conflictingBookings.length 
+      })}
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
         onClose={() => setShowResolutionModal(false)}
