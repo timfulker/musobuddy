@@ -164,48 +164,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Development mode: Quick access for testing accounts
-      if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Admin account: user ID 43963086
-        const realUser = await storage.getUserById('43963086');
-        
-        if (realUser) {
-          const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
-          
-          return res.json({
-            success: true,
-            message: 'Development login successful - using real user data',
-            authToken,
-            user: {
-              userId: realUser.id,
-              email: realUser.email,
-              firstName: realUser.firstName,
-              lastName: realUser.lastName,
-              isAdmin: true // Admin privileges for timfulker@gmail.com
-            }
-          });
-        }
-      } else if (email === 'timfulkermusic@gmail.com' && password === 'music123') {
-        // Regular user account created through admin panel
-        const realUser = await storage.getUserById('1754488522516');
-        
-        if (realUser) {
-          const authToken = generateAuthToken(realUser.id, realUser.email || '', true);
-          
-          return res.json({
-            success: true,
-            message: 'User login successful',
-            authToken,
-            user: {
-              userId: realUser.id,
-              email: realUser.email,
-              firstName: realUser.firstName,
-              lastName: realUser.lastName,
-              isAdmin: false // Regular user account
-            }
-          });
-        }
-      }
+      // All authentication now goes through proper credential verification
 
       const user = await storage.getUserByEmail(email);
       if (!user) {

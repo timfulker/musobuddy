@@ -12,11 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 
 import { storeAuthToken } from '@/utils/authToken';
 
-// Check if we're in development mode
-const isDevelopment = () => {
-  const hostname = window.location.hostname;
-  return hostname.includes('janeway.replit.dev') || hostname.includes('localhost');
-};
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -33,9 +28,8 @@ export default function LoginPage() {
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      // Development: Default to admin credentials for simplified access
-      email: isDevelopment() ? "timfulker@gmail.com" : "",
-      password: isDevelopment() ? "admin123" : "",
+      email: "",
+      password: "",
     },
   });
 
