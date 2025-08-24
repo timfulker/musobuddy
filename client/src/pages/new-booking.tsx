@@ -506,6 +506,40 @@ export default function NewBookingPage({
     }
   }, [editingBooking, isEditMode, form]);
 
+  // Helper function to add new gig types to user settings
+  const addNewGigTypeToSettings = async (gigType: string) => {
+    if (!gigType || clientMode || userGigTypes.includes(gigType)) {
+      return; // Skip if empty, in client mode, or gig type already exists
+    }
+
+    try {
+      // Get current settings
+      const currentSettings = queryClient.getQueryData(['/api/settings']);
+      const currentGigTypes = (currentSettings as any)?.customGigTypes || [];
+      
+      // Add new gig type if not already present
+      if (!currentGigTypes.includes(gigType)) {
+        const updatedGigTypes = [...currentGigTypes, gigType];
+        
+        // Update user settings
+        await apiRequest('/api/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            customGigTypes: updatedGigTypes
+          }),
+        });
+        
+        // Invalidate settings cache to refresh the data
+        queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+        
+        console.log(`✅ Added new gig type "${gigType}" to user settings`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to add gig type to settings:', error);
+      // Don't show error to user - this is a background operation
+    }
+  };
+
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
       const bookingData = {
@@ -543,7 +577,12 @@ export default function NewBookingPage({
       });
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (response, variables) => {
+      // Add new gig type to settings if it's custom
+      if (variables.gigType) {
+        await addNewGigTypeToSettings(variables.gigType);
+      }
+      
       toast({
         title: "Success!",
         description: "Booking has been created successfully",
@@ -647,8 +686,14 @@ export default function NewBookingPage({
         return await response.json();
       }
     },
-    onSuccess: () => {
+    onSuccess: async (response, variables) => {
       console.log('✅ Booking update successful!');
+      
+      // Add new gig type to settings if it's custom (only for musicians, not clients)
+      if (!clientMode && variables.gigType) {
+        await addNewGigTypeToSettings(variables.gigType);
+      }
+      
       if (clientMode) {
         toast({
           title: "Success!",
