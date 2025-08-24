@@ -145,8 +145,6 @@ export default function ActionableEnquiries() {
   const conflictsByBookingId = React.useMemo(() => {
     if (!conflicts || conflicts.length === 0) return {};
     
-    console.log('🔍 Processing conflicts for mapping:', conflicts.length);
-    
     const conflictMap: { [bookingId: number]: any[] } = {};
     conflicts.forEach((conflict: any) => {
       const { bookingId, withBookingId, clientName, time, severity, message } = conflict;
@@ -160,11 +158,7 @@ export default function ActionableEnquiries() {
         severity,
         message
       });
-      
-      console.log(`📍 Added conflict for booking ${bookingId} with booking ${withBookingId}`);
     });
-    
-    console.log('🗂️ Final conflict map keys:', Object.keys(conflictMap));
     return conflictMap;
   }, [conflicts]);
 

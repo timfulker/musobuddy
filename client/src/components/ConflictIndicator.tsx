@@ -103,7 +103,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       {/* Conflict Indicator Button */}
       <Button
         size="sm"
-        className={`absolute top-2 right-2 h-8 px-3 border-0 shadow-md z-10 ${
+        className={`absolute top-12 right-2 h-8 px-3 border-0 shadow-md z-10 ${
           severity === 'hard' ? 'bg-red-500 hover:bg-red-600 text-white' : 
           severity === 'soft' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 
           'bg-yellow-500 hover:bg-yellow-600 text-black'
