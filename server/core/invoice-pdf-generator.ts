@@ -361,20 +361,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-section {
-                display: flex;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
                 gap: 40px;
                 padding: 30px;
                 background: #fafbfc;
                 border-radius: 8px;
                 margin-bottom: 30px;
-                page-break-inside: avoid;
-            }
-            
-            .payment-block {
-                flex: 1;
-                min-width: 250px;
-                page-break-inside: avoid;
             }
             
             .payment-block h4 {
@@ -486,12 +479,14 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     max-width: 100%;
                 }
                 
-                /* PAGE 1 CONTENT - Keep together */
+                /* Keep sections together */
                 .header, 
                 .parties-section,
                 .services-section,
                 .thank-you-note,
-                .totals-section {
+                .totals-section,
+                .payment-section,
+                .terms-section {
                     page-break-inside: avoid;
                 }
                 
@@ -512,29 +507,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 /* Show page 2 header only in print */
                 .page-2-header {
                     display: block !important;
-                }
-                
-                /* PAGE 2 CONTENT - Force payment section to stay together */
-                .payment-section {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    page-break-before: auto !important;
-                    orphans: 4;
-                    widows: 4;
-                    margin-top: 20px;
-                    margin-bottom: 40px;
-                }
-                
-                .payment-block {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    display: block !important;
-                }
-                
-                .terms-section {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    page-break-before: avoid !important;
                 }
                 
                 /* Hide web-only footer in print */
@@ -559,7 +531,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
     <body>
         <!-- Print Note - Only visible on screen -->
         <div class="print-note">
-            📄 This invoice is designed to print on 2 A4 pages. Page 1: Invoice details & totals | Page 2: Payment information & terms
+            📄 This invoice is designed to print on 2 A4 pages. Page 1: Header & services | Page 2: Totals, payment details & terms
         </div>
         
         <div class="invoice-container">
@@ -681,9 +653,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                         <span>£${invoice.amount}</span>
                     </div>
                 </div>
-                
-                <!-- PAGE BREAK - Page 2 starts here when printed -->
-                <div class="page-break"></div>
+            </div>
+            
+            <!-- PAGE BREAK - Page 2 starts here when printed -->
+            <div class="page-break"></div>
+            
+            <!-- Main Content for Page 2 -->
+            <div class="main-content">
                 
                 <!-- Page 2 Header (visible only in print) -->
                 <div style="display: none; padding: 20px 0 30px 0; border-bottom: 2px solid #667eea; margin-bottom: 30px;" class="page-2-header">
