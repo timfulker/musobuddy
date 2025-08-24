@@ -253,7 +253,10 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       })}
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
-        onClose={() => setShowResolutionModal(false)}
+        onClose={() => {
+          console.log('🔴 Modal onClose called for booking:', bookingId);
+          setShowResolutionModal(false);
+        }}
         conflictingBookings={[currentBooking, ...conflictingBookings].filter(Boolean)}
         onEditBooking={handleEditBooking}
       />
