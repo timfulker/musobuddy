@@ -344,8 +344,7 @@ export default function Settings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [selectedCustomTitle, setSelectedCustomTitle] = useState("invoice");
-  // Custom gig type input state
-  const [customGigTypeInput, setCustomGigTypeInput] = useState('');
+  // Custom gig types are now managed behind the scenes
   
   // Widget token state
   const [widgetUrl, setWidgetUrl] = useState<string>('');
@@ -380,33 +379,6 @@ export default function Settings() {
     }));
   };
 
-  // Handle adding custom gig type
-  const handleAddCustomGigType = () => {
-    const trimmedInput = customGigTypeInput.trim();
-    if (!trimmedInput) return;
-
-    const currentCustomTypes = form.getValues('customGigTypes') || [];
-    
-    // Check if already exists
-    if (currentCustomTypes.includes(trimmedInput)) {
-      toast({
-        title: "Duplicate Gig Type",
-        description: "This gig type already exists in your custom list.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Add to form data
-    const updatedTypes = [...currentCustomTypes, trimmedInput];
-    form.setValue('customGigTypes', updatedTypes);
-    setCustomGigTypeInput('');
-    
-    toast({
-      title: "Custom Gig Type Added",
-      description: `"${trimmedInput}" has been added to your custom gig types.`,
-    });
-  };
 
   // Get or create permanent widget URL and QR code
   const getOrCreateWidgetUrl = async () => {
@@ -572,28 +544,26 @@ export default function Settings() {
       form.setValue('secondaryInstruments', updatedSecondary);
     }
     
-    // Combine gig types from both primary and secondary instruments
-    const allInstruments = [instrument, ...updatedSecondary].filter(Boolean);
-    const combinedGigTypes = allInstruments.reduce((acc, inst) => {
-      const instrumentGigTypes = getGigTypeNamesForInstrument(inst || '');
-      return [...acc, ...instrumentGigTypes];
-    }, [] as string[]);
-    
-    // Remove duplicates and update the form
-    const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-    
-    // CRITICAL FIX: Update the form's customGigTypes with filtered gig types
-    form.setValue('customGigTypes', uniqueGigTypes);
+    // Only populate gig types if customGigTypes is empty (initial setup)
+    const currentGigTypes = form.getValues('customGigTypes') || [];
+    if (currentGigTypes.length === 0) {
+      const allInstruments = [instrument, ...updatedSecondary].filter(Boolean);
+      const combinedGigTypes = allInstruments.reduce((acc, inst) => {
+        const instrumentGigTypes = getGigTypeNamesForInstrument(inst || '');
+        return [...acc, ...instrumentGigTypes];
+      }, [] as string[]);
+      
+      const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+      form.setValue('customGigTypes', uniqueGigTypes);
+      
+      console.log(`🎵 Initial gig types populated: ${uniqueGigTypes.length} types for ${instrument}`);
+    }
     
     setHasChanges(true);
     
-    console.log(`🎵 Instrument changed to: ${instrument}`);
-    console.log(`🎵 Combined instruments:`, allInstruments);
-    console.log(`🎵 Combined gig types:`, uniqueGigTypes.length, 'types');
-    
     toast({
-      title: "Instrument Selected",
-      description: `Set to ${getInstrumentDisplayName(instrument)} with ${uniqueGigTypes.length} available gig types. Remember to save your settings!`,
+      title: "Instrument Selected", 
+      description: `Primary instrument set to ${getInstrumentDisplayName(instrument)}. Remember to save your settings!`,
     });
   };
 
@@ -1606,18 +1576,7 @@ export default function Settings() {
                                           const updated = field.value?.filter((_, i) => i !== index) || [];
                                           field.onChange(updated);
                                           
-                                          // Update available gig types when secondary instruments change
-                                          const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
-                                          const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
-                                            return [...acc, ...instrumentGigTypes];
-                                          }, [] as string[]);
-                                          
-                                          // Remove duplicates and update the form
-                                          const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                          
-                                          // CRITICAL FIX: Update the form's customGigTypes
-                                          form.setValue('customGigTypes', uniqueGigTypes);
+                                          // Secondary instruments don't auto-modify gig types - users manage manually
                                         }}
                                         className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
                                       >
@@ -1634,17 +1593,7 @@ export default function Settings() {
                                     type="button"
                                     onClick={() => {
                                       field.onChange([]);
-                                      // Update available gig types when all secondary instruments are removed
-                                      const allInstruments = [form.watch('primaryInstrument')].filter(Boolean);
-                                      const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
-                                        return [...acc, ...instrumentGigTypes];
-                                      }, [] as string[]);
-                                      
-                                      const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                      
-                                      // CRITICAL FIX: Update the form's customGigTypes
-                                      form.setValue('customGigTypes', uniqueGigTypes);
+                                      // Clear All doesn't auto-modify gig types - users manage manually
                                     }}
                                     className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline"
                                   >
@@ -1696,70 +1645,7 @@ export default function Settings() {
                         )}
                       />
 
-                      {/* Gig types are now managed in the custom gig types section below */}
-
-                      {/* Custom Gig Types Management */}
-                      <FormField
-                        control={form.control}
-                        name="customGigTypes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Your Custom Gig Types</FormLabel>
-                            <div className="space-y-3">
-                              {/* Display existing custom gig types */}
-                              {field.value && Array.isArray(field.value) && field.value.length > 0 && (
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                                  <div className="flex flex-wrap gap-2">
-                                    {field.value.map((gigType: string, index: number) => (
-                                      <div key={index} className="flex items-center bg-white dark:bg-slate-700 px-3 py-1 rounded-full border text-sm">
-                                        <span>{gigType}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const updated = field.value.filter((_: string, i: number) => i !== index);
-                                            field.onChange(updated);
-                                          }}
-                                          className="ml-2 text-red-500 hover:text-red-700 text-xs"
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* Add new custom gig type */}
-                              <div className="flex gap-2">
-                                <Input 
-                                  placeholder="Add custom gig type (e.g., Masonic Lodge, Burlesque Show, Quiz Night)"
-                                  value={customGigTypeInput}
-                                  onChange={(e) => setCustomGigTypeInput(e.target.value)}
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddCustomGigType();
-                                    }
-                                  }}
-                                />
-                                <Button 
-                                  type="button" 
-                                  onClick={handleAddCustomGigType}
-                                  disabled={!customGigTypeInput.trim()}
-                                  size="sm"
-                                  className="px-4"
-                                >
-                                  Add
-                                </Button>
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                Add specialized gig types unique to your business. These will be saved to your account and available in booking forms.
-                              </div>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Gig types are now managed behind the scenes - populated on initial instrument selection */}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
