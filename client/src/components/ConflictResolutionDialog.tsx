@@ -285,7 +285,10 @@ export default function ConflictResolutionDialog({
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{booking.venue}</span>
+                      <span className="text-sm">
+                        {booking.venue || 'Venue TBC'}
+                        {booking.venueAddress && ` - ${booking.venueAddress}`}
+                      </span>
                     </div>
                   </div>
 
