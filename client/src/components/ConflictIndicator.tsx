@@ -38,6 +38,8 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   const [isOpen, setIsOpen] = useState(false);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
   const [, setLocation] = useLocation();
+  
+  console.log('🟢 ConflictIndicator rendered for booking:', bookingId, 'conflicts:', conflicts?.length);
 
   // Check if this conflict dialog should be automatically opened
   useEffect(() => {

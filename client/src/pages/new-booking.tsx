@@ -776,12 +776,21 @@ export default function NewBookingPage({
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
+                          console.log('🔴 Back to Conflict clicked!', { 
+                            bookingId: editingBooking?.id,
+                            hasConflicts: editingBookingConflicts?.length > 0 
+                          });
                           // Store which booking's conflict dialog should be opened and navigate back
                           if (editingBooking?.id) {
                             localStorage.setItem('openConflictForBooking', editingBooking.id.toString());
                             // Also ensure we go to list view where ConflictIndicators are rendered
                             localStorage.setItem('bookingViewMode', 'list');
+                            console.log('🔴 Stored in localStorage:', {
+                              openConflictForBooking: editingBooking.id.toString(),
+                              bookingViewMode: 'list'
+                            });
                           }
+                          console.log('🔴 Navigating to /bookings');
                           setLocation('/bookings');
                         }}
                         className="bg-orange-500 hover:bg-orange-600 border-orange-500 text-white hover:text-white font-medium"
