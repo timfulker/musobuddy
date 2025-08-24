@@ -637,6 +637,20 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     Thank you for choosing ${businessName.split('|')[0]?.trim() || 'Tim Fulker'} Music Services. It was a pleasure performing at your event!
                 </div>
                 
+                <!-- PAGE BREAK - Page 2 starts here when printed -->
+                <div class="page-break"></div>
+                
+                <!-- Page 2 Header (visible only in print) -->
+                <div style="display: none; padding: 10px 0 15px 0; border-bottom: 2px solid #667eea; margin-bottom: 15px;" class="page-2-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 14px; font-weight: bold; color: #2c3e50;">${businessName}</span>
+                            <span style="font-size: 11px; color: #6c757d; margin-left: 12px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
+                        </div>
+                        <span style="font-size: 11px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
+                    </div>
+                </div>
+                
                 <!-- Totals Section -->
                 <div class="totals-section">
                     <div class="total-row">
@@ -655,20 +669,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     <div class="grand-total">
                         <span>Total Due</span>
                         <span>£${invoice.amount}</span>
-                    </div>
-                </div>
-                
-                <!-- PAGE BREAK - Page 2 starts here when printed -->
-                <div class="page-break"></div>
-                
-                <!-- Page 2 Header (visible only in print) -->
-                <div style="display: none; padding: 10px 0 15px 0; border-bottom: 2px solid #667eea; margin-bottom: 15px;" class="page-2-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-size: 14px; font-weight: bold; color: #2c3e50;">${businessName}</span>
-                            <span style="font-size: 11px; color: #6c757d; margin-left: 12px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
-                        </div>
-                        <span style="font-size: 11px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
                     </div>
                 </div>
                 
