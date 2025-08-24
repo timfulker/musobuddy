@@ -44,13 +44,29 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
     gcTime: 0, // Don't cache (v5 property name)
   });
 
+  // Fetch conflicting booking details
+  const conflictingBookingIds = conflicts.map(c => c.conflictingBookingId);
+  const { data: conflictingBookings = [] } = useQuery({
+    queryKey: [`/api/bookings/multiple`, conflictingBookingIds],
+    queryFn: async () => {
+      if (!conflictingBookingIds.length) return [];
+      const promises = conflictingBookingIds.map(id => 
+        fetch(`/api/bookings/${id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}` }
+        }).then(res => res.json())
+      );
+      return Promise.all(promises);
+    },
+    enabled: showResolutionModal && conflictingBookingIds.length > 0,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
   // Refetch when modal opens to ensure fresh data
   const handleResolveClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🔍 Resolve button clicked for booking:', bookingId);
     setShowResolutionModal(true);
-    console.log('✅ Set showResolutionModal to true');
     refetchBooking(); // Force fresh data fetch
   };
 
@@ -189,11 +205,8 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       {/* Full Conflict Resolution Modal */}
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
-        onClose={() => {
-          console.log('🔍 Closing resolution modal');
-          setShowResolutionModal(false);
-        }}
-        conflictingBookings={[currentBooking, ...conflicts.map(c => ({ id: c.conflictingBookingId }))].filter(Boolean)}
+        onClose={() => setShowResolutionModal(false)}
+        conflictingBookings={[currentBooking, ...conflictingBookings].filter(Boolean)}
         onEditBooking={onEditBooking}
       />
     </>
