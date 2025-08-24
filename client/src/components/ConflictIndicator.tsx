@@ -47,12 +47,16 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
         parseInt(shouldOpenConflict) === bookingId && 
         conflicts && 
         conflicts.length > 0) {
-      // Clean up immediately to prevent other instances from trying
-      localStorage.removeItem('openConflictForBooking');
-      // Small delay to ensure all data is loaded
-      setTimeout(() => {
+      console.log('🎯 Auto-opening conflict modal for booking:', bookingId);
+      // Small delay to ensure all data is loaded, then open and clean up
+      const timer = setTimeout(() => {
+        console.log('🚀 Opening conflict modal NOW for booking:', bookingId);
         setShowResolutionModal(true);
-      }, 1000); // Increased delay to ensure page is fully loaded
+        // Clean up after opening to prevent re-triggering
+        localStorage.removeItem('openConflictForBooking');
+      }, 2000); // Increased delay to ensure page is fully loaded
+      
+      return () => clearTimeout(timer);
     }
   }, [bookingId, conflicts]);
 
