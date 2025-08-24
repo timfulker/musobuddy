@@ -237,6 +237,58 @@ export async function registerSettingsRoutes(app: Express) {
         emailPrefix: user?.emailPrefix || null
       };
       
+      // Parse JSON strings that may be corrupted from earlier storage
+      if (responseSettings.customGigTypes) {
+        try {
+          if (typeof responseSettings.customGigTypes === 'string') {
+            // Try to parse as JSON, but handle corrupted format
+            let gigTypesString = responseSettings.customGigTypes;
+            // Fix corrupted JSON format: {"item1","item2"} -> ["item1","item2"]
+            if (gigTypesString.startsWith('{') && gigTypesString.includes('","')) {
+              gigTypesString = '[' + gigTypesString.slice(1, -1) + ']';
+            }
+            responseSettings.customGigTypes = JSON.parse(gigTypesString);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse customGigTypes, defaulting to empty array:', error);
+          responseSettings.customGigTypes = [];
+        }
+      }
+      
+      if (responseSettings.secondaryInstruments) {
+        try {
+          if (typeof responseSettings.secondaryInstruments === 'string') {
+            // Try to parse as JSON, but handle corrupted format
+            let instrumentsString = responseSettings.secondaryInstruments;
+            // Fix corrupted JSON format: {"item1","item2"} -> ["item1","item2"]
+            if (instrumentsString.startsWith('{') && instrumentsString.includes('","')) {
+              instrumentsString = '[' + instrumentsString.slice(1, -1) + ']';
+            }
+            responseSettings.secondaryInstruments = JSON.parse(instrumentsString);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse secondaryInstruments, defaulting to empty array:', error);
+          responseSettings.secondaryInstruments = [];
+        }
+      }
+      
+      if (responseSettings.customClauses) {
+        try {
+          if (typeof responseSettings.customClauses === 'string') {
+            // Try to parse as JSON, but handle corrupted format
+            let clausesString = responseSettings.customClauses;
+            // Fix corrupted JSON format: {"item1","item2"} -> ["item1","item2"]
+            if (clausesString.startsWith('{') && clausesString.includes('","')) {
+              clausesString = '[' + clausesString.slice(1, -1) + ']';
+            }
+            responseSettings.customClauses = JSON.parse(clausesString);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse customClauses, defaulting to empty array:', error);
+          responseSettings.customClauses = [];
+        }
+      }
+      
       res.json(responseSettings);
       
     } catch (error) {
