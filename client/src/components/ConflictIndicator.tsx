@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,15 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   const [isOpen, setIsOpen] = useState(false);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
   const [, setLocation] = useLocation();
+
+  // Check if this conflict dialog should be automatically opened
+  useEffect(() => {
+    const shouldOpenConflict = localStorage.getItem('openConflictForBooking');
+    if (shouldOpenConflict && parseInt(shouldOpenConflict) === bookingId && conflicts.length > 0) {
+      setShowResolutionModal(true);
+      localStorage.removeItem('openConflictForBooking'); // Clean up
+    }
+  }, [bookingId, conflicts]);
 
   // Handle editing a booking - navigate to the edit form
   const handleEditBooking = (booking: any) => {
