@@ -778,7 +778,10 @@ export default function NewBookingPage({
                         onClick={() => {
                           // Store which booking's conflict dialog should be opened and navigate back
                           if (editingBooking?.id) {
+                            console.log('🔧 Storing conflict booking ID:', editingBooking.id);
                             localStorage.setItem('openConflictForBooking', editingBooking.id.toString());
+                            // Also ensure we go to list view where ConflictIndicators are rendered
+                            localStorage.setItem('bookingViewMode', 'list');
                           }
                           setLocation('/bookings');
                         }}

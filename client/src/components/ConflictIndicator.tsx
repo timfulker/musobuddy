@@ -42,13 +42,14 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   // Check if this conflict dialog should be automatically opened
   useEffect(() => {
     const shouldOpenConflict = localStorage.getItem('openConflictForBooking');
+    console.log('🔧 ConflictIndicator useEffect:', { shouldOpenConflict, bookingId, conflictsLength: conflicts?.length });
     if (shouldOpenConflict && parseInt(shouldOpenConflict) === bookingId && conflicts && conflicts.length > 0) {
       // Small delay to ensure all data is loaded
       setTimeout(() => {
         console.log('🔧 Auto-opening conflict dialog for booking:', bookingId);
         setShowResolutionModal(true);
         localStorage.removeItem('openConflictForBooking'); // Clean up
-      }, 100);
+      }, 500); // Increased delay to ensure page is fully loaded
     }
   }, [bookingId, conflicts]);
 
