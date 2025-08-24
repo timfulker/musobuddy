@@ -579,8 +579,11 @@ export default function Settings() {
       return [...acc, ...instrumentGigTypes];
     }, [] as string[]);
     
-    // Remove duplicates - gig types now managed through customGigTypes field
+    // Remove duplicates and update the form
     const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+    
+    // CRITICAL FIX: Update the form's customGigTypes with filtered gig types
+    form.setValue('customGigTypes', uniqueGigTypes);
     
     setHasChanges(true);
     
@@ -1610,8 +1613,11 @@ export default function Settings() {
                                             return [...acc, ...instrumentGigTypes];
                                           }, [] as string[]);
                                           
-                                          // Remove duplicates - gig types now managed through customGigTypes field
+                                          // Remove duplicates and update the form
                                           const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                          
+                                          // CRITICAL FIX: Update the form's customGigTypes
+                                          form.setValue('customGigTypes', uniqueGigTypes);
                                         }}
                                         className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
                                       >
@@ -1636,6 +1642,9 @@ export default function Settings() {
                                       }, [] as string[]);
                                       
                                       const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                      
+                                      // CRITICAL FIX: Update the form's customGigTypes
+                                      form.setValue('customGigTypes', uniqueGigTypes);
                                     }}
                                     className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline"
                                   >
