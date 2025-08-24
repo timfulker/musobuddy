@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -36,6 +37,14 @@ interface ConflictIndicatorProps {
 export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, onEditBooking }: ConflictIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
+  const [, setLocation] = useLocation();
+
+  // Handle editing a booking - navigate to the edit form
+  const handleEditBooking = (booking: any) => {
+    // Store the booking ID so we can return to it later
+    localStorage.setItem('bookingReturnToId', booking.id.toString());
+    setLocation(`/new-booking?edit=${booking.id}`);
+  };
 
   // Fetch the current booking data for the resolution modal
   const { data: currentBooking, refetch: refetchBooking } = useQuery({
@@ -216,7 +225,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
         isOpen={showResolutionModal}
         onClose={() => setShowResolutionModal(false)}
         conflictingBookings={[currentBooking, ...conflictingBookings].filter(Boolean)}
-        onEditBooking={onEditBooking}
+        onEditBooking={handleEditBooking}
       />
     </>
   );
