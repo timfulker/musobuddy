@@ -186,8 +186,8 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Login endpoint - protected with rate limiting
-  app.post('/api/auth/login', loginLimiter, async (req, res) => {
+  // Login endpoint - temporarily bypass rate limiting for debugging
+  app.post('/api/auth/login', async (req, res) => {
     try {
       console.log('🔍 LOGIN REQUEST:', { 
         email: req.body.email, 
