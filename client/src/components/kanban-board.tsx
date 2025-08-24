@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import ConflictIndicator from "@/components/ConflictIndicator";
 
 import { findActiveAuthToken } from '@/utils/authToken';
 
@@ -134,6 +135,42 @@ export default function ActionableEnquiries() {
     }
   });
 
+  // Fetch conflicts data for conflict indicators
+  const { data: conflicts = [] } = useQuery({
+    queryKey: ['/api/conflicts'],
+    enabled: !isLoading && (enquiries as any[]).length > 0,
+  });
+
+  // Create a mapping of conflicts by booking ID for quick lookup
+  const conflictsByBookingId = React.useMemo(() => {
+    if (!conflicts || conflicts.length === 0) return {};
+    
+    const conflictMap: { [bookingId: number]: any[] } = {};
+    conflicts.forEach((conflict: any) => {
+      const { bookingId1, bookingId2, clientName1, clientName2, time1, time2, severity } = conflict;
+      
+      // Add conflict info for first booking
+      if (!conflictMap[bookingId1]) conflictMap[bookingId1] = [];
+      conflictMap[bookingId1].push({
+        conflictingBookingId: bookingId2,
+        clientName: clientName2,
+        time: time2,
+        severity
+      });
+      
+      // Add conflict info for second booking
+      if (!conflictMap[bookingId2]) conflictMap[bookingId2] = [];
+      conflictMap[bookingId2].push({
+        conflictingBookingId: bookingId1,
+        clientName: clientName1,
+        time: time1,
+        severity
+      });
+    });
+    
+    return conflictMap;
+  }, [conflicts]);
+
   const formatDateBox = (dateString: string) => {
     if (!dateString) return { dayName: "", dayNum: "", monthYear: "" };
     const date = new Date(dateString);
@@ -223,13 +260,24 @@ export default function ActionableEnquiries() {
       }
     };
     
+    // Get conflicts for this enquiry
+    const enquiryConflicts = conflictsByBookingId[enquiry.id] || [];
+
     return (
       <Card 
         key={enquiry.id} 
-        className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer`}
+        className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer relative`}
         onClick={() => setLocation(`/bookings?view=calendar&highlight=${enquiry.id}`)}
         onDoubleClick={() => setLocation(`/new-booking?edit=${enquiry.id}`)}
       >
+        {/* Conflict Indicator */}
+        {enquiryConflicts.length > 0 && (
+          <ConflictIndicator
+            bookingId={enquiry.id}
+            conflicts={enquiryConflicts}
+          />
+        )}
+        
         <CardContent className="p-4">
           <div className="flex items-start space-x-4">
             {/* Date Box */}

@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ConflictResolutionDialog } from "./ConflictResolutionDialog";
+import ConflictResolutionDialog from "./ConflictResolutionDialog";
 
 interface Conflict {
   withBookingId: number;

@@ -4,12 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
+import ConflictIndicator from '@/components/ConflictIndicator';
 
 interface MobileBookingCardProps {
   booking: any;
+  conflicts?: any[];
 }
 
-export default function MobileBookingCard({ booking }: MobileBookingCardProps) {
+export default function MobileBookingCard({ booking, conflicts = [] }: MobileBookingCardProps) {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -41,7 +43,15 @@ export default function MobileBookingCard({ booking }: MobileBookingCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow relative">
+      {/* Conflict Indicator */}
+      {conflicts.length > 0 && (
+        <ConflictIndicator
+          bookingId={booking.id}
+          conflicts={conflicts}
+        />
+      )}
+      
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">

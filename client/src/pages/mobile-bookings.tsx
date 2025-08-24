@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,42 @@ export default function MobileBookings() {
     queryKey: ['/api/bookings'],
     select: (data: any[]) => data || []
   });
+
+  // Fetch conflicts data for conflict indicators
+  const { data: conflicts = [] } = useQuery({
+    queryKey: ['/api/conflicts'],
+    enabled: !isLoading && bookings && bookings.length > 0,
+  });
+
+  // Create a mapping of conflicts by booking ID for quick lookup
+  const conflictsByBookingId = useMemo(() => {
+    if (!conflicts || conflicts.length === 0) return {};
+    
+    const conflictMap: { [bookingId: number]: any[] } = {};
+    conflicts.forEach((conflict: any) => {
+      const { bookingId1, bookingId2, clientName1, clientName2, time1, time2, severity } = conflict;
+      
+      // Add conflict info for first booking
+      if (!conflictMap[bookingId1]) conflictMap[bookingId1] = [];
+      conflictMap[bookingId1].push({
+        conflictingBookingId: bookingId2,
+        clientName: clientName2,
+        time: time2,
+        severity
+      });
+      
+      // Add conflict info for second booking
+      if (!conflictMap[bookingId2]) conflictMap[bookingId2] = [];
+      conflictMap[bookingId2].push({
+        conflictingBookingId: bookingId1,
+        clientName: clientName1,
+        time: time1,
+        severity
+      });
+    });
+    
+    return conflictMap;
+  }, [conflicts]);
 
   // Filter and sort bookings
   const filteredBookings = bookings?.filter(booking => 
@@ -104,15 +140,15 @@ export default function MobileBookings() {
         </TabsList>
 
         <TabsContent value="upcoming" className="mt-4">
-          <BookingsList bookings={upcomingBookings} isLoading={isLoading} emptyMessage="No upcoming bookings" />
+          <BookingsList bookings={upcomingBookings} isLoading={isLoading} emptyMessage="No upcoming bookings" conflictsByBookingId={conflictsByBookingId} />
         </TabsContent>
 
         <TabsContent value="pending" className="mt-4">
-          <BookingsList bookings={pendingBookings} isLoading={isLoading} emptyMessage="No pending bookings" />
+          <BookingsList bookings={pendingBookings} isLoading={isLoading} emptyMessage="No pending bookings" conflictsByBookingId={conflictsByBookingId} />
         </TabsContent>
 
         <TabsContent value="past" className="mt-4">
-          <BookingsList bookings={pastBookings} isLoading={isLoading} emptyMessage="No past bookings" />
+          <BookingsList bookings={pastBookings} isLoading={isLoading} emptyMessage="No past bookings" conflictsByBookingId={conflictsByBookingId} />
         </TabsContent>
       </Tabs>
     </div>
@@ -123,9 +159,10 @@ interface BookingsListProps {
   bookings: any[];
   isLoading: boolean;
   emptyMessage: string;
+  conflictsByBookingId: { [bookingId: number]: any[] };
 }
 
-function BookingsList({ bookings, isLoading, emptyMessage }: BookingsListProps) {
+function BookingsList({ bookings, isLoading, emptyMessage, conflictsByBookingId }: BookingsListProps) {
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -146,9 +183,16 @@ function BookingsList({ bookings, isLoading, emptyMessage }: BookingsListProps) 
 
   return (
     <div className="space-y-4">
-      {bookings.map((booking) => (
-        <MobileBookingCard key={booking.id} booking={booking} />
-      ))}
+      {bookings.map((booking) => {
+        const bookingConflicts = conflictsByBookingId[booking.id] || [];
+        return (
+          <MobileBookingCard 
+            key={booking.id} 
+            booking={booking} 
+            conflicts={bookingConflicts}
+          />
+        );
+      })}
     </div>
   );
 }
