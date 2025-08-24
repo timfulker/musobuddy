@@ -45,7 +45,9 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   });
 
   // Refetch when modal opens to ensure fresh data
-  const handleResolveClick = () => {
+  const handleResolveClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('🔍 Resolve button clicked for booking:', bookingId);
     setShowResolutionModal(true);
     console.log('✅ Set showResolutionModal to true');
@@ -105,13 +107,15 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       {/* Conflict Indicator Button */}
       <Button
         size="sm"
-        className={`absolute top-20 right-2 h-8 px-3 border-0 shadow-md z-10 ${
+        className={`absolute top-20 right-2 h-8 px-3 border-0 shadow-md z-20 ${
           severity === 'hard' ? 'bg-red-500 hover:bg-red-600 text-white' : 
           severity === 'soft' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 
           'bg-yellow-500 hover:bg-yellow-600 text-black'
         }`}
         title={getTooltipText()}
         onClick={handleResolveClick}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
         <span className="text-xs font-medium">Resolve</span>
       </Button>
@@ -183,17 +187,15 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       </Dialog>
 
       {/* Full Conflict Resolution Modal */}
-      {showResolutionModal && (
-        <ConflictResolutionDialog
-          isOpen={showResolutionModal}
-          onClose={() => {
-            console.log('🔍 Closing resolution modal');
-            setShowResolutionModal(false);
-          }}
-          conflictingBookings={[currentBooking, ...conflicts.map(c => ({ id: c.conflictingBookingId }))].filter(Boolean)}
-          onEditBooking={onEditBooking}
-        />
-      )}
+      <ConflictResolutionDialog
+        isOpen={showResolutionModal}
+        onClose={() => {
+          console.log('🔍 Closing resolution modal');
+          setShowResolutionModal(false);
+        }}
+        conflictingBookings={[currentBooking, ...conflicts.map(c => ({ id: c.conflictingBookingId }))].filter(Boolean)}
+        onEditBooking={onEditBooking}
+      />
     </>
   );
 }
