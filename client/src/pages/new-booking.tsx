@@ -97,7 +97,7 @@ export default function NewBookingPage({
   editBookingId: propEditBookingId,
   clientInfo 
 }: NewBookingProps = {}) {
-  const [location, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   
   // Conditional authentication - only use auth in musician mode
@@ -147,6 +147,17 @@ export default function NewBookingPage({
     enabled: isEditMode && !!editBookingId && !clientMode, // Skip for client mode
     retry: false,
   });
+
+  // Get conflicts for the current booking (only in edit mode for musicians)
+  const { data: conflictsData = [] } = useQuery({
+    queryKey: ['/api/conflicts'],
+    enabled: isEditMode && !!editBookingId && !clientMode,
+  });
+
+  // Filter conflicts that involve the current booking being edited
+  const editingBookingConflicts = conflictsData.filter((conflict: any) => 
+    conflict.bookingId === parseInt(editBookingId!) || conflict.conflictingBookingId === parseInt(editBookingId!)
+  );
   
   const bookingDocuments = documentsResponse?.documents || [];
   
@@ -752,12 +763,30 @@ export default function NewBookingPage({
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                  <Link href="/bookings">
-                    <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back to Bookings
-                    </Button>
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link href="/bookings">
+                      <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Bookings
+                      </Button>
+                    </Link>
+                    {/* Back to conflict button - only show if booking has conflicts */}
+                    {isEditMode && editingBooking && editingBookingConflicts && editingBookingConflicts.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          // Store the booking ID and navigate back to dashboard with conflict highlighting
+                          localStorage.setItem('highlightConflict', editingBooking.id.toString());
+                          setLocation('/?openConflict=' + editingBooking.id);
+                        }}
+                        className="bg-orange-500 hover:bg-orange-600 border-orange-500 text-white hover:text-white font-medium"
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Conflict
+                      </Button>
+                    )}
+                  </div>
                   <div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
                       {isEditMode ? 'Edit Booking' : 'New Booking'}
