@@ -184,8 +184,8 @@ export default function NewBookingPage({
     enabled: !clientMode, // Skip for client mode
   });
 
-  // Extract gig types from user settings
-  const userGigTypes = userSettings && Array.isArray((userSettings as any).gigTypes) ? (userSettings as any).gigTypes : [];
+  // Extract gig types from user settings - now using customGigTypes field
+  const userGigTypes = userSettings && Array.isArray((userSettings as any).customGigTypes) ? (userSettings as any).customGigTypes : [];
 
   // Calculate mileage between user's business address and venue
   const calculateMileage = async (venueAddress: string) => {
