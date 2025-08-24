@@ -537,21 +537,37 @@ export default function Settings() {
   // Handler for instrument selection
   const handleInstrumentChange = (instrument: string) => {
     setSelectedInstrument(instrument);
-    const gigTypes = getGigTypeNamesForInstrument(instrument);
-    setAvailableGigTypes(gigTypes);
     
     // Update the form with the selected instrument
     form.setValue('primaryInstrument', instrument);
+    
+    // Remove the new primary instrument from secondary instruments if it's there
+    const currentSecondary = form.getValues('secondaryInstruments') || [];
+    const updatedSecondary = currentSecondary.filter(sec => sec !== instrument);
+    if (updatedSecondary.length !== currentSecondary.length) {
+      form.setValue('secondaryInstruments', updatedSecondary);
+    }
+    
+    // Combine gig types from both primary and secondary instruments
+    const allInstruments = [instrument, ...updatedSecondary].filter(Boolean);
+    const combinedGigTypes = allInstruments.reduce((acc, inst) => {
+      const instrumentGigTypes = getGigTypeNamesForInstrument(inst || '');
+      return [...acc, ...instrumentGigTypes];
+    }, [] as string[]);
+    
+    // Remove duplicates and set available gig types
+    const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+    setAvailableGigTypes(uniqueGigTypes);
+    
     setHasChanges(true);
     
     console.log(`🎵 Instrument changed to: ${instrument}`);
-    console.log(`🎵 Form value set to:`, form.getValues('primaryInstrument'));
+    console.log(`🎵 Combined instruments:`, allInstruments);
+    console.log(`🎵 Combined gig types:`, uniqueGigTypes.length, 'types');
     
-    // Note: We don't call the separate endpoint here anymore
-    // The instrument will be saved when the main form is submitted
     toast({
       title: "Instrument Selected",
-      description: `Set to ${getInstrumentDisplayName(instrument)}. Remember to save your settings!`,
+      description: `Set to ${getInstrumentDisplayName(instrument)} with ${uniqueGigTypes.length} available gig types. Remember to save your settings!`,
     });
   };
 

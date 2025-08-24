@@ -7,6 +7,7 @@ import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireAuth } from '../middleware/auth';
 import { db } from '../core/database';
 import { clientCommunications } from '@shared/schema';
+import { getGigTypeNamesForInstrument } from '@shared/instrument-gig-presets';
 
 export async function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
@@ -258,7 +259,37 @@ export async function registerSettingsRoutes(app: Express) {
       
       console.log(`⚙️ Updating settings for user ${userId}:`, req.body);
       
-      const updatedSettings = await storage.updateSettings(userId, req.body);
+      // Process the request body to combine instrument-based gig types
+      const processedBody = { ...req.body };
+      
+      // If instruments are being updated, automatically generate combined gig types
+      if (processedBody.primaryInstrument || processedBody.secondaryInstruments) {
+        const allInstruments = [
+          processedBody.primaryInstrument, 
+          ...(Array.isArray(processedBody.secondaryInstruments) ? processedBody.secondaryInstruments : [])
+        ].filter(Boolean);
+        
+        // Get gig types for all instruments
+        const instrumentGigTypes = allInstruments.reduce((acc, instrument) => {
+          const gigTypes = getGigTypeNamesForInstrument(instrument);
+          return [...acc, ...gigTypes];
+        }, [] as string[]);
+        
+        // Get existing custom gig types (manually added ones)
+        const existingCustomTypes = Array.isArray(processedBody.customGigTypes) ? processedBody.customGigTypes : [];
+        
+        // Combine instrument-based and custom gig types, remove duplicates
+        const combinedGigTypes = [...new Set([...instrumentGigTypes, ...existingCustomTypes])];
+        
+        // Update the processed body with combined gig types
+        processedBody.customGigTypes = combinedGigTypes;
+        
+        console.log(`🎵 Combined ${allInstruments.length} instruments into ${combinedGigTypes.length} gig types for user ${userId}`);
+        console.log(`🎵 Instruments:`, allInstruments);
+        console.log(`🎵 Combined gig types:`, combinedGigTypes.slice(0, 10), combinedGigTypes.length > 10 ? `...and ${combinedGigTypes.length - 10} more` : '');
+      }
+      
+      const updatedSettings = await storage.updateSettings(userId, processedBody);
       console.log(`✅ Updated settings for user ${userId}`);
       
       res.json(updatedSettings);
