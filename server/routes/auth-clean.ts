@@ -189,26 +189,47 @@ export function setupAuthRoutes(app: Express) {
   // Login endpoint - protected with rate limiting
   app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
+      console.log('🔍 LOGIN REQUEST:', { 
+        email: req.body.email, 
+        hasPassword: !!req.body.password,
+        passwordLength: req.body.password?.length 
+      });
+
       const { email, password } = req.body;
 
       if (!email || !password) {
+        console.log('❌ Missing login fields:', { email: !!email, password: !!password });
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
       // All authentication now goes through proper credential verification
-
+      console.log('🔍 Looking up user by email:', email);
       const user = await storage.getUserByEmail(email);
+      
       if (!user) {
+        console.log('❌ User not found for email:', email);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
+      console.log('✅ User found:', { 
+        userId: user.id, 
+        email: user.email,
+        hasPassword: !!user.password,
+        passwordLength: user.password?.length,
+        phoneVerified: user.phoneVerified 
+      });
+
       const isValidPassword = await bcrypt.compare(password, user.password || '');
+      console.log('🔍 Password comparison result:', isValidPassword);
+      
       if (!isValidPassword) {
+        console.log('❌ Invalid password for user:', email);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       // Generate JWT token
       const authToken = generateAuthToken(user.id, user.email || '', true);
+      console.log('✅ Login successful for user:', email);
 
       res.json({
         success: true,
@@ -221,7 +242,7 @@ export function setupAuthRoutes(app: Express) {
       });
 
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
