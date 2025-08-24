@@ -342,7 +342,6 @@ export default function Settings() {
     contract: false, // Contract & Invoice settings section
     bank: false,
     pricing: false, // AI Pricing Guide section
-    gigTypes: false, // Custom gig types management section
     widget: false, // Widget URL management section
     performance: false,
     instruments: true, // Open by default for new instrument context feature
@@ -1668,52 +1667,7 @@ export default function Settings() {
                           </div>
                         </div>
                       )}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
 
-              {/* Custom Gig Types */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.gigTypes} onOpenChange={() => toggleSection('gigTypes')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
-                          <span>Gig Types Management</span>
-                        </div>
-                        {expandedSections.gigTypes ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        View available gig types for your instruments and add custom ones
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-6">
-                      {/* Available Gig Types Display */}
-                      {(selectedInstrument || form.watch('secondaryInstruments')?.length > 0) && availableGigTypes.length > 0 && (
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Gig Types for Your Instruments</h4>
-                          <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                              {availableGigTypes.map((gigType, index) => (
-                                <div key={index} className="bg-white dark:bg-slate-700 px-3 py-2 rounded-md border text-center">
-                                  {gigType}
-                                </div>
-                              ))}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                              These gig types are available in booking forms and AI will use them for contextual template generation.
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
                       {/* Custom Gig Types Management */}
                       <FormField
                         control={form.control}
@@ -1780,6 +1734,7 @@ export default function Settings() {
                   </CollapsibleContent>
                 </Collapsible>
               </Card>
+
 
               {/* Performance Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
