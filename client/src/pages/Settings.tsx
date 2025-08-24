@@ -177,6 +177,7 @@ const settingsFormSchema = z.object({
   themeShowQrCode: z.boolean().optional(),
   themeShowTerms: z.boolean().optional(),
   themeCustomTitle: z.string().optional(),
+  emailPrefix: z.string().optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
@@ -264,6 +265,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     pricingNotes: data.pricing_notes || data.pricingNotes || "",
     specialOffers: data.special_offers || data.specialOffers || "",
     // Travel expense integration removed - always include travel in performance fee
+    emailPrefix: data.emailPrefix || "",
   };
 };
 
@@ -512,6 +514,9 @@ export default function Settings() {
       });
       
       // Don't reset the form immediately - let it keep the user's changes
+      
+      // Invalidate settings cache to refresh data immediately
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
       // The form will be updated when the settings query refreshes
       
       // Store the new data as initial data for comparison

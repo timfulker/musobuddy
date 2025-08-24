@@ -168,8 +168,6 @@ export async function registerSettingsRoutes(app: Express) {
         storage.getUserById(userId)
       ]);
       
-      // DEBUG: Log entire user object to see all properties
-      console.log(`🔍 [DEBUG] Full user object for ${userId}:`, user);
       
       if (!settings) {
         // Create default settings if none exist
