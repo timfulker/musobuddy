@@ -361,13 +361,20 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-section {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                flex-wrap: wrap;
                 gap: 40px;
                 padding: 30px;
                 background: #fafbfc;
                 border-radius: 8px;
                 margin-bottom: 30px;
+                page-break-inside: avoid;
+            }
+            
+            .payment-block {
+                flex: 1;
+                min-width: 250px;
+                page-break-inside: avoid;
             }
             
             .payment-block h4 {
@@ -479,14 +486,12 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     max-width: 100%;
                 }
                 
-                /* Keep sections together */
+                /* PAGE 1 CONTENT - Keep together */
                 .header, 
                 .parties-section,
                 .services-section,
                 .thank-you-note,
-                .totals-section,
-                .payment-section,
-                .terms-section {
+                .totals-section {
                     page-break-inside: avoid;
                 }
                 
@@ -507,6 +512,29 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 /* Show page 2 header only in print */
                 .page-2-header {
                     display: block !important;
+                }
+                
+                /* PAGE 2 CONTENT - Force payment section to stay together */
+                .payment-section {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    page-break-before: auto !important;
+                    orphans: 4;
+                    widows: 4;
+                    margin-top: 20px;
+                    margin-bottom: 40px;
+                }
+                
+                .payment-block {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    display: block !important;
+                }
+                
+                .terms-section {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    page-break-before: avoid !important;
                 }
                 
                 /* Hide web-only footer in print */
@@ -531,7 +559,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
     <body>
         <!-- Print Note - Only visible on screen -->
         <div class="print-note">
-            📄 This invoice is designed to print on 2 A4 pages. Page 1: Header & services | Page 2: Totals, payment details & terms
+            📄 This invoice is designed to print on 2 A4 pages. Page 1: Invoice details & totals | Page 2: Payment information & terms
         </div>
         
         <div class="invoice-container">
@@ -632,25 +660,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="thank-you-note">
                     Thank you for choosing ${businessName.split('|')[0]?.trim() || 'Tim Fulker'} Music Services. It was a pleasure performing at your event!
                 </div>
-                <!-- ========== END OF PAGE 1 ========== -->
-            </div>
-            
-            <!-- PAGE BREAK - Page 2 starts here when printed -->
-            <div class="page-break"></div>
-            
-            <!-- Main Content for Page 2 -->
-            <div class="main-content">
-                <!-- ========== PAGE 2 CONTENT STARTS ========== -->
-                <!-- Page 2 Header (visible only in print) -->
-                <div style="display: none; padding: 20px 0 30px 0; border-bottom: 2px solid #667eea; margin-bottom: 30px;" class="page-2-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">${businessName}</span>
-                            <span style="font-size: 14px; color: #6c757d; margin-left: 20px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
-                        </div>
-                        <span style="font-size: 14px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
-                    </div>
-                </div>
                 
                 <!-- Totals Section -->
                 <div class="totals-section">
@@ -669,7 +678,21 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     <div class="total-divider"></div>
                     <div class="grand-total">
                         <span>Total Due</span>
-                        <span>£${(parseFloat(invoice.amount) - parseFloat(invoice.depositPaid || '0')).toFixed(2)}</span>
+                        <span>£${invoice.amount}</span>
+                    </div>
+                </div>
+                
+                <!-- PAGE BREAK - Page 2 starts here when printed -->
+                <div class="page-break"></div>
+                
+                <!-- Page 2 Header (visible only in print) -->
+                <div style="display: none; padding: 20px 0 30px 0; border-bottom: 2px solid #667eea; margin-bottom: 30px;" class="page-2-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">${businessName}</span>
+                            <span style="font-size: 14px; color: #6c757d; margin-left: 20px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
+                        </div>
+                        <span style="font-size: 14px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
                     </div>
                 </div>
                 
