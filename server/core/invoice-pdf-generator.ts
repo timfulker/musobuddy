@@ -361,20 +361,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-section {
-                display: flex;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
                 gap: 40px;
                 padding: 30px;
                 background: #fafbfc;
                 border-radius: 8px;
                 margin-bottom: 30px;
-                page-break-inside: avoid;
-            }
-            
-            .payment-block {
-                flex: 1;
-                min-width: 250px;
-                page-break-inside: avoid;
             }
             
             .payment-block h4 {
@@ -514,27 +507,10 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     display: block !important;
                 }
                 
-                /* PAGE 2 CONTENT - Force payment section to stay together */
-                .payment-section {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    page-break-before: auto !important;
-                    orphans: 4;
-                    widows: 4;
-                    margin-top: 20px;
-                    margin-bottom: 40px;
-                }
-                
-                .payment-block {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    display: block !important;
-                }
-                
+                /* PAGE 2 CONTENT - Keep together */
+                .payment-section,
                 .terms-section {
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                    page-break-before: avoid !important;
+                    page-break-inside: avoid;
                 }
                 
                 /* Hide web-only footer in print */
