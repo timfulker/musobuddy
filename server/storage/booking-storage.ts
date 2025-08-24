@@ -391,7 +391,15 @@ export class BookingStorage {
       .orderBy(desc(bookingConflicts.createdAt));
 
     // Also detect real-time conflicts by checking all bookings on same dates
-    const userBookings = await this.getBookingsByUser(userId);
+    const allUserBookings = await this.getBookingsByUser(userId);
+    
+    // Filter to only include active bookings (including new inquiries, but exclude cancelled/rejected/completed)
+    const userBookings = allUserBookings.filter(booking => 
+      booking.status !== 'rejected' && 
+      booking.status !== 'cancelled' && 
+      booking.status !== 'completed'
+    );
+    
     const realTimeConflicts: any[] = [];
 
     for (let i = 0; i < userBookings.length; i++) {
