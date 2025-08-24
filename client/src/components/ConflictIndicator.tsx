@@ -42,23 +42,15 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   // Check if this conflict dialog should be automatically opened
   useEffect(() => {
     const shouldOpenConflict = localStorage.getItem('openConflictForBooking');
-    console.log('🔧 ConflictIndicator useEffect:', { 
-      shouldOpenConflict, 
-      bookingId, 
-      conflictsLength: conflicts?.length,
-      isMatch: shouldOpenConflict && parseInt(shouldOpenConflict) === bookingId
-    });
     
     if (shouldOpenConflict && 
         parseInt(shouldOpenConflict) === bookingId && 
         conflicts && 
         conflicts.length > 0) {
-      console.log('🔧 Match found! Opening conflict dialog for booking:', bookingId);
       // Clean up immediately to prevent other instances from trying
       localStorage.removeItem('openConflictForBooking');
       // Small delay to ensure all data is loaded
       setTimeout(() => {
-        console.log('🔧 Auto-opening conflict dialog NOW for booking:', bookingId);
         setShowResolutionModal(true);
       }, 1000); // Increased delay to ensure page is fully loaded
     }

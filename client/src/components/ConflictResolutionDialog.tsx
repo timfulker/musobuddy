@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, User, AlertTriangle, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar, Clock, MapPin, User, AlertTriangle, Edit, Trash2, CheckCircle, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -32,6 +33,8 @@ export default function ConflictResolutionDialog({
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [conflictSeverity, setConflictSeverity] = useState<'hard' | 'soft'>('soft');
   const [conflictDate, setConflictDate] = useState<string>('');
+  const [editingBookingId, setEditingBookingId] = useState<number | null>(null);
+  const [editedTimes, setEditedTimes] = useState<{[key: number]: {eventTime: string, eventEndTime: string}}>({});
 
 
   // Get conflict resolutions to check if this conflict group is already resolved
@@ -162,6 +165,59 @@ export default function ConflictResolutionDialog({
     }
   };
 
+  // Start inline editing for a booking
+  const startInlineEdit = (booking: any) => {
+    setEditingBookingId(booking.id);
+    setEditedTimes({
+      ...editedTimes,
+      [booking.id]: {
+        eventTime: booking.eventTime || '',
+        eventEndTime: booking.eventEndTime || ''
+      }
+    });
+  };
+
+  // Cancel inline editing
+  const cancelInlineEdit = () => {
+    setEditingBookingId(null);
+  };
+
+  // Save inline edit changes
+  const saveInlineEditMutation = useMutation({
+    mutationFn: async ({ bookingId, times }: { bookingId: number, times: { eventTime: string, eventEndTime: string }}) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        body: {
+          eventTime: times.eventTime,
+          eventEndTime: times.eventEndTime
+        }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+      toast({
+        title: "Times Updated",
+        description: "Booking times have been successfully updated",
+      });
+      setEditingBookingId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update booking times",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveInlineEdit = (bookingId: number) => {
+    const times = editedTimes[bookingId];
+    if (times) {
+      saveInlineEditMutation.mutate({ bookingId, times });
+    }
+  };
+
   const handleRejectBooking = (booking: any) => {
     deleteMutation.mutate(booking.id);
   };
@@ -279,9 +335,41 @@ export default function ConflictResolutionDialog({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">
-                        {booking.eventTime || 'TBC'} - {booking.eventEndTime || 'TBC'}
-                      </span>
+                      {editingBookingId === booking.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            value={editedTimes[booking.id]?.eventTime || ''}
+                            onChange={(e) => setEditedTimes({
+                              ...editedTimes,
+                              [booking.id]: {
+                                ...editedTimes[booking.id],
+                                eventTime: e.target.value
+                              }
+                            })}
+                            className="h-7 w-24 text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="text-sm">-</span>
+                          <Input
+                            type="time"
+                            value={editedTimes[booking.id]?.eventEndTime || ''}
+                            onChange={(e) => setEditedTimes({
+                              ...editedTimes,
+                              [booking.id]: {
+                                ...editedTimes[booking.id],
+                                eventEndTime: e.target.value
+                              }
+                            })}
+                            className="h-7 w-24 text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-sm">
+                          {booking.eventTime || 'TBC'} - {booking.eventEndTime || 'TBC'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-500" />
@@ -311,31 +399,74 @@ export default function ConflictResolutionDialog({
                   </div>
                   
                   <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditBooking(booking);
-                      }}
-                      className="h-8 px-2"
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRejectBooking(booking);
-                      }}
-                      className="h-8 px-2 text-red-600 hover:text-red-700"
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Reject
-                    </Button>
+                    {editingBookingId === booking.id ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveInlineEdit(booking.id);
+                          }}
+                          className="h-8 px-2 text-green-600 hover:text-green-700"
+                          disabled={saveInlineEditMutation.isPending}
+                        >
+                          <Save className="w-3 h-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelInlineEdit();
+                          }}
+                          className="h-8 px-2"
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startInlineEdit(booking);
+                          }}
+                          className="h-8 px-2"
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Edit Time
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditBooking(booking);
+                          }}
+                          className="h-8 px-2"
+                        >
+                          Full Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRejectBooking(booking);
+                          }}
+                          className="h-8 px-2 text-red-600 hover:text-red-700"
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
