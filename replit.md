@@ -58,19 +58,17 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Core Structure**: Modular route architecture.
 - **Authentication**: JWT-based system with SMS/email/phone verification and secure email-based password reset.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
 - **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
-- **Admin Database Access**: Read-only administration panel with table browsing, filtering, search, and CSV export.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, and automated scrolling to next upcoming booking.
 - **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, guided creation, legally compliant amendment system, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, random 16-character token security for URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management, expiry date monitoring, alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.

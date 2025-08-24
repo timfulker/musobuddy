@@ -1,4 +1,5 @@
 import { type Express } from "express";
+import rateLimit from 'express-rate-limit';
 import { storage } from "../core/storage";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
@@ -19,6 +20,39 @@ function formatPhoneNumber(phone: string): string {
   return '+44' + digits;
 }
 
+// Rate limiting configuration for authentication endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per 15 minutes
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 signup attempts per hour
+  message: { error: 'Too many signup attempts. Please try again in 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const smsVerificationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 3, // 3 SMS verification attempts per 10 minutes
+  message: { error: 'Too many verification attempts. Please try again in 10 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 password reset attempts per hour
+  message: { error: 'Too many password reset attempts. Please try again in 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // In-memory verification storage (replace with Redis in production)
 const pendingVerifications = new Map<string, {
   firstName: string;
@@ -33,8 +67,8 @@ const pendingVerifications = new Map<string, {
 export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up clean JWT-based authentication...');
 
-  // Signup endpoint
-  app.post('/api/auth/signup', async (req, res) => {
+  // Signup endpoint - protected with rate limiting
+  app.post('/api/auth/signup', signupLimiter, async (req, res) => {
     try {
       const { firstName, lastName, email, phoneNumber, password } = req.body;
 
@@ -155,8 +189,8 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Login endpoint
-  app.post('/api/auth/login', async (req, res) => {
+  // Login endpoint - protected with rate limiting
+  app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
       const { email, password } = req.body;
 
@@ -447,8 +481,8 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Verify SMS code
-  app.post('/api/auth/verify-sms', async (req, res) => {
+  // Verify SMS code - protected with rate limiting
+  app.post('/api/auth/verify-sms', smsVerificationLimiter, async (req, res) => {
     try {
       console.log('🔍 SMS verification request body:', req.body);
       const { userId, verificationCode } = req.body;
@@ -587,8 +621,8 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Forgot Password endpoint
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  // Forgot Password endpoint - protected with rate limiting
+  app.post('/api/auth/forgot-password', passwordResetLimiter, async (req, res) => {
     try {
       const { email } = req.body;
 
