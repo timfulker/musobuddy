@@ -978,7 +978,7 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
-              {/* Lead Email Management */}
+              {/* Email Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
                 <Collapsible open={expandedSections.email} onOpenChange={() => toggleSection('email')}>
                   <CollapsibleTrigger className="w-full">
@@ -986,7 +986,7 @@ export default function Settings() {
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
                           <Mail className="w-5 h-5 text-primary" />
-                          <span>Lead Email Management</span>
+                          <span>Email Settings</span>
                         </div>
                         {expandedSections.email ? 
                           <ChevronDown className="w-5 h-5 text-gray-400" /> : 
@@ -996,7 +996,8 @@ export default function Settings() {
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="p-6 space-y-6">
+                      {/* Professional Email Address */}
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <div className="flex items-start space-x-3">
                           <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -1024,45 +1025,21 @@ export default function Settings() {
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
 
-
-
-              {/* Email Settings */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.contact} onOpenChange={() => toggleSection('contact')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Globe className="w-5 h-5 text-primary" />
-                          <span>Email Settings</span>
-                        </div>
-                        {expandedSections.contact ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="emailFromName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Your Name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      {/* Email From Name */}
+                      <FormField
+                        control={form.control}
+                        name="emailFromName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Your Name" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
