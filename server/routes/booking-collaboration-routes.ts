@@ -174,6 +174,8 @@ export function setupBookingCollaborationRoutes(app: Express) {
         // Technical Details
         'venueContact',
         'soundTechContact',
+        'soundCheckTime',
+        'powerEquipment',
         'stageSize',
         'specialGuests',
         // Music Preferences
