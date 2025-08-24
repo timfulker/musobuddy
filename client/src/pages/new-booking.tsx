@@ -776,9 +776,8 @@ export default function NewBookingPage({
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
-                          // Store the booking ID and navigate back to dashboard with conflict highlighting
-                          localStorage.setItem('highlightConflict', editingBooking.id.toString());
-                          setLocation('/?openConflict=' + editingBooking.id);
+                          // Navigate back to the dashboard where conflicts are displayed
+                          setLocation('/');
                         }}
                         className="bg-orange-500 hover:bg-orange-600 border-orange-500 text-white hover:text-white font-medium"
                       >
