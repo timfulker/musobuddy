@@ -521,7 +521,7 @@ export default function NewBookingPage({
         venueAddress: data.venueAddress || null,
         venueContactInfo: data.venueContactInfo || null,
         fee: data.fee ? parseFloat(data.fee) : null,
-        eventType: data.eventType || null,
+
         gigType: data.gigType || null,
         equipmentRequirements: data.equipmentRequirements || null,
         specialRequirements: data.specialRequirements || null,
@@ -578,7 +578,7 @@ export default function NewBookingPage({
         venueAddress: data.venueAddress || null,
         venueContactInfo: data.venueContactInfo || null,
         fee: data.fee ? parseFloat(data.fee) : null,
-        eventType: data.eventType || null,
+
         gigType: data.gigType || null,
         equipmentRequirements: data.equipmentRequirements || null,
         specialRequirements: data.specialRequirements || null,
@@ -1404,41 +1404,13 @@ export default function NewBookingPage({
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="eventType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Event Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select event type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="wedding">Wedding</SelectItem>
-                            <SelectItem value="corporate">Corporate Event</SelectItem>
-                            <SelectItem value="private_party">Private Party</SelectItem>
-                            <SelectItem value="pub_gig">Pub Gig</SelectItem>
-                            <SelectItem value="restaurant">Restaurant</SelectItem>
-                            <SelectItem value="festival">Festival</SelectItem>
-                            <SelectItem value="charity">Charity Event</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="gigType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gig Type</FormLabel>
+                        <FormLabel>Event Type</FormLabel>
                         <div className="space-y-2">
                           <Select onValueChange={(value) => {
                             if (value !== 'custom') {
@@ -1447,7 +1419,7 @@ export default function NewBookingPage({
                           }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select gig type or choose 'Custom' to type your own" />
+                                <SelectValue placeholder="Select event type or choose 'Custom' to type your own" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -1463,7 +1435,7 @@ export default function NewBookingPage({
                           {(!gigTypes.includes(field.value as any) || field.value === '') && (
                             <FormControl>
                               <Input 
-                                placeholder="Type custom gig type (e.g., Burlesque Show, Masonic Lodge, School Assembly)"
+                                placeholder="Type custom event type (e.g., Burlesque Show, Masonic Lodge, School Assembly)"
                                 value={gigTypes.includes(field.value as any) ? '' : field.value}
                                 onChange={(e) => field.onChange(e.target.value)}
                               />
@@ -1471,7 +1443,7 @@ export default function NewBookingPage({
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Select from common types or enter your own custom gig type
+                          Select from your configured event types or enter a custom one
                         </div>
                         <FormMessage />
                       </FormItem>

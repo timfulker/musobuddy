@@ -386,7 +386,6 @@ export const bookings = pgTable("bookings", {
   venueAddress: text("venue_address"),
   clientAddress: text("client_address"),
   what3words: varchar("what3words"), // Precise location using what3words
-  eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   fee: decimal("fee", { precision: 10, scale: 2 }),
   equipmentRequirements: text("equipment_requirements"),
