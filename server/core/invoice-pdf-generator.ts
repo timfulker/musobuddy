@@ -92,10 +92,10 @@ export async function generateInvoicePDF(
       format: 'A4', 
       printBackground: true,
       margin: {
-        top: '20mm',
-        right: '15mm', 
-        bottom: '20mm',
-        left: '15mm'
+        top: '15mm',
+        right: '12mm', 
+        bottom: '15mm',
+        left: '12mm'
       }
     });
     
@@ -228,15 +228,15 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .main-content {
-                padding: 40px;
+                padding: 30px;
             }
             
             .parties-section {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 40px;
-                margin-bottom: 40px;
-                padding: 25px;
+                gap: 30px;
+                margin-bottom: 25px;
+                padding: 20px;
                 background: #f8f9fa;
                 border-radius: 8px;
             }
@@ -277,7 +277,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .services-section {
-                margin-bottom: 40px;
+                margin-bottom: 25px;
             }
             
             .section-title {
@@ -306,7 +306,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .service-table td {
-                padding: 15px 12px;
+                padding: 12px;
                 border-bottom: 1px solid #e9ecef;
                 font-size: 14px;
             }
@@ -330,9 +330,9 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             
             .totals-section {
                 background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                padding: 25px;
+                padding: 20px;
                 border-radius: 8px;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
             
             .total-row {
@@ -363,11 +363,11 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             .payment-section {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 40px;
-                padding: 30px;
+                gap: 25px;
+                padding: 20px;
                 background: #fafbfc;
                 border-radius: 8px;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
             
             .payment-block h4 {
@@ -380,15 +380,15 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-details {
-                font-size: 14px;
-                line-height: 1.8;
+                font-size: 13px;
+                line-height: 1.6;
                 color: #5a6c7d;
             }
             
             .bank-detail {
                 background: white;
-                padding: 8px 12px;
-                margin: 5px 0;
+                padding: 6px 10px;
+                margin: 3px 0;
                 border-radius: 4px;
                 border-left: 3px solid #667eea;
             }
@@ -404,7 +404,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .terms-section {
-                padding: 20px 30px;
+                padding: 15px 20px;
                 background: #f8f9fa;
                 border-top: 1px solid #dee2e6;
             }
@@ -419,9 +419,9 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .terms-content {
-                font-size: 12px;
+                font-size: 11px;
                 color: #6c757d;
-                line-height: 1.6;
+                line-height: 1.5;
             }
             
             .footer {
@@ -449,7 +449,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             
             /* Page Break Indicators - visible only on screen */
             .page-break {
-                margin: 40px 0;
+                margin: 20px 0;
                 border-top: 2px dashed #dee2e6;
                 position: relative;
                 page-break-after: always;
@@ -522,7 +522,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             /* Page size configuration for printing */
             @page {
                 size: A4;
-                margin: 20mm;
+                margin: 15mm 12mm;
                 
                 @bottom-center {
                     content: "Page " counter(page) " of 2";
@@ -662,13 +662,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="page-break"></div>
                 
                 <!-- Page 2 Header (visible only in print) -->
-                <div style="display: none; padding: 20px 0 30px 0; border-bottom: 2px solid #667eea; margin-bottom: 30px;" class="page-2-header">
+                <div style="display: none; padding: 15px 0 20px 0; border-bottom: 2px solid #667eea; margin-bottom: 20px;" class="page-2-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">${businessName}</span>
-                            <span style="font-size: 14px; color: #6c757d; margin-left: 20px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
+                            <span style="font-size: 16px; font-weight: bold; color: #2c3e50;">${businessName}</span>
+                            <span style="font-size: 12px; color: #6c757d; margin-left: 15px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
                         </div>
-                        <span style="font-size: 14px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
+                        <span style="font-size: 12px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
                     </div>
                 </div>
                 
@@ -699,7 +699,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                             <div class="due-date-highlight">
                                 Due by: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
                             </div>
-                            <br><br>
+                            <br>
                             <small>Late payments may incur a fee of 2% per month.</small>
                         </div>
                     </div>
