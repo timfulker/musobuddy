@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import ConflictResolutionDialog from "./ConflictResolutionDialog";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Conflict {
   withBookingId: number;
@@ -44,18 +45,26 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
     gcTime: 0, // Don't cache (v5 property name)
   });
 
-  // Fetch conflicting booking details
+  // Fetch conflicting booking details using apiRequest for proper authentication
   const conflictingBookingIds = conflicts.map(c => c.conflictingBookingId);
   const { data: conflictingBookings = [] } = useQuery({
-    queryKey: [`/api/bookings/multiple`, conflictingBookingIds],
+    queryKey: [`/api/bookings/batch`, conflictingBookingIds.sort().join(',')],
     queryFn: async () => {
       if (!conflictingBookingIds.length) return [];
-      const promises = conflictingBookingIds.map(id => 
-        fetch(`/api/bookings/${id}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'test-token'}` }
-        }).then(res => res.json())
-      );
-      return Promise.all(promises);
+      
+      // Use apiRequest for proper authentication
+      const promises = conflictingBookingIds.map(async (id) => {
+        try {
+          const response = await apiRequest(`/api/bookings/${id}`);
+          return await response.json();
+        } catch (error) {
+          console.error(`Failed to fetch booking ${id}:`, error);
+          return null;
+        }
+      });
+      
+      const results = await Promise.all(promises);
+      return results.filter(Boolean);
     },
     enabled: showResolutionModal && conflictingBookingIds.length > 0,
     staleTime: 0,

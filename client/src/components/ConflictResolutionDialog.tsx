@@ -33,22 +33,6 @@ export default function ConflictResolutionDialog({
   const [conflictSeverity, setConflictSeverity] = useState<'hard' | 'soft'>('soft');
   const [conflictDate, setConflictDate] = useState<string>('');
 
-  // Debug logging
-  useEffect(() => {
-    if (isOpen) {
-      console.log('🔍 ConflictResolutionDialog opened with bookings:', conflictingBookings);
-      conflictingBookings.forEach((booking, index) => {
-        console.log(`Booking ${index}:`, {
-          id: booking?.id,
-          clientName: booking?.clientName,
-          eventDate: booking?.eventDate,
-          eventTime: booking?.eventTime,
-          venue: booking?.venue,
-          fee: booking?.fee
-        });
-      });
-    }
-  }, [isOpen, conflictingBookings]);
 
   // Get conflict resolutions to check if this conflict group is already resolved
   const { data: resolutions = [] } = useQuery({
