@@ -210,7 +210,8 @@ export class ConflictEngine {
   static detectAllConflicts(bookings: BookingInfo[]): ConflictDetectionResult[] {
     const conflicts: ConflictDetectionResult[] = [];
 
-    // Only check confirmed/active bookings for conflicts
+    // Check all potential bookings for conflicts (including new inquiries)
+    // Only exclude definitely cancelled/rejected/completed bookings
     const activeBookings = bookings.filter(b => 
       b.status !== 'rejected' && 
       b.status !== 'cancelled' && 
