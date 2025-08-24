@@ -24,9 +24,26 @@ export class SettingsStorage {
     logoUrl?: string;
     bankDetails?: any;
     notificationPreferences?: any;
+    [key: string]: any; // Allow other fields like customGigTypes, secondaryInstruments, etc.
   }) {
+    // Process arrays before saving to database
+    const processedData = { ...data };
+    
+    // Ensure arrays are properly stringified for database storage
+    if (processedData.customGigTypes && Array.isArray(processedData.customGigTypes)) {
+      processedData.customGigTypes = JSON.stringify(processedData.customGigTypes);
+    }
+    
+    if (processedData.secondaryInstruments && Array.isArray(processedData.secondaryInstruments)) {
+      processedData.secondaryInstruments = JSON.stringify(processedData.secondaryInstruments);
+    }
+    
+    if (processedData.customClauses && Array.isArray(processedData.customClauses)) {
+      processedData.customClauses = JSON.stringify(processedData.customClauses);
+    }
+    
     const result = await db.insert(userSettings).values({
-      ...data,
+      ...processedData,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
@@ -40,8 +57,24 @@ export class SettingsStorage {
       return await this.createSettings({ userId, ...updates });
     }
 
+    // Process arrays before saving to database
+    const processedUpdates = { ...updates };
+    
+    // Ensure arrays are properly stringified for database storage
+    if (processedUpdates.customGigTypes && Array.isArray(processedUpdates.customGigTypes)) {
+      processedUpdates.customGigTypes = JSON.stringify(processedUpdates.customGigTypes);
+    }
+    
+    if (processedUpdates.secondaryInstruments && Array.isArray(processedUpdates.secondaryInstruments)) {
+      processedUpdates.secondaryInstruments = JSON.stringify(processedUpdates.secondaryInstruments);
+    }
+    
+    if (processedUpdates.customClauses && Array.isArray(processedUpdates.customClauses)) {
+      processedUpdates.customClauses = JSON.stringify(processedUpdates.customClauses);
+    }
+
     const result = await db.update(userSettings)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...processedUpdates, updatedAt: new Date() })
       .where(eq(userSettings.userId, userId))
       .returning();
     
