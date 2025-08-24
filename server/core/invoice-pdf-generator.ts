@@ -361,8 +361,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-section {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                flex-wrap: wrap;
                 gap: 40px;
                 padding: 30px;
                 background: #fafbfc;
@@ -372,6 +372,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             }
             
             .payment-block {
+                flex: 1;
+                min-width: 250px;
                 page-break-inside: avoid;
             }
             
@@ -512,18 +514,27 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     display: block !important;
                 }
                 
-                /* PAGE 2 CONTENT - Keep together */
+                /* PAGE 2 CONTENT - Force payment section to stay together */
                 .payment-section {
                     page-break-inside: avoid !important;
                     break-inside: avoid !important;
+                    page-break-before: auto !important;
+                    orphans: 4;
+                    widows: 4;
                     margin-top: 20px;
                     margin-bottom: 40px;
                 }
                 
-                .payment-block,
+                .payment-block {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    display: block !important;
+                }
+                
                 .terms-section {
                     page-break-inside: avoid !important;
                     break-inside: avoid !important;
+                    page-break-before: avoid !important;
                 }
                 
                 /* Hide web-only footer in print */
