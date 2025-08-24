@@ -33,6 +33,23 @@ export default function ConflictResolutionDialog({
   const [conflictSeverity, setConflictSeverity] = useState<'hard' | 'soft'>('soft');
   const [conflictDate, setConflictDate] = useState<string>('');
 
+  // Debug logging
+  useEffect(() => {
+    if (isOpen) {
+      console.log('🔍 ConflictResolutionDialog opened with bookings:', conflictingBookings);
+      conflictingBookings.forEach((booking, index) => {
+        console.log(`Booking ${index}:`, {
+          id: booking?.id,
+          clientName: booking?.clientName,
+          eventDate: booking?.eventDate,
+          eventTime: booking?.eventTime,
+          venue: booking?.venue,
+          fee: booking?.fee
+        });
+      });
+    }
+  }, [isOpen, conflictingBookings]);
+
   // Get conflict resolutions to check if this conflict group is already resolved
   const { data: resolutions = [] } = useQuery({
     queryKey: ['/api/conflicts/resolutions'],
@@ -203,7 +220,10 @@ export default function ConflictResolutionDialog({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    if (!dateString) return 'Invalid Date';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-GB', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -255,19 +275,28 @@ export default function ConflictResolutionDialog({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">{booking.clientName}</span>
+                      <span className="font-medium">{booking.clientName || 'Unknown Client'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-500" />
                       <span className="text-sm">{formatDate(booking.eventDate)}</span>
                     </div>
+                    {booking.status && (
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        booking.status === 'new' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {booking.status.toUpperCase()}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-500" />
                       <span className="text-sm">
-                        {booking.eventTime} - {booking.eventEndTime || 'TBC'}
+                        {booking.eventTime || 'TBC'} - {booking.eventEndTime || 'TBC'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
