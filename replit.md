@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a comprehensive platform designed to streamline administrative tasks for musicians, including bookings, contracts, and invoices. Its main purpose is to reduce the administrative burden on musicians, allowing them to focus on creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists.
+MusoBuddy is a platform designed to streamline administrative tasks for musicians, including bookings, contracts, and invoices. Its core purpose is to reduce administrative burden, allowing musicians to focus on creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists by providing a comprehensive, integrated suite of tools.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -19,7 +19,7 @@ External integration deployment requirement: All external integrations (Stripe p
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
 AI Usage Model: Removed all AI usage limitations and artificial premium tiers as "making a rod for our our back" since AI costs are minimal (£0.74/month even for super-heavy users with 50 bookings). System now provides unlimited AI-powered email parsing and response generation for all users.
-Google Calendar Sync Strategy: Implemented ID-based sync approach to minimize AI costs. Every MusoBuddy booking synced to Google Calendar gets permanent ID link embedded in event metadata. Future syncs use ID links for direct updates (zero AI cost). AI only used optionally for linking pre-existing Google Calendar events without MusoBuddy IDs.
+Google Calendar Sync Strategy: Implemented ID-based sync approach to minimize AI costs. Every MusoBuddy booking synced to Google Calendar gets permanent ID link embedded in event metadata. Future syncs uses ID links for direct updates (zero AI cost). AI only used optionally for linking pre-existing Google Calendar events without MusoBuddy IDs.
 Google Calendar field mapping: Event titles display as "Client Name - Event Type" format (e.g., "Susan Davis - Wedding") per user preference, providing clear identification of both client and event type in calendar view.
 Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
@@ -51,10 +51,10 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast. Dynamic PDF theming.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design, dynamic PDF theming, simplified action buttons, centralized messaging, auto-scroll to next upcoming booking, edit booking page sidebar, simplified email footer branding, enhanced HTML email template display, and a dual client portal system.
+- **UI/UX Decisions**: Enhanced responsive design adapting to mobile/desktop, simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -62,30 +62,29 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) with unlimited usage.
+- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) for unlimited usage.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, and automated scrolling to next upcoming booking.
-- **Document Management**: Multi-document upload system per booking with categorization and secure R2 cloud storage.
+- **Document Management**: Multi-document upload system per booking with categorization and secure cloud storage.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
-- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, random 16-character token security for URLs, and support for multiple CC recipients.
-- **Compliance Tracking**: Document management, expiry date monitoring, alerts.
+- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
+- **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-- **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with tabbed interface for client replies and unparseable messages.
+- **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems for reliability.
+- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Centralized "Messages" page for all client communications.
 - **AI-powered Workflows**: Streamlined unparseable message workflow, manual booking re-processing, and manual detail extraction from messages with review dialog.
-- **Calendar Sync**: ID-based Google Calendar sync for efficiency.
+- **Calendar Sync**: ID-based Google Calendar sync for efficiency and cost optimization.
 - **Travel Expense Management**: Simplified system where travel expenses are always included in the performance fee display as a single amount.
 - **Encore Booking Management**: Toggle switch for clear application status.
-- **Client Portal**: Dual-portal system with React client portal for contract signing and dynamic collaborative form for post-signing event planning.
+- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration with real-time bidirectional sync.
 
 ## External Dependencies
 
 - **Cloud Services**:
     - Cloudflare R2
     - Neon Database (PostgreSQL)
-    - Replit
 - **APIs and Services**:
     - Google Maps API
     - Mailgun

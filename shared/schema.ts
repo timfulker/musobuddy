@@ -69,6 +69,19 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// SMS Verification table - secure database storage instead of in-memory Map
+export const smsVerifications = pgTable("sms_verifications", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull().unique(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  phoneNumber: varchar("phone_number").notNull(),
+  password: varchar("password").notNull(), // Hashed password
+  verificationCode: varchar("verification_code", { length: 6 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Security Monitoring - Track usage for spam/abuse protection (not artificial limits)
 export const securityMonitoring = pgTable("security_monitoring", {
   id: serial("id").primaryKey(),
@@ -1012,6 +1025,12 @@ export const insertMessageNotificationSchema = createInsertSchema(messageNotific
   createdAt: true,
 });
 
+// SMS Verification schemas
+export const insertSmsVerificationSchema = createInsertSchema(smsVerifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 
 
 
@@ -1080,6 +1099,10 @@ export type InsertSecurityMonitoring = z.infer<typeof insertSecurityMonitoringSc
 export type SecurityMonitoring = typeof securityMonitoring.$inferSelect;
 export type InsertUserSecurityStatus = z.infer<typeof insertUserSecurityStatusSchema>;
 export type UserSecurityStatus = typeof userSecurityStatus.$inferSelect;
+
+// SMS Verification types
+export type InsertSmsVerification = z.infer<typeof insertSmsVerificationSchema>;
+export type SmsVerification = typeof smsVerifications.$inferSelect;
 
 // NEW: Contract Learning System Tables
 

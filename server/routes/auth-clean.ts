@@ -53,16 +53,7 @@ const passwordResetLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// In-memory verification storage (replace with Redis in production)
-const pendingVerifications = new Map<string, {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-  verificationCode: string;
-  expiresAt: Date;
-}>();
+// SMS verification now uses secure database storage instead of vulnerable in-memory Map
 
 export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up clean JWT-based authentication...');
@@ -86,16 +77,22 @@ export function setupAuthRoutes(app: Express) {
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
-      // Store pending verification
-      pendingVerifications.set(email, {
+      // Hash password before storing in database (security improvement)
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Store pending verification securely in database
+      await storage.createSmsVerification(
+        email,
         firstName,
         lastName,
-        email,
-        phoneNumber: formattedPhone,
-        password,
+        formattedPhone,
+        hashedPassword,
         verificationCode,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-      });
+        new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+      );
+
+      // Clean up expired verifications for security
+      await storage.deleteExpiredSmsVerifications();
 
       // Send SMS verification using Twilio
       try {
@@ -134,13 +131,14 @@ export function setupAuthRoutes(app: Express) {
     try {
       const { email, verificationCode } = req.body;
 
-      const pending = pendingVerifications.get(email);
+      // Get pending verification from secure database storage
+      const pending = await storage.getSmsVerificationByEmail(email);
       if (!pending) {
         return res.status(400).json({ error: 'No pending verification found' });
       }
 
       if (pending.expiresAt < new Date()) {
-        pendingVerifications.delete(email);
+        await storage.deleteSmsVerification(email);
         return res.status(400).json({ error: 'Verification code expired' });
       }
 
@@ -148,14 +146,13 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid verification code' });
       }
 
-      // Create user
-      const hashedPassword = await bcrypt.hash(pending.password, 10);
+      // Create user (password is already securely hashed in database)
       const userId = nanoid();
 
       const newUser = await storage.createUser({
         id: userId,
         email: pending.email,
-        password: hashedPassword,
+        password: pending.password, // Already hashed when stored
         firstName: pending.firstName,
         lastName: pending.lastName,
         phoneNumber: pending.phoneNumber,
@@ -165,8 +162,8 @@ export function setupAuthRoutes(app: Express) {
         createdAt: new Date()
       });
 
-      // Clean up pending verification
-      pendingVerifications.delete(email);
+      // Clean up pending verification from database
+      await storage.deleteSmsVerification(email);
 
       // Generate JWT token
       const authToken = generateAuthToken(userId, pending.email, true);
@@ -381,26 +378,18 @@ export function setupAuthRoutes(app: Express) {
         plan: 'free'
       });
 
-      // Store verification code for later SMS verification
+      // Store verification code securely in database for later SMS verification
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
-      pendingVerifications.set(userId, {
+      await storage.createSmsVerification(
+        email, // Use email as unique identifier
         firstName,
         lastName,
-        email,
-        phoneNumber: formattedPhone,
-        password: hashedPassword,
+        formattedPhone,
+        hashedPassword,
         verificationCode,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-      } as {
-        firstName: string;
-        lastName: string;
-        email: string;
-        phoneNumber: string;
-        password: string;
-        verificationCode: string;
-        expiresAt: Date;
-      });
+        new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+      );
 
       res.json({ 
         success: true, 
@@ -426,28 +415,28 @@ export function setupAuthRoutes(app: Express) {
       }
 
       console.log('📱 Generating SMS verification code for userId:', userId);
+      
+      // Look up user to get email for database verification storage
+      const user = await storage.getUserById(userId);
+      if (!user || !user.email) {
+        return res.status(400).json({ error: 'User not found or missing email' });
+      }
+
       // Generate new verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const formattedPhone = formatPhoneNumber(phoneNumber);
       console.log('📱 Formatted phone number:', formattedPhone);
 
-      // Store/update verification data
-      const existingData = pendingVerifications.get(userId) || {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phoneNumber: formattedPhone,
-        password: '',
+      // Store verification securely in database
+      await storage.createSmsVerification(
+        user.email,
+        user.firstName || '',
+        user.lastName || '', 
+        formattedPhone,
+        user.password || '', // Use existing user password hash
         verificationCode,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
-      };
-      
-      pendingVerifications.set(userId, {
-        ...existingData,
-        phoneNumber: formattedPhone,
-        verificationCode,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-      });
+        new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+      );
 
       // Send SMS verification using Twilio
       try {
@@ -493,15 +482,22 @@ export function setupAuthRoutes(app: Express) {
       }
 
       console.log('🔍 Looking for pending verification for userId:', userId);
-      const pending = pendingVerifications.get(userId);
+      
+      // Get user to find their email for database lookup
+      const user = await storage.getUserById(userId);
+      if (!user || !user.email) {
+        return res.status(400).json({ error: 'User not found' });
+      }
+
+      // Get pending verification from secure database storage
+      const pending = await storage.getSmsVerificationByEmail(user.email);
       if (!pending) {
         console.log('❌ No pending verification found for userId:', userId);
-        console.log('🔍 Current pending verifications:', Array.from(pendingVerifications.keys()));
         return res.status(400).json({ error: 'No pending verification found' });
       }
 
       if (pending.expiresAt < new Date()) {
-        pendingVerifications.delete(userId);
+        await storage.deleteSmsVerification(user.email);
         return res.status(400).json({ error: 'Verification code expired' });
       }
 
@@ -512,8 +508,8 @@ export function setupAuthRoutes(app: Express) {
       // Update user's phone verification status
       await storage.updateUser(userId, { phoneVerified: true });
 
-      // Clean up pending verification
-      pendingVerifications.delete(userId);
+      // Clean up pending verification from database
+      await storage.deleteSmsVerification(user.email);
 
       res.json({
         success: true,
@@ -718,5 +714,15 @@ export function setupAuthRoutes(app: Express) {
     }
   });
   
+  // Periodic cleanup of expired verification codes for security hygiene
+  setInterval(async () => {
+    try {
+      await storage.deleteExpiredSmsVerifications();
+    } catch (error) {
+      console.error('❌ Error cleaning up expired SMS verifications:', error);
+    }
+  }, 10 * 60 * 1000); // Clean up every 10 minutes
+
   console.log('✅ Clean authentication system configured with SMS and Stripe integration');
+  console.log('🧹 Periodic cleanup enabled for expired verification codes');
 }
