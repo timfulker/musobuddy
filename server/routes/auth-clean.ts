@@ -57,6 +57,8 @@ const passwordResetLimiter = rateLimit({
 
 export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up clean JWT-based authentication...');
+  console.log('🔍 [DEBUG] Express app object:', !!app);
+  console.log('🔍 [DEBUG] App.post method:', typeof app.post);
 
   // Signup endpoint - protected with rate limiting
   app.post('/api/auth/signup', signupLimiter, async (req, res) => {
@@ -185,6 +187,14 @@ export function setupAuthRoutes(app: Express) {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // TEST ENDPOINT - Verify routing works for auth paths
+  console.log('🔍 [DEBUG] Registering test route...');
+  app.get('/api/auth/test-route', async (req, res) => {
+    console.log('🧪 TEST ROUTE HIT - Auth routing works!');
+    res.json({ success: true, message: 'Auth routing is working' });
+  });
+  console.log('✅ [DEBUG] Test route registered');
 
   // Login endpoint - temporarily bypass rate limiting for debugging
   app.post('/api/auth/login', async (req, res) => {
