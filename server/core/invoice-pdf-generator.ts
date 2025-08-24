@@ -363,65 +363,65 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
             .payment-section {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 25px;
-                padding: 20px;
+                gap: 20px;
+                padding: 15px;
                 background: #fafbfc;
-                border-radius: 8px;
-                margin-bottom: 20px;
+                border-radius: 6px;
+                margin-bottom: 15px;
             }
             
             .payment-block h4 {
-                font-size: 14px;
+                font-size: 13px;
                 color: #667eea;
-                margin-bottom: 15px;
+                margin-bottom: 10px;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
             
             .payment-details {
-                font-size: 13px;
-                line-height: 1.6;
+                font-size: 12px;
+                line-height: 1.4;
                 color: #5a6c7d;
             }
             
             .bank-detail {
                 background: white;
-                padding: 6px 10px;
-                margin: 3px 0;
-                border-radius: 4px;
+                padding: 4px 8px;
+                margin: 2px 0;
+                border-radius: 3px;
                 border-left: 3px solid #667eea;
             }
             
             .due-date-highlight {
                 background: #fff3cd;
                 color: #856404;
-                padding: 10px 15px;
-                border-radius: 4px;
+                padding: 6px 10px;
+                border-radius: 3px;
                 font-weight: 600;
                 display: inline-block;
-                margin-top: 10px;
+                margin-top: 6px;
             }
             
             .terms-section {
-                padding: 15px 20px;
+                padding: 10px 15px;
                 background: #f8f9fa;
                 border-top: 1px solid #dee2e6;
             }
             
             .terms-title {
-                font-size: 12px;
+                font-size: 11px;
                 font-weight: 600;
                 color: #5a6c7d;
-                margin-bottom: 10px;
+                margin-bottom: 6px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
             
             .terms-content {
-                font-size: 11px;
+                font-size: 10px;
                 color: #6c757d;
-                line-height: 1.5;
+                line-height: 1.3;
             }
             
             .footer {
@@ -662,13 +662,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="page-break"></div>
                 
                 <!-- Page 2 Header (visible only in print) -->
-                <div style="display: none; padding: 15px 0 20px 0; border-bottom: 2px solid #667eea; margin-bottom: 20px;" class="page-2-header">
+                <div style="display: none; padding: 10px 0 15px 0; border-bottom: 2px solid #667eea; margin-bottom: 15px;" class="page-2-header">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span style="font-size: 16px; font-weight: bold; color: #2c3e50;">${businessName}</span>
-                            <span style="font-size: 12px; color: #6c757d; margin-left: 15px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
+                            <span style="font-size: 14px; font-weight: bold; color: #2c3e50;">${businessName}</span>
+                            <span style="font-size: 11px; color: #6c757d; margin-left: 12px;">Invoice #${invoice.invoiceNumber} (Page 2 of 2)</span>
                         </div>
-                        <span style="font-size: 12px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
+                        <span style="font-size: 11px; color: #6c757d;">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</span>
                     </div>
                 </div>
                 
@@ -695,12 +695,11 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     <div class="payment-block">
                         <h4>Payment Terms</h4>
                         <div class="payment-details">
-                            Payment is due within 2 days of invoice date.
+                            Due within 2 days of invoice date.
                             <div class="due-date-highlight">
-                                Due by: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
+                                Due: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
                             </div>
-                            <br>
-                            <small>Late payments may incur a fee of 2% per month.</small>
+                            <small>Late fee: 2% per month.</small>
                         </div>
                     </div>
                 </div>
