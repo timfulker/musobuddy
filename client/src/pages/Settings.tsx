@@ -579,9 +579,8 @@ export default function Settings() {
       return [...acc, ...instrumentGigTypes];
     }, [] as string[]);
     
-    // Remove duplicates and set available gig types
+    // Remove duplicates - gig types now managed through customGigTypes field
     const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-    setAvailableGigTypes(uniqueGigTypes);
     
     setHasChanges(true);
     
@@ -1611,9 +1610,8 @@ export default function Settings() {
                                             return [...acc, ...instrumentGigTypes];
                                           }, [] as string[]);
                                           
-                                          // Remove duplicates
+                                          // Remove duplicates - gig types now managed through customGigTypes field
                                           const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                          setAvailableGigTypes(uniqueGigTypes);
                                         }}
                                         className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
                                       >
@@ -1638,7 +1636,6 @@ export default function Settings() {
                                       }, [] as string[]);
                                       
                                       const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                      setAvailableGigTypes(uniqueGigTypes);
                                     }}
                                     className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline"
                                   >
@@ -1660,9 +1657,8 @@ export default function Settings() {
                                       return [...acc, ...instrumentGigTypes];
                                     }, [] as string[]);
                                     
-                                    // Remove duplicates
+                                    // Remove duplicates - gig types now managed through customGigTypes field
                                     const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                    setAvailableGigTypes(uniqueGigTypes);
                                   }
                                 }}
                               >
