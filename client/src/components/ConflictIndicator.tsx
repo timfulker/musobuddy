@@ -39,29 +39,11 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   const [showResolutionModal, setShowResolutionModal] = useState(false);
   const [, setLocation] = useLocation();
   
-  console.log('🟢 ConflictIndicator rendered for booking:', bookingId, 'conflicts:', conflicts?.length);
 
-  // Check if this conflict dialog should be automatically opened
+  // Clean up any leftover localStorage from previous functionality
   useEffect(() => {
-    const shouldOpenConflict = localStorage.getItem('openConflictForBooking');
-    
-    if (shouldOpenConflict && 
-        parseInt(shouldOpenConflict) === bookingId && 
-        conflicts && 
-        conflicts.length > 0) {
-      console.log('🎯 Auto-opening conflict modal for booking:', bookingId);
-      // Small delay to ensure all data is loaded, then open and clean up
-      const timer = setTimeout(() => {
-        console.log('🚀 Opening conflict modal NOW for booking:', bookingId);
-        setShowResolutionModal(true);
-        console.log('🚀 Modal state set to true');
-        // Clean up after opening to prevent re-triggering
-        localStorage.removeItem('openConflictForBooking');
-      }, 2000); // Increased delay to ensure page is fully loaded
-      
-      return () => clearTimeout(timer);
-    }
-  }, [bookingId, conflicts]);
+    localStorage.removeItem('openConflictForBooking');
+  }, []);
 
   // Handle editing a booking - navigate to the edit form
   const handleEditBooking = (booking: any) => {
@@ -245,18 +227,9 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       </Dialog>
 
       {/* Full Conflict Resolution Modal */}
-      {console.log('🔵 Modal render check:', { 
-        showResolutionModal, 
-        bookingId,
-        hasCurrentBooking: !!currentBooking,
-        conflictingBookingsCount: conflictingBookings.length 
-      })}
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
-        onClose={() => {
-          console.log('🔴 Modal onClose called for booking:', bookingId);
-          setShowResolutionModal(false);
-        }}
+        onClose={() => setShowResolutionModal(false)}
         conflictingBookings={[currentBooking, ...conflictingBookings].filter(Boolean)}
         onEditBooking={handleEditBooking}
       />
