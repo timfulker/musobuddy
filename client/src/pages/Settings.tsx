@@ -231,14 +231,39 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     bankDetails: data.bank_details || data.bankDetails || "",
     // Instrument settings
     primaryInstrument: data.primary_instrument || data.primaryInstrument || "",
-    secondaryInstruments: Array.isArray(data.secondary_instruments || data.secondaryInstruments) ? 
-                          (data.secondary_instruments || data.secondaryInstruments) : 
-                          (typeof (data.secondary_instruments || data.secondaryInstruments) === 'string' ? 
-                           JSON.parse((data.secondary_instruments || data.secondaryInstruments) || '[]') : []),
-    customGigTypes: Array.isArray(data.custom_gig_types || data.customGigTypes) ? 
-                    (data.custom_gig_types || data.customGigTypes) : 
-                    (typeof (data.custom_gig_types || data.customGigTypes) === 'string' ? 
-                     JSON.parse((data.custom_gig_types || data.customGigTypes) || '[]') : []),
+    secondaryInstruments: (() => {
+      const instrumentsData = data.secondary_instruments || data.secondaryInstruments;
+      if (Array.isArray(instrumentsData)) {
+        return instrumentsData;
+      }
+      if (typeof instrumentsData === 'string' && instrumentsData.trim()) {
+        try {
+          return JSON.parse(instrumentsData);
+        } catch (error) {
+          console.error('❌ JSON parse error for secondaryInstruments:', error);
+          console.error('❌ Problematic JSON string:', instrumentsData);
+          return [];
+        }
+      }
+      return [];
+    })(),
+    customGigTypes: (() => {
+      const gigTypesData = data.custom_gig_types || data.customGigTypes;
+      if (Array.isArray(gigTypesData)) {
+        return gigTypesData;
+      }
+      if (typeof gigTypesData === 'string' && gigTypesData.trim()) {
+        try {
+          return JSON.parse(gigTypesData);
+        } catch (error) {
+          console.error('❌ JSON parse error for customGigTypes:', error);
+          console.error('❌ Problematic JSON string:', gigTypesData);
+          console.error('❌ String at position 19:', gigTypesData.slice(15, 25));
+          return [];
+        }
+      }
+      return [];
+    })(),
     // Performance settings
     bookingDisplayLimit: data.booking_display_limit || data.bookingDisplayLimit || "50",
     distanceUnits: data.distance_units || data.distanceUnits || "miles",
