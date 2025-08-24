@@ -189,7 +189,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           line-height: 1.6;
         }
         
-        /* NO PAGE BREAK CONTROLS - OPTIMIZED FOR SINGLE PAGE */
+        /* PAGE BREAK CONTROLS - OPTIMIZED FOR PROPER SPLITTING */
         .no-page-break {
           page-break-inside: avoid;
           break-inside: avoid;
@@ -198,11 +198,14 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .keep-together {
           page-break-inside: avoid;
           break-inside: avoid;
-          page-break-before: avoid;
-          break-before: avoid;
         }
         
-        /* FORCE TOTALS SECTION TO STAY WITH TABLE */
+        /* KEEP TABLE AND TOTALS TOGETHER */
+        .items-and-totals-wrapper {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        
         .items-table {
           margin-bottom: 10px !important;
         }
@@ -210,8 +213,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .total-section {
           page-break-inside: avoid !important;
           break-inside: avoid !important;
-          page-break-before: avoid !important;
-          break-before: avoid !important;
         }
         
         /* HEADER SECTION */
@@ -222,6 +223,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           margin-bottom: 40px;
           border-bottom: 3px solid ${secondaryColor};
           padding-bottom: 20px;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         
         .logo-section {
@@ -256,6 +259,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           justify-content: space-between;
           margin-bottom: 40px;
           gap: 40px;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         
         .billing-info {
@@ -433,8 +438,9 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         </div>
       </div>
       
-      <!-- ITEMS TABLE -->
-      <table class="items-table keep-together">
+      <!-- ITEMS TABLE AND TOTALS WRAPPER -->
+      <div class="items-and-totals-wrapper">
+      <table class="items-table">
         <thead>
           <tr>
             <th>Description</th>
@@ -459,7 +465,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
       </table>
       
       <!-- TOTALS SECTION -->
-      <div class="total-section keep-together">
+      <div class="total-section">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
           <div class="total-amount">£${invoice.fee || invoice.amount}</div>
@@ -476,6 +482,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           <div class="total-label">Total Due:</div>
           <div class="total-amount">£${invoice.amount}</div>
         </div>
+      </div>
       </div>
       
       <!-- PAYMENT INFORMATION -->
