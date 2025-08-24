@@ -776,7 +776,8 @@ export default function NewBookingPage({
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
-                          // Simply navigate back to bookings page
+                          // Set list view mode and navigate back to bookings page
+                          localStorage.setItem('bookingViewMode', 'list');
                           setLocation('/bookings');
                         }}
                         className="bg-orange-500 hover:bg-orange-600 border-orange-500 text-white hover:text-white font-medium"
