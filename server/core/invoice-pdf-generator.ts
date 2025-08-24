@@ -368,6 +368,11 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 background: #fafbfc;
                 border-radius: 8px;
                 margin-bottom: 30px;
+                page-break-inside: avoid;
+            }
+            
+            .payment-block {
+                page-break-inside: avoid;
             }
             
             .payment-block h4 {
@@ -508,9 +513,17 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 }
                 
                 /* PAGE 2 CONTENT - Keep together */
-                .payment-section,
+                .payment-section {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    margin-top: 20px;
+                    margin-bottom: 40px;
+                }
+                
+                .payment-block,
                 .terms-section {
-                    page-break-inside: avoid;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
                 }
                 
                 /* Hide web-only footer in print */
