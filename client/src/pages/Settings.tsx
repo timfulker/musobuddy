@@ -1002,7 +1002,7 @@ export default function Settings() {
                             </p>
                             <div className="mt-3 p-2 bg-white dark:bg-slate-800 rounded border border-blue-200 dark:border-blue-700">
                               <code className="text-sm font-mono text-blue-800 dark:text-blue-200">
-                                Current: {settings?.emailFromName || settings?.emailPrefix || 'Not set'}@enquiries.musobuddy.com
+                                Current: {settings?.emailPrefix || 'Not set'}@enquiries.musobuddy.com
                               </code>
                             </div>
                             <div className="mt-3">
