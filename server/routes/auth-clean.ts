@@ -188,6 +188,15 @@ export function setupAuthRoutes(app: Express) {
 
   // Login endpoint - temporarily bypass rate limiting for debugging
   app.post('/api/auth/login', async (req, res) => {
+    console.log('🚨 LOGIN ENDPOINT HIT - REQUEST REACHED HANDLER!');
+    console.log('🔍 Request details:', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      bodyKeys: Object.keys(req.body || {}),
+      body: req.body
+    });
+    
     try {
       console.log('🔍 LOGIN REQUEST:', { 
         email: req.body.email, 
