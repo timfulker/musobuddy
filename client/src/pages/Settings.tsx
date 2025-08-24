@@ -707,8 +707,26 @@ export default function Settings() {
       // Set up instrument state
       if (settings.primaryInstrument) {
         setSelectedInstrument(settings.primaryInstrument);
-        const gigTypes = getGigTypeNamesForInstrument(settings.primaryInstrument);
-        setAvailableGigTypes(gigTypes);
+        
+        // Use saved combined gig types from database, not just primary instrument
+        if (settings.customGigTypes && settings.customGigTypes.length > 0) {
+          // Use the saved combined gig types that include all instruments
+          setAvailableGigTypes(settings.customGigTypes);
+        } else {
+          // Fallback: Calculate combined gig types from all instruments
+          const allInstruments = [
+            settings.primaryInstrument, 
+            ...(Array.isArray(settings.secondaryInstruments) ? settings.secondaryInstruments : [])
+          ].filter(Boolean);
+          
+          const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
+            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
+            return [...acc, ...instrumentGigTypes];
+          }, [] as string[]);
+          
+          const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+          setAvailableGigTypes(uniqueGigTypes);
+        }
       }
       
       
