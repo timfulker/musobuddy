@@ -54,7 +54,7 @@ import BookingCollaborate from "@/pages/booking-collaborate";
 import { useEffect, lazy } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading, user, error } = useAuth();
+  const { isAuthenticated, isLoading, user, error, needsSubscription, authenticationStatus } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -73,10 +73,13 @@ function Router() {
   if (currentPath === '/') {
     console.log('🔍 Root path auth state:', {
       isAuthenticated,
+      needsSubscription,
+      authenticationStatus,
       hasUser: !!user,
       hasError: !!error,
       errorStatus: (error as any)?.status,
       userPhoneVerified: (user as any)?.phoneVerified,
+      userSubscribed: (user as any)?.isSubscribed,
       currentPath
     });
   }
@@ -90,6 +93,13 @@ function Router() {
   if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
     console.log('🔄 Redirecting authenticated user to dashboard');
     window.location.href = '/dashboard';
+    return null;
+  }
+
+  // CRITICAL: Check subscription verification before allowing dashboard access
+  if (needsSubscription && !isTrialSuccess && !hasStripeSession && !isPaymentReturn) {
+    console.log('💳 Redirecting user to Stripe verification - subscription required');
+    window.location.href = '/start-trial';
     return null;
   }
 

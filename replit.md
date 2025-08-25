@@ -54,7 +54,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast. Dynamic PDF theming.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design adapting to mobile/desktop, simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
+- **UI/UX Decisions**: Enhanced responsive design, simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
@@ -62,13 +62,13 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models (GPT-5 for email parsing/venue extraction; Claude Sonnet 4 for response generation) for unlimited usage.
+- **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, and automated scrolling to next upcoming booking.
 - **Document Management**: Multi-document upload system per booking with categorization and secure cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, cloud storage, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.

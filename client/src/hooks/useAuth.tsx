@@ -212,9 +212,13 @@ export function useAuth() {
     }
   };
 
-  // Enhanced authentication state logic
+  // Enhanced authentication state logic with subscription verification
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
-  const isRegularUserAuthenticated = !!user && !error && (user as any)?.phoneVerified;
+  
+  // Regular users need BOTH phone verification AND subscription verification
+  const hasPhoneVerification = (user as any)?.phoneVerified;
+  const hasSubscriptionVerification = (user as any)?.isSubscribed || (user as any)?.tier !== 'free';
+  const isRegularUserAuthenticated = !!user && !error && hasPhoneVerification && hasSubscriptionVerification;
   
   // Check if we're in circuit breaker mode (only during active failures)
   const isCircuitBreakerActive = authFailureCount >= MAX_AUTH_FAILURES;
@@ -222,7 +226,7 @@ export function useAuth() {
   // More robust loading state - show loading during actual loading or circuit breaker
   const isAuthLoading = isLoading || isFetching;
   
-  // Enhanced authentication status with clear state differentiation
+  // Enhanced authentication status with subscription verification
   const authenticationStatus = (() => {
     if (isAuthLoading) return 'loading';
     if ((error as any)?.status === 401) return 'unauthenticated';
@@ -230,6 +234,7 @@ export function useAuth() {
     if (isAdminAuthenticated) return 'admin';
     if (isRegularUserAuthenticated) return 'authenticated'; 
     if (user && !(user as any)?.phoneVerified) return 'needs_verification';
+    if (user && (user as any)?.phoneVerified && !hasSubscriptionVerification) return 'needs_subscription';
     return 'unauthenticated';
   })();
 
@@ -240,6 +245,7 @@ export function useAuth() {
     error, // Show actual errors
     isAdmin: (user as any)?.isAdmin === true,
     needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin,
+    needsSubscription: !!user && (user as any)?.phoneVerified && !hasSubscriptionVerification && !(user as any)?.isAdmin,
     authenticationStatus, // New: explicit status for debugging
     logout
   };
