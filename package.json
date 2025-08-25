@@ -49,7 +49,7 @@
     "@react-google-maps/api": "^2.20.7",
     "@sendgrid/mail": "^8.1.5",
     "@sparticuz/chromium": "^138.0.1",
-    "@stripe/react-stripe-js": "^3.9.0",
+    "@stripe/react-stripe-js": "^3.9.1",
     "@stripe/stripe-js": "^7.8.0",
     "@tanstack/react-query": "^5.60.5",
     "@types/bcrypt": "^5.0.2",
