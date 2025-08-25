@@ -204,6 +204,20 @@ export function setupAuthRoutes(app: Express) {
   });
   console.log('✅ [DEBUG] Test route registered');
 
+  // DIAGNOSTIC ENDPOINT - Check if all required functions exist
+  app.get('/api/auth/diagnostic', async (req, res) => {
+    const diagnostics = {
+      storageExists: !!storage,
+      getUserByFirebaseUidExists: typeof storage.getUserByFirebaseUid === 'function',
+      createUserExists: typeof storage.createUser === 'function',
+      verifyFirebaseTokenExists: typeof verifyFirebaseToken === 'function',
+      firebaseAdminConfigured: true
+    };
+    
+    console.log('🚑 Diagnostics check:', diagnostics);
+    res.json({ diagnostics });
+  });
+
   // Firebase login endpoint - verifies token and creates/finds user
   // NO RATE LIMITING on Firebase endpoint as it's already protected by Firebase auth
   app.post('/api/auth/firebase-login', async (req, res) => {
@@ -221,8 +235,18 @@ export function setupAuthRoutes(app: Express) {
       console.log('🔥 Firebase login attempt with token length:', idToken?.length);
       console.log('🔥 Token type:', typeof idToken);
 
-      // Verify Firebase token
-      const firebaseUser = await verifyFirebaseToken(idToken);
+      // Verify Firebase token with comprehensive error handling
+      let firebaseUser;
+      try {
+        firebaseUser = await verifyFirebaseToken(idToken);
+      } catch (verifyError: any) {
+        console.error('❌ Firebase token verification threw error:', verifyError);
+        return res.status(500).json({ 
+          error: 'Firebase verification failed',
+          details: process.env.NODE_ENV === 'development' ? verifyError.message : undefined
+        });
+      }
+      
       if (!firebaseUser) {
         console.log('❌ Firebase user verification returned null');
         return res.status(401).json({ error: 'Invalid Firebase token' });
@@ -230,25 +254,47 @@ export function setupAuthRoutes(app: Express) {
 
       console.log('🔥 Firebase token verified for user:', firebaseUser.uid);
 
-      // Get user from database using Firebase UID
-      let user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      // Get user from database using Firebase UID - with error handling
+      let user;
+      try {
+        if (typeof storage.getUserByFirebaseUid !== 'function') {
+          console.error('❌ getUserByFirebaseUid function not available');
+          return res.status(500).json({ error: 'Database function missing' });
+        }
+        user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      } catch (dbError: any) {
+        console.error('❌ Database lookup failed:', dbError);
+        return res.status(500).json({ 
+          error: 'Database lookup failed',
+          details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        });
+      }
 
       if (!user) {
         // Create new user from Firebase data
         const userId = nanoid();
         
-        const newUser = await storage.createUser({
-          id: userId,
-          email: firebaseUser.email || '',
-          password: '', // Firebase users don't need password
-          firstName: firebaseUser.name?.split(' ')[0] || 'User',
-          lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
-          firebaseUid: firebaseUser.uid,
-          phoneVerified: firebaseUser.emailVerified || false,
-          isAdmin: isExemptUser(firebaseUser.email || ''),
-          tier: 'pending_payment',
-          createdAt: new Date()
-        });
+        let newUser;
+        try {
+          newUser = await storage.createUser({
+            id: userId,
+            email: firebaseUser.email || '',
+            password: '', // Firebase users don't need password
+            firstName: firebaseUser.name?.split(' ')[0] || 'User',
+            lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
+            firebaseUid: firebaseUser.uid,
+            phoneVerified: firebaseUser.emailVerified || false,
+            isAdmin: isExemptUser(firebaseUser.email || ''),
+            tier: 'pending_payment',
+            createdAt: new Date()
+          });
+        } catch (createError: any) {
+          console.error('❌ User creation failed:', createError);
+          return res.status(500).json({ 
+            error: 'User creation failed',
+            details: process.env.NODE_ENV === 'development' ? createError.message : undefined
+          });
+        }
 
         user = newUser;
         console.log('✅ New user created from Firebase:', user.id);
