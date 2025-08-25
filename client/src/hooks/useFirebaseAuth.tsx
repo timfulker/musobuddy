@@ -52,40 +52,49 @@ export function useFirebaseAuth() {
           }
 
           const data = await response.json();
+          console.log('📦 Firebase login response data:', data);
           
           // Check if payment is required
           if (data.paymentRequired && !data.user?.isAdmin) {
-            console.log('💳 Payment required for user:', data.user?.email);
+            console.log('💳 Payment required for user:', {
+              email: data.user?.email,
+              userId: data.user?.userId,
+              hasUserId: !!data.user?.userId
+            });
             
             // Redirect to Stripe checkout for payment
             try {
               const stripeResponse = await fetch('/api/stripe/create-checkout', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${idToken}`
+                  'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  email: data.user?.email,
                   userId: data.user?.userId,
-                  returnUrl: window.location.origin + '/success'
+                  email: data.user?.email
                 }),
               });
 
               if (stripeResponse.ok) {
                 const stripeData = await stripeResponse.json();
+                console.log('✅ Stripe checkout created:', stripeData);
                 if (stripeData.url || stripeData.checkoutUrl) {
                   window.location.href = stripeData.url || stripeData.checkoutUrl;
                   return;
+                } else {
+                  console.error('❌ No checkout URL in response:', stripeData);
                 }
+              } else {
+                const errorData = await stripeResponse.json();
+                console.error('❌ Stripe checkout failed:', stripeResponse.status, errorData);
               }
             } catch (stripeError) {
-              console.error('Failed to create Stripe checkout:', stripeError);
+              console.error('❌ Failed to create Stripe checkout:', stripeError);
             }
             
-            // Fallback: redirect to signup if Stripe fails
-            console.log('⚠️ Redirecting to signup as fallback');
-            window.location.href = '/signup';
+            // Fallback: redirect to pricing page instead of signup
+            console.log('⚠️ Redirecting to pricing page as fallback');
+            window.location.href = '/pricing';
             return;
           }
           
