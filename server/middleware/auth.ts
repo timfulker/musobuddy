@@ -1,6 +1,7 @@
 // CRITICAL FIX: Unified authentication middleware to prevent inconsistent token validation
 import jwt from 'jsonwebtoken';
 import { type Request, type Response, type NextFunction } from 'express';
+import { verifyFirebaseToken } from '../core/firebase-admin';
 
 // Centralized JWT configuration
 const JWT_CONFIG = {
@@ -92,8 +93,8 @@ export function verifyAuthToken(token: string): AuthToken | null {
   }
 }
 
-// Unified authentication middleware with comprehensive token extraction
-export const requireAuth = (req: any, res: Response, next: NextFunction) => {
+// Unified authentication middleware with Firebase ID token support
+export const requireAuth = async (req: any, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   // Extract token from multiple sources (in priority order)
@@ -140,11 +141,52 @@ export const requireAuth = (req: any, res: Response, next: NextFunction) => {
     });
   }
   
+  // Try Firebase token verification first
+  const firebaseUser = await verifyFirebaseToken(token);
+  if (firebaseUser) {
+    // Get user from database using Firebase UID
+    try {
+      const { storage } = await import('../core/storage');
+      const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      
+      if (!user) {
+        const duration = Date.now() - startTime;
+        if (AUTH_DEBUG) {
+          console.log(`❌ [AUTH] Firebase user not found in database: ${firebaseUser.uid} (${duration}ms)`);
+        }
+        return res.status(401).json({ 
+          error: 'User not found',
+          details: 'Please complete your account setup'
+        });
+      }
+      
+      // Attach user info to request (compatible with existing code)
+      req.user = {
+        userId: user.id.toString(),
+        email: user.email,
+        isVerified: true, // Firebase users are always verified
+        firebaseUid: firebaseUser.uid
+      };
+      req.authSource = tokenSource;
+      
+      const duration = Date.now() - startTime;
+      if (AUTH_DEBUG) {
+        console.log(`✅ [AUTH] Firebase authenticated user ${user.id} via ${tokenSource} (${duration}ms)`);
+      }
+      
+      return next();
+    } catch (error) {
+      console.error('Database lookup error:', error);
+      return res.status(500).json({ error: 'Authentication error' });
+    }
+  }
+  
+  // Fallback to JWT token verification (for backwards compatibility)
   const decoded = verifyAuthToken(token);
   if (!decoded) {
     const duration = Date.now() - startTime;
     if (AUTH_DEBUG) {
-      console.log(`❌ [AUTH] Invalid token (${duration}ms)`);
+      console.log(`❌ [AUTH] Invalid Firebase and JWT token (${duration}ms)`);
     }
     return res.status(401).json({ 
       error: 'Invalid or expired token',
@@ -158,7 +200,7 @@ export const requireAuth = (req: any, res: Response, next: NextFunction) => {
   
   const duration = Date.now() - startTime;
   if (AUTH_DEBUG) {
-    console.log(`✅ [AUTH] Authenticated user ${decoded.userId} via ${tokenSource} (${duration}ms)`);
+    console.log(`✅ [AUTH] JWT authenticated user ${decoded.userId} via ${tokenSource} (${duration}ms)`);
   }
   
   next();

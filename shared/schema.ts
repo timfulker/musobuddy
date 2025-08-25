@@ -53,6 +53,8 @@ export const users = pgTable("users", {
   fraudScore: integer("fraud_score").default(0),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   reminderSentAt: timestamp("reminder_sent_at"),
+  // Firebase Auth Integration
+  firebaseUid: text("firebase_uid").unique(), // Firebase user UID for authentication
   // Existing fields
   isActive: boolean("is_active").default(true), // Account active/suspended
   lastLoginAt: timestamp("last_login_at"),

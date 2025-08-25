@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { findActiveAuthToken } from '@/utils/authToken';
+import { auth } from '@/firebase';
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -26,10 +26,16 @@ export async function apiRequest(
   let body = options?.body;
   const headers = options?.headers || {};
   
-  // Add JWT token to all API requests using centralized token system
-  const token = findActiveAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // Get Firebase ID token for authentication
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    try {
+      const idToken = await currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${idToken}`;
+    } catch (error) {
+      console.warn('Failed to get Firebase ID token:', error);
+      // Continue without token - let the backend handle the 401
+    }
   }
   
   if (body) {
@@ -41,14 +47,6 @@ export async function apiRequest(
       headers['Content-Type'] = 'application/json';
     } else if (typeof body === 'string') {
       headers['Content-Type'] = 'application/json';
-    }
-  }
-
-  // Add JWT auth token to headers (remove duplicate)
-  if (!headers['Authorization']) {
-    const authToken = findActiveAuthToken();
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
     }
   }
 
@@ -75,13 +73,17 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Query request to: ${queryKey[0]}
     
-    // Get auth token using centralized token system
-    const authToken = findActiveAuthToken();
+    // Get Firebase ID token for authentication
     const headers: HeadersInit = {};
-    
-    // Add Bearer token if available
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        const idToken = await currentUser.getIdToken();
+        headers['Authorization'] = `Bearer ${idToken}`;
+      } catch (error) {
+        console.warn('Failed to get Firebase ID token for query:', error);
+        // Continue without token - let the backend handle the 401
+      }
     }
     
     const res = await fetch(queryKey[0] as string, {

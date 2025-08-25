@@ -203,6 +203,67 @@ export function setupAuthRoutes(app: Express) {
   });
   console.log('✅ [DEBUG] Test route registered');
 
+  // Firebase login endpoint - exchanges Firebase ID token for JWT
+  app.post('/api/auth/firebase-login', async (req, res) => {
+    try {
+      const { idToken } = req.body;
+
+      if (!idToken) {
+        return res.status(400).json({ error: 'Firebase ID token is required' });
+      }
+
+      // Verify Firebase token
+      const firebaseUser = await verifyFirebaseToken(idToken);
+      if (!firebaseUser) {
+        return res.status(401).json({ error: 'Invalid Firebase token' });
+      }
+
+      console.log('🔥 Firebase token verified for user:', firebaseUser.uid);
+
+      // Get user from database using Firebase UID
+      let user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+
+      if (!user) {
+        // Create new user from Firebase data
+        const userId = nanoid();
+        
+        const newUser = await storage.createUser({
+          id: userId,
+          email: firebaseUser.email || '',
+          firstName: firebaseUser.displayName?.split(' ')[0] || '',
+          lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+          firebaseUid: firebaseUser.uid,
+          phoneVerified: !!firebaseUser.phoneNumber,
+          isAdmin: isExemptUser(firebaseUser.email || ''),
+          tier: 'free',
+          createdAt: new Date()
+        });
+
+        user = newUser;
+        console.log('✅ New user created from Firebase:', user.id);
+      }
+
+      // Generate JWT token for the app
+      const authToken = generateAuthToken(user.id, user.email || '', true, user.isAdmin);
+
+      res.json({
+        success: true,
+        authToken,
+        user: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isAdmin: user.isAdmin || false
+        }
+      });
+
+    } catch (error) {
+      console.error('Firebase login error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Login endpoint - temporarily bypass rate limiting for debugging
   app.post('/api/auth/login', async (req, res) => {
     console.log('🚨 LOGIN ENDPOINT HIT - REQUEST REACHED HANDLER!');

@@ -40,80 +40,41 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      console.log('🔐 Login response:', result);
-
-      if (!response.ok) {
-        // SECURITY FIX: Handle payment requirement
-        if (response.status === 403 && result.requiresPayment) {
-          toast({
-            title: "Payment Required",
-            description: "Please complete your subscription setup",
-            variant: "destructive",
-          });
-          
-          // Redirect to Stripe checkout for payment
-          try {
-            const stripeResponse = await fetch('/api/stripe/create-checkout', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: result.email,
-                userId: result.userId,
-                returnUrl: window.location.origin + '/success'
-              }),
-            });
-
-            if (stripeResponse.ok) {
-              const stripeData = await stripeResponse.json();
-              if (stripeData.url || stripeData.checkoutUrl) {
-                window.location.href = stripeData.url || stripeData.checkoutUrl;
-                return;
-              }
-            }
-          } catch (stripeError) {
-            console.error('Failed to create Stripe checkout:', stripeError);
-          }
-          
-          // Fallback: redirect to signup if Stripe fails
-          window.location.href = '/signup';
-          return;
-        }
-        
-        throw new Error(result.error || 'Login failed');
-      }
-
-      // SECURITY FIX: Use centralized token storage
-      storeAuthToken(result.authToken, data.email);
-      console.log('🔑 Token stored with user-specific key for:', data.email);
+      // Use Firebase to sign in with email/password
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/firebase');
       
-      // Verify token was stored
-      const { findActiveAuthToken } = await import('@/utils/authToken');
-      const storedToken = findActiveAuthToken();
-      console.log('✅ Token stored successfully:', !!storedToken);
+      console.log('🔥 Attempting Firebase login...');
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      
+      console.log('✅ Firebase login successful:', userCredential.user.uid);
       
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
 
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // The useFirebaseAuth hook will handle token exchange and redirection automatically
       
     } catch (error: any) {
+      console.error('❌ Firebase login failed:', error);
+      
+      let errorMessage = 'Login failed';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address';
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Login failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

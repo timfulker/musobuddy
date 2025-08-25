@@ -79,6 +79,15 @@ export function useFirebaseAuth() {
           
           // Invalidate auth queries to refresh user data
           queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+          
+          // Redirect to dashboard if on auth pages
+          if (window.location.pathname.startsWith('/auth') || 
+              window.location.pathname === '/login' || 
+              window.location.pathname === '/signup') {
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 500);
+          }
         } catch (err) {
           console.error('❌ Firebase token exchange failed:', err);
           setError(err instanceof Error ? err.message : 'Authentication failed');
