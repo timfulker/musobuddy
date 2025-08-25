@@ -230,10 +230,10 @@ export function setupAuthRoutes(app: Express) {
         const newUser = await storage.createUser({
           id: userId,
           email: firebaseUser.email || '',
-          firstName: firebaseUser.displayName?.split(' ')[0] || '',
-          lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+          firstName: firebaseUser.name?.split(' ')[0] || 'User',
+          lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
           firebaseUid: firebaseUser.uid,
-          phoneVerified: !!firebaseUser.phoneNumber,
+          phoneVerified: firebaseUser.emailVerified || false,
           isAdmin: isExemptUser(firebaseUser.email || ''),
           tier: 'free',
           createdAt: new Date()
