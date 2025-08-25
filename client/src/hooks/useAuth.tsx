@@ -215,9 +215,11 @@ export function useAuth() {
   // Enhanced authentication state logic with subscription verification
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
   
-  // Regular users need BOTH phone verification AND subscription verification
+  // Regular users need BOTH phone verification AND valid Stripe subscription
   const hasPhoneVerification = (user as any)?.phoneVerified;
-  const hasSubscriptionVerification = (user as any)?.isSubscribed || (user as any)?.tier !== 'free';
+  const hasValidStripeSubscription = (user as any)?.isSubscribed && (user as any)?.stripeCustomerId;
+  const hasValidTier = (user as any)?.tier !== 'free';
+  const hasSubscriptionVerification = hasValidStripeSubscription || hasValidTier;
   const isRegularUserAuthenticated = !!user && !error && hasPhoneVerification && hasSubscriptionVerification;
   
   // Check if we're in circuit breaker mode (only during active failures)

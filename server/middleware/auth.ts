@@ -164,6 +164,57 @@ export const requireAuth = (req: any, res: Response, next: NextFunction) => {
   next();
 };
 
+// SECURITY FIX: New middleware to require paid subscription
+export const requirePaidAuth = async (req: any, res: Response, next: NextFunction) => {
+  // First check authentication
+  requireAuth(req, res, async () => {
+    if (!req.user) {
+      return; // requireAuth already handled the response
+    }
+    
+    try {
+      // Check user's payment status
+      const { storage } = await import('../core/storage');
+      const user = await storage.getUserById(req.user.userId);
+      
+      if (!user) {
+        return res.status(401).json({ 
+          error: 'User not found',
+          details: 'Please log in again'
+        });
+      }
+      
+      const userPlan = user.plan || 'pending_payment';
+      
+      // Block access for users without valid payment
+      if (userPlan === 'pending_payment' && !user.createdViaStripe) {
+        if (AUTH_DEBUG) {
+          console.log(`❌ [AUTH-PAID] User ${user.id} blocked - payment required`);
+        }
+        return res.status(403).json({
+          error: 'Payment required',
+          details: 'Please complete your subscription setup',
+          requiresPayment: true,
+          userId: user.id,
+          email: user.email
+        });
+      }
+      
+      // Attach full user info to request
+      req.userDetails = user;
+      
+      if (AUTH_DEBUG) {
+        console.log(`✅ [AUTH-PAID] User ${user.id} has valid plan: ${userPlan}`);
+      }
+      
+      next();
+    } catch (error) {
+      console.error('Payment verification error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+};
+
 // Optional authentication (doesn't fail if no token)
 export const optionalAuth = (req: any, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;

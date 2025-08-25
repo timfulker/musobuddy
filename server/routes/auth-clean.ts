@@ -246,7 +246,22 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Generate JWT token
+      // SECURITY FIX: Check if user has completed payment process
+      const userPlan = user.plan || 'pending_payment';
+      console.log('🔍 User plan status:', userPlan);
+      
+      if (userPlan === 'pending_payment' && !user.createdViaStripe) {
+        console.log('❌ User login blocked - payment pending:', email);
+        return res.status(403).json({ 
+          error: 'Payment required',
+          details: 'Please complete your subscription setup',
+          requiresPayment: true,
+          userId: user.id,
+          email: user.email
+        });
+      }
+
+      // Generate JWT token only for paid users
       const authToken = generateAuthToken(user.id, user.email || '', true);
       console.log('✅ Login successful for user:', email);
 
@@ -256,7 +271,8 @@ export function setupAuthRoutes(app: Express) {
         authToken,
         user: {
           userId: user.id,
-          email: user.email
+          email: user.email,
+          plan: userPlan
         }
       });
 
@@ -415,7 +431,7 @@ export function setupAuthRoutes(app: Express) {
         phoneNumber: formattedPhone,
         phoneVerified: false,
         createdViaStripe: false,
-        plan: 'free'
+        plan: 'pending_payment' // SECURITY FIX: Require payment before full access
       });
 
       // Store verification code securely in database for later SMS verification

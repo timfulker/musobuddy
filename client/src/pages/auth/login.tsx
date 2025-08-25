@@ -49,6 +49,44 @@ export default function LoginPage() {
       console.log('🔐 Login response:', result);
 
       if (!response.ok) {
+        // SECURITY FIX: Handle payment requirement
+        if (response.status === 403 && result.requiresPayment) {
+          toast({
+            title: "Payment Required",
+            description: "Please complete your subscription setup",
+            variant: "destructive",
+          });
+          
+          // Redirect to Stripe checkout for payment
+          try {
+            const stripeResponse = await fetch('/api/stripe/create-checkout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: result.email,
+                userId: result.userId,
+                returnUrl: window.location.origin + '/success'
+              }),
+            });
+
+            if (stripeResponse.ok) {
+              const stripeData = await stripeResponse.json();
+              if (stripeData.url || stripeData.checkoutUrl) {
+                window.location.href = stripeData.url || stripeData.checkoutUrl;
+                return;
+              }
+            }
+          } catch (stripeError) {
+            console.error('Failed to create Stripe checkout:', stripeError);
+          }
+          
+          // Fallback: redirect to signup if Stripe fails
+          window.location.href = '/signup';
+          return;
+        }
+        
         throw new Error(result.error || 'Login failed');
       }
 
