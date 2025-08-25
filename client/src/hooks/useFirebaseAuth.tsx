@@ -35,12 +35,16 @@ export function useFirebaseAuth() {
           });
 
           // Get Firebase ID token
-          const idToken = await firebaseUser.getIdToken();
+          const idToken = await firebaseUser.getIdToken(true); // Force refresh
           console.log('🎫 Got Firebase ID token, length:', idToken.length);
+          console.log('🎫 Token preview:', idToken.substring(0, 50) + '...');
 
           // Verify user exists in our database and check subscription
           console.log('🔄 Verifying user in database...');
-          const response = await fetch('/api/auth/firebase-login', {
+          const apiUrl = import.meta.env.DEV ? '/api/auth/firebase-login' : '/api/auth/firebase-login';
+          console.log('📡 Making request to:', apiUrl);
+          
+          const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -57,8 +61,19 @@ export function useFirebaseAuth() {
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            console.log('❌ User verification failed with data:', errorData);
+            const errorText = await response.text();
+            let errorData;
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { error: errorText };
+            }
+            console.log('❌ User verification failed:', {
+              status: response.status,
+              statusText: response.statusText,
+              url: response.url,
+              data: errorData
+            });
             throw new Error(`User verification failed: ${response.status} ${response.statusText}`);
           }
 

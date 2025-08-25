@@ -33,6 +33,10 @@ export class Storage {
     return userStorage.getUserByEmail(email);
   }
 
+  async getUserByFirebaseUid(firebaseUid: string) {
+    return userStorage.getUserByFirebaseUid(firebaseUid);
+  }
+
   async getUserByPhone(phoneNumber: string) {
     return userStorage.getUserByPhone(phoneNumber);
   }

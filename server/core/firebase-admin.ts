@@ -36,15 +36,37 @@ export const adminAuth = getAuth();
 
 export async function verifyFirebaseToken(idToken: string) {
   try {
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    if (!idToken || typeof idToken !== 'string') {
+      console.error('❌ Invalid token provided:', typeof idToken, idToken?.length);
+      return null;
+    }
+    
+    console.log('🔍 Attempting to verify Firebase token of length:', idToken.length);
+    console.log('🔍 Token starts with:', idToken.substring(0, 30));
+    
+    const decodedToken = await adminAuth.verifyIdToken(idToken, true); // Check revoked status
+    console.log('✅ Firebase token verified successfully for:', decodedToken.email);
+    
     return {
       uid: decodedToken.uid,
       email: decodedToken.email,
       emailVerified: decodedToken.email_verified,
       name: decodedToken.name,
     };
-  } catch (error) {
-    console.error('Firebase token verification failed:', error);
+  } catch (error: any) {
+    console.error('❌ Firebase token verification failed:');
+    console.error('- Error message:', error.message);
+    console.error('- Error code:', error.code);
+    console.error('- Error info:', error.errorInfo);
+    
+    if (error.code === 'auth/argument-error') {
+      console.error('🚨 Token format issue - received token:', {
+        type: typeof idToken,
+        length: idToken?.length,
+        preview: idToken?.substring(0, 50)
+      });
+    }
+    
     return null;
   }
 }

@@ -208,15 +208,23 @@ export function setupAuthRoutes(app: Express) {
   // NO RATE LIMITING on Firebase endpoint as it's already protected by Firebase auth
   app.post('/api/auth/firebase-login', async (req, res) => {
     try {
+      console.log('🔥 Firebase login endpoint hit');
+      console.log('📦 Request body keys:', Object.keys(req.body || {}));
+      
       const { idToken } = req.body;
 
       if (!idToken) {
+        console.log('❌ No idToken provided in request body');
         return res.status(400).json({ error: 'Firebase ID token is required' });
       }
+
+      console.log('🔥 Firebase login attempt with token length:', idToken?.length);
+      console.log('🔥 Token type:', typeof idToken);
 
       // Verify Firebase token
       const firebaseUser = await verifyFirebaseToken(idToken);
       if (!firebaseUser) {
+        console.log('❌ Firebase user verification returned null');
         return res.status(401).json({ error: 'Invalid Firebase token' });
       }
 
@@ -284,7 +292,7 @@ export function setupAuthRoutes(app: Express) {
         }
       }
 
-      // User authenticated successfully - no JWT needed, Firebase token is the auth
+      // User authenticated successfully - Firebase token is the only auth needed
       res.json({
         success: true,
         user: {
@@ -298,9 +306,16 @@ export function setupAuthRoutes(app: Express) {
         }
       });
 
-    } catch (error) {
-      console.error('Firebase login error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+    } catch (error: any) {
+      console.error('❌ Firebase login error:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      });
+      res.status(500).json({ 
+        error: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

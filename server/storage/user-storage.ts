@@ -29,6 +29,11 @@ export class UserStorage {
     return result[0] || null;
   }
 
+  async getUserByFirebaseUid(firebaseUid: string) {
+    const result = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    return result[0] || null;
+  }
+
   async getUserByPhone(phoneNumber: string) {
     const result = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
     return result[0] || null;
