@@ -63,13 +63,19 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Session setup
+// Trust proxy for proper HTTPS detection in deployment
+app.set('trust proxy', 1);
+
+// Session setup with proper cookie configuration
+const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT;
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false,
+    secure: isProduction, // Require HTTPS in production
+    httpOnly: false, // Allow frontend access
+    sameSite: isProduction ? 'none' : 'lax', // Cross-site for deployment
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));

@@ -57,10 +57,6 @@ export class Storage {
     return userStorage.getUserByResetToken(token);
   }
 
-  async getUserByFirebaseUid(firebaseUid: string) {
-    return userStorage.getUserByFirebaseUid(firebaseUid);
-  }
-
   async generateQuickAddToken(userId: string) {
     return userStorage.generateQuickAddToken(userId);
   }

@@ -416,10 +416,10 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // SECURITY FIX: Check if user has completed payment process
-      const userPlan = user.plan || 'pending_payment';
-      console.log('🔍 User plan status:', userPlan);
+      const userTier = user.tier || user.plan || 'pending_payment';
+      console.log('🔍 User tier/plan status:', userTier, 'createdViaStripe:', user.createdViaStripe);
       
-      if (userPlan === 'pending_payment' && !user.createdViaStripe) {
+      if (userTier === 'pending_payment' && !user.createdViaStripe) {
         console.log('❌ User login blocked - payment pending:', email);
         return res.status(403).json({ 
           error: 'Payment required',
@@ -955,8 +955,10 @@ export function setupAuthRoutes(app: Express) {
       const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
       const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
-      // Check subscription validity
-      const hasValidSubscription = user.isSubscribed && user.stripeCustomerId && user.tier !== 'free';
+      // Check subscription validity - include pending_payment as valid (user in payment setup process)
+      const hasValidSubscription = 
+        (user.isSubscribed && user.stripeCustomerId && user.tier !== 'free') ||
+        user.tier === 'pending_payment'; // Allow users in payment setup process
 
       res.json({
         hasValidSubscription,
