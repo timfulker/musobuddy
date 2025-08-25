@@ -424,9 +424,11 @@ export function setupAuthRoutes(app: Express) {
         return res.status(403).json({ 
           error: 'Payment required',
           details: 'Please complete your subscription setup',
-          requiresPayment: true,
-          userId: user.id,
-          email: user.email
+          paymentRequired: true,
+          user: {
+            userId: user.id,
+            email: user.email
+          }
         });
       }
 
