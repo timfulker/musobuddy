@@ -8,7 +8,7 @@ declare module 'express-serve-static-core' {
   }
 }
 
-// Simplified middleware - all authenticated users have access
+// SECURE: Verify subscription status before granting access
 export const requireSubscription = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check if user is authenticated
@@ -19,7 +19,30 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // All authenticated users have access (no free tier)
+    const userId = req.user.id || req.user.userId;
+    const user = await storage.getUserById(userId);
+    
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'User not found',
+        redirectTo: '/login'
+      });
+    }
+
+    // CRITICAL: Verify subscription status
+    const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
+    const isNonFreeTier = user.tier && user.tier !== 'free';
+    
+    if (!hasValidSubscription && !isNonFreeTier) {
+      console.log(`🔒 Access denied for user ${userId} - subscription verification failed`);
+      return res.status(403).json({ 
+        error: 'Subscription required',
+        redirectTo: '/start-trial',
+        needsSubscription: true
+      });
+    }
+
+    console.log(`✅ Authenticated user ${userId} - subscription verified, access granted`);
     return next();
 
   } catch (error) {
@@ -28,7 +51,7 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
   }
 };
 
-// Simplified middleware - all authenticated users have access (no free tier blocking)
+// SECURE: Verify subscription status OR admin access before granting access
 export const requireSubscriptionOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check if user is authenticated
@@ -39,9 +62,36 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       });
     }
 
-    // All authenticated users have access (admin-created accounts and subscribers)
     const userId = req.user.id || req.user.userId;
-    console.log(`✅ Authenticated user ${userId} - access granted`);
+    const user = await storage.getUserById(userId);
+    
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'User not found',
+        redirectTo: '/login'
+      });
+    }
+
+    // Allow admin access
+    if (user.isAdmin) {
+      console.log(`✅ Admin user ${userId} - access granted`);
+      return next();
+    }
+
+    // CRITICAL: Verify subscription status for non-admin users
+    const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
+    const isNonFreeTier = user.tier && user.tier !== 'free';
+    
+    if (!hasValidSubscription && !isNonFreeTier) {
+      console.log(`🔒 Access denied for user ${userId} - subscription verification failed`);
+      return res.status(403).json({ 
+        error: 'Subscription required',
+        redirectTo: '/start-trial',
+        needsSubscription: true
+      });
+    }
+
+    console.log(`✅ Authenticated user ${userId} - subscription verified, access granted`);
     return next();
 
   } catch (error) {
@@ -50,11 +100,20 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
   }
 };
 
-// Helper function to check if user has access (simplified - all authenticated users have access)
+// SECURE: Helper function to check if user has valid subscription access
 export const hasSubscriptionAccess = async (userId: string): Promise<boolean> => {
   try {
     const user = await storage.getUserById(userId);
-    return !!user; // Any valid user has access
+    if (!user) return false;
+    
+    // Admin users always have access
+    if (user.isAdmin) return true;
+    
+    // Check for valid subscription
+    const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
+    const isNonFreeTier = user.tier && user.tier !== 'free';
+    
+    return hasValidSubscription || isNonFreeTier;
   } catch (error) {
     console.error('Access check error:', error);
     return false;
