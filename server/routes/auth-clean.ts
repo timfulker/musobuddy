@@ -780,8 +780,9 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // Determine if user was created by admin (multiple ways to check)
-      const isAdminCreated = user.createdByAdmin || (!user.createdViaStripe && user.tier === 'free' && user.isSubscribed === false);
+      // STRICT: Only these 3 specific accounts bypass subscription checks
+      const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+      const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
       // Check subscription validity
       const hasValidSubscription = user.isSubscribed && user.stripeCustomerId && user.tier !== 'free';

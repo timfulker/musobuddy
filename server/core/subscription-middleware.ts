@@ -29,23 +29,27 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // TEMPORARY: Allow all authenticated users during development
-    // TODO: Implement proper subscription verification after client testing
-    console.log(`✅ Authenticated user ${userId} - temporary development access granted`);
-    return next();
+    // STRICT: Only allow specific exempt accounts to bypass subscription checks
+    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+    const isExemptUser = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
+    
+    if (isExemptUser) {
+      console.log(`✅ Exempt user ${userId} (${user.email}) - subscription check bypassed`);
+      return next();
+    }
 
-    // DISABLED: Subscription verification (will re-enable after testing)
-    // const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
-    // const isNonFreeTier = user.tier && user.tier !== 'free';
-    // 
-    // if (!hasValidSubscription && !isNonFreeTier) {
-    //   console.log(`🔒 Access denied for user ${userId} - subscription verification failed`);
-    //   return res.status(403).json({ 
-    //     error: 'Subscription required',
-    //     redirectTo: '/start-trial',
-    //     needsSubscription: true
-    //   });
-    // }
+    // ENFORCE: Subscription verification for all other users
+    const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
+    const isNonFreeTier = user.tier && user.tier !== 'free';
+    
+    if (!hasValidSubscription && !isNonFreeTier) {
+      console.log(`🔒 Access denied for user ${userId} (${user.email}) - subscription verification failed`);
+      return res.status(403).json({ 
+        error: 'Subscription required',
+        redirectTo: '/start-trial',
+        needsSubscription: true
+      });
+    }
 
     console.log(`✅ Authenticated user ${userId} - subscription verified, access granted`);
     return next();
@@ -83,23 +87,27 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       return next();
     }
 
-    // TEMPORARY: Allow all authenticated users during development
-    // TODO: Implement proper subscription verification after client testing
-    console.log(`✅ Authenticated user ${userId} - temporary development access granted`);
-    return next();
+    // STRICT: Only allow specific exempt accounts to bypass subscription checks
+    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+    const isExemptUser = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
+    
+    if (isExemptUser) {
+      console.log(`✅ Exempt user ${userId} (${user.email}) - subscription check bypassed`);
+      return next();
+    }
 
-    // DISABLED: Subscription verification (will re-enable after testing)
-    // const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
-    // const isNonFreeTier = user.tier && user.tier !== 'free';
-    // 
-    // if (!hasValidSubscription && !isNonFreeTier) {
-    //   console.log(`🔒 Access denied for user ${userId} - subscription verification failed`);
-    //   return res.status(403).json({ 
-    //     error: 'Subscription required',
-    //     redirectTo: '/start-trial',
-    //     needsSubscription: true
-    //   });
-    // }
+    // ENFORCE: Subscription verification for all other users
+    const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
+    const isNonFreeTier = user.tier && user.tier !== 'free';
+    
+    if (!hasValidSubscription && !isNonFreeTier) {
+      console.log(`🔒 Access denied for user ${userId} (${user.email}) - subscription verification failed`);
+      return res.status(403).json({ 
+        error: 'Subscription required',
+        redirectTo: '/start-trial',
+        needsSubscription: true
+      });
+    }
 
     console.log(`✅ Authenticated user ${userId} - subscription verified, access granted`);
     return next();
