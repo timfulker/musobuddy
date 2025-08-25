@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, signInWithRedirect, signInWithPopup, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, User } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,7 +19,18 @@ const googleProvider = new GoogleAuthProvider();
 
 // Auth functions
 export const signInWithGoogle = () => {
+  // Use popup for better user experience and immediate result
+  return signInWithPopup(auth, googleProvider);
+};
+
+// For redirect flow (if needed)
+export const signInWithGoogleRedirect = () => {
   return signInWithRedirect(auth, googleProvider);
+};
+
+// Get redirect result after coming back from redirect
+export const getGoogleRedirectResult = () => {
+  return getRedirectResult(auth);
 };
 
 export const signOutUser = () => {

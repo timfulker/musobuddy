@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { onAuthStateChange, signInWithGoogle, signOutUser } from '@shared/firebase';
+import { onAuthStateChange, signInWithGoogle, signOutUser, getGoogleRedirectResult } from '@shared/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function useFirebaseAuth() {
@@ -10,6 +10,17 @@ export function useFirebaseAuth() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Check for redirect result first (in case we're coming back from a redirect)
+    getGoogleRedirectResult()
+      .then((result) => {
+        if (result?.user) {
+          console.log('🔥 Got redirect result with user:', result.user.email);
+        }
+      })
+      .catch((error) => {
+        console.log('🔥 No redirect result or error:', error.code);
+      });
+
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
       console.log('🔥 Firebase auth state changed:', !!firebaseUser);
       setUser(firebaseUser);
@@ -127,7 +138,10 @@ export function useFirebaseAuth() {
   const loginWithGoogle = async () => {
     try {
       setError(null);
-      await signInWithGoogle();
+      console.log('🔥 Initiating Google login with popup...');
+      const result = await signInWithGoogle();
+      console.log('🔥 Google login successful:', result.user?.email);
+      // The auth state change listener will handle the rest
     } catch (err) {
       console.error('❌ Google login failed:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
