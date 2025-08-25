@@ -231,6 +231,7 @@ export function setupAuthRoutes(app: Express) {
         const newUser = await storage.createUser({
           id: userId,
           email: firebaseUser.email || '',
+          password: '', // Firebase users don't need password
           firstName: firebaseUser.name?.split(' ')[0] || 'User',
           lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
           firebaseUid: firebaseUser.uid,

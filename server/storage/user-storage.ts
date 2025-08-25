@@ -188,6 +188,8 @@ export class UserStorage {
     quickAddToken?: string;
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
+    firebaseUid?: string;
+    createdAt?: Date;
   }) {
     // Password should already be hashed by caller
     const result = await db.insert(users).values({
@@ -203,7 +205,8 @@ export class UserStorage {
       quickAddToken: data.quickAddToken,
       emailPrefix: data.emailPrefix,
       stripeCustomerId: data.stripeCustomerId,
-      createdAt: new Date(),
+      firebaseUid: data.firebaseUid,
+      createdAt: data.createdAt || new Date(),
       updatedAt: new Date(),
     }).returning();
 
