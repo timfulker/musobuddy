@@ -86,6 +86,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
     - Cloudflare R2
     - Neon Database (PostgreSQL)
 - **APIs and Services**:
+    - Firebase
     - Google Maps API
     - Mailgun
     - OpenAI GPT-5

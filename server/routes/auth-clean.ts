@@ -24,7 +24,7 @@ function formatPhoneNumber(phone: string): string {
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
-  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'tim@timfulker.com', 'jake.stanley@musobuddy.com'];
   return allowedBypassEmails.includes(email);
 }
 
