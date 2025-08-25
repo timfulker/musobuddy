@@ -23,7 +23,7 @@ Google Calendar Sync Strategy: Implemented ID-based sync approach to minimize AI
 Google Calendar field mapping: Event titles display as "Client Name - Event Type" format (e.g., "Susan Davis - Wedding") per user preference, providing clear identification of both client and event type in calendar view.
 Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter.
 Document count indicators: Removed from booking cards due to persistent accuracy issues. User prefers working system without confusing indicators - Documents section remains accessible via booking details.
-Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on explicit user action. No automatic searches occur when opening booking forms or typing in venue name. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
+Venue name auto-fill manual control: Modified venue name auto-complete to only trigger on an explicit user action. No automatic searches occur when opening booking forms or typing in venue name. Auto-fill only activates when user clicks in venue name field and presses Tab, providing complete manual control over when API calls are made. Other address fields retain normal auto-search behavior.
 Address book navigation: "View Details" button on client cards in address book now navigates directly to calendar view with specific booking highlighted, instead of just going to generic bookings page.
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
@@ -58,7 +58,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Authentication**: Pure Firebase authentication with Google Sign-in and email/password options. Firebase Admin SDK for token verification, eliminating internal JWT generation. Subscription-based access control with Firebase middleware.
+- **Authentication**: Pure Firebase authentication with Google Sign-in and email/password options. Firebase Admin SDK for token verification. Subscription-based access control with Firebase middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
