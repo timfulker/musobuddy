@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
 import { generateAuthToken, requireAuth } from '../middleware/auth';
+import { verifyFirebaseToken } from '../core/firebase-admin';
 
 // Phone number formatting
 function formatPhoneNumber(phone: string): string {
@@ -18,6 +19,12 @@ function formatPhoneNumber(phone: string): string {
     return '+44' + digits;
   }
   return '+44' + digits;
+}
+
+// Check if user is exempt from subscription requirements
+function isExemptUser(email: string): boolean {
+  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+  return allowedBypassEmails.includes(email);
 }
 
 // Rate limiting configuration for authentication endpoints
@@ -669,6 +676,90 @@ export function setupAuthRoutes(app: Express) {
       
     } catch (error) {
       console.error('Stripe login error:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
+  // Firebase authentication endpoint
+  app.post('/api/auth/firebase-login', loginLimiter, async (req, res) => {
+    try {
+      const { idToken } = req.body;
+
+      if (!idToken) {
+        return res.status(400).json({ error: 'Firebase ID token is required' });
+      }
+
+      // Verify the Firebase token
+      const firebaseUser = await verifyFirebaseToken(idToken);
+      
+      if (!firebaseUser) {
+        return res.status(401).json({ error: 'Invalid Firebase token' });
+      }
+
+      if (!firebaseUser.email) {
+        return res.status(400).json({ error: 'Email is required for authentication' });
+      }
+
+      console.log(`🔥 Firebase login attempt for email: ${firebaseUser.email}`);
+
+      // Check if user exists in our system
+      let user = await storage.getUserByEmail(firebaseUser.email);
+
+      if (!user) {
+        // Create new user from Firebase data
+        const userId = nanoid();
+        
+        // Extract first and last name from Firebase display name
+        const displayName = firebaseUser.name || '';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        user = await storage.createUser({
+          id: userId,
+          email: firebaseUser.email,
+          firstName: firstName || 'User',
+          lastName: lastName || '',
+          password: '', // Firebase users don't need password
+          phoneNumber: '', // Will be collected later if needed
+          phoneVerified: firebaseUser.emailVerified || false,
+          createdViaStripe: false,
+          plan: 'pending_payment' // Require payment like other users
+        });
+
+        console.log(`✅ New Firebase user created: ${user.id} (${user.email})`);
+      }
+
+      // Check subscription status
+      if (user.plan === 'pending_payment' && !isExemptUser(user.email)) {
+        return res.status(403).json({
+          requiresPayment: true,
+          error: 'Payment required',
+          email: user.email,
+          userId: user.id
+        });
+      }
+
+      // Generate JWT token for our system
+      const authToken = generateAuthToken(user.id, user.email || '', true);
+
+      console.log(`✅ Firebase login successful for user: ${user.id} (${user.email})`);
+
+      res.json({
+        success: true,
+        message: 'Authentication successful',
+        authToken,
+        user: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneVerified: user.phoneVerified || firebaseUser.emailVerified || false
+        }
+      });
+
+    } catch (error) {
+      console.error('Firebase login error:', error);
       res.status(500).json({ error: 'Authentication failed' });
     }
   });
