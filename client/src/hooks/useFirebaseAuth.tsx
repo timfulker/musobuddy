@@ -17,11 +17,18 @@ export function useFirebaseAuth() {
 
       if (firebaseUser) {
         try {
+          console.log('🔥 Firebase user detected:', {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName
+          });
+
           // Get Firebase ID token
           const idToken = await firebaseUser.getIdToken();
-          console.log('🎫 Got Firebase ID token');
+          console.log('🎫 Got Firebase ID token, length:', idToken.length);
 
           // Exchange Firebase token for our app's JWT
+          console.log('🔄 Attempting token exchange...');
           const response = await fetch('/api/auth/firebase-login', {
             method: 'POST',
             headers: {
@@ -32,10 +39,18 @@ export function useFirebaseAuth() {
             })
           });
 
+          console.log('🌐 Token exchange response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+          });
+
           if (!response.ok) {
+            const errorData = await response.json();
+            console.log('❌ Token exchange failed with data:', errorData);
+            
             // Handle payment requirement
             if (response.status === 403) {
-              const errorData = await response.json();
               if (errorData.requiresPayment) {
                 // Redirect to Stripe checkout for payment
                 try {
@@ -63,11 +78,12 @@ export function useFirebaseAuth() {
                 }
                 
                 // Fallback: redirect to signup if Stripe fails
+                console.log('⚠️ Redirecting to signup as fallback');
                 window.location.href = '/signup';
                 return;
               }
             }
-            throw new Error('Failed to exchange Firebase token');
+            throw new Error(`Token exchange failed: ${response.status} ${response.statusText}`);
           }
 
           const data = await response.json();
