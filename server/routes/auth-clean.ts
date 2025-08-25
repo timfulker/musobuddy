@@ -236,7 +236,7 @@ export function setupAuthRoutes(app: Express) {
           firebaseUid: firebaseUser.uid,
           phoneVerified: firebaseUser.emailVerified || false,
           isAdmin: isExemptUser(firebaseUser.email || ''),
-          tier: 'free',
+          tier: 'pending_payment',
           createdAt: new Date()
         });
 
@@ -261,10 +261,12 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Check subscription status for non-admin users
-      if (!user.isAdmin && user.tier === 'free') {
-        // TODO: Check Stripe subscription status
+      if (!user.isAdmin && (user.tier === 'pending_payment' || user.tier === 'free')) {
+        // Check if they have an active Stripe subscription
         const hasActiveSubscription = user.stripeSubscriptionId ? true : false;
-        if (!hasActiveSubscription) {
+        
+        // If no subscription and not exempt, require payment
+        if (!hasActiveSubscription && user.tier === 'pending_payment') {
           return res.json({
             success: true,
             paymentRequired: true,
