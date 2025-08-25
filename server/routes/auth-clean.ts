@@ -221,6 +221,7 @@ export function setupAuthRoutes(app: Express) {
   // Firebase login endpoint - verifies token and creates/finds user
   // NO RATE LIMITING on Firebase endpoint as it's already protected by Firebase auth
   app.post('/api/auth/firebase-login', async (req, res) => {
+    console.log('🔥 Firebase login endpoint hit - ENTRY POINT');
     try {
       console.log('🔥 Firebase login endpoint hit');
       console.log('📦 Request body keys:', Object.keys(req.body || {}));
