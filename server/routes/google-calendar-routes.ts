@@ -1,15 +1,15 @@
 import type { Express } from "express";
 import { GoogleCalendarService } from "../services/google-calendar";
 import { AIEventMatcher } from "../services/ai-event-matcher";
-import { requireAuth } from "../middleware/auth";
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from "../core/storage";
 
 export function registerGoogleCalendarRoutes(app: Express) {
   
   // Start OAuth flow
-  app.get('/api/google-calendar/auth', requireAuth, async (req: any, res) => {
+  app.get('/api/google-calendar/auth', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       console.log('🔗 Starting OAuth flow for user:', userId);
 
       const googleCalendarService = new GoogleCalendarService();
@@ -124,9 +124,9 @@ export function registerGoogleCalendarRoutes(app: Express) {
   });
 
   // Get integration status
-  app.get('/api/google-calendar/status', requireAuth, async (req: any, res) => {
+  app.get('/api/google-calendar/status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       console.log('🔍 Checking Google Calendar status for user:', userId);
       
       if (!userId) {
@@ -165,9 +165,9 @@ export function registerGoogleCalendarRoutes(app: Express) {
   });
 
   // Update sync settings  
-  app.post('/api/google-calendar/settings', requireAuth, async (req: any, res) => {
+  app.post('/api/google-calendar/settings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const { syncEnabled, autoSyncBookings, autoImportEvents, syncDirection } = req.body;
 
       await storage.updateGoogleCalendarIntegration(userId, {
@@ -187,9 +187,9 @@ export function registerGoogleCalendarRoutes(app: Express) {
   });
 
   // Manual sync trigger (ID-based with minimal AI)
-  app.post('/api/google-calendar/sync', requireAuth, async (req: any, res) => {
+  app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const { direction = 'export', linkUnknownEvents = false } = req.body;
 
       const integration = await storage.getGoogleCalendarIntegration(userId);
@@ -376,9 +376,9 @@ export function registerGoogleCalendarRoutes(app: Express) {
   });
 
   // Disconnect Google Calendar
-  app.delete('/api/google-calendar/disconnect', requireAuth, async (req: any, res) => {
+  app.delete('/api/google-calendar/disconnect', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       await storage.deleteGoogleCalendarIntegration(userId);
 

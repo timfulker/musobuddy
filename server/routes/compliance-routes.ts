@@ -1,7 +1,7 @@
 import { type Express, type Response } from "express";
 import multer from "multer";
 import { storage } from "../core/storage";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { asyncHandler } from '../middleware/errorHandler';
 
@@ -26,9 +26,9 @@ export function registerComplianceRoutes(app: Express) {
   console.log('📋 Setting up compliance routes...');
 
   // Get all compliance documents for authenticated user
-  app.get('/api/compliance', requireAuth, asyncHandler(async (req: any, res: Response) => {
+  app.get('/api/compliance', authenticateWithFirebase, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -44,12 +44,12 @@ export function registerComplianceRoutes(app: Express) {
 
   // Upload compliance document
   app.post('/api/compliance/upload', 
-    requireAuth,
+    authenticateWithFirebase,
     generalApiRateLimit,
     upload.single('documentFile'),
-    asyncHandler(async (req: any, res: Response) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }
@@ -108,11 +108,11 @@ export function registerComplianceRoutes(app: Express) {
 
   // Update compliance document
   app.patch('/api/compliance/:id', 
-    requireAuth,
+    authenticateWithFirebase,
     generalApiRateLimit,
-    asyncHandler(async (req: any, res: Response) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }
@@ -139,11 +139,11 @@ export function registerComplianceRoutes(app: Express) {
 
   // Delete compliance document
   app.delete('/api/compliance/:id', 
-    requireAuth,
+    authenticateWithFirebase,
     generalApiRateLimit,
-    asyncHandler(async (req: any, res: Response) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }

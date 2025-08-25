@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { StripeService } from "../core/stripe-service";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from "../core/storage";
 
 const stripeService = new StripeService();
@@ -17,8 +17,8 @@ export function registerStripeRoutes(app: Express) {
 
 
   // Test route to verify auth middleware works
-  app.get('/api/subscription/test', requireAuth, async (req, res) => {
-    const userId = req.user?.userId;
+  app.get('/api/subscription/test', authenticateWithFirebase, async (req, res) => {
+    const userId = req.user?.id;
     console.log('🔍 Test route - userId:', userId);
     res.json({ message: 'Auth test successful', userId });
   });
@@ -169,10 +169,10 @@ export function registerStripeRoutes(app: Express) {
   });
 
   // Existing checkout session for authenticated users
-  app.post('/api/create-checkout-session', requireAuth, async (req, res) => {
+  app.post('/api/create-checkout-session', authenticateWithFirebase, async (req, res) => {
     try {
       const { priceId = 'price_1RouBwD9Bo26CG1DAF1rkSZI' } = req.body;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -200,9 +200,9 @@ export function registerStripeRoutes(app: Express) {
   });
 
   // Alternative subscription status endpoint to avoid route conflicts
-  app.get('/api/stripe/subscription-status', requireAuth, async (req, res) => {
+  app.get('/api/stripe/subscription-status', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       console.log('🔍 Stripe subscription status - userId:', userId);
       
       if (!userId) {

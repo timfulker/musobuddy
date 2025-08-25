@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, authenticateWithFirebasePaid, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { generateInvoicePDF } from '../core/invoice-pdf-generator';
 import { uploadInvoiceToCloud } from '../core/cloud-storage';
@@ -10,7 +10,7 @@ export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
 
   // Public invoice viewing endpoint - no authentication required
-  app.get('/api/public/invoice/:token', async (req: any, res) => {
+  app.get('/api/public/invoice/:token', async (req: AuthenticatedRequest, res) => {
     try {
       const { token } = req.params;
       console.log(`🔍 Looking up public invoice with token: ${token}`);
@@ -46,7 +46,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Manual payment status update endpoint (for bank transfer payments)
-  app.post('/api/invoice/:id/mark-paid', requireAuth, async (req: any, res) => {
+  app.post('/api/invoice/:id/mark-paid', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -94,9 +94,9 @@ export function registerInvoiceRoutes(app: Express) {
   // Security is handled through random tokens in the R2 URL paths
 
   // Get all invoices for authenticated user (requires subscription)
-  app.get('/api/invoices', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
+  app.get('/api/invoices', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -111,9 +111,9 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Create new invoice (requires subscription)
-  app.post('/api/invoices', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
+  app.post('/api/invoices', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -218,9 +218,9 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Update invoice
-  app.patch('/api/invoices/:id', requireAuth, async (req: any, res) => {
+  app.patch('/api/invoices/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -276,10 +276,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Delete invoice
-  app.delete('/api/invoices/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/invoices/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       console.log(`🗑️ Delete request for invoice #${invoiceId} by user ${userId}`);
       
@@ -324,10 +324,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Bulk delete invoices
-  app.post('/api/invoices/bulk-delete', requireAuth, async (req: any, res) => {
+  app.post('/api/invoices/bulk-delete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { invoiceIds } = req.body;
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -392,12 +392,12 @@ export function registerInvoiceRoutes(app: Express) {
     console.log('🚨 All headers:', Object.keys(req.headers));
     
     // Call the original auth middleware
-    requireAuth(req, res, next);
-  }, async (req: any, res) => {
+    authenticateWithFirebase(req, res, next);
+  }, async (req: AuthenticatedRequest, res) => {
     try {
       const { invoiceId, customMessage } = req.body;
       const parsedInvoiceId = parseInt(invoiceId);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -504,10 +504,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Mark invoice as paid
-  app.post('/api/invoices/:id/mark-paid', requireAuth, async (req: any, res) => {
+  app.post('/api/invoices/:id/mark-paid', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -540,10 +540,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get individual invoice for viewing
-  app.get('/api/invoices/:id/view', requireAuth, async (req: any, res) => {
+  app.get('/api/invoices/:id/view', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -574,10 +574,10 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Regenerate invoice PDF with current theme settings
-  app.post('/api/invoices/:id/regenerate', requireAuth, async (req: any, res) => {
+  app.post('/api/invoices/:id/regenerate', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });

@@ -1,14 +1,14 @@
 import type { Express, Request, Response } from "express";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from "../core/storage";
 
 export function registerNotificationRoutes(app: Express) {
   console.log('🔔 Setting up notification routes...');
 
   // Get notification counts for badges
-  app.get('/api/notifications/counts', requireAuth, async (req: any, res: Response) => {
+  app.get('/api/notifications/counts', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -69,9 +69,9 @@ export function registerNotificationRoutes(app: Express) {
   });
 
   // Get detailed notifications (for dropdown/list view)
-  app.get('/api/notifications', requireAuth, async (req: any, res: Response) => {
+  app.get('/api/notifications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -144,9 +144,9 @@ export function registerNotificationRoutes(app: Express) {
   });
 
   // Get client messages specifically for the Messages page
-  app.get('/api/notifications/messages', requireAuth, async (req: any, res: Response) => {
+  app.get('/api/notifications/messages', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }

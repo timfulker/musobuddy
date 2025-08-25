@@ -1,13 +1,13 @@
 import type { Express } from "express";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 export function registerFeedbackRoutes(app: Express) {
   console.log('💬 Setting up feedback routes...');
 
   // Get all feedback
-  app.get('/api/feedback', requireAuth, async (req, res) => {
+  app.get('/api/feedback', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -25,9 +25,9 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Create new feedback
-  app.post('/api/feedback', requireAuth, async (req, res) => {
+  app.post('/api/feedback', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -48,9 +48,9 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Update feedback status (admin only)
-  app.patch('/api/feedback/:id/status', requireAuth, async (req, res) => {
+  app.patch('/api/feedback/:id/status', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const feedbackId = req.params.id;
       
       if (!userId) {

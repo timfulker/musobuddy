@@ -58,7 +58,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Authentication**: JWT-based system with SMS/email/phone verification and secure email-based password reset.
+- **Authentication**: Pure Firebase authentication with Google Sign-in and email/password options. Firebase Admin SDK for token verification, eliminating internal JWT generation. Subscription-based access control with Firebase middleware.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.

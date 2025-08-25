@@ -1,0 +1,313 @@
+// Pure Firebase Authentication Middleware
+import { type Request, type Response, type NextFunction } from 'express';
+import { verifyFirebaseToken } from '../core/firebase-admin';
+import { storage } from '../core/storage';
+
+// Enhanced logging for debugging - controlled by environment
+const AUTH_DEBUG = process.env.AUTH_DEBUG === 'true' && process.env.NODE_ENV === 'development';
+
+// Extend Express Request type
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    firebaseUid: string;
+    isAdmin: boolean;
+    tier: string;
+    phoneVerified: boolean;
+  };
+  firebaseToken?: string;
+}
+
+/**
+ * Extract Firebase ID token from request
+ */
+function extractFirebaseToken(req: Request): string | null {
+  let token: string | null = null;
+  
+  // 1. Authorization header (Bearer token) - standard approach
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  }
+  
+  // 2. Custom header (fallback for some clients)
+  if (!token && req.headers['x-firebase-token']) {
+    token = req.headers['x-firebase-token'] as string;
+  }
+  
+  // 3. Query parameter (for download links, etc.)
+  if (!token && req.query.firebaseToken) {
+    token = req.query.firebaseToken as string;
+  }
+  
+  return token;
+}
+
+/**
+ * Main Firebase authentication middleware
+ * Verifies Firebase ID token and attaches user to request
+ */
+export const authenticateWithFirebase = async (
+  req: AuthenticatedRequest, 
+  res: Response, 
+  next: NextFunction
+) => {
+  const startTime = Date.now();
+  
+  // Extract token
+  const token = extractFirebaseToken(req);
+  
+  if (!token) {
+    const duration = Date.now() - startTime;
+    if (AUTH_DEBUG) {
+      console.log(`❌ [FIREBASE-AUTH] No token provided (${duration}ms)`);
+    }
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      details: 'No authentication token provided'
+    });
+  }
+  
+  try {
+    // Verify Firebase token
+    const firebaseUser = await verifyFirebaseToken(token);
+    
+    if (!firebaseUser) {
+      const duration = Date.now() - startTime;
+      if (AUTH_DEBUG) {
+        console.log(`❌ [FIREBASE-AUTH] Invalid token (${duration}ms)`);
+      }
+      return res.status(401).json({ 
+        error: 'Invalid authentication token',
+        details: 'Please log in again'
+      });
+    }
+    
+    // Get user from database using Firebase UID
+    const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+    
+    if (!user) {
+      const duration = Date.now() - startTime;
+      if (AUTH_DEBUG) {
+        console.log(`❌ [FIREBASE-AUTH] User not found for Firebase UID: ${firebaseUser.uid} (${duration}ms)`);
+      }
+      return res.status(404).json({ 
+        error: 'User not found',
+        details: 'Please complete your account setup'
+      });
+    }
+    
+    // Attach user to request
+    req.user = {
+      id: user.id,
+      email: user.email || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      firebaseUid: firebaseUser.uid,
+      isAdmin: user.isAdmin || false,
+      tier: user.tier || 'free',
+      phoneVerified: user.phoneVerified || false
+    };
+    req.firebaseToken = token;
+    
+    const duration = Date.now() - startTime;
+    if (AUTH_DEBUG) {
+      console.log(`✅ [FIREBASE-AUTH] Authenticated user ${user.id} (${user.email}) in ${duration}ms`);
+    }
+    
+    next();
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    console.error('Firebase authentication error:', error);
+    
+    // Handle specific Firebase errors
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ 
+        error: 'Token expired',
+        details: 'Please log in again'
+      });
+    }
+    
+    if (error.code === 'auth/argument-error') {
+      return res.status(401).json({ 
+        error: 'Invalid token format',
+        details: 'Please log in again'
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Authentication failed',
+      details: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Firebase authentication with subscription check
+ * Ensures user has active subscription (except admins)
+ */
+export const authenticateWithFirebasePaid = async (
+  req: AuthenticatedRequest, 
+  res: Response, 
+  next: NextFunction
+) => {
+  // First authenticate with Firebase
+  await authenticateWithFirebase(req, res, async () => {
+    if (!req.user) {
+      return; // authenticateWithFirebase already handled the response
+    }
+    
+    // Admin users bypass payment check
+    if (req.user.isAdmin) {
+      if (AUTH_DEBUG) {
+        console.log(`✅ [FIREBASE-AUTH-PAID] Admin user ${req.user.id} bypassed payment check`);
+      }
+      return next();
+    }
+    
+    // Check subscription status
+    if (req.user.tier === 'free') {
+      // Check Stripe subscription status
+      try {
+        const hasActiveSubscription = await checkUserSubscription(req.user.id);
+        if (!hasActiveSubscription) {
+          if (AUTH_DEBUG) {
+            console.log(`❌ [FIREBASE-AUTH-PAID] User ${req.user.id} requires payment`);
+          }
+          return res.status(403).json({
+            error: 'Subscription required',
+            details: 'Please complete your subscription setup',
+            requiresPayment: true,
+            userId: req.user.id,
+            email: req.user.email
+          });
+        }
+      } catch (error) {
+        console.error('Subscription check error:', error);
+        // Allow access if subscription check fails (fail open)
+      }
+    }
+    
+    if (AUTH_DEBUG) {
+      console.log(`✅ [FIREBASE-AUTH-PAID] User ${req.user.id} has valid subscription (tier: ${req.user.tier})`);
+    }
+    
+    next();
+  });
+};
+
+/**
+ * Optional Firebase authentication
+ * Doesn't fail if no token, but attaches user if valid token present
+ */
+export const optionalFirebaseAuth = async (
+  req: AuthenticatedRequest, 
+  res: Response, 
+  next: NextFunction
+) => {
+  const token = extractFirebaseToken(req);
+  
+  if (!token) {
+    // No token is fine for optional auth
+    return next();
+  }
+  
+  try {
+    const firebaseUser = await verifyFirebaseToken(token);
+    
+    if (firebaseUser) {
+      const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      
+      if (user) {
+        req.user = {
+          id: user.id,
+          email: user.email || '',
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          firebaseUid: firebaseUser.uid,
+          isAdmin: user.isAdmin || false,
+          tier: user.tier || 'free',
+          phoneVerified: user.phoneVerified || false
+        };
+        req.firebaseToken = token;
+        
+        if (AUTH_DEBUG) {
+          console.log(`✅ [FIREBASE-AUTH-OPTIONAL] User ${user.id} authenticated`);
+        }
+      }
+    }
+  } catch (error) {
+    // Silent fail for optional auth
+    if (AUTH_DEBUG) {
+      console.log(`⚠️ [FIREBASE-AUTH-OPTIONAL] Token verification failed (continuing anyway)`);
+    }
+  }
+  
+  next();
+};
+
+/**
+ * Admin-only Firebase authentication
+ * Requires valid Firebase token AND admin role
+ */
+export const authenticateFirebaseAdmin = async (
+  req: AuthenticatedRequest, 
+  res: Response, 
+  next: NextFunction
+) => {
+  // First authenticate with Firebase
+  await authenticateWithFirebase(req, res, () => {
+    if (!req.user) {
+      return; // authenticateWithFirebase already handled the response
+    }
+    
+    // Check admin status
+    if (!req.user.isAdmin) {
+      if (AUTH_DEBUG) {
+        console.log(`❌ [FIREBASE-AUTH-ADMIN] User ${req.user.id} denied admin access`);
+      }
+      return res.status(403).json({ 
+        error: 'Admin access required',
+        details: 'You do not have permission to access this resource'
+      });
+    }
+    
+    if (AUTH_DEBUG) {
+      console.log(`✅ [FIREBASE-AUTH-ADMIN] Admin access granted to user ${req.user.id}`);
+    }
+    
+    next();
+  });
+};
+
+/**
+ * Helper function to check user subscription status
+ * This should be implemented based on your Stripe integration
+ */
+async function checkUserSubscription(userId: string): Promise<boolean> {
+  try {
+    const user = await storage.getUserById(userId);
+    if (!user) return false;
+    
+    // Check if user has Stripe subscription
+    if (user.stripeSubscriptionId) {
+      // TODO: Verify with Stripe that subscription is active
+      // For now, assume having a subscription ID means active
+      return true;
+    }
+    
+    // Check if user tier is paid
+    return user.tier !== 'free' && user.tier !== 'pending_payment';
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    return false;
+  }
+}
+
+// Re-export for backwards compatibility during migration
+export const requireFirebaseAuth = authenticateWithFirebase;
+export const requireFirebasePaidAuth = authenticateWithFirebasePaid;
+export const requireFirebaseAdmin = authenticateFirebaseAdmin;

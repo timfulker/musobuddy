@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid';
 import crypto from 'crypto';
 import { generateAuthToken, requireAuth } from '../middleware/auth';
 import { verifyFirebaseToken } from '../core/firebase-admin';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 // Phone number formatting
 function formatPhoneNumber(phone: string): string {
@@ -203,7 +204,7 @@ export function setupAuthRoutes(app: Express) {
   });
   console.log('✅ [DEBUG] Test route registered');
 
-  // Firebase login endpoint - exchanges Firebase ID token for JWT
+  // Firebase login endpoint - verifies token and creates/finds user
   app.post('/api/auth/firebase-login', async (req, res) => {
     try {
       const { idToken } = req.body;
@@ -241,20 +242,55 @@ export function setupAuthRoutes(app: Express) {
 
         user = newUser;
         console.log('✅ New user created from Firebase:', user.id);
+        
+        // New user needs to check subscription
+        if (!user.isAdmin) {
+          return res.json({
+            success: true,
+            paymentRequired: true,
+            user: {
+              userId: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              firebaseUid: firebaseUser.uid,
+              isAdmin: false
+            }
+          });
+        }
       }
 
-      // Generate JWT token for the app
-      const authToken = generateAuthToken(user.id, user.email || '', true, user.isAdmin);
+      // Check subscription status for non-admin users
+      if (!user.isAdmin && user.tier === 'free') {
+        // TODO: Check Stripe subscription status
+        const hasActiveSubscription = user.stripeSubscriptionId ? true : false;
+        if (!hasActiveSubscription) {
+          return res.json({
+            success: true,
+            paymentRequired: true,
+            user: {
+              userId: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              firebaseUid: firebaseUser.uid,
+              isAdmin: false
+            }
+          });
+        }
+      }
 
+      // User authenticated successfully - no JWT needed, Firebase token is the auth
       res.json({
         success: true,
-        authToken,
         user: {
           userId: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          isAdmin: user.isAdmin || false
+          firebaseUid: firebaseUser.uid,
+          isAdmin: user.isAdmin || false,
+          tier: user.tier
         }
       });
 
@@ -417,8 +453,8 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Get current user endpoint
-  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
+  // Get current user endpoint - uses Firebase authentication
+  app.get('/api/auth/user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.userId;
       

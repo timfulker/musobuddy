@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, authenticateWithFirebasePaid, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { cleanEncoreTitle } from '../core/booking-formatter';
 import OpenAI from 'openai';
@@ -12,9 +12,9 @@ export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
   // Get all bookings for authenticated user (requires subscription)
-  app.get('/api/bookings', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
+  app.get('/api/bookings', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -29,14 +29,14 @@ export function registerBookingRoutes(app: Express) {
 
   // Create new booking (requires subscription)
   app.post('/api/bookings', 
-    requireAuth,
+    authenticateWithFirebase,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     sanitizeInput,
     validateBody(schemas.createBooking),
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -124,10 +124,10 @@ export function registerBookingRoutes(app: Express) {
   }));
 
   // Update booking
-  app.patch('/api/bookings/:id', requireAuth, async (req: any, res) => {
+  app.patch('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -167,10 +167,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Delete booking
-  app.delete('/api/bookings/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -192,10 +192,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Get individual booking
-  app.get('/api/bookings/:id', requireAuth, async (req: any, res) => {
+  app.get('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -214,10 +214,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Extract details from message content using AI
-  app.post('/api/bookings/:id/extract-details', requireAuth, async (req: any, res) => {
+  app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const { messageContent } = req.body;
       
       if (!userId) {
@@ -299,10 +299,10 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Bulk delete bookings
-  app.post('/api/bookings/bulk-delete', requireAuth, async (req: any, res) => {
+  app.post('/api/bookings/bulk-delete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { bookingIds } = req.body;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -624,9 +624,9 @@ ${messageText.replace(/\n/g, '<br>')}
   });
 
   // Add missing QR code generation endpoint for production compatibility
-  app.post('/api/generate-qr-code', requireAuth, async (req: any, res) => {
+  app.post('/api/generate-qr-code', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -671,12 +671,12 @@ ${messageText.replace(/\n/g, '<br>')}
 
   // Send compliance documents for a booking
   app.post('/api/bookings/:id/send-compliance', 
-    requireAuth,
+    authenticateWithFirebase,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     asyncHandler(async (req: any, res: any) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }
@@ -812,11 +812,11 @@ ${businessName}</p>
 
   // Get documents for a specific booking
   app.get('/api/bookings/:id/documents', 
-    requireAuth,
+    authenticateWithFirebase,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: any, res: any) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }
@@ -848,11 +848,11 @@ ${businessName}</p>
 
   // Check if compliance documents have been sent for a specific booking
   app.get('/api/bookings/:id/compliance-sent', 
-    requireAuth,
+    authenticateWithFirebase,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: any, res: any) => {
       try {
-        const userId = req.user?.userId;
+        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ error: 'Authentication required' });
         }

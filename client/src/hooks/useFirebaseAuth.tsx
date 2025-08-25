@@ -27,8 +27,8 @@ export function useFirebaseAuth() {
           const idToken = await firebaseUser.getIdToken();
           console.log('🎫 Got Firebase ID token, length:', idToken.length);
 
-          // Exchange Firebase token for our app's JWT
-          console.log('🔄 Attempting token exchange...');
+          // Verify user exists in our database and check subscription
+          console.log('🔄 Verifying user in database...');
           const response = await fetch('/api/auth/firebase-login', {
             method: 'POST',
             headers: {
@@ -39,7 +39,7 @@ export function useFirebaseAuth() {
             })
           });
 
-          console.log('🌐 Token exchange response:', {
+          console.log('🌐 User verification response:', {
             status: response.status,
             statusText: response.statusText,
             ok: response.ok
@@ -47,51 +47,49 @@ export function useFirebaseAuth() {
 
           if (!response.ok) {
             const errorData = await response.json();
-            console.log('❌ Token exchange failed with data:', errorData);
-            
-            // Handle payment requirement
-            if (response.status === 403) {
-              if (errorData.requiresPayment) {
-                // Redirect to Stripe checkout for payment
-                try {
-                  const stripeResponse = await fetch('/api/stripe/create-checkout', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      email: errorData.email,
-                      userId: errorData.userId,
-                      returnUrl: window.location.origin + '/success'
-                    }),
-                  });
-
-                  if (stripeResponse.ok) {
-                    const stripeData = await stripeResponse.json();
-                    if (stripeData.url || stripeData.checkoutUrl) {
-                      window.location.href = stripeData.url || stripeData.checkoutUrl;
-                      return;
-                    }
-                  }
-                } catch (stripeError) {
-                  console.error('Failed to create Stripe checkout:', stripeError);
-                }
-                
-                // Fallback: redirect to signup if Stripe fails
-                console.log('⚠️ Redirecting to signup as fallback');
-                window.location.href = '/signup';
-                return;
-              }
-            }
-            throw new Error(`Token exchange failed: ${response.status} ${response.statusText}`);
+            console.log('❌ User verification failed with data:', errorData);
+            throw new Error(`User verification failed: ${response.status} ${response.statusText}`);
           }
 
           const data = await response.json();
           
-          // Use centralized token storage
-          const { storeAuthToken } = await import('@/utils/authToken');
-          storeAuthToken(data.authToken, firebaseUser.email || '');
-          console.log('✅ Firebase login successful, JWT stored');
+          // Check if payment is required
+          if (data.paymentRequired && !data.user?.isAdmin) {
+            console.log('💳 Payment required for user:', data.user?.email);
+            
+            // Redirect to Stripe checkout for payment
+            try {
+              const stripeResponse = await fetch('/api/stripe/create-checkout', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                  email: data.user?.email,
+                  userId: data.user?.userId,
+                  returnUrl: window.location.origin + '/success'
+                }),
+              });
+
+              if (stripeResponse.ok) {
+                const stripeData = await stripeResponse.json();
+                if (stripeData.url || stripeData.checkoutUrl) {
+                  window.location.href = stripeData.url || stripeData.checkoutUrl;
+                  return;
+                }
+              }
+            } catch (stripeError) {
+              console.error('Failed to create Stripe checkout:', stripeError);
+            }
+            
+            // Fallback: redirect to signup if Stripe fails
+            console.log('⚠️ Redirecting to signup as fallback');
+            window.location.href = '/signup';
+            return;
+          }
+          
+          console.log('✅ Firebase login successful, user verified');
           
           // Invalidate auth queries to refresh user data
           queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
@@ -109,8 +107,7 @@ export function useFirebaseAuth() {
           setError(err instanceof Error ? err.message : 'Authentication failed');
         }
       } else {
-        // User signed out
-        localStorage.removeItem('musobuddy-auth-token');
+        // User signed out - clear all data
         queryClient.clear();
       }
     });
@@ -131,7 +128,6 @@ export function useFirebaseAuth() {
   const logout = async () => {
     try {
       await signOutUser();
-      localStorage.removeItem('musobuddy-auth-token');
       localStorage.removeItem('musobuddy-theme');
       localStorage.removeItem('musobuddy-custom-color');
       queryClient.clear();
@@ -139,7 +135,6 @@ export function useFirebaseAuth() {
     } catch (err) {
       console.error('❌ Logout failed:', err);
       // Force cleanup even if logout fails
-      localStorage.removeItem('musobuddy-auth-token');
       localStorage.removeItem('musobuddy-theme');
       localStorage.removeItem('musobuddy-custom-color');
       queryClient.clear();

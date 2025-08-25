@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from "../core/storage";
 
 export function registerClientRoutes(app: Express) {
@@ -54,9 +54,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Get all clients for the authenticated user
-  app.get('/api/clients', requireAuth, async (req, res) => {
+  app.get('/api/clients', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -74,9 +74,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Create a new client
-  app.post('/api/clients', requireAuth, async (req, res) => {
+  app.post('/api/clients', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -93,9 +93,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Update a client
-  app.patch('/api/clients/:id', requireAuth, async (req, res) => {
+  app.patch('/api/clients/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const clientId = parseInt(req.params.id);
       
       if (!userId) {
@@ -113,9 +113,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Delete a client
-  app.delete('/api/clients/:id', requireAuth, async (req, res) => {
+  app.delete('/api/clients/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const clientId = parseInt(req.params.id);
       
       if (!userId) {
@@ -133,9 +133,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Populate address book from existing bookings
-  app.post('/api/clients/populate-from-bookings', requireAuth, async (req, res) => {
+  app.post('/api/clients/populate-from-bookings', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -213,9 +213,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Create a new client
-  app.post('/api/clients', requireAuth, async (req, res) => {
+  app.post('/api/clients', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -237,9 +237,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Update a client
-  app.put('/api/clients/:id', requireAuth, async (req, res) => {
+  app.put('/api/clients/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const clientId = req.params.id;
       
       if (!userId) {
@@ -262,9 +262,9 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Delete a client
-  app.delete('/api/clients/:id', requireAuth, async (req, res) => {
+  app.delete('/api/clients/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const clientId = req.params.id;
       
       if (!userId) {

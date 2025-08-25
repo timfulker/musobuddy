@@ -6,7 +6,7 @@ import { contractSigningEmailService } from "../core/contract-signing-email";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, authenticateWithFirebasePaid, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerContractRoutes(app: Express) {
@@ -60,7 +60,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Fix all signing pages with JavaScript errors
-  app.post('/api/contracts/fix-all-signing-pages', async (req: any, res) => {
+  app.post('/api/contracts/fix-all-signing-pages', async (req: AuthenticatedRequest, res) => {
     try {
       console.log('🔧 Starting to fix all signing pages with JavaScript errors...');
       
@@ -113,10 +113,10 @@ export function registerContractRoutes(app: Express) {
   });
   
   // Regenerate signing page endpoint - fixes JavaScript errors
-  app.post('/api/contracts/:id/regenerate-signing-page', requireAuth, async (req: any, res) => {
+  app.post('/api/contracts/:id/regenerate-signing-page', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
@@ -157,7 +157,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // CRITICAL: Direct contract signing page endpoint (GET)
-  app.get('/api/contracts/sign/:id', async (req: any, res) => {
+  app.get('/api/contracts/sign/:id', async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
@@ -188,9 +188,9 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Get all contracts for authenticated user (requires subscription)
-  app.get('/api/contracts', requireAuth, requireSubscriptionOrAdmin, async (req: any, res) => {
+  app.get('/api/contracts', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.id;
       const contracts = await storage.getContracts(userId);
       console.log(`✅ Retrieved ${contracts.length} contracts for user ${userId}`);
       res.json(contracts);
@@ -201,10 +201,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // FIXED: Add missing R2 URL endpoint that was causing 404 errors
-  app.get('/api/contracts/:id/r2-url', requireAuth, async (req: any, res) => {
+  app.get('/api/contracts/:id/r2-url', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
@@ -269,10 +269,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Add download endpoint for fallback when isolated endpoints fail
-  app.get('/api/contracts/:id/download', requireAuth, async (req: any, res) => {
+  app.get('/api/contracts/:id/download', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
@@ -325,7 +325,7 @@ export function registerContractRoutes(app: Express) {
 
   // Create new contract
   app.post('/api/contracts', 
-    requireAuth, 
+    authenticateWithFirebase, 
     asyncHandler(async (req: any, res: any) => {
     try {
       const contractNumber = req.body.contractNumber || 
@@ -353,7 +353,7 @@ export function registerContractRoutes(app: Express) {
       });
 
       const contractData = {
-        userId: req.user.userId,
+        userId: req.user.id,
         contractNumber,
         clientName: req.body.clientName,
         clientEmail: req.body.clientEmail || null,
@@ -379,14 +379,14 @@ export function registerContractRoutes(app: Express) {
       };
       
       const newContract = await storage.createContract(contractData);
-      console.log(`✅ Created contract #${newContract.id} for user ${req.user.userId}`);
+      console.log(`✅ Created contract #${newContract.id} for user ${req.user.id}`);
       
       // Generate signing page URL
       try {
         const signingPageUrl = `/sign/${newContract.id}`;
         const updatedContract = await storage.updateContract(newContract.id, {
           signingPageUrl: signingPageUrl
-        }, req.user.userId);
+        }, req.user.id);
         res.json(updatedContract);
       } catch (signingError) {
         console.warn('⚠️ Failed to create signing page:', signingError);
@@ -411,7 +411,7 @@ export function registerContractRoutes(app: Express) {
   }));
 
   // Send contract via email
-  app.post('/api/contracts/send-email', requireAuth, async (req: any, res) => {
+  app.post('/api/contracts/send-email', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { contractId, customMessage } = req.body;
       const parsedContractId = parseInt(contractId);
@@ -421,11 +421,11 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      if (contract.userId !== req.user.userId) {
+      if (contract.userId !== req.user.id) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const userSettings = await storage.getSettings(req.user.userId);
+      const userSettings = await storage.getSettings(req.user.id);
       if (!userSettings) {
         return res.status(404).json({ error: 'User settings not found' });
       }
@@ -497,7 +497,7 @@ export function registerContractRoutes(app: Express) {
   });
   
   // CRITICAL: Enhanced contract signing endpoint with retry logic and better error handling
-  app.post('/api/contracts/sign/:id', async (req: any, res) => {
+  app.post('/api/contracts/sign/:id', async (req: AuthenticatedRequest, res) => {
     // Set CORS headers for all responses
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -786,14 +786,14 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Get individual contract - FIXED: Use standard auth middleware
-  app.get('/api/contracts/:id', requireAuth, async (req: any, res) => {
+  app.get('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
       
-      const userId = req.user.userId;
+      const userId = req.user.id;
       const contract = await storage.getContract(contractId);
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
@@ -817,10 +817,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Update contract (only allowed for draft contracts)
-  app.patch('/api/contracts/:id', requireAuth, async (req: any, res) => {
+  app.patch('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       // Get the current contract to check its status
       const existingContract = await storage.getContract(contractId);
@@ -865,10 +865,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Amend contract - creates a new contract with "Amended" suffix
-  app.post('/api/contracts/:id/amend', requireAuth, async (req: any, res) => {
+  app.post('/api/contracts/:id/amend', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       // Get the original contract
       const originalContract = await storage.getContract(contractId);
@@ -945,11 +945,11 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Delete contract
-  app.delete('/api/contracts/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      await storage.deleteContract(contractId, req.user.userId);
-      console.log(`✅ Deleted contract #${contractId} for user ${req.user.userId}`);
+      await storage.deleteContract(contractId, req.user.id);
+      console.log(`✅ Deleted contract #${contractId} for user ${req.user.id}`);
       res.json({ success: true });
     } catch (error) {
       console.error('❌ Failed to delete contract:', error);
@@ -958,10 +958,10 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Bulk delete contracts
-  app.post('/api/contracts/bulk-delete', requireAuth, async (req: any, res) => {
+  app.post('/api/contracts/bulk-delete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { contractIds } = req.body;
-      const userId = req.user.userId;
+      const userId = req.user.id;
       
       if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
         return res.status(400).json({ error: 'Contract IDs array is required' });

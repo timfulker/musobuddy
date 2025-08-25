@@ -4,7 +4,7 @@ import { services } from "../core/services";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { db } from '../core/database';
 import { clientCommunications } from '@shared/schema';
 import { getGigTypeNamesForInstrument } from '@shared/instrument-gig-presets';
@@ -18,9 +18,9 @@ export async function registerSettingsRoutes(app: Express) {
   // Lead Email Setup Endpoints
   
   // Get user's lead email address
-  app.get('/api/email/my-address', requireAuth, async (req: any, res) => {
+  app.get('/api/email/my-address', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -50,9 +50,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Check if email prefix is available
-  app.post('/api/email/check-availability', requireAuth, async (req: any, res) => {
+  app.post('/api/email/check-availability', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -95,9 +95,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Assign email prefix to user
-  app.post('/api/email/assign-prefix', requireAuth, async (req: any, res) => {
+  app.post('/api/email/assign-prefix', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -156,9 +156,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Get user settings
-  app.get('/api/settings', requireAuth, async (req: any, res) => {
+  app.get('/api/settings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -299,12 +299,12 @@ export async function registerSettingsRoutes(app: Express) {
 
   // Update user settings
   app.patch('/api/settings', 
-    requireAuth,
+    authenticateWithFirebase,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -357,12 +357,12 @@ export async function registerSettingsRoutes(app: Express) {
 
   // Add instrument to settings
   app.post('/api/settings/instrument', 
-    requireAuth,
+    authenticateWithFirebase,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -398,7 +398,7 @@ export async function registerSettingsRoutes(app: Express) {
 
   // Global gig types endpoint
   // Legacy endpoint for backward compatibility
-  app.get('/api/gig-types', async (req: any, res) => {
+  app.get('/api/gig-types', async (req: AuthenticatedRequest, res) => {
     try {
       const globalGigTypes = [
         'Wedding',
@@ -420,7 +420,7 @@ export async function registerSettingsRoutes(app: Express) {
     }
   });
 
-  app.get('/api/global-gig-types', async (req: any, res) => {
+  app.get('/api/global-gig-types', async (req: AuthenticatedRequest, res) => {
     try {
       // Return predefined gig types
       const globalGigTypes = [
@@ -446,9 +446,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // User-specific gig types aggregated from bookings
-  app.get('/api/user-gig-types', requireAuth, async (req: any, res) => {
+  app.get('/api/user-gig-types', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -470,9 +470,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Generate widget token
-  app.post('/api/generate-widget-token', requireAuth, async (req: any, res) => {
+  app.post('/api/generate-widget-token', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -529,9 +529,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Get existing widget token
-  app.get('/api/get-widget-token', requireAuth, async (req: any, res) => {
+  app.get('/api/get-widget-token', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -563,9 +563,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Get widget info (permanent widget URL and QR code)
-  app.get('/api/get-widget-info', requireAuth, async (req: any, res) => {
+  app.get('/api/get-widget-info', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -592,9 +592,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Templates endpoint - fetch user's email templates
-  app.get('/api/templates', requireAuth, async (req: any, res) => {
+  app.get('/api/templates', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -608,9 +608,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Create new email template
-  app.post('/api/templates', requireAuth, async (req: any, res) => {
+  app.post('/api/templates', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -639,9 +639,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Update email template
-  app.patch('/api/templates/:id', requireAuth, async (req: any, res) => {
+  app.patch('/api/templates/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
       
       if (!userId) {
@@ -674,9 +674,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Delete email template
-  app.delete('/api/templates/:id', requireAuth, async (req: any, res) => {
+  app.delete('/api/templates/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
       
       if (!userId) {
@@ -701,9 +701,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Set template as default
-  app.post('/api/templates/:id/set-default', requireAuth, async (req: any, res) => {
+  app.post('/api/templates/:id/set-default', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
       
       if (!userId) {
@@ -728,9 +728,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Seed default templates for existing users
-  app.post('/api/templates/seed-defaults', requireAuth, async (req: any, res) => {
+  app.post('/api/templates/seed-defaults', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -765,9 +765,9 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Send email using template
-  app.post('/api/templates/send-email', requireAuth, async (req: any, res) => {
+  app.post('/api/templates/send-email', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -1152,9 +1152,9 @@ This email was sent via MusoBuddy Professional Music Management Platform
   });
 
   // AI Response Generation endpoint
-  app.post('/api/ai/generate-response', requireAuth, async (req: any, res) => {
+  app.post('/api/ai/generate-response', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -1281,10 +1281,10 @@ This email was sent via MusoBuddy Professional Music Management Platform
   });
 
   // Glockapps deliverability test endpoint
-  app.post('/api/test/glockapp-delivery', requireAuth, async (req: any, res) => {
+  app.post('/api/test/glockapp-delivery', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { testId, templateId, seedEmails } = req.body;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });

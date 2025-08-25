@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from '../core/storage';
 import { parseBookingMessage } from '../ai/booking-message-parser';
 
@@ -7,9 +7,9 @@ export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
 
   // Get all unparseable messages
-  app.get('/api/unparseable-messages', requireAuth, async (req, res) => {
+  app.get('/api/unparseable-messages', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       console.log('🔍 [UNPARSEABLE-API] API called for user:', userId);
       
@@ -37,9 +37,9 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Mark message as reviewed
-  app.patch('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
+  app.patch('/api/unparseable-messages/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
       
       if (!userId) {
@@ -68,9 +68,9 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Convert message to booking (manual)
-  app.post('/api/unparseable-messages/:id/convert', requireAuth, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/convert', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
       
       if (!userId) {
@@ -143,9 +143,9 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Reprocess message through AI
-  app.post('/api/unparseable-messages/:id/reprocess', requireAuth, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/reprocess', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
       
       if (!userId) {
@@ -239,9 +239,9 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Link message to existing booking
-  app.post('/api/unparseable-messages/:id/link', requireAuth, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/link', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
       const { bookingId } = req.body;
       
@@ -298,9 +298,9 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Delete message
-  app.delete('/api/unparseable-messages/:id', requireAuth, async (req, res) => {
+  app.delete('/api/unparseable-messages/:id', authenticateWithFirebase, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
       
       if (!userId) {
