@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscriptionWatchdog } from "@/hooks/useSubscriptionWatchdog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
@@ -55,6 +56,9 @@ import { useEffect, lazy } from "react";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error, needsSubscription, authenticationStatus } = useAuth();
+  
+  // Initialize subscription watchdog for authenticated users
+  useSubscriptionWatchdog();
 
   // Show loading state while checking authentication
   if (isLoading) {

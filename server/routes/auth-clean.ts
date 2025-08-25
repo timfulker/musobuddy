@@ -770,6 +770,37 @@ export function setupAuthRoutes(app: Express) {
     }
   });
   
+  // Subscription watchdog endpoint - checks subscription status for periodic verification
+  app.get('/api/subscription/watchdog-status', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Determine if user was created by admin (multiple ways to check)
+      const isAdminCreated = user.createdByAdmin || (!user.createdViaStripe && user.tier === 'free' && user.isSubscribed === false);
+      
+      // Check subscription validity
+      const hasValidSubscription = user.isSubscribed && user.stripeCustomerId && user.tier !== 'free';
+
+      res.json({
+        hasValidSubscription,
+        isAdminCreated,
+        stripeCustomerId: user.stripeCustomerId,
+        isSubscribed: user.isSubscribed,
+        tier: user.tier,
+        userId: user.id
+      });
+
+    } catch (error) {
+      console.error('❌ Watchdog status error:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription status' });
+    }
+  });
+
   // Periodic cleanup of expired verification codes for security hygiene
   setInterval(async () => {
     try {
