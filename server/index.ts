@@ -868,6 +868,82 @@ app.get('/api/email-queue/status', async (req, res) => {
     }
   });
 
+  // Stripe webhook handler for payment completion
+  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      console.log('🔔 Stripe webhook received');
+      
+      const sig = req.headers['stripe-signature'] as string;
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (!webhookSecret) {
+        console.error('❌ Missing STRIPE_WEBHOOK_SECRET');
+        return res.status(400).send('Webhook secret not configured');
+      }
+      
+      let event;
+      
+      try {
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
+          apiVersion: '2024-12-18.acacia' 
+        });
+        
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        console.log('✅ Stripe webhook signature verified:', event.type);
+      } catch (err: any) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+      
+      // Handle the event
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        console.log('💳 Processing checkout.session.completed:', session.id);
+        
+        // Get customer email from session
+        const customerEmail = session.customer_email || session.metadata?.userEmail;
+        
+        if (!customerEmail) {
+          console.error('❌ No customer email found in session');
+          return res.status(400).send('No customer email');
+        }
+        
+        console.log('🔍 Looking up user with email:', customerEmail);
+        
+        // Find user by email and upgrade their tier
+        const user = await storage.getUserByEmail(customerEmail);
+        
+        if (!user) {
+          console.error('❌ User not found for email:', customerEmail);
+          return res.status(404).send('User not found');
+        }
+        
+        // Update user to standard tier with Stripe info
+        await storage.updateUser(user.id, {
+          tier: 'standard',
+          stripeCustomerId: session.customer,
+          stripeSubscriptionId: session.subscription,
+          isSubscribed: true
+        });
+        
+        console.log('✅ User upgraded to standard tier:', {
+          userId: user.id,
+          email: customerEmail,
+          customerId: session.customer,
+          subscriptionId: session.subscription
+        });
+      } else {
+        console.log(`ℹ️ Unhandled webhook event: ${event.type}`);
+      }
+      
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error('❌ Stripe webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
   // Register all API routes
   console.log('🔄 Registering all modular routes...');
   const { registerRoutes } = await import('./routes');

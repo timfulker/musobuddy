@@ -246,6 +246,59 @@ router.get('/api/admin/problematic-bookings', async (req, res) => {
   }
 });
 
+// Link Firebase UID to existing database user
+router.post('/api/admin/link-firebase-user', async (req, res) => {
+  try {
+    const { email, firebaseUid } = req.body;
+    
+    if (!email || !firebaseUid) {
+      return res.status(400).json({ 
+        error: 'Email and firebaseUid are required' 
+      });
+    }
+    
+    console.log(`🔗 [ADMIN] Linking Firebase UID to user: ${email}`);
+    
+    // Find the existing user by email
+    const user = await storage.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ 
+        error: `User with email ${email} not found in database` 
+      });
+    }
+    
+    // Check if Firebase UID is already linked to another user
+    const existingFirebaseUser = await storage.getUserByFirebaseUid(firebaseUid);
+    if (existingFirebaseUser && existingFirebaseUser.id !== user.id) {
+      return res.status(409).json({ 
+        error: `Firebase UID ${firebaseUid} is already linked to another user: ${existingFirebaseUser.email}` 
+      });
+    }
+    
+    // Update the user record with Firebase UID
+    await storage.updateUser(user.id, { firebaseUid });
+    
+    console.log(`✅ [ADMIN] Successfully linked Firebase UID ${firebaseUid} to user ${email} (ID: ${user.id})`);
+    
+    res.json({
+      success: true,
+      message: `Firebase account linked to ${email}`,
+      user: {
+        id: user.id,
+        email: user.email,
+        firebaseUid: firebaseUid
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to link Firebase user:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Export the registration function for the routes/index.ts file
 export async function registerAdminRoutes(app: any) {
   app.use(router);

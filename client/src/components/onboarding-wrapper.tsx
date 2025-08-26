@@ -47,10 +47,10 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
         <OnboardingWizard 
           isOpen={true} 
           onComplete={() => {
-            // Don't reload page - just mark as dismissed to hide wizard
+            // Mark as dismissed and redirect to dashboard
             setWizardDismissed(true);
-            // Optionally trigger a query invalidation to update status
-            // window.location.reload(); // REMOVED - causes auth state loss
+            // Redirect to dashboard after completing onboarding
+            window.location.href = '/dashboard';
           }}
           onDismiss={() => setWizardDismissed(true)}
           user={user}
