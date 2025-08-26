@@ -282,7 +282,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       
       // Additional check: Ensure we have an auth token before attempting to save
       const { findActiveAuthToken } = await import('../utils/authToken');
-      const token = findActiveAuthToken();
+      const token = await findActiveAuthToken();
       
       if (!token) {
         // Silently skip theme save when no auth token (expected on collaboration pages)
