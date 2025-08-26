@@ -98,6 +98,7 @@ export default function NewBookingPage({
   clientInfo 
 }: NewBookingProps = {}) {
   const [location, setLocation] = useLocation();
+  const navigate = useHistory();
   const { toast } = useToast();
   
   // Conditional authentication - only use auth in musician mode
