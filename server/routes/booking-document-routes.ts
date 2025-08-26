@@ -5,7 +5,7 @@ import { db } from '../core/database';
 import { bookings, bookingDocuments } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { uploadToCloudflareR2 } from '../core/cloud-storage';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 const router = Router();
 
@@ -28,7 +28,7 @@ const upload = multer({
 });
 
 // Get all documents for a booking
-router.get('/api/bookings/:bookingId/documents', requireAuth, async (req: Request, res: Response) => {
+router.get('/api/bookings/:bookingId/documents', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
     const userId = (req as any).user?.userId || (req.session as any)?.userId;
@@ -74,7 +74,7 @@ router.get('/api/bookings/:bookingId/documents', requireAuth, async (req: Reques
 
 // Upload document for a booking
 router.post('/api/bookings/:bookingId/documents', 
-  requireAuth,  // Use the standard auth middleware
+  authenticateWithFirebase,  // Use Firebase auth middleware
   upload.single('document'), 
   async (req: Request, res: Response) => {
   try {
@@ -178,7 +178,7 @@ router.post('/api/bookings/:bookingId/documents',
 });
 
 // Get document info for a booking
-router.get('/api/bookings/:bookingId/document', requireAuth, async (req: Request, res: Response) => {
+router.get('/api/bookings/:bookingId/document', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
     const userId = (req as any).user?.userId || (req.session as any)?.userId;
@@ -227,7 +227,7 @@ router.get('/api/bookings/:bookingId/document', requireAuth, async (req: Request
 });
 
 // Delete document from a booking
-router.delete('/api/bookings/:bookingId/document', requireAuth, async (req: Request, res: Response) => {
+router.delete('/api/bookings/:bookingId/document', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
     const userId = (req as any).user?.userId || (req.session as any)?.userId;
@@ -279,7 +279,7 @@ router.delete('/api/bookings/:bookingId/document', requireAuth, async (req: Requ
 });
 
 // Delete a specific document
-router.delete('/api/documents/:documentId', requireAuth, async (req: Request, res: Response) => {
+router.delete('/api/documents/:documentId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { documentId } = req.params;
     const userId = (req as any).user?.userId || (req.session as any)?.userId;

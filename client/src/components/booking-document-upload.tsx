@@ -14,7 +14,6 @@ import { Upload, FileText, Loader2, Check, Eye, Download, Trash2 } from "lucide-
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { findActiveAuthToken } from "@/utils/authToken";
 
 interface BookingDocumentUploadProps {
   booking: any;
@@ -47,14 +46,8 @@ export default function BookingDocumentUpload({ booking, isOpen, onClose }: Book
       const formData = new FormData();
       formData.append('document', file);
 
-      // Get the auth token
-      const authToken = localStorage.getItem('authToken') || 
-                       findActiveAuthToken();
-      
+      // Firebase auth is handled automatically via cookies
       const headers: any = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
 
       const response = await fetch(`/api/bookings/${booking.id}/upload-document`, {
         method: 'POST',

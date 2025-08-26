@@ -4,14 +4,14 @@ import { db } from '../core/database.js';
 import { blockedDates, type BlockedDate } from '@shared/schema.js';
 import { z } from 'zod';
 import { insertBlockedDateSchema } from '@shared/schema.js';
-import { requireAuth } from '../middleware/auth.js';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 const router = Router();
 
 // Get all blocked dates for a user
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
     
     const userBlockedDates = await db
       .select()
@@ -31,9 +31,9 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // Get blocked dates for a specific date range
-router.get('/range', requireAuth, async (req, res) => {
+router.get('/range', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
     const { startDate, endDate } = req.query;
     
     if (!startDate || !endDate) {
@@ -68,9 +68,9 @@ router.get('/range', requireAuth, async (req, res) => {
 });
 
 // Create a new blocked date
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
     
     // Validate request body
     const validatedData = insertBlockedDateSchema.parse(req.body);
@@ -111,9 +111,9 @@ router.post('/', requireAuth, async (req, res) => {
 });
 
 // Update a blocked date
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
     const blockedDateId = parseInt(req.params.id);
     
     if (isNaN(blockedDateId)) {
@@ -168,9 +168,9 @@ router.put('/:id', requireAuth, async (req, res) => {
 });
 
 // Delete a blocked date
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
     const blockedDateId = parseInt(req.params.id);
     
     if (isNaN(blockedDateId)) {

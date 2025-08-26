@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { requireAuth } from "../middleware/auth.js";
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { collaborativeFormGenerator } from "../core/collaborative-form-generator.js";
 import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";
@@ -8,10 +8,10 @@ import crypto from 'crypto';
 
 export function setupCollaborativeFormRoutes(app: Express) {
   // Generate collaborative form after contract signing
-  app.post('/api/contracts/:contractId/generate-collaborative-form', requireAuth, async (req: Request, res: Response) => {
+  app.post('/api/contracts/:contractId/generate-collaborative-form', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { contractId } = req.params;
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -278,11 +278,11 @@ export function setupCollaborativeFormRoutes(app: Express) {
   });
 
   // Update field lock settings
-  app.post('/api/collaborative-form/:bookingId/locks', requireAuth, async (req: Request, res: Response) => {
+  app.post('/api/collaborative-form/:bookingId/locks', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { bookingId } = req.params;
       const { fieldLocks } = req.body;
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });

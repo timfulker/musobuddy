@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 export function registerIsolatedRoutes(app: Express) {
   console.log('🔗 Setting up isolated routes for cloud compatibility...');
@@ -108,7 +108,7 @@ export function registerIsolatedRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -205,7 +205,7 @@ export function registerIsolatedRoutes(app: Express) {
       }
 
       // For R2 URL access, allow if user is authenticated OR if it's an isolated request
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       // If user is authenticated, check ownership
       if (userId && contract.userId !== userId) {

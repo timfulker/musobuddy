@@ -11,7 +11,6 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-import { storeAuthToken } from '@/utils/authToken';
 import { useAuth } from '@/hooks/useAuth';
 
 
@@ -26,7 +25,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { signInWithGoogle, isLoading: firebaseLoading, error: firebaseError } = useAuth();
+  const { signInWithGoogle, signInWithEmail, isLoading: firebaseLoading, error: firebaseError } = useAuth();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -40,34 +39,30 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      // Use Firebase to sign in with email/password
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase');
+      console.log('🔥 Attempting login...');
+      await signInWithEmail(data.email, data.password);
       
-      console.log('🔥 Attempting Firebase login...');
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      
-      console.log('✅ Firebase login successful:', userCredential.user.uid);
-      
+      // The useAuth hook will handle token exchange and redirection automatically
+      // Only show success if we're still on the page (not redirected)
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
-
-      // The useFirebaseAuth hook will handle token exchange and redirection automatically
       
     } catch (error: any) {
-      console.error('❌ Firebase login failed:', error);
+      console.error('❌ Login failed:', error);
       
       let errorMessage = 'Login failed';
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Incorrect email or password';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address';
       } else if (error.code === 'auth/user-disabled') {
         errorMessage = 'This account has been disabled';
+      } else if (firebaseError) {
+        errorMessage = firebaseError;
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -174,7 +169,7 @@ export default function LoginPage() {
               variant="outline"
               type="button"
               className="w-full mt-4"
-              onClick={loginWithGoogle}
+              onClick={signInWithGoogle}
               disabled={firebaseLoading || isLoading}
             >
               {firebaseLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -16,7 +16,6 @@ import { Upload, FileText, Loader2, Eye, Download, Trash2, Plus, Receipt, File }
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { findActiveAuthToken } from "@/utils/authToken";
 
 interface BookingDocument {
   id: number;
@@ -67,11 +66,8 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
       formData.append('document', file);
       formData.append('documentType', documentType);
 
-      const authToken = localStorage.getItem('authToken') || findActiveAuthToken();
+      // Firebase auth is handled automatically
       const headers: any = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
 
       const response = await fetch(`/api/bookings/${booking.id}/documents`, {
         method: 'POST',

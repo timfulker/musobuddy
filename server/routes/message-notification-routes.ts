@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from '../core/storage';
 
 const router = Router();
 
 // Get all message notifications for user
-router.get('/notifications/messages', requireAuth, async (req: any, res) => {
+router.get('/notifications/messages', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     const isRead = req.query.isRead !== undefined ? req.query.isRead === 'true' : undefined;
     
     const notifications = await storage.getMessageNotifications(userId, isRead);
@@ -23,9 +23,9 @@ router.get('/notifications/messages', requireAuth, async (req: any, res) => {
 });
 
 // Get unread count for badge display
-router.get('/notifications/messages/count', requireAuth, async (req: any, res) => {
+router.get('/notifications/messages/count', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     
     const unreadNotifications = await storage.getMessageNotifications(userId, false);
     const count = unreadNotifications.length;
@@ -41,7 +41,7 @@ router.get('/notifications/messages/count', requireAuth, async (req: any, res) =
 });
 
 // Mark notification as read
-router.patch('/notifications/messages/:id/read', requireAuth, async (req: any, res) => {
+router.patch('/notifications/messages/:id/read', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
     const notificationId = parseInt(req.params.id);
     
@@ -62,7 +62,7 @@ router.patch('/notifications/messages/:id/read', requireAuth, async (req: any, r
 });
 
 // Delete notification
-router.delete('/notifications/messages/:id', requireAuth, async (req: any, res) => {
+router.delete('/notifications/messages/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
     const notificationId = parseInt(req.params.id);
     

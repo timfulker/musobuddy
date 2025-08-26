@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Loader2, Eye, EyeOff } from 'lucide-react';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SignupPage() {
@@ -22,7 +20,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
-  const { signInWithGoogle, isLoading: firebaseLoading, error: firebaseError } = useAuth();
+  const { signInWithGoogle, signUpWithEmail, isLoading: firebaseLoading, error: firebaseError } = useAuth();
 
   // Create Firebase account
   const handleCreateAccount = async (e: React.FormEvent) => {
@@ -42,28 +40,20 @@ export default function SignupPage() {
     setError('');
 
     try {
-      console.log('🔥 Creating Firebase account...', { email, firstName, lastName });
+      console.log('🔥 Creating account...', { email, firstName, lastName });
       
-      // Create Firebase user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Update user profile with display name
-      await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`.trim()
-      });
-
-      console.log('✅ Firebase account created:', user.uid);
+      // Use the auth hook to create account
+      await signUpWithEmail(email, password, firstName, lastName);
       
       toast({
         title: "Account created successfully!",
         description: "You'll be redirected to complete your subscription setup."
       });
 
-      // The useFirebaseAuth hook will handle the token exchange and payment redirect automatically
+      // The useAuth hook will handle the token exchange and payment redirect automatically
       
     } catch (err: any) {
-      console.error('❌ Firebase account creation failed:', err);
+      console.error('❌ Account creation failed:', err);
       let errorMessage = 'Failed to create account';
       
       // Handle specific Firebase auth errors
@@ -224,7 +214,7 @@ export default function SignupPage() {
                   variant="outline"
                   type="button"
                   className="w-full mt-4"
-                  onClick={loginWithGoogle}
+                  onClick={signInWithGoogle}
                   disabled={firebaseLoading || loading}
                 >
                   {firebaseLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

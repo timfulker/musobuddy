@@ -133,9 +133,10 @@ export function useAuth() {
       console.log('🔄 Starting email sign-in...');
       await signInWithEmailAndPassword(auth, email, password);
       // Auth state change will be handled by the useEffect above
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Email sign-in failed:', error);
-      setAuthState(prev => ({ ...prev, error: 'Email sign-in failed' }));
+      setAuthState(prev => ({ ...prev, error: error.message || 'Email sign-in failed' }));
+      throw error; // Re-throw to allow component to handle specific errors
     }
   };
 

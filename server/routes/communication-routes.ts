@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
 import { clientCommunications, bookings, userSettings } from '@shared/schema';
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { eq, desc, and } from 'drizzle-orm';
 import { services } from '../core/services';
 
 export function setupCommunicationRoutes(app: any) {
   // Save a communication record when an email/SMS is sent
-  app.post('/api/communications', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.post('/api/communications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -59,9 +59,9 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get communication history for a client
-  app.get('/api/communications/client/:email', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.get('/api/communications/client/:email', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -86,9 +86,9 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get communication history for a booking
-  app.get('/api/communications/booking/:bookingId', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.get('/api/communications/booking/:bookingId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         console.log('❌ No userId found in request');
         return res.status(401).json({ error: 'Authentication required' });
@@ -116,9 +116,9 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get all communications for the authenticated user
-  app.get('/api/communications', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.get('/api/communications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -143,9 +143,9 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for conversation page - get messages formatted for UI
-  app.get('/api/conversations/:bookingId', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.get('/api/conversations/:bookingId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -429,11 +429,11 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for sending replies in conversation
-  app.post('/api/conversations/reply', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.post('/api/conversations/reply', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
       console.log('📧 [CONVERSATION-REPLY] Starting conversation reply process...');
       
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       console.log('📧 [CONVERSATION-REPLY] User ID from token:', userId);
       
       if (!userId) {
@@ -659,9 +659,9 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for ignoring messages (marks them as read without responding)
-  app.post('/api/conversations/ignore', requireAuth, async (req: Request & { user?: any }, res: Response) => {
+  app.post('/api/conversations/ignore', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }

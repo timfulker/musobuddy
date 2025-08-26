@@ -4,7 +4,6 @@ import { storage } from "../core/storage";
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
-import { generateAuthToken, requireAuth } from '../middleware/auth';
 import { verifyFirebaseToken } from '../core/firebase-admin';
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
@@ -175,13 +174,9 @@ export function setupAuthRoutes(app: Express) {
       // Clean up pending verification from database
       await storage.deleteSmsVerification(email);
 
-      // Generate JWT token
-      const authToken = generateAuthToken(userId, pending.email, true);
-
       res.json({
         success: true,
         message: 'Account created successfully',
-        authToken,
         user: {
           userId,
           email: pending.email,
@@ -458,18 +453,15 @@ export function setupAuthRoutes(app: Express) {
         });
       }
 
-      // Generate JWT token only for paid users
-      const authToken = generateAuthToken(user.id, user.email || '', true);
       console.log('✅ Login successful for user:', email);
 
       res.json({
         success: true,
         message: 'Login successful',
-        authToken,
         user: {
           userId: user.id,
           email: user.email,
-          plan: userPlan
+          plan: user.tier || user.plan || 'free'
         }
       });
 
@@ -480,10 +472,10 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Change password endpoint
-  app.post('/api/auth/change-password', requireAuth, async (req: any, res) => {
+  app.post('/api/auth/change-password', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const userId = req.user.userId;
+      const userId = req.user?.id;
 
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Current password and new password are required' });
@@ -549,7 +541,7 @@ export function setupAuthRoutes(app: Express) {
   // Get current user endpoint - uses Firebase authentication
   app.get('/api/auth/user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.id;
       
       // Handle admin user from database
       const user = await storage.getUserById(userId);
@@ -574,9 +566,9 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Alias for /api/auth/user
-  app.get('/api/auth/me', requireAuth, async (req: any, res) => {
+  app.get('/api/auth/me', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.id;
       
       const user = await storage.getUserById(userId);
       if (!user) {
@@ -776,9 +768,9 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
-  app.get('/api/subscription/status', requireAuth, async (req: any, res) => {
+  app.get('/api/subscription/status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.id;
       console.log('📊 Auth route handling subscription status for userId:', userId);
       
       if (!userId) {
@@ -846,15 +838,11 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found. Please wait a moment and try again.' });
       }
       
-      // Generate JWT token for the user
-      const authToken = generateAuthToken(user.id, user.email || '', true);
-      
       console.log(`✅ Stripe login successful for user: ${user.id} (${user.email})`);
       
       res.json({
         success: true,
         message: 'Authentication successful',
-        authToken,
         user: {
           userId: user.id,
           email: user.email,
@@ -867,6 +855,68 @@ export function setupAuthRoutes(app: Express) {
     } catch (error) {
       console.error('Stripe login error:', error);
       res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
+  // Firebase signup endpoint - creates user after Firebase authentication
+  app.post('/api/auth/firebase-signup', async (req, res) => {
+    try {
+      const { idToken, firstName, lastName } = req.body;
+      
+      if (!idToken) {
+        return res.status(400).json({ error: 'Firebase ID token is required' });
+      }
+      
+      console.log('🔥 Firebase signup endpoint called');
+      
+      // Verify Firebase token
+      const firebaseUser = await verifyFirebaseToken(idToken);
+      if (!firebaseUser) {
+        return res.status(401).json({ error: 'Invalid Firebase token' });
+      }
+      
+      console.log('🔥 Firebase signup for user:', firebaseUser.email);
+      
+      // Check if user already exists
+      let user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      
+      if (!user) {
+        // Create new user from Firebase data
+        const userId = nanoid();
+        
+        user = await storage.createUser({
+          id: userId,
+          email: firebaseUser.email || '',
+          password: '', // Firebase users don't need password
+          firstName: firstName || firebaseUser.name?.split(' ')[0] || 'User',
+          lastName: lastName || firebaseUser.name?.split(' ').slice(1).join(' ') || '',
+          firebaseUid: firebaseUser.uid,
+          phoneVerified: firebaseUser.emailVerified || false,
+          isAdmin: isExemptUser(firebaseUser.email || ''),
+          tier: 'pending_payment',
+          createdAt: new Date()
+        });
+        
+        console.log('✅ New user created from Firebase signup:', user.id);
+      }
+      
+      res.json({
+        success: true,
+        user: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tier: user.tier
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Firebase signup error:', error);
+      res.status(500).json({ 
+        error: 'Account creation failed',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -971,10 +1021,10 @@ export function setupAuthRoutes(app: Express) {
   
   // Subscription watchdog endpoint - checks subscription status for periodic verification  
   console.log('🔍 REGISTERING WATCHDOG ROUTE: /api/subscription/watchdog-status');
-  app.get('/api/subscription/watchdog-status', requireAuth, async (req: any, res) => {
+  app.get('/api/subscription/watchdog-status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     console.log('🔍 WATCHDOG ENDPOINT HIT - userId:', req.user?.userId);
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.id;
       
       const user = await storage.getUserById(userId);
       if (!user) {

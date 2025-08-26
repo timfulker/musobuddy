@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import { storage } from "../core/storage";
-import { requireAuth } from "../middleware/auth";
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding
-  app.post('/api/onboarding/complete', requireAuth, async (req: any, res) => {
+  app.post('/api/onboarding/complete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const onboardingData = req.body;
 
       console.log('📋 Completing onboarding for user:', userId);
@@ -85,9 +85,9 @@ export function registerOnboardingRoutes(app: Express) {
   });
 
   // Get onboarding status
-  app.get('/api/onboarding/status', requireAuth, async (req: any, res) => {
+  app.get('/api/onboarding/status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(400).json({ error: 'User ID required' });

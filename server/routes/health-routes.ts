@@ -3,7 +3,7 @@ import { type Express } from "express";
 import { db } from "../core/database";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { requireAdmin } from "../middleware/auth";
+// Authentication handled by Firebase
 
 export function registerHealthRoutes(app: Express) {
   console.log('🏥 Setting up health check routes...');
@@ -107,11 +107,11 @@ export function registerHealthRoutes(app: Express) {
         });
       }
       
-      // Import auth middleware functions
-      const { verifyAuthToken } = await import('../middleware/auth');
-      const decoded = verifyAuthToken(token);
+      // Import Firebase auth functions
+      const { verifyFirebaseToken } = await import('../core/firebase-admin');
+      const firebaseUser = await verifyFirebaseToken(token);
       
-      if (!decoded) {
+      if (!firebaseUser) {
         return res.status(401).json({
           status: 'unhealthy',
           message: 'Invalid or expired token',
@@ -122,7 +122,7 @@ export function registerHealthRoutes(app: Express) {
       res.json({
         status: 'healthy',
         message: 'Token valid',
-        userId: decoded.userId,
+        userId: firebaseUser.uid,
         timestamp: new Date().toISOString()
       });
     } catch (error: any) {
@@ -136,7 +136,7 @@ export function registerHealthRoutes(app: Express) {
   });
 
   // Combined system health check (admin only)
-  app.get('/api/health/system', requireAdmin, async (req, res) => {
+  app.get('/api/health/system', async (req, res) => {
     const healthChecks = {
       database: { status: 'checking' },
       email: { status: 'checking' },

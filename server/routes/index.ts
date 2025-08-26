@@ -28,7 +28,7 @@ import bookingDocumentRoutes from "./booking-document-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
 // AI token routes removed - unlimited AI usage for all users
 
-import { requireAuth } from '../middleware/auth';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { storage } from "../core/storage";
 
 export async function registerRoutes(app: Express) {
@@ -99,9 +99,9 @@ export async function registerRoutes(app: Express) {
   // AI token routes removed - unlimited AI usage for all users
   
   // Conflict management endpoints
-  app.get('/api/conflicts', requireAuth, async (req: any, res) => {
+  app.get('/api/conflicts', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -118,9 +118,9 @@ export async function registerRoutes(app: Express) {
     }
   });
   
-  app.get('/api/conflicts/resolutions', requireAuth, async (req: any, res) => {
+  app.get('/api/conflicts/resolutions', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
@@ -143,9 +143,9 @@ export async function registerRoutes(app: Express) {
   });
   
   // Conflict resolution endpoint
-  app.post('/api/conflicts/resolve', requireAuth, async (req: any, res) => {
+  app.post('/api/conflicts/resolve', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const { bookingIds, resolution, notes } = req.body;
       
       if (!userId) {
@@ -181,9 +181,9 @@ export async function registerRoutes(app: Express) {
   // Compliance routes now handled by registerComplianceRoutes
 
   // Dashboard stats endpoint
-  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
+  app.get('/api/dashboard/stats', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
