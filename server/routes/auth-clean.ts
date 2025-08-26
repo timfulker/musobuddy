@@ -827,6 +827,7 @@ export function setupAuthRoutes(app: Express) {
         firebaseUid: firebaseUser.uid,
         phoneVerified: firebaseUser.emailVerified || false,
         isAdmin: false,
+        isBetaTester: isBetaUser,
         tier: isBetaUser ? 'standard' : 'pending_payment',
         stripeCustomerId: stripeCustomerId,
         createdAt: new Date()
