@@ -766,7 +766,7 @@ export function setupAuthRoutes(app: Express) {
       
       try {
         const Stripe = (await import('stripe')).default;
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { 
+        const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
           apiVersion: '2024-12-18.acacia' 
         });
         
@@ -852,6 +852,65 @@ export function setupAuthRoutes(app: Express) {
       console.error('❌ Firebase signup error:', error);
       res.status(500).json({ 
         error: 'Account creation failed',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Create Stripe checkout session for regular users
+  app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+      const { userEmail, userId } = req.body;
+      
+      if (!userEmail || !userId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
+        apiVersion: '2024-12-18.acacia' 
+      });
+      
+      console.log('🔄 Creating checkout session for:', userEmail);
+      
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        customer_email: userEmail,
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'gbp',
+            product_data: {
+              name: 'MusoBuddy Subscription',
+              description: 'Monthly subscription to MusoBuddy'
+            },
+            unit_amount: 2500, // £25.00 in pence
+            recurring: {
+              interval: 'month'
+            }
+          },
+          quantity: 1
+        }],
+        mode: 'subscription',
+        success_url: `${req.headers.origin}/wizard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/signup`,
+        metadata: {
+          userId: userId,
+          userEmail: userEmail
+        }
+      });
+      
+      console.log('✅ Checkout session created:', session.id);
+      
+      res.json({ 
+        url: session.url,
+        sessionId: session.id 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Checkout session creation failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to create checkout session',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }

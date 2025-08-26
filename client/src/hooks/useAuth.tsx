@@ -79,6 +79,8 @@ export function useAuth() {
       const data = await response.json();
       console.log('✅ User created in database:', data.user);
       
+      return data; // Return user data for routing decisions
+      
     } catch (error: any) {
       console.error('❌ Email signup failed:', error);
       setAuthState(prev => ({ ...prev, error: error.message }));

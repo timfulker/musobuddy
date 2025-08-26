@@ -43,14 +43,50 @@ export default function SignupPage() {
       console.log('🔥 Creating account...', { email, firstName, lastName });
       
       // Use the auth hook to create account
-      await signUpWithEmail(email, password, firstName, lastName);
+      const result = await signUpWithEmail(email, password, firstName, lastName);
       
-      toast({
-        title: "Account created successfully!",
-        description: "You'll be redirected to complete your subscription setup."
-      });
-
-      // The useAuth hook will handle the token exchange and payment redirect automatically
+      console.log('🔍 Signup result:', result);
+      
+      if (result?.user?.isBeta || result?.user?.status === 'standard') {
+        // Beta user - immediate access to dashboard
+        toast({
+          title: "Welcome, Beta Tester!",
+          description: "You have immediate access to all features."
+        });
+        
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
+      } else {
+        // Regular user - needs to complete payment
+        toast({
+          title: "Account created successfully!",
+          description: "Redirecting to complete your subscription..."
+        });
+        
+        // Create Stripe checkout session for regular user
+        setTimeout(async () => {
+          try {
+            const checkoutResponse = await fetch('/api/create-checkout-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                userEmail: email,
+                userId: result.user.userId 
+              })
+            });
+            
+            const checkoutData = await checkoutResponse.json();
+            if (checkoutData.url) {
+              window.location.href = checkoutData.url;
+            } else {
+              console.error('No checkout URL received:', checkoutData);
+            }
+          } catch (error) {
+            console.error('❌ Checkout creation failed:', error);
+          }
+        }, 1500);
+      }
       
     } catch (err: any) {
       console.error('❌ Account creation failed:', err);
