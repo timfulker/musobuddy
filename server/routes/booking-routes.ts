@@ -11,8 +11,8 @@ import OpenAI from 'openai';
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
-  // Get all bookings for authenticated user (requires subscription)
-  app.get('/api/bookings', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
+  // Get all bookings for authenticated user
+  app.get('/api/bookings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
