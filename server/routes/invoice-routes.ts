@@ -93,8 +93,8 @@ export function registerInvoiceRoutes(app: Express) {
   // REMOVED: MusoBuddy invoice view endpoint - files are viewed directly on R2
   // Security is handled through random tokens in the R2 URL paths
 
-  // Get all invoices for authenticated user (requires subscription)
-  app.get('/api/invoices', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
+  // Get all invoices for authenticated user
+  app.get('/api/invoices', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       if (!userId) {
@@ -110,8 +110,8 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
-  // Create new invoice (requires subscription)
-  app.post('/api/invoices', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
+  // Create new invoice
+  app.post('/api/invoices', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       if (!userId) {

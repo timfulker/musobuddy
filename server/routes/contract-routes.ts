@@ -187,8 +187,8 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
-  // Get all contracts for authenticated user (requires subscription)
-  app.get('/api/contracts', authenticateWithFirebasePaid, async (req: AuthenticatedRequest, res) => {
+  // Get all contracts for authenticated user
+  app.get('/api/contracts', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       const contracts = await storage.getContracts(userId);
