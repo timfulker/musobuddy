@@ -11,8 +11,19 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
+interface DatabaseUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isAdmin: boolean;
+  isBetaTester: boolean;
+  tier: string;
+  // Add other database user fields as needed
+}
+
 interface AuthState {
-  user: User | null;
+  user: (User & Partial<DatabaseUser>) | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
@@ -27,14 +38,61 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('🔥 CLEAN auth state:', user?.email || 'no user');
-      setAuthState({
-        user,
-        isLoading: false,
-        isAuthenticated: !!user,
-        error: null
-      });
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔥 CLEAN auth state:', firebaseUser?.email || 'no user');
+      
+      if (firebaseUser) {
+        try {
+          // Fetch database user data
+          const token = await firebaseUser.getIdToken();
+          const response = await fetch('/api/auth/user', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const databaseUser = await response.json();
+            console.log('✅ Database user fetched:', { email: databaseUser.email, isAdmin: databaseUser.isAdmin });
+            
+            // Merge Firebase user with database user data
+            const mergedUser = {
+              ...firebaseUser,
+              ...databaseUser
+            };
+            
+            setAuthState({
+              user: mergedUser,
+              isLoading: false,
+              isAuthenticated: true,
+              error: null
+            });
+          } else {
+            console.warn('⚠️ Failed to fetch database user, using Firebase user only');
+            setAuthState({
+              user: firebaseUser,
+              isLoading: false,
+              isAuthenticated: true,
+              error: null
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error fetching database user:', error);
+          setAuthState({
+            user: firebaseUser,
+            isLoading: false,
+            isAuthenticated: true,
+            error: null
+          });
+        }
+      } else {
+        setAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          error: null
+        });
+      }
     });
 
     return unsubscribe;
