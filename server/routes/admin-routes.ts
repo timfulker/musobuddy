@@ -2,13 +2,14 @@
  * Admin routes for bulk re-processing and system maintenance
  */
 
-import { Router } from 'express';
+import { type Express } from 'express';
 import { storage } from '../core/storage';
 
-const router = Router();
-
+// Export the registration function for the routes/index.ts file
+export async function registerAdminRoutes(app: Express) {
+  
 // Manual re-process selected bookings endpoint  
-router.post('/api/admin/reprocess-bookings', async (req, res) => {
+app.post('/api/admin/reprocess-bookings', async (req, res) => {
   try {
     const { bookingIds } = req.body;
     
@@ -191,7 +192,7 @@ router.post('/api/admin/reprocess-bookings', async (req, res) => {
 });
 
 // Get list of problematic bookings for review
-router.get('/api/admin/problematic-bookings', async (req, res) => {
+app.get('/api/admin/problematic-bookings', async (req, res) => {
   try {
     const allBookings = await storage.getAllBookings();
     
@@ -247,7 +248,7 @@ router.get('/api/admin/problematic-bookings', async (req, res) => {
 });
 
 // Link Firebase UID to existing database user
-router.post('/api/admin/link-firebase-user', async (req, res) => {
+app.post('/api/admin/link-firebase-user', async (req, res) => {
   try {
     const { email, firebaseUid } = req.body;
     
@@ -299,9 +300,4 @@ router.post('/api/admin/link-firebase-user', async (req, res) => {
   }
 });
 
-// Export the registration function for the routes/index.ts file
-export async function registerAdminRoutes(app: any) {
-  app.use(router);
 }
-
-export default router;
