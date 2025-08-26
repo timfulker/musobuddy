@@ -32,9 +32,14 @@ function createEnvironmentConfig(): EnvironmentConfig {
   let corsOrigin: string;
   
   if (isProduction) {
-    // Production deployment
-    appServerUrl = 'https://musobuddy.replit.app';
-    corsOrigin = 'https://musobuddy.replit.app';
+    // Production deployment - support both domains
+    // Check if custom domain is being used via headers (set by proxy/CDN)
+    const customDomain = process.env.CUSTOM_DOMAIN || 'www.musobuddy.com';
+    const replitDomain = 'musobuddy.replit.app';
+    
+    // Default to custom domain, but this will be overridden by actual request host
+    appServerUrl = `https://${customDomain}`;
+    corsOrigin = [`https://${customDomain}`, `https://${replitDomain}`];
   } else if (process.env.REPLIT_DEV_DOMAIN) {
     // Replit development
     appServerUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;

@@ -20,12 +20,15 @@ if (process.env.STRIPE_TEST_SECRET_KEY) {
 export class StripeService {
   private stripe = stripe;
 
-  async createNewUserTrialSession(email: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI', userId?: string) {
+  async createNewUserTrialSession(email: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI', userId?: string, requestHost?: string) {
     if (!this.stripe) {
       throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
+      // Determine the correct base URL
+      const baseUrl = requestHost ? `https://${requestHost}` : ENV.appServerUrl;
+      
       // Create checkout session for new user with 30-day trial
       // User account will be created after successful payment via webhook
       const session = await this.stripe.checkout.sessions.create({
@@ -46,8 +49,8 @@ export class StripeService {
             ...(userId && { userId })
           },
         },
-        success_url: `https://musobuddy.replit.app/trial-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `https://musobuddy.replit.app/pricing`,
+        success_url: `${baseUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/pricing`,
         metadata: {
           userEmail: email,
           trial_type: 'core_monthly',
@@ -65,7 +68,7 @@ export class StripeService {
     }
   }
 
-  async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
+  async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI', requestHost?: string) {
     if (!this.stripe) {
       throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
     }
@@ -75,6 +78,9 @@ export class StripeService {
       if (!user) {
         throw new Error('User not found');
       }
+
+      // Determine the correct base URL
+      const baseUrl = requestHost ? `https://${requestHost}` : ENV.appServerUrl;
 
       // Create or get Stripe customer
       let customerId = user.stripeCustomerId;
@@ -112,8 +118,8 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `https://musobuddy.replit.app/trial-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `https://musobuddy.replit.app/pricing`,
+        success_url: `${baseUrl}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/pricing`,
         metadata: {
           userId: userId,
           userEmail: user.email || '',
@@ -130,9 +136,9 @@ export class StripeService {
     }
   }
 
-  async createCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
+  async createCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI', requestHost?: string) {
     // Legacy method for non-trial subscriptions
-    return this.createTrialCheckoutSession(userId, priceId);
+    return this.createTrialCheckoutSession(userId, priceId, requestHost);
   }
 
   async getSessionDetails(sessionId: string) {

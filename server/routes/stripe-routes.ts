@@ -34,7 +34,9 @@ export function registerStripeRoutes(app: Express) {
 
       console.log('🔥 Creating trial checkout session for new user:', email);
 
-      const result = await stripeService.createNewUserTrialSession(email, priceId);
+      // Get the host from request headers for dynamic URL generation
+      const host = req.get('host') || req.headers.host;
+      const result = await stripeService.createNewUserTrialSession(email, priceId, undefined, host);
       
       console.log('🔥 Trial session created:', result.sessionId);
       
@@ -70,8 +72,10 @@ export function registerStripeRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // Get the host from request headers for dynamic URL generation
+      const host = req.get('host') || req.headers.host;
       // Create Stripe checkout session
-      const result = await stripeService.createNewUserTrialSession(email, priceId, userId);
+      const result = await stripeService.createNewUserTrialSession(email, priceId, userId, host);
       
       console.log('🔥 Checkout session created for user:', userId, 'sessionId:', result.sessionId);
       
@@ -175,7 +179,9 @@ export function registerStripeRoutes(app: Express) {
 
       console.log('🔥 Creating checkout session for user:', userId, 'priceId:', priceId);
 
-      const result = await stripeService.createTrialCheckoutSession(userId, priceId);
+      // Get the host from request headers for dynamic URL generation
+      const host = req.get('host') || req.headers.host;
+      const result = await stripeService.createTrialCheckoutSession(userId, priceId, host);
       
       console.log('🔥 Checkout session created:', result.sessionId);
       
