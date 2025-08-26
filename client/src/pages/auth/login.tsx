@@ -12,7 +12,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 import { storeAuthToken } from '@/utils/authToken';
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 
 const loginSchema = z.object({
@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { loginWithGoogle, loading: firebaseLoading, error: firebaseError } = useFirebaseAuth();
+  const { signInWithGoogle, isLoading: firebaseLoading, error: firebaseError } = useAuth();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),

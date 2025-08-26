@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/firebase';
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -22,7 +22,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
-  const { loginWithGoogle, loading: firebaseLoading, error: firebaseError } = useFirebaseAuth();
+  const { signInWithGoogle, isLoading: firebaseLoading, error: firebaseError } = useAuth();
 
   // Create Firebase account
   const handleCreateAccount = async (e: React.FormEvent) => {
