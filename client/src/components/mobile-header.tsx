@@ -49,7 +49,7 @@ export default function MobileHeader() {
             {getPageTitle()}
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 leading-none mt-0.5">
-            {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email}
+            {user?.displayName || user?.email}
           </p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function MobileHeader() {
                 <div>
                   <h2 className="font-semibold text-lg">MusoBuddy</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email}
+                    {user?.displayName || user?.email}
                   </p>
                 </div>
               </div>

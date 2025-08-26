@@ -33,11 +33,10 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   }
 
   // Only show onboarding wizard if:
-  // 1. User has completed Stripe verification
-  // 2. User hasn't completed onboarding
-  // 3. User hasn't dismissed the wizard
+  // 1. User hasn't completed onboarding
+  // 2. User hasn't dismissed the wizard
+  // (Stripe verification removed - all authenticated users can access onboarding)
   const shouldShowWizard = onboardingStatus && 
-    onboardingStatus.stripeVerified && 
     !onboardingStatus.onboardingCompleted && 
     !wizardDismissed;
 
@@ -47,7 +46,12 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
         {children}
         <OnboardingWizard 
           isOpen={true} 
-          onComplete={() => window.location.reload()}
+          onComplete={() => {
+            // Don't reload page - just mark as dismissed to hide wizard
+            setWizardDismissed(true);
+            // Optionally trigger a query invalidation to update status
+            // window.location.reload(); // REMOVED - causes auth state loss
+          }}
           onDismiss={() => setWizardDismissed(true)}
           user={user}
         />

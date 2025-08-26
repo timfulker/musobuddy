@@ -42,12 +42,15 @@ export default function LoginPage() {
       console.log('🔥 Attempting login...');
       await signInWithEmail(data.email, data.password);
       
-      // The useAuth hook will handle token exchange and redirection automatically
-      // Only show success if we're still on the page (not redirected)
+      console.log('✅ Login successful, redirecting to dashboard...');
+      
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
+      
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard';
       
     } catch (error: any) {
       console.error('❌ Login failed:', error);

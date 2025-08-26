@@ -237,7 +237,7 @@ export default function TrialSuccessPage() {
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-gray-600 dark:text-gray-300 mb-2">
-                Welcome to MusoBuddy, <span className="font-semibold">{user.firstName}</span>!
+                Welcome to MusoBuddy, <span className="font-semibold">{user.displayName || user.email}</span>!
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Your account setup is complete and your free trial has started!

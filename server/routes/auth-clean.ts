@@ -213,151 +213,52 @@ export function setupAuthRoutes(app: Express) {
     res.json({ diagnostics });
   });
 
-  // Firebase login endpoint - verifies token and creates/finds user
-  app.post('/api/auth/firebase-login', async (req, res) => {
-    console.log('🔥 Firebase login endpoint called');
+  // DATABASE INSPECTION ENDPOINT - Check user records
+  app.get('/api/auth/inspect-users', async (req, res) => {
     try {
-      console.log('🔥 Firebase login endpoint hit');
-      console.log('📦 Request body keys:', Object.keys(req.body || {}));
+      console.log('🔍 Inspecting all user records...');
       
-      const { idToken } = req.body;
-
-      if (!idToken) {
-        console.log('❌ No idToken provided in request body');
-        return res.status(400).json({ error: 'Firebase ID token is required' });
-      }
-
-      console.log('🔥 Firebase login attempt with token length:', idToken?.length);
-      console.log('🔥 Token type:', typeof idToken);
-
-      // Verify Firebase token with comprehensive error handling
-      let firebaseUser;
-      try {
-        firebaseUser = await verifyFirebaseToken(idToken);
-      } catch (verifyError: any) {
-        console.error('❌ Firebase token verification threw error:', verifyError);
-        return res.status(500).json({ 
-          error: 'Firebase verification failed',
-          details: process.env.NODE_ENV === 'development' ? verifyError.message : undefined
-        });
-      }
+      // Get all users with key fields
+      const allUsers = await storage.getAllUsers();
       
-      if (!firebaseUser) {
-        console.log('❌ Firebase user verification returned null');
-        return res.status(401).json({ error: 'Invalid Firebase token' });
-      }
-
-      console.log('🔥 Firebase token verified for user:', firebaseUser.uid);
-
-      // Get user from database using Firebase UID - with error handling
-      let user;
-      try {
-        if (typeof storage.getUserByFirebaseUid !== 'function') {
-          console.error('❌ getUserByFirebaseUid function not available');
-          return res.status(500).json({ error: 'Database function missing' });
-        }
-        user = await storage.getUserByFirebaseUid(firebaseUser.uid);
-      } catch (dbError: any) {
-        console.error('❌ Database lookup failed:', dbError);
-        return res.status(500).json({ 
-          error: 'Database lookup failed',
-          details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
-        });
-      }
-
-      if (!user) {
-        // Create new user from Firebase data
-        const userId = nanoid();
-        
-        let newUser;
-        try {
-          newUser = await storage.createUser({
-            id: userId,
-            email: firebaseUser.email || '',
-            password: '', // Firebase users don't need password
-            firstName: firebaseUser.name?.split(' ')[0] || 'User',
-            lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
-            firebaseUid: firebaseUser.uid,
-            phoneVerified: firebaseUser.emailVerified || false,
-            isAdmin: isExemptUser(firebaseUser.email || ''),
-            tier: 'pending_payment',
-            createdAt: new Date()
-          });
-        } catch (createError: any) {
-          console.error('❌ User creation failed:', createError);
-          return res.status(500).json({ 
-            error: 'User creation failed',
-            details: process.env.NODE_ENV === 'development' ? createError.message : undefined
-          });
-        }
-
-        user = newUser;
-        console.log('✅ New user created from Firebase:', user.id);
-        
-        // STRIPE INTEGRATION REMOVED - Allow all users access for now
-        // New users get full access until payment system is reimplemented
-        console.log('✅ New user created, granting full access (payment system disabled)');
-      }
-
-      // HOTFIX: Update isAdmin field for tim@timfulker.com since it was incorrectly set earlier
-      if (user.email === 'tim@timfulker.com' && user.isAdmin) {
-        console.log('🔧 Hotfix: Correcting isAdmin flag for tim@timfulker.com');
-        try {
-          await storage.updateUser(user.id, { isAdmin: false });
-          user.isAdmin = false;
-          console.log('✅ Hotfix successful: isAdmin set to false');
-        } catch (hotfixError) {
-          console.error('❌ Hotfix failed:', hotfixError);
-          // Continue without hotfix - don't crash the login
-        }
-      }
-
-      // STRIPE INTEGRATION REMOVED - All users get access for now
-      // Payment checking disabled until new Stripe integration is implemented
-      console.log('✅ Payment checking disabled - granting access to all users');
-
-      // STRIPE INTEGRATION REMOVED - No payment required
-      const needsPayment = false; // Always false until payment system is reimplemented
-      
-      console.log('✅ Authentication successful:', {
+      const userSummaries = allUsers.map(user => ({
+        id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        firebaseUid: user.firebaseUid,
+        isActive: user.isActive,
         tier: user.tier,
-        isAdmin: user.isAdmin,
-        stripeCustomerId: user.stripeCustomerId,
-        createdViaStripe: user.createdViaStripe,
-        stripeSubscriptionId: user.stripeSubscriptionId,
-        isSubscribed: user.isSubscribed,
         plan: user.plan,
-        needsPayment
+        isAdmin: user.isAdmin,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt
+      }));
+      
+      console.log(`Found ${userSummaries.length} users:`, userSummaries);
+      
+      res.json({ 
+        count: userSummaries.length,
+        users: userSummaries 
       });
-
-      res.json({
-        success: true,
-        user: {
-          userId: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isAdmin: user.isAdmin || false,
-          tier: user.tier,
-          stripeCustomerId: user.stripeCustomerId,
-          isSubscribed: user.isSubscribed
-        },
-        paymentRequired: needsPayment
-      });
-
-    } catch (error: any) {
-      console.error('❌ Firebase login error:', {
-        message: error.message,
-        stack: error.stack,
-        code: error.code
-      });
+      
+    } catch (error) {
+      console.error('❌ User inspection failed:', error);
       res.status(500).json({ 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Failed to inspect users',
+        details: error.message 
       });
     }
   });
+
+  // DISABLED: Firebase auth is now handled client-side only
+  // app.post('/api/auth/firebase-login', async (req, res) => {
+  //   console.log('🔥 Firebase login endpoint called (deprecated - auth handled client-side)');
+  //   res.json({
+  //     success: true,
+  //     message: 'Authentication now handled entirely client-side with Firebase'
+  //   });
+  // });
 
   // Login endpoint - temporarily bypass rate limiting for debugging
   app.post('/api/auth/login', async (req, res) => {
@@ -831,16 +732,16 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Firebase signup endpoint - creates user after Firebase authentication
+  // NEW: Clean Firebase signup with database creation and beta user detection
   app.post('/api/auth/firebase-signup', async (req, res) => {
     try {
       const { idToken, firstName, lastName } = req.body;
       
-      if (!idToken) {
-        return res.status(400).json({ error: 'Firebase ID token is required' });
+      if (!idToken || !firstName || !lastName) {
+        return res.status(400).json({ error: 'Missing required fields' });
       }
       
-      console.log('🔥 Firebase signup endpoint called');
+      console.log('🔥 Processing Firebase signup...');
       
       // Verify Firebase token
       const firebaseUser = await verifyFirebaseToken(idToken);
@@ -848,40 +749,102 @@ export function setupAuthRoutes(app: Express) {
         return res.status(401).json({ error: 'Invalid Firebase token' });
       }
       
-      console.log('🔥 Firebase signup for user:', firebaseUser.email);
+      console.log('✅ Firebase token verified for:', firebaseUser.email);
       
-      // Check if user already exists
-      let user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      // Check if user already exists in database
+      const existingUser = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      if (existingUser) {
+        return res.status(409).json({ 
+          error: 'Account already exists',
+          redirect: '/login' 
+        });
+      }
       
-      if (!user) {
-        // Create new user from Firebase data
-        const userId = nanoid();
-        
-        user = await storage.createUser({
-          id: userId,
-          email: firebaseUser.email || '',
-          password: '', // Firebase users don't need password
-          firstName: firstName || firebaseUser.name?.split(' ')[0] || 'User',
-          lastName: lastName || firebaseUser.name?.split(' ').slice(1).join(' ') || '',
-          firebaseUid: firebaseUser.uid,
-          phoneVerified: firebaseUser.emailVerified || false,
-          isAdmin: isExemptUser(firebaseUser.email || ''),
-          tier: 'pending_payment',
-          createdAt: new Date()
+      // Check if user is a beta tester in Stripe
+      let isBetaUser = false;
+      let stripeCustomerId = null;
+      
+      try {
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { 
+          apiVersion: '2024-12-18.acacia' 
         });
         
-        console.log('✅ New user created from Firebase signup:', user.id);
+        console.log('🔍 Checking Stripe for beta customer with email:', firebaseUser.email);
+        console.log('🔑 Using Stripe key starting with:', process.env.STRIPE_SECRET_KEY?.substring(0, 12));
+        const customers = await stripe.customers.list({
+          email: firebaseUser.email,
+          limit: 1
+        });
+        
+        console.log('📋 Stripe API returned:', customers.data.length, 'customers');
+        
+        if (customers.data.length > 0) {
+          const customer = customers.data[0];
+          console.log('🎯 Found Stripe customer:', customer.id);
+          
+          // Check if customer has beta metadata or subscription
+          if (customer.metadata?.is_beta === 'true') {
+            isBetaUser = true;
+            stripeCustomerId = customer.id;
+            console.log('✅ Beta user detected via metadata');
+          } else {
+            // Check for beta subscription
+            const subscriptions = await stripe.subscriptions.list({
+              customer: customer.id,
+              limit: 10
+            });
+            
+            const hasBetaSubscription = subscriptions.data.some(sub => 
+              sub.items.data.some(item => 
+                item.price.product === 'beta' || 
+                item.price.nickname?.toLowerCase().includes('beta')
+              )
+            );
+            
+            if (hasBetaSubscription) {
+              isBetaUser = true;
+              stripeCustomerId = customer.id;
+              console.log('✅ Beta user detected via subscription');
+            }
+          }
+        }
+      } catch (stripeError) {
+        console.error('⚠️ Stripe check failed, continuing as regular user:', stripeError);
+        console.error('⚠️ Error details:', stripeError.message);
+        console.error('⚠️ Error type:', stripeError.type);
+        // Continue without beta status if Stripe fails
       }
+      
+      // Create user in database with appropriate status
+      const userId = nanoid();
+      const newUser = await storage.createUser({
+        id: userId,
+        email: firebaseUser.email || '',
+        password: '', // Firebase users don't need password
+        firstName,
+        lastName,
+        firebaseUid: firebaseUser.uid,
+        phoneVerified: firebaseUser.emailVerified || false,
+        isAdmin: false,
+        tier: isBetaUser ? 'standard' : 'pending_payment',
+        stripeCustomerId: stripeCustomerId,
+        createdAt: new Date()
+      });
+      
+      console.log(`✅ User created in database: ${userId} (${isBetaUser ? 'BETA' : 'REGULAR'})`);
       
       res.json({
         success: true,
         user: {
-          userId: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          tier: user.tier
-        }
+          userId: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          status: newUser.tier,
+          isBeta: isBetaUser
+        },
+        requiresPayment: !isBetaUser
       });
       
     } catch (error: any) {
