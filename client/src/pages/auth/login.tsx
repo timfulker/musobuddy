@@ -42,7 +42,7 @@ export default function LoginPage() {
     try {
       // Use Firebase to sign in with email/password
       const { signInWithEmailAndPassword } = await import('firebase/auth');
-      const { auth } = await import('@/firebase');
+      const { auth } = await import('@/lib/firebase');
       
       console.log('🔥 Attempting Firebase login...');
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);

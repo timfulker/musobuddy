@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/firebase';
+import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SignupPage() {
