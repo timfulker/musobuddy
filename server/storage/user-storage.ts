@@ -184,6 +184,7 @@ export class UserStorage {
     phoneVerified?: boolean;
     tier?: string;
     isAdmin?: boolean;
+    isBetaTester?: boolean;
     quickAddToken?: string;
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
@@ -201,6 +202,7 @@ export class UserStorage {
       phoneVerified: data.phoneVerified || false,
       tier: data.tier || 'free',
       isAdmin: data.isAdmin || false,
+      isBetaTester: data.isBetaTester || false,
       quickAddToken: data.quickAddToken,
       emailPrefix: data.emailPrefix,
       stripeCustomerId: data.stripeCustomerId,
