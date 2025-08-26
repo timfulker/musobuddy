@@ -944,6 +944,12 @@ app.get('/api/email-queue/status', async (req, res) => {
     }
   });
 
+  // Apply global subscription protection to all API routes
+  console.log('🔒 Setting up global subscription protection...');
+  const { subscriptionGuard } = await import('./middleware/subscription-guard');
+  app.use(subscriptionGuard);
+  console.log('✅ Global subscription guard active for all /api/* routes');
+
   // Register all API routes
   console.log('🔄 Registering all modular routes...');
   const { registerRoutes } = await import('./routes');
