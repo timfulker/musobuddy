@@ -300,4 +300,163 @@ app.post('/api/admin/link-firebase-user', async (req, res) => {
   }
 });
 
+// Create new user endpoint for admin panel
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    const { 
+      email, 
+      firstName, 
+      lastName, 
+      password, 
+      firebaseUid, 
+      tier, 
+      isAdmin, 
+      isBetaTester, 
+      phoneVerified 
+    } = req.body;
+    
+    if (!email || !firstName || !lastName || !password) {
+      return res.status(400).json({ 
+        error: 'Email, first name, last name, and password are required' 
+      });
+    }
+    
+    console.log(`🔧 [ADMIN] Creating new user: ${email}`);
+    
+    // Check if user already exists
+    const existingUser = await storage.getUserByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({ 
+        error: `User with email ${email} already exists` 
+      });
+    }
+    
+    // If firebaseUid provided, check if it's already linked
+    if (firebaseUid) {
+      const existingFirebaseUser = await storage.getUserByFirebaseUid(firebaseUid);
+      if (existingFirebaseUser) {
+        return res.status(409).json({ 
+          error: `Firebase UID ${firebaseUid} is already linked to another user: ${existingFirebaseUser.email}` 
+        });
+      }
+    }
+    
+    // Hash password
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Generate user ID
+    const { nanoid } = await import('nanoid');
+    const userId = nanoid();
+    
+    // Create user data
+    const userData = {
+      id: userId,
+      email,
+      firstName,
+      lastName,
+      password: hashedPassword,
+      firebaseUid: firebaseUid || null,
+      tier: tier || 'free',
+      isAdmin: isAdmin || false,
+      isBetaTester: isBetaTester || false,
+      phoneVerified: phoneVerified || false,
+      isActive: true,
+      onboardingCompleted: false
+    };
+    
+    // Create user in database
+    const newUser = await storage.createUser(userData);
+    
+    console.log(`✅ [ADMIN] Successfully created user ${email} (ID: ${userId})`);
+    if (firebaseUid) {
+      console.log(`🔗 [ADMIN] Firebase UID ${firebaseUid} linked during creation`);
+    }
+    
+    res.json({
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        tier: newUser.tier,
+        isAdmin: newUser.isAdmin,
+        isBetaTester: newUser.isBetaTester,
+        firebaseUid: newUser.firebaseUid
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to create user:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get all users endpoint for admin panel
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    console.log('📋 [ADMIN] Fetching all users for admin panel');
+    
+    const allUsers = await storage.getAllUsers();
+    
+    // Return user data without sensitive information
+    const sanitizedUsers = allUsers.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      tier: user.tier,
+      isAdmin: user.isAdmin,
+      isBetaTester: user.isBetaTester,
+      betaStartDate: user.betaStartDate,
+      betaEndDate: user.betaEndDate,
+      betaFeedbackCount: user.betaFeedbackCount,
+      createdAt: user.createdAt,
+      firebaseUid: user.firebaseUid
+    }));
+    
+    res.json(sanitizedUsers);
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to fetch users:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get admin overview endpoint
+app.get('/api/admin/overview', async (req, res) => {
+  try {
+    console.log('📊 [ADMIN] Fetching admin overview');
+    
+    // Get basic counts
+    const totalUsers = await storage.getTotalUserCount();
+    const totalBookings = await storage.getTotalBookingCount();
+    const totalContracts = await storage.getTotalContractCount();
+    const totalInvoices = await storage.getTotalInvoiceCount();
+    
+    res.json({
+      totalUsers,
+      totalBookings,
+      totalContracts,
+      totalInvoices,
+      systemHealth: 'healthy',
+      databaseStatus: 'connected'
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to fetch overview:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 }
