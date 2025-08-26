@@ -12,7 +12,7 @@ export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
   // Get all bookings for authenticated user
-  app.get('/api/bookings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/bookings', authenticateWithFirebase, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -124,7 +124,7 @@ export function registerBookingRoutes(app: Express) {
   }));
 
   // Update booking
-  app.patch('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.patch('/api/bookings/:id', authenticateWithFirebase, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -167,7 +167,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Delete booking
-  app.delete('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.delete('/api/bookings/:id', authenticateWithFirebase, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -192,7 +192,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Get individual booking
-  app.get('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/bookings/:id', authenticateWithFirebase, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -214,7 +214,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Extract details from message content using AI
-  app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, requireSubscriptionOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
