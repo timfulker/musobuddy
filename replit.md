@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a platform designed to streamline administrative tasks for musicians, including bookings, contracts, and invoices. Its core purpose is to reduce administrative burden, allowing musicians to focus on creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists by providing a comprehensive, integrated suite of tools with significant market potential.
+MusoBuddy is a platform designed to streamline administrative tasks for musicians, including bookings, contracts, and invoices. Its core purpose is to reduce administrative burden, allowing musicians to focus on creative work. The project aims to be a user-friendly, scalable, and globally leading solution for music career management, simplifying business administration and empowering artists by providing a comprehensive, integrated suite of tools with significant market potential. The system provides unlimited AI-powered email parsing and response generation for all users.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -18,7 +18,6 @@ Invoice CC functionality: CC recipients are supported for invoice emails only (c
 External integration deployment requirement: All external integrations (Stripe payments, Mailgun webhooks, OAuth callbacks, third-party APIs) are configured to communicate with the deployed version of the application, not the development environment.
 Invoice reminders remain manual-only by user preference - automatic reminder system considered but rejected to maintain user control.
 Timeline preference: User prefers realistic timeline expectations over artificial urgency - focus on thorough functionality testing over rushed deployment.
-AI Usage Model: Removed all AI usage limitations and artificial premium tiers as "making a rod for our our back" since AI costs are minimal (£0.74/month even for super-heavy users with 50 bookings). System now provides unlimited AI-powered email parsing and response generation for all users.
 Google Calendar Sync Strategy: Implemented ID-based sync approach to minimize AI costs. Every MusoBuddy booking synced to Google Calendar gets permanent ID link embedded in event metadata. Future syncs uses ID links for direct updates (zero AI cost). AI only used optionally for linking pre-existing Google Calendar events without MusoBuddy IDs.
 Google Calendar field mapping: Event titles display as "Client Name - Event Type" format (e.g., "Susan Davis - Wedding") per user preference, providing clear identification of both client and event type in calendar view.
 Booking card actions: User prefers "Conversation" as a primary action button instead of separate View/Edit buttons. Primary actions should be: Respond, Conversation, and View. Secondary actions (Thank You, Invoice, Contract, Compliance, Reject) belong in dropdown menu to reduce clutter.
