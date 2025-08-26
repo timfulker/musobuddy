@@ -66,7 +66,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### System Design Choices
 - **User Management**: Two-tier system (Admin Accounts, User Accounts).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, and automated scrolling to next upcoming booking.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms.
 - **Document Management**: Multi-document upload system per booking with categorization and secure cloud storage.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
