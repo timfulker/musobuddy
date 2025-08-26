@@ -42,9 +42,7 @@ export default function TrialSuccessPage() {
         try {
           console.log('🔐 Authenticating with Stripe session:', sessionId);
           
-          // CRITICAL: Clear any existing tokens and theme to prevent wrong user access
-          const { clearAllAuthTokens } = await import('@/utils/authToken');
-          clearAllAuthTokens();
+          // CRITICAL: Clear any existing theme to prevent theme leak from previous user
           
           // Also clear theme settings to prevent theme leak from previous user
           localStorage.removeItem('musobuddy-theme');
@@ -64,11 +62,23 @@ export default function TrialSuccessPage() {
             if (response.ok) {
               const result = await response.json();
               
-              // Store the auth token for the correct user
-              if (result.authToken && result.user) {
-                const { storeAuthToken } = await import('@/utils/authToken');
-                storeAuthToken(result.authToken, result.user.email);
-                console.log('✅ Stored auth token for user:', result.user.email);
+              console.log('✅ Stripe session verified for user:', result.user?.email);
+              
+              // Now we need to log the user into Firebase
+              const { auth } = await import('@/lib/firebase');
+              const { signInWithCustomToken } = await import('firebase/auth');
+              
+              // Get Firebase custom token for this user
+              const tokenResponse = await fetch('/api/auth/firebase-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: result.user.userId })
+              });
+              
+              if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json();
+                await signInWithCustomToken(auth, tokenData.customToken);
+                console.log('✅ User signed into Firebase after payment');
               }
               
               toast({
@@ -76,9 +86,9 @@ export default function TrialSuccessPage() {
                 description: "Your account has been created successfully.",
               });
 
-              // Remove session ID from URL and reload
+              // Remove session ID from URL and redirect to dashboard
               window.history.replaceState({}, document.title, '/trial-success');
-              window.location.reload();
+              setLocation('/dashboard');
             } else {
               console.error('❌ Stripe authentication failed:', response.status);
               const error = await response.json();

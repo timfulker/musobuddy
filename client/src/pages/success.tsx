@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { storeAuthToken } from '@/utils/authToken';
 
 export default function SuccessPage() {
   const [, setLocation] = useLocation();
@@ -41,19 +40,9 @@ export default function SuccessPage() {
         throw new Error(data.error || 'Payment verification failed');
       }
 
-      // Store auth token if provided
-      if (data.authToken && data.user?.email) {
-        console.log('🔐 Storing auth token for user:', data.user.email);
-        storeAuthToken(data.authToken, data.user.email);
-        
-        // Verify token was stored correctly
-        const { findActiveAuthToken } = await import('@/utils/authToken');
-        const storedToken = findActiveAuthToken();
-        console.log('🔐 Token verification after storage:', !!storedToken);
-        
-        if (!storedToken) {
-          throw new Error('Failed to store authentication token');
-        }
+      // Firebase authentication will handle user session automatically
+      if (data.user?.email) {
+        console.log('🔐 Payment verified for user:', data.user.email);
         
         // Clear any previous auth failures to allow fresh login attempt
         if (typeof window !== 'undefined') {
@@ -74,7 +63,7 @@ export default function SuccessPage() {
           }
         }, 2000);
       } else {
-        throw new Error('Invalid authentication data received');
+        throw new Error('Invalid user data received');
       }
 
     } catch (error: any) {

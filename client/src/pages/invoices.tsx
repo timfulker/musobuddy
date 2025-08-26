@@ -20,6 +20,7 @@ import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import { auth } from '@/lib/firebase';
 
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
@@ -506,106 +507,14 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number, customMessage?: string }) => {
-      
-      
-      
-      
-      // MOBILE EMERGENCY FIX - Direct token extraction to bypass cache
-      console.log('🚨 MOBILE EMERGENCY FIX - Scanning ALL localStorage');
-      let token = null;
-      
-      // Brute force scan of ALL localStorage keys
-      const allKeys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        allKeys.push(localStorage.key(i));
-      }
-      console.log('🚨 All localStorage keys found:', allKeys);
-      
-      // Look for ANY key containing 'token' or 'auth'
-      for (const key of allKeys) {
-        if (key && (key.includes('token') || key.includes('auth'))) {
-          const stored = localStorage.getItem(key);
-          console.log(`🚨 Checking ${key}: ${stored ? 'HAS VALUE' : 'EMPTY'}`);
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              if (parsed.token && typeof parsed.token === 'string' && parsed.token.length > 10) {
-                token = parsed.token;
-                console.log(`🚨 SUCCESS: Using token from ${key}`);
-                break;
-              }
-            } catch {
-              // Plain string token
-              if (typeof stored === 'string' && stored.length > 10 && !stored.includes('{')) {
-                token = stored;
-                console.log(`🚨 SUCCESS: Using plain token from ${key}`);
-                break;
-              }
-            }
-          }
-        }
+      // Get Firebase authentication token
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('You must be logged in to send invoices');
       }
       
-      // iOS Safari fallback - check all possible token locations  
-      if (!token) {
-        console.log('📧 Mobile fallback - scanning localStorage');
-        
-        // First, try the exact same logic that works in useAuth
-        const hostname = window.location.hostname;
-        const possibleKeys = [
-          `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          'authToken_www_musobuddy_com',
-          'authToken_dev',
-          'authToken'
-        ];
-        
-        for (const key of possibleKeys) {
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            console.log(`📧 Found token in key: ${key}`);
-            try {
-              const parsed = JSON.parse(stored);
-              if (parsed.token) {
-                token = parsed.token;
-                console.log(`📧 Using parsed token from ${key}`);
-                break;
-              }
-            } catch {
-              // Plain string token
-              token = stored;
-              console.log(`📧 Using plain token from ${key}`);
-              break;
-            }
-          }
-        }
-        
-        // If still no token, scan everything
-        if (!token) {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('authToken')) {
-              const stored = localStorage.getItem(key);
-              console.log(`📧 Scanning key: ${key}, has value: ${!!stored}`);
-              if (stored) {
-                try {
-                  const parsed = JSON.parse(stored);
-                  if (parsed.token) {
-                    token = parsed.token;
-                    console.log(`📧 Emergency token from ${key}`);
-                    break;
-                  }
-                } catch {
-                  token = stored;
-                  console.log(`📧 Emergency plain token from ${key}`);
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      console.log('📧 Send email - Final token found:', !!token);
+      const idToken = await currentUser.getIdToken();
+      console.log('📧 Send email - Firebase user authenticated:', !!currentUser);
       console.log('📧 Send email - Invoice ID:', invoiceId);
       console.log('📧 Send email - Custom message:', customMessage ? 'Present' : 'None');
       
@@ -613,7 +522,7 @@ export default function Invoices() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+          'Authorization': `Bearer ${idToken}`,
         },
         credentials: 'include', // Important for session handling
         body: JSON.stringify({ invoiceId, customMessage }),

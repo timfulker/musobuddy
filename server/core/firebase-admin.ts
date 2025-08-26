@@ -70,3 +70,15 @@ export async function verifyFirebaseToken(idToken: string) {
     return null;
   }
 }
+
+export async function createCustomToken(uid: string, additionalClaims?: object) {
+  try {
+    console.log('🔍 Creating custom token for UID:', uid);
+    const customToken = await adminAuth.createCustomToken(uid, additionalClaims);
+    console.log('✅ Custom token created successfully');
+    return customToken;
+  } catch (error: any) {
+    console.error('❌ Custom token creation failed:', error);
+    throw error;
+  }
+}

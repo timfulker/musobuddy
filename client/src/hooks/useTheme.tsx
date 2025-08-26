@@ -280,12 +280,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Additional check: Ensure we have an auth token before attempting to save
-      const { findActiveAuthToken } = await import('../utils/authToken');
-      const token = await findActiveAuthToken();
+      // Additional check: Ensure we have Firebase auth before attempting to save
+      const { auth } = await import('@/lib/firebase');
+      const currentUser = auth.currentUser;
       
-      if (!token) {
-        // Silently skip theme save when no auth token (expected on collaboration pages)
+      if (!currentUser) {
+        // Silently skip theme save when no user authenticated (expected on collaboration pages)
         return;
       }
       

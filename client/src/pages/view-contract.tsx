@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Calendar, MapPin, Clock, DollarSign, Download, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react";
+import { auth } from '@/lib/firebase';
 
 interface Contract {
   id: number;
@@ -59,12 +60,14 @@ export default function ViewContract() {
       try {
         console.log('🔍 Fetching contract:', contractId);
         
-        // Get authentication token from localStorage
-        const authToken = localStorage.getItem('authToken') || 
-                         localStorage.getItem('authToken_www_musobuddy_com') ||
-                         localStorage.getItem('token');
+        // Get Firebase authentication token
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          throw new Error('You must be logged in to view contracts');
+        }
         
-        console.log('🔍 Auth token found:', !!authToken);
+        const idToken = await currentUser.getIdToken();
+        console.log('🔍 Firebase user authenticated:', !!currentUser);
         
         // ROBUST APPROACH: Handle the specific 200-but-HTML issue with proper auth
         const response = await fetch(`/api/contracts/${contractId}`, {
@@ -72,7 +75,7 @@ export default function ViewContract() {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+            'Authorization': `Bearer ${idToken}`
           }
         });
         
@@ -144,7 +147,7 @@ export default function ViewContract() {
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+              'Authorization': `Bearer ${idToken}`
             }
           });
           

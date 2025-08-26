@@ -19,33 +19,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, MapPin, User, Banknote } from "lucide-react";
-
-// Helper function to get the correct auth token - using standard format
-const getAuthTokenKey = () => {
-  const hostname = window.location.hostname;
-  
-  // Development: Admin-only access for simplified testing
-  if (hostname.includes('janeway.replit.dev') || hostname.includes('localhost')) {
-    // Use user-specific token (updated with security fix)
-    const baseKey = 'authToken_dev';
-    // Look for user-specific tokens in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(baseKey + '_')) {
-        return key;
-      }
-    }
-    return baseKey; // Fallback
-  }
-  
-  // Production: Environment-specific to prevent conflicts (match standard format)
-  return `authToken_${hostname.replace(/[^a-zA-Z0-9]/g, '_')}`;
-};
-
-const getAuthToken = () => {
-  const tokenKey = getAuthTokenKey();
-  return localStorage.getItem(tokenKey);
-};
+import { auth } from '@/lib/firebase';
 
 interface Booking {
   id: number;
@@ -74,12 +48,17 @@ export default function BookingStatusDialog({
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
-      const token = getAuthToken();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error("You must be logged in to update booking status");
+      }
+
+      const idToken = await currentUser.getIdToken();
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${idToken}`,
         },
         body: JSON.stringify({ status }),
       });

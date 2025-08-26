@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ConflictIndicator from "@/components/ConflictIndicator";
 
-import { findActiveAuthToken } from '@/utils/authToken';
+import { auth } from '@/lib/firebase';
 
 export default function ActionableEnquiries() {
   const [location, setLocation] = useLocation();
@@ -100,18 +100,19 @@ export default function ActionableEnquiries() {
     refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
     staleTime: 30000, // Consider data stale after 30 seconds
     queryFn: async () => {
-      const token = findActiveAuthToken();
+      const currentUser = auth.currentUser;
       
-      if (!token) {
-        console.error('❌ No auth token found for kanban board');
-        throw new Error('No authentication token');
+      if (!currentUser) {
+        console.error('❌ No authenticated user found for kanban board');
+        throw new Error('You must be logged in to view bookings');
       }
       
-      console.log('🔍 Kanban board - Token found:', !!token);
+      const idToken = await currentUser.getIdToken();
+      console.log('🔍 Kanban board - Firebase user authenticated:', !!currentUser);
       
       const response = await fetch('/api/bookings', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json'
         }
       });

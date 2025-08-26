@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { apiRequest } from '@/lib/queryClient';
-import { findActiveAuthToken } from '@/utils/authToken';
+import { auth } from '@/lib/firebase';
 
 interface EmailTemplate {
   id: number;
@@ -127,18 +127,18 @@ export default function Templates() {
     }
   }, [bookingData]);
   
-  // Use centralized auth token system
-  const getAuthToken = () => {
-    return findActiveAuthToken(); // Returns the token string directly
+  // Use Firebase authentication
+  const getAuthToken = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('You must be logged in to access templates');
+    }
+    return await currentUser.getIdToken();
   };
 
   const fetchBookingData = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        console.error('❌ No auth token for booking data');
-        return;
-      }
+      const token = await getAuthToken();
       
       const response = await apiRequest(`/api/bookings/${bookingId}`, { method: 'GET' });
       const booking = await response.json();
@@ -151,11 +151,7 @@ export default function Templates() {
 
   const fetchUserSettings = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        console.error('❌ No auth token for settings');
-        return;
-      }
+      const token = await getAuthToken();
       
       const response = await apiRequest('/api/settings', { method: 'GET' });
       const settings = await response.json();
@@ -199,11 +195,7 @@ export default function Templates() {
 
   const seedDefaultTemplates = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        console.error('❌ No auth token for seeding templates');
-        return;
-      }
+      const token = await getAuthToken();
       
       const response = await apiRequest('/api/templates/seed-defaults', { method: 'POST' });
       const result = await response.json();
@@ -221,12 +213,7 @@ export default function Templates() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const token = getAuthToken();
-      if (!token) {
-        console.error('❌ No auth token for templates');
-        window.location.href = '/';
-        return;
-      }
+      const token = await getAuthToken();
       
       const response = await apiRequest('/api/templates', { method: 'GET' });
       const data = await response.json();
