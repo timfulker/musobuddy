@@ -54,7 +54,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast. Dynamic PDF theming.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**: Enhanced responsive design (single app adapting to mobile/desktop), simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
+- **UI/UX Decisions**: Enhanced responsive design, simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).

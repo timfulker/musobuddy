@@ -327,11 +327,21 @@ export function setupAuthRoutes(app: Express) {
 
       // Check subscription status for non-admin users
       if (!user.isAdmin && (user.tier === 'pending_payment' || user.tier === 'free')) {
-        // Check if they have an active Stripe subscription
+        // Check if they have an active Stripe subscription or were created via Stripe
         const hasActiveSubscription = user.stripeSubscriptionId ? true : false;
+        const wasCreatedViaStripe = user.createdViaStripe || false;
+        const hasStripeCustomer = user.stripeCustomerId ? true : false;
         
-        // If no subscription and not exempt, require payment
-        if (!hasActiveSubscription && user.tier === 'pending_payment') {
+        // If no subscription AND not created via Stripe AND no customer ID, require payment
+        if (!hasActiveSubscription && !wasCreatedViaStripe && !hasStripeCustomer && user.tier === 'pending_payment') {
+          console.log('🔍 User needs payment:', {
+            email: user.email,
+            hasActiveSubscription,
+            wasCreatedViaStripe,
+            hasStripeCustomer,
+            tier: user.tier
+          });
+          
           return res.json({
             success: true,
             paymentRequired: true,
@@ -346,10 +356,22 @@ export function setupAuthRoutes(app: Express) {
             }
           });
         }
+        
+        // Log successful authentication for users who have paid
+        if (hasActiveSubscription || wasCreatedViaStripe || hasStripeCustomer) {
+          console.log('✅ User has valid subscription/payment:', {
+            email: user.email,
+            hasActiveSubscription,
+            wasCreatedViaStripe,
+            hasStripeCustomer,
+            tier: user.tier
+          });
+        }
       }
 
-      // Clean response with payment check
-      const needsPayment = !user.isAdmin && user.tier === 'pending_payment' && !user.stripeCustomerId;
+      // Clean response with payment check (updated to include all payment indicators)
+      const needsPayment = !user.isAdmin && user.tier === 'pending_payment' && 
+                          !user.stripeCustomerId && !user.createdViaStripe && !user.stripeSubscriptionId;
       
       console.log('✅ Authentication successful:', {
         email: user.email,
