@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload, MessageSquare, MessageCircle, MoreHorizontal, ThumbsUp, DollarSign, FileText, Shield, XCircle, Users, Music } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useHistory } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
