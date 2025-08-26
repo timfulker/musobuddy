@@ -142,14 +142,9 @@ export function registerStripeRoutes(app: Express) {
 
       console.log('✅ User subscription activated:', user.id);
 
-      // Generate JWT token for immediate login
-      const { generateAuthToken } = await import('../middleware/auth');
-      const authToken = generateAuthToken(user.id, user.email || '', true);
-
       res.json({
         success: true,
         message: 'Payment verified and subscription activated',
-        authToken: authToken,
         user: {
           userId: user.id,
           email: user.email,
