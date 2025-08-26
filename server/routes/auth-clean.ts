@@ -294,22 +294,9 @@ export function setupAuthRoutes(app: Express) {
         user = newUser;
         console.log('✅ New user created from Firebase:', user.id);
         
-        // New user needs to check subscription
-        if (!user.isAdmin) {
-          return res.json({
-            success: true,
-            paymentRequired: true,
-            user: {
-              userId: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              firebaseUid: firebaseUser.uid,
-              isAdmin: false,
-              tier: user.tier
-            }
-          });
-        }
+        // STRIPE INTEGRATION REMOVED - Allow all users access for now
+        // New users get full access until payment system is reimplemented
+        console.log('✅ New user created, granting full access (payment system disabled)');
       }
 
       // HOTFIX: Update isAdmin field for tim@timfulker.com since it was incorrectly set earlier
@@ -325,58 +312,22 @@ export function setupAuthRoutes(app: Express) {
         }
       }
 
-      // Check subscription status for non-admin users
-      if (!user.isAdmin && (user.tier === 'pending_payment' || user.tier === 'free')) {
-        // Check if they have an active Stripe subscription or were created via Stripe
-        const hasActiveSubscription = user.stripeSubscriptionId ? true : false;
-        const wasCreatedViaStripe = user.createdViaStripe || false;
-        const hasStripeCustomer = user.stripeCustomerId ? true : false;
-        
-        // If no subscription AND not created via Stripe AND no customer ID, require payment
-        if (!hasActiveSubscription && !wasCreatedViaStripe && !hasStripeCustomer && user.tier === 'pending_payment') {
-          console.log('🔍 User needs payment:', {
-            email: user.email,
-            hasActiveSubscription,
-            wasCreatedViaStripe,
-            hasStripeCustomer,
-            tier: user.tier
-          });
-          
-          return res.json({
-            success: true,
-            paymentRequired: true,
-            user: {
-              userId: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              firebaseUid: firebaseUser.uid,
-              isAdmin: user.isAdmin,
-              tier: user.tier
-            }
-          });
-        }
-        
-        // Log successful authentication for users who have paid
-        if (hasActiveSubscription || wasCreatedViaStripe || hasStripeCustomer) {
-          console.log('✅ User has valid subscription/payment:', {
-            email: user.email,
-            hasActiveSubscription,
-            wasCreatedViaStripe,
-            hasStripeCustomer,
-            tier: user.tier
-          });
-        }
-      }
+      // STRIPE INTEGRATION REMOVED - All users get access for now
+      // Payment checking disabled until new Stripe integration is implemented
+      console.log('✅ Payment checking disabled - granting access to all users');
 
-      // Clean response with payment check (updated to include all payment indicators)
-      const needsPayment = !user.isAdmin && user.tier === 'pending_payment' && 
-                          !user.stripeCustomerId && !user.createdViaStripe && !user.stripeSubscriptionId;
+      // STRIPE INTEGRATION REMOVED - No payment required
+      const needsPayment = false; // Always false until payment system is reimplemented
       
       console.log('✅ Authentication successful:', {
         email: user.email,
         tier: user.tier,
         isAdmin: user.isAdmin,
+        stripeCustomerId: user.stripeCustomerId,
+        createdViaStripe: user.createdViaStripe,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        isSubscribed: user.isSubscribed,
+        plan: user.plan,
         needsPayment
       });
 

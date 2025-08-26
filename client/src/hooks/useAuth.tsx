@@ -54,33 +54,9 @@ export function useAuth() {
           const data = await response.json();
           console.log('✅ User authenticated:', data.user?.email);
 
-          // Check if user needs payment
-          if (data.paymentRequired && data.user?.tier === 'pending_payment' && !data.user?.isAdmin) {
-            console.log('💳 Payment required - redirecting to Stripe checkout');
-            
-            // Redirect to Stripe checkout immediately
-            try {
-              const stripeResponse = await fetch('/api/stripe/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: data.user.userId,
-                  email: data.user.email
-                })
-              });
-
-              if (stripeResponse.ok) {
-                const stripeData = await stripeResponse.json();
-                if (stripeData.checkoutUrl || stripeData.url) {
-                  console.log('🔄 Redirecting to payment:', stripeData.checkoutUrl || stripeData.url);
-                  window.location.href = stripeData.checkoutUrl || stripeData.url;
-                  return;
-                }
-              }
-            } catch (stripeError) {
-              console.error('❌ Stripe redirect failed:', stripeError);
-            }
-          }
+          // STRIPE INTEGRATION REMOVED - No payment redirects
+          // All authenticated users get access until payment system is reimplemented
+          console.log('✅ Payment checking disabled - proceeding with authentication');
 
           // Set authenticated user
           setAuthState({

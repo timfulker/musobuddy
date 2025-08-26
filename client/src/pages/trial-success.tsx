@@ -51,6 +51,7 @@ export default function TrialSuccessPage() {
           console.log('🔓 Cleared existing auth tokens and theme for new Stripe user');
             
             // Authenticate using Stripe session ID
+            console.log('🔍 Calling verify-session with sessionId:', sessionId);
             const response = await fetch('/api/stripe/verify-session', {
               method: 'POST',
               headers: {
@@ -59,10 +60,13 @@ export default function TrialSuccessPage() {
               body: JSON.stringify({ sessionId }),
             });
 
+            console.log('🔍 Verify-session response status:', response.status);
+
             if (response.ok) {
               const result = await response.json();
               
               console.log('✅ Stripe session verified for user:', result.user?.email);
+              console.log('✅ Full verification result:', result);
               
               // Now we need to log the user into Firebase
               const { auth } = await import('@/lib/firebase');
@@ -92,9 +96,11 @@ export default function TrialSuccessPage() {
             } else {
               console.error('❌ Stripe authentication failed:', response.status);
               const error = await response.json();
+              console.error('❌ Stripe authentication error details:', error);
               
               // If user not found, might need to wait for webhook
               if (response.status === 404) {
+                console.log('⏳ User not found (404) - waiting for webhook processing...');
                 setTimeout(() => {
                   window.location.reload();
                 }, 3000);
