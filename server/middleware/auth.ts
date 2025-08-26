@@ -144,16 +144,17 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
   // Try Firebase token verification first
   const firebaseUser = await verifyFirebaseToken(token);
   if (firebaseUser) {
+    console.log('🔥 FIREBASE USER VERIFIED IN requireAuth:', firebaseUser);
     // Get user from database using Firebase UID
     try {
       const { storage } = await import('../core/storage');
+      console.log('🔍 Looking up user by Firebase UID:', firebaseUser.uid);
       const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+      console.log('🔍 Database lookup result:', user ? `Found user ${user.id}` : 'NOT FOUND');
       
       if (!user) {
         const duration = Date.now() - startTime;
-        if (AUTH_DEBUG) {
-          console.log(`❌ [AUTH] Firebase user not found in database: ${firebaseUser.uid} (${duration}ms)`);
-        }
+        console.log(`❌ [AUTH] Firebase user not found in database: ${firebaseUser.uid} (${duration}ms)`);
         return res.status(401).json({ 
           error: 'User not found',
           details: 'Please complete your account setup'

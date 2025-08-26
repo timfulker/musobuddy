@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscriptionWatchdog } from "@/hooks/useSubscriptionWatchdog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
@@ -55,10 +54,7 @@ import BookingCollaborate from "@/pages/booking-collaborate";
 import { useEffect, lazy } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading, user, error, needsSubscription, authenticationStatus } = useAuth();
-  
-  // Initialize subscription watchdog for authenticated users
-  useSubscriptionWatchdog();
+  const { isAuthenticated, isLoading, user, error } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -77,13 +73,9 @@ function Router() {
   if (currentPath === '/') {
     console.log('🔍 Root path auth state:', {
       isAuthenticated,
-      needsSubscription,
-      authenticationStatus,
       hasUser: !!user,
       hasError: !!error,
       errorStatus: (error as any)?.status,
-      userPhoneVerified: (user as any)?.phoneVerified,
-      userSubscribed: (user as any)?.isSubscribed,
       currentPath
     });
   }
@@ -100,12 +92,7 @@ function Router() {
     return null;
   }
 
-  // CRITICAL: Check subscription verification before allowing dashboard access
-  if (needsSubscription && !isTrialSuccess && !hasStripeSession && !isPaymentReturn) {
-    console.log('💳 Redirecting user to Stripe verification - subscription required');
-    window.location.href = '/start-trial';
-    return null;
-  }
+  // Payment redirect logic is now handled in useAuth hook
 
   // If user tries to access protected routes without authentication, redirect to login
   const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];

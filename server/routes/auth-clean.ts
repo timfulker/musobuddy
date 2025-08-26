@@ -24,7 +24,7 @@ function formatPhoneNumber(phone: string): string {
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
-  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'tim@timfulker.com', 'jake.stanley@musobuddy.com'];
+  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
   return allowedBypassEmails.includes(email);
 }
 
@@ -219,9 +219,8 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Firebase login endpoint - verifies token and creates/finds user
-  // NO RATE LIMITING on Firebase endpoint as it's already protected by Firebase auth
   app.post('/api/auth/firebase-login', async (req, res) => {
-    console.log('🔥 Firebase login endpoint hit - ENTRY POINT');
+    console.log('🔥 Firebase login endpoint called');
     try {
       console.log('🔥 Firebase login endpoint hit');
       console.log('📦 Request body keys:', Object.keys(req.body || {}));
@@ -311,9 +310,23 @@ export function setupAuthRoutes(app: Express) {
               firstName: user.firstName,
               lastName: user.lastName,
               firebaseUid: firebaseUser.uid,
-              isAdmin: false
+              isAdmin: false,
+              tier: user.tier
             }
           });
+        }
+      }
+
+      // HOTFIX: Update isAdmin field for tim@timfulker.com since it was incorrectly set earlier
+      if (user.email === 'tim@timfulker.com' && user.isAdmin) {
+        console.log('🔧 Hotfix: Correcting isAdmin flag for tim@timfulker.com');
+        try {
+          await storage.updateUser(user.id, { isAdmin: false });
+          user.isAdmin = false;
+          console.log('✅ Hotfix successful: isAdmin set to false');
+        } catch (hotfixError) {
+          console.error('❌ Hotfix failed:', hotfixError);
+          // Continue without hotfix - don't crash the login
         }
       }
 
@@ -333,13 +346,23 @@ export function setupAuthRoutes(app: Express) {
               firstName: user.firstName,
               lastName: user.lastName,
               firebaseUid: firebaseUser.uid,
-              isAdmin: false
+              isAdmin: user.isAdmin,
+              tier: user.tier
             }
           });
         }
       }
 
-      // User authenticated successfully - Firebase token is the only auth needed
+      // Clean response with payment check
+      const needsPayment = !user.isAdmin && user.tier === 'pending_payment' && !user.stripeCustomerId;
+      
+      console.log('✅ Authentication successful:', {
+        email: user.email,
+        tier: user.tier,
+        isAdmin: user.isAdmin,
+        needsPayment
+      });
+
       res.json({
         success: true,
         user: {
@@ -347,10 +370,12 @@ export function setupAuthRoutes(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          firebaseUid: firebaseUser.uid,
           isAdmin: user.isAdmin || false,
-          tier: user.tier
-        }
+          tier: user.tier,
+          stripeCustomerId: user.stripeCustomerId,
+          isSubscribed: user.isSubscribed
+        },
+        paymentRequired: needsPayment
       });
 
     } catch (error: any) {
@@ -944,8 +969,10 @@ export function setupAuthRoutes(app: Express) {
     }
   });
   
-  // Subscription watchdog endpoint - checks subscription status for periodic verification
+  // Subscription watchdog endpoint - checks subscription status for periodic verification  
+  console.log('🔍 REGISTERING WATCHDOG ROUTE: /api/subscription/watchdog-status');
   app.get('/api/subscription/watchdog-status', requireAuth, async (req: any, res) => {
+    console.log('🔍 WATCHDOG ENDPOINT HIT - userId:', req.user?.userId);
     try {
       const userId = req.user.userId;
       
@@ -954,14 +981,21 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // STRICT: Only these 3 specific accounts bypass subscription checks
+      // STRICT: Only these 3 specific accounts bypass subscription checks  
       const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
       const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
-      // Check subscription validity - include pending_payment as valid (user in payment setup process)
+      // Check subscription validity - pending_payment users need to complete payment
       const hasValidSubscription = 
-        (user.isSubscribed && user.stripeCustomerId && user.tier !== 'free') ||
-        user.tier === 'pending_payment'; // Allow users in payment setup process
+        (user.isSubscribed && user.stripeCustomerId && user.tier !== 'free') &&
+        user.tier !== 'pending_payment'; // Exclude pending_payment users - they need to complete payment
+
+      console.log('🔍 WATCHDOG RESULT:', {
+        userId: user.id,
+        tier: user.tier,
+        isSubscribed: user.isSubscribed,
+        hasValidSubscription
+      });
 
       res.json({
         hasValidSubscription,

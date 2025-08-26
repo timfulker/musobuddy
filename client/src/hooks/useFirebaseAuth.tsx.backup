@@ -79,16 +79,26 @@ export function useFirebaseAuth() {
 
           const data = await response.json();
           console.log('📦 Firebase login response data:', data);
+          console.log('📦 DETAILED RESPONSE ANALYSIS:');
+          console.log('  - data.paymentRequired:', data.paymentRequired);
+          console.log('  - data.user?.tier:', data.user?.tier);
+          console.log('  - data.user?.isAdmin:', data.user?.isAdmin);
+          console.log('  - Payment redirect condition 1:', (data.paymentRequired && !data.user?.isAdmin));
+          console.log('  - Payment redirect condition 2:', (data.user?.tier === 'pending_payment' && !data.user?.isAdmin));
+          console.log('  - WILL REDIRECT:', ((data.paymentRequired && !data.user?.isAdmin) || (data.user?.tier === 'pending_payment' && !data.user?.isAdmin)));
           
           // Check if payment is required
-          if (data.paymentRequired && !data.user?.isAdmin) {
+          // Check if user needs payment (either paymentRequired flag OR tier is pending_payment)
+          if ((data.paymentRequired && !data.user?.isAdmin) || 
+              (data.user?.tier === 'pending_payment' && !data.user?.isAdmin)) {
             console.log('💳 Payment required for user:', {
               email: data.user?.email,
               userId: data.user?.userId,
-              hasUserId: !!data.user?.userId
+              tier: data.user?.tier,
+              paymentRequired: data.paymentRequired
             });
             
-            // Redirect to Stripe checkout for payment
+            // Redirect to Stripe checkout for payment IMMEDIATELY
             try {
               const stripeResponse = await fetch('/api/stripe/create-checkout', {
                 method: 'POST',
@@ -103,7 +113,7 @@ export function useFirebaseAuth() {
 
               if (stripeResponse.ok) {
                 const stripeData = await stripeResponse.json();
-                console.log('✅ Stripe checkout created:', stripeData);
+                console.log('✅ Stripe checkout created - redirecting immediately:', stripeData);
                 if (stripeData.url || stripeData.checkoutUrl) {
                   window.location.href = stripeData.url || stripeData.checkoutUrl;
                   return;

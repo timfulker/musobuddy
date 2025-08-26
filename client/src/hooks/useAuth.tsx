@@ -1,161 +1,185 @@
-import { useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/firebase';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+
+interface User {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isAdmin: boolean;
+  tier: string;
+  stripeCustomerId?: string;
+  isSubscribed?: boolean;
+}
+
+interface AuthState {
+  user: User | null;
+  firebaseUser: any;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const queryClient = useQueryClient();
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    firebaseUser: null,
+    isLoading: true,
+    isAuthenticated: false,
+    error: null
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('🔥 Firebase auth state changed:', !!firebaseUser);
-      setUser(firebaseUser);
-      setError(null);
-
       if (firebaseUser) {
+        console.log('🔥 Firebase user detected:', firebaseUser.email);
+        
         try {
           // Get Firebase ID token
           const idToken = await firebaseUser.getIdToken();
-          console.log('🎫 Got Firebase ID token');
-
-          // Exchange Firebase token for our app's user profile
+          
+          // Exchange Firebase token for our user data
           const response = await fetch('/api/auth/firebase-login', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              idToken: idToken
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
           });
 
           if (!response.ok) {
-            // Handle payment requirement
-            if (response.status === 403) {
-              const errorData = await response.json();
-              if (errorData.requiresPayment) {
-                // Redirect to Stripe checkout for payment
-                try {
-                  const stripeResponse = await fetch('/api/stripe/create-checkout', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      email: errorData.email,
-                      userId: errorData.userId,
-                      returnUrl: window.location.origin + '/success'
-                    }),
-                  });
-
-                  if (stripeResponse.ok) {
-                    const stripeData = await stripeResponse.json();
-                    if (stripeData.url || stripeData.checkoutUrl) {
-                      window.location.href = stripeData.url || stripeData.checkoutUrl;
-                      setLoading(false);
-                      return;
-                    }
-                  }
-                } catch (stripeError) {
-                  console.error('Failed to create Stripe checkout:', stripeError);
-                }
-                
-                // Set payment required state
-                setUserProfile({ 
-                  ...errorData, 
-                  needsSubscription: true,
-                  phoneVerified: true // Firebase users are considered verified
-                });
-                setLoading(false);
-                return;
-              }
-            }
-            throw new Error('Failed to get user profile from Firebase token');
+            throw new Error(`Authentication failed: ${response.status}`);
           }
 
-          const profileData = await response.json();
-          console.log('✅ Firebase user profile loaded:', profileData);
-          setUserProfile(profileData);
-          
-        } catch (err) {
-          console.error('❌ Firebase user profile loading failed:', err);
-          setError(err instanceof Error ? err.message : 'Authentication failed');
+          const data = await response.json();
+          console.log('✅ User authenticated:', data.user?.email);
+
+          // Check if user needs payment
+          if (data.paymentRequired && data.user?.tier === 'pending_payment' && !data.user?.isAdmin) {
+            console.log('💳 Payment required - redirecting to Stripe checkout');
+            
+            // Redirect to Stripe checkout immediately
+            try {
+              const stripeResponse = await fetch('/api/stripe/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: data.user.userId,
+                  email: data.user.email
+                })
+              });
+
+              if (stripeResponse.ok) {
+                const stripeData = await stripeResponse.json();
+                if (stripeData.checkoutUrl || stripeData.url) {
+                  console.log('🔄 Redirecting to payment:', stripeData.checkoutUrl || stripeData.url);
+                  window.location.href = stripeData.checkoutUrl || stripeData.url;
+                  return;
+                }
+              }
+            } catch (stripeError) {
+              console.error('❌ Stripe redirect failed:', stripeError);
+            }
+          }
+
+          // Set authenticated user
+          setAuthState({
+            user: data.user,
+            firebaseUser,
+            isLoading: false,
+            isAuthenticated: true,
+            error: null
+          });
+
+        } catch (error) {
+          console.error('❌ Authentication error:', error);
+          setAuthState({
+            user: null,
+            firebaseUser: null,
+            isLoading: false,
+            isAuthenticated: false,
+            error: error instanceof Error ? error.message : 'Authentication failed'
+          });
         }
       } else {
         // User signed out
-        setUserProfile(null);
-        queryClient.clear();
+        setAuthState({
+          user: null,
+          firebaseUser: null,
+          isLoading: false,
+          isAuthenticated: false,
+          error: null
+        });
       }
-      
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [queryClient]);
+  }, []);
 
-  const logout = async () => {
+  const signInWithGoogle = async () => {
     try {
-      const { signOut } = await import('firebase/auth');
-      await signOut(auth);
-      
-      // Clear theme settings to prevent leaking to next user
-      localStorage.removeItem('musobuddy-theme');
-      localStorage.removeItem('musobuddy-custom-color');
-      localStorage.removeItem('musobuddy-auth-token');
-      
-      console.log('🔓 Logged out from Firebase');
-      
-      // Clear all queries and redirect
-      queryClient.clear();
-      window.location.href = '/';
+      const provider = new GoogleAuthProvider();
+      console.log('🔄 Starting Google sign-in...');
+      await signInWithPopup(auth, provider);
+      // Auth state change will be handled by the useEffect above
     } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect even if logout fails
-      localStorage.removeItem('musobuddy-theme');
-      localStorage.removeItem('musobuddy-custom-color');
-      localStorage.removeItem('musobuddy-auth-token');
-      queryClient.clear();
-      window.location.href = '/';
+      console.error('❌ Google sign-in failed:', error);
+      setAuthState(prev => ({ ...prev, error: 'Google sign-in failed' }));
     }
   };
 
-  // Enhanced authentication state logic with Firebase
-  const isAdminAuthenticated = userProfile?.isAdmin === true;
-  
-  // Firebase users skip phone verification since Firebase handles email verification
-  const hasPhoneVerification = true; // Firebase users are considered verified
-  const hasValidStripeSubscription = userProfile?.isSubscribed && userProfile?.stripeCustomerId;
-  const hasValidTier = userProfile?.tier !== 'free';
-  const hasSubscriptionVerification = hasValidStripeSubscription || hasValidTier;
-  const isRegularUserAuthenticated = !!user && !!userProfile && !error && hasSubscriptionVerification;
-  
-  // Enhanced authentication status
-  const authenticationStatus = (() => {
-    if (loading) return 'loading';
-    if (error) return 'error';
-    if (!user) return 'unauthenticated';
-    if (!userProfile) return 'loading'; // Still loading profile
-    if (isAdminAuthenticated) return 'admin';
-    if (isRegularUserAuthenticated) return 'authenticated'; 
-    if (userProfile?.needsSubscription) return 'needs_subscription';
-    return 'authenticated'; // Firebase users skip phone verification
-  })();
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      console.log('🔄 Starting email sign-in...');
+      await signInWithEmailAndPassword(auth, email, password);
+      // Auth state change will be handled by the useEffect above
+    } catch (error) {
+      console.error('❌ Email sign-in failed:', error);
+      setAuthState(prev => ({ ...prev, error: 'Email sign-in failed' }));
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
+    try {
+      console.log('🔄 Starting email sign-up...');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create user in our database
+      const idToken = await userCredential.user.getIdToken();
+      const response = await fetch('/api/auth/firebase-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, firstName, lastName })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Auth state change will be handled by the useEffect above
+    } catch (error) {
+      console.error('❌ Email sign-up failed:', error);
+      setAuthState(prev => ({ ...prev, error: 'Email sign-up failed' }));
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      // Clear any cached data
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
+      window.location.href = '/';
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+    }
+  };
 
   return {
-    user: userProfile || user, // Return profile data or Firebase user
-    firebaseUser: user, // Raw Firebase user object
-    isAuthenticated: isAdminAuthenticated || isRegularUserAuthenticated,
-    isLoading: loading,
-    error,
-    isAdmin: userProfile?.isAdmin === true,
-    needsVerification: false, // Firebase handles verification
-    needsSubscription: !!user && !!userProfile && !hasSubscriptionVerification && !userProfile?.isAdmin,
-    authenticationStatus,
+    ...authState,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
     logout
   };
 }

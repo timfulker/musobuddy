@@ -28,6 +28,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
 
+
   // Handle Stripe session restoration on dashboard load
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

@@ -1,0 +1,166 @@
+import { useEffect, useState } from 'react';
+import { User } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase';
+import { useQueryClient } from '@tanstack/react-query';
+
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔥 Firebase auth state changed:', !!firebaseUser);
+      setUser(firebaseUser);
+      setError(null);
+
+      if (firebaseUser) {
+        try {
+          // Get Firebase ID token
+          const idToken = await firebaseUser.getIdToken();
+          console.log('🎫 Got Firebase ID token');
+
+          // Exchange Firebase token for our app's user profile
+          const response = await fetch('/api/auth/firebase-login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              idToken: idToken
+            })
+          });
+
+          if (!response.ok) {
+            // Handle payment requirement
+            if (response.status === 403) {
+              const errorData = await response.json();
+              if (errorData.requiresPayment) {
+                // Redirect to Stripe checkout for payment
+                try {
+                  const stripeResponse = await fetch('/api/stripe/create-checkout', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      email: errorData.email,
+                      userId: errorData.userId,
+                      returnUrl: window.location.origin + '/success'
+                    }),
+                  });
+
+                  if (stripeResponse.ok) {
+                    const stripeData = await stripeResponse.json();
+                    if (stripeData.url || stripeData.checkoutUrl) {
+                      window.location.href = stripeData.url || stripeData.checkoutUrl;
+                      setLoading(false);
+                      return;
+                    }
+                  }
+                } catch (stripeError) {
+                  console.error('Failed to create Stripe checkout:', stripeError);
+                }
+                
+                // Set payment required state
+                setUserProfile({ 
+                  ...errorData, 
+                  needsSubscription: true,
+                  phoneVerified: true // Firebase users are considered verified
+                });
+                setLoading(false);
+                return;
+              }
+            }
+            throw new Error('Failed to get user profile from Firebase token');
+          }
+
+          const profileData = await response.json();
+          console.log('✅ Firebase user profile loaded:', profileData);
+          console.log('🔍 DETAILED USER ANALYSIS:');
+          console.log('  - profileData.success:', profileData.success);
+          console.log('  - profileData.user?.tier:', profileData.user?.tier);
+          console.log('  - profileData.user?.isAdmin:', profileData.user?.isAdmin);
+          console.log('  - profileData.paymentRequired:', profileData.paymentRequired);
+          setUserProfile(profileData);
+          
+        } catch (err) {
+          console.error('❌ Firebase user profile loading failed:', err);
+          setError(err instanceof Error ? err.message : 'Authentication failed');
+        }
+      } else {
+        // User signed out
+        setUserProfile(null);
+        queryClient.clear();
+      }
+      
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [queryClient]);
+
+  const logout = async () => {
+    try {
+      const { signOut } = await import('firebase/auth');
+      await signOut(auth);
+      
+      // Clear theme settings to prevent leaking to next user
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
+      localStorage.removeItem('musobuddy-auth-token');
+      
+      console.log('🔓 Logged out from Firebase');
+      
+      // Clear all queries and redirect
+      queryClient.clear();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      localStorage.removeItem('musobuddy-theme');
+      localStorage.removeItem('musobuddy-custom-color');
+      localStorage.removeItem('musobuddy-auth-token');
+      queryClient.clear();
+      window.location.href = '/';
+    }
+  };
+
+  // Enhanced authentication state logic with Firebase
+  const isAdminAuthenticated = userProfile?.isAdmin === true;
+  
+  // Firebase users skip phone verification since Firebase handles email verification
+  const hasPhoneVerification = true; // Firebase users are considered verified
+  const hasValidStripeSubscription = userProfile?.isSubscribed && userProfile?.stripeCustomerId;
+  const hasValidTier = userProfile?.tier !== 'free' && userProfile?.tier !== 'pending_payment';
+  const hasSubscriptionVerification = hasValidStripeSubscription || hasValidTier;
+  const isRegularUserAuthenticated = !!user && !!userProfile && !error && hasSubscriptionVerification;
+  
+  // Enhanced authentication status
+  const authenticationStatus = (() => {
+    if (loading) return 'loading';
+    if (error) return 'error';
+    if (!user) return 'unauthenticated';
+    if (!userProfile) return 'loading'; // Still loading profile
+    if (isAdminAuthenticated) return 'admin';
+    if (isRegularUserAuthenticated) return 'authenticated'; 
+    if (userProfile?.needsSubscription) return 'needs_subscription';
+    return 'authenticated'; // Firebase users skip phone verification
+  })();
+
+  return {
+    user: userProfile || user, // Return profile data or Firebase user
+    firebaseUser: user, // Raw Firebase user object
+    isAuthenticated: isAdminAuthenticated || isRegularUserAuthenticated,
+    isLoading: loading,
+    error,
+    isAdmin: userProfile?.isAdmin === true,
+    needsVerification: false, // Firebase handles verification
+    needsSubscription: !!user && !!userProfile && !hasSubscriptionVerification && !userProfile?.isAdmin,
+    authenticationStatus,
+    logout
+  };
+}
