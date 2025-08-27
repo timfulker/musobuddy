@@ -266,60 +266,30 @@ export function setupAuthRoutes(app: Express) {
         });
       }
       
-      // Check if user is a beta tester in Stripe
+      // Check if user has a beta invite
       let isBetaUser = false;
-      let stripeCustomerId = null;
+      let betaInvite = null;
       
       try {
-        const Stripe = (await import('stripe')).default;
-        const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
-          apiVersion: '2024-12-18.acacia' 
-        });
+        console.log('🔍 Checking beta invite list for email:', firebaseUser.email);
+        betaInvite = await storage.getBetaInviteByEmail(firebaseUser.email || '');
         
-        console.log('🔍 Checking Stripe for beta customer with email:', firebaseUser.email);
-        console.log('🔑 Using Stripe key starting with:', process.env.STRIPE_SECRET_KEY?.substring(0, 12));
-        const customers = await stripe.customers.list({
-          email: firebaseUser.email,
-          limit: 1
-        });
-        
-        console.log('📋 Stripe API returned:', customers.data.length, 'customers');
-        
-        if (customers.data.length > 0) {
-          const customer = customers.data[0];
-          console.log('🎯 Found Stripe customer:', customer.id);
-          
-          // Check if customer has beta metadata or subscription
-          if (customer.metadata?.is_beta === 'true') {
-            isBetaUser = true;
-            stripeCustomerId = customer.id;
-            console.log('✅ Beta user detected via metadata');
-          } else {
-            // Check for beta subscription
-            const subscriptions = await stripe.subscriptions.list({
-              customer: customer.id,
-              limit: 10
-            });
-            
-            const hasBetaSubscription = subscriptions.data.some(sub => 
-              sub.items.data.some(item => 
-                item.price.product === 'beta' || 
-                item.price.nickname?.toLowerCase().includes('beta')
-              )
-            );
-            
-            if (hasBetaSubscription) {
-              isBetaUser = true;
-              stripeCustomerId = customer.id;
-              console.log('✅ Beta user detected via subscription');
-            }
-          }
+        if (betaInvite && betaInvite.status === 'pending') {
+          isBetaUser = true;
+          console.log('✅ Beta invite found - user eligible for beta access');
+          console.log('📋 Beta invite details:', {
+            cohort: betaInvite.cohort,
+            invitedBy: betaInvite.invitedBy,
+            invitedAt: betaInvite.invitedAt
+          });
+        } else if (betaInvite && betaInvite.status === 'used') {
+          console.log('⚠️ Beta invite already used - treating as regular user');
+        } else {
+          console.log('❌ No beta invite found for this email - regular signup');
         }
-      } catch (stripeError) {
-        console.error('⚠️ Stripe check failed, continuing as regular user:', stripeError);
-        console.error('⚠️ Error details:', stripeError.message);
-        console.error('⚠️ Error type:', stripeError.type);
-        // Continue without beta status if Stripe fails
+      } catch (betaError) {
+        console.error('⚠️ Beta invite check failed, continuing as regular user:', betaError);
+        // Continue without beta status if beta check fails
       }
       
       // Capture security and tracking data
@@ -341,7 +311,7 @@ export function setupAuthRoutes(app: Express) {
         isAdmin: false,
         isBetaTester: isBetaUser,
         tier: isBetaUser ? 'standard' : 'pending_payment',
-        stripeCustomerId: stripeCustomerId,
+        stripeCustomerId: null, // Will be set during subscription creation
         signupIpAddress: signupIP,
         deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
         lastLoginAt: new Date(),
@@ -352,6 +322,17 @@ export function setupAuthRoutes(app: Express) {
       });
       
       console.log(`✅ User created in database: ${userId} (${isBetaUser ? 'BETA' : 'REGULAR'})`);
+      
+      // Mark beta invite as used if applicable
+      if (isBetaUser && betaInvite) {
+        try {
+          await storage.markBetaInviteAsUsed(firebaseUser.email || '', userId);
+          console.log('✅ Beta invite marked as used');
+        } catch (error) {
+          console.error('⚠️ Failed to mark beta invite as used:', error);
+          // Don't fail the whole signup for this
+        }
+      }
       
       res.json({
         success: true,
@@ -391,6 +372,25 @@ export function setupAuthRoutes(app: Express) {
       
       console.log('🔄 Creating checkout session for:', userEmail);
       
+      // Check if user is a beta tester to apply appropriate coupon
+      const user = await storage.getUserById(userId);
+      const isBetaTester = user?.isBetaTester || false;
+      
+      console.log('👤 User beta status:', isBetaTester);
+      
+      // Prepare subscription data with appropriate coupon
+      const subscriptionData: any = {
+        trial_period_days: 30, // 30-day free trial for all users
+      };
+      
+      // Apply beta tester coupon for 12 months free
+      if (isBetaTester) {
+        subscriptionData.discounts = [{
+          coupon: 'BETA_TESTER_2025' // 100% off for 12 months
+        }];
+        console.log('🎉 Applied BETA_TESTER_2025 coupon for 12 months free');
+      }
+      
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         customer_email: userEmail,
@@ -400,15 +400,14 @@ export function setupAuthRoutes(app: Express) {
           quantity: 1
         }],
         mode: 'subscription',
-        subscription_data: {
-          trial_period_days: 30, // 30-day free trial
-        },
+        subscription_data: subscriptionData,
         success_url: `${req.headers.origin}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/signup`,
         metadata: {
           userId: userId,
           userEmail: userEmail,
-          signup_type: 'trial' // Mark as trial signup
+          signup_type: isBetaTester ? 'beta_tester' : 'trial',
+          is_beta_user: isBetaTester.toString()
         }
       });
       

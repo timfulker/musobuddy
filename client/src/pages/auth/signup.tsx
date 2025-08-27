@@ -51,7 +51,7 @@ export default function SignupPage() {
         // Beta user - immediate access to dashboard
         toast({
           title: "Welcome, Beta Tester!",
-          description: "You have immediate access to all features."
+          description: "You have 12 months completely free + 30% lifetime discount!"
         });
         
         setTimeout(() => {

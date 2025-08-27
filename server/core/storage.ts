@@ -663,6 +663,32 @@ export class Storage {
   async getPendingInvoicesAmount(userId: string): Promise<number> {
     return invoiceStorage.getPendingInvoicesAmount(userId);
   }
+
+  // ===== BETA INVITE METHODS =====
+  async getBetaInviteByEmail(email: string) {
+    return miscStorage.getBetaInviteByEmail(email);
+  }
+
+  async createBetaInvite(data: {
+    email: string;
+    invitedBy: string;
+    notes?: string;
+    cohort?: string;
+  }) {
+    return miscStorage.createBetaInvite(data);
+  }
+
+  async markBetaInviteAsUsed(email: string, usedBy: string) {
+    return miscStorage.markBetaInviteAsUsed(email, usedBy);
+  }
+
+  async getAllBetaInvites() {
+    return miscStorage.getAllBetaInvites();
+  }
+
+  async deleteBetaInvite(email: string) {
+    return miscStorage.deleteBetaInvite(email);
+  }
 }
 
 export const storage = new Storage();

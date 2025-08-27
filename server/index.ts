@@ -919,12 +919,40 @@ app.get('/api/email-queue/status', async (req, res) => {
           return res.status(404).send('User not found');
         }
         
-        // Check if this is a trial signup or paid subscription
-        // CORRECTED: Proper trial detection for Stripe-managed trials
+        // Check if this is a beta tester, trial signup, or paid subscription
+        const isBetaSignup = session.metadata?.signup_type === 'beta_tester' ||
+                           session.metadata?.is_beta_user === 'true';
         const isTrialSignup = session.metadata?.signup_type === 'trial' || 
-                             (session.subscription && session.amount_total === 0);
+                             (session.subscription && session.amount_total === 0 && !isBetaSignup);
         
-        if (isTrialSignup) {
+        if (isBetaSignup) {
+          // Beta tester signup - 12 months free
+          console.log('🎉 Setting up beta tester with 12 months free for user:', user.id);
+          
+          const betaStartDate = new Date();
+          const betaEndDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 12 months
+          
+          await storage.updateUser(user.id, {
+            tier: 'core',
+            plan: 'beta_tester',
+            trialStartedAt: betaStartDate,
+            trialExpiresAt: betaEndDate,
+            trialStatus: 'active',
+            stripeCustomerId: session.customer,
+            stripeSubscriptionId: session.subscription,
+            accountStatus: 'active',
+            isSubscribed: true,
+            isBetaTester: true // Ensure beta flag is set
+          });
+          
+          console.log('✅ Beta tester setup completed:', {
+            userId: user.id,
+            email: customerEmail,
+            betaStart: betaStartDate.toISOString(),
+            betaEnd: betaEndDate.toISOString(),
+            customerId: session.customer
+          });
+        } else if (isTrialSignup) {
           // Trial signup - 30 day trial
           console.log('🎯 Setting up 30-day trial for user:', user.id);
           
@@ -970,6 +998,78 @@ app.get('/api/email-queue/status', async (req, res) => {
             subscriptionId: session.subscription
           });
         }
+      } else if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object;
+        console.log('🔄 Processing subscription update:', subscription.id);
+        
+        // Check if this is a beta tester reaching the end of their 12-month free period
+        const customer = subscription.customer;
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
+          apiVersion: '2024-12-18.acacia' 
+        });
+        
+        // Get customer email
+        const stripeCustomer = await stripe.customers.retrieve(customer as string);
+        const customerEmail = stripeCustomer.email;
+        
+        if (!customerEmail) {
+          console.error('❌ No customer email found for subscription update');
+          return res.status(400).send('No customer email');
+        }
+        
+        console.log('🔍 Looking up user for subscription update:', customerEmail);
+        const user = await storage.getUserByEmail(customerEmail);
+        
+        if (!user) {
+          console.error('❌ User not found for subscription update:', customerEmail);
+          return res.status(404).send('User not found');
+        }
+        
+        // Check if user is a beta tester and if BETA_TESTER_2025 coupon is expiring
+        if (user.isBetaTester && subscription.discount?.coupon?.id === 'BETA_TESTER_2025') {
+          // Check if the discount is ending (next period will not have the discount)
+          const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+            customer: customer as string
+          });
+          
+          // If upcoming invoice doesn't have the beta tester discount, upgrade to alumni
+          const hasAlumniDiscount = upcomingInvoice.discounts?.some(d => d.coupon?.id === 'BETA_ALUMNI_30_FOREVER');
+          const hasBetaDiscount = upcomingInvoice.discounts?.some(d => d.coupon?.id === 'BETA_TESTER_2025');
+          
+          if (!hasBetaDiscount && !hasAlumniDiscount) {
+            console.log('🎓 Beta tester transitioning to alumni - applying lifetime 30% discount');
+            
+            try {
+              // Apply the alumni discount to the subscription
+              await stripe.subscriptions.update(subscription.id, {
+                discounts: [{
+                  coupon: 'BETA_ALUMNI_30_FOREVER'
+                }]
+              });
+              
+              // Update user status
+              await storage.updateUser(user.id, {
+                plan: 'beta_alumni',
+                trialStatus: 'expired' // Beta period over, now on alumni pricing
+              });
+              
+              console.log('✅ Beta alumni upgrade completed:', {
+                userId: user.id,
+                email: customerEmail,
+                subscriptionId: subscription.id
+              });
+            } catch (error) {
+              console.error('❌ Failed to apply alumni discount:', error);
+            }
+          }
+        }
+      } else if (event.type === 'customer.subscription.created' || 
+                 event.type === 'customer.subscription.deleted' ||
+                 event.type === 'invoice.payment_succeeded' ||
+                 event.type === 'invoice.payment_failed') {
+        console.log(`📋 Handling ${event.type} - no special beta logic needed`);
+        // These events are logged but don't need special beta handling
       } else {
         console.log(`ℹ️ Unhandled webhook event: ${event.type}`);
       }

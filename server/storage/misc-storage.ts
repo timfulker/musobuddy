@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites } from "../../shared/schema";
 import { eq, and, desc, sql, lte, gte, ne } from "drizzle-orm";
 
 export class MiscStorage {
@@ -456,6 +456,54 @@ export class MiscStorage {
   async deleteMessageNotification(id: number) {
     const result = await db.delete(messageNotifications)
       .where(eq(messageNotifications.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // ===== BETA INVITE METHODS =====
+
+  async getBetaInviteByEmail(email: string) {
+    const result = await db.select().from(betaInvites)
+      .where(eq(betaInvites.email, email.toLowerCase()));
+    return result[0] || null;
+  }
+
+  async createBetaInvite(data: {
+    email: string;
+    invitedBy: string;
+    notes?: string;
+    cohort?: string;
+  }) {
+    const result = await db.insert(betaInvites).values({
+      email: data.email.toLowerCase(),
+      invitedBy: data.invitedBy,
+      notes: data.notes || null,
+      cohort: data.cohort || '2025_beta',
+      status: 'pending'
+    }).returning();
+    return result[0];
+  }
+
+  async markBetaInviteAsUsed(email: string, usedBy: string) {
+    const result = await db.update(betaInvites)
+      .set({ 
+        status: 'used',
+        usedAt: new Date(),
+        usedBy: usedBy
+      })
+      .where(eq(betaInvites.email, email.toLowerCase()))
+      .returning();
+    return result[0];
+  }
+
+  async getAllBetaInvites() {
+    return await db.select().from(betaInvites)
+      .orderBy(desc(betaInvites.invitedAt));
+  }
+
+  async deleteBetaInvite(email: string) {
+    const result = await db.delete(betaInvites)
+      .where(eq(betaInvites.email, email.toLowerCase()))
       .returning();
     return result[0];
   }

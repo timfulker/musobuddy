@@ -1106,6 +1106,19 @@ export type UserSecurityStatus = typeof userSecurityStatus.$inferSelect;
 export type InsertSmsVerification = z.infer<typeof insertSmsVerificationSchema>;
 export type SmsVerification = typeof smsVerifications.$inferSelect;
 
+// Beta invite management table
+export const betaInvites = pgTable("beta_invites", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull().unique(),
+  status: varchar("status").default("pending"), // pending, used, expired
+  invitedBy: varchar("invited_by").notNull(), // Admin user ID who sent invite
+  invitedAt: timestamp("invited_at").defaultNow(),
+  usedAt: timestamp("used_at"),
+  usedBy: varchar("used_by"), // User ID who used the invite
+  notes: text("notes"), // Internal notes about the invite
+  cohort: varchar("cohort").default("2025_beta"), // Beta cohort identifier
+});
+
 // NEW: Contract Learning System Tables
 
 // Store imported contract files
@@ -1166,6 +1179,11 @@ export const insertImportedContractSchema = createInsertSchema(importedContracts
 export const insertContractExtractionPatternSchema = createInsertSchema(contractExtractionPatterns);
 export const insertContractExtractionSchema = createInsertSchema(contractExtractions);
 export const insertClientCommunicationSchema = createInsertSchema(clientCommunications);
+export const insertBetaInviteSchema = createInsertSchema(betaInvites).omit({
+  id: true,
+  invitedAt: true,
+  usedAt: true,
+});
 
 // Types for the new tables
 export type InsertImportedContract = z.infer<typeof insertImportedContractSchema>;
@@ -1176,4 +1194,6 @@ export type InsertContractExtraction = z.infer<typeof insertContractExtractionSc
 export type ContractExtraction = typeof contractExtractions.$inferSelect;
 export type InsertClientCommunication = z.infer<typeof insertClientCommunicationSchema>;
 export type ClientCommunication = typeof clientCommunications.$inferSelect;
+export type InsertBetaInvite = z.infer<typeof insertBetaInviteSchema>;
+export type BetaInvite = typeof betaInvites.$inferSelect;
 
