@@ -359,6 +359,55 @@ export class UserStorage {
       throw error;
     }
   }
+
+  async lockUser(userId: string, lockedUntil: Date, reason?: string) {
+    try {
+      await db.update(users)
+        .set({
+          lockedUntil: lockedUntil
+        })
+        .where(eq(users.id, userId));
+      
+      console.log(`🔒 Locked user ${userId} until ${lockedUntil.toISOString()}. Reason: ${reason || 'No reason provided'}`);
+    } catch (error) {
+      console.error('❌ Failed to lock user:', error);
+      throw error;
+    }
+  }
+
+  async unlockUser(userId: string) {
+    try {
+      await db.update(users)
+        .set({
+          lockedUntil: null
+        })
+        .where(eq(users.id, userId));
+      
+      console.log(`🔓 Unlocked user ${userId}`);
+    } catch (error) {
+      console.error('❌ Failed to unlock user:', error);
+      throw error;
+    }
+  }
+
+  async getLockedUsers() {
+    try {
+      const result = await db.select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        lockedUntil: users.lockedUntil,
+        lastLoginAt: users.lastLoginAt,
+        lastLoginIp: users.lastLoginIp
+      }).from(users).where(sql`locked_until > NOW()`);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to get locked users:', error);
+      throw error;
+    }
+  }
 }
 
 export const userStorage = new UserStorage();

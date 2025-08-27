@@ -2,6 +2,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { verifyFirebaseToken } from '../core/firebase-admin';
 import { storage } from '../core/storage';
+import { userStorage } from '../storage/user-storage';
 
 // Enhanced logging for debugging - controlled by environment
 const AUTH_DEBUG = process.env.AUTH_DEBUG === 'true' && process.env.NODE_ENV === 'development';
@@ -100,6 +101,19 @@ export const authenticateWithFirebase = async (
       });
     }
     
+    // Check if account is locked
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      const lockExpiry = new Date(user.lockedUntil);
+      const duration = Date.now() - startTime;
+      console.log(`🔒 [FIREBASE-AUTH] Account locked for user ${user.id} (${user.email}) until ${lockExpiry.toISOString()}`);
+      
+      return res.status(423).json({ 
+        error: 'Account temporarily locked',
+        details: `Your account is locked until ${lockExpiry.toLocaleString()}. Contact support if you need assistance.`,
+        lockedUntil: lockExpiry.toISOString()
+      });
+    }
+    
     // Check if this is a fresh login by comparing with last login time
     const currentTime = new Date();
     const lastLoginTime = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
@@ -111,7 +125,7 @@ export const authenticateWithFirebase = async (
       const loginIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] as string || 'unknown';
       
       // Update login tracking in database (async, don't block request)
-      storage.updateLoginActivity(user.id, currentTime, loginIP).catch(error => {
+      userStorage.updateLoginActivity(user.id, currentTime, loginIP).catch(error => {
         console.error('⚠️ Failed to update login activity:', error);
         // Don't block authentication if tracking fails
       });

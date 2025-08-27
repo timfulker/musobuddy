@@ -4,6 +4,8 @@
 
 import { type Express } from 'express';
 import { storage } from '../core/storage';
+import { userStorage } from '../storage/user-storage';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 // Export the registration function for the routes/index.ts file
 export async function registerAdminRoutes(app: Express) {
@@ -494,6 +496,102 @@ app.patch('/api/admin/users/:userId', async (req, res) => {
 
   } catch (error: any) {
     console.error(`❌ [ADMIN] Failed to update user:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get all locked users
+app.get('/api/admin/locked-users', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const lockedUsers = await userStorage.getLockedUsers();
+    console.log(`📊 [ADMIN] Retrieved ${lockedUsers.length} locked users for admin ${req.user.email}`);
+    
+    res.json({ 
+      success: true, 
+      lockedUsers,
+      count: lockedUsers.length 
+    });
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to get locked users:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Lock user account
+app.post('/api/admin/lock-user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { userId, hours, reason } = req.body;
+    
+    if (!userId || !hours) {
+      return res.status(400).json({ 
+        error: 'userId and hours are required' 
+      });
+    }
+
+    // Calculate lock expiry time
+    const lockedUntil = new Date();
+    lockedUntil.setHours(lockedUntil.getHours() + parseInt(hours));
+
+    await userStorage.lockUser(userId, lockedUntil, reason);
+    
+    console.log(`🔒 [ADMIN] Admin ${req.user.email} locked user ${userId} until ${lockedUntil.toISOString()}`);
+    
+    res.json({
+      success: true,
+      message: `User locked until ${lockedUntil.toLocaleString()}`,
+      lockedUntil: lockedUntil.toISOString()
+    });
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to lock user:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Unlock user account
+app.post('/api/admin/unlock-user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        error: 'userId is required' 
+      });
+    }
+
+    await userStorage.unlockUser(userId);
+    
+    console.log(`🔓 [ADMIN] Admin ${req.user.email} unlocked user ${userId}`);
+    
+    res.json({
+      success: true,
+      message: 'User account unlocked'
+    });
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to unlock user:', error);
     res.status(500).json({
       success: false,
       error: error.message
