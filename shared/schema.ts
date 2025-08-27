@@ -61,11 +61,9 @@ export const users = pgTable("users", {
   lastLoginIP: varchar("last_login_ip"),
   loginAttempts: integer("login_attempts").default(0),
   lockedUntil: timestamp("locked_until"),
-  forcePasswordChange: boolean("force_password_change").default(false),
-  // Password reset fields
+  // Password reset fields (Firebase handles password management)
   passwordResetToken: varchar("password_reset_token", { length: 128 }),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
-  notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
   // Test mode override - force Stripe test mode even in production
   forceTestMode: boolean("force_test_mode").default(false),
   // AI usage tracking removed - unlimited AI usage for all users
