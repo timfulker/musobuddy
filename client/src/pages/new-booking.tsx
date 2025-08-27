@@ -893,14 +893,14 @@ export default function NewBookingPage({
                       </DropdownMenuItem>
                       
                       <DropdownMenuItem
-                        onClick={() => setLocation(`/contracts/new?bookingId=${editBookingId}`))
+                        onClick={() => setLocation(`/contracts/new?bookingId=${editBookingId}`)}
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Create Contract
                       </DropdownMenuItem>
                       
                       <DropdownMenuItem
-                        onClick={() => setLocation(`/compliance?bookingId=${editBookingId}`))
+                        onClick={() => setLocation(`/compliance?bookingId=${editBookingId}`)}
                       >
                         <Shield className="w-4 h-4 mr-2" />
                         Compliance

@@ -9,6 +9,8 @@ const PUBLIC_ROUTES = new Set([
   '/api/auth/refresh',
   '/api/auth/verify-token',
   '/api/auth/password-reset',
+  '/api/auth/user', // CRITICAL: Allow users to check auth status
+  '/api/onboarding/status', // Allow onboarding flow
   '/api/health',
   '/api/stripe/webhook',
   '/api/stripe/create-checkout',
