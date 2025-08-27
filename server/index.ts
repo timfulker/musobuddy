@@ -941,72 +941,55 @@ app.get('/api/email-queue/status', async (req, res) => {
                              (session.subscription && session.amount_total === 0 && !isBetaSignup);
         
         if (isBetaSignup) {
-          // Beta tester signup - 12 months free
-          console.log('🎉 Setting up beta tester with 12 months free for user:', user.id);
+          // Beta tester completing checkout - they already have 1 year trial
+          console.log('🎉 Beta tester completing checkout:', user.id);
           
-          const betaStartDate = new Date();
-          const betaEndDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 12 months
-          
+          // Beta testers already have trial_ends_at set for 1 year during signup
+          // Just update their Stripe info
           await storage.updateUser(user.id, {
-            tier: 'core',
-            plan: 'beta_tester',
-            trialStartedAt: betaStartDate,
-            trialExpiresAt: betaEndDate,
-            trialStatus: 'active',
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
-            accountStatus: 'active',
-            isSubscribed: true,
+            // Don't set has_paid to true - they're on free beta access
+            hasPaid: false,
             isBetaTester: true // Ensure beta flag is set
           });
           
-          console.log('✅ Beta tester setup completed:', {
+          console.log('✅ Beta tester Stripe info updated:', {
             userId: user.id,
             email: customerEmail,
-            betaStart: betaStartDate.toISOString(),
-            betaEnd: betaEndDate.toISOString(),
             customerId: session.customer
           });
         } else if (isTrialSignup) {
-          // Trial signup - 30 day trial
-          console.log('🎯 Setting up 30-day trial for user:', user.id);
+          // Trial user completing checkout - they already have 30 day trial
+          console.log('🎯 Trial user completing checkout:', user.id);
           
-          const trialStartDate = new Date();
-          const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-          
+          // Trial users already have trial_ends_at set during signup
+          // Just update their Stripe info
           await storage.updateUser(user.id, {
-            tier: 'core', // Trial gets core features
-            plan: 'trial',
-            trialStartedAt: trialStartDate,
-            trialExpiresAt: trialEndDate,
-            trialStatus: 'active',
             stripeCustomerId: session.customer,
-            stripeSubscriptionId: session.subscription, // Trials have subscription IDs too
-            accountStatus: 'active',
-            isSubscribed: true // Change: Trial users are considered subscribed during trial
+            stripeSubscriptionId: session.subscription,
+            // Don't set has_paid to true yet - they're still in trial
+            hasPaid: false
           });
           
-          console.log('✅ Trial setup completed:', {
+          console.log('✅ Trial user Stripe info updated:', {
             userId: user.id,
             email: customerEmail,
-            trialStart: trialStartDate.toISOString(),
-            trialEnd: trialEndDate.toISOString(),
             customerId: session.customer
           });
         } else {
-          // Paid subscription
-          console.log('💳 Setting up paid subscription for user:', user.id);
+          // Paid subscription - user has actually paid money
+          console.log('💳 Processing payment for user:', user.id);
           
           await storage.updateUser(user.id, {
-            tier: 'core',
-            plan: 'core',
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
-            isSubscribed: true,
-            accountStatus: 'active'
+            hasPaid: true, // Mark as paid user
+            // Clear trial_ends_at since they've paid
+            trialEndsAt: null
           });
           
-          console.log('✅ Paid subscription setup completed:', {
+          console.log('✅ User marked as paid subscriber:', {
             userId: user.id,
             email: customerEmail,
             customerId: session.customer,

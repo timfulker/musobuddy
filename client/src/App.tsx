@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { requiresPayment, isProtectedRoute, getPaymentRedirectUrl } from "@/lib/payment-utils";
+import { hasAccess, isProtectedRoute, getPaymentRedirectUrl } from "@/lib/access-control";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
@@ -72,8 +72,9 @@ function Router() {
     const isPaymentReturn = window.location.search.includes('session_id') || currentPath === '/payment-success';
     const isTrialSuccess = currentPath === '/trial-success';
     
-    // Use centralized payment enforcement logic
-    const needsPaymentSetup = requiresPayment(user);
+    // Use new simplified access control logic
+    const hasUserAccess = hasAccess(user);
+    const needsPaymentSetup = !hasUserAccess;
     const isProtected = isProtectedRoute(currentPath);
     const paymentRedirectUrl = getPaymentRedirectUrl();
     

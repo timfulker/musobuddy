@@ -133,32 +133,34 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // CRITICAL: Return complete user data including subscription fields
-      // Note: Database fields use snake_case, need to map correctly
+      // Return simplified user data with new access control fields
       res.json({
-        userId: user.id,
+        // Identity
+        uid: user.id,
+        userId: user.id, // Keep for backwards compatibility
         email: user.email,
         firstName: user.first_name || user.firstName,
         lastName: user.last_name || user.lastName,
-        isAdmin: user.is_admin || false,
         emailPrefix: user.email_prefix || null,
         
-        // SUBSCRIPTION FIELDS - Required for access control (using snake_case from DB)
-        tier: user.tier || 'pending_payment',
-        plan: user.plan || 'pending_payment',
-        created_via_stripe: user.created_via_stripe || false,
-        createdViaStripe: user.created_via_stripe || false,  // Also send camelCase for compatibility
-        trial_status: user.trial_status || 'inactive',
-        trialStatus: user.trial_status || 'inactive',  // Also send camelCase
-        isSubscribed: user.is_subscribed || false,
+        // User Type (new simplified fields)
+        isAdmin: user.is_admin || false,
+        isAssigned: user.is_assigned || false,
+        isBetaTester: user.is_beta_tester || false,
+        
+        // Access Control (new simplified fields)
+        hasPaid: user.has_paid || false,
+        trialEndsAt: user.trial_ends_at || null,
+        accountNotes: user.account_notes || null,
+        
+        // Stripe Integration (keep for payment processing)
         stripeCustomerId: user.stripe_customer_id || null,
         stripeSubscriptionId: user.stripe_subscription_id || null,
-        isBetaTester: user.is_beta_tester || false,
-        onboardingCompleted: user.onboarding_completed || false,
         
-        // Computed field for easy payment check - CRITICAL FIX
-        hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || 
-                            isExemptUser(user.email)
+        // Legacy fields for backwards compatibility (to be removed later)
+        tier: user.has_paid ? 'core' : (user.trial_ends_at && new Date(user.trial_ends_at) > new Date() ? 'trial' : 'pending_payment'),
+        plan: 'core', // Only one plan now
+        hasCompletedPayment: user.has_paid || false
       });
 
     } catch (error) {
@@ -177,32 +179,34 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // CRITICAL: Return complete user data including subscription fields (matching /api/auth/user)
-      // Note: Database fields use snake_case, need to map correctly
+      // Return simplified user data with new access control fields (matching /api/auth/user)
       res.json({
-        userId: user.id,
+        // Identity
+        uid: user.id,
+        userId: user.id, // Keep for backwards compatibility
         email: user.email,
         firstName: user.first_name || user.firstName,
         lastName: user.last_name || user.lastName,
-        isAdmin: user.is_admin || false,
         emailPrefix: user.email_prefix || null,
         
-        // SUBSCRIPTION FIELDS - Required for access control (using snake_case from DB)
-        tier: user.tier || 'pending_payment',
-        plan: user.plan || 'pending_payment',
-        created_via_stripe: user.created_via_stripe || false,
-        createdViaStripe: user.created_via_stripe || false,  // Also send camelCase for compatibility
-        trial_status: user.trial_status || 'inactive',
-        trialStatus: user.trial_status || 'inactive',  // Also send camelCase
-        isSubscribed: user.is_subscribed || false,
+        // User Type (new simplified fields)
+        isAdmin: user.is_admin || false,
+        isAssigned: user.is_assigned || false,
+        isBetaTester: user.is_beta_tester || false,
+        
+        // Access Control (new simplified fields)
+        hasPaid: user.has_paid || false,
+        trialEndsAt: user.trial_ends_at || null,
+        accountNotes: user.account_notes || null,
+        
+        // Stripe Integration (keep for payment processing)
         stripeCustomerId: user.stripe_customer_id || null,
         stripeSubscriptionId: user.stripe_subscription_id || null,
-        isBetaTester: user.is_beta_tester || false,
-        onboardingCompleted: user.onboarding_completed || false,
         
-        // Computed field for easy payment check - CRITICAL FIX
-        hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || 
-                            isExemptUser(user.email)
+        // Legacy fields for backwards compatibility (to be removed later)
+        tier: user.has_paid ? 'core' : (user.trial_ends_at && new Date(user.trial_ends_at) > new Date() ? 'trial' : 'pending_payment'),
+        plan: 'core', // Only one plan now
+        hasCompletedPayment: user.has_paid || false
       });
 
     } catch (error) {
@@ -366,7 +370,12 @@ export function setupAuthRoutes(app: Express) {
       
       console.log('🔒 Security data captured:', { signupIP, userAgent, deviceFingerprint });
       
-      // Create user in database with appropriate status
+      // Determine trial duration based on user type
+      const trialDays = isBetaUser ? 365 : 30; // Beta testers get 1 year, regular users get 30 days
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+      
+      // Create user in database with trial period
       const userId = nanoid();
       const newUser = await storage.createUser({
         id: userId,
@@ -376,14 +385,16 @@ export function setupAuthRoutes(app: Express) {
         firebaseUid: firebaseUser.uid,
         isAdmin: false,
         isBetaTester: isBetaUser,
-        tier: 'pending_payment', // All users must go through Stripe, beta testers get coupon applied
+        isAssigned: false, // Not an assigned account
+        trialEndsAt: trialEndsAt, // Set trial expiration
+        hasPaid: false, // Hasn't paid yet
+        tier: 'pending_payment', // Legacy field - to be removed
         stripeCustomerId: null, // Will be set during subscription creation
         signupIpAddress: signupIP,
         deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
         lastLoginAt: new Date(),
         lastLoginIP: signupIP,
         fraudScore: 0,
-        onboardingCompleted: false,
         createdAt: new Date()
       });
       
@@ -407,10 +418,14 @@ export function setupAuthRoutes(app: Express) {
           email: newUser.email,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
-          status: newUser.tier,
-          isBeta: isBetaUser
+          isBeta: isBetaUser,
+          trialEndsAt: trialEndsAt,
+          hasPaid: false
         },
-        requiresPayment: true // All users go through Stripe, beta testers get coupon applied
+        message: isBetaUser 
+          ? 'Welcome! Your 1-year beta access has started.' 
+          : 'Welcome! Your 30-day free trial has started.',
+        redirect: '/dashboard' // Users can access dashboard during trial
       });
       
     } catch (error: any) {
@@ -436,11 +451,16 @@ export function setupAuthRoutes(app: Express) {
       // Check if user is a beta tester to apply appropriate coupon
       const user = await storage.getUserById(userId);
       
-      // Determine which Stripe key to use based on force test mode or environment
-      const shouldUseTestMode = user?.forceTestMode || process.env.NODE_ENV !== 'production';
+      // Automatically detect test mode from email pattern
+      const isTestAccount = userEmail.includes('+test');
+      const shouldUseTestMode = isTestAccount || process.env.NODE_ENV === 'development';
       const stripeKey = shouldUseTestMode 
         ? process.env.STRIPE_TEST_SECRET_KEY 
         : process.env.STRIPE_SECRET_KEY;
+      
+      if (isTestAccount) {
+        console.log('🧪 Test account detected - using Stripe test mode');
+      }
       
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(stripeKey || '', { 

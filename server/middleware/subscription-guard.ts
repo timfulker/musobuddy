@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './firebase-auth';
 import { storage } from '../core/storage';
+import { hasAccess, getUserStatus } from '../utils/access-control';
 
 // Public routes that don't require any subscription
 const PUBLIC_ROUTES = new Set([
@@ -87,64 +88,29 @@ export const subscriptionGuard = async (req: Request, res: Response, next: NextF
       });
     }
 
-    // Admin users bypass all subscription checks
-    if (user.isAdmin) {
-      console.log(`✅ [SUBSCRIPTION-GUARD] Admin user ${user.id} bypassed subscription check for ${req.path}`);
+    // Use new simplified access control system
+    const userHasAccess = hasAccess(user);
+    const userStatus = getUserStatus(user);
+    
+    // If user has access, allow them through
+    if (userHasAccess) {
+      console.log(`✅ [SUBSCRIPTION-GUARD] User ${user.id} (${userStatus.type}) granted access to ${req.path}`);
       return next();
     }
-
-    // Check hardcoded email exemptions (existing system)
-    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-    if (allowedBypassEmails.includes(user.email)) {
-      console.log(`✅ [SUBSCRIPTION-GUARD] Exempt user ${user.id} (${user.email}) bypassed subscription check for ${req.path}`);
+    
+    // User doesn't have access - check if they're allowed on payment routes
+    if (isPendingPaymentAllowed(req.path)) {
+      console.log(`✅ [SUBSCRIPTION-GUARD] User ${user.id} allowed access to payment route: ${req.path}`);
       return next();
     }
-
-    // STRICT PAYMENT ENFORCEMENT
-    const userTier = user.tier || 'pending_payment';
-    const createdViaStripe = user.created_via_stripe || false;
     
-    // Check if user needs payment (multiple conditions)
-    const needsPayment = (
-      userTier === 'pending_payment' ||
-      !userTier ||
-      userTier === undefined ||
-      (!createdViaStripe && !allowedBypassEmails.includes(user.email)) ||
-      (userTier === 'free' && !allowedBypassEmails.includes(user.email)) // 'free' tier without admin bypass = needs payment
-    );
-    
-    if (needsPayment) {
-      // Allow limited access to payment-related routes
-      if (isPendingPaymentAllowed(req.path)) {
-        console.log(`✅ [SUBSCRIPTION-GUARD] Unpaid user ${user.id} allowed access to payment route: ${req.path}`);
-        return next();
-      }
-      
-      console.log(`🔒 [SUBSCRIPTION-GUARD] Unpaid user ${user.id} blocked from ${req.path} (tier: ${userTier}, stripe: ${createdViaStripe})`);
-      return res.status(402).json({ 
-        error: 'Payment Required',
-        code: 'SUBSCRIPTION_PENDING',
-        details: 'Please complete your subscription setup to access this feature',
-        redirectTo: '/subscription/update-payment'
-      });
-    }
-
-    // Valid paid tiers (must also be created via Stripe unless admin)
-    const validPaidTiers = ['core', 'premium', 'enterprise'];
-    const hasValidPaidTier = validPaidTiers.includes(userTier) && createdViaStripe;
-    
-    if (hasValidPaidTier) {
-      console.log(`✅ [SUBSCRIPTION-GUARD] Paid user ${user.id} with tier '${userTier}' granted access to ${req.path}`);
-      return next();
-    }
-
-    // Block all other cases (shouldn't reach here with proper enforcement above)
-    console.log(`🔒 [SUBSCRIPTION-GUARD] User ${user.id} blocked - unexpected state (tier: ${userTier}, stripe: ${createdViaStripe})`);
-    return res.status(403).json({ 
-      error: 'Subscription required',
-      details: 'Invalid subscription status',
-      tier: userTier,
-      createdViaStripe: createdViaStripe
+    // Block access - payment required
+    console.log(`🔒 [SUBSCRIPTION-GUARD] User ${user.id} blocked from ${req.path} - ${userStatus.message}`);
+    return res.status(402).json({ 
+      error: 'Payment Required',
+      code: 'SUBSCRIPTION_REQUIRED',
+      details: userStatus.message,
+      redirectTo: '/subscription/update-payment'
     });
 
   } catch (error) {

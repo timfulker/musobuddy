@@ -21,34 +21,32 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  isAdmin: boolean("is_admin").default(false), // Admin role flag
-  subscriptionBypass: boolean("subscription_bypass").default(false), // Bypass subscription paywall
-  // Stripe subscription fields
-  isSubscribed: boolean("is_subscribed").default(false),
-  isLifetime: boolean("is_lifetime").default(false),
-  isBetaTester: boolean("is_beta_tester").default(false),
-  betaFeedbackCount: integer("beta_feedback_count").default(0),
-  stripeCustomerId: text("stripe_customer_id"),
-  plan: varchar("plan", { length: 50 }).default("free"), // free, trial, core, premium
-  tier: varchar("tier", { length: 50 }).default("free"), // free, core, premium
-  createdViaStripe: boolean("created_via_stripe").default(false), // Track users created via Stripe checkout
-  emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
-  quickAddToken: text("quick_add_token").unique(), // Unique token for quick-add booking widget
-  widgetUrl: text("widget_url"), // Permanent widget URL for booking requests
-  widgetQrCode: text("widget_qr_code"), // Base64 QR code for the widget URL
-  // SaaS Trial Management Fields
-  phoneNumber: varchar("phone_number", { length: 20 }), // .unique() removed for testing - re-add for launch
-  trialStartedAt: timestamp("trial_started_at"),
-  trialExpiresAt: timestamp("trial_expires_at"),
-  trialStatus: varchar("trial_status", { length: 20 }).default("inactive"), // inactive, active, converted, cancelled, expired
-  accountStatus: varchar("account_status", { length: 20 }).default("active"), // active, payment_failed, suspended, cancelled
-  paymentFailedAt: timestamp("payment_failed_at"),
-  gracePeriodExpiresAt: timestamp("grace_period_expires_at"),
-  signupIpAddress: varchar("signup_ip_address"),
-  deviceFingerprint: text("device_fingerprint"),
-  fraudScore: integer("fraud_score").default(0),
-  onboardingCompleted: boolean("onboarding_completed").default(false),
-  reminderSentAt: timestamp("reminder_sent_at"),
+  // User Type (simple booleans)
+  isAdmin: boolean("is_admin").default(false),         // Admin role flag
+  isAssigned: boolean("is_assigned").default(false),   // Free access granted by admin
+  isBetaTester: boolean("is_beta_tester").default(false), // Beta program participant
+  
+  // Access Control
+  trialEndsAt: timestamp("trial_ends_at").default(null), // 30 days regular, 1 year beta
+  hasPaid: boolean("has_paid").default(false),           // Successfully paid via Stripe
+  
+  // Notes
+  accountNotes: text("account_notes").default(null),     // Admin notes about account
+  
+  // Stripe Integration
+  stripeCustomerId: text("stripe_customer_id").default(null),
+  stripeSubscriptionId: text("stripe_subscription_id").default(null),
+  
+  // Assignment tracking
+  assignedAt: timestamp("assigned_at").default(null),    // When admin granted access
+  assignedBy: varchar("assigned_by").default(null),      // Which admin granted it
+  
+  // Widget fields (keep these as they're used)
+  emailPrefix: text("email_prefix").unique(),            // For personalized email addresses
+  quickAddToken: text("quick_add_token").unique(),       // Unique token for quick-add booking widget
+  widgetUrl: text("widget_url"),                         // Permanent widget URL for booking requests
+  widgetQrCode: text("widget_qr_code"),                  // Base64 QR code for the widget URL
+  phoneNumber: varchar("phone_number", { length: 20 }),  // Keep for contact info
   // Firebase Auth Integration
   firebaseUid: text("firebase_uid").unique(), // Firebase user UID for authentication
   // Existing fields
@@ -60,8 +58,6 @@ export const users = pgTable("users", {
   // Password reset fields (Firebase handles password management)
   passwordResetToken: varchar("password_reset_token", { length: 128 }),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
-  // Test mode override - force Stripe test mode even in production
-  forceTestMode: boolean("force_test_mode").default(false),
   // AI usage tracking removed - unlimited AI usage for all users
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
