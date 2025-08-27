@@ -55,7 +55,8 @@ export default function Dashboard() {
           description: "Your account is now active. Let's get started with setting up your email integration.",
         });
         // Force page reload to refresh auth state
-        setTimeout(() => window.location.reload(), 100);
+        // Remove page reload - causes infinite loops
+        console.log('Dashboard initialized');
       })
       .catch((error) => {
         console.error('❌ Session restoration failed:', error);
@@ -79,9 +80,8 @@ export default function Dashboard() {
         description: "You are logged out. Logging in again...",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
+      // Use React Router instead of window.location to prevent page reloads
+      // Note: This should be handled by the main App.tsx routing logic instead
       return;
     }
   }, [isAuthenticated, isLoading, toast]);

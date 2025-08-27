@@ -55,6 +55,7 @@ import { useEffect, lazy } from "react";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
+  const [location, setLocation] = useLocation();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -68,41 +69,30 @@ function Router() {
     );
   }
 
-  // DEBUG: Log authentication state for root path
-  const currentPath = window.location.pathname;
-  if (currentPath === '/') {
-    console.log('🔍 Root path auth state:', {
-      isAuthenticated,
-      hasUser: !!user,
-      hasError: !!error,
-      errorStatus: (error as any)?.status,
-      currentPath
-    });
-  }
+  // Use useEffect for navigation to prevent render loops
+  useEffect(() => {
+    const currentPath = location;
+    const hasStripeSession = window.location.search.includes('stripe_session');
+    const isPaymentReturn = window.location.search.includes('session_id') || currentPath === '/payment-success';
+    const isTrialSuccess = currentPath === '/trial-success';
+    
+    // Redirect authenticated user from root to dashboard
+    if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
+      console.log('🔄 Redirecting authenticated user to dashboard');
+      setLocation('/dashboard');
+      return;
+    }
 
-  // Simple redirect without useEffect to prevent loops
-  // Exception: Don't redirect if user is on trial-success page or coming from Stripe
-  const hasStripeSession = window.location.search.includes('stripe_session');
-  const isPaymentReturn = window.location.search.includes('session_id') || window.location.pathname === '/payment-success';
-  const isTrialSuccess = window.location.pathname === '/trial-success';
-  
-  if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
-    console.log('🔄 Redirecting authenticated user to dashboard');
-    window.location.href = '/dashboard';
-    return null;
-  }
-
-  // Payment redirect logic is now handled in useAuth hook
-
-  // If user tries to access protected routes without authentication, redirect to login
-  const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];
-  const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
-  
-  if (!isAuthenticated && isProtectedRoute) {
-    console.log('🔒 Redirecting unauthenticated user to login');
-    window.location.href = '/login';
-    return null;
-  }
+    // Redirect unauthenticated users from protected routes to login
+    const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];
+    const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+    
+    if (!isAuthenticated && isProtectedRoute) {
+      console.log('🔒 Redirecting unauthenticated user to login');
+      setLocation('/login');
+      return;
+    }
+  }, [isAuthenticated, location, setLocation]);
 
   return (
     <Switch>
@@ -123,19 +113,14 @@ function Router() {
       <Route path="/widget/:token" component={QuickAddWidget} />
 
       <Route path="/logout" component={() => {
-        // Client-side logout handler - clears cache and redirects
-        fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include'
-        }).then(() => {
-          // Clear React Query cache to force re-authentication
-          queryClient.clear();
-          window.location.href = '/';
-        }).catch(() => {
-          // Even if logout fails, clear cache and redirect
-          queryClient.clear();
-          window.location.href = '/';
-        });
+        // Use Firebase logout from useAuth hook instead of direct API calls
+        const { logout } = useAuth();
+        useEffect(() => {
+          logout().then(() => {
+            queryClient.clear();
+            setLocation('/');
+          });
+        }, []);
         return <div>Logging out...</div>;
       }} />
       
