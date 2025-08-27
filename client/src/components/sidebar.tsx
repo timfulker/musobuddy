@@ -196,6 +196,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <NotificationBadge count={counts.overdueInvoices} />
           </Link>
 
+          {/* Admin Panel - only show for admin users */}
+          {user?.isAdmin && (
+            <Link 
+              href="/admin" 
+              onClick={() => window.innerWidth < 768 && onClose()}
+              className={cn(
+                getNavLinkClass("/admin"),
+                isActive("/admin") ? 'bg-primary text-primary-foreground' : '',
+                'relative'
+              )}
+            >
+              <Crown className="w-5 h-5 text-yellow-500" />
+              <span>Admin Panel</span>
+            </Link>
+          )}
 
           
           {/* Settings Section with Collapsible Submenu */}
