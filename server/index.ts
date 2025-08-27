@@ -876,8 +876,15 @@ app.get('/api/email-queue/status', async (req, res) => {
     }
   });
 
-  // Stripe webhook handler for payment completion
-  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Stripe webhook alias route (to match Stripe dashboard configuration)
+  app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    // Forward to the main webhook handler
+    req.url = '/api/webhook/stripe';
+    return handleStripeWebhook(req, res);
+  });
+
+  // Main Stripe webhook handler for payment completion
+  async function handleStripeWebhook(req: any, res: any) {
     try {
       console.log('🔔 Stripe webhook received');
       
@@ -1087,6 +1094,11 @@ app.get('/api/email-queue/status', async (req, res) => {
       console.error('❌ Stripe webhook error:', error);
       res.status(500).json({ error: 'Webhook processing failed' });
     }
+  }
+
+  // Original webhook route using the shared handler function
+  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    return handleStripeWebhook(req, res);
   });
 
   // Register all API routes FIRST (so Firebase auth can set req.user)
