@@ -112,17 +112,7 @@ function Router() {
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/widget/:token" component={QuickAddWidget} />
 
-      <Route path="/logout" component={() => {
-        // Use Firebase logout from useAuth hook instead of direct API calls
-        const { logout } = useAuth();
-        useEffect(() => {
-          logout().then(() => {
-            queryClient.clear();
-            setLocation('/');
-          });
-        }, []);
-        return <div>Logging out...</div>;
-      }} />
+      <Route path="/logout" component={LogoutComponent} />
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
