@@ -50,6 +50,7 @@ import OnboardingWrapper from "@/components/onboarding-wrapper";
 import BookingSummary from "@/pages/booking-summary";
 import BookingCollaborate from "@/pages/booking-collaborate";
 import LogoutPage from "@/pages/logout";
+import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
 
 import { useEffect, lazy } from "react";
 
@@ -119,6 +120,7 @@ function Router() {
       <Route path="/widget/:token" component={QuickAddWidget} />
 
       <Route path="/logout" component={LogoutPage} />
+      <Route path="/subscription/update-payment" component={SubscriptionUpdatePayment} />
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
