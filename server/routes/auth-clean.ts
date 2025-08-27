@@ -344,7 +344,7 @@ export function setupAuthRoutes(app: Express) {
           status: newUser.tier,
           isBeta: isBetaUser
         },
-        requiresPayment: !isBetaUser
+        requiresPayment: true // All users go through Stripe, beta testers get coupon applied
       });
       
     } catch (error: any) {
