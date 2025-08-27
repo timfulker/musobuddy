@@ -322,6 +322,107 @@ export default function AdminPanel() {
     },
   });
 
+  // Beta code mutations
+  const createBetaCodeMutation = useMutation({
+    mutationFn: (codeData: any) => apiRequest('/api/admin/beta-codes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(codeData),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beta-codes"] });
+      setBetaCodeDialogOpen(false);
+      setBetaCodeForm({
+        code: '',
+        maxUses: 1,
+        trialDays: 365,
+        description: '',
+        expiresAt: ''
+      });
+      toast({
+        title: "Beta code created",
+        description: "New invite code has been generated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error creating beta code",
+        description: error.message || "Failed to create beta code",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBetaCodeMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: number, updates: any }) => 
+      apiRequest(`/api/admin/beta-codes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beta-codes"] });
+      toast({
+        title: "Beta code updated",
+        description: "Code settings have been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating beta code",
+        description: error.message || "Failed to update beta code",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBetaCodeMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/admin/beta-codes/${id}`, {
+      method: 'DELETE',
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beta-codes"] });
+      toast({
+        title: "Beta code deleted",
+        description: "Invite code has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting beta code",
+        description: error.message || "Failed to delete beta code",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateBetaCode = () => {
+    if (!betaCodeForm.code) {
+      toast({
+        title: "Code required",
+        description: "Please enter a beta invite code",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const codeData = {
+      ...betaCodeForm,
+      expiresAt: betaCodeForm.expiresAt || null
+    };
+    
+    createBetaCodeMutation.mutate(codeData);
+  };
+
+  const generateRandomCode = () => {
+    const prefix = 'BETA';
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const year = new Date().getFullYear();
+    const code = `${prefix}-${randomPart}-${year}`;
+    
+    setBetaCodeForm(prev => ({ ...prev, code }));
+  };
+
   const handleCreateUser = () => {
     if (!newUserForm.email) {
       toast({
@@ -1157,6 +1258,212 @@ export default function AdminPanel() {
                           <li>5. Send them the app URL to start testing</li>
                         </ol>
                       </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="beta-codes" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                      <CardTitle className="text-foreground">Beta Invite Codes</CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Manage dynamic beta invite codes for secure access control
+                      </CardDescription>
+                    </div>
+                    <Dialog open={betaCodeDialogOpen} onOpenChange={setBetaCodeDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Create Code
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>Create Beta Invite Code</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <Label htmlFor="code">Invite Code</Label>
+                              <Input
+                                id="code"
+                                value={betaCodeForm.code}
+                                onChange={(e) => setBetaCodeForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                                placeholder="BETA-XXXX-2025"
+                                className="font-mono"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={generateRandomCode}
+                                className="px-3"
+                              >
+                                Generate
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="maxUses">Max Uses</Label>
+                              <Input
+                                id="maxUses"
+                                type="number"
+                                value={betaCodeForm.maxUses}
+                                onChange={(e) => setBetaCodeForm(prev => ({ ...prev, maxUses: parseInt(e.target.value) || 1 }))}
+                                min="1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="trialDays">Trial Days</Label>
+                              <Input
+                                id="trialDays"
+                                type="number"
+                                value={betaCodeForm.trialDays}
+                                onChange={(e) => setBetaCodeForm(prev => ({ ...prev, trialDays: parseInt(e.target.value) || 365 }))}
+                                min="1"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Input
+                              id="description"
+                              value={betaCodeForm.description}
+                              onChange={(e) => setBetaCodeForm(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="e.g., Early access for musicians"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="expiresAt">Expires At (Optional)</Label>
+                            <Input
+                              id="expiresAt"
+                              type="date"
+                              value={betaCodeForm.expiresAt}
+                              onChange={(e) => setBetaCodeForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                            />
+                          </div>
+
+                          <div className="flex justify-end gap-3">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setBetaCodeDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={handleCreateBetaCode}
+                              disabled={createBetaCodeMutation.isPending}
+                            >
+                              {createBetaCodeMutation.isPending ? "Creating..." : "Create Code"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {betaCodesLoading ? (
+                    <div className="text-center py-8">Loading beta codes...</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {betaCodes?.betaCodes?.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No beta invite codes created yet</p>
+                          <p className="text-sm">Create your first dynamic invite code above</p>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4">
+                          {betaCodes?.betaCodes?.map((code) => (
+                            <div key={code.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-3">
+                                    <code className="text-lg font-mono font-bold bg-muted px-2 py-1 rounded">
+                                      {code.code}
+                                    </code>
+                                    <Badge variant={code.status === 'active' ? 'default' : 'secondary'}>
+                                      {code.status}
+                                    </Badge>
+                                    {code.expiresAt && new Date(code.expiresAt) < new Date() && (
+                                      <Badge variant="destructive">Expired</Badge>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                                    <div>
+                                      <span className="font-medium">Uses:</span> {code.currentUses}/{code.maxUses}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Trial:</span> {code.trialDays} days
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Created:</span> {new Date(code.createdAt).toLocaleDateString()}
+                                    </div>
+                                    {code.expiresAt && (
+                                      <div>
+                                        <span className="font-medium">Expires:</span> {new Date(code.expiresAt).toLocaleDateString()}
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {code.description && (
+                                    <p className="text-sm text-muted-foreground italic">
+                                      {code.description}
+                                    </p>
+                                  )}
+                                  
+                                  {code.lastUsedAt && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Last used: {new Date(code.lastUsedAt).toLocaleString()}
+                                    </p>
+                                  )}
+                                </div>
+                                
+                                <div className="flex gap-2 lg:flex-col">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const updates = { status: code.status === 'active' ? 'disabled' : 'active' };
+                                      updateBetaCodeMutation.mutate({ id: code.id, updates });
+                                    }}
+                                    disabled={updateBetaCodeMutation.isPending}
+                                    className="flex-1 lg:flex-none"
+                                  >
+                                    {code.status === 'active' ? 'Disable' : 'Enable'}
+                                  </Button>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      if (confirm(`Delete beta code ${code.code}? This cannot be undone.`)) {
+                                        deleteBetaCodeMutation.mutate(code.id);
+                                      }
+                                    }}
+                                    disabled={deleteBetaCodeMutation.isPending}
+                                    className="flex-1 lg:flex-none"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
