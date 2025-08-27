@@ -64,30 +64,54 @@ function Router() {
     const isPreview = window.location.hostname.includes('replit.dev');
     if (isPreview) return;
     
-    if (isLoading) return; // Skip navigation logic while loading
+    if (isLoading || !user) return; // Skip navigation logic while loading or user not available
     
     const currentPath = location;
     const hasStripeSession = window.location.search.includes('stripe_session');
     const isPaymentReturn = window.location.search.includes('session_id') || currentPath === '/payment-success';
     const isTrialSuccess = currentPath === '/trial-success';
     
-    // Redirect authenticated user from root to dashboard
+    // Admin bypass emails
+    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+    const isAdminUser = user.isAdmin || allowedBypassEmails.includes(user.email);
+    
+    // Check if user needs payment setup (excluding admin users)
+    const needsPaymentSetup = !isAdminUser && (
+      !user.createdViaStripe || 
+      user.tier === 'pending_payment' || 
+      user.plan === 'pending_payment'
+    );
+    
+    // Protected routes that require payment
+    const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];
+    const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+    
+    // Redirect authenticated users who need payment setup from protected routes
+    if (isAuthenticated && needsPaymentSetup && isProtectedRoute && currentPath !== '/subscription/update-payment') {
+      console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
+      setLocation('/subscription/update-payment');
+      return;
+    }
+    
+    // Redirect authenticated user from root to appropriate destination
     if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
-      console.log('🔄 Redirecting authenticated user to dashboard');
-      setLocation('/dashboard');
+      if (needsPaymentSetup) {
+        console.log('🔄 Redirecting authenticated unpaid user to payment setup');
+        setLocation('/subscription/update-payment');
+      } else {
+        console.log('🔄 Redirecting authenticated paid user to dashboard');
+        setLocation('/dashboard');
+      }
       return;
     }
 
     // Redirect unauthenticated users from protected routes to login
-    const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];
-    const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
-    
     if (!isAuthenticated && isProtectedRoute) {
       console.log('🔒 Redirecting unauthenticated user to login');
       setLocation('/login');
       return;
     }
-  }, [isAuthenticated, isLoading, location]);
+  }, [isAuthenticated, isLoading, user, location]);
 
   // Show loading state while checking authentication
   if (isLoading) {
