@@ -384,15 +384,19 @@ export function setupAuthRoutes(app: Express) {
         customer_email: userEmail,
         payment_method_types: ['card'],
         line_items: [{
-          price: 'price_1RouBwD9Bo26CG1DAF1rkSZI', // Your pre-configured Stripe price ID
+          price: 'price_1RoX6JD9Bo26CG1DAHob4Bh1', // MusoBuddy Core price ID
           quantity: 1
         }],
         mode: 'subscription',
+        subscription_data: {
+          trial_period_days: 30, // 30-day free trial
+        },
         success_url: `${req.headers.origin}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/signup`,
         metadata: {
           userId: userId,
-          userEmail: userEmail
+          userEmail: userEmail,
+          signup_type: 'trial' // Mark as trial signup
         }
       });
       
