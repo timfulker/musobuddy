@@ -363,6 +363,11 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
       
+      console.log('🔄 Creating checkout session for:', userEmail);
+      
+      // Check if user is a beta tester to apply appropriate coupon
+      const user = await storage.getUserById(userId);
+      
       // Determine which Stripe key to use based on force test mode or environment
       const shouldUseTestMode = user?.forceTestMode || process.env.NODE_ENV !== 'production';
       const stripeKey = shouldUseTestMode 
@@ -373,11 +378,6 @@ export function setupAuthRoutes(app: Express) {
       const stripe = new Stripe(stripeKey || '', { 
         apiVersion: '2024-12-18.acacia' 
       });
-      
-      console.log('🔄 Creating checkout session for:', userEmail);
-      
-      // Check if user is a beta tester to apply appropriate coupon
-      const user = await storage.getUserById(userId);
       const isBetaTester = user?.isBetaTester || false;
       
       console.log('👤 User beta status:', isBetaTester);

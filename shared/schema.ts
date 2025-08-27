@@ -1104,8 +1104,7 @@ export type SmsVerification = typeof smsVerifications.$inferSelect;
 
 // Beta invite management table
 export const betaInvites = pgTable("beta_invites", {
-  id: serial("id").primaryKey(),
-  email: varchar("email").notNull().unique(),
+  email: varchar("email").primaryKey(),
   status: varchar("status").default("pending"), // pending, used, expired
   invitedBy: varchar("invited_by").notNull(), // Admin user ID who sent invite
   invitedAt: timestamp("invited_at").defaultNow(),
