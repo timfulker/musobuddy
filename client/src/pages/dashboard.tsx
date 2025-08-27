@@ -27,6 +27,10 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  
+  // Prevent infinite loops in preview by detecting preview environment
+  const isPreview = window.location.hostname.includes('replit.dev') && 
+                    window.location.pathname === '/';
 
 
   // Handle Stripe session restoration on dashboard load
@@ -69,8 +73,10 @@ export default function Dashboard() {
     }
   }, [toast]);
 
-  // Redirect to login if not authenticated (but skip if we're processing Stripe session)
+  // Redirect to login if not authenticated (but skip if we're processing Stripe session or in preview)
   useEffect(() => {
+    if (isPreview) return; // Skip auth redirects in preview
+    
     const urlParams = new URLSearchParams(window.location.search);
     const hasStripeSession = urlParams.get('stripe_session');
     
@@ -84,8 +90,23 @@ export default function Dashboard() {
       // Note: This should be handled by the main App.tsx routing logic instead
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, isPreview]);
 
+  // Special handling for preview environment to prevent loops
+  if (isPreview && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-4">MusoBuddy Dashboard</h1>
+          <p className="text-muted-foreground">
+            Please log in to view the full dashboard. 
+            The preview environment has limited functionality.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

@@ -13,12 +13,16 @@ interface NotificationCounts {
 
 export function NotificationSoundManager() {
   const previousCounts = useRef<NotificationCounts | null>(null);
+  
+  // Disable polling in preview environment
+  const isPreview = window.location.hostname.includes('replit.dev');
 
   // Poll for notification counts
   const { data: notificationCounts } = useQuery<NotificationCounts>({
     queryKey: ['/api/notifications/counts'],
-    refetchInterval: 10000, // Check every 10 seconds
+    refetchInterval: isPreview ? false : 10000, // Disable in preview
     staleTime: 5000,
+    enabled: !isPreview, // Disable query in preview
   });
 
   useEffect(() => {

@@ -13,10 +13,14 @@ interface DashboardStats {
 }
 
 export default function StatsCards() {
+  // Disable polling in preview environment
+  const isPreview = window.location.hostname.includes('replit.dev');
+  
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
-    refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
-    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: isPreview ? false : 60000, // Disable in preview
+    staleTime: 30000,
+    enabled: !isPreview, // Disable query in preview
   });
 
   if (isLoading) {

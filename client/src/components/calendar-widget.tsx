@@ -7,8 +7,12 @@ import type { Booking } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 
 export default function CalendarWidget() {
+  // Disable polling in preview environment
+  const isPreview = window.location.hostname.includes('replit.dev');
+  
   const { data: allBookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["/api/bookings"],
+    enabled: !isPreview, // Disable query in preview
   });
 
   // Filter for upcoming bookings within the next two weeks including today (no limit for dynamic sizing)
