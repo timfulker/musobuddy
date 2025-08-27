@@ -396,7 +396,9 @@ export function setupAuthRoutes(app: Express) {
         customer_email: userEmail,
         payment_method_types: ['card'],
         line_items: [{
-          price: 'price_1RoX6JD9Bo26CG1DAHob4Bh1', // MusoBuddy Core price ID
+          price: process.env.NODE_ENV === 'production' 
+            ? 'price_1RoX6JD9Bo26CG1DAHob4Bh1'  // Live environment
+            : 'price_1RouBwD9Bo26CG1DAF1rkSZI', // Test environment
           quantity: 1
         }],
         mode: 'subscription',
