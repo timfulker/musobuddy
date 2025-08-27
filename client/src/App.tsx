@@ -49,7 +49,7 @@ import GoogleCalendarCallback from "@/pages/google-calendar-callback";
 import OnboardingWrapper from "@/components/onboarding-wrapper";
 import BookingSummary from "@/pages/booking-summary";
 import BookingCollaborate from "@/pages/booking-collaborate";
-
+import LogoutPage from "@/pages/logout";
 
 import { useEffect, lazy } from "react";
 
