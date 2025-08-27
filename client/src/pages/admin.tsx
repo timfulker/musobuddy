@@ -793,6 +793,16 @@ export default function AdminPanel() {
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="checkbox"
+                                    id="forceTestMode"
+                                    checked={newUserForm.forceTestMode}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, forceTestMode: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="forceTestMode">Force Test Mode (use test Stripe even in production)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
                                     id="phoneVerified"
                                     checked={newUserForm.phoneVerified}
                                     onChange={(e) => setNewUserForm(prev => ({ ...prev, phoneVerified: e.target.checked }))}

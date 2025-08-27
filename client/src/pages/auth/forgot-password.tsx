@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -32,19 +34,11 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      // Use Firebase's built-in password reset
+      await sendPasswordResetEmail(auth, data.email, {
+        url: `${window.location.origin}/login`, // Where users return after reset
+        handleCodeInApp: false
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send reset email');
-      }
 
       setIsSubmitted(true);
       toast({
@@ -53,9 +47,28 @@ export default function ForgotPasswordPage() {
       });
       
     } catch (error: any) {
+      console.error('Password reset error:', error);
+      
+      let errorMessage = "Failed to send reset email";
+      
+      // Handle specific Firebase error codes
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "No account found with this email address";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Please enter a valid email address";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many requests. Please try again later";
+          break;
+        default:
+          errorMessage = error.message || "Failed to send reset email";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
