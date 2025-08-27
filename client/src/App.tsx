@@ -57,20 +57,10 @@ function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Use useEffect for navigation to prevent render loops
   useEffect(() => {
+    if (isLoading) return; // Skip navigation logic while loading
+    
     const currentPath = location;
     const hasStripeSession = window.location.search.includes('stripe_session');
     const isPaymentReturn = window.location.search.includes('session_id') || currentPath === '/payment-success';
@@ -92,7 +82,19 @@ function Router() {
       setLocation('/login');
       return;
     }
-  }, [isAuthenticated, location]); // Removed setLocation from dependencies
+  }, [isAuthenticated, isLoading, location]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Switch>
