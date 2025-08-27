@@ -76,10 +76,13 @@ function Router() {
     const isAdminUser = user.isAdmin || allowedBypassEmails.includes(user.email);
     
     // Check if user needs payment setup (excluding admin users)
-    // FIXED LOGIC: pending_payment means they haven't paid yet
+    // STRICT PAYMENT ENFORCEMENT: Multiple checks to prevent bypass
     const needsPaymentSetup = !isAdminUser && (
-      user.tier === 'pending_payment'  // This tier means they need to pay
-      // Don't check other fields - tier is the source of truth
+      user.tier === 'pending_payment' ||  // Explicitly needs payment
+      !user.tier ||                       // No tier = blocked
+      user.tier === undefined ||          // Undefined tier = blocked  
+      (!user.createdViaStripe && !user.created_via_stripe) || // Not created via Stripe = blocked
+      user.tier === 'free'                // 'free' tier without admin = blocked (backwards logic fix)
     );
     
     // Debug logging for payment validation
