@@ -1,15 +1,12 @@
-// Payment enforcement utility functions
+// Simplified payment enforcement utility functions
 
 interface User {
   email?: string;
-  tier?: string;
-  plan?: string;
-  created_via_stripe?: boolean;
-  createdViaStripe?: boolean;
   isAdmin?: boolean;
-  is_subscribed?: boolean;
-  subscription_status?: string;
-  hasCompletedPayment?: boolean;
+  isAssigned?: boolean;
+  isBetaTester?: boolean;
+  hasPaid?: boolean;
+  trialEndsAt?: string | null;
 }
 
 // Admin bypass emails - these users always have full access
@@ -20,65 +17,47 @@ const ADMIN_BYPASS_EMAILS = [
 ];
 
 /**
- * Check if a user requires payment to access the platform
- * This is the central payment enforcement logic
+ * Check if a user has access to the platform (simplified logic)
  */
-export function requiresPayment(user: User | null | undefined): boolean {
-  // No user = requires payment
-  if (!user) {
-    console.log('🔒 Payment required: No user object');
-    return true;
+export function hasAccess(user: User | null | undefined): boolean {
+  if (!user) return false;
+
+  // Admin users always have access
+  if (user.isAdmin) return true;
+  
+  // Check admin bypass emails
+  if (user.email && ADMIN_BYPASS_EMAILS.includes(user.email)) return true;
+  
+  // Assigned users always have access
+  if (user.isAssigned) return true;
+  
+  // Paid users always have access
+  if (user.hasPaid) return true;
+  
+  // Check if trial is still active
+  if (user.trialEndsAt) {
+    const trialEnd = new Date(user.trialEndsAt);
+    if (trialEnd > new Date()) {
+      return true; // Trial still active
+    }
   }
-
-  // Admin users and bypass emails never require payment
-  const isAdminUser = user.isAdmin || (user.email && ADMIN_BYPASS_EMAILS.includes(user.email));
-  if (isAdminUser) {
-    console.log('✅ Admin user bypass:', user.email);
-    return false;
-  }
-
-  // Check multiple conditions to prevent bypass
-  const conditions = {
-    hasPendingPaymentTier: user.tier === 'pending_payment',
-    hasNoTier: !user.tier || user.tier === undefined,
-    notCreatedViaStripe: !user.created_via_stripe && !user.createdViaStripe,
-    hasFreeTierWithoutAdmin: user.tier === 'free' && !isAdminUser,
-    explicitlyNotPaid: user.hasCompletedPayment === false
-  };
-
-  const needsPayment = Object.values(conditions).some(condition => condition);
-
-  if (needsPayment) {
-    console.log('🔒 Payment required for user:', {
-      email: user.email,
-      tier: user.tier,
-      conditions: Object.entries(conditions)
-        .filter(([_, value]) => value)
-        .map(([key]) => key)
-    });
-  }
-
-  return needsPayment;
+  
+  // No access
+  return false;
 }
 
 /**
- * Check if a user has a valid paid subscription
+ * Check if a user requires payment to access the platform
+ */
+export function requiresPayment(user: User | null | undefined): boolean {
+  return !hasAccess(user);
+}
+
+/**
+ * Check if a user has a valid subscription (same as hasAccess now)
  */
 export function hasValidSubscription(user: User | null | undefined): boolean {
-  if (!user) return false;
-
-  // Admin bypass
-  const isAdminUser = user.isAdmin || (user.email && ADMIN_BYPASS_EMAILS.includes(user.email));
-  if (isAdminUser) return true;
-
-  // Valid paid tiers
-  const validPaidTiers = ['core', 'premium', 'enterprise'];
-  const hasValidTier = user.tier && validPaidTiers.includes(user.tier.toLowerCase());
-  
-  // Must have been created via Stripe (except admins)
-  const wasCreatedViaStripe = user.created_via_stripe || user.createdViaStripe;
-  
-  return hasValidTier && wasCreatedViaStripe;
+  return hasAccess(user);
 }
 
 /**
@@ -103,14 +82,35 @@ export function isProtectedRoute(path: string): boolean {
     '/templates',
     '/address-book',
     '/admin',
-    '/feedback',
-    '/unparseable-messages',
+    '/watchdog',
     '/messages',
-    '/conversation',
-    '/email-setup',
-    '/system-health',
-    '/mobile-invoice-sender'
+    '/calendar'
   ];
   
   return protectedRoutes.some(route => path.startsWith(route));
+}
+
+/**
+ * Check if user is in trial period
+ */
+export function isInTrial(user: User | null | undefined): boolean {
+  if (!user || !user.trialEndsAt) return false;
+  
+  const trialEnd = new Date(user.trialEndsAt);
+  return trialEnd > new Date() && !user.hasPaid;
+}
+
+/**
+ * Get days remaining in trial
+ */
+export function getTrialDaysRemaining(user: User | null | undefined): number {
+  if (!user || !user.trialEndsAt) return 0;
+  
+  const trialEnd = new Date(user.trialEndsAt);
+  const now = new Date();
+  
+  if (trialEnd <= now) return 0;
+  
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.ceil((trialEnd.getTime() - now.getTime()) / msPerDay);
 }

@@ -61,11 +61,12 @@ export function setupAuthRoutes(app: Express) {
           trial_status: user.trial_status
         },
         whatWeShouldReturn: {
-          tier: user.tier || 'pending_payment',
-          plan: user.plan || 'pending_payment', 
-          created_via_stripe: user.created_via_stripe || false,
-          createdViaStripe: user.created_via_stripe || false,
-          hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || isExemptUser(email)
+          isAdmin: user.isAdmin || false,
+          isAssigned: user.isAssigned || false,
+          hasPaid: user.hasPaid || false,
+          trialEndsAt: user.trialEndsAt,
+          hasAccess: user.isAdmin || user.isAssigned || user.hasPaid || 
+                     (user.trialEndsAt && new Date(user.trialEndsAt) > new Date())
         }
       });
     } catch (error) {
@@ -157,9 +158,7 @@ export function setupAuthRoutes(app: Express) {
         stripeCustomerId: user.stripe_customer_id || null,
         stripeSubscriptionId: user.stripe_subscription_id || null,
         
-        // Legacy fields for backwards compatibility (to be removed later)
-        tier: user.has_paid ? 'core' : (user.trial_ends_at && new Date(user.trial_ends_at) > new Date() ? 'trial' : 'pending_payment'),
-        plan: 'core', // Only one plan now
+        // No legacy fields - clean response only
         hasCompletedPayment: user.has_paid || false
       });
 
@@ -203,9 +202,7 @@ export function setupAuthRoutes(app: Express) {
         stripeCustomerId: user.stripe_customer_id || null,
         stripeSubscriptionId: user.stripe_subscription_id || null,
         
-        // Legacy fields for backwards compatibility (to be removed later)
-        tier: user.has_paid ? 'core' : (user.trial_ends_at && new Date(user.trial_ends_at) > new Date() ? 'trial' : 'pending_payment'),
-        plan: 'core', // Only one plan now
+        // No legacy fields - clean response only
         hasCompletedPayment: user.has_paid || false
       });
 
@@ -388,7 +385,7 @@ export function setupAuthRoutes(app: Express) {
         isAssigned: false, // Not an assigned account
         trialEndsAt: trialEndsAt, // Set trial expiration
         hasPaid: false, // Hasn't paid yet
-        tier: 'pending_payment', // Legacy field - to be removed
+        // No tier field - using simplified access control
         stripeCustomerId: null, // Will be set during subscription creation
         signupIpAddress: signupIP,
         deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
@@ -541,10 +538,9 @@ export function setupAuthRoutes(app: Express) {
       const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
       const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
-      // Check subscription validity - pending_payment users need to complete payment
-      const hasValidSubscription = 
-        (user.isSubscribed && user.stripeCustomerId && user.tier !== 'free') &&
-        user.tier !== 'pending_payment'; // Exclude pending_payment users - they need to complete payment
+      // Check access using simplified logic
+      const hasValidSubscription = user.isAdmin || user.isAssigned || user.hasPaid || 
+        (user.trialEndsAt && new Date(user.trialEndsAt) > new Date());
 
       console.log('🔍 WATCHDOG RESULT:', {
         userId: user.id,

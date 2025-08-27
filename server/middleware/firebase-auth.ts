@@ -330,8 +330,9 @@ async function checkUserSubscription(userId: string): Promise<boolean> {
       return true;
     }
     
-    // Check if user tier is paid
-    return user.tier !== 'free' && user.tier !== 'pending_payment';
+    // Check if user has access using simplified logic
+    return user.isAdmin || user.isAssigned || user.hasPaid || 
+           (user.trialEndsAt && new Date(user.trialEndsAt) > new Date());
   } catch (error) {
     console.error('Error checking subscription:', error);
     return false;
