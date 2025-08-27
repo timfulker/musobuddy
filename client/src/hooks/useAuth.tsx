@@ -46,9 +46,32 @@ export function useAuth() {
     isAuthenticated: false,
     error: null
   });
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to be ready before listening to state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Skip the first "no user" state if auth hasn't initialized yet
+      if (!authInitialized && !firebaseUser) {
+        setAuthInitialized(true);
+        // Give Firebase a moment to restore persisted session
+        setTimeout(() => {
+          if (auth.currentUser) {
+            console.log('🔥 CLEAN auth state (restored):', auth.currentUser.email);
+          } else {
+            console.log('🔥 CLEAN auth state: no user');
+            setAuthState({
+              user: null,
+              isLoading: false,
+              isAuthenticated: false,
+              error: null
+            });
+          }
+        }, 100);
+        return;
+      }
+      
+      setAuthInitialized(true);
       console.log('🔥 CLEAN auth state:', firebaseUser?.email || 'no user');
       
       if (firebaseUser) {
