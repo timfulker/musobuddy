@@ -919,20 +919,56 @@ app.get('/api/email-queue/status', async (req, res) => {
           return res.status(404).send('User not found');
         }
         
-        // Update user to standard tier with Stripe info
-        await storage.updateUser(user.id, {
-          tier: 'standard',
-          stripeCustomerId: session.customer,
-          stripeSubscriptionId: session.subscription,
-          isSubscribed: true
-        });
+        // Check if this is a trial signup or paid subscription
+        const isTrialSignup = session.mode === 'setup' || session.subscription === null || 
+                             session.payment_status === 'unpaid' || 
+                             session.metadata?.signup_type === 'trial';
         
-        console.log('✅ User upgraded to standard tier:', {
-          userId: user.id,
-          email: customerEmail,
-          customerId: session.customer,
-          subscriptionId: session.subscription
-        });
+        if (isTrialSignup) {
+          // Trial signup - 30 day trial
+          console.log('🎯 Setting up 30-day trial for user:', user.id);
+          
+          const trialStartDate = new Date();
+          const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+          
+          await storage.updateUser(user.id, {
+            tier: 'core', // Trial gets core features
+            plan: 'trial',
+            trialStartedAt: trialStartDate,
+            trialExpiresAt: trialEndDate,
+            trialStatus: 'active',
+            stripeCustomerId: session.customer,
+            accountStatus: 'active',
+            isSubscribed: false // Trial is not a paid subscription
+          });
+          
+          console.log('✅ Trial setup completed:', {
+            userId: user.id,
+            email: customerEmail,
+            trialStart: trialStartDate.toISOString(),
+            trialEnd: trialEndDate.toISOString(),
+            customerId: session.customer
+          });
+        } else {
+          // Paid subscription
+          console.log('💳 Setting up paid subscription for user:', user.id);
+          
+          await storage.updateUser(user.id, {
+            tier: 'core',
+            plan: 'core',
+            stripeCustomerId: session.customer,
+            stripeSubscriptionId: session.subscription,
+            isSubscribed: true,
+            accountStatus: 'active'
+          });
+          
+          console.log('✅ Paid subscription setup completed:', {
+            userId: user.id,
+            email: customerEmail,
+            customerId: session.customer,
+            subscriptionId: session.subscription
+          });
+        }
       } else {
         console.log(`ℹ️ Unhandled webhook event: ${event.type}`);
       }
