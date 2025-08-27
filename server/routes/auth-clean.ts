@@ -310,7 +310,7 @@ export function setupAuthRoutes(app: Express) {
         phoneVerified: firebaseUser.emailVerified || false,
         isAdmin: false,
         isBetaTester: isBetaUser,
-        tier: isBetaUser ? 'standard' : 'pending_payment',
+        tier: 'pending_payment', // All users must go through Stripe, beta testers get coupon applied
         stripeCustomerId: null, // Will be set during subscription creation
         signupIpAddress: signupIP,
         deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
