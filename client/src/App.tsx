@@ -92,7 +92,7 @@ function Router() {
       setLocation('/login');
       return;
     }
-  }, [isAuthenticated, location, setLocation]);
+  }, [isAuthenticated, location]); // Removed setLocation from dependencies
 
   return (
     <Switch>
