@@ -41,6 +41,38 @@ export function setupAuthRoutes(app: Express) {
     res.json({ diagnostics });
   });
 
+  // TEST ENDPOINT - Debug what auth returns
+  app.get('/api/auth/debug-user/:email', async (req, res) => {
+    try {
+      const email = req.params.email;
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Show exactly what we're getting from DB and what we're returning
+      res.json({
+        rawFromDb: {
+          tier: user.tier,
+          plan: user.plan,
+          created_via_stripe: user.created_via_stripe,
+          is_subscribed: user.is_subscribed,
+          trial_status: user.trial_status
+        },
+        whatWeShouldReturn: {
+          tier: user.tier || 'pending_payment',
+          plan: user.plan || 'pending_payment', 
+          created_via_stripe: user.created_via_stripe || false,
+          createdViaStripe: user.created_via_stripe || false,
+          hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || isExemptUser(email)
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // DATABASE INSPECTION ENDPOINT - Check user records
   app.get('/api/auth/inspect-users', async (req, res) => {
     try {
@@ -101,14 +133,32 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // CRITICAL: Return complete user data including subscription fields
+      // Note: Database fields use snake_case, need to map correctly
       res.json({
         userId: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isAdmin: user.isAdmin || false,
-
-        emailPrefix: user.emailPrefix || null
+        firstName: user.first_name || user.firstName,
+        lastName: user.last_name || user.lastName,
+        isAdmin: user.is_admin || false,
+        emailPrefix: user.email_prefix || null,
+        
+        // SUBSCRIPTION FIELDS - Required for access control (using snake_case from DB)
+        tier: user.tier || 'pending_payment',
+        plan: user.plan || 'pending_payment',
+        created_via_stripe: user.created_via_stripe || false,
+        createdViaStripe: user.created_via_stripe || false,  // Also send camelCase for compatibility
+        trial_status: user.trial_status || 'inactive',
+        trialStatus: user.trial_status || 'inactive',  // Also send camelCase
+        isSubscribed: user.is_subscribed || false,
+        stripeCustomerId: user.stripe_customer_id || null,
+        stripeSubscriptionId: user.stripe_subscription_id || null,
+        isBetaTester: user.is_beta_tester || false,
+        onboardingCompleted: user.onboarding_completed || false,
+        
+        // Computed field for easy payment check - CRITICAL FIX
+        hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || 
+                            isExemptUser(user.email)
       });
 
     } catch (error) {
@@ -127,14 +177,32 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      // CRITICAL: Return complete user data including subscription fields (matching /api/auth/user)
+      // Note: Database fields use snake_case, need to map correctly
       res.json({
         userId: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isAdmin: user.isAdmin || false,
-
-        emailPrefix: user.emailPrefix || null
+        firstName: user.first_name || user.firstName,
+        lastName: user.last_name || user.lastName,
+        isAdmin: user.is_admin || false,
+        emailPrefix: user.email_prefix || null,
+        
+        // SUBSCRIPTION FIELDS - Required for access control (using snake_case from DB)
+        tier: user.tier || 'pending_payment',
+        plan: user.plan || 'pending_payment',
+        created_via_stripe: user.created_via_stripe || false,
+        createdViaStripe: user.created_via_stripe || false,  // Also send camelCase for compatibility
+        trial_status: user.trial_status || 'inactive',
+        trialStatus: user.trial_status || 'inactive',  // Also send camelCase
+        isSubscribed: user.is_subscribed || false,
+        stripeCustomerId: user.stripe_customer_id || null,
+        stripeSubscriptionId: user.stripe_subscription_id || null,
+        isBetaTester: user.is_beta_tester || false,
+        onboardingCompleted: user.onboarding_completed || false,
+        
+        // Computed field for easy payment check - CRITICAL FIX
+        hasCompletedPayment: (user.created_via_stripe === true && user.tier !== 'pending_payment') || 
+                            isExemptUser(user.email)
       });
 
     } catch (error) {

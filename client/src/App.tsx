@@ -76,11 +76,24 @@ function Router() {
     const isAdminUser = user.isAdmin || allowedBypassEmails.includes(user.email);
     
     // Check if user needs payment setup (excluding admin users)
+    // CRITICAL FIX: Check tier first as primary indicator
     const needsPaymentSetup = !isAdminUser && (
-      !user.createdViaStripe || 
-      user.tier === 'pending_payment' || 
-      user.plan === 'pending_payment'
+      user.tier === 'pending_payment' ||  // Primary check
+      !user.hasCompletedPayment ||        // Computed field check
+      !user.createdViaStripe              // Secondary check
     );
+    
+    // Debug logging for payment validation
+    if (user && !isAdminUser) {
+      console.log('💳 Payment validation check:', {
+        email: user.email,
+        hasCompletedPayment: user.hasCompletedPayment,
+        createdViaStripe: user.createdViaStripe,
+        tier: user.tier,
+        plan: user.plan,
+        needsPaymentSetup
+      });
+    }
     
     // Protected routes that require payment
     const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];

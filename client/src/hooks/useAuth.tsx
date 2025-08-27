@@ -19,7 +19,17 @@ interface DatabaseUser {
   isAdmin: boolean;
   isBetaTester: boolean;
   tier: string;
-  // Add other database user fields as needed
+  plan: string;
+  created_via_stripe: boolean;
+  createdViaStripe: boolean;  // CamelCase version
+  trial_status: string;
+  trialStatus: string;  // CamelCase version
+  isSubscribed: boolean;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  onboardingCompleted: boolean;
+  hasCompletedPayment: boolean;
+  emailPrefix: string | null;
 }
 
 interface AuthState {
@@ -53,7 +63,14 @@ export function useAuth() {
           
           if (response.ok) {
             const databaseUser = await response.json();
-            console.log('✅ Database user fetched:', { email: databaseUser.email, isAdmin: databaseUser.isAdmin });
+            console.log('✅ Database user fetched:', { 
+              email: databaseUser.email, 
+              isAdmin: databaseUser.isAdmin,
+              tier: databaseUser.tier,
+              plan: databaseUser.plan,
+              createdViaStripe: databaseUser.createdViaStripe,
+              hasCompletedPayment: databaseUser.hasCompletedPayment
+            });
             
             // Merge Firebase user with database user data
             const mergedUser = {
