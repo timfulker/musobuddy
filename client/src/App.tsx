@@ -110,7 +110,6 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
-      <Route path="/auth/reset-password" component={ResetPasswordPage} />
       <Route path="/start-trial" component={StartTrial} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
       <Route path="/trial-success" component={TrialSuccessPage} />
