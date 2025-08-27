@@ -599,4 +599,55 @@ app.post('/api/admin/unlock-user', authenticateWithFirebase, async (req: Authent
   }
 });
 
+// Retrieve specific Mailgun stored message
+app.post('/api/admin/mailgun-message', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { storageKey } = req.body;
+    
+    if (!storageKey) {
+      return res.status(400).json({ 
+        error: 'storageKey is required' 
+      });
+    }
+
+    const mailgunDomain = 'enquiries.musobuddy.com';
+    const mailgunApiKey = process.env.MAILGUN_API_KEY;
+    const storageUrl = `https://storage-europe-west1.api.mailgun.net/v3/domains/${mailgunDomain}/messages/${storageKey}`;
+    
+    console.log(`📧 [ADMIN] Fetching Mailgun message: ${storageKey}`);
+    
+    // Fetch the message from Mailgun storage
+    const response = await fetch(storageUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`api:${mailgunApiKey}`).toString('base64')}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Mailgun API error: ${response.status} ${response.statusText}`);
+    }
+
+    const messageData = await response.json();
+    
+    console.log(`✅ [ADMIN] Retrieved message: ${messageData.subject || 'No Subject'}`);
+    
+    res.json({
+      success: true,
+      message: messageData
+    });
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to retrieve Mailgun message:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 }
