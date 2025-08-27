@@ -348,11 +348,32 @@ export function setupAuthRoutes(app: Express) {
         console.log('🔍 Checking beta invite list for email:', firebaseUser.email);
         betaInvite = await storage.getBetaInviteByEmail(firebaseUser.email || '');
         
-        // Check if invite code matches known beta codes
-        const validBetaCodes = ['BETA2025', 'MUSOBETA', 'EARLYBIRDMUSIC'];
-        if (!isBetaUser && inviteCode && validBetaCodes.includes(inviteCode.toUpperCase())) {
-          isBetaUser = true;
-          console.log('✅ Valid beta invite code provided:', inviteCode);
+        // Check if invite code matches a valid dynamic beta code
+        if (!isBetaUser && inviteCode) {
+          const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
+          if (betaCode && betaCode.status === 'active') {
+            // Check if code hasn't expired
+            if (!betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt)) {
+              // Check if code hasn't reached max uses
+              if (betaCode.currentUses < betaCode.maxUses) {
+                isBetaUser = true;
+                console.log('✅ Valid dynamic beta invite code provided:', inviteCode);
+                console.log('📋 Code details:', {
+                  id: betaCode.id,
+                  maxUses: betaCode.maxUses,
+                  currentUses: betaCode.currentUses,
+                  trialDays: betaCode.trialDays,
+                  description: betaCode.description
+                });
+              } else {
+                console.log('⚠️ Beta code has reached maximum uses:', inviteCode);
+              }
+            } else {
+              console.log('⚠️ Beta code has expired:', inviteCode);
+            }
+          } else {
+            console.log('❌ Invalid or inactive beta code:', inviteCode);
+          }
         }
         
         if (betaInvite && betaInvite.status === 'pending') {
@@ -410,12 +431,21 @@ export function setupAuthRoutes(app: Express) {
       console.log(`✅ User created in database: ${userId} (${isBetaUser ? 'BETA' : 'REGULAR'})`);
       
       // Mark beta invite as used if applicable
-      if (isBetaUser && betaInvite) {
+      if (isBetaUser) {
         try {
-          await storage.markBetaInviteAsUsed(firebaseUser.email || '', userId);
-          console.log('✅ Beta invite marked as used');
+          // Mark email-based beta invite as used
+          if (betaInvite) {
+            await storage.markBetaInviteAsUsed(firebaseUser.email || '', userId);
+            console.log('✅ Beta invite marked as used');
+          }
+          
+          // Mark beta invite code as used if one was provided
+          if (inviteCode) {
+            await storage.markBetaInviteCodeAsUsed(inviteCode, userId);
+            console.log('✅ Beta invite code marked as used:', inviteCode);
+          }
         } catch (error) {
-          console.error('⚠️ Failed to mark beta invite as used:', error);
+          console.error('⚠️ Failed to mark beta invite/code as used:', error);
           // Don't fail the whole signup for this
         }
       }

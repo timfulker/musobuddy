@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites, betaInviteCodes } from "../../shared/schema";
 import { eq, and, desc, sql, lte, gte, ne } from "drizzle-orm";
 
 export class MiscStorage {
@@ -504,6 +504,77 @@ export class MiscStorage {
   async deleteBetaInvite(email: string) {
     const result = await db.delete(betaInvites)
       .where(eq(betaInvites.email, email.toLowerCase()))
+      .returning();
+    return result[0];
+  }
+
+  // ===== BETA INVITE CODE METHODS =====
+
+  async createBetaInviteCode(data: {
+    code: string;
+    maxUses?: number;
+    trialDays?: number;
+    description?: string;
+    createdBy: string;
+    expiresAt?: Date;
+  }) {
+    const result = await db.insert(betaInviteCodes).values({
+      code: data.code.toUpperCase(),
+      maxUses: data.maxUses || 1,
+      trialDays: data.trialDays || 365,
+      description: data.description || null,
+      createdBy: data.createdBy,
+      expiresAt: data.expiresAt || null,
+      status: 'active',
+      currentUses: 0
+    }).returning();
+    return result[0];
+  }
+
+  async getBetaInviteCodeByCode(code: string) {
+    const result = await db.select().from(betaInviteCodes)
+      .where(eq(betaInviteCodes.code, code.toUpperCase()));
+    return result[0] || null;
+  }
+
+  async getAllBetaInviteCodes() {
+    return await db.select().from(betaInviteCodes)
+      .orderBy(desc(betaInviteCodes.createdAt));
+  }
+
+  async markBetaInviteCodeAsUsed(code: string, usedBy: string) {
+    // First get the current code
+    const currentCode = await this.getBetaInviteCodeByCode(code);
+    if (!currentCode) return null;
+
+    const result = await db.update(betaInviteCodes)
+      .set({ 
+        currentUses: currentCode.currentUses + 1,
+        lastUsedAt: new Date(),
+        lastUsedBy: usedBy
+      })
+      .where(eq(betaInviteCodes.code, code.toUpperCase()))
+      .returning();
+    return result[0];
+  }
+
+  async updateBetaInviteCode(id: number, updates: {
+    status?: string;
+    maxUses?: number;
+    trialDays?: number;
+    description?: string;
+    expiresAt?: Date;
+  }) {
+    const result = await db.update(betaInviteCodes)
+      .set(updates)
+      .where(eq(betaInviteCodes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBetaInviteCode(id: number) {
+    const result = await db.delete(betaInviteCodes)
+      .where(eq(betaInviteCodes.id, id))
       .returning();
     return result[0];
   }

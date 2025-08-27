@@ -650,4 +650,169 @@ app.post('/api/admin/mailgun-message', authenticateWithFirebase, async (req: Aut
   }
 });
 
+// ===== BETA INVITE CODE MANAGEMENT =====
+
+// Get all beta invite codes
+app.get('/api/admin/beta-codes', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    console.log('📋 [ADMIN] Fetching all beta invite codes');
+    
+    const betaCodes = await storage.getAllBetaInviteCodes();
+    
+    res.json({
+      success: true,
+      betaCodes
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to fetch beta codes:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Create a new beta invite code
+app.post('/api/admin/beta-codes', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { code, maxUses, trialDays, description, expiresAt } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ 
+        error: 'Code is required' 
+      });
+    }
+
+    console.log(`🎫 [ADMIN] Creating beta invite code: ${code}`);
+    
+    // Check if code already exists
+    const existingCode = await storage.getBetaInviteCodeByCode(code);
+    if (existingCode) {
+      return res.status(409).json({ 
+        error: 'Code already exists' 
+      });
+    }
+
+    const newCode = await storage.createBetaInviteCode({
+      code,
+      maxUses: maxUses || 1,
+      trialDays: trialDays || 365,
+      description: description || null,
+      createdBy: req.user.id,
+      expiresAt: expiresAt ? new Date(expiresAt) : null
+    });
+
+    console.log(`✅ [ADMIN] Beta code created:`, {
+      id: newCode.id,
+      code: newCode.code,
+      maxUses: newCode.maxUses,
+      trialDays: newCode.trialDays
+    });
+    
+    res.json({
+      success: true,
+      betaCode: newCode
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to create beta code:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update a beta invite code
+app.put('/api/admin/beta-codes/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    const { status, maxUses, trialDays, description, expiresAt } = req.body;
+    
+    console.log(`📝 [ADMIN] Updating beta code ID: ${id}`);
+    
+    const updates: any = {};
+    if (status !== undefined) updates.status = status;
+    if (maxUses !== undefined) updates.maxUses = maxUses;
+    if (trialDays !== undefined) updates.trialDays = trialDays;
+    if (description !== undefined) updates.description = description;
+    if (expiresAt !== undefined) updates.expiresAt = expiresAt ? new Date(expiresAt) : null;
+
+    const updatedCode = await storage.updateBetaInviteCode(parseInt(id), updates);
+    
+    if (!updatedCode) {
+      return res.status(404).json({ 
+        error: 'Beta code not found' 
+      });
+    }
+
+    console.log(`✅ [ADMIN] Beta code updated:`, updatedCode.code);
+    
+    res.json({
+      success: true,
+      betaCode: updatedCode
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to update beta code:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Delete a beta invite code
+app.delete('/api/admin/beta-codes/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    
+    console.log(`🗑️ [ADMIN] Deleting beta code ID: ${id}`);
+    
+    const deletedCode = await storage.deleteBetaInviteCode(parseInt(id));
+    
+    if (!deletedCode) {
+      return res.status(404).json({ 
+        error: 'Beta code not found' 
+      });
+    }
+
+    console.log(`✅ [ADMIN] Beta code deleted:`, deletedCode.code);
+    
+    res.json({
+      success: true,
+      message: 'Beta code deleted',
+      deletedCode
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to delete beta code:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 }

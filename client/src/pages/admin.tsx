@@ -33,7 +33,8 @@ import {
   Edit,
   Mail,
   RotateCcw,
-  DollarSign
+  DollarSign,
+  Ticket
 } from "lucide-react";
 import APICostMonitor from "@/components/api-cost-monitor";
 import { ApiUsageManager } from "@/components/api-usage-manager";
@@ -61,6 +62,21 @@ interface AdminUser {
   trialEndsAt: string | null;
   accountNotes: string | null;
   createdAt: string;
+}
+
+interface BetaInviteCode {
+  id: number;
+  code: string;
+  maxUses: number;
+  currentUses: number;
+  trialDays: number;
+  description: string | null;
+  status: string;
+  createdAt: string;
+  createdBy: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  lastUsedBy: string | null;
 }
 
 export default function AdminPanel() {
@@ -104,6 +120,16 @@ export default function AdminPanel() {
     isBetaTester: false,
     personalMessage: ''
   });
+  
+  // Beta codes state
+  const [betaCodeDialogOpen, setBetaCodeDialogOpen] = useState(false);
+  const [betaCodeForm, setBetaCodeForm] = useState({
+    code: '',
+    maxUses: 1,
+    trialDays: 365,
+    description: '',
+    expiresAt: ''
+  });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -123,6 +149,15 @@ export default function AdminPanel() {
 
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+    retry: 3,
+    staleTime: 30000,
+  });
+
+  const { data: betaCodes, isLoading: betaCodesLoading } = useQuery<{
+    success: boolean;
+    betaCodes: BetaInviteCode[];
+  }>({
+    queryKey: ["/api/admin/beta-codes"],
     retry: 3,
     staleTime: 30000,
   });
@@ -439,9 +474,13 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-8 h-auto">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+              <TabsTrigger value="beta-codes" className="text-xs sm:text-sm flex items-center gap-1">
+                <Ticket className="h-3 w-3" />
+                Beta Codes
+              </TabsTrigger>
               <TabsTrigger value="api-costs" className="text-xs sm:text-sm flex items-center gap-1">
                 <DollarSign className="h-3 w-3" />
                 API Costs

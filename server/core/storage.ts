@@ -689,6 +689,44 @@ export class Storage {
   async deleteBetaInvite(email: string) {
     return miscStorage.deleteBetaInvite(email);
   }
+
+  // ===== BETA INVITE CODE METHODS =====
+  async createBetaInviteCode(data: {
+    code: string;
+    maxUses?: number;
+    trialDays?: number;
+    description?: string;
+    createdBy: string;
+    expiresAt?: Date;
+  }) {
+    return miscStorage.createBetaInviteCode(data);
+  }
+
+  async getBetaInviteCodeByCode(code: string) {
+    return miscStorage.getBetaInviteCodeByCode(code);
+  }
+
+  async getAllBetaInviteCodes() {
+    return miscStorage.getAllBetaInviteCodes();
+  }
+
+  async markBetaInviteCodeAsUsed(code: string, usedBy: string) {
+    return miscStorage.markBetaInviteCodeAsUsed(code, usedBy);
+  }
+
+  async updateBetaInviteCode(id: number, updates: {
+    status?: string;
+    maxUses?: number;
+    trialDays?: number;
+    description?: string;
+    expiresAt?: Date;
+  }) {
+    return miscStorage.updateBetaInviteCode(id, updates);
+  }
+
+  async deleteBetaInviteCode(id: number) {
+    return miscStorage.deleteBetaInviteCode(id);
+  }
 }
 
 export const storage = new Storage();

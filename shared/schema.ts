@@ -1086,7 +1086,7 @@ export type UserSecurityStatus = typeof userSecurityStatus.$inferSelect;
 export type InsertSmsVerification = z.infer<typeof insertSmsVerificationSchema>;
 export type SmsVerification = typeof smsVerifications.$inferSelect;
 
-// Beta invite management table
+// Beta invite management table (email-based invites)
 export const betaInvites = pgTable("beta_invites", {
   email: varchar("email").primaryKey(),
   status: varchar("status").default("pending"), // pending, used, expired
@@ -1096,6 +1096,22 @@ export const betaInvites = pgTable("beta_invites", {
   usedBy: varchar("used_by"), // User ID who used the invite
   notes: text("notes"), // Internal notes about the invite
   cohort: varchar("cohort").default("2025_beta"), // Beta cohort identifier
+});
+
+// Dynamic beta invite codes table
+export const betaInviteCodes = pgTable("beta_invite_codes", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 20 }).unique().notNull(), // e.g. BETA-X7K9-2025
+  status: varchar("status").default("active"), // active, disabled, expired
+  maxUses: integer("max_uses").default(1), // How many times this code can be used
+  currentUses: integer("current_uses").default(0), // How many times it's been used
+  trialDays: integer("trial_days").default(365), // How many trial days to grant
+  description: text("description"), // Admin notes about this code
+  createdBy: varchar("created_by").notNull(), // Admin user ID who created it
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Optional expiry date
+  lastUsedAt: timestamp("last_used_at"),
+  lastUsedBy: varchar("last_used_by"), // Last user ID who used it
 });
 
 // NEW: Contract Learning System Tables
@@ -1159,9 +1175,15 @@ export const insertContractExtractionPatternSchema = createInsertSchema(contract
 export const insertContractExtractionSchema = createInsertSchema(contractExtractions);
 export const insertClientCommunicationSchema = createInsertSchema(clientCommunications);
 export const insertBetaInviteSchema = createInsertSchema(betaInvites).omit({
-  id: true,
   invitedAt: true,
   usedAt: true,
+});
+export const insertBetaInviteCodeSchema = createInsertSchema(betaInviteCodes).omit({
+  id: true,
+  createdAt: true,
+  currentUses: true,
+  lastUsedAt: true,
+  lastUsedBy: true,
 });
 
 // Types for the new tables
@@ -1175,4 +1197,6 @@ export type InsertClientCommunication = z.infer<typeof insertClientCommunication
 export type ClientCommunication = typeof clientCommunications.$inferSelect;
 export type InsertBetaInvite = z.infer<typeof insertBetaInviteSchema>;
 export type BetaInvite = typeof betaInvites.$inferSelect;
+export type InsertBetaInviteCode = z.infer<typeof insertBetaInviteCodeSchema>;
+export type BetaInviteCode = typeof betaInviteCodes.$inferSelect;
 
