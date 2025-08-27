@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
+import { requiresPayment, isProtectedRoute, getPaymentRedirectUrl } from "@/lib/payment-utils";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
@@ -71,40 +72,15 @@ function Router() {
     const isPaymentReturn = window.location.search.includes('session_id') || currentPath === '/payment-success';
     const isTrialSuccess = currentPath === '/trial-success';
     
-    // Admin bypass emails
-    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-    const isAdminUser = user.isAdmin || allowedBypassEmails.includes(user.email);
-    
-    // Check if user needs payment setup (excluding admin users)
-    // STRICT PAYMENT ENFORCEMENT: Multiple checks to prevent bypass
-    const needsPaymentSetup = !isAdminUser && (
-      user.tier === 'pending_payment' ||  // Explicitly needs payment
-      !user.tier ||                       // No tier = blocked
-      user.tier === undefined ||          // Undefined tier = blocked  
-      (!user.createdViaStripe && !user.created_via_stripe) || // Not created via Stripe = blocked
-      user.tier === 'free'                // 'free' tier without admin = blocked (backwards logic fix)
-    );
-    
-    // Debug logging for payment validation
-    if (user && !isAdminUser) {
-      console.log('💳 Payment validation check:', {
-        email: user.email,
-        hasCompletedPayment: user.hasCompletedPayment,
-        createdViaStripe: user.createdViaStripe,
-        tier: user.tier,
-        plan: user.plan,
-        needsPaymentSetup
-      });
-    }
-    
-    // Protected routes that require payment
-    const protectedRoutes = ['/dashboard', '/bookings', '/new-booking', '/contracts', '/invoices', '/settings', '/compliance', '/templates', '/address-book', '/admin', '/feedback', '/unparseable-messages', '/messages', '/conversation', '/email-setup', '/system-health', '/mobile-invoice-sender'];
-    const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+    // Use centralized payment enforcement logic
+    const needsPaymentSetup = requiresPayment(user);
+    const isProtected = isProtectedRoute(currentPath);
+    const paymentRedirectUrl = getPaymentRedirectUrl();
     
     // Redirect authenticated users who need payment setup from protected routes
-    if (isAuthenticated && needsPaymentSetup && isProtectedRoute && currentPath !== '/subscription/update-payment') {
+    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {
       console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
-      setLocation('/subscription/update-payment');
+      setLocation(paymentRedirectUrl);
       return;
     }
     
@@ -112,7 +88,7 @@ function Router() {
     if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
       if (needsPaymentSetup) {
         console.log('🔄 Redirecting authenticated unpaid user to payment setup');
-        setLocation('/subscription/update-payment');
+        setLocation(paymentRedirectUrl);
       } else {
         console.log('🔄 Redirecting authenticated paid user to dashboard');
         setLocation('/dashboard');
@@ -121,7 +97,7 @@ function Router() {
     }
 
     // Redirect unauthenticated users from protected routes to login
-    if (!isAuthenticated && isProtectedRoute) {
+    if (!isAuthenticated && isProtected) {
       console.log('🔒 Redirecting unauthenticated user to login');
       setLocation('/login');
       return;

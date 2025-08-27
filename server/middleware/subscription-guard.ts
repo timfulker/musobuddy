@@ -100,16 +100,27 @@ export const subscriptionGuard = async (req: Request, res: Response, next: NextF
       return next();
     }
 
-    // Check subscription status
+    // STRICT PAYMENT ENFORCEMENT
     const userTier = user.tier || 'pending_payment';
+    const createdViaStripe = user.created_via_stripe || false;
     
-    if (userTier === 'pending_payment') {
+    // Check if user needs payment (multiple conditions)
+    const needsPayment = (
+      userTier === 'pending_payment' ||
+      !userTier ||
+      userTier === undefined ||
+      (!createdViaStripe && !allowedBypassEmails.includes(user.email)) ||
+      (userTier === 'free' && !allowedBypassEmails.includes(user.email)) // 'free' tier without admin bypass = needs payment
+    );
+    
+    if (needsPayment) {
+      // Allow limited access to payment-related routes
       if (isPendingPaymentAllowed(req.path)) {
-        console.log(`✅ [SUBSCRIPTION-GUARD] Pending payment user ${user.id} allowed access to ${req.path}`);
+        console.log(`✅ [SUBSCRIPTION-GUARD] Unpaid user ${user.id} allowed access to payment route: ${req.path}`);
         return next();
       }
       
-      console.log(`🔒 [SUBSCRIPTION-GUARD] Pending payment user ${user.id} blocked from ${req.path}`);
+      console.log(`🔒 [SUBSCRIPTION-GUARD] Unpaid user ${user.id} blocked from ${req.path} (tier: ${userTier}, stripe: ${createdViaStripe})`);
       return res.status(402).json({ 
         error: 'Payment Required',
         code: 'SUBSCRIPTION_PENDING',
@@ -118,18 +129,22 @@ export const subscriptionGuard = async (req: Request, res: Response, next: NextF
       });
     }
 
-    // Allow users with active subscription tiers
-    if (['free', 'core', 'premium', 'enterprise'].includes(userTier)) {
-      console.log(`✅ [SUBSCRIPTION-GUARD] User ${user.id} with tier '${userTier}' granted access to ${req.path}`);
+    // Valid paid tiers (must also be created via Stripe unless admin)
+    const validPaidTiers = ['core', 'premium', 'enterprise'];
+    const hasValidPaidTier = validPaidTiers.includes(userTier) && createdViaStripe;
+    
+    if (hasValidPaidTier) {
+      console.log(`✅ [SUBSCRIPTION-GUARD] Paid user ${user.id} with tier '${userTier}' granted access to ${req.path}`);
       return next();
     }
 
-    // Block all other cases
-    console.log(`🔒 [SUBSCRIPTION-GUARD] User ${user.id} with tier '${userTier}' blocked from ${req.path}`);
+    // Block all other cases (shouldn't reach here with proper enforcement above)
+    console.log(`🔒 [SUBSCRIPTION-GUARD] User ${user.id} blocked - unexpected state (tier: ${userTier}, stripe: ${createdViaStripe})`);
     return res.status(403).json({ 
       error: 'Subscription required',
       details: 'Invalid subscription status',
-      tier: userTier
+      tier: userTier,
+      createdViaStripe: createdViaStripe
     });
 
   } catch (error) {
