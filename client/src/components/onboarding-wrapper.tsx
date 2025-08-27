@@ -18,6 +18,9 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   const { isAuthenticated, user } = useAuth();
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [, setLocation] = useLocation();
+  
+  // Check if we're in the middle of a signup flow
+  const isSignupInProgress = localStorage.getItem('signup-in-progress') === 'true';
 
   const { data: onboardingStatus, isLoading } = useQuery<OnboardingStatus>({
     queryKey: ['/api/onboarding/status'],
@@ -37,10 +40,11 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // Only show onboarding wizard if:
   // 1. User hasn't completed onboarding
   // 2. User hasn't dismissed the wizard
-  // (Stripe verification removed - all authenticated users can access onboarding)
+  // 3. Not in the middle of signup flow (prevents interference with payment redirect)
   const shouldShowWizard = onboardingStatus && 
     !onboardingStatus.onboardingCompleted && 
-    !wizardDismissed;
+    !wizardDismissed &&
+    !isSignupInProgress;
 
   if (shouldShowWizard) {
     return (

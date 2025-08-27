@@ -39,6 +39,9 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
 
+    // Mark signup as in progress to prevent onboarding wizard interference
+    localStorage.setItem('signup-in-progress', 'true');
+
     try {
       console.log('🔥 Creating account...', { email, firstName, lastName });
       
@@ -55,6 +58,7 @@ export default function SignupPage() {
         });
         
         setTimeout(() => {
+          localStorage.removeItem('signup-in-progress'); // Clear signup flag
           window.location.href = '/dashboard';
         }, 1500);
       } else {
@@ -78,12 +82,15 @@ export default function SignupPage() {
             
             const checkoutData = await checkoutResponse.json();
             if (checkoutData.url) {
+              localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
               window.location.href = checkoutData.url;
             } else {
               console.error('No checkout URL received:', checkoutData);
+              localStorage.removeItem('signup-in-progress'); // Clear on error
             }
           } catch (error) {
             console.error('❌ Checkout creation failed:', error);
+            localStorage.removeItem('signup-in-progress'); // Clear on error
           }
         }, 1500);
       }
@@ -104,6 +111,7 @@ export default function SignupPage() {
       }
       
       setError(errorMessage);
+      localStorage.removeItem('signup-in-progress'); // Clear on error
     } finally {
       setLoading(false);
     }
