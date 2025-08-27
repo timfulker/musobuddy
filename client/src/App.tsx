@@ -114,7 +114,17 @@ function Router() {
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/widget/:token" component={QuickAddWidget} />
 
-      <Route path="/logout" component={LogoutComponent} />
+      <Route path="/logout" component={() => {
+        const { logout } = useAuth();
+        
+        useEffect(() => {
+          logout().then(() => {
+            window.location.href = '/';
+          });
+        }, [logout]);
+        
+        return <div>Logging out...</div>;
+      }} />
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
