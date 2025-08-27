@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Calendar, ArrowLeft, Save, Crown, MapPin, Paperclip, Eye, Download, Upload, MessageSquare, MessageCircle, MoreHorizontal, ThumbsUp, DollarSign, FileText, Shield, XCircle, Users, Music } from "lucide-react";
-import { Link, useLocation, useNavigate } from "wouter";
+import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -98,7 +98,6 @@ export default function NewBookingPage({
   clientInfo 
 }: NewBookingProps = {}) {
   const [location, setLocation] = useLocation();
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   // Conditional authentication - only use auth in musician mode
@@ -600,7 +599,7 @@ export default function NewBookingPage({
         description: "Booking has been created successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      navigate('/bookings');
+      setLocation('/bookings');
     },
     onError: (error) => {
       console.error("Create Booking Error:", error);
@@ -719,7 +718,7 @@ export default function NewBookingPage({
           description: "Booking updated successfully",
         });
         queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-        navigate('/bookings');
+        setLocation('/bookings');
       }
     },
     onError: (error: any) => {
@@ -840,7 +839,7 @@ export default function NewBookingPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/templates?bookingId=${editBookingId}&action=respond`)}
+                    onClick={() => setLocation(`/templates?bookingId=${editBookingId}&action=respond`)}
                     className="text-blue-600 hover:bg-blue-50"
                   >
                     <MessageSquare className="w-4 h-4 mr-1" />
@@ -850,7 +849,7 @@ export default function NewBookingPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/conversation/${editBookingId}`)}
+                    onClick={() => setLocation(`/conversation/${editBookingId}`)}
                     className="text-indigo-600 hover:bg-indigo-50"
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
@@ -880,28 +879,28 @@ export default function NewBookingPage({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem
-                        onClick={() => navigate(`/templates?bookingId=${editBookingId}&action=thankyou`)}
+                        onClick={() => setLocation(`/templates?bookingId=${editBookingId}&action=thankyou`)}
                       >
                         <ThumbsUp className="w-4 h-4 mr-2" />
                         Send Thank You
                       </DropdownMenuItem>
                       
                       <DropdownMenuItem
-                        onClick={() => navigate(`/invoices?create=true&bookingId=${editBookingId}`)}
+                        onClick={() => setLocation(`/invoices?create=true&bookingId=${editBookingId}`)}
                       >
                         <DollarSign className="w-4 h-4 mr-2" />
                         Create Invoice
                       </DropdownMenuItem>
                       
                       <DropdownMenuItem
-                        onClick={() => navigate(`/contracts/new?bookingId=${editBookingId}`)}
+                        onClick={() => setLocation(`/contracts/new?bookingId=${editBookingId}`))
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Create Contract
                       </DropdownMenuItem>
                       
                       <DropdownMenuItem
-                        onClick={() => navigate(`/compliance?bookingId=${editBookingId}`)}
+                        onClick={() => setLocation(`/compliance?bookingId=${editBookingId}`))
                       >
                         <Shield className="w-4 h-4 mr-2" />
                         Compliance
@@ -922,7 +921,7 @@ export default function NewBookingPage({
                                   title: "Booking rejected",
                                   description: "The booking has been marked as rejected",
                                 });
-                                navigate('/bookings');
+                                setLocation('/bookings');
                               }
                             } catch (error) {
                               toast({
