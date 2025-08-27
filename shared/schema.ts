@@ -209,19 +209,7 @@ export const phoneVerifications = pgTable("phone_verifications", {
   userAgent: text("user_agent"),
 });
 
-// Trial management tracking
-export const trialTracking = pgTable("trial_tracking", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  trialStartedAt: timestamp("trial_started_at"),
-  trialExpiresAt: timestamp("trial_expires_at"),
-  trialStatus: varchar("trial_status", { length: 20 }).default("inactive"), // active, converted, cancelled, expired
-  reminderSentAt: timestamp("reminder_sent_at"),
-  conversionDate: timestamp("conversion_date"),
-  cancellationDate: timestamp("cancellation_date"),
-  cancellationReason: text("cancellation_reason"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Trial tracking removed - now using simplified trial_ends_at field in users table
 
 // Fraud prevention log
 export const fraudPreventionLog = pgTable("fraud_prevention_log", {
