@@ -241,7 +241,7 @@ export function setupAuthRoutes(app: Express) {
   // NEW: Clean Firebase signup with database creation and beta user detection
   app.post('/api/auth/firebase-signup', async (req, res) => {
     try {
-      const { idToken, firstName, lastName } = req.body;
+      const { idToken, firstName, lastName, deviceFingerprint } = req.body;
       
       if (!idToken || !firstName || !lastName) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -322,6 +322,12 @@ export function setupAuthRoutes(app: Express) {
         // Continue without beta status if Stripe fails
       }
       
+      // Capture security and tracking data
+      const signupIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] as string || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      
+      console.log('🔒 Security data captured:', { signupIP, userAgent, deviceFingerprint });
+      
       // Create user in database with appropriate status
       const userId = nanoid();
       const newUser = await storage.createUser({
@@ -336,6 +342,12 @@ export function setupAuthRoutes(app: Express) {
         isBetaTester: isBetaUser,
         tier: isBetaUser ? 'standard' : 'pending_payment',
         stripeCustomerId: stripeCustomerId,
+        signupIpAddress: signupIP,
+        deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
+        lastLoginAt: new Date(),
+        lastLoginIP: signupIP,
+        fraudScore: 0,
+        onboardingCompleted: false,
         createdAt: new Date()
       });
       

@@ -920,9 +920,9 @@ app.get('/api/email-queue/status', async (req, res) => {
         }
         
         // Check if this is a trial signup or paid subscription
-        const isTrialSignup = session.mode === 'setup' || session.subscription === null || 
-                             session.payment_status === 'unpaid' || 
-                             session.metadata?.signup_type === 'trial';
+        // CORRECTED: Proper trial detection for Stripe-managed trials
+        const isTrialSignup = session.metadata?.signup_type === 'trial' || 
+                             (session.subscription && session.amount_total === 0);
         
         if (isTrialSignup) {
           // Trial signup - 30 day trial
@@ -938,8 +938,9 @@ app.get('/api/email-queue/status', async (req, res) => {
             trialExpiresAt: trialEndDate,
             trialStatus: 'active',
             stripeCustomerId: session.customer,
+            stripeSubscriptionId: session.subscription, // Trials have subscription IDs too
             accountStatus: 'active',
-            isSubscribed: false // Trial is not a paid subscription
+            isSubscribed: true // Change: Trial users are considered subscribed during trial
           });
           
           console.log('✅ Trial setup completed:', {
