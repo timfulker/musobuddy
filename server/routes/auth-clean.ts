@@ -107,7 +107,7 @@ export function setupAuthRoutes(app: Express) {
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin: user.isAdmin || false,
-        phoneVerified: user.phoneVerified || false,
+
         emailPrefix: user.emailPrefix || null
       });
 
@@ -133,7 +133,7 @@ export function setupAuthRoutes(app: Express) {
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin: user.isAdmin || false,
-        phoneVerified: user.phoneVerified || false,
+
         emailPrefix: user.emailPrefix || null
       });
 
@@ -306,7 +306,6 @@ export function setupAuthRoutes(app: Express) {
         firstName,
         lastName,
         firebaseUid: firebaseUser.uid,
-        phoneVerified: firebaseUser.emailVerified || false,
         isAdmin: false,
         isBetaTester: isBetaUser,
         tier: 'pending_payment', // All users must go through Stripe, beta testers get coupon applied

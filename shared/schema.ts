@@ -27,8 +27,6 @@ export const users = pgTable("users", {
   isSubscribed: boolean("is_subscribed").default(false),
   isLifetime: boolean("is_lifetime").default(false),
   isBetaTester: boolean("is_beta_tester").default(false),
-  betaStartDate: timestamp("beta_start_date"),
-  betaEndDate: timestamp("beta_end_date"),
   betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
   plan: varchar("plan", { length: 50 }).default("free"), // free, trial, core, premium
@@ -40,8 +38,6 @@ export const users = pgTable("users", {
   widgetQrCode: text("widget_qr_code"), // Base64 QR code for the widget URL
   // SaaS Trial Management Fields
   phoneNumber: varchar("phone_number", { length: 20 }), // .unique() removed for testing - re-add for launch
-  phoneVerified: boolean("phone_verified").default(false),
-  phoneVerifiedAt: timestamp("phone_verified_at"),
   trialStartedAt: timestamp("trial_started_at"),
   trialExpiresAt: timestamp("trial_expires_at"),
   trialStatus: varchar("trial_status", { length: 20 }).default("inactive"), // inactive, active, converted, cancelled, expired
