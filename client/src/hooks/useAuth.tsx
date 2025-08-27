@@ -127,7 +127,7 @@ export function useAuth() {
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUpWithEmail = async (email: string, password: string, firstName: string, lastName: string, inviteCode?: string) => {
     try {
       setAuthState(prev => ({ ...prev, error: null }));
       
@@ -143,7 +143,7 @@ export function useAuth() {
       const response = await fetch('/api/auth/firebase-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, firstName, lastName })
+        body: JSON.stringify({ idToken, firstName, lastName, inviteCode })
       });
       
       if (!response.ok) {

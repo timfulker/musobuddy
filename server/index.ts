@@ -941,38 +941,36 @@ app.get('/api/email-queue/status', async (req, res) => {
                              (session.subscription && session.amount_total === 0 && !isBetaSignup);
         
         if (isBetaSignup) {
-          // Beta tester completing checkout - they already have 1 year trial
+          // Beta tester completing checkout - they have 365 day trial
           console.log('🎉 Beta tester completing checkout:', user.id);
           
-          // Beta testers already have trial_ends_at set for 1 year during signup
-          // Just update their Stripe info
+          // SECURITY: Beta testers must complete checkout to access the app
+          // has_paid = true means they've completed the payment flow (even with 100% discount)
           await storage.updateUser(user.id, {
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
-            // Don't set has_paid to true - they're on free beta access
-            hasPaid: false,
+            hasPaid: true, // CRITICAL: Set to true - they've completed checkout
             isBetaTester: true // Ensure beta flag is set
           });
           
-          console.log('✅ Beta tester Stripe info updated:', {
+          console.log('✅ Beta tester activated (has_paid = true):', {
             userId: user.id,
             email: customerEmail,
             customerId: session.customer
           });
         } else if (isTrialSignup) {
-          // Trial user completing checkout - they already have 30 day trial
+          // Trial user completing checkout - they have 30 day trial
           console.log('🎯 Trial user completing checkout:', user.id);
           
-          // Trial users already have trial_ends_at set during signup
-          // Just update their Stripe info
+          // SECURITY: Trial users must complete checkout to access the app
+          // has_paid = true means they've completed the payment flow (even with 100% discount)
           await storage.updateUser(user.id, {
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
-            // Don't set has_paid to true yet - they're still in trial
-            hasPaid: false
+            hasPaid: true // CRITICAL: Set to true - they've completed checkout
           });
           
-          console.log('✅ Trial user Stripe info updated:', {
+          console.log('✅ Trial user activated (has_paid = true):', {
             userId: user.id,
             email: customerEmail,
             customerId: session.customer

@@ -54,13 +54,12 @@ interface AdminUser {
   email: string;
   firstName: string;
   lastName: string;
-  tier: string;
   isAdmin: boolean;
+  isAssigned: boolean;
   isBetaTester: boolean;
-  forceTestMode: boolean;
-  betaStartDate: string;
-  betaEndDate: string;
-  betaFeedbackCount: number;
+  hasPaid: boolean;
+  trialEndsAt: string | null;
+  accountNotes: string | null;
   createdAt: string;
 }
 
@@ -81,10 +80,9 @@ export default function AdminPanel() {
     lastName: '',
     password: '',
     firebaseUid: '',
-    tier: 'free',
     isAdmin: false,
+    isAssigned: false,
     isBetaTester: false,
-    forceTestMode: false,
     phoneVerified: false
   });
   const [editUserForm, setEditUserForm] = useState({
@@ -92,19 +90,18 @@ export default function AdminPanel() {
     firstName: '',
     lastName: '',
     password: '',
-    tier: 'free',
     isAdmin: false,
+    isAssigned: false,
     isBetaTester: false,
-    forceTestMode: false
+    accountNotes: ''
   });
   const [inviteForm, setInviteForm] = useState({
     email: '',
     firstName: '',
     lastName: '',
-    tier: 'free',
     isAdmin: false,
+    isAssigned: false,
     isBetaTester: false,
-    forceTestMode: false,
     personalMessage: ''
   });
   const { isDesktop } = useResponsive();
@@ -329,10 +326,10 @@ export default function AdminPanel() {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       password: '', // Start empty - admin can choose to change password or leave current
-      tier: user.tier,
       isAdmin: user.isAdmin,
+      isAssigned: user.isAssigned || false,
       isBetaTester: user.isBetaTester || false,
-      forceTestMode: user.forceTestMode || false
+      accountNotes: user.accountNotes || ''
     });
     setEditUserOpen(true);
   };
@@ -368,8 +365,10 @@ export default function AdminPanel() {
     const matchesFilter = userFilter === 'all' ||
       (userFilter === 'admin' && user.isAdmin === true) ||
       (userFilter === 'beta' && user.isBetaTester === true) ||
-      (userFilter === 'regular' && !user.isAdmin && !user.isBetaTester) ||
-      userFilter === (user.tier || 'free');
+      (userFilter === 'assigned' && user.isAssigned === true) ||
+      (userFilter === 'paid' && user.hasPaid === true) ||
+      (userFilter === 'trial' && user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) ||
+      (userFilter === 'regular' && !user.isAdmin && !user.isBetaTester && !user.isAssigned);
     
     return matchesSearch && matchesFilter;
   });
@@ -390,14 +389,14 @@ export default function AdminPanel() {
     );
   };
 
-  const getTierBadge = (tier: string) => {
-    const colors = {
-      free: "bg-gray-100 text-gray-800",
-      core: "bg-blue-100 text-blue-800", 
-      premium: "bg-primary/10 text-yellow-800",
-      enterprise: "bg-yellow-100 text-yellow-800"
-    };
-    return colors[tier as keyof typeof colors] || colors.free;
+  const getAccessBadge = (user: AdminUser) => {
+    if (user.isAdmin) return { color: "bg-purple-100 text-purple-800", label: "Admin" };
+    if (user.isAssigned) return { color: "bg-green-100 text-green-800", label: "Assigned" };
+    if (user.hasPaid) return { color: "bg-blue-100 text-blue-800", label: "Paid" };
+    if (user.trialEndsAt && new Date(user.trialEndsAt) > new Date()) {
+      return { color: "bg-yellow-100 text-yellow-800", label: "Trial" };
+    }
+    return { color: "bg-gray-100 text-gray-800", label: "Expired" };
   };
 
   // Show loading state while checking authentication
@@ -639,20 +638,6 @@ export default function AdminPanel() {
                                   />
                                 </div>
                               </div>
-                              <div className="grid gap-2">
-                                <Label htmlFor="invite-tier">Initial Subscription Tier</Label>
-                                <Select value={inviteForm.tier} onValueChange={(value) => setInviteForm(prev => ({ ...prev, tier: value }))}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select tier" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="free">Free</SelectItem>
-                                    <SelectItem value="core">Core</SelectItem>
-                                    <SelectItem value="premium">Premium</SelectItem>
-                                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
                               <div className="space-y-3">
                                 <div className="flex items-center space-x-2">
                                   <input
@@ -754,20 +739,6 @@ export default function AdminPanel() {
                                   value={newUserForm.firebaseUid}
                                   onChange={(e) => setNewUserForm(prev => ({ ...prev, firebaseUid: e.target.value }))}
                                 />
-                              </div>
-                              <div className="grid gap-2">
-                                <Label htmlFor="tier">Subscription Tier</Label>
-                                <Select value={newUserForm.tier} onValueChange={(value) => setNewUserForm(prev => ({ ...prev, tier: value }))}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select tier" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="free">Free</SelectItem>
-                                    <SelectItem value="core">Core</SelectItem>
-                                    <SelectItem value="premium">Premium</SelectItem>
-                                    <SelectItem value="enterprise">Enterprise</SelectItem>
-                                  </SelectContent>
-                                </Select>
                               </div>
                               <div className="space-y-3">
                                 <div className="flex items-center space-x-2">
@@ -893,8 +864,8 @@ export default function AdminPanel() {
                               </div>
                               <div className="text-sm text-muted-foreground truncate">{user.email}</div>
                               <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                <Badge className={getTierBadge(user.tier || 'free')}>
-                                  {user.tier ? user.tier.charAt(0).toUpperCase() + user.tier.slice(1) : 'Free'}
+                                <Badge className={getAccessBadge(user).color}>
+                                  {getAccessBadge(user).label}
                                 </Badge>
                                 {user.isAdmin && (
                                   <Badge variant="outline" className="text-yellow-600 border-yellow-200">
@@ -1005,21 +976,14 @@ export default function AdminPanel() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-tier">Subscription Tier</Label>
-                      <Select 
-                        value={editUserForm.tier} 
-                        onValueChange={(value) => setEditUserForm(prev => ({ ...prev, tier: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="free">Free</SelectItem>
-                          <SelectItem value="core">Core</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                          <SelectItem value="enterprise">Enterprise</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="edit-notes">Account Notes</Label>
+                      <Input
+                        id="edit-notes"
+                        type="text"
+                        placeholder="Optional notes about this account"
+                        value={editUserForm.accountNotes}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, accountNotes: e.target.value }))}
+                      />
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">

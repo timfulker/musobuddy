@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [inviteCode, setInviteCode] = useState(''); // Optional beta invite code
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -43,57 +44,60 @@ export default function SignupPage() {
     localStorage.setItem('signup-in-progress', 'true');
 
     try {
-      console.log('🔥 Creating account...', { email, firstName, lastName });
+      console.log('🔥 Creating account...', { email, firstName, lastName, inviteCode });
       
-      // Use the auth hook to create account
-      const result = await signUpWithEmail(email, password, firstName, lastName);
+      // Use the auth hook to create account (pass invite code if provided)
+      const result = await signUpWithEmail(email, password, firstName, lastName, inviteCode);
       
       console.log('🔍 Signup result:', result);
       
-      if (result?.user?.isBeta || result?.user?.status === 'standard') {
-        // Beta user - immediate access to dashboard
-        toast({
-          title: "Welcome, Beta Tester!",
-          description: "You have 12 months completely free + 30% lifetime discount!"
-        });
-        
-        setTimeout(() => {
-          localStorage.removeItem('signup-in-progress'); // Clear signup flag
-          window.location.href = '/dashboard';
-        }, 1500);
-      } else {
-        // Regular user - needs to complete payment
-        toast({
-          title: "Account created successfully!",
-          description: "Redirecting to complete your subscription..."
-        });
-        
-        // Create Stripe checkout session for regular user
-        setTimeout(async () => {
-          try {
-            const checkoutResponse = await fetch('/api/create-checkout-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                userEmail: email,
-                userId: result.user.userId 
-              })
-            });
-            
-            const checkoutData = await checkoutResponse.json();
-            if (checkoutData.url) {
-              localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
-              window.location.href = checkoutData.url;
-            } else {
-              console.error('No checkout URL received:', checkoutData);
-              localStorage.removeItem('signup-in-progress'); // Clear on error
-            }
-          } catch (error) {
-            console.error('❌ Checkout creation failed:', error);
+      // ALL users must go through Stripe checkout (including beta testers)
+      // Beta testers will get 365-day trial, regular users get 30-day trial
+      const welcomeMessage = result?.user?.isBeta 
+        ? "Welcome, Beta Tester! Complete checkout for your 12-month free trial."
+        : "Account created! Complete checkout to start your 30-day free trial.";
+      
+      toast({
+        title: "Account created successfully!",
+        description: welcomeMessage
+      });
+      
+      // Create Stripe checkout session for ALL users
+      setTimeout(async () => {
+        try {
+          const checkoutResponse = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              userEmail: email,
+              userId: result.user.userId,
+              isBeta: result?.user?.isBeta || false // Pass beta status to backend
+            })
+          });
+          
+          const checkoutData = await checkoutResponse.json();
+          if (checkoutData.url) {
+            localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
+            window.location.href = checkoutData.url;
+          } else {
+            console.error('No checkout URL received:', checkoutData);
             localStorage.removeItem('signup-in-progress'); // Clear on error
+            toast({
+              title: "Error",
+              description: "Failed to create checkout session. Please try again.",
+              variant: "destructive"
+            });
           }
-        }, 1500);
-      }
+        } catch (error) {
+          console.error('❌ Checkout creation failed:', error);
+          localStorage.removeItem('signup-in-progress'); // Clear on error
+          toast({
+            title: "Error",
+            description: "Failed to create checkout session. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }, 1500);
       
     } catch (err: any) {
       console.error('❌ Account creation failed:', err);
@@ -169,6 +173,22 @@ export default function SignupPage() {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="inviteCode">
+                    Invite Code <span className="text-gray-500">(optional)</span>
+                  </Label>
+                  <Input
+                    id="inviteCode"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Leave blank if you don't have one"
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter your beta invite code if you have one
+                  </p>
+                </div>
 
                 <div>
                   <Label htmlFor="password">Password</Label>

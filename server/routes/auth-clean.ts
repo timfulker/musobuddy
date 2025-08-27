@@ -310,13 +310,18 @@ export function setupAuthRoutes(app: Express) {
   // NEW: Clean Firebase signup with database creation and beta user detection
   app.post('/api/auth/firebase-signup', async (req, res) => {
     try {
-      const { idToken, firstName, lastName, deviceFingerprint } = req.body;
+      const { idToken, firstName, lastName, deviceFingerprint, inviteCode } = req.body;
       
       if (!idToken || !firstName || !lastName) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
       
       console.log('🔥 Processing Firebase signup...');
+      
+      // Log if invite code was provided
+      if (inviteCode) {
+        console.log('📨 Invite code provided:', inviteCode);
+      }
       
       // Verify Firebase token
       const firebaseUser = await verifyFirebaseToken(idToken);
@@ -335,13 +340,20 @@ export function setupAuthRoutes(app: Express) {
         });
       }
       
-      // Check if user has a beta invite
+      // Check if user has a beta invite (either by email match or invite code)
       let isBetaUser = false;
       let betaInvite = null;
       
       try {
         console.log('🔍 Checking beta invite list for email:', firebaseUser.email);
         betaInvite = await storage.getBetaInviteByEmail(firebaseUser.email || '');
+        
+        // Check if invite code matches known beta codes
+        const validBetaCodes = ['BETA2025', 'MUSOBETA', 'EARLYBIRDMUSIC'];
+        if (!isBetaUser && inviteCode && validBetaCodes.includes(inviteCode.toUpperCase())) {
+          isBetaUser = true;
+          console.log('✅ Valid beta invite code provided:', inviteCode);
+        }
         
         if (betaInvite && betaInvite.status === 'pending') {
           isBetaUser = true;
@@ -353,7 +365,7 @@ export function setupAuthRoutes(app: Express) {
           });
         } else if (betaInvite && betaInvite.status === 'used') {
           console.log('⚠️ Beta invite already used - treating as regular user');
-        } else {
+        } else if (!isBetaUser) {
           console.log('❌ No beta invite found for this email - regular signup');
         }
       } catch (betaError) {
@@ -420,9 +432,9 @@ export function setupAuthRoutes(app: Express) {
           hasPaid: false
         },
         message: isBetaUser 
-          ? 'Welcome! Your 1-year beta access has started.' 
-          : 'Welcome! Your 30-day free trial has started.',
-        redirect: '/dashboard' // Users can access dashboard during trial
+          ? 'Welcome! Complete setup to start your 1-year free beta access.' 
+          : 'Welcome! Complete setup to start your 30-day trial.',
+        redirect: '/payment' // Everyone goes to payment (Stripe handles trial)
       });
       
     } catch (error: any) {
@@ -437,13 +449,14 @@ export function setupAuthRoutes(app: Express) {
   // Create Stripe checkout session for regular users
   app.post('/api/create-checkout-session', async (req, res) => {
     try {
-      const { userEmail, userId } = req.body;
+      const { userEmail, userId, isBeta } = req.body;
       
       if (!userEmail || !userId) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
       
       console.log('🔄 Creating checkout session for:', userEmail);
+      console.log('📨 Beta status from frontend:', isBeta);
       
       // Check if user is a beta tester to apply appropriate coupon
       const user = await storage.getUserById(userId);
@@ -463,22 +476,23 @@ export function setupAuthRoutes(app: Express) {
       const stripe = new Stripe(stripeKey || '', { 
         apiVersion: '2024-12-18.acacia' 
       });
-      const isBetaTester = user?.isBetaTester || false;
+      // Use isBeta from frontend if provided, otherwise check database
+      const isBetaTester = isBeta || user?.isBetaTester || false;
       
       console.log('👤 User beta status:', isBetaTester);
       
-      // Prepare subscription data with appropriate coupon
+      // Determine trial length based on beta status
+      const trialDays = isBetaTester ? 365 : 30; // 365 days for beta, 30 for regular
+      
+      // Prepare subscription data with appropriate trial period
       const subscriptionData: any = {
-        trial_period_days: 30, // 30-day free trial for all users
+        trial_period_days: trialDays,
+        metadata: {
+          is_beta_tester: isBetaTester ? 'true' : 'false'
+        }
       };
       
-      // Apply beta tester coupon for 12 months free
-      if (isBetaTester) {
-        subscriptionData.discounts = [{
-          coupon: 'BETA_TESTER_2025' // 100% off for 12 months
-        }];
-        console.log('🎉 Applied BETA_TESTER_2025 coupon for 12 months free');
-      }
+      console.log(`🎯 Setting ${trialDays}-day trial for ${isBetaTester ? 'beta tester' : 'regular user'}`);
       
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
