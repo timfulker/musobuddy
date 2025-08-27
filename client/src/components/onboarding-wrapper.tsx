@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import OnboardingWizard from "./onboarding-wizard";
 
 interface OnboardingWrapperProps {
@@ -16,6 +17,7 @@ interface OnboardingStatus {
 export default function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { isAuthenticated, user } = useAuth();
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: onboardingStatus, isLoading } = useQuery<OnboardingStatus>({
     queryKey: ['/api/onboarding/status'],
@@ -49,8 +51,8 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
           onComplete={() => {
             // Mark as dismissed and redirect to dashboard
             setWizardDismissed(true);
-            // Redirect to dashboard after completing onboarding
-            window.location.href = '/dashboard';
+            // Use wouter for navigation to prevent page reload
+            setLocation('/dashboard');
           }}
           onDismiss={() => setWizardDismissed(true)}
           user={user}

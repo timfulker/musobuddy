@@ -58,9 +58,7 @@ export default function Dashboard() {
           title: "Welcome to MusoBuddy!",
           description: "Your account is now active. Let's get started with setting up your email integration.",
         });
-        // Force page reload to refresh auth state
-        // Remove page reload - causes infinite loops
-        console.log('Dashboard initialized');
+        console.log('Dashboard initialized with Stripe session');
       })
       .catch((error) => {
         console.error('❌ Session restoration failed:', error);
@@ -73,46 +71,39 @@ export default function Dashboard() {
     }
   }, [toast]);
 
-  // Redirect to login if not authenticated (but skip if we're processing Stripe session or in preview)
+  // Only show toast if auth changes after initial load
   useEffect(() => {
-    if (isPreview) return; // Skip auth redirects in preview
+    if (isPreview) return; // Skip auth in preview
     
     const urlParams = new URLSearchParams(window.location.search);
     const hasStripeSession = urlParams.get('stripe_session');
     
+    // Don't redirect or show toasts during initial loading or if we have a Stripe session
     if (!isLoading && !isAuthenticated && !hasStripeSession) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      // Use React Router instead of window.location to prevent page reloads
-      // Note: This should be handled by the main App.tsx routing logic instead
-      return;
+      // Just show a message, let the router handle redirects
+      console.log('User not authenticated on dashboard');
     }
-  }, [isAuthenticated, isLoading, toast, isPreview]);
+  }, [isAuthenticated, isLoading, isPreview]);
 
-  // Special handling for preview environment to prevent loops
-  if (isPreview && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-4">MusoBuddy Dashboard</h1>
-          <p className="text-muted-foreground">
-            Please log in to view the full dashboard. 
-            The preview environment has limited functionality.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (isLoading || !isAuthenticated) {
+  // Show loading state while checking auth
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If not authenticated, show a message (router should handle redirect)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+          <p className="text-muted-foreground">Please log in to access the dashboard.</p>
         </div>
       </div>
     );
