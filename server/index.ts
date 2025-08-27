@@ -86,10 +86,18 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res, next) => {
-  // If it's an explicit API health check or a curl/health check request
-  if (req.headers['user-agent']?.includes('GoogleHC') || 
-      req.headers['user-agent']?.includes('curl') ||
-      req.headers['accept']?.includes('application/json')) {
+  // Only return JSON for explicit health checks and monitoring tools
+  // Allow all browser requests (including Replit preview) to go to Vite
+  const userAgent = req.headers['user-agent'] || '';
+  const accept = req.headers['accept'] || '';
+  
+  // Check for monitoring/health check tools
+  if (userAgent.includes('GoogleHC') || 
+      userAgent.includes('Pingdom') ||
+      userAgent.includes('StatusCake') ||
+      userAgent.includes('UptimeRobot') ||
+      (userAgent.includes('curl') && !accept.includes('text/html')) ||
+      (userAgent.includes('python') && accept.includes('application/json'))) {
     return res.status(200).json({ 
       status: 'MusoBuddy API', 
       mode: process.env.NODE_ENV,
@@ -97,7 +105,7 @@ app.get('/', (req, res, next) => {
     });
   }
   
-  // In both development and production, let other middleware handle HTML requests
+  // Let Vite handle all browser requests (including Replit preview iframe)
   return next();
 });
 
