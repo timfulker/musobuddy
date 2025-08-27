@@ -343,6 +343,22 @@ export class UserStorage {
     const result = await db.delete(smsVerifications).where(lt(smsVerifications.expiresAt, now));
     console.log(`🧹 Cleaned up expired SMS verifications: ${result.rowCount || 0} removed`);
   }
+
+  async updateLoginActivity(userId: string, loginTime: Date, loginIP: string) {
+    try {
+      await db.update(users)
+        .set({
+          lastLoginAt: loginTime,
+          lastLoginIp: loginIP
+        })
+        .where(eq(users.id, userId));
+      
+      console.log(`📍 Updated login activity for user ${userId}: ${loginIP} at ${loginTime.toISOString()}`);
+    } catch (error) {
+      console.error('❌ Failed to update login activity:', error);
+      throw error;
+    }
+  }
 }
 
 export const userStorage = new UserStorage();

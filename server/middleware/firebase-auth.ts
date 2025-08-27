@@ -100,6 +100,23 @@ export const authenticateWithFirebase = async (
       });
     }
     
+    // Check if this is a fresh login by comparing with last login time
+    const currentTime = new Date();
+    const lastLoginTime = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
+    const timeSinceLastLogin = lastLoginTime ? currentTime.getTime() - lastLoginTime.getTime() : Infinity;
+    
+    // Only track login activity if it's been more than 5 minutes since last login
+    // This prevents tracking every API call as a "login"
+    if (!lastLoginTime || timeSinceLastLogin > 5 * 60 * 1000) {
+      const loginIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] as string || 'unknown';
+      
+      // Update login tracking in database (async, don't block request)
+      storage.updateLoginActivity(user.id, currentTime, loginIP).catch(error => {
+        console.error('⚠️ Failed to update login activity:', error);
+        // Don't block authentication if tracking fails
+      });
+    }
+    
     // Attach user to request
     req.user = {
       id: user.id,
@@ -115,7 +132,7 @@ export const authenticateWithFirebase = async (
     
     const duration = Date.now() - startTime;
     if (AUTH_DEBUG) {
-      console.log(`✅ [FIREBASE-AUTH] Authenticated user ${user.id} (${user.email}) in ${duration}ms`);
+      console.log(`✅ [FIREBASE-AUTH] Authenticated user ${user.id} (${user.email}) from IP ${loginIP} in ${duration}ms`);
     }
     
     next();
