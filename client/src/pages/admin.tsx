@@ -57,6 +57,7 @@ interface AdminUser {
   tier: string;
   isAdmin: boolean;
   isBetaTester: boolean;
+  forceTestMode: boolean;
   betaStartDate: string;
   betaEndDate: string;
   betaFeedbackCount: number;
@@ -83,6 +84,7 @@ export default function AdminPanel() {
     tier: 'free',
     isAdmin: false,
     isBetaTester: false,
+    forceTestMode: false,
     phoneVerified: false
   });
   const [editUserForm, setEditUserForm] = useState({
@@ -92,7 +94,8 @@ export default function AdminPanel() {
     password: '',
     tier: 'free',
     isAdmin: false,
-    isBetaTester: false
+    isBetaTester: false,
+    forceTestMode: false
   });
   const [inviteForm, setInviteForm] = useState({
     email: '',
@@ -101,6 +104,7 @@ export default function AdminPanel() {
     tier: 'free',
     isAdmin: false,
     isBetaTester: false,
+    forceTestMode: false,
     personalMessage: ''
   });
   const { isDesktop } = useResponsive();
@@ -327,7 +331,8 @@ export default function AdminPanel() {
       password: '', // Start empty - admin can choose to change password or leave current
       tier: user.tier,
       isAdmin: user.isAdmin,
-      isBetaTester: user.isBetaTester || false
+      isBetaTester: user.isBetaTester || false,
+      forceTestMode: user.forceTestMode || false
     });
     setEditUserOpen(true);
   };
@@ -1026,6 +1031,16 @@ export default function AdminPanel() {
                           className="rounded"
                         />
                         <Label htmlFor="edit-isBetaTester">Beta Tester</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="edit-forceTestMode"
+                          checked={editUserForm.forceTestMode}
+                          onChange={(e) => setEditUserForm(prev => ({ ...prev, forceTestMode: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="edit-forceTestMode">Force Test Mode (use Stripe test environment in production)</Label>
                       </div>
                     </div>
                   </div>

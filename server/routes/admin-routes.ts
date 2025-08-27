@@ -459,4 +459,46 @@ app.get('/api/admin/overview', async (req, res) => {
   }
 });
 
+// Update user endpoint
+app.patch('/api/admin/users/:userId', async (req, res) => {
+  try {
+    // Extract authentication data from request (added by Firebase middleware)
+    const firebaseUser = (req as any).firebaseUser;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Get the admin user making the request
+    const adminUser = await storage.getUserByFirebaseUid(firebaseUser.uid);
+    if (!adminUser || !adminUser.isAdmin) {
+      console.log(`❌ [ADMIN] Non-admin user ${firebaseUser.uid} attempted to update user`);
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { userId } = req.params;
+    const userData = req.body;
+
+    console.log(`📝 [ADMIN] Admin ${adminUser.email} updating user ${userId}:`, userData);
+
+    // Update the user
+    await storage.updateUser(userId, userData);
+
+    // Get the updated user to return
+    const updatedUser = await storage.getUserById(userId);
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log(`✅ [ADMIN] Successfully updated user ${userId}`);
+    res.json(updatedUser);
+
+  } catch (error: any) {
+    console.error(`❌ [ADMIN] Failed to update user:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 }

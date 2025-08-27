@@ -365,8 +365,14 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
       
+      // Determine which Stripe key to use based on force test mode or environment
+      const shouldUseTestMode = user?.forceTestMode || process.env.NODE_ENV !== 'production';
+      const stripeKey = shouldUseTestMode 
+        ? process.env.STRIPE_TEST_SECRET_KEY 
+        : process.env.STRIPE_SECRET_KEY;
+      
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
+      const stripe = new Stripe(stripeKey || '', { 
         apiVersion: '2024-12-18.acacia' 
       });
       
@@ -396,9 +402,9 @@ export function setupAuthRoutes(app: Express) {
         customer_email: userEmail,
         payment_method_types: ['card'],
         line_items: [{
-          price: process.env.NODE_ENV === 'production' 
-            ? 'price_1RoX6JD9Bo26CG1DAHob4Bh1'  // Live environment
-            : 'price_1RouBwD9Bo26CG1DAF1rkSZI', // Test environment
+          price: shouldUseTestMode
+            ? 'price_1RouBwD9Bo26CG1DAF1rkSZI' // Test environment
+            : 'price_1RoX6JD9Bo26CG1DAHob4Bh1', // Live environment
           quantity: 1
         }],
         mode: 'subscription',

@@ -66,6 +66,8 @@ export const users = pgTable("users", {
   passwordResetToken: varchar("password_reset_token", { length: 128 }),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
+  // Test mode override - force Stripe test mode even in production
+  forceTestMode: boolean("force_test_mode").default(false),
   // AI usage tracking removed - unlimited AI usage for all users
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
