@@ -257,7 +257,7 @@ export function setupAuthRoutes(app: Express) {
       
       console.log('✅ Firebase token verified for:', firebaseUser.email);
       
-      // Check if user already exists in database
+      // Check if user already exists in database by Firebase UID
       const existingUser = await storage.getUserByFirebaseUid(firebaseUser.uid);
       if (existingUser) {
         return res.status(409).json({ 
