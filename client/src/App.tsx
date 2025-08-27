@@ -76,11 +76,10 @@ function Router() {
     const isAdminUser = user.isAdmin || allowedBypassEmails.includes(user.email);
     
     // Check if user needs payment setup (excluding admin users)
-    // CRITICAL FIX: Check tier first as primary indicator
+    // FIXED LOGIC: pending_payment means they haven't paid yet
     const needsPaymentSetup = !isAdminUser && (
-      user.tier === 'pending_payment' ||  // Primary check
-      !user.hasCompletedPayment ||        // Computed field check
-      !user.createdViaStripe              // Secondary check
+      user.tier === 'pending_payment'  // This tier means they need to pay
+      // Don't check other fields - tier is the source of truth
     );
     
     // Debug logging for payment validation
