@@ -227,7 +227,32 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
                    (data.custom_clauses || data.customClauses) : 
                    (typeof (data.custom_clauses || data.customClauses) === 'string' ? 
                     JSON.parse((data.custom_clauses || data.customClauses) || '[]') : []),
-    bankDetails: data.bank_details || data.bankDetails || "",
+    bankDetails: (() => {
+      const bankData = data.bank_details || data.bankDetails;
+      if (!bankData) return "";
+      
+      // If it's already a formatted string, return as-is
+      if (typeof bankData === 'string' && !bankData.startsWith('{')) {
+        return bankData;
+      }
+      
+      // If it's JSON or a JSON string, parse and format it
+      try {
+        const parsed = typeof bankData === 'string' ? JSON.parse(bankData) : bankData;
+        if (parsed && typeof parsed === 'object') {
+          const lines = [];
+          if (parsed.bankName) lines.push(`Bank Name: ${parsed.bankName}`);
+          if (parsed.accountName) lines.push(`Account Name: ${parsed.accountName}`);
+          if (parsed.sortCode) lines.push(`Sort Code: ${parsed.sortCode}`);
+          if (parsed.accountNumber) lines.push(`Account Number: ${parsed.accountNumber}`);
+          return lines.join('\n');
+        }
+      } catch (error) {
+        console.error('Error parsing bank details:', error);
+      }
+      
+      return bankData || "";
+    })(),
     // Instrument settings
     primaryInstrument: data.primary_instrument || data.primaryInstrument || "",
     secondaryInstruments: (() => {
@@ -642,7 +667,32 @@ export default function Settings() {
         emailSignature: settings.emailSignature || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
-        bankDetails: settings.bankDetails || "",
+        bankDetails: (() => {
+          const bankData = settings.bankDetails;
+          if (!bankData) return "";
+          
+          // If it's already a formatted string, return as-is
+          if (typeof bankData === 'string' && !bankData.startsWith('{')) {
+            return bankData;
+          }
+          
+          // If it's JSON or a JSON string, parse and format it
+          try {
+            const parsed = typeof bankData === 'string' ? JSON.parse(bankData) : bankData;
+            if (parsed && typeof parsed === 'object') {
+              const lines = [];
+              if (parsed.bankName) lines.push(`Bank Name: ${parsed.bankName}`);
+              if (parsed.accountName) lines.push(`Account Name: ${parsed.accountName}`);
+              if (parsed.sortCode) lines.push(`Sort Code: ${parsed.sortCode}`);
+              if (parsed.accountNumber) lines.push(`Account Number: ${parsed.accountNumber}`);
+              return lines.join('\n');
+            }
+          } catch (error) {
+            console.error('Error parsing bank details:', error);
+          }
+          
+          return bankData || "";
+        })(),
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
         baseHourlyRate: settings.baseHourlyRate || 130,

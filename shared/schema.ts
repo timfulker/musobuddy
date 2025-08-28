@@ -30,6 +30,9 @@ export const users = pgTable("users", {
   trialEndsAt: timestamp("trial_ends_at").default(null), // 30 days regular, 1 year beta
   hasPaid: boolean("has_paid").default(false),           // Successfully paid via Stripe
   
+  // Onboarding tracking
+  onboardingCompleted: boolean("onboarding_completed").default(false), // Setup wizard completion status
+  
   // Notes
   accountNotes: text("account_notes").default(null),     // Admin notes about account
   
