@@ -190,7 +190,9 @@ export function isPublicRoute(path: string): boolean {
     /^\/view-contract\/[^\/]+$/,
     /^\/view-invoice\/[^\/]+$/,
     /^\/widget\/[^\/]+$/,
-    /^\/invoice\/[^\/]+$/
+    /^\/invoice\/[^\/]+$/,
+    /^\/api\/portal\/[^\/]+/, // Client portal routes (with token authentication)
+    /^\/booking\/[^\/]+\/collaborate/ // Booking collaboration routes
   ];
   
   return publicPatterns.some(pattern => pattern.test(path));
