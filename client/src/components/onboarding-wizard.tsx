@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,12 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch existing user settings to pre-populate form
+  const { data: userSettings } = useQuery({
+    queryKey: ['/api/settings'],
+    enabled: !!user,
+  });
+
   const [formData, setFormData] = useState({
     // Business Address
     addressLine1: '',
@@ -77,6 +83,30 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
     widgetToken: '',
     qrCodeGenerated: false
   });
+
+  // Pre-populate form data when user settings are loaded
+  useEffect(() => {
+    if (userSettings) {
+      setFormData(prev => ({
+        ...prev,
+        // Business Address
+        addressLine1: userSettings.addressLine1 || '',
+        addressLine2: userSettings.addressLine2 || '',
+        city: userSettings.city || '',
+        postcode: userSettings.postcode || '',
+        
+        // Email Setup
+        businessEmail: userSettings.businessEmail || user?.email || '',
+        emailPrefix: userSettings.emailPrefix || '',
+        
+        // Bank Details - parse JSON if exists
+        bankName: userSettings.bankDetails?.bankName || '',
+        accountName: userSettings.bankDetails?.accountName || '',
+        accountNumber: userSettings.bankDetails?.accountNumber || '',
+        sortCode: userSettings.bankDetails?.sortCode || '',
+      }));
+    }
+  }, [userSettings, user?.email]);
 
   const updateFormData = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
