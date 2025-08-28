@@ -94,10 +94,10 @@ class ClientPortalService {
       }
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://musobuddy.replit.app'
-        : 'http://localhost:5173';
+        : `https://${process.env.REPL_SLUG || 'musobuddy'}.${process.env.REPL_OWNER || 'timfulkermusic'}.replit.dev`;
       
-      // Generate the correct booking collaboration URL
-      const portalUrl = `${baseUrl}/booking/${bookingId}/collaborate?token=${token}`;
+      // Generate the correct client portal URL (standalone - no dashboard sidebar)
+      const portalUrl = `${baseUrl}/api/portal/${contractId}?token=${token}`;
 
       // Generate QR code for the collaboration URL
       const qrCodeDataUrl = await QRCode.toDataURL(portalUrl, {
@@ -119,16 +119,14 @@ class ClientPortalService {
     } catch (error) {
       console.error('❌ Error setting up client portal:', error);
       
-      // Fallback: Try to use contract's booking ID if available
+      // Fallback: Generate portal URL for the contract
       const token = this.generatePortalToken();
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://musobuddy.replit.app'
-        : 'http://localhost:5173';
+        : `https://${process.env.REPL_SLUG || 'musobuddy'}.${process.env.REPL_OWNER || 'timfulkermusic'}.repl.dev`;
       
-      // Try to at least generate a collaboration URL even if setup failed
-      // This assumes the contract has an associated booking
-      const fallbackBookingId = (error as any)?.bookingId || contractId;
-      const fallbackUrl = `${baseUrl}/booking/${fallbackBookingId}/collaborate?token=${token}`;
+      // Generate fallback portal URL (standalone - no dashboard sidebar)
+      const fallbackUrl = `${baseUrl}/api/portal/${contractId}?token=${token}`;
       
       console.warn(`⚠️ [CLIENT-PORTAL] Using fallback URL for contract ${contractId}: ${fallbackUrl}`);
       
