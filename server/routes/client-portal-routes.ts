@@ -57,9 +57,9 @@ export function registerClientPortalRoutes(app: Express) {
             sharedNotes: booking.shared_notes,
             referenceTracks: booking.reference_tracks,
             photoPermission: booking.photo_permission,
-            encoreAllowed: booking.encore_allowed,
-            encoreSuggestions: booking.encore_suggestions,
-            updatedAt: booking.updated_at
+            encoreAllowed: booking.encoreAllowed,
+            encoreSuggestions: booking.encoreSuggestions,
+            updatedAt: booking.updatedAt
           };
         }
       }
@@ -135,9 +135,9 @@ export function registerClientPortalRoutes(app: Express) {
           shared_notes: updates.sharedNotes,
           reference_tracks: updates.referenceTracks,
           photo_permission: updates.photoPermission,
-          encore_allowed: updates.encoreAllowed,
-          encore_suggestions: updates.encoreSuggestions,
-          updated_at: new Date()
+          encoreAllowed: updates.encoreAllowed,
+          encoreSuggestions: updates.encoreSuggestions,
+          updatedAt: new Date()
         };
 
         // Remove undefined values but keep empty strings and false values

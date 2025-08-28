@@ -79,8 +79,8 @@ export function getUserStatus(user: User | null | undefined) {
     return { 
       type: isBetaTester ? 'beta_trial' : 'trial',
       message: `${daysLeft} days left in ${isBetaTester ? 'beta access' : 'trial'}`,
-      days_remaining: daysLeft,
-      trial_ends_at: trialEnd
+      daysRemaining: daysLeft,
+      trialEndsAt: trialEnd
     };
   }
   

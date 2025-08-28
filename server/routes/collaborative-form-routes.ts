@@ -183,9 +183,9 @@ export function setupCollaborativeFormRoutes(app: Express) {
         shared_notes: updateData.sharedNotes,
         reference_tracks: updateData.referenceTracks,
         photo_permission: updateData.photoPermission,
-        encore_allowed: updateData.encoreAllowed,
-        encore_suggestions: updateData.encoreSuggestions,
-        updated_at: new Date()
+        encoreAllowed: updateData.encoreAllowed,
+        encoreSuggestions: updateData.encoreSuggestions,
+        updatedAt: new Date()
       };
 
       // Remove undefined values but keep empty strings and false values
@@ -205,7 +205,7 @@ export function setupCollaborativeFormRoutes(app: Express) {
         console.log(`⚠️ [COLLABORATIVE-FORM] No fields to update, only updating timestamp`);
         // At least update the timestamp
         await db.update(bookings)
-          .set({ updated_at: new Date() })
+          .set({ updatedAt: new Date() })
           .where(eq(bookings.id, targetBookingId));
         
         console.log(`✅ [COLLABORATIVE-FORM] Updated timestamp for booking ${targetBookingId}`);
