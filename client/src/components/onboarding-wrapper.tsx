@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { isPublicRoute } from "@/lib/access-control";
 import OnboardingWizard from "./onboarding-wizard";
 
 interface OnboardingWrapperProps {
@@ -17,7 +18,7 @@ interface OnboardingStatus {
 export default function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { isAuthenticated, user } = useAuth();
   const [wizardDismissed, setWizardDismissed] = useState(false);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Check if we're in the middle of a signup flow
   const isSignupInProgress = localStorage.getItem('signup-in-progress') === 'true';
@@ -41,10 +42,12 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // 1. User hasn't completed onboarding
   // 2. User hasn't dismissed the wizard
   // 3. Not in the middle of signup flow (prevents interference with payment redirect)
+  // 4. Not on a public route (prevents wizard showing on landing page, etc.)
   const shouldShowWizard = onboardingStatus && 
     !onboardingStatus.onboardingCompleted && 
     !wizardDismissed &&
-    !isSignupInProgress;
+    !isSignupInProgress &&
+    !isPublicRoute(location);
 
   if (shouldShowWizard) {
     return (
