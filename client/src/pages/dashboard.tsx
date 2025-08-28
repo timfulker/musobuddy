@@ -26,7 +26,7 @@ export default function Dashboard() {
   const { isDesktop } = useResponsive();
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, refreshUserData } = useAuth();
   
   // Prevent infinite loops in preview by detecting preview environment
   const isPreview = window.location.hostname.includes('replit.dev') && 

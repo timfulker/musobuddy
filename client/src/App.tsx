@@ -65,7 +65,16 @@ function Router() {
     const isPreview = window.location.hostname.includes('replit.dev');
     if (isPreview) return;
     
-    if (isLoading || !user) return; // Skip navigation logic while loading or user not available
+    if (isLoading) return; // Skip navigation logic while loading
+    
+    // Handle logout - redirect to login if not authenticated and not on public pages
+    if (!isAuthenticated && !isPublicRoute(location)) {
+      console.log('🔀 Redirecting to login - user not authenticated');
+      setLocation('/login');
+      return;
+    }
+    
+    if (!user) return; // Skip further logic if no user data available
     
     const currentPath = location;
     const hasStripeSession = window.location.search.includes('stripe_session');

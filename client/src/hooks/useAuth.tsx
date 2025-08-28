@@ -92,7 +92,8 @@ export function useAuth() {
               tier: databaseUser.tier,
               plan: databaseUser.plan,
               createdViaStripe: databaseUser.createdViaStripe,
-              hasCompletedPayment: databaseUser.hasCompletedPayment
+              hasCompletedPayment: databaseUser.hasCompletedPayment,
+              fullData: databaseUser  // Log full data to debug
             });
             
             // Merge Firebase user with database user data
@@ -208,11 +209,45 @@ export function useAuth() {
     }
   };
 
+  const refreshUserData = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const token = await currentUser.getIdToken(true); // Force refresh token
+        const response = await fetch('/api/auth/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const databaseUser = await response.json();
+          console.log('🔄 User data refreshed:', databaseUser);
+          
+          const mergedUser = {
+            ...currentUser,
+            ...databaseUser
+          };
+          
+          setAuthState({
+            user: mergedUser,
+            isLoading: false,
+            isAuthenticated: true,
+            error: null
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh user data:', error);
+    }
+  };
+
   return {
     ...authState,
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
-    logout
+    logout,
+    refreshUserData
   };
 }
