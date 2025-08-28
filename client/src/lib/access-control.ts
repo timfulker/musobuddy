@@ -158,3 +158,40 @@ export function isProtectedRoute(path: string): boolean {
   
   return protectedRoutes.some(route => path.startsWith(route));
 }
+
+/**
+ * Check if a route is public and accessible without authentication
+ * @param path - Route path to check
+ * @returns boolean - true if route is publicly accessible
+ */
+export function isPublicRoute(path: string): boolean {
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/signup',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/start-trial',
+    '/terms-and-conditions',
+    '/trial-success',
+    '/success',
+    '/logout',
+    '/subscription/update-payment'
+  ];
+  
+  // Check for exact matches first
+  if (publicRoutes.includes(path)) {
+    return true;
+  }
+  
+  // Check for patterns that should be public
+  const publicPatterns = [
+    /^\/sign-contract\/[^\/]+$/,
+    /^\/view-contract\/[^\/]+$/,
+    /^\/view-invoice\/[^\/]+$/,
+    /^\/widget\/[^\/]+$/,
+    /^\/invoice\/[^\/]+$/
+  ];
+  
+  return publicPatterns.some(pattern => pattern.test(path));
+}

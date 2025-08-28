@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeProvider as AppThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAccess, isProtectedRoute, getPaymentRedirectUrl } from "@/lib/access-control";
+import { hasAccess, isProtectedRoute, isPublicRoute, getPaymentRedirectUrl } from "@/lib/access-control";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";
 import NotFound from "@/pages/not-found";
