@@ -67,13 +67,25 @@ function Router() {
     
     if (isLoading) return; // Skip navigation logic while loading
     
-    // Handle logout - redirect to login if not authenticated and not on public pages
-    if (!isAuthenticated && !isPublicRoute(location)) {
-      console.log('🔀 Redirecting to login - user not authenticated');
-      setLocation('/login');
+    // PRIORITY: Handle unauthenticated users immediately
+    if (!isAuthenticated) {
+      // If on a protected route, redirect to login immediately
+      if (isProtectedRoute(location)) {
+        console.log('🔀 Redirecting unauthenticated user from protected route to login');
+        setLocation('/login');
+        return;
+      }
+      // If on a non-public route that's not protected, also redirect to login
+      if (!isPublicRoute(location)) {
+        console.log('🔀 Redirecting unauthenticated user to login');
+        setLocation('/login');
+        return;
+      }
+      // User is unauthenticated but on a public route - allow them to stay
       return;
     }
     
+    // From here on, user is authenticated, so we need user data
     if (!user) return; // Skip further logic if no user data available
     
     const currentPath = location;
@@ -106,12 +118,7 @@ function Router() {
       return;
     }
 
-    // Redirect unauthenticated users from protected routes to login
-    if (!isAuthenticated && isProtected) {
-      console.log('🔒 Redirecting unauthenticated user to login');
-      setLocation('/login');
-      return;
-    }
+    // This check is now handled earlier in the useEffect
   }, [isAuthenticated, isLoading, user, location]);
 
   // Show loading state while checking authentication
