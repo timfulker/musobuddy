@@ -42,8 +42,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { user, logout } = useAuth();
-  const [location] = useLocation();
+  const { user } = useAuth();
+  const [location, navigate] = useLocation();
   const { isDesktop } = useResponsive();
   const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
   const [settingsExpanded, setSettingsExpanded] = useState(false);
@@ -54,7 +54,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const isSettingsActive = settingsPages.some(page => location === page);
   
   const handleLogout = () => {
-    logout();
+    // Navigate to logout page for proper cleanup and redirect
+    navigate('/logout');
   };
 
   // Auto-expand settings if on a settings page

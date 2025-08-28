@@ -9,7 +9,8 @@ export default function LogoutPage() {
   useEffect(() => {
     const performLogout = async () => {
       await logout();
-      setLocation('/');
+      // Redirect directly to login page after logout
+      setLocation('/login');
     };
     
     performLogout();
