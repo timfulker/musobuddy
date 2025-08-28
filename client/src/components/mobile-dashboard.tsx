@@ -15,12 +15,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { format, isToday, isTomorrow, addDays } from 'date-fns';
 
 export default function MobileDashboard() {
-  const isMobile = useIsMobile();
-
   const { data: bookings } = useQuery({
     queryKey: ['/api/bookings'],
     select: (data: any[]) => data || []
@@ -68,11 +65,8 @@ export default function MobileDashboard() {
     }
   };
 
-  if (!isMobile) {
-    // Redirect to regular dashboard on desktop
-    window.location.href = '/dashboard';
-    return null;
-  }
+  // Note: Mobile detection is handled by parent dashboard component
+  // No need for redirect logic here
 
   return (
     <div className="space-y-6">
