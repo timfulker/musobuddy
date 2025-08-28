@@ -140,26 +140,26 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        firstName: user.first_name || user.firstName,
-        lastName: user.last_name || user.lastName,
-        emailPrefix: user.email_prefix || null,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailPrefix: user.emailPrefix || null,
         
         // User Type (new simplified fields)
-        isAdmin: user.is_admin || false,
-        isAssigned: user.is_assigned || false,
-        isBetaTester: user.is_beta_tester || false,
+        isAdmin: user.isAdmin || false,
+        isAssigned: user.isAssigned || false,
+        isBetaTester: user.isBetaTester || false,
         
         // Access Control (new simplified fields)
-        hasPaid: user.has_paid || false,
-        trialEndsAt: user.trial_ends_at || null,
-        accountNotes: user.account_notes || null,
+        hasPaid: user.hasPaid || false,
+        trialEndsAt: user.trialEndsAt || null,
+        accountNotes: user.accountNotes || null,
         
         // Stripe Integration (keep for payment processing)
-        stripeCustomerId: user.stripe_customer_id || null,
-        stripeSubscriptionId: user.stripe_subscription_id || null,
+        stripeCustomerId: user.stripeCustomerId || null,
+        stripeSubscriptionId: user.stripeSubscriptionId || null,
         
         // No legacy fields - clean response only
-        hasCompletedPayment: user.has_paid || false
+        hasCompletedPayment: user.hasPaid || false
       });
 
     } catch (error) {
@@ -184,26 +184,26 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        firstName: user.first_name || user.firstName,
-        lastName: user.last_name || user.lastName,
-        emailPrefix: user.email_prefix || null,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailPrefix: user.emailPrefix || null,
         
         // User Type (new simplified fields)
-        isAdmin: user.is_admin || false,
-        isAssigned: user.is_assigned || false,
-        isBetaTester: user.is_beta_tester || false,
+        isAdmin: user.isAdmin || false,
+        isAssigned: user.isAssigned || false,
+        isBetaTester: user.isBetaTester || false,
         
         // Access Control (new simplified fields)
-        hasPaid: user.has_paid || false,
-        trialEndsAt: user.trial_ends_at || null,
-        accountNotes: user.account_notes || null,
+        hasPaid: user.hasPaid || false,
+        trialEndsAt: user.trialEndsAt || null,
+        accountNotes: user.accountNotes || null,
         
         // Stripe Integration (keep for payment processing)
-        stripeCustomerId: user.stripe_customer_id || null,
-        stripeSubscriptionId: user.stripe_subscription_id || null,
+        stripeCustomerId: user.stripeCustomerId || null,
+        stripeSubscriptionId: user.stripeSubscriptionId || null,
         
         // No legacy fields - clean response only
-        hasCompletedPayment: user.has_paid || false
+        hasCompletedPayment: user.hasPaid || false
       });
 
     } catch (error) {
