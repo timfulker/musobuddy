@@ -391,7 +391,7 @@ export default function OnboardingWizard({ isOpen, onComplete, onDismiss, user }
                 variant="ghost" 
                 size="sm" 
                 onClick={onDismiss}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 mr-8"
               >
                 Skip Setup
               </Button>
