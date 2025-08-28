@@ -6,15 +6,10 @@
 interface User {
   uid?: string;
   email?: string;
-  is_admin?: boolean;
   isAdmin?: boolean;
-  is_assigned?: boolean;
   isAssigned?: boolean;
-  is_beta_tester?: boolean;
   isBetaTester?: boolean;
-  trial_ends_at?: Date | string | null;
   trialEndsAt?: Date | string | null;
-  has_paid?: boolean;
   hasPaid?: boolean;
 }
 
@@ -26,11 +21,11 @@ interface User {
 export function hasAccess(user: User | null | undefined): boolean {
   if (!user) return false;
   
-  // Handle both snake_case and camelCase field names
-  const isAdmin = user.is_admin || user.isAdmin;
-  const isAssigned = user.is_assigned || user.isAssigned;
-  const trialEndsAt = user.trial_ends_at || user.trialEndsAt;
-  const hasPaid = user.has_paid || user.hasPaid;
+  // Use camelCase field names from database
+  const isAdmin = user.isAdmin;
+  const isAssigned = user.isAssigned;
+  const trialEndsAt = user.trialEndsAt;
+  const hasPaid = user.hasPaid;
   
   // Admins always have access
   if (isAdmin) return true;
@@ -58,12 +53,12 @@ export function hasAccess(user: User | null | undefined): boolean {
 export function getUserStatus(user: User | null | undefined) {
   if (!user) return { type: 'unauthenticated', message: 'Not logged in' };
   
-  // Handle both snake_case and camelCase field names
-  const isAdmin = user.is_admin || user.isAdmin;
-  const isAssigned = user.is_assigned || user.isAssigned;
-  const isBetaTester = user.is_beta_tester || user.isBetaTester;
-  const trialEndsAt = user.trial_ends_at || user.trialEndsAt;
-  const hasPaid = user.has_paid || user.hasPaid;
+  // Use camelCase field names from database
+  const isAdmin = user.isAdmin;
+  const isAssigned = user.isAssigned;
+  const isBetaTester = user.isBetaTester;
+  const trialEndsAt = user.trialEndsAt;
+  const hasPaid = user.hasPaid;
   
   // Check user type
   if (isAdmin) return { type: 'admin', message: 'Admin Account' };
