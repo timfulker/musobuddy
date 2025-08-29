@@ -535,6 +535,19 @@ export function registerContractRoutes(app: Express) {
         console.error(`⚠️ Failed to track contract email in conversation (non-critical):`, trackingError.message);
         // Continue - email sending was successful even if tracking failed
       }
+
+      // 🎯 NEW: Auto-advance workflow stage when contract is sent
+      if (contract.enquiryId) {
+        try {
+          await storage.updateBooking(contract.enquiryId, {
+            contractSent: true,
+            workflowStage: 'contract'
+          }, req.user.id);
+          console.log(`🚀 Advanced booking ${contract.enquiryId} to 'contract' workflow stage`);
+        } catch (stageError: any) {
+          console.error(`⚠️ Failed to advance workflow stage (non-critical):`, stageError.message);
+        }
+      }
       
       res.json({ success: true, message: 'Contract sent successfully' });
       
@@ -814,6 +827,19 @@ export function registerContractRoutes(app: Express) {
       } catch (emailError: any) {
         console.error(`⚠️ [CONTRACT-SIGN] Email send failed (non-critical):`, emailError.message);
         // Continue - signing is still successful even if email fails
+      }
+
+      // 🎯 NEW: Auto-advance workflow stage when contract is signed
+      if (updateResult.enquiryId) {
+        try {
+          await storage.updateBooking(updateResult.enquiryId, {
+            contractSigned: true,
+            workflowStage: 'confirmed'
+          }, contract.userId);
+          console.log(`🚀 Advanced booking ${updateResult.enquiryId} to 'confirmed' workflow stage`);
+        } catch (stageError: any) {
+          console.error(`⚠️ Failed to advance workflow stage (non-critical):`, stageError.message);
+        }
       }
 
       const duration = Date.now() - startTime;

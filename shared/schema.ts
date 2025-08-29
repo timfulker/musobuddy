@@ -393,6 +393,7 @@ export const bookings = pgTable("bookings", {
   whatsIncluded: text("whats_included"), // What's included in the service
   status: varchar("status").notNull().default("new"), // New 6-stage workflow: new, awaiting_response, client_confirms, contract_sent, confirmed, cancelled, completed
   previousStatus: varchar("previous_status"), // Track status before auto-completion to completed
+  workflowStage: varchar("workflow_stage").notNull().default("initial"), // Workflow progression: initial, negotiating, contract, confirmed, performed, complete
   notes: text("notes"),
   originalEmailContent: text("original_email_content"), // Store original email content
   applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails

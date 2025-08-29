@@ -35,11 +35,13 @@ import BookingDocumentsManager from "@/components/booking-documents-manager";
 import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
+import WorkflowStageMeter from "@/components/workflow-stage-meter";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Enquiry } from "@shared/schema";
 import { validateBookingArray, safeGet, safeGetString } from "@shared/validation";
+import { WORKFLOW_STAGES, getStageDefinition, getStageProgress, getStageColor, determineCurrentStage, type WorkflowStage } from "../../../shared/workflow-stages";
 
 type ViewMode = 'list' | 'calendar';
 type CalendarView = 'day' | 'week' | 'month' | 'year';
@@ -1870,6 +1872,11 @@ export default function UnifiedBookings() {
                                                     ⚠️ Conflict
                                                   </Badge>
                                                 )}
+                                                {/* Workflow stage meter - sound desk style */}
+                                                <WorkflowStageMeter 
+                                                  booking={groupBooking} 
+                                                  className="ml-auto" 
+                                                />
                                               </div>
                                               <div className="text-sm text-gray-600 space-y-1">
                                                 <div className="flex items-center gap-4">
