@@ -491,6 +491,14 @@ PROFESSIONAL DETAILS TO INCLUDE:
 - Repertoire and customization options
 - Include travel expenses in total quote when applicable
 
+CRITICAL CONTRACT MESSAGING RULES:
+- NEVER say contracts or forms are "attached to this message" or "sent as an attachment"
+- NEVER use phrases like "please find attached" or "attached herewith"
+- Contracts are always sent separately via secure links, not as email attachments
+- Say "I will send you the booking agreement separately" or "the contract will be sent via secure link"
+- Do NOT claim any documents are included with or attached to the current email message
+- Booking agreements are always delivered through separate, secure channels
+
 IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
   }
 
