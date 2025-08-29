@@ -1871,11 +1871,6 @@ export default function UnifiedBookings() {
                                                     ⚠️ Conflict
                                                   </Badge>
                                                 )}
-                                                {/* Workflow stage meter - sound desk style */}
-                                                <WorkflowStageMeter 
-                                                  booking={groupBooking} 
-                                                  className="ml-auto" 
-                                                />
                                               </div>
                                               <div className="text-sm text-gray-600 space-y-1">
                                                 <div className="flex items-center gap-4">
