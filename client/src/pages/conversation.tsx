@@ -66,6 +66,10 @@ export default function Conversation() {
   const [fieldModes, setFieldModes] = useState<Record<string, 'replace' | 'append'>>({});
   // AI token usage state removed - unlimited AI usage for all users
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Get action from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const action = urlParams.get('action');
 
 
 
@@ -128,6 +132,18 @@ export default function Conversation() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Handle action parameter from URL
+  useEffect(() => {
+    if (action === 'thankyou') {
+      // Show templates and potentially add a helpful context
+      setShowTemplates(true);
+      setContextInput('Thank you message after contract signing');
+    } else if (action === 'respond') {
+      // Could auto-show templates for quick responses
+      setShowTemplates(true);
+    }
+  }, [action]);
 
   // Send reply mutation
   const sendReplyMutation = useMutation({
@@ -803,6 +819,18 @@ export default function Conversation() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Dynamic header based on action */}
+            {action === 'thankyou' && (
+              <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="text-sm font-medium text-green-800">
+                  Sending Thank You Message
+                </div>
+                <div className="text-xs text-green-600 mt-1">
+                  Send a thank you message after contract signing. Select a template or generate with AI.
+                </div>
+              </div>
+            )}
+            
             <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded">
               💡 AI uses the last 4 messages for context. Use "Add Context" button for extra information.
             </div>
