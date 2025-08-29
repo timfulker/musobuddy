@@ -72,7 +72,7 @@ export default function FeedbackPage() {
     title: "",
     description: "",
     priority: "medium",
-    page: window.location.pathname,
+    page: typeof window !== 'undefined' ? window.location.pathname : '',
   });
 
   // Fetch feedback
@@ -108,7 +108,7 @@ export default function FeedbackPage() {
         title: "",
         description: "",
         priority: "medium",
-        page: window.location.pathname,
+        page: typeof window !== 'undefined' ? window.location.pathname : '',
       });
     },
     onError: (error: Error) => {
