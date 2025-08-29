@@ -103,7 +103,15 @@ export const authenticateWithFirebase = async (
     }
     
     // SECURITY: Check email verification for non-privileged users
-    if (!user.isAdmin && !user.isAssigned && !firebaseUser.emailVerified) {
+    // Allow bypass for test accounts (emails containing +test, +dev, +staging)
+    const isTestAccount = user.email && (
+      user.email.includes('+test') ||
+      user.email.includes('+dev') ||
+      user.email.includes('+staging') ||
+      user.email.includes('+demo')
+    );
+    
+    if (!user.isAdmin && !user.isAssigned && !isTestAccount && !firebaseUser.emailVerified) {
       const duration = Date.now() - startTime;
       console.log(`🔒 [FIREBASE-AUTH] Email verification required for user ${user.id} (${user.email})`);
       
@@ -113,6 +121,10 @@ export const authenticateWithFirebase = async (
         requiresVerification: true,
         email: user.email
       });
+    }
+    
+    if (isTestAccount && AUTH_DEBUG) {
+      console.log(`🧪 [FIREBASE-AUTH] Test account bypass for ${user.email}`);
     }
     
     // Check if account is locked
