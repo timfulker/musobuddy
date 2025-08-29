@@ -1841,6 +1841,8 @@ export default function UnifiedBookings() {
                                                 <Badge className={getStatusColor(groupBooking.status)}>
                                                   {groupBooking.status?.replace('_', ' ') || 'New'}
                                                 </Badge>
+                                                {/* Workflow Stage Meter */}
+                                                <WorkflowStageMeter booking={groupBooking} />
                                                 {/* Document indicator - includes both new and legacy documents */}
                                                 <BookingDocumentIndicator 
                                                   bookingId={groupBooking.id}
@@ -2135,6 +2137,8 @@ export default function UnifiedBookings() {
                                   <Badge className={getStatusColor(booking.status)}>
                                     {booking.status?.replace('_', ' ') || 'New'}
                                   </Badge>
+                                  {/* Workflow Stage Meter */}
+                                  <WorkflowStageMeter booking={booking} />
                                   {/* Document indicator - includes both new and legacy documents */}
                                   <BookingDocumentIndicator 
                                     bookingId={booking.id}
