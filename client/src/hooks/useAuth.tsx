@@ -218,6 +218,11 @@ export function useAuth() {
     try {
       const currentUser = auth.currentUser;
       if (currentUser) {
+        // CRITICAL: First reload the Firebase user to get updated email verification status
+        await currentUser.reload();
+        console.log('🔄 Firebase user reloaded, emailVerified:', currentUser.emailVerified);
+        
+        // Then get a fresh token with the updated claims
         const token = await currentUser.getIdToken(true); // Force refresh token
         const response = await fetch('/api/auth/user', {
           headers: {
@@ -236,6 +241,15 @@ export function useAuth() {
           
           setAuthState({
             user: mergedUser,
+            isLoading: false,
+            isAuthenticated: true,
+            error: null
+          });
+        } else {
+          console.log('⚠️ Failed to fetch database user, using Firebase user only');
+          // If database call fails but Firebase user is valid, use Firebase data
+          setAuthState({
+            user: currentUser,
             isLoading: false,
             isAuthenticated: true,
             error: null
