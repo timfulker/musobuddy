@@ -64,13 +64,19 @@ export default function WorkflowStageOverride({ booking, onStageUpdate }: Workfl
           variant="ghost" 
           size="sm" 
           className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
         >
           <Settings className="w-3 h-3 mr-1" />
           Override
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent 
+        className="sm:max-w-md"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Override Workflow Stage</DialogTitle>
           <DialogDescription>
