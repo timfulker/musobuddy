@@ -484,16 +484,25 @@ export function registerInvoiceRoutes(app: Express) {
         if (emailResult.success) {
           console.log(`✅ Invoice email sent successfully for invoice ${invoiceId}`);
           
-          // 🎯 NEW: Track invoice email in conversation history
+          // 🎯 Track invoice email in conversation history
           try {
             // Import database components
             const { db } = await import('../core/db');
             const { clientCommunications } = await import('../../shared/schema');
             
+            console.log(`📧 Attempting to track invoice email for booking ${invoice.enquiryId}`);
+            console.log(`📧 Invoice details:`, {
+              userId: userId,
+              bookingId: invoice.enquiryId,
+              clientName: invoice.clientName,
+              clientEmail: invoice.clientEmail,
+              invoiceNumber: invoice.invoiceNumber
+            });
+            
             // Create conversation record for tracking
             const [communication] = await db.insert(clientCommunications).values({
               userId: userId,
-              bookingId: invoice.enquiryId || null, // Link to booking if available
+              bookingId: invoice.enquiryId || null,
               clientName: invoice.clientName,
               clientEmail: invoice.clientEmail,
               communicationType: 'email',
@@ -511,9 +520,15 @@ export function registerInvoiceRoutes(app: Express) {
               notes: 'Invoice email sent via MusoBuddy system'
             }).returning();
             
-            console.log(`📧 Invoice email tracked in conversation for booking ${invoice.enquiryId}`);
+            console.log(`✅ Invoice email tracked successfully! Communication ID: ${communication.id} for booking ${invoice.enquiryId}`);
           } catch (trackingError: any) {
-            console.error(`⚠️ Failed to track invoice email in conversation (non-critical):`, trackingError.message);
+            console.error(`❌ CRITICAL: Failed to track invoice email in conversation:`, {
+              error: trackingError.message,
+              stack: trackingError.stack,
+              invoiceId: invoice.id,
+              enquiryId: invoice.enquiryId,
+              userId: userId
+            });
             // Continue - email sending was successful even if tracking failed
           }
           
