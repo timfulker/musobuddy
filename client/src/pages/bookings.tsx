@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign, Mail, CreditCard } from "lucide-react";
 import { useLocation, Link, useRoute } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -195,6 +195,36 @@ export default function UnifiedBookings() {
   
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
+
+  // Invoice status helpers
+  const getInvoiceForBooking = (bookingId: number) => {
+    return invoices.find((invoice: any) => invoice.bookingId === bookingId);
+  };
+
+  const getInvoiceStatusIcons = (bookingId: number) => {
+    const invoice = getInvoiceForBooking(bookingId);
+    
+    if (!invoice) {
+      return {
+        sentIcon: <Mail className="w-4 h-4 text-red-500" title="Invoice not sent" />,
+        paidIcon: null
+      };
+    }
+
+    const isSent = invoice.status === 'sent' || invoice.status === 'paid';
+    const isPaid = invoice.status === 'paid';
+
+    return {
+      sentIcon: isSent 
+        ? <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />
+        : <Mail className="w-4 h-4 text-red-500" title="Invoice not sent" />,
+      paidIcon: isSent 
+        ? isPaid 
+          ? <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />
+          : <CreditCard className="w-4 h-4 text-red-500" title="Invoice not paid" />
+        : null
+    };
+  };
 
   // Fetch data for both views
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
@@ -1904,6 +1934,16 @@ export default function UnifiedBookings() {
                                                       })()}
                                                     </span>
                                                   )}
+                                                  {/* Invoice Status Icons */}
+                                                  {(() => {
+                                                    const { sentIcon, paidIcon } = getInvoiceStatusIcons(groupBooking.id);
+                                                    return (
+                                                      <span className="flex items-center gap-1">
+                                                        {sentIcon}
+                                                        {paidIcon}
+                                                      </span>
+                                                    );
+                                                  })()}
                                                   {groupBooking.applyNowLink && (
                                                     <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
                                                       🎵 ENCORE
