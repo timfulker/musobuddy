@@ -503,6 +503,35 @@ export function registerContractRoutes(app: Express) {
       // Send email with the signing page URL, not the PDF URL
       await emailService.sendContractEmail(contract, userSettings, subject, signingPageResult.url || '', customMessage);
       
+      // 🎯 NEW: Track contract email in conversation history
+      try {
+        const communicationData = {
+          userId: req.user.id,
+          bookingId: contract.enquiryId || null, // Link to booking if available
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail,
+          communicationType: 'email' as const,
+          direction: 'outbound' as const,
+          templateName: 'Contract Email',
+          templateCategory: 'contract',
+          subject: subject,
+          messageBody: `Contract ready for signing - ${contract.contractNumber}\n\nSigning URL: ${signingPageResult.url}\n\n${customMessage ? `Custom message: ${customMessage}` : ''}`,
+          attachments: JSON.stringify([{
+            name: `Contract_${contract.contractNumber}.pdf`,
+            url: contract.cloudStorageUrl || signingPageResult.url,
+            type: 'contract_pdf'
+          }]),
+          deliveryStatus: 'sent' as const,
+          notes: 'Contract email sent via MusoBuddy system'
+        };
+        
+        await storage.createCommunication(communicationData);
+        console.log(`📧 Contract email tracked in conversation for booking ${contract.enquiryId}`);
+      } catch (trackingError: any) {
+        console.error(`⚠️ Failed to track contract email in conversation (non-critical):`, trackingError.message);
+        // Continue - email sending was successful even if tracking failed
+      }
+      
       res.json({ success: true, message: 'Contract sent successfully' });
       
     } catch (error) {
