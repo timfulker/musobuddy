@@ -1,10 +1,11 @@
 import { format } from 'date-fns';
-import { Calendar, MapPin, Clock, DollarSign, User, Phone, Mail, MessageSquare } from 'lucide-react';
+import { Calendar, MapPin, Clock, DollarSign, User, Phone, Mail, MessageSquare, CreditCard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import ConflictIndicator from '@/components/ConflictIndicator';
+import { useQuery } from '@tanstack/react-query';
 
 interface MobileBookingCardProps {
   booking: any;
@@ -12,6 +13,31 @@ interface MobileBookingCardProps {
 }
 
 export default function MobileBookingCard({ booking, conflicts = [] }: MobileBookingCardProps) {
+  // Fetch invoices data to show invoice status
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["/api/invoices"],
+    retry: 2,
+  });
+
+  // Invoice status helper
+  const getInvoiceStatusIcon = (bookingId: number) => {
+    const invoice = invoices.find((inv: any) => inv.bookingId === bookingId);
+    
+    if (!invoice || invoice.status === 'draft') {
+      return null; // Don't show icon if no invoice or still draft
+    }
+
+    if (invoice.status === 'paid') {
+      return <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />;
+    }
+
+    if (invoice.status === 'sent' || invoice.status === 'overdue') {
+      return <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />;
+    }
+
+    return null;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -88,9 +114,13 @@ export default function MobileBookingCard({ booking, conflicts = [] }: MobileBoo
           )}
 
           {booking.fee && (
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-              <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
-              <span>£{booking.fee}</span>
+            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center">
+                <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span>£{booking.fee}</span>
+              </div>
+              {/* Invoice Status Icon */}
+              {getInvoiceStatusIcon(booking.id)}
             </div>
           )}
         </div>

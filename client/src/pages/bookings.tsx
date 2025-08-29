@@ -201,29 +201,22 @@ export default function UnifiedBookings() {
     return invoices.find((invoice: any) => invoice.bookingId === bookingId);
   };
 
-  const getInvoiceStatusIcons = (bookingId: number) => {
+  const getInvoiceStatusIcon = (bookingId: number) => {
     const invoice = getInvoiceForBooking(bookingId);
     
-    if (!invoice) {
-      return {
-        sentIcon: <Mail className="w-4 h-4 text-red-500" title="Invoice not sent" />,
-        paidIcon: null
-      };
+    if (!invoice || invoice.status === 'draft') {
+      return null; // Don't show icon if no invoice or still draft
     }
 
-    const isSent = invoice.status === 'sent' || invoice.status === 'paid';
-    const isPaid = invoice.status === 'paid';
+    if (invoice.status === 'paid') {
+      return <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />;
+    }
 
-    return {
-      sentIcon: isSent 
-        ? <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />
-        : <Mail className="w-4 h-4 text-red-500" title="Invoice not sent" />,
-      paidIcon: isSent 
-        ? isPaid 
-          ? <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />
-          : <CreditCard className="w-4 h-4 text-red-500" title="Invoice not paid" />
-        : null
-    };
+    if (invoice.status === 'sent' || invoice.status === 'overdue') {
+      return <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />;
+    }
+
+    return null;
   };
 
   // Fetch data for both views
@@ -1934,16 +1927,8 @@ export default function UnifiedBookings() {
                                                       })()}
                                                     </span>
                                                   )}
-                                                  {/* Invoice Status Icons */}
-                                                  {(() => {
-                                                    const { sentIcon, paidIcon } = getInvoiceStatusIcons(groupBooking.id);
-                                                    return (
-                                                      <span className="flex items-center gap-1">
-                                                        {sentIcon}
-                                                        {paidIcon}
-                                                      </span>
-                                                    );
-                                                  })()}
+                                                  {/* Invoice Status Icon */}
+                                                  {getInvoiceStatusIcon(groupBooking.id)}
                                                   {groupBooking.applyNowLink && (
                                                     <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
                                                       🎵 ENCORE
@@ -2227,6 +2212,8 @@ export default function UnifiedBookings() {
                                         {booking.fee}
                                       </span>
                                     )}
+                                    {/* Invoice Status Icon */}
+                                    {getInvoiceStatusIcon(booking.id)}
                                     {booking.applyNowLink && (
                                       <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
                                         🎵 ENCORE
