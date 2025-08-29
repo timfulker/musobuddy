@@ -452,7 +452,11 @@ export function setupCommunicationRoutes(app: any) {
       // Get booking details for client name
       console.log('📧 [CONVERSATION-REPLY] Fetching booking details...');
       const booking = await db
-        .select({ clientName: bookings.clientName, title: bookings.title })
+        .select({ 
+          clientName: bookings.clientName, 
+          title: bookings.title,
+          workflowStage: bookings.workflowStage 
+        })
         .from(bookings)
         .where(and(
           eq(bookings.id, bookingId),
@@ -460,7 +464,7 @@ export function setupCommunicationRoutes(app: any) {
         ))
         .limit(1);
 
-      console.log('📧 [CONVERSATION-REPLY] Booking query result:', booking.length > 0 ? { clientName: booking[0].clientName, title: booking[0].title } : 'No booking found');
+      console.log('📧 [CONVERSATION-REPLY] Booking query result:', booking.length > 0 ? { clientName: booking[0].clientName, title: booking[0].title, workflowStage: booking[0].workflowStage } : 'No booking found');
 
       if (!booking.length) {
         console.log('❌ [CONVERSATION-REPLY] Booking not found for ID:', bookingId, 'and user:', userId);
