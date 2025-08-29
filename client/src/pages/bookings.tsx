@@ -1956,7 +1956,7 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/templates?bookingId=${groupBooking.id}&action=respond`);
+                                                  navigate(`/conversation?bookingId=${groupBooking.id}`);
                                                 }}
                                                 className="text-blue-600 hover:bg-blue-50"
                                               >
@@ -2251,7 +2251,7 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                                  navigate(`/conversation?bookingId=${booking.id}`);
                                 }}
                                 className="text-blue-600 hover:bg-blue-50"
                               >
@@ -3487,8 +3487,8 @@ export default function UnifiedBookings() {
                       case 'respond':
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
-                          console.log('Navigating to templates for respond:', booking.id);
-                          navigate(`/templates?bookingId=${booking.id}&action=respond`);
+                          console.log('Navigating to conversation for respond:', booking.id);
+                          navigate(`/conversation?bookingId=${booking.id}`);
                         }, 200);
                         break;
                       case 'contract':
@@ -3508,8 +3508,8 @@ export default function UnifiedBookings() {
                       case 'thankyou':
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
-                          console.log('Navigating to templates for thankyou:', booking.id);
-                          navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+                          console.log('Navigating to conversation for thankyou:', booking.id);
+                          navigate(`/conversation?bookingId=${booking.id}&action=thankyou`);
                         }, 200);
                         break;
                       case 'send_compliance':

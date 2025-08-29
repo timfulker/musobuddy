@@ -839,7 +839,7 @@ export default function NewBookingPage({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setLocation(`/templates?bookingId=${editBookingId}&action=respond`)}
+                    onClick={() => setLocation(`/conversation?bookingId=${editBookingId}`)}
                     className="text-blue-600 hover:bg-blue-50"
                   >
                     <MessageSquare className="w-4 h-4 mr-1" />
