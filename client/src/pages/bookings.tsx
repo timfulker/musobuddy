@@ -205,15 +205,25 @@ export default function UnifiedBookings() {
     const invoice = getInvoiceForBooking(bookingId);
     
     if (!invoice || invoice.status === 'draft') {
-      return null; // Don't show icon if no invoice or still draft
+      return null; // Don't show if no invoice or still draft
     }
 
     if (invoice.status === 'paid') {
-      return <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />;
+      return (
+        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+          <CreditCard className="w-3 h-3 mr-1" />
+          Invoice Paid
+        </Badge>
+      );
     }
 
     if (invoice.status === 'sent' || invoice.status === 'overdue') {
-      return <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />;
+      return (
+        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+          <Mail className="w-3 h-3 mr-1" />
+          Invoice Sent
+        </Badge>
+      );
     }
 
     return null;

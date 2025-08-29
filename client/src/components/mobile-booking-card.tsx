@@ -24,15 +24,25 @@ export default function MobileBookingCard({ booking, conflicts = [] }: MobileBoo
     const invoice = invoices.find((inv: any) => inv.bookingId === bookingId);
     
     if (!invoice || invoice.status === 'draft') {
-      return null; // Don't show icon if no invoice or still draft
+      return null; // Don't show if no invoice or still draft
     }
 
     if (invoice.status === 'paid') {
-      return <CreditCard className="w-4 h-4 text-green-500" title="Invoice paid" />;
+      return (
+        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+          <CreditCard className="w-3 h-3 mr-1" />
+          Invoice Paid
+        </Badge>
+      );
     }
 
     if (invoice.status === 'sent' || invoice.status === 'overdue') {
-      return <Mail className="w-4 h-4 text-green-500" title="Invoice sent" />;
+      return (
+        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+          <Mail className="w-3 h-3 mr-1" />
+          Invoice Sent
+        </Badge>
+      );
     }
 
     return null;
@@ -113,16 +123,16 @@ export default function MobileBookingCard({ booking, conflicts = [] }: MobileBoo
             </div>
           )}
 
-          {booking.fee && (
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+            {booking.fee && (
               <div className="flex items-center">
                 <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
                 <span>£{booking.fee}</span>
               </div>
-              {/* Invoice Status Icon */}
-              {getInvoiceStatusIcon(booking.id)}
-            </div>
-          )}
+            )}
+            {/* Invoice Status Badge */}
+            {getInvoiceStatusIcon(booking.id)}
+          </div>
         </div>
 
         {/* Client Contact */}
