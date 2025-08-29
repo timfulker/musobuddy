@@ -196,8 +196,46 @@ export function useAuth() {
     try {
       setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       console.log('✅ Google signin successful');
+      
+      // Check if this is a new user by trying to fetch database record
+      const token = await result.user.getIdToken();
+      const userResponse = await fetch('/api/auth/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // If user doesn't exist in database (404), create them
+      if (userResponse.status === 404) {
+        console.log('🆕 New Google user detected, creating database record...');
+        
+        // Extract name from Google profile
+        const displayName = result.user.displayName || '';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || 'Google';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+        
+        const signupResponse = await fetch('/api/auth/firebase-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            idToken: token, 
+            firstName, 
+            lastName 
+          })
+        });
+        
+        if (!signupResponse.ok) {
+          const errorData = await signupResponse.json();
+          console.error('❌ Failed to create database user:', errorData);
+          // Don't throw error - let them proceed with Firebase-only data
+        } else {
+          console.log('✅ Database record created for Google user');
+        }
+      }
+      
     } catch (error: any) {
       console.error('❌ Google signin failed:', error);
       setAuthState(prev => ({ ...prev, error: error.message }));
