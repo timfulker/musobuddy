@@ -483,6 +483,40 @@ export function registerInvoiceRoutes(app: Express) {
         
         if (emailResult.success) {
           console.log(`✅ Invoice email sent successfully for invoice ${invoiceId}`);
+          
+          // 🎯 NEW: Track invoice email in conversation history
+          try {
+            // Import database components
+            const { db } = await import('../core/db');
+            const { clientCommunications } = await import('../../shared/schema');
+            
+            // Create conversation record for tracking
+            const [communication] = await db.insert(clientCommunications).values({
+              userId: userId,
+              bookingId: invoice.enquiryId || null, // Link to booking if available
+              clientName: invoice.clientName,
+              clientEmail: invoice.clientEmail,
+              communicationType: 'email',
+              direction: 'outbound',
+              templateName: 'Invoice Email',
+              templateCategory: 'invoice',
+              subject: `Invoice ${invoice.invoiceNumber} - ${invoice.businessName || 'MusoBuddy'}`,
+              messageBody: `Invoice sent - ${invoice.invoiceNumber}\n\nAmount Due: £${invoice.totalAmount}\nDue Date: ${new Date(invoice.dueDate).toLocaleDateString()}\n\nInvoice URL: ${invoice.cloudStorageUrl}\n\n${customMessage ? `Custom message: ${customMessage}` : ''}`,
+              attachments: JSON.stringify([{
+                name: `Invoice_${invoice.invoiceNumber}.pdf`,
+                url: invoice.cloudStorageUrl,
+                type: 'invoice_pdf'
+              }]),
+              deliveryStatus: 'sent',
+              notes: 'Invoice email sent via MusoBuddy system'
+            }).returning();
+            
+            console.log(`📧 Invoice email tracked in conversation for booking ${invoice.enquiryId}`);
+          } catch (trackingError: any) {
+            console.error(`⚠️ Failed to track invoice email in conversation (non-critical):`, trackingError.message);
+            // Continue - email sending was successful even if tracking failed
+          }
+          
           res.json({ success: true, message: 'Invoice sent successfully' });
         } else {
           console.error('❌ Failed to send invoice email:', emailResult.error);

@@ -169,6 +169,39 @@ export function registerIsolatedRoutes(app: Express) {
         await emailService.sendContractEmail(updatedContract, userSettings, subject, signingPageUrl, customMessage || '');
         console.log(`✅ Contract email sent successfully for contract ${contractId}`);
         
+        // 🎯 NEW: Track contract email in conversation history
+        try {
+          // Import database components
+          const { db } = await import('../core/db');
+          const { clientCommunications } = await import('../../shared/schema');
+          
+          // Create conversation record for tracking
+          const [communication] = await db.insert(clientCommunications).values({
+            userId: userId,
+            bookingId: updatedContract.enquiryId || null, // Link to booking if available
+            clientName: updatedContract.clientName,
+            clientEmail: updatedContract.clientEmail,
+            communicationType: 'email',
+            direction: 'outbound',
+            templateName: 'Contract Email',
+            templateCategory: 'contract',
+            subject: subject,
+            messageBody: `Contract ready for signing - ${updatedContract.contractNumber}\n\nContract URL: ${signingPageUrl}\n\n${customMessage ? `Custom message: ${customMessage}` : ''}`,
+            attachments: JSON.stringify([{
+              name: `Contract_${updatedContract.contractNumber}.pdf`,
+              url: updatedContract.cloudStorageUrl,
+              type: 'contract_pdf'
+            }]),
+            deliveryStatus: 'sent',
+            notes: 'Contract email sent via MusoBuddy system'
+          }).returning();
+          
+          console.log(`📧 Contract email tracked in conversation for booking ${updatedContract.enquiryId}`);
+        } catch (trackingError: any) {
+          console.error(`⚠️ Failed to track contract email in conversation (non-critical):`, trackingError.message);
+          // Continue - email sending was successful even if tracking failed
+        }
+        
         res.json({ 
           success: true, 
           message: 'Contract sent successfully',

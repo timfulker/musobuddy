@@ -381,6 +381,30 @@ export function registerContractRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.user.id}`);
       
+      // 🎯 NEW: Sync contract fields back to linked booking if enquiryId exists
+      if (newContract.enquiryId && newContract.enquiryId > 0) {
+        try {
+          const syncFields = {
+            eventTime: newContract.eventTime,
+            eventEndTime: newContract.eventEndTime,
+            clientPhone: newContract.clientPhone,
+            venue: newContract.venue,
+            venueAddress: newContract.venueAddress,
+            fee: newContract.fee,
+            deposit: newContract.deposit,
+            travelExpenses: newContract.travelExpenses,
+            equipmentRequirements: newContract.equipmentRequirements,
+            specialRequirements: newContract.specialRequirements
+          };
+          
+          await storage.updateBooking(newContract.enquiryId, syncFields, req.user.id);
+          console.log(`🔄 Synced contract fields back to booking ${newContract.enquiryId}`);
+        } catch (syncError: any) {
+          console.error(`⚠️ Failed to sync contract fields to booking (non-critical):`, syncError.message);
+          // Continue - contract creation was successful even if sync failed
+        }
+      }
+      
       // Generate signing page URL
       try {
         const signingPageUrl = `/sign/${newContract.id}`;
@@ -857,6 +881,31 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       console.log(`✅ Updated draft contract #${contractId} for user ${userId}`);
+      
+      // 🎯 NEW: Sync contract field updates back to linked booking if enquiryId exists
+      if (updatedContract.enquiryId && updatedContract.enquiryId > 0) {
+        try {
+          const syncFields = {
+            eventTime: updatedContract.eventTime,
+            eventEndTime: updatedContract.eventEndTime,
+            clientPhone: updatedContract.clientPhone,
+            venue: updatedContract.venue,
+            venueAddress: updatedContract.venueAddress,
+            fee: updatedContract.fee,
+            deposit: updatedContract.deposit,
+            travelExpenses: updatedContract.travelExpenses,
+            equipmentRequirements: updatedContract.equipmentRequirements,
+            specialRequirements: updatedContract.specialRequirements
+          };
+          
+          await storage.updateBooking(updatedContract.enquiryId, syncFields, userId);
+          console.log(`🔄 Synced contract field updates back to booking ${updatedContract.enquiryId}`);
+        } catch (syncError: any) {
+          console.error(`⚠️ Failed to sync contract field updates to booking (non-critical):`, syncError.message);
+          // Continue - contract update was successful even if sync failed
+        }
+      }
+      
       res.json(updatedContract);
     } catch (error) {
       console.error('❌ Failed to update contract:', error);

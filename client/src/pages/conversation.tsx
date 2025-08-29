@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info, Edit, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, FileText, Sparkles, FileSearch, CheckCircle, AlertCircle, MessageSquare, Info, Edit, MoreVertical, Receipt } from "lucide-react";
 // AI token usage component removed - unlimited AI usage for all users
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -679,28 +679,77 @@ export default function Conversation() {
                           <div className="text-sm whitespace-pre-wrap">
                             {message.content}
                           </div>
-                          {/* Extract Details button for all messages (except original inquiry) */}
+                          {/* Action buttons for messages (except original inquiry) */}
                           {message.id !== 0 && (
                             <div className="mt-3 pt-3 border-t">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleExtractDetails(message)}
-                                disabled={isExtracting}
-                                className="text-xs"
-                              >
-                                {isExtracting && selectedMessage?.id === message.id ? (
-                                  <>
-                                    <div className="w-3 h-3 mr-1 animate-spin border-2 border-gray-500 border-t-transparent rounded-full" />
-                                    Extracting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <FileSearch className="w-3 h-3 mr-1" />
-                                    Extract Details
-                                  </>
-                                )}
-                              </Button>
+                              <div className="flex gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleExtractDetails(message)}
+                                  disabled={isExtracting}
+                                  className="text-xs"
+                                >
+                                  {isExtracting && selectedMessage?.id === message.id ? (
+                                    <>
+                                      <div className="w-3 h-3 mr-1 animate-spin border-2 border-gray-500 border-t-transparent rounded-full" />
+                                      Extracting...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FileSearch className="w-3 h-3 mr-1" />
+                                      Extract Details
+                                    </>
+                                  )}
+                                </Button>
+                                
+                                {/* PDF Attachment View Buttons */}
+                                {(() => {
+                                  try {
+                                    const attachments = JSON.parse(message.attachments || '[]');
+                                    const buttons = [];
+                                    
+                                    // Contract PDF Button
+                                    const contractPdf = attachments.find((att: any) => att.type === 'contract_pdf');
+                                    if (contractPdf) {
+                                      buttons.push(
+                                        <Button
+                                          key="contract"
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => window.open(contractPdf.url, '_blank')}
+                                          className="text-xs bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
+                                        >
+                                          <FileText className="w-3 h-3 mr-1" />
+                                          View Contract
+                                        </Button>
+                                      );
+                                    }
+                                    
+                                    // Invoice PDF Button
+                                    const invoicePdf = attachments.find((att: any) => att.type === 'invoice_pdf');
+                                    if (invoicePdf) {
+                                      buttons.push(
+                                        <Button
+                                          key="invoice"
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => window.open(invoicePdf.url, '_blank')}
+                                          className="text-xs bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                                        >
+                                          <Receipt className="w-3 h-3 mr-1" />
+                                          View Invoice
+                                        </Button>
+                                      );
+                                    }
+                                    
+                                    return buttons;
+                                  } catch (e) {
+                                    // Ignore JSON parse errors
+                                  }
+                                  return null;
+                                })()}
+                              </div>
                             </div>
                           )}
                         </div>
