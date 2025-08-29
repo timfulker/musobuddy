@@ -1082,6 +1082,16 @@ This email was sent via MusoBuddy Professional Music Management Platform
       if (isThankYouTemplate && booking) {
         await storage.updateBooking(bookingId, { status: 'Completed' }, userId);
         console.log(`✅ Booking ${bookingId} marked as completed after thank you email`);
+      } else if (booking && !isThankYouTemplate) {
+        // Auto-advance workflow stage if this is the first response (not a thank you)
+        console.log(`🔍 Checking workflow stage for booking ${bookingId}: current stage = '${booking.workflowStage}'`);
+        if (booking.workflowStage === 'initial') {
+          console.log(`📝 Booking ${bookingId} is in 'initial' stage, advancing to 'negotiating'...`);
+          await storage.updateBooking(bookingId, { workflowStage: 'negotiating' }, userId);
+          console.log(`✨ Advanced booking ${bookingId} from 'initial' to 'negotiating' stage after first response`);
+        } else {
+          console.log(`ℹ️ Booking ${bookingId} is already in '${booking.workflowStage}' stage, no auto-advance needed`);
+        }
       }
 
       // Save communication history to cloud storage
