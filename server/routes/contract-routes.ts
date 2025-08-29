@@ -505,13 +505,18 @@ export function registerContractRoutes(app: Express) {
       
       // 🎯 NEW: Track contract email in conversation history
       try {
-        const communicationData = {
+        // Import database components
+        const { db } = await import('../core/db');
+        const { clientCommunications } = await import('../../shared/schema');
+        
+        // Create conversation record for tracking
+        const [communication] = await db.insert(clientCommunications).values({
           userId: req.user.id,
           bookingId: contract.enquiryId || null, // Link to booking if available
           clientName: contract.clientName,
           clientEmail: contract.clientEmail,
-          communicationType: 'email' as const,
-          direction: 'outbound' as const,
+          communicationType: 'email',
+          direction: 'outbound',
           templateName: 'Contract Email',
           templateCategory: 'contract',
           subject: subject,
@@ -521,11 +526,10 @@ export function registerContractRoutes(app: Express) {
             url: contract.cloudStorageUrl || signingPageResult.url,
             type: 'contract_pdf'
           }]),
-          deliveryStatus: 'sent' as const,
+          deliveryStatus: 'sent',
           notes: 'Contract email sent via MusoBuddy system'
-        };
+        }).returning();
         
-        await storage.createCommunication(communicationData);
         console.log(`📧 Contract email tracked in conversation for booking ${contract.enquiryId}`);
       } catch (trackingError: any) {
         console.error(`⚠️ Failed to track contract email in conversation (non-critical):`, trackingError.message);
