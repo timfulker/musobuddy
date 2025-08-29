@@ -1838,10 +1838,7 @@ export default function UnifiedBookings() {
                                                 <h3 className="text-lg font-semibold">
                                                   {groupBooking.eventType || 'Event'}
                                                 </h3>
-                                                <Badge className={getStatusColor(groupBooking.status)}>
-                                                  {groupBooking.status?.replace('_', ' ') || 'New'}
-                                                </Badge>
-                                                {/* Workflow Stage Meter */}
+                                                {/* Unified Workflow Stage Display */}
                                                 <WorkflowStageMeter booking={groupBooking} />
                                                 {/* Document indicator - includes both new and legacy documents */}
                                                 <BookingDocumentIndicator 
@@ -2134,10 +2131,7 @@ export default function UnifiedBookings() {
                                   <h3 className="text-lg font-semibold">
                                     {booking.eventType || 'Event'}
                                   </h3>
-                                  <Badge className={getStatusColor(booking.status)}>
-                                    {booking.status?.replace('_', ' ') || 'New'}
-                                  </Badge>
-                                  {/* Workflow Stage Meter */}
+                                  {/* Unified Workflow Stage Display */}
                                   <WorkflowStageMeter booking={booking} />
                                   {/* Document indicator - includes both new and legacy documents */}
                                   <BookingDocumentIndicator 

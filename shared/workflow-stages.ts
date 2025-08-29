@@ -1,7 +1,7 @@
 // Workflow Stage Management System
 // Tracks booking progression through business workflow stages
 
-export type WorkflowStage = 'initial' | 'negotiating' | 'contract' | 'confirmed' | 'performed' | 'complete';
+export type WorkflowStage = 'initial' | 'negotiating' | 'client_confirmed' | 'contract' | 'confirmed' | 'performed' | 'complete';
 
 export interface StageDefinition {
   id: WorkflowStage;
@@ -24,6 +24,13 @@ export const WORKFLOW_STAGES: StageDefinition[] = [
     label: 'Negotiating',
     icon: '💬',
     description: 'Back-and-forth conversations',
+    autoAdvanceConditions: ['client_verbally_confirmed']
+  },
+  {
+    id: 'client_confirmed',
+    label: 'Client Confirmed',
+    icon: '✨',
+    description: 'Client verbally confirms booking',
     autoAdvanceConditions: ['contract_sent']
   },
   {

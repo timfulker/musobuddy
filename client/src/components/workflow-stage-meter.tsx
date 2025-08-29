@@ -25,7 +25,7 @@ export default function WorkflowStageMeter({ booking, className = "" }: Workflow
               <TooltipTrigger asChild>
                 <div 
                   className={`
-                    relative h-6 w-3 rounded-sm border transition-all duration-300 cursor-help
+                    relative h-6 w-5 rounded-sm border transition-all duration-300 cursor-help
                     ${isActive 
                       ? isCurrent
                         ? 'bg-blue-500 border-blue-600 shadow-lg shadow-blue-300' // Current stage - bright blue with glow
