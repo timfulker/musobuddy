@@ -128,6 +128,12 @@ export function shouldAdvanceToComplete(booking: any): boolean {
 }
 
 export function determineCurrentStage(booking: any): WorkflowStage {
+  // If a manual workflow stage is set, use that
+  if (booking.workflowStage && booking.workflowStage !== 'initial') {
+    return booking.workflowStage as WorkflowStage;
+  }
+  
+  // Otherwise, determine based on booking data
   // Check conditions in reverse order (most advanced first)
   if (shouldAdvanceToComplete(booking)) return 'complete';
   if (shouldAdvanceToPerformed(booking)) return 'performed';

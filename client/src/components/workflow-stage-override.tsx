@@ -64,6 +64,7 @@ export default function WorkflowStageOverride({ booking, onStageUpdate }: Workfl
           variant="ghost" 
           size="sm" 
           className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
+          onClick={(e) => e.stopPropagation()}
         >
           <Settings className="w-3 h-3 mr-1" />
           Override
