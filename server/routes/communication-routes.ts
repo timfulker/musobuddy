@@ -635,14 +635,20 @@ export function setupCommunicationRoutes(app: any) {
         console.log(`✅ Marked all message notifications as read for booking ${bookingId}`);
 
         // Auto-advance workflow stage if this is the first response
+        console.log(`🔍 Checking workflow stage for booking ${bookingId}: current stage = '${booking[0].workflowStage}'`);
         if (booking[0].workflowStage === 'initial') {
-          await db.update(bookings)
+          console.log(`📝 Booking ${bookingId} is in 'initial' stage, advancing to 'negotiating'...`);
+          const updateResult = await db.update(bookings)
             .set({ workflowStage: 'negotiating' })
             .where(and(
               eq(bookings.id, bookingId),
               eq(bookings.userId, userId)
-            ));
+            ))
+            .returning({ updatedStage: bookings.workflowStage });
           console.log(`✨ Advanced booking ${bookingId} from 'initial' to 'negotiating' stage after first response`);
+          console.log(`✅ Update result:`, updateResult);
+        } else {
+          console.log(`ℹ️ Booking ${bookingId} is already in '${booking[0].workflowStage}' stage, no auto-advance needed`);
         }
 
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
