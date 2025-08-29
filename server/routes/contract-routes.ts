@@ -390,7 +390,8 @@ export function registerContractRoutes(app: Express) {
             clientPhone: newContract.clientPhone,
             venue: newContract.venue,
             venueAddress: newContract.venueAddress,
-            fee: newContract.fee,
+            // Don't sync fee back to booking to preserve original booking fee
+            // fee: newContract.fee,
             deposit: newContract.deposit,
             travelExpenses: newContract.travelExpenses,
             equipmentRequirements: newContract.equipmentRequirements,
@@ -704,12 +705,16 @@ export function registerContractRoutes(app: Express) {
         
         // Send client portal email with QR code and collaborative access
         if (updateResult.clientEmail) {
-          await contractSigningEmailService.sendSigningConfirmation(
+          const signingConfirmationResult = await contractSigningEmailService.sendSigningConfirmation(
             updateResult,
             userSettings,
             emailService
           );
-          console.log(`✉️ [CONTRACT-SIGN] Client portal email sent to: ${updateResult.clientEmail}`);
+          if (signingConfirmationResult.success) {
+            console.log(`✉️ [CONTRACT-SIGN] Client portal email sent to: ${updateResult.clientEmail}`);
+          } else {
+            console.error(`❌ [CONTRACT-SIGN] Failed to send client portal email:`, signingConfirmationResult.error);
+          }
         }
         
         // ALSO send to performer/business owner
@@ -891,7 +896,8 @@ export function registerContractRoutes(app: Express) {
             clientPhone: updatedContract.clientPhone,
             venue: updatedContract.venue,
             venueAddress: updatedContract.venueAddress,
-            fee: updatedContract.fee,
+            // Don't sync fee back to booking to preserve original booking fee
+            // fee: updatedContract.fee,
             deposit: updatedContract.deposit,
             travelExpenses: updatedContract.travelExpenses,
             equipmentRequirements: updatedContract.equipmentRequirements,
