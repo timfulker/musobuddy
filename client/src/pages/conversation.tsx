@@ -344,7 +344,15 @@ export default function Conversation() {
     try {
       // Build update object with only selected fields
       const updates: any = {};
+      let hasClientConfirmation = false;
+      
       selectedFields.forEach(field => {
+        // Skip the clientConfirmsBooking field as it's not a booking field
+        if (field === 'clientConfirmsBooking') {
+          hasClientConfirmation = extractedDetails[field] === true;
+          return;
+        }
+        
         const newValue = editedValues[field] || extractedDetails[field];
         if (newValue !== null && newValue !== '') {
           const mode = fieldModes[field] || 'replace';
@@ -364,6 +372,11 @@ export default function Conversation() {
         }
       });
       
+      // If client confirms booking and current stage is 'negotiating', advance to 'client_confirmed'
+      if (hasClientConfirmation && booking.workflowStage === 'negotiating') {
+        updates.workflowStage = 'client_confirmed';
+      }
+      
       const response = await apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -372,9 +385,18 @@ export default function Conversation() {
       
       if (!response.ok) throw new Error('Failed to update booking');
       
+      // Custom toast message based on what was updated
+      let toastTitle = "Booking updated successfully";
+      let toastDescription = `${selectedFields.size - (hasClientConfirmation ? 1 : 0)} field${selectedFields.size > 1 ? 's' : ''} updated from client message`;
+      
+      if (hasClientConfirmation && booking.workflowStage === 'negotiating') {
+        toastTitle = "✨ Client Confirmation Detected!";
+        toastDescription = "Booking advanced to 'Client Confirmed' stage and details updated";
+      }
+      
       toast({
-        title: "Booking updated successfully",
-        description: `${selectedFields.size} field${selectedFields.size > 1 ? 's' : ''} updated from client message`,
+        title: toastTitle,
+        description: toastDescription,
       });
       
       // Refresh booking data
@@ -994,6 +1016,7 @@ export default function Conversation() {
                   notes: 'Additional Notes',
                   performanceDuration: 'Performance Duration',
                   guestCount: 'Guest Count',
+                  clientConfirmsBooking: '✨ Client Confirms Booking',
                 };
                 
                 const mode = fieldModes[field] || 'replace';
@@ -1011,6 +1034,42 @@ export default function Conversation() {
                     previewValue = `${currentValue} ${editedValue}`;
                   }
                 }
+                
+                // Special handling for client confirmation field
+                if (field === 'clientConfirmsBooking' && value === true) {
+                  return (
+                    <div key={field} className="flex items-start space-x-3 p-3 border-2 border-purple-300 bg-purple-50 rounded-lg">
+                      <Checkbox
+                        id={field}
+                        checked={selectedFields.has(field)}
+                        onCheckedChange={(checked) => {
+                          const newFields = new Set(selectedFields);
+                          if (checked) {
+                            newFields.add(field);
+                          } else {
+                            newFields.delete(field);
+                          }
+                          setSelectedFields(newFields);
+                        }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">✨</span>
+                          <div>
+                            <p className="font-semibold text-purple-800">Client Confirmation Detected!</p>
+                            <p className="text-sm text-purple-600">
+                              The client appears to be confirming this booking. 
+                              {booking.workflowStage === 'negotiating' && ' Checking this will advance to "Client Confirmed" stage.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Skip clientConfirmsBooking if false
+                if (field === 'clientConfirmsBooking') return null;
                 
                 return (
                   <div key={field} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">

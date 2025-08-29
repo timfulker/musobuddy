@@ -253,6 +253,7 @@ export function registerBookingRoutes(app: Express) {
       - notes: Any additional notes or requirements
       - performanceDuration: How long the performance should be (use exact format: "30 minutes", "1 hour", "2 hours", "2 x 45 min sets", etc.)
       - guestCount: Number of guests expected
+      - clientConfirmsBooking: boolean - Set to true if the message contains phrases like "we'd like to confirm", "we confirm", "we accept", "we'd like to book", "please go ahead", "sounds perfect", "that works for us", "we're happy to proceed", "we agree", "let's proceed", "we'd like to move forward", etc. indicating the client is confirming the booking
       
       Only include fields where information is clearly stated. Return null for fields not mentioned.
       
