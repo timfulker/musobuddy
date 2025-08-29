@@ -11,12 +11,7 @@ export default function SubscriptionUpdatePayment() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated]);
+  // Authentication is handled by App.tsx routing - no need for redirect here
 
   const handleStartSubscription = async () => {
     if (!user?.userId || !user?.email) {
