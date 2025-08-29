@@ -503,16 +503,25 @@ export function registerContractRoutes(app: Express) {
       // Send email with the signing page URL, not the PDF URL
       await emailService.sendContractEmail(contract, userSettings, subject, signingPageResult.url || '', customMessage);
       
-      // 🎯 NEW: Track contract email in conversation history
+      // 🎯 Track contract email in conversation history
       try {
         // Import database components
         const { db } = await import('../core/db');
         const { clientCommunications } = await import('../../shared/schema');
         
+        console.log(`📧 Attempting to track contract email for booking ${contract.enquiryId}`);
+        console.log(`📧 Contract details:`, {
+          userId: req.user.id,
+          bookingId: contract.enquiryId,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail,
+          subject: subject
+        });
+        
         // Create conversation record for tracking
         const [communication] = await db.insert(clientCommunications).values({
           userId: req.user.id,
-          bookingId: contract.enquiryId || null, // Link to booking if available
+          bookingId: contract.enquiryId || null,
           clientName: contract.clientName,
           clientEmail: contract.clientEmail,
           communicationType: 'email',
@@ -530,9 +539,15 @@ export function registerContractRoutes(app: Express) {
           notes: 'Contract email sent via MusoBuddy system'
         }).returning();
         
-        console.log(`📧 Contract email tracked in conversation for booking ${contract.enquiryId}`);
+        console.log(`✅ Contract email tracked successfully! Communication ID: ${communication.id} for booking ${contract.enquiryId}`);
       } catch (trackingError: any) {
-        console.error(`⚠️ Failed to track contract email in conversation (non-critical):`, trackingError.message);
+        console.error(`❌ CRITICAL: Failed to track contract email in conversation:`, {
+          error: trackingError.message,
+          stack: trackingError.stack,
+          contractId: contract.id,
+          enquiryId: contract.enquiryId,
+          userId: req.user.id
+        });
         // Continue - email sending was successful even if tracking failed
       }
 
