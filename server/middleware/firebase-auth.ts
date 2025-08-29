@@ -102,14 +102,9 @@ export const authenticateWithFirebase = async (
       });
     }
     
-    // SECURITY: Check email verification for non-privileged users
-    // Allow bypass for test accounts (emails containing +test, +dev, +staging)
-    const isTestAccount = user.email && (
-      user.email.includes('+test') ||
-      user.email.includes('+dev') ||
-      user.email.includes('+staging') ||
-      user.email.includes('+demo')
-    );
+    // SECURITY: Check email verification for non-privileged users  
+    // Allow bypass only for +test accounts (matches Stripe test environment logic)
+    const isTestAccount = user.email && user.email.includes('+test');
     
     if (!user.isAdmin && !user.isAssigned && !isTestAccount && !firebaseUser.emailVerified) {
       const duration = Date.now() - startTime;
