@@ -1956,7 +1956,7 @@ export default function UnifiedBookings() {
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate(`/conversation?bookingId=${groupBooking.id}`);
+                                                  navigate(`/conversation/${groupBooking.id}`);
                                                 }}
                                                 className="text-blue-600 hover:bg-blue-50"
                                               >
@@ -2251,7 +2251,7 @@ export default function UnifiedBookings() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/conversation?bookingId=${booking.id}`);
+                                  navigate(`/conversation/${booking.id}`);
                                 }}
                                 className="text-blue-600 hover:bg-blue-50"
                               >
@@ -3488,7 +3488,7 @@ export default function UnifiedBookings() {
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
                           console.log('Navigating to conversation for respond:', booking.id);
-                          navigate(`/conversation?bookingId=${booking.id}`);
+                          navigate(`/conversation/${booking.id}`);
                         }, 200);
                         break;
                       case 'contract':
@@ -3509,7 +3509,7 @@ export default function UnifiedBookings() {
                         // Delay to ensure all state clears before navigation
                         setTimeout(() => {
                           console.log('Navigating to conversation for thankyou:', booking.id);
-                          navigate(`/conversation?bookingId=${booking.id}&action=thankyou`);
+                          navigate(`/conversation/${booking.id}?action=thankyou`);
                         }, 200);
                         break;
                       case 'send_compliance':

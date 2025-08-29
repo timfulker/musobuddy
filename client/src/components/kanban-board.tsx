@@ -384,7 +384,7 @@ export default function ActionableEnquiries() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLocation(`/conversation?bookingId=${enquiry.id}`);
+                          setLocation(`/conversation/${enquiry.id}`);
                         }}
                         className="text-blue-600 hover:bg-blue-50 border-blue-200"
                         title="Respond to client"

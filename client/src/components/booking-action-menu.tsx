@@ -63,7 +63,7 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
           newStatus = 'awaiting_response';
         }
         // Navigate to conversation page to handle all types of responses
-        navigate(`/conversation?bookingId=${booking.id}`);
+        navigate(`/conversation/${booking.id}`);
         break;
       case 'issue_contract':
         // Navigate to contracts page with booking data pre-filled
@@ -76,7 +76,7 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         break;
       case 'send_thankyou':
         // Navigate to conversation page with thank you context
-        navigate(`/conversation?bookingId=${booking.id}&action=thankyou`);
+        navigate(`/conversation/${booking.id}?action=thankyou`);
         break;
       case 'edit_booking':
         // Open booking details dialog for editing
