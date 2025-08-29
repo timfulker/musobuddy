@@ -155,7 +155,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           >
             <MessageSquare className="w-5 h-5" />
-            <span>Workflow</span>
+            <span>Messages</span>
             <NotificationBadge count={counts.totalMessages || counts.clientMessages || 0} />
           </Link>
           

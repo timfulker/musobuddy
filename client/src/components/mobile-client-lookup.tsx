@@ -150,7 +150,7 @@ function ClientCard({ client }: ClientCardProps) {
           <Link href={`/conversation?clientEmail=${client.email}`} className="flex-1">
             <Button variant="outline" size="sm" className="w-full">
               <Mail className="w-4 h-4 mr-2" />
-              Workflow
+              Message
             </Button>
           </Link>
           

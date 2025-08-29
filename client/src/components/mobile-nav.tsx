@@ -55,7 +55,7 @@ export default function MobileNav() {
           <span className={cn("text-xs leading-tight", isActive("/mobile-invoice-sender") && "font-medium")}>Invoice</span>
         </Link>
 
-        {/* Workflow */}
+        {/* Messages */}
         <Link href="/messages" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-2 min-w-0 flex-1 rounded-lg transition-colors relative",
           isActive("/messages") ? "text-primary bg-primary/10" : "text-gray-500 dark:text-gray-400 hover:text-primary/80"
@@ -68,7 +68,7 @@ export default function MobileNav() {
               </span>
             )}
           </div>
-          <span className={cn("text-xs leading-tight", isActive("/messages") && "font-medium")}>Workflow</span>
+          <span className={cn("text-xs leading-tight", isActive("/messages") && "font-medium")}>Messages</span>
         </Link>
 
         {/* Clients */}
