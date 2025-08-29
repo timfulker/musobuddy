@@ -630,6 +630,17 @@ export function setupCommunicationRoutes(app: any) {
         await storage.markAllBookingMessageNotificationsAsRead(bookingId, userId);
         console.log(`✅ Marked all message notifications as read for booking ${bookingId}`);
 
+        // Auto-advance workflow stage if this is the first response
+        if (booking[0].workflowStage === 'initial') {
+          await db.update(bookings)
+            .set({ workflowStage: 'negotiating' })
+            .where(and(
+              eq(bookings.id, bookingId),
+              eq(bookings.userId, userId)
+            ));
+          console.log(`✨ Advanced booking ${bookingId} from 'initial' to 'negotiating' stage after first response`);
+        }
+
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
         res.json({ success: true, communication, mailgunId: emailResult.messageId });
 
