@@ -490,10 +490,10 @@ export function registerInvoiceRoutes(app: Express) {
             const { db } = await import('../core/db');
             const { clientCommunications } = await import('../../shared/schema');
             
-            console.log(`📧 Attempting to track invoice email for booking ${invoice.enquiryId}`);
+            console.log(`📧 Attempting to track invoice email for booking ${invoice.bookingId}`);
             console.log(`📧 Invoice details:`, {
               userId: userId,
-              bookingId: invoice.enquiryId,
+              bookingId: invoice.bookingId,
               clientName: invoice.clientName,
               clientEmail: invoice.clientEmail,
               invoiceNumber: invoice.invoiceNumber
@@ -502,7 +502,7 @@ export function registerInvoiceRoutes(app: Express) {
             // Create conversation record for tracking
             const [communication] = await db.insert(clientCommunications).values({
               userId: userId,
-              bookingId: invoice.enquiryId || null,
+              bookingId: invoice.bookingId || null,
               clientName: invoice.clientName,
               clientEmail: invoice.clientEmail,
               communicationType: 'email',
@@ -520,13 +520,13 @@ export function registerInvoiceRoutes(app: Express) {
               notes: 'Invoice email sent via MusoBuddy system'
             }).returning();
             
-            console.log(`✅ Invoice email tracked successfully! Communication ID: ${communication.id} for booking ${invoice.enquiryId}`);
+            console.log(`✅ Invoice email tracked successfully! Communication ID: ${communication.id} for booking ${invoice.bookingId}`);
           } catch (trackingError: any) {
             console.error(`❌ CRITICAL: Failed to track invoice email in conversation:`, {
               error: trackingError.message,
               stack: trackingError.stack,
               invoiceId: invoice.id,
-              enquiryId: invoice.enquiryId,
+              bookingId: invoice.bookingId,
               userId: userId
             });
             // Continue - email sending was successful even if tracking failed
