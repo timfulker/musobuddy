@@ -614,8 +614,8 @@ export default function Conversation() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageCircle className="w-5 h-5" />
-              <span>Conversation History</span>
-              <Badge variant="outline">{messages.length} messages</Badge>
+              <span>Client Workflow Timeline</span>
+              <Badge variant="outline">{messages.length} items</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -623,8 +623,8 @@ export default function Conversation() {
               {messages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
                   <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No messages yet</p>
-                  <p className="text-sm">Start the conversation by sending a message below.</p>
+                  <p>No workflow items yet</p>
+                  <p className="text-sm">Start the client workflow by sending a message below.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
