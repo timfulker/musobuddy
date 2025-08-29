@@ -40,6 +40,7 @@ import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import ResetPasswordPage from "@/pages/auth/reset-password";
+import { EmailVerification } from "@/pages/auth/email-verification";
 import StartTrial from "@/pages/start-trial";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
@@ -141,6 +142,7 @@ function Router() {
       <Route path="/signup" component={SignupPage} />
       <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
       <Route path="/auth/reset-password" component={ResetPasswordPage} />
+      <Route path="/auth/verify-email" component={EmailVerification} />
       <Route path="/start-trial" component={StartTrial} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
       <Route path="/trial-success" component={TrialSuccessPage} />

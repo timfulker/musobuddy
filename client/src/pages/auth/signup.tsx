@@ -51,36 +51,65 @@ export default function SignupPage() {
       
       console.log('🔍 Signup result:', result);
       
-      // ALL users must go through Stripe checkout (including beta testers)
-      // Beta testers will get 365-day trial, regular users get 30-day trial
-      const welcomeMessage = result?.user?.isBeta 
-        ? "Welcome, Beta Tester! Complete checkout for your 12-month free trial."
-        : "Account created! Complete checkout to start your 30-day free trial.";
+      // Check if email verification is needed
+      const needsVerification = result?.needsVerification || false;
       
-      toast({
-        title: "Account created successfully!",
-        description: welcomeMessage
-      });
-      
-      // Create Stripe checkout session for ALL users
-      setTimeout(async () => {
-        try {
-          const checkoutResponse = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              userEmail: email,
-              userId: result.user.userId,
-              isBeta: result?.user?.isBeta || false // Pass beta status to backend
-            })
-          });
-          
-          const checkoutData = await checkoutResponse.json();
-          if (checkoutData.url) {
-            localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
-            window.location.href = checkoutData.url;
-          } else {
-            console.error('No checkout URL received:', checkoutData);
+      if (needsVerification) {
+        // Redirect to email verification for security
+        const welcomeMessage = result?.user?.isBeta 
+          ? "Welcome, Beta Tester! Please verify your email to continue."
+          : "Account created! Please verify your email to start your trial.";
+        
+        toast({
+          title: "Account created successfully!",
+          description: welcomeMessage
+        });
+        
+        // Redirect to email verification page
+        setTimeout(() => {
+          localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
+          window.location.href = '/auth/verify-email';
+        }, 1500);
+        
+      } else {
+        // Admin/assigned accounts can skip verification and go to payment
+        const welcomeMessage = result?.user?.isBeta 
+          ? "Welcome, Beta Tester! Complete checkout for your 12-month free trial."
+          : "Account created! Complete checkout to start your 30-day free trial.";
+        
+        toast({
+          title: "Account created successfully!",
+          description: welcomeMessage
+        });
+        
+        // Create Stripe checkout session for admin/assigned users only
+        setTimeout(async () => {
+          try {
+            const checkoutResponse = await fetch('/api/create-checkout-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                userEmail: email,
+                userId: result.user.userId,
+                isBeta: result?.user?.isBeta || false // Pass beta status to backend
+              })
+            });
+            
+            const checkoutData = await checkoutResponse.json();
+            if (checkoutData.url) {
+              localStorage.removeItem('signup-in-progress'); // Clear signup flag before redirect
+              window.location.href = checkoutData.url;
+            } else {
+              console.error('No checkout URL received:', checkoutData);
+              localStorage.removeItem('signup-in-progress'); // Clear on error
+              toast({
+                title: "Error",
+                description: "Failed to create checkout session. Please try again.",
+                variant: "destructive"
+              });
+            }
+          } catch (error) {
+            console.error('❌ Checkout creation failed:', error);
             localStorage.removeItem('signup-in-progress'); // Clear on error
             toast({
               title: "Error",
@@ -88,16 +117,8 @@ export default function SignupPage() {
               variant: "destructive"
             });
           }
-        } catch (error) {
-          console.error('❌ Checkout creation failed:', error);
-          localStorage.removeItem('signup-in-progress'); // Clear on error
-          toast({
-            title: "Error",
-            description: "Failed to create checkout session. Please try again.",
-            variant: "destructive"
-          });
-        }
-      }, 1500);
+        }, 1500);
+      }
       
     } catch (err: any) {
       console.error('❌ Account creation failed:', err);
@@ -258,7 +279,7 @@ export default function SignupPage() {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? 'Creating Account...' : 'Create Account & Continue to Payment'}
+                  {loading ? 'Creating Account...' : 'Create Account & Verify Email'}
                 </Button>
               </form>
               

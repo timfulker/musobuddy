@@ -7,7 +7,8 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -162,7 +163,11 @@ export function useAuth() {
       });
       console.log('✅ Firebase signup successful');
       
-      // Step 2: Create user in database
+      // Step 2: Send email verification
+      await sendEmailVerification(credential.user);
+      console.log('✅ Email verification sent');
+      
+      // Step 3: Create user in database
       const idToken = await credential.user.getIdToken();
       const response = await fetch('/api/auth/firebase-signup', {
         method: 'POST',
@@ -178,7 +183,7 @@ export function useAuth() {
       const data = await response.json();
       console.log('✅ User created in database:', data.user);
       
-      return data; // Return user data for routing decisions
+      return { ...data, needsVerification: true }; // Flag that verification is needed
       
     } catch (error: any) {
       console.error('❌ Email signup failed:', error);
@@ -242,12 +247,28 @@ export function useAuth() {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await sendEmailVerification(currentUser);
+        console.log('✅ Verification email resent');
+        return true;
+      }
+      throw new Error('No user logged in');
+    } catch (error: any) {
+      console.error('❌ Failed to resend verification email:', error);
+      throw error;
+    }
+  };
+
   return {
     ...authState,
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
     logout,
-    refreshUserData
+    refreshUserData,
+    resendVerificationEmail
   };
 }

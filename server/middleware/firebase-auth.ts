@@ -12,6 +12,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
+    emailVerified: boolean;  // Firebase email verification status
     firstName: string;
     lastName: string;
     firebaseUid: string;
@@ -101,6 +102,19 @@ export const authenticateWithFirebase = async (
       });
     }
     
+    // SECURITY: Check email verification for non-privileged users
+    if (!user.isAdmin && !user.isAssigned && !firebaseUser.emailVerified) {
+      const duration = Date.now() - startTime;
+      console.log(`🔒 [FIREBASE-AUTH] Email verification required for user ${user.id} (${user.email})`);
+      
+      return res.status(403).json({ 
+        error: 'Email verification required',
+        details: 'Please verify your email address to access this feature',
+        requiresVerification: true,
+        email: user.email
+      });
+    }
+    
     // Check if account is locked
     if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
       const lockExpiry = new Date(user.lockedUntil);
@@ -135,6 +149,7 @@ export const authenticateWithFirebase = async (
     req.user = {
       id: user.id,
       email: user.email || '',
+      emailVerified: firebaseUser.emailVerified || false,
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       firebaseUid: firebaseUser.uid,
@@ -256,6 +271,7 @@ export const optionalFirebaseAuth = async (
         req.user = {
           id: user.id,
           email: user.email || '',
+          emailVerified: firebaseUser.emailVerified || false,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           firebaseUid: firebaseUser.uid,
@@ -317,6 +333,7 @@ export const authenticateFirebaseAdmin = async (
 /**
  * Helper function to check user subscription status
  * This should be implemented based on your Stripe integration
+ * NOTE: Email verification is checked separately in the main auth middleware
  */
 async function checkUserSubscription(userId: string): Promise<boolean> {
   try {
@@ -331,6 +348,7 @@ async function checkUserSubscription(userId: string): Promise<boolean> {
     }
     
     // Check if user has access using simplified logic
+    // NOTE: Email verification is enforced at the middleware level for security
     return user.isAdmin || user.isAssigned || user.hasPaid || 
            (user.trialEndsAt && new Date(user.trialEndsAt) > new Date());
   } catch (error) {

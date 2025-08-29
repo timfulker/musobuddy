@@ -6,6 +6,7 @@
 interface User {
   uid?: string;
   email?: string;
+  emailVerified?: boolean;  // Firebase email verification status
   isAdmin?: boolean;
   isAssigned?: boolean;
   isBetaTester?: boolean;
@@ -17,6 +18,27 @@ interface User {
   is_beta_tester?: boolean;
   trial_ends_at?: Date | string | null;
   has_paid?: boolean;
+}
+
+/**
+ * Check if user's email is verified (required for payment access)
+ * @param user - User object from auth context
+ * @returns boolean - true if email is verified or user doesn't need verification
+ */
+export function hasVerifiedEmail(user: User | null | undefined): boolean {
+  if (!user) return false;
+  
+  // Handle both snake_case and camelCase field names
+  const isAdmin = user.isAdmin || user.is_admin;
+  const isAssigned = user.isAssigned || user.is_assigned;
+  
+  // Admins and assigned accounts bypass email verification requirement
+  if (isAdmin || isAssigned) {
+    return true;
+  }
+  
+  // All other users must have verified email
+  return user.emailVerified === true;
 }
 
 /**
@@ -43,6 +65,12 @@ export function hasAccess(user: User | null | undefined): boolean {
   if (isAssigned) {
     console.log('✅ Assigned account has full access');
     return true;
+  }
+  
+  // SECURITY: Email verification required for payment access
+  if (!hasVerifiedEmail(user)) {
+    console.log('🔒 Access denied - email verification required');
+    return false;
   }
   
   // Check if still in trial period
@@ -131,6 +159,14 @@ export function getPaymentRedirectUrl(): string {
 }
 
 /**
+ * Get email verification redirect URL
+ * @returns string - URL to redirect for email verification
+ */
+export function getVerificationRedirectUrl(): string {
+  return '/auth/verify-email';
+}
+
+/**
  * Check if a route is protected and requires authentication/payment
  * @param path - Route path to check
  * @returns boolean - true if route requires authentication
@@ -171,6 +207,7 @@ export function isPublicRoute(path: string): boolean {
     '/signup',
     '/auth/forgot-password',
     '/auth/reset-password',
+    '/auth/verify-email',
     '/start-trial',
     '/terms-and-conditions',
     '/trial-success',
