@@ -251,7 +251,7 @@ export function registerBookingRoutes(app: Express) {
       - fee: Performance fee amount (numeric value only)
       - deposit: Deposit amount (numeric value only)
       - notes: Any additional notes or requirements
-      - performanceDuration: How long the performance should be
+      - performanceDuration: How long the performance should be (use exact format: "30 minutes", "1 hour", "2 hours", "2 x 45 min sets", etc.)
       - guestCount: Number of guests expected
       
       Only include fields where information is clearly stated. Return null for fields not mentioned.
@@ -270,6 +270,54 @@ export function registerBookingRoutes(app: Express) {
       
       // Clean up the extracted data
       const cleanedDetails: any = {};
+      
+      // Helper function to standardize performance duration
+      const standardizePerformanceDuration = (duration: string): string => {
+        if (!duration || typeof duration !== 'string') return duration;
+        
+        const cleaned = duration.toLowerCase().trim();
+        
+        // Duration mapping to match dropdown options exactly
+        const durationMap: { [key: string]: string } = {
+          // Standard durations
+          '30 minutes': '30 minutes',
+          '30 mins': '30 minutes',
+          '30min': '30 minutes',
+          '45 minutes': '45 minutes', 
+          '45 mins': '45 minutes',
+          '45min': '45 minutes',
+          '1 hour': '1 hour',
+          '1hr': '1 hour',
+          '1-hour': '1 hour',
+          '75 minutes': '75 minutes',
+          '75 mins': '75 minutes',
+          '90 minutes': '90 minutes',
+          '90 mins': '90 minutes',
+          '1.5 hours': '90 minutes',
+          '1.5hrs': '90 minutes',
+          '2 hours': '2 hours',
+          '2hrs': '2 hours', 
+          '2-hour': '2 hours',
+          '2.5 hours': '2.5 hours',
+          '2.5hrs': '2.5 hours',
+          '3 hours': '3 hours',
+          '3hrs': '3 hours',
+          '3.5 hours': '3.5 hours',
+          '3.5hrs': '3.5 hours', 
+          '4 hours': '4 hours',
+          '4hrs': '4 hours',
+          // Set formats
+          '2 x 45 min sets': '2 x 45 min sets',
+          '2x45 min sets': '2 x 45 min sets',
+          '2 x 1 hour sets': '2 x 1 hour sets', 
+          '2x1 hour sets': '2 x 1 hour sets',
+          '3 x 45 min sets': '3 x 45 min sets',
+          '3x45 min sets': '3 x 45 min sets'
+        };
+        
+        return durationMap[cleaned] || duration; // Return original if no match
+      };
+      
       for (const [key, value] of Object.entries(extractedDetails)) {
         if (value !== null && value !== '' && value !== undefined) {
           // Special handling for dates
@@ -283,6 +331,10 @@ export function registerBookingRoutes(app: Express) {
             } catch {
               cleanedDetails[key] = value;
             }
+          }
+          // Special handling for performance duration
+          else if (key === 'performanceDuration' && typeof value === 'string') {
+            cleanedDetails[key] = standardizePerformanceDuration(value);
           } else {
             cleanedDetails[key] = value;
           }
