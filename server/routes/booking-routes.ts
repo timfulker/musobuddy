@@ -11,16 +11,83 @@ import OpenAI from 'openai';
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
-  // Get all bookings for authenticated user
+  // Get bookings for authenticated user with display settings applied
   app.get('/api/bookings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      const bookings = await storage.getBookings(userId);
-      console.log(`✅ Retrieved ${bookings.length} bookings for user ${userId}`);
-      res.json(bookings);
+      
+      // Get user settings to apply display filters
+      const settings = await storage.getSettings(userId);
+      const allBookings = await storage.getBookings(userId);
+      
+      // Apply display settings filter
+      let filteredBookings = allBookings;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Start of today
+      
+      if (settings) {
+        const showFuture = settings.displayFutureBookings !== false; // Default true
+        const pastLimit = settings.displayPastBookings || 50; // Default 50
+        
+        // Separate past and future bookings
+        const pastBookings = allBookings.filter(b => 
+          b.eventDate && new Date(b.eventDate) < now
+        ).sort((a, b) => 
+          new Date(b.eventDate!).getTime() - new Date(a.eventDate!).getTime()
+        );
+        
+        const futureBookings = allBookings.filter(b => 
+          !b.eventDate || new Date(b.eventDate) >= now
+        ).sort((a, b) => {
+          if (!a.eventDate) return 1;
+          if (!b.eventDate) return -1;
+          return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+        });
+        
+        // Apply settings
+        filteredBookings = [];
+        
+        // Add future bookings if enabled
+        if (showFuture) {
+          filteredBookings.push(...futureBookings);
+        }
+        
+        // Add limited past bookings
+        if (pastLimit > 0) {
+          filteredBookings.push(...pastBookings.slice(0, pastLimit));
+        }
+        
+        // Sort combined list by date (future first, then recent past)
+        filteredBookings.sort((a, b) => {
+          if (!a.eventDate && !b.eventDate) return 0;
+          if (!a.eventDate) return 1;
+          if (!b.eventDate) return -1;
+          
+          const dateA = new Date(a.eventDate);
+          const dateB = new Date(b.eventDate);
+          const isAFuture = dateA >= now;
+          const isBFuture = dateB >= now;
+          
+          // Future bookings come first, sorted ascending
+          if (isAFuture && isBFuture) {
+            return dateA.getTime() - dateB.getTime();
+          }
+          // Past bookings come after, sorted descending (most recent first)
+          if (!isAFuture && !isBFuture) {
+            return dateB.getTime() - dateA.getTime();
+          }
+          // Future before past
+          return isAFuture ? -1 : 1;
+        });
+        
+        console.log(`✅ Applied display settings: ${filteredBookings.length} of ${allBookings.length} bookings shown (future: ${showFuture}, past limit: ${pastLimit})`);
+      }
+      
+      console.log(`✅ Retrieved ${filteredBookings.length} bookings for user ${userId}`);
+      res.json(filteredBookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
       res.status(500).json({ error: 'Failed to fetch bookings' });
