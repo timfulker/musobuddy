@@ -27,6 +27,48 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
+  // Batch fetch multiple bookings by IDs - optimized for conflict resolution
+  app.post('/api/bookings/batch', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { bookingIds } = req.body;
+      if (!bookingIds || !Array.isArray(bookingIds)) {
+        return res.status(400).json({ error: 'bookingIds array is required' });
+      }
+
+      // Limit to prevent abuse
+      const limitedIds = bookingIds.slice(0, 100);
+      
+      // Fetch all bookings in one query
+      const bookings = await Promise.all(
+        limitedIds.map(async (id) => {
+          try {
+            const booking = await storage.getBooking(id);
+            // Verify ownership
+            if (booking && booking.userId === userId) {
+              return booking;
+            }
+            return null;
+          } catch (error) {
+            console.error(`Failed to fetch booking ${id}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const validBookings = bookings.filter(Boolean);
+      console.log(`✅ Batch fetched ${validBookings.length} bookings for user ${userId}`);
+      res.json(validBookings);
+    } catch (error) {
+      console.error('❌ Failed to batch fetch bookings:', error);
+      res.status(500).json({ error: 'Failed to batch fetch bookings' });
+    }
+  });
+
   // Create new booking (requires subscription)
   app.post('/api/bookings', 
     authenticateWithFirebase,

@@ -60,38 +60,37 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
     gcTime: 300000, // Keep in cache for 5 minutes
   });
 
-  // Fetch conflicting booking details using apiRequest for proper authentication
+  // Fetch conflicting booking details in batch for better performance
   const conflictingBookingIds = conflicts.map(c => c.conflictingBookingId);
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: [`/api/bookings/batch`, conflictingBookingIds.sort().join(',')],
     queryFn: async () => {
       if (!conflictingBookingIds.length) return [];
       
-      // Use apiRequest for proper authentication
-      const promises = conflictingBookingIds.map(async (id) => {
-        try {
-          const response = await apiRequest(`/api/bookings/${id}`);
-          return await response.json();
-        } catch (error) {
-          console.error(`Failed to fetch booking ${id}:`, error);
-          return null;
-        }
+      // Use batch endpoint for efficiency - single request instead of 60+ requests
+      const response = await apiRequest('/api/bookings/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingIds: conflictingBookingIds })
       });
       
-      const results = await Promise.all(promises);
-      return results.filter(Boolean);
+      if (!response.ok) {
+        throw new Error('Failed to fetch bookings');
+      }
+      
+      return await response.json();
     },
     enabled: showResolutionModal && conflictingBookingIds.length > 0,
-    staleTime: 60000, // Cache for 1 minute
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 300000, // Cache for 5 minutes - conflicts don't change that often
+    gcTime: 600000, // Keep in cache for 10 minutes
   });
 
-  // Refetch when modal opens to ensure fresh data
+  // Open modal without refetching - data is already cached
   const handleResolveClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowResolutionModal(true);
-    refetchBooking(); // Force fresh data fetch
+    // Removed refetchBooking() - use cached data for performance
   };
 
   if (!conflicts || conflicts.length === 0) {
