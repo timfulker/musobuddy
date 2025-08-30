@@ -52,12 +52,12 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
     setLocation(`/new-booking?edit=${booking.id}`);
   };
 
-  // Fetch the current booking data for the resolution modal
+  // Fetch the current booking data for the resolution modal - optimized caching
   const { data: currentBooking, refetch: refetchBooking } = useQuery({
     queryKey: [`/api/bookings/${bookingId}`],
     enabled: showResolutionModal,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache (v5 property name)
+    staleTime: 60000, // Cache for 1 minute instead of always fresh
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
   // Fetch conflicting booking details using apiRequest for proper authentication
@@ -82,8 +82,8 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       return results.filter(Boolean);
     },
     enabled: showResolutionModal && conflictingBookingIds.length > 0,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60000, // Cache for 1 minute
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
   // Refetch when modal opens to ensure fresh data

@@ -6,20 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import ConflictIndicator from '@/components/ConflictIndicator';
 import { useQuery } from '@tanstack/react-query';
+import { memo, useMemo } from 'react';
 
 interface MobileBookingCardProps {
   booking: any;
   conflicts?: any[];
 }
 
-export default function MobileBookingCard({ booking, conflicts = [] }: MobileBookingCardProps) {
-  // Fetch invoices data to show invoice status
+const MobileBookingCard = memo(function MobileBookingCard({ booking, conflicts = [] }: MobileBookingCardProps) {
+  // Fetch invoices data to show invoice status - optimized with caching
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
+    staleTime: 300000, // Cache for 5 minutes
     retry: 2,
   });
 
-  // Invoice status helper
+  // Invoice status helper - memoized for performance
+  const invoiceStatusIcon = useMemo(() => {
+    return getInvoiceStatusIcon(booking.id);
+  }, [invoices, booking.id]);
+
   const getInvoiceStatusIcon = (bookingId: number) => {
     const invoice = invoices.find((inv: any) => inv.bookingId === bookingId);
     
@@ -131,7 +137,7 @@ export default function MobileBookingCard({ booking, conflicts = [] }: MobileBoo
               </div>
             )}
             {/* Invoice Status Badge */}
-            {getInvoiceStatusIcon(booking.id)}
+            {invoiceStatusIcon}
           </div>
         </div>
 
@@ -170,4 +176,6 @@ export default function MobileBookingCard({ booking, conflicts = [] }: MobileBoo
       </CardContent>
     </Card>
   );
-}
+});
+
+export default MobileBookingCard;

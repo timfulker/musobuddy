@@ -17,11 +17,11 @@ export function NotificationSoundManager() {
   // Disable polling in preview environment
   const isPreview = window.location.hostname.includes('replit.dev');
 
-  // Poll for notification counts
+  // Poll for notification counts - optimized for performance
   const { data: notificationCounts } = useQuery<NotificationCounts>({
     queryKey: ['/api/notifications/counts'],
-    refetchInterval: isPreview ? false : 10000, // Disable in preview
-    staleTime: 5000,
+    refetchInterval: isPreview ? false : 30000, // Reduced from 10s to 30s for performance
+    staleTime: 20000, // Increased from 5s to 20s to reduce server load
     enabled: !isPreview, // Disable query in preview
   });
 

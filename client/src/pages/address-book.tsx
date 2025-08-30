@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -186,8 +186,8 @@ export default function AddressBook() {
     setViewingClient(client);
   };
 
-  // Filter and sort clients
-  const filteredAndSortedClients = clients
+  // Filter and sort clients - optimized with memoization
+  const filteredAndSortedClients = useMemo(() => clients
     .filter((client: Client) => {
       // Search filter
       const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,7 +261,7 @@ export default function AddressBook() {
       } else {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
-    });
+    }), [clients, searchQuery, clientFilter, sortBy, sortOrder]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedClients.length / itemsPerPage);
