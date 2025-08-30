@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a platform designed to streamline administrative tasks for musicians, such as bookings, contracts, and invoices. Its vision is to become a user-friendly, scalable, and globally leading solution for music career management, offering an integrated suite of tools including AI-powered email parsing and response generation, thereby enhancing musicians' professional lives and market potential.
+MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, encompassing bookings, contracts, and invoicing. Its primary goal is to offer a user-friendly, scalable, and globally leading solution for music career management. Key capabilities include AI-powered email parsing and response generation, aiming to enhance musicians' professional lives, increase efficiency, and maximize their market potential. The project envisions a future where musicians can focus more on their art and less on administrative overhead, positioning MusoBuddy as an indispensable tool in the music industry.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -33,7 +33,7 @@ Mobile strategy: Implementing enhanced responsive design (Option 1) - single app
 Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
 Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings gets AI re-processing rather than automatic detection of problematic bookings.
 Extract details from messages: Manual "Extract Details" button on client replies in conversations. Shows review dialog with append/replace options for each field. Notes default to append mode while other fields default to replace. Shows preview of final value for append operations. User values safety with full review before applying changes.
-Bookings page sort persistence: Sort criteria (field and direction) are saved to localStorage and restored when returning to bookings page, providing intuitive UX where users don't need to re-select their preferred sort order after editing bookings.
+Bookings page sort persistence: Sort criteria (field and direction) are saved to localStorage and restored when returning to bookings page, providing intuitive UX where users doesn't need to re-select their preferred sort order after editing bookings.
 Booking summary gig sheets: New "Summary" button on booking cards opens comprehensive gig information in new tab with print-friendly layout. Organized by categories (Event Details, Venue Information, Client Information, Financial Details, Setup & Performance, Notes) and only displays populated fields. Includes optional Google Maps integration for venue location.
 Conversation window original inquiry: Original client inquiry (stored in originalEmailContent field) displays as the first message in conversation threads with distinctive green styling and "Original Inquiry" badge. Provides complete conversation context from initial contact through all subsequent messages.
 Conversation to booking navigation: "Edit Booking" button added to conversation header for easy navigation from conversation history to booking form. Provides quick access to edit booking details while viewing client conversations.
@@ -50,34 +50,32 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast. Dynamic PDF theming.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast and supporting dynamic PDF theming.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
 
 ### Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Authentication**: Pure Firebase authentication with Google Sign-in and email/password options. Firebase Admin SDK for token verification. Subscription-based access control with Firebase middleware.
+- **Authentication**: Pure Firebase authentication (Google Sign-in, email/password) with Firebase Admin SDK for token verification and subscription-based access control.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails, parsing, and template management.
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Enhanced responsive design, simplified action buttons, centralized messaging, auto-scroll to upcoming bookings, consistent sidebar navigation, simplified branding, enhanced email template display, and a dual client portal system for signing and collaboration.
-- **User Management**: Two-tier system (Admin Accounts, User Accounts).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms.
-- **Document Management**: Multi-document upload system per booking with categorization and secure cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding.
+- **UI/UX Decisions**: Responsive design (mobile/desktop), simplified action buttons, centralized messaging, auto-scrolling, consistent sidebar navigation, streamlined branding, enhanced email templates, and a dual client portal system.
+- **User Management**: Two-tier system (Admin, User).
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, and simplified travel expense integration.
+- **Document Management**: Multi-document upload, categorization, and secure cloud storage.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding with page break handling.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-- **System Isolation**: Critical components (invoice/contract generation) designed as isolated systems for reliability.
-- **Email Processing**: Comprehensive queue system to eliminate race conditions, process emails sequentially with delays for AI accuracy, using mutex locking, duplicate detection, and retry logic. Centralized "Messages" page for all client communications.
-- **AI-powered Workflows**: Streamlined unparseable message workflow, manual booking re-processing, and manual detail extraction from messages with review dialog.
-- **Calendar Sync**: ID-based Google Calendar sync for efficiency and cost optimization.
-- **Travel Expense Management**: Simplified system where travel expenses are always included in the performance fee display as a single amount.
-- **Encore Booking Management**: Toggle switch for clear application status.
-- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration with real-time bidirectional sync.
+- **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
+- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page.
+- **AI-powered Workflows**: Streamlined unparseable message handling, manual booking re-processing, and manual detail extraction with review dialog.
+- **Client Portal**: Dual-portal system for contract signing (mandatory fields) and post-signing collaboration (dynamic form with real-time bidirectional sync).
+- **Encore Booking Management**: Clear toggle switch for application status.
 
 ## External Dependencies
 
