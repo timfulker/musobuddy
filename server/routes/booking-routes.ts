@@ -28,9 +28,10 @@ export function registerBookingRoutes(app: Express) {
       const now = new Date();
       now.setHours(0, 0, 0, 0); // Start of today
       
-      if (settings) {
+      if (settings && settings.bookingDisplayLimit !== 'all') {
+        // Only apply filtering if not set to 'all'
         const showFuture = settings.displayFutureBookings !== false; // Default true
-        const pastLimit = settings.displayPastBookings || 50; // Default 50
+        const pastLimit = settings.bookingDisplayLimit === '50' ? 50 : 50; // Use bookingDisplayLimit setting
         
         // Separate past and future bookings
         const pastBookings = allBookings.filter(b => 
@@ -83,7 +84,9 @@ export function registerBookingRoutes(app: Express) {
           return isAFuture ? -1 : 1;
         });
         
-        console.log(`✅ Applied display settings: ${filteredBookings.length} of ${allBookings.length} bookings shown (future: ${showFuture}, past limit: ${pastLimit})`);
+        console.log(`✅ Applied display settings: ${filteredBookings.length} of ${allBookings.length} bookings shown (limit: ${pastLimit})`);
+      } else if (settings?.bookingDisplayLimit === 'all') {
+        console.log(`✅ Showing all ${allBookings.length} bookings (display limit: all)`);
       }
       
       console.log(`✅ Retrieved ${filteredBookings.length} bookings for user ${userId}`);

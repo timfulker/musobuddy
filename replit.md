@@ -63,17 +63,16 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design (mobile/desktop), simplified action buttons, centralized messaging, auto-scrolling, consistent sidebar navigation, streamlined branding, enhanced email templates, and a dual client portal system.
+- **UI/UX Decisions**: Responsive design (mobile/desktop), simplified action buttons, centralized messaging, auto-scrolling, consistent sidebar navigation, streamlined branding, enhanced email templates, and a dual client portal system. Luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, and simplified travel expense integration.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, and manual re-processing.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and luminance-aware branding with page break handling.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and page break handling.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
-- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page.
-- **AI-powered Workflows**: Streamlined unparseable message handling, manual booking re-processing, and manual detail extraction with review dialog.
+- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
 - **Client Portal**: Dual-portal system for contract signing (mandatory fields) and post-signing collaboration (dynamic form with real-time bidirectional sync).
 - **Encore Booking Management**: Clear toggle switch for application status.
 
