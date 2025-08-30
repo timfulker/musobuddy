@@ -66,7 +66,7 @@ export default function WorkflowStageOverride({ booking, onStageUpdate }: Workfl
           className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
           onClick={(e) => {
             e.stopPropagation();
-            e.preventDefault();
+            setIsOpen(true);
           }}
         >
           <Settings className="w-3 h-3 mr-1" />

@@ -80,11 +80,7 @@ export default function WorkflowStageMeter({ booking, className = "" }: Workflow
         })}
         
         {/* Stage label and override button */}
-        <div 
-          className="ml-2 flex items-center gap-2"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
+        <div className="ml-2 flex items-center gap-2">
           <span className="text-xs text-gray-600 font-medium">
             {getStageDefinition(currentStage)?.label || 'Initial'}
           </span>

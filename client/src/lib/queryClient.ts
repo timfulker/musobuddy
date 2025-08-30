@@ -1,6 +1,38 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { auth } from '@/lib/firebase';
 
+// Token cache with 55 minute expiry (Firebase tokens expire after 1 hour)
+let tokenCache: { token: string; expiry: number } | null = null;
+
+async function getIdToken(forceRefresh = false): Promise<string | null> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return null;
+
+  // Check if we have a valid cached token
+  if (!forceRefresh && tokenCache && tokenCache.expiry > Date.now()) {
+    return tokenCache.token;
+  }
+
+  try {
+    // Get a fresh token from Firebase (only when needed)
+    const token = await currentUser.getIdToken(forceRefresh);
+    // Cache the token for 55 minutes
+    tokenCache = {
+      token,
+      expiry: Date.now() + 55 * 60 * 1000
+    };
+    return token;
+  } catch (error) {
+    console.warn('Failed to get Firebase ID token:', error);
+    return null;
+  }
+}
+
+// Clear token cache on auth state change
+auth.onAuthStateChanged(() => {
+  tokenCache = null;
+});
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -26,16 +58,10 @@ export async function apiRequest(
   let body = options?.body;
   const headers = options?.headers || {};
   
-  // Get Firebase ID token for authentication
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    try {
-      const idToken = await currentUser.getIdToken();
-      headers['Authorization'] = `Bearer ${idToken}`;
-    } catch (error) {
-      console.warn('Failed to get Firebase ID token:', error);
-      // Continue without token - let the backend handle the 401
-    }
+  // Get Firebase ID token for authentication (now cached)
+  let idToken = await getIdToken();
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`;
   }
   
   if (body) {
@@ -56,6 +82,26 @@ export async function apiRequest(
     body,
   });
 
+  // If we get a 401, try once more with a fresh token
+  if (res.status === 401 && auth.currentUser) {
+    idToken = await getIdToken(true); // Force refresh
+    if (idToken) {
+      headers['Authorization'] = `Bearer ${idToken}`;
+      const retryRes = await fetch(url, {
+        method,
+        headers,
+        body,
+      });
+      
+      if (retryRes.status === 401) {
+        throw new Error("Your session has expired. Please log in again to continue.");
+      }
+      
+      await throwIfResNotOk(retryRes);
+      return retryRes;
+    }
+  }
+
   // Check for authentication errors and provide user-friendly messages
   if (res.status === 401) {
     throw new Error("Your session has expired. Please log in again to continue.");
@@ -73,22 +119,27 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Query request to: ${queryKey[0]}
     
-    // Get Firebase ID token for authentication
+    // Get Firebase ID token for authentication (now cached)
     const headers: HeadersInit = {};
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      try {
-        const idToken = await currentUser.getIdToken();
-        headers['Authorization'] = `Bearer ${idToken}`;
-      } catch (error) {
-        console.warn('Failed to get Firebase ID token for query:', error);
-        // Continue without token - let the backend handle the 401
-      }
+    let idToken = await getIdToken();
+    if (idToken) {
+      headers['Authorization'] = `Bearer ${idToken}`;
     }
     
-    const res = await fetch(queryKey[0] as string, {
+    let res = await fetch(queryKey[0] as string, {
       headers,
     });
+    
+    // If we get a 401, try once more with a fresh token
+    if (res.status === 401 && auth.currentUser) {
+      idToken = await getIdToken(true); // Force refresh
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+        res = await fetch(queryKey[0] as string, {
+          headers,
+        });
+      }
+    }
     
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
