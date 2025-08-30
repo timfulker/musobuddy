@@ -229,19 +229,43 @@ export default function UnifiedBookings() {
     return null;
   };
 
-  // Fetch data for both views
+  // Determine if we should fetch ALL bookings (when searching/filtering)
+  const shouldFetchAll = searchQuery.length >= 2 || statusFilter !== 'all' || 
+                         dateFilter !== 'all' || conflictFilter;
+
+  // Build query parameters for the all endpoint
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('search', searchQuery);
+    if (statusFilter !== 'all') params.append('status', statusFilter);
+    if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
+    if (conflictFilter) params.append('hasConflict', 'true');
+    // Don't apply limit when actively searching/filtering
+    if (searchQuery || statusFilter !== 'all' || dateFilter !== 'all') {
+      params.append('applyLimit', 'false');
+    }
+    return params.toString();
+  };
+
+  // Fetch data - use different endpoint based on whether we're searching/filtering
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-    queryKey: ["/api/bookings"],
+    queryKey: shouldFetchAll 
+      ? ["/api/bookings/all", searchQuery, statusFilter, dateFilter, conflictFilter]
+      : ["/api/bookings"],
     retry: 2,
     queryFn: async () => {
-      const response = await apiRequest('/api/bookings');
+      const endpoint = shouldFetchAll 
+        ? `/api/bookings/all?${buildQueryParams()}`
+        : '/api/bookings';
+      
+      const response = await apiRequest(endpoint);
       const data = await response.json();
       
-      // Debug: Check what venue data we have for Encore bookings
-      const encoreBookings = data.filter((booking: any) => booking.applyNowLink);
-      if (encoreBookings.length > 0) {
-        console.log(`🎵 Bookings page - Found ${encoreBookings.length} Encore bookings. First one:`, encoreBookings[0]);
-        console.log(`🎵 Bookings page - Venue fields: venue="${encoreBookings[0].venue}", venueAddress="${encoreBookings[0].venueAddress}", venue_address="${encoreBookings[0].venue_address}"`);
+      // Log what we're fetching
+      if (shouldFetchAll) {
+        console.log(`🔍 Fetching ALL bookings with filters - Search: "${searchQuery}", Status: ${statusFilter}, Date: ${dateFilter}`);
+      } else {
+        console.log(`✅ Fetching default view (future + last 50)`);
       }
       
       return data;
@@ -617,6 +641,15 @@ export default function UnifiedBookings() {
     if (!bookings || !Array.isArray(bookings)) return [];
 
     const validBookings = validateBookingArray(bookings) ? bookings : [];
+    
+    // If we're using the /all endpoint with filters, the server already filtered
+    // So we only need to apply frontend filtering for the default view
+    if (shouldFetchAll) {
+      // Server already filtered, just sort
+      return validBookings;
+    }
+    
+    // Apply frontend filtering only for default view
     let filtered = validBookings.filter((booking) => {
       // Enhanced search - includes more fields
       const searchLower = searchQuery.toLowerCase();
@@ -688,8 +721,9 @@ export default function UnifiedBookings() {
       return matchesSearch && matchesStatus && matchesDate && matchesConflict;
     });
 
-    // Sort the filtered results
-    filtered.sort((a: any, b: any) => {
+    // Sort the results (whether server-filtered or client-filtered)
+    const toSort = shouldFetchAll ? validBookings : filtered;
+    toSort.sort((a: any, b: any) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
       
@@ -710,7 +744,7 @@ export default function UnifiedBookings() {
       return 0;
     });
 
-    return filtered;
+    return shouldFetchAll ? toSort : filtered;
   }, [bookings, searchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
 
   const toggleSelectAll = () => {

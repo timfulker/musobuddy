@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, encompassing bookings, contracts, and invoicing. Its primary goal is to offer a user-friendly, scalable, and globally leading solution for music career management. Key capabilities include AI-powered email parsing and response generation, aiming to enhance musicians' professional lives, increase efficiency, and maximize their market potential. The project envisions a future where musicians can focus more on their art and less on administrative overhead, positioning MusoBuddy as an indispensable tool in the music industry.
+MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, encompassing bookings, contracts, and invoicing. Its primary goal is to offer a user-friendly, scalable, and globally leading solution for music career management. Key capabilities include AI-powered email parsing and response generation, aiming to free musicians from administrative overhead so they can focus on their art. The project envisions becoming the global standard for music career management, significantly reducing administrative burden for musicians.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -63,11 +63,11 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design (mobile/desktop), simplified action buttons, centralized messaging, auto-scrolling, consistent sidebar navigation, streamlined branding, enhanced email templates, and a dual client portal system. Luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined action buttons, centralized messaging, auto-scrolling on booking pages, consistent sidebar navigation, simplified branding, enhanced email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, and manual re-processing.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, and manual re-processing options.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and page break handling.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and robust page break handling.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
