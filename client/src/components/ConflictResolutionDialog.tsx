@@ -67,57 +67,50 @@ export default function ConflictResolutionDialog({
     }
   });
 
-  // Determine conflict severity based on time overlaps
+  // Determine conflict severity - optimized to check only first few pairs
   useEffect(() => {
     if (conflictingBookings.length >= 2) {
       let hasTimeOverlap = false;
       let date = '';
       
-      // Check each pair for time overlaps
-      for (let i = 0; i < conflictingBookings.length; i++) {
-        for (let j = i + 1; j < conflictingBookings.length; j++) {
-          const booking1 = conflictingBookings[i];
-          const booking2 = conflictingBookings[j];
+      // PERFORMANCE FIX: Only check first 5 bookings to determine severity
+      // This avoids O(n²) complexity with large conflict sets
+      const bookingsToCheck = conflictingBookings.slice(0, 5);
+      
+      // Check limited pairs for time overlaps
+      for (let i = 0; i < bookingsToCheck.length && !hasTimeOverlap; i++) {
+        for (let j = i + 1; j < bookingsToCheck.length && !hasTimeOverlap; j++) {
+          const booking1 = bookingsToCheck[i];
+          const booking2 = bookingsToCheck[j];
           
           // Set conflict date from first booking
           if (!date && booking1.eventDate) {
             date = new Date(booking1.eventDate).toISOString().split('T')[0];
           }
           
-          // Check if both bookings have start times (end times are optional)
-          if (booking1.eventTime && booking2.eventTime) {
-            // Parse start times
-            const [start1Hours, start1Minutes] = booking1.eventTime.split(':').map(Number);
-            const [start2Hours, start2Minutes] = booking2.eventTime.split(':').map(Number);
-            
-            const start1 = start1Hours * 60 + start1Minutes;
-            const start2 = start2Hours * 60 + start2Minutes;
-            
-            // CRITICAL: If either booking lacks end time, treat as hard conflict
-            // No assumptions about duration - both start and end times required
-            if (!booking1.eventEndTime || !booking2.eventEndTime) {
-              hasTimeOverlap = true; // Treat as hard conflict
-              break;
-            }
-            
-            const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
-            const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
-            
-            const end1 = end1Hours * 60 + end1Minutes;
-            const end2 = end2Hours * 60 + end2Minutes;
-            
-            // Check for actual time overlap
-            if (start1 < end2 && end1 > start2) {
-              hasTimeOverlap = true;
-              break;
-            }
-          } else if (!booking1.eventTime || !booking2.eventTime) {
-            // Only treat as hard conflict if NO start times at all
+          // Quick check: if times are missing, it's a hard conflict
+          if (!booking1.eventTime || !booking2.eventTime ||
+              !booking1.eventEndTime || !booking2.eventEndTime) {
             hasTimeOverlap = true;
             break;
           }
+          
+          // Parse and check times only if all are present
+          const [start1Hours, start1Minutes] = booking1.eventTime.split(':').map(Number);
+          const [start2Hours, start2Minutes] = booking2.eventTime.split(':').map(Number);
+          const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
+          const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
+          
+          const start1 = start1Hours * 60 + start1Minutes;
+          const start2 = start2Hours * 60 + start2Minutes;
+          const end1 = end1Hours * 60 + end1Minutes;
+          const end2 = end2Hours * 60 + end2Minutes;
+          
+          // Check for actual time overlap
+          if (start1 < end2 && end1 > start2) {
+            hasTimeOverlap = true;
+          }
         }
-        if (hasTimeOverlap) break;
       }
       
       setConflictSeverity(hasTimeOverlap ? 'hard' : 'soft');

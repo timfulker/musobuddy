@@ -27,7 +27,7 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
-  // Batch fetch multiple bookings by IDs - optimized for conflict resolution
+  // Batch fetch multiple bookings by IDs - optimized single database query
   app.post('/api/bookings/batch', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
@@ -43,25 +43,10 @@ export function registerBookingRoutes(app: Express) {
       // Limit to prevent abuse
       const limitedIds = bookingIds.slice(0, 100);
       
-      // Fetch all bookings in one query
-      const bookings = await Promise.all(
-        limitedIds.map(async (id) => {
-          try {
-            const booking = await storage.getBooking(id);
-            // Verify ownership
-            if (booking && booking.userId === userId) {
-              return booking;
-            }
-            return null;
-          } catch (error) {
-            console.error(`Failed to fetch booking ${id}:`, error);
-            return null;
-          }
-        })
-      );
-
-      const validBookings = bookings.filter(Boolean);
-      console.log(`✅ Batch fetched ${validBookings.length} bookings for user ${userId}`);
+      // Fetch all bookings in ONE optimized database query
+      const validBookings = await storage.getBookingsByIds(limitedIds, userId);
+      
+      console.log(`✅ Batch fetched ${validBookings.length} bookings in single query for user ${userId}`);
       res.json(validBookings);
     } catch (error) {
       console.error('❌ Failed to batch fetch bookings:', error);

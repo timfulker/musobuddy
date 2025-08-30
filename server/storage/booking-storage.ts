@@ -294,6 +294,26 @@ export class BookingStorage {
     }));
   }
 
+  // Batch fetch multiple bookings by IDs - optimized single query
+  async getBookingsByIds(bookingIds: number[], userId: string) {
+    if (!bookingIds || bookingIds.length === 0) {
+      return [];
+    }
+    
+    const results = await db.select().from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        sql`${bookings.id} = ANY(${bookingIds})`
+      ));
+    
+    return results.map(booking => ({
+      ...booking,
+      eventDate: booking.eventDate ? new Date(booking.eventDate) : null,
+      createdAt: booking.createdAt ? new Date(booking.createdAt) : null,
+      updatedAt: booking.updatedAt ? new Date(booking.updatedAt) : null,
+    }));
+  }
+
   async getBookingsByDateRange(userId: string, startDate: Date, endDate: Date) {
     const results = await db.select().from(bookings)
       .where(and(
