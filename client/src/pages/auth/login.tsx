@@ -42,15 +42,28 @@ export default function LoginPage() {
       console.log('🔥 Attempting login...');
       await signInWithEmail(data.email, data.password);
       
-      console.log('✅ Login successful, redirecting to dashboard...');
+      console.log('✅ Login successful, checking payment status...');
       
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       
-      // Redirect to dashboard after successful login
-      window.location.href = '/dashboard';
+      // Check if user needs to complete payment setup
+      const response = await fetch('/api/subscription/watchdog-status');
+      if (response.ok) {
+        const status = await response.json();
+        if (!status.hasValidSubscription) {
+          console.log('🔄 User needs to complete payment setup');
+          window.location.href = '/subscription-update-payment';
+        } else {
+          console.log('✅ User has valid subscription, redirecting to dashboard');
+          window.location.href = '/dashboard';
+        }
+      } else {
+        // Fallback - go to dashboard and let server handle redirect
+        window.location.href = '/dashboard';
+      }
       
     } catch (error: any) {
       console.error('❌ Login failed:', error);
@@ -175,8 +188,23 @@ export default function LoginPage() {
               onClick={async () => {
                 try {
                   await signInWithGoogle();
-                  console.log('✅ Google login successful, redirecting to dashboard...');
-                  window.location.href = '/dashboard';
+                  console.log('✅ Google login successful, checking payment status...');
+                  
+                  // Check if user needs to complete payment setup
+                  const response = await fetch('/api/subscription/watchdog-status');
+                  if (response.ok) {
+                    const status = await response.json();
+                    if (!status.hasValidSubscription) {
+                      console.log('🔄 User needs to complete payment setup');
+                      window.location.href = '/subscription-update-payment';
+                    } else {
+                      console.log('✅ User has valid subscription, redirecting to dashboard');
+                      window.location.href = '/dashboard';
+                    }
+                  } else {
+                    // Fallback - go to dashboard and let server handle redirect
+                    window.location.href = '/dashboard';
+                  }
                 } catch (error) {
                   console.error('❌ Google login failed:', error);
                 }
