@@ -13,6 +13,7 @@ interface User {
 const ADMIN_BYPASS_EMAILS = [
   'timfulker@gmail.com', 
   'timfulkermusic@gmail.com', 
+  'musobuddy@gmail.com',
   'jake.stanley@musobuddy.com'
 ];
 

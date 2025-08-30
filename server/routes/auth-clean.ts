@@ -6,7 +6,7 @@ import { authenticateWithFirebase, type AuthenticatedRequest } from '../middlewa
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
-  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'musobuddy@gmail.com', 'jake.stanley@musobuddy.com'];
   return allowedBypassEmails.includes(email);
 }
 
