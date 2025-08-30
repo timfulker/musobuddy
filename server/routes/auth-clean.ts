@@ -418,7 +418,6 @@ export function setupAuthRoutes(app: Express) {
         isAssigned: false, // Not an assigned account
         trialEndsAt: trialEndsAt, // Set trial expiration
         hasPaid: false, // Hasn't paid yet
-        onboardingCompleted: true, // Skip onboarding wizard - go straight to payment
         // No tier field - using simplified access control
         stripeCustomerId: null, // Will be set during subscription creation
         signupIpAddress: signupIP,

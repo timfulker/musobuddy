@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { isPublicRoute } from "@/lib/access-control";
+import { isPublicRoute, hasAccess } from "@/lib/access-control";
 import OnboardingWizard from "./onboarding-wizard";
 
 interface OnboardingWrapperProps {
@@ -43,11 +43,13 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // 2. User hasn't dismissed the wizard
   // 3. Not in the middle of signup flow (prevents interference with payment redirect)
   // 4. Not on a public route (prevents wizard showing on landing page, etc.)
+  // 5. User has access (payment has been set up) - wizard only shows AFTER payment
   const shouldShowWizard = onboardingStatus && 
     !onboardingStatus.onboardingCompleted && 
     !wizardDismissed &&
     !isSignupInProgress &&
-    !isPublicRoute(location);
+    !isPublicRoute(location) &&
+    hasAccess(user); // Only show wizard if user has paid/has access
 
   if (shouldShowWizard) {
     return (
