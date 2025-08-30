@@ -299,7 +299,15 @@ export default function SignupPage() {
                   variant="outline"
                   type="button"
                   className="w-full mt-4"
-                  onClick={signInWithGoogle}
+                  onClick={async () => {
+                    try {
+                      await signInWithGoogle();
+                      console.log('✅ Google signup successful, redirecting to payment setup...');
+                      window.location.href = '/subscription-update-payment';
+                    } catch (error) {
+                      console.error('❌ Google signup failed:', error);
+                    }
+                  }}
                   disabled={firebaseLoading || loading}
                 >
                   {firebaseLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
