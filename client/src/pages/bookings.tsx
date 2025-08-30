@@ -248,7 +248,7 @@ export default function UnifiedBookings() {
   };
 
   // Fetch data - use different endpoint based on whether we're searching/filtering
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery({
     queryKey: shouldFetchAll 
       ? ["/api/bookings/all", searchQuery, statusFilter, dateFilter, conflictFilter]
       : ["/api/bookings"],
@@ -258,19 +258,38 @@ export default function UnifiedBookings() {
         ? `/api/bookings/all?${buildQueryParams()}`
         : '/api/bookings';
       
+      // Log what we're fetching
+      console.log(`🎯 Attempting to fetch from: ${endpoint}`);
+      console.log(`🎯 shouldFetchAll=${shouldFetchAll}, search="${searchQuery}", status=${statusFilter}, date=${dateFilter}`);
+      
       const response = await apiRequest(endpoint);
+      
+      if (!response.ok) {
+        console.error(`❌ Failed to fetch bookings: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`❌ Error response:`, errorText);
+        throw new Error(`Failed to fetch bookings: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
-      // Log what we're fetching
+      // Log what we got
       if (shouldFetchAll) {
-        console.log(`🔍 Fetching ALL bookings with filters - Search: "${searchQuery}", Status: ${statusFilter}, Date: ${dateFilter}`);
+        console.log(`🔍 Got ${data.length} bookings from ALL endpoint`);
       } else {
-        console.log(`✅ Fetching default view (future + last 50)`);
+        console.log(`✅ Got ${data.length} bookings from default endpoint`);
       }
       
       return data;
     },
-  }) as { data: Enquiry[], isLoading: boolean };
+  }) as { data: Enquiry[], isLoading: boolean, error: any };
+
+  // Log any query errors
+  useEffect(() => {
+    if (bookingsError) {
+      console.error('❌ Bookings query error:', bookingsError);
+    }
+  }, [bookingsError]);
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],

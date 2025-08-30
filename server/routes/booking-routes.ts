@@ -264,6 +264,145 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Delete booking
+  // Advanced search/filter endpoint - MUST come before :id routes
+  app.get('/api/bookings/all', 
+    authenticateWithFirebase,
+    requireSubscriptionOrAdmin,
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Get query parameters
+      const search = (req.query.search as string || '').toLowerCase();
+      const status = req.query.status as string;
+      const dateFilter = req.query.dateFilter as string;
+      const hasConflict = req.query.hasConflict === 'true';
+      const applyLimit = req.query.applyLimit !== 'false'; // Default true for performance
+
+      console.log(`🔍 Search endpoint called - search: "${search}", status: ${status}, date: ${dateFilter}`);
+
+      // Get ALL bookings for comprehensive search/filter
+      const allBookings = await storage.getBookings(userId);
+      
+      // Apply filters
+      let filteredBookings = allBookings;
+
+      // Search filter - searches all fields
+      if (search.length >= 2) {
+        filteredBookings = filteredBookings.filter(booking => {
+          // Search in client name
+          if (booking.clientName?.toLowerCase().includes(search)) return true;
+          // Search in venue
+          if (booking.venue?.toLowerCase().includes(search)) return true;
+          // Search in venue address
+          if (booking.venueAddress?.toLowerCase().includes(search)) return true;
+          // Search in title
+          if (booking.title?.toLowerCase().includes(search)) return true;
+          // Search in notes
+          if (booking.notes?.toLowerCase().includes(search)) return true;
+          // Search in event type
+          if (booking.eventType?.toLowerCase().includes(search)) return true;
+          // Search in gig type
+          if (booking.gigType?.toLowerCase().includes(search)) return true;
+          // Search by fee amount
+          if (booking.fee?.includes(search)) return true;
+          // Search by client phone
+          if (booking.clientPhone?.includes(search)) return true;
+          // Search by client email
+          if (booking.clientEmail?.toLowerCase().includes(search)) return true;
+          return false;
+        });
+      }
+
+      // Status filter
+      if (status && status !== 'all') {
+        filteredBookings = filteredBookings.filter(booking => booking.status === status);
+      }
+
+      // Date filter
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
+      if (dateFilter === 'future') {
+        filteredBookings = filteredBookings.filter(booking => 
+          !booking.eventDate || new Date(booking.eventDate) >= now
+        );
+      } else if (dateFilter === 'past') {
+        filteredBookings = filteredBookings.filter(booking => 
+          booking.eventDate && new Date(booking.eventDate) < now
+        );
+      } else if (dateFilter === 'this-week') {
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        filteredBookings = filteredBookings.filter(booking => {
+          if (!booking.eventDate) return false;
+          const eventDate = new Date(booking.eventDate);
+          return eventDate >= now && eventDate <= weekEnd;
+        });
+      } else if (dateFilter === 'this-month') {
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filteredBookings = filteredBookings.filter(booking => {
+          if (!booking.eventDate) return false;
+          const eventDate = new Date(booking.eventDate);
+          return eventDate >= now && eventDate <= monthEnd;
+        });
+      }
+
+      // Conflict filter - would need to check against conflicts data
+      // This is a placeholder - actual implementation would need conflict data
+      if (hasConflict) {
+        // Filter for bookings that have conflicts
+        // Implementation would check against conflict data
+      }
+
+      // Sort results: future first (ascending), then past (descending)
+      filteredBookings.sort((a, b) => {
+        if (!a.eventDate && !b.eventDate) return 0;
+        if (!a.eventDate) return 1;
+        if (!b.eventDate) return -1;
+        
+        const dateA = new Date(a.eventDate);
+        const dateB = new Date(b.eventDate);
+        const isAFuture = dateA >= now;
+        const isBFuture = dateB >= now;
+        
+        if (isAFuture && isBFuture) return dateA.getTime() - dateB.getTime();
+        if (!isAFuture && !isBFuture) return dateB.getTime() - dateA.getTime();
+        return isAFuture ? -1 : 1;
+      });
+
+      // Apply display limit if requested (for performance)
+      let finalBookings = filteredBookings;
+      if (applyLimit && !search && !status && dateFilter !== 'past') {
+        // Get user settings
+        const settings = await storage.getSettings(userId);
+        if (settings?.bookingDisplayLimit !== 'all') {
+          // Apply the same limiting logic as main endpoint
+          const futureBookings = filteredBookings.filter(b => 
+            !b.eventDate || new Date(b.eventDate) >= now
+          );
+          const pastBookings = filteredBookings.filter(b => 
+            b.eventDate && new Date(b.eventDate) < now
+          );
+          
+          finalBookings = [
+            ...futureBookings,
+            ...pastBookings.slice(0, 50)
+          ];
+        }
+      }
+
+      console.log(`🔍 Advanced filter result: ${finalBookings.length} of ${allBookings.length} bookings (search: "${search}", status: ${status}, date: ${dateFilter})`);
+      res.json(finalBookings);
+    } catch (error) {
+      console.error('❌ Failed to filter bookings:', error);
+      res.status(500).json({ error: 'Failed to filter bookings' });
+    }
+  }));
+
   app.delete('/api/bookings/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
@@ -1031,139 +1170,6 @@ ${businessName}</p>
     })
   );
 
-  // Advanced search/filter endpoint - searches ALL bookings with filters
-  app.get('/api/bookings/all', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      // Get query parameters
-      const search = (req.query.search as string || '').toLowerCase();
-      const status = req.query.status as string;
-      const dateFilter = req.query.dateFilter as string;
-      const hasConflict = req.query.hasConflict === 'true';
-      const applyLimit = req.query.applyLimit !== 'false'; // Default true for performance
-
-      // Get ALL bookings for comprehensive search/filter
-      const allBookings = await storage.getBookings(userId);
-      
-      // Apply filters
-      let filteredBookings = allBookings;
-
-      // Search filter - searches all fields
-      if (search.length >= 2) {
-        filteredBookings = filteredBookings.filter(booking => {
-          // Search in client name
-          if (booking.clientName?.toLowerCase().includes(search)) return true;
-          // Search in venue
-          if (booking.venue?.toLowerCase().includes(search)) return true;
-          // Search in venue address
-          if (booking.venueAddress?.toLowerCase().includes(search)) return true;
-          // Search in title
-          if (booking.title?.toLowerCase().includes(search)) return true;
-          // Search in notes
-          if (booking.notes?.toLowerCase().includes(search)) return true;
-          // Search in event type
-          if (booking.eventType?.toLowerCase().includes(search)) return true;
-          // Search in gig type
-          if (booking.gigType?.toLowerCase().includes(search)) return true;
-          // Search by fee amount
-          if (booking.fee?.includes(search)) return true;
-          // Search by client phone
-          if (booking.clientPhone?.includes(search)) return true;
-          // Search by client email
-          if (booking.clientEmail?.toLowerCase().includes(search)) return true;
-          return false;
-        });
-      }
-
-      // Status filter
-      if (status && status !== 'all') {
-        filteredBookings = filteredBookings.filter(booking => booking.status === status);
-      }
-
-      // Date filter
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      
-      if (dateFilter === 'future') {
-        filteredBookings = filteredBookings.filter(booking => 
-          !booking.eventDate || new Date(booking.eventDate) >= now
-        );
-      } else if (dateFilter === 'past') {
-        filteredBookings = filteredBookings.filter(booking => 
-          booking.eventDate && new Date(booking.eventDate) < now
-        );
-      } else if (dateFilter === 'this-week') {
-        const weekEnd = new Date(now);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-        filteredBookings = filteredBookings.filter(booking => {
-          if (!booking.eventDate) return false;
-          const eventDate = new Date(booking.eventDate);
-          return eventDate >= now && eventDate <= weekEnd;
-        });
-      } else if (dateFilter === 'this-month') {
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        filteredBookings = filteredBookings.filter(booking => {
-          if (!booking.eventDate) return false;
-          const eventDate = new Date(booking.eventDate);
-          return eventDate >= now && eventDate <= monthEnd;
-        });
-      }
-
-      // Conflict filter - would need to check against conflicts data
-      // This is a placeholder - actual implementation would need conflict data
-      if (hasConflict) {
-        // Filter for bookings that have conflicts
-        // Implementation would check against conflict data
-      }
-
-      // Sort results: future first (ascending), then past (descending)
-      filteredBookings.sort((a, b) => {
-        if (!a.eventDate && !b.eventDate) return 0;
-        if (!a.eventDate) return 1;
-        if (!b.eventDate) return -1;
-        
-        const dateA = new Date(a.eventDate);
-        const dateB = new Date(b.eventDate);
-        const isAFuture = dateA >= now;
-        const isBFuture = dateB >= now;
-        
-        if (isAFuture && isBFuture) return dateA.getTime() - dateB.getTime();
-        if (!isAFuture && !isBFuture) return dateB.getTime() - dateA.getTime();
-        return isAFuture ? -1 : 1;
-      });
-
-      // Apply display limit if requested (for performance)
-      let finalBookings = filteredBookings;
-      if (applyLimit && !search && !status && dateFilter !== 'past') {
-        // Get user settings
-        const settings = await storage.getSettings(userId);
-        if (settings?.bookingDisplayLimit !== 'all') {
-          // Apply the same limiting logic as main endpoint
-          const futureBookings = filteredBookings.filter(b => 
-            !b.eventDate || new Date(b.eventDate) >= now
-          );
-          const pastBookings = filteredBookings.filter(b => 
-            b.eventDate && new Date(b.eventDate) < now
-          );
-          
-          finalBookings = [
-            ...futureBookings,
-            ...pastBookings.slice(0, 50)
-          ];
-        }
-      }
-
-      console.log(`🔍 Advanced filter: ${finalBookings.length} of ${allBookings.length} bookings (search: "${search}", status: ${status}, date: ${dateFilter})`);
-      res.json(finalBookings);
-    } catch (error) {
-      console.error('❌ Failed to filter bookings:', error);
-      res.status(500).json({ error: 'Failed to filter bookings' });
-    }
-  });
 
   console.log('✅ Booking routes configured');
 }

@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, encompassing bookings, contracts, and invoicing. Its primary goal is to offer a user-friendly, scalable, and globally leading solution for music career management. Key capabilities include AI-powered email parsing and response generation, aiming to free musicians from administrative overhead so they can focus on their art. The project envisions becoming the global standard for music career management, significantly reducing administrative burden for musicians.
+MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary goal is to provide a user-friendly, scalable, and globally leading solution for music career management, significantly reducing administrative burden through features like AI-powered email parsing and response generation. The project aims to empower musicians by becoming the global standard for music career management, addressing market potential in administrative efficiency for music professionals.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -40,7 +40,7 @@ Conversation to booking navigation: "Edit Booking" button added to conversation 
 Travel expense integration: SIMPLIFIED SYSTEM - Travel expenses are always included in the performance fee display as a single amount to eliminate calculation confusion. The previous toggle system was removed to ensure consistent calculations across AI responses, booking displays, and contract generation. All fees are now displayed as a clean total (e.g., £310) without automatic travel breakdown labels. Users have full control over whether and how they communicate travel expense details to clients manually, allowing for personalized client communication approaches.
 PDF contract page break handling: Enhanced CSS rules to prevent venue field titles and values from being separated across page breaks. Venue and venue address fields are grouped together with `break-inside: avoid` and `page-break-inside: avoid` CSS properties. If space is insufficient, the entire venue details group moves to the next page as a unit, maintaining professional layout integrity.
 Encore booking management: Added toggle switch for Encore bookings on both dashboard and bookings page that clearly shows current application status and allows toggling between "not applied" (new status) and "applied" (in_progress status). This replaces the confusing "Applied" button that looked identical before and after clicking. Toggle switch prevents dashboard clutter from applied-for jobs while maintaining booking records and providing clear visual feedback.
-Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings take precedence over over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly. Implemented cache-bustings API calls and complete form reset to prevent stale fee data from appearing in contract creation forms.
+Contract fee data priority: Booking form data always overrides travel expense settings when creating contracts. The specific fee amounts entered in individual bookings takes precedence over over global travel expense integration preferences, ensuring contract accuracy matches booking form displays exactly. Implemented cache-bustings API calls and complete form reset to prevent stale fee data from appearing in contract creation forms.
 User-customizable contract terms: Contract Terms & Conditions are now fully editable at the user level through Settings page. Users can replace the default professional terms with their own custom terms and conditions, which will appear in all generated contract PDFs. The terms support line breaks for proper formatting and can be toggled on/off via the themeShowTerms setting. If no custom terms are provided, the system uses comprehensive default terms covering payment, cancellation, performance standards, and legal framework.
 Time format standardization: Both booking form and contract form now use identical 24-hour time format (input type="time") ensuring precise time auto-population. When contracts are generated from bookings with specific times like "16:03", the contract form correctly displays and pre-selects these exact times insteads of showing blank fields. This eliminates the previous format mismatch between 24-hour booking times and predefined AM/PM contract options.
 Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contract PDFs now dynamically adjust color based on theme background luminance for optimal visibility. On dark themes like midnight blue, text appears in white/light colors; on light themes, it appears in dark colors. This ensures WCAG 2.0 compliant contrast ratios and professional branding visibility across all theme colors.
@@ -50,7 +50,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 
 ### Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, adhering to WCAG 2.0 luminance for text contrast and supporting dynamic PDF theming.
+- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, supporting dynamic PDF theming and WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
 
@@ -63,17 +63,17 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined action buttons, centralized messaging, auto-scrolling on booking pages, consistent sidebar navigation, simplified branding, enhanced email templates, and a dual client portal system with luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design, streamlined action buttons, centralized messaging, auto-scrolling on booking pages, consistent sidebar navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, and manual re-processing options.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, manual re-processing, and sort persistence. Includes gig sheet generation.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, automated reminders, user-customizable terms, consistent 24-hour time formatting, and robust page break handling.
-- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients.
+- **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
+- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
-- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
-- **Client Portal**: Dual-portal system for contract signing (mandatory fields) and post-signing collaboration (dynamic form with real-time bidirectional sync).
+- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling (auto-conversion to dateless bookings) and manual detail extraction with review.
+- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync.
 - **Encore Booking Management**: Clear toggle switch for application status.
 
 ## External Dependencies
