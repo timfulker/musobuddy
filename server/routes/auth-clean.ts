@@ -401,7 +401,7 @@ export function setupAuthRoutes(app: Express) {
       console.log('🔒 Security data captured:', { signupIP, userAgent, deviceFingerprint });
       
       // Determine trial duration based on user type
-      const trialDays = isBetaUser ? 365 : 30; // Beta testers get 1 year, regular users get 30 days
+      const trialDays = isBetaUser ? 90 : 30; // Beta testers get 90 days, regular users get 30 days
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
       
@@ -512,7 +512,7 @@ export function setupAuthRoutes(app: Express) {
       console.log('👤 User beta status:', isBetaTester);
       
       // Determine trial length based on beta status
-      const trialDays = isBetaTester ? 365 : 30; // 365 days for beta, 30 for regular
+      const trialDays = isBetaTester ? 90 : 30; // 90 days for beta, 30 for regular
       
       // Prepare subscription data with appropriate trial period
       const subscriptionData: any = {
