@@ -1166,26 +1166,29 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
                 <FormControl>
-                  <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
-                    <span className={`text-sm font-medium ${field.value === '50' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                      Show 50 bookings
-                    </span>
+                  <div className="flex gap-2 p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
                     <button
                       type="button"
-                      onClick={() => field.onChange(field.value === '50' ? 'all' : '50')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                        field.value === 'all' ? 'bg-green-500' : 'bg-gray-300'
+                      onClick={() => field.onChange('50')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        field.value === '50' 
+                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
-                          field.value === 'all' ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
+                      Show 50 bookings
                     </button>
-                    <span className={`text-sm font-medium ${field.value === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('all')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        field.value === 'all' 
+                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
                       Show all bookings
-                    </span>
+                    </button>
                   </div>
                 </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
@@ -1203,26 +1206,29 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
                 <FormControl>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                    <span className={`text-sm font-medium ${field.value === 'miles' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                      Miles
-                    </span>
+                  <div className="flex gap-2 p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
                     <button
                       type="button"
-                      onClick={() => field.onChange(field.value === 'miles' ? 'km' : 'miles')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                        field.value === 'km' ? 'bg-green-500' : 'bg-gray-300'
+                      onClick={() => field.onChange('miles')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        field.value === 'miles' 
+                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
-                          field.value === 'km' ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
+                      Miles
                     </button>
-                    <span className={`text-sm font-medium ${field.value === 'km' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange('km')}
+                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        field.value === 'km' 
+                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
                       Kilometers
-                    </span>
+                    </button>
                   </div>
                 </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
