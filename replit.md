@@ -1,7 +1,5 @@
-# MusoBuddy
-
 ### Overview
-MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, covering bookings, contracts, and invoicing. Its primary purpose is to provide a user-friendly, scalable solution for music career management, significantly reducing administrative burden through features like AI-powered email parsing and response generation. The project aims to empower musicians by becoming the global standard for music career management, addressing the market potential in administrative efficiency for music professionals.
+MusoBuddy is a platform designed to streamline administrative tasks for musicians by centralizing bookings, contracts, and invoicing. Its core purpose is to provide a user-friendly, scalable solution for music career management, reducing administrative burden through features like AI-powered email parsing. The project aims to become the global standard for music career management, enhancing efficiency for music professionals and enabling them to focus on their art.
 
 ### User Preferences
 Preferred communication style: Simple, everyday language.
@@ -66,10 +64,9 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **UI/UX Decisions**: Responsive design (mobile/desktop adaptation), streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
-- **Document Management**: Multi-document upload, categorization, and secure cloud storage.
+- **Document Management**: Multi-document upload, categorization, and secure cloud storage with expiry date monitoring and alerts.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
-- **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.

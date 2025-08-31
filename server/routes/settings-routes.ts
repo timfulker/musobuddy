@@ -399,29 +399,6 @@ export async function registerSettingsRoutes(app: Express) {
     }
   }));
 
-  // Global gig types endpoint
-  // Legacy endpoint for backward compatibility
-  app.get('/api/gig-types', async (req: AuthenticatedRequest, res) => {
-    try {
-      const globalGigTypes = [
-        'Wedding',
-        'Corporate Event', 
-        'Private Party',
-        'Concert',
-        'Festival',
-        'Bar/Restaurant',
-        'Club Performance',
-        'Session Work',
-        'Teaching',
-        'Recording',
-        'Other'
-      ];
-      res.json(globalGigTypes);
-    } catch (error) {
-      console.error('❌ Failed to fetch gig types:', error);
-      res.status(500).json({ error: 'Failed to fetch gig types' });
-    }
-  });
 
   app.get('/api/global-gig-types', async (req: AuthenticatedRequest, res) => {
     try {
