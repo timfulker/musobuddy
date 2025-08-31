@@ -130,5 +130,30 @@ export function registerFeedbackRoutes(app: Express) {
     }
   });
 
+  // Test endpoint to check feedback table structure (development only, no auth)
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/api/feedback/test-table', async (req, res) => {
+      try {
+        console.log('🧪 Testing feedback table access...');
+        // Try a simple query to check table exists
+        const result = await feedbackStorage.getFeedback('test-user-id', true);
+        console.log('🧪 Feedback table query successful, rows:', result.length);
+        res.json({
+          message: 'Feedback table accessible',
+          rowCount: result.length,
+          sampleStructure: result.length > 0 ? Object.keys(result[0]) : 'No existing feedback rows'
+        });
+      } catch (error) {
+        console.error('❌ Feedback table test failed:', error);
+        console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
+        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        res.status(500).json({
+          error: 'Feedback table not accessible',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
+  }
+
   console.log('✅ Feedback routes configured');
 }

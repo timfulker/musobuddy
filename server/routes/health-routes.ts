@@ -15,14 +15,26 @@ export function registerHealthRoutes(app: Express) {
   // Database health check
   app.get('/api/health/database', async (req, res) => {
     try {
-      // Test database connectivity with a simple query
-      const result = await sql`SELECT 1 as test`;
+      // Test database connectivity and check feedback table structure
+      const healthResult = await sql`SELECT 1 as test`;
       
-      if (result && result.length > 0) {
+      // Also check feedback table structure and row count for debugging
+      const schemaResult = await sql`
+        SELECT column_name, data_type, column_default, is_nullable 
+        FROM information_schema.columns 
+        WHERE table_name = 'feedback' AND column_name = 'id'
+      `;
+      
+      const rowCountResult = await sql`SELECT COUNT(*) as count FROM feedback`;
+      const rowCount = rowCountResult[0]?.count || 0;
+      
+      if (healthResult && healthResult.length > 0) {
         res.json({
           status: 'healthy',
           message: 'Database connected',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          feedbackIdColumn: schemaResult && schemaResult.length > 0 ? schemaResult[0] : 'Not found',
+          feedbackRowCount: rowCount
         });
       } else {
         throw new Error('Database query returned no results');
@@ -257,6 +269,32 @@ export function registerHealthRoutes(app: Express) {
 </html>`;
     res.send(emailPreview);
   });
+
+  // Debug endpoint to check feedback table structure in development
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/api/health/feedback-schema', async (req, res) => {
+      try {
+        console.log('🔍 Checking feedback table schema...');
+        const result = await sql`
+          SELECT column_name, data_type, column_default, is_nullable 
+          FROM information_schema.columns 
+          WHERE table_name = 'feedback' 
+          ORDER BY ordinal_position
+        `;
+        console.log('📋 Feedback table schema:', result);
+        res.json({
+          message: 'Feedback table schema',
+          columns: result
+        });
+      } catch (error) {
+        console.error('❌ Failed to check feedback schema:', error);
+        res.status(500).json({
+          error: 'Schema check failed',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
+  }
 
   console.log('✅ Health check routes configured');
 }
