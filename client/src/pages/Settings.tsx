@@ -1163,19 +1163,28 @@ export default function Settings() {
             control={form.control}
             name="bookingDisplayLimit"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select display limit" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="50">Show 50 bookings</SelectItem>
-                    <SelectItem value="all">Show all bookings</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="50" id="limit-50" />
+                      <FormLabel htmlFor="limit-50" className="text-sm font-normal cursor-pointer">
+                        Show 50 bookings
+                      </FormLabel>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="all" id="limit-all" />
+                      <FormLabel htmlFor="limit-all" className="text-sm font-normal cursor-pointer">
+                        Show all bookings
+                      </FormLabel>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
                   Controls how many bookings are displayed on the bookings page
                 </FormDescription>
@@ -1188,19 +1197,28 @@ export default function Settings() {
             control={form.control}
             name="distanceUnits"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select distance units" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="miles">Miles</SelectItem>
-                    <SelectItem value="km">Kilometers</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="miles" id="distance-miles" />
+                      <FormLabel htmlFor="distance-miles" className="text-sm font-normal cursor-pointer">
+                        Miles
+                      </FormLabel>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="km" id="distance-km" />
+                      <FormLabel htmlFor="distance-km" className="text-sm font-normal cursor-pointer">
+                        Kilometers
+                      </FormLabel>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
                   Units used for displaying distances to venues
                 </FormDescription>
