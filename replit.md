@@ -63,9 +63,9 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging with auto-scrolling and consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design adapting for mobile/desktop, streamlined actions (e.g., booking card actions, simplified travel expense display), centralized messaging with auto-scrolling and consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, manual re-processing, and sort persistence. Includes gig sheet generation.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
@@ -73,8 +73,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling (auto-conversion to dateless bookings) and manual detail extraction with review.
-- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync.
-- **Encore Booking Management**: Clear toggle switch for application status.
+- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
 ## External Dependencies
 

@@ -34,15 +34,8 @@ export function hasAccess(user: User | null | undefined): boolean {
   // Test accounts must go through normal payment flow in Stripe test mode
   if (isAssigned && !user.email?.includes('+test')) return true;
   
-  // Check if still in trial period
-  if (trialEndsAt) {
-    const trialEndDate = new Date(trialEndsAt);
-    if (new Date() < trialEndDate) {
-      return true;
-    }
-  }
-  
-  // Trial expired - must have paid
+  // HARD RULE: No dashboard access without payment setup (has_paid = true)
+  // This includes trial users - they must complete payment setup to access dashboard
   return hasPaid === true;
 }
 

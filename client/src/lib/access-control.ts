@@ -78,20 +78,10 @@ export function hasAccess(user: User | null | undefined): boolean {
     return false;
   }
   
-  // Check if still in trial period
-  if (trialEndsAt) {
-    const trialEndDate = new Date(trialEndsAt);
-    const now = new Date();
-    if (now < trialEndDate) {
-      const daysLeft = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      console.log(`✅ User in trial period (${daysLeft} days remaining)`);
-      return true;
-    }
-  }
-  
-  // Trial expired - must have paid
+  // HARD RULE: No dashboard access without payment setup (has_paid = true)
+  // This includes trial users - they must complete payment setup to access dashboard
   if (hasPaid) {
-    console.log('✅ Paid user has full access');
+    console.log('✅ Payment setup completed - user has access');
     return true;
   }
   
