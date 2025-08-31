@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X, Shield } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -473,6 +473,22 @@ export default function Settings() {
       checkCompletion: (data: SettingsFormData) => {
         return !!(data.themeTemplate && data.themeTone && data.themeFont);
       }
+    },
+    {
+      id: 'templates',
+      label: 'Templates',
+      icon: FileText,
+      checkCompletion: (data: SettingsFormData) => {
+        return true; // Templates are always considered complete
+      }
+    },
+    {
+      id: 'compliance',
+      label: 'Compliance',
+      icon: Shield,
+      checkCompletion: (data: SettingsFormData) => {
+        return true; // Compliance is always considered complete
+      }
     }
   ];
 
@@ -497,6 +513,10 @@ export default function Settings() {
         return renderWidgetSection();
       case 'themes':
         return renderThemesSection();
+      case 'templates':
+        return renderTemplatesSection();
+      case 'compliance':
+        return renderComplianceSection();
       default:
         return renderBusinessSection();
     }
@@ -1382,6 +1402,52 @@ export default function Settings() {
     </Card>
   );
 
+  const renderTemplatesSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <FileText className="w-5 h-5 text-primary" />
+          <span>Templates</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <div className="text-center py-8">
+          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Templates Management</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Manage your invoice and contract templates here.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            Template customization features coming soon.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderComplianceSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Shield className="w-5 h-5 text-primary" />
+          <span>Compliance</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <div className="text-center py-8">
+          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Compliance Settings</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Manage your data protection and compliance settings here.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            Compliance management features coming soon.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   // Get or create permanent widget URL and QR code
   const getOrCreateWidgetUrl = async () => {
     setIsGeneratingToken(true);
@@ -1838,7 +1904,7 @@ export default function Settings() {
                       ></div>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {completedSections}/{settingsSections.length} completed ({completionPercentage}%)
+                      {completedSections}/{settingsSections.filter(s => s.id !== 'templates' && s.id !== 'compliance').length} completed ({Math.round((completedSections / settingsSections.filter(s => s.id !== 'templates' && s.id !== 'compliance').length) * 100)}%)
                     </span>
                   </div>
                 </div>
@@ -1847,11 +1913,11 @@ export default function Settings() {
           </div>
         </header>
 
-        {/* Settings Content - Single Page */}
-        <div className="max-w-4xl mx-auto p-6">
+        {/* Unified Settings Content */}
+        <div className="p-6 max-w-4xl mx-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* All sections rendered continuously */}
+              {/* Render all sections in one page */}
               {renderBusinessSection()}
               {renderEmailSection()}
               {renderContractSection()}
@@ -1861,6 +1927,8 @@ export default function Settings() {
               {renderPerformanceSection()}
               {renderWidgetSection()}
               {renderThemesSection()}
+              {renderTemplatesSection()}
+              {renderComplianceSection()}
               
               {/* Save Button */}
               <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
