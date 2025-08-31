@@ -83,7 +83,8 @@ export function useAuth() {
           if (response.ok) {
             const databaseUser = await response.json();
             console.log('✅ Database user fetched:', { 
-              email: databaseUser.email, 
+              email: databaseUser.email,
+              emailVerified: databaseUser.emailVerified, // CRITICAL: Check if this is present
               isAdmin: databaseUser.isAdmin,
               isBetaTester: databaseUser.isBetaTester,
               isAssigned: databaseUser.isAssigned,

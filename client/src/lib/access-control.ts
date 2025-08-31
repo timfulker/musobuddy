@@ -69,7 +69,12 @@ export function hasAccess(user: User | null | undefined): boolean {
   
   // SECURITY: Email verification required for payment access
   if (!hasVerifiedEmail(user)) {
-    console.log('🔒 Access denied - email verification required');
+    console.log('🔒 Access denied - email verification required', {
+      email: user.email,
+      emailVerified: user.emailVerified,
+      isAdmin: user.isAdmin,
+      isAssigned: user.isAssigned
+    });
     return false;
   }
   
@@ -90,7 +95,13 @@ export function hasAccess(user: User | null | undefined): boolean {
     return true;
   }
   
-  console.log('🔒 Access denied - payment required');
+  console.log('🔒 Access denied - payment required', {
+    email: user.email,
+    emailVerified: user.emailVerified,
+    trialEndsAt: trialEndsAt,
+    hasPaid: hasPaid,
+    fullUser: user
+  });
   return false;
 }
 
