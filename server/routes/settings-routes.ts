@@ -1443,38 +1443,20 @@ This email was sent via MusoBuddy Professional Music Management Platform
       
       const settings = await storage.getSettings(userId);
       
-      // Always generate fresh gig types from current instruments
-      const primaryInstrument = settings?.primaryInstrument || "";
-      
-      // Parse secondaryInstruments if it's a JSON string
-      let secondaryInstruments: string[] = [];
-      if (settings?.secondaryInstruments) {
-        if (typeof settings.secondaryInstruments === 'string') {
+      // Get stored gig types from the database (these were generated when instruments were set)
+      let storedGigTypes: string[] = [];
+      if (settings?.gigTypes) {
+        if (typeof settings.gigTypes === 'string') {
           try {
-            secondaryInstruments = JSON.parse(settings.secondaryInstruments);
+            storedGigTypes = JSON.parse(settings.gigTypes);
           } catch (e) {
-            console.warn('Failed to parse secondaryInstruments:', e);
-            secondaryInstruments = [];
+            console.warn('Failed to parse stored gigTypes:', e);
+            storedGigTypes = [];
           }
-        } else if (Array.isArray(settings.secondaryInstruments)) {
-          secondaryInstruments = settings.secondaryInstruments;
+        } else if (Array.isArray(settings.gigTypes)) {
+          storedGigTypes = settings.gigTypes;
         }
       }
-      
-      const allInstruments = [
-        primaryInstrument, 
-        ...secondaryInstruments
-      ].filter(Boolean);
-      
-      // Get gig types for all selected instruments (AI-generated)
-      const instrumentGigTypes = [];
-      for (const instrument of allInstruments) {
-        const gigTypes = await getGigTypeNamesForInstrument(instrument);
-        instrumentGigTypes.push(...gigTypes);
-      }
-      
-      // Remove duplicates from instrument gig types
-      const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)];
       
       // Get custom gig types the user has added manually
       let customGigTypes: string[] = [];
@@ -1491,13 +1473,10 @@ This email was sent via MusoBuddy Professional Music Management Platform
         }
       }
       
-      // Store ONLY the AI-generated gig types in the gig_types field
-      await storage.updateSettings(userId, { gigTypes: uniqueInstrumentGigTypes });
+      // Combine stored gig types and custom types for the booking form dropdown
+      const combinedGigTypes = [...new Set([...storedGigTypes, ...customGigTypes])].sort();
       
-      // Combine AI-generated and custom for the booking form dropdown
-      const combinedGigTypes = [...new Set([...uniqueInstrumentGigTypes, ...customGigTypes])].sort();
-      
-      console.log(`🎵 AI-generated: ${uniqueInstrumentGigTypes.length} gig types from ${allInstruments.length} instruments`);
+      console.log(`🎵 Stored gig types: ${storedGigTypes.length} from database`);
       console.log(`🎵 Custom types: ${customGigTypes.length} custom gig types`);
       console.log(`🎵 Total combined: ${combinedGigTypes.length} gig types for dropdown`);
       
