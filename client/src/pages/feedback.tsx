@@ -47,6 +47,9 @@ export default function FeedbackPage() {
   const queryClient = useQueryClient();
   
   const [newFeedbackOpen, setNewFeedbackOpen] = useState(false);
+  const [adminReplyOpen, setAdminReplyOpen] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
+  const [adminReply, setAdminReply] = useState("");
   const [feedbackForm, setFeedbackForm] = useState({
     type: "bug",
     title: "",
@@ -98,8 +101,9 @@ export default function FeedbackPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Feedback submitted successfully",
+        title: "Thank you for your feedback! 🎉",
+        description: "Your feedback has been submitted successfully and will help us improve MusoBuddy. We'll review it and get back to you if needed.",
+        duration: 6000, // Show for 6 seconds
       });
       queryClient.invalidateQueries({ queryKey: ['/api/feedback'] });
       setNewFeedbackOpen(false);
@@ -144,9 +148,12 @@ export default function FeedbackPage() {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Feedback status updated",
+        description: adminReply ? "Admin response added successfully" : "Feedback status updated",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/feedback'] });
+      setAdminReplyOpen(false);
+      setSelectedFeedback(null);
+      setAdminReply("");
     },
     onError: (error: Error) => {
       toast({
@@ -168,6 +175,29 @@ export default function FeedbackPage() {
     }
     
     createFeedbackMutation.mutate(feedbackForm);
+  };
+
+  const handleAdminReply = () => {
+    if (!selectedFeedback || !adminReply.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a response message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateStatusMutation.mutate({
+      id: selectedFeedback.id,
+      status: selectedFeedback.status, // Keep current status
+      adminNotes: adminReply.trim()
+    });
+  };
+
+  const openAdminReply = (feedback: Feedback) => {
+    setSelectedFeedback(feedback);
+    setAdminReply(feedback.adminNotes || "");
+    setAdminReplyOpen(true);
   };
 
   const getTypeIcon = (type: string) => {
@@ -325,6 +355,54 @@ export default function FeedbackPage() {
           )}
         </div>
 
+        {/* Admin Reply Dialog */}
+        <Dialog open={adminReplyOpen} onOpenChange={setAdminReplyOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Reply to Feedback</DialogTitle>
+            </DialogHeader>
+            {selectedFeedback && (
+              <div className="space-y-4">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    {getTypeIcon(selectedFeedback.type)}
+                    <h3 className="font-medium">{selectedFeedback.title}</h3>
+                    <Badge className={getPriorityColor(selectedFeedback.priority)}>
+                      {selectedFeedback.priority}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {selectedFeedback.description}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="adminReply">Your Response</Label>
+                  <Textarea
+                    id="adminReply"
+                    value={adminReply}
+                    onChange={(e) => setAdminReply(e.target.value)}
+                    placeholder="Type your response to the beta tester..."
+                    rows={4}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setAdminReplyOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleAdminReply}
+                    disabled={updateStatusMutation.isPending}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    {updateStatusMutation.isPending ? "Sending..." : "Send Reply"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Feedback List */}
         <Card>
           <CardHeader>
@@ -389,6 +467,14 @@ export default function FeedbackPage() {
                       {user?.isAdmin && (
                         <div className="flex items-center space-x-2">
                           <span>by {item.userName} ({item.userEmail})</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openAdminReply(item)}
+                            className="text-sm"
+                          >
+                            Reply
+                          </Button>
                           <Select
                             value={item.status}
                             onValueChange={(status) => updateStatusMutation.mutate({ id: item.id, status })}

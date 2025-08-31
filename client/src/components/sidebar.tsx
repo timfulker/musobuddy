@@ -321,21 +321,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span style={{ color: 'inherit' }}>Beta Feedback</span>
             </Link>
           )}
-          
-          {/* Admin section - only show for admin users */}
-          {(user as any)?.isAdmin && (
-            <Link 
-              href="/admin" 
-              onClick={() => window.innerWidth < 768 && onClose()} 
-              className={cn(
-                getNavLinkClass("/admin"),
-                isActive("/admin") ? 'bg-primary text-primary-foreground' : ''
-              )}
-            >
-              <Crown className="w-5 h-5" />
-              <span>Admin</span>
-            </Link>
-          )}
         </nav>
 
         {/* User Profile */}
