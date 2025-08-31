@@ -8,7 +8,8 @@
       "Bash(node:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(NODE_ENV=development npx tsx server/migrations/remove_invoice_payment_terms.ts)"
+      "Bash(NODE_ENV=development npx tsx server/migrations/remove_invoice_payment_terms.ts)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": [],

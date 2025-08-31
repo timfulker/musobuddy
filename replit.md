@@ -65,7 +65,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 ### System Design Choices
 - **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
 - **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
