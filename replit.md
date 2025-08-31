@@ -1,9 +1,9 @@
 # MusoBuddy
 
-## Overview
+### Overview
 MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, covering bookings, contracts, and invoicing. Its primary purpose is to provide a user-friendly, scalable solution for music career management, significantly reducing administrative burden through features like AI-powered email parsing and response generation. The project aims to empower musicians by becoming the global standard for music career management, addressing the market potential in administrative efficiency for music professionals.
 
-## User Preferences
+### User Preferences
 Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
@@ -46,15 +46,15 @@ Time format standardization: Both booking form and contract form now use identic
 Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contract PDFs now dynamically adjust color based on theme background luminance for optimal visibility. On dark themes like midnight blue, text appears in white/light colors; on light themes, it appears in dark colors. This ensures WCAG 2.0 compliant contrast ratios and professional branding visibility across all theme colors.
 Client portal system architecture: Implemented dual-portal system with clear separation of concerns. React Client Portal handles mandatory contract signing fields (client phone, address, venue address) before signing, while Dynamic Collaborative Form manages post-signing event planning collaboration (venue contacts, music preferences, logistics). Switched from static R2 HTML storage to dynamic server-side rendering, ensuring collaborative forms always display fresh database data without manual regeneration. Fixed critical field mapping inconsistencies between snake_case database columns and camelCase frontend expectations. All collaborative fields now sync bidirectionally in real-time between booking forms and client collaborative forms.
 
-## System Architecture
+### System Architecture
 
-### Frontend
+**Frontend**
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, supporting dynamic PDF theming and WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
 
-### Backend
+**Backend**
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Authentication**: Pure Firebase authentication (Google Sign-in, email/password) with Firebase Admin SDK for token verification and subscription-based access control.
 - **File Storage**: Cloudflare R2 for PDF storage.
@@ -62,8 +62,8 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
 - **AI Integration**: Dual AI models for unlimited usage.
 
-### System Design Choices
-- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
+**System Design Choices**
+- **UI/UX Decisions**: Responsive design (mobile/desktop adaptation), streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
@@ -75,7 +75,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
 - **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
-## External Dependencies
+### External Dependencies
 
 - **Cloud Services**:
     - Cloudflare R2

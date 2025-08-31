@@ -9,7 +9,6 @@ export async function restoreDeletedColumns() {
       'event_types',
       'instruments_played', 
       'custom_instruments',
-      'business_address',
       'default_terms'
     ];
     
