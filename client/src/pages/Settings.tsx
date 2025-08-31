@@ -385,30 +385,336 @@ export default function Settings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<SettingsFormData | null>(null);
   
-  // Collapsible state for each section
-  const [expandedSections, setExpandedSections] = useState({
-    business: true,
-    email: false,
-    contact: false,
-    address: false,
-    financial: false,
-    contract: false, // Contract & Invoice settings section
-    bank: false,
-    pricing: false, // AI Pricing Guide section
-    widget: false, // Widget URL management section
-    performance: false,
-    instruments: true, // Open by default for new instrument context feature
-    themes: false,
-    appThemes: true, // App theme selector section
-  });
+  // Active section for sidebar navigation
+  const [activeSection, setActiveSection] = useState('business');
+  
+  // Define all settings sections with completion logic
+  const settingsSections = [
+    {
+      id: 'business',
+      label: 'Business Information',
+      icon: Building,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.businessName && data.businessEmail && data.phone);
+      }
+    },
+    {
+      id: 'email',
+      label: 'Email Settings',
+      icon: Mail,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.emailFromName && data.emailSignature);
+      }
+    },
+    {
+      id: 'contract',
+      label: 'Contract & Invoice Settings',
+      icon: FileText,
+      checkCompletion: (data: SettingsFormData) => {
+        const hasBasicInvoiceSettings = !!(data.defaultInvoiceDueDays);
+        const hasContractClauses = Object.values(data.contractClauses || {}).some(Boolean);
+        return hasBasicInvoiceSettings && hasContractClauses;
+      }
+    },
+    {
+      id: 'bank',
+      label: 'Bank Details',
+      icon: CreditCard,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.bankDetails && data.bankDetails.length > 10);
+      }
+    },
+    {
+      id: 'pricing',
+      label: 'AI Pricing Guide',
+      icon: Receipt,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.baseHourlyRate && data.minimumBookingHours && data.additionalHourRate);
+      }
+    },
+    {
+      id: 'instruments',
+      label: 'Instrument & AI Context',
+      icon: Music,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.primaryInstrument);
+      }
+    },
+    {
+      id: 'performance',
+      label: 'Performance Settings',
+      icon: SettingsIcon,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.bookingDisplayLimit && data.distanceUnits);
+      }
+    },
+    {
+      id: 'widget',
+      label: 'Booking Widget',
+      icon: ExternalLink,
+      checkCompletion: () => {
+        return !!(widgetUrl && qrCodeUrl);
+      }
+    },
+    {
+      id: 'themes',
+      label: 'App Theme',
+      icon: Palette,
+      checkCompletion: (data: SettingsFormData) => {
+        return !!(data.themeTemplate && data.themeTone && data.themeFont);
+      }
+    }
+  ];
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section as keyof typeof prev]
-    }));
+  // Calculate completion stats using existing form fields
+  const currentFormData = form?.getValues() || {};
+  const completedSections = settingsSections.filter(section => 
+    section.checkCompletion(currentFormData)
+  ).length;
+  const completionPercentage = Math.round((completedSections / settingsSections.length) * 100);
+
+  // Function to render the active section content
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'business':
+        return renderBusinessSection();
+      case 'email':
+        return renderEmailSection();
+      case 'contract':
+        return renderContractSection();
+      case 'bank':
+        return renderBankSection();
+      case 'pricing':
+        return renderPricingSection();
+      case 'instruments':
+        return renderInstrumentsSection();
+      case 'performance':
+        return renderPerformanceSection();
+      case 'widget':
+        return renderWidgetSection();
+      case 'themes':
+        return renderThemesSection();
+      default:
+        return renderBusinessSection();
+    }
   };
 
+  // Render functions for each settings section
+  const renderBusinessSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Building className="w-5 h-5 text-primary" />
+          <span>Business Information</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="businessName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Business Name</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="Your Business Name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="businessEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Business Email</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="business@example.com" type="email" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Phone</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="+44 (0) 123 456 7890" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="emailFromName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="Your Name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Placeholder render functions for other sections (will implement with actual content)
+  const renderEmailSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Mail className="w-5 h-5 text-primary" />
+          <span>Email Settings</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="emailFromName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="Your Name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="emailSignature"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
+                <FormControl>
+                  <textarea 
+                    {...field} 
+                    value={field.value || ""} 
+                    placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    rows={4}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderContractSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <FileText className="w-5 h-5 text-primary" />
+          <span>Contract & Invoice Settings</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Contract settings content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderBankSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <CreditCard className="w-5 h-5 text-primary" />
+          <span>Bank Details</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Bank details content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPricingSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Receipt className="w-5 h-5 text-primary" />
+          <span>AI Pricing Guide</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Pricing guide content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderInstrumentsSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Music className="w-5 h-5 text-primary" />
+          <span>Instrument & AI Context</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Instrument settings content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPerformanceSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <SettingsIcon className="w-5 h-5 text-primary" />
+          <span>Performance Settings</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Performance settings content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderWidgetSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <ExternalLink className="w-5 h-5 text-primary" />
+          <span>Booking Widget</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Widget settings content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderThemesSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Palette className="w-5 h-5 text-primary" />
+          <span>App Theme</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-muted-foreground">Theme settings content will be added from existing sections.</p>
+      </CardContent>
+    </Card>
+  );
 
   // Get or create permanent widget URL and QR code
   const getOrCreateWidgetUrl = async () => {
@@ -812,7 +1118,7 @@ export default function Settings() {
       <MobileNav />
       
       <div className="main-content">
-        {/* Header */}
+        {/* Header with Progress */}
         <header className="border-b border-gray-200 dark:border-slate-700 p-6 bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -822,1472 +1128,103 @@ export default function Settings() {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
-                Settings
-              </h1>
+              <div className="ml-12 md:ml-0">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  Settings
+                </h1>
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="h-2 bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-300"
+                        style={{ width: `${completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {completedSections}/{settingsSections.length} completed ({completionPercentage}%)
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="text-primary hover:text-primary"
+                  >
+                    ← Back to Dashboard
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Settings Content */}
-        <div className="p-6 space-y-6 pb-24 md:pb-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* Business Information */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.business} onOpenChange={() => toggleSection('business')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Building className="w-5 h-5 text-primary" />
-                          <span>Business Information</span>
-                        </div>
-                        {expandedSections.business ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="businessName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Business Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="Your Business Name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="businessEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Business Email</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="business@example.com" type="email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="+44 (0) 123 456 7890" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="emailFromName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="Your Name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="emailSignature"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
-                          <FormControl>
-                            <textarea 
-                              {...field} 
-                              value={field.value || ""} 
-                              placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
-                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              rows={4}
-                            />
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground">
-                            Your custom email signature that will appear at the end of all template emails
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  {/* Business Address - Separate Fields */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Business Address
-                    </h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="addressLine1"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Address Line 1</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="123 Main Street" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="addressLine2"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Address Line 2 (Optional)</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="Apartment, suite, etc." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">City</FormLabel>
-                            <FormControl>
-                              <Input {...field} value={field.value || ""} placeholder="London" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="county"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">County (Optional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} value={field.value || ""} placeholder="Greater London" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="postcode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Postcode</FormLabel>
-                            <FormControl>
-                              <Input {...field} value={field.value || ""} placeholder="SW1A 1AA" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+        {/* Settings Layout with Sidebar */}
+        <div className="flex min-h-[calc(100vh-120px)]">
+          {/* Settings Navigation Sidebar */}
+          <div className="w-80 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+            <nav className="space-y-2">
+              {settingsSections.map((section) => {
+                const Icon = section.icon;
+                const isCompleted = section.checkCompletion(currentFormData);
+                const isActive = activeSection === section.id;
+                
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-all ${
+                      isActive 
+                        ? 'bg-primary/10 border-l-4 border-primary text-primary' 
+                        : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{section.label}</span>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Website</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="https://yourwebsite.com" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="taxNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Tax Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ""} placeholder="TAX123456" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* Email Settings */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.email} onOpenChange={() => toggleSection('email')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Mail className="w-5 h-5 text-primary" />
-                          <span>Email Settings</span>
-                        </div>
-                        {expandedSections.email ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-6">
-                      {/* Professional Email Address */}
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <div className="flex items-start space-x-3">
-                          <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Professional Email Address</h4>
-                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                              Your dedicated email address for receiving client inquiries that automatically create bookings.
-                            </p>
-                            <div className="mt-3 p-2 bg-white dark:bg-slate-800 rounded border border-blue-200 dark:border-blue-700">
-                              <code className="text-sm font-mono text-blue-800 dark:text-blue-200">
-                                Current: {settings?.emailPrefix || 'Not set'}@enquiries.musobuddy.com
-                              </code>
-                            </div>
-                            <div className="mt-3">
-                              <Button 
-                                type="button"
-                                onClick={() => window.open('/email-setup', '_blank')}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                size="sm"
-                              >
-                                <Mail className="w-4 h-4 mr-2" />
-                                Change Email Prefix
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                    {isCompleted && (
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                       </div>
-
-                      {/* Email From Name */}
-                      <FormField
-                        control={form.control}
-                        name="emailFromName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Your Name" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-
-
-              {/* Contract & Invoice Settings */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.contract} onOpenChange={() => toggleSection('contract')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="w-5 h-5 text-primary" />
-                          <span>Contract & Invoice Settings</span>
-                        </div>
-                        {expandedSections.contract ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-6">
-                      {/* Invoice Settings */}
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                          <Receipt className="w-4 h-4 mr-2" />
-                          Invoice Settings
-                        </h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="invoicePrefix"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Invoice Number Prefix</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    value={field.value || ""} 
-                                    placeholder="INV" 
-                                    maxLength={5}
-                                    onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                                  />
-                                </FormControl>
-                                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                                  Set a custom prefix for your invoice numbers (e.g., JS-0001). Leave blank to auto-generate from your business name.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="nextInvoiceNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="00001" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="invoicePaymentTerms"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
-                                <FormControl>
-                                  <RadioGroup
-                                    value={field.value}
-                                    onValueChange={field.onChange}
-                                    className="flex flex-col space-y-2"
-                                  >
-                                    <div className="flex items-center space-x-2">
-                                      <RadioGroupItem value="on_receipt" id="on_receipt" />
-                                      <Label htmlFor="on_receipt">Payment Due on Receipt</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                      <RadioGroupItem value="days_after" id="days_after" />
-                                      <Label htmlFor="days_after">Payment Due in X Days</Label>
-                                    </div>
-                                  </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          {form.watch("invoicePaymentTerms") === "days_after" && (
-                            <FormField
-                              control={form.control}
-                              name="defaultInvoiceDueDays"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-sm font-medium">Number of Days</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      {...field} 
-                                      type="number"
-                                      min="1"
-                                      max="365"
-                                      placeholder="7"
-                                      className="w-32"
-                                    />
-                                  </FormControl>
-                                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                                    Days after issue (e.g., 7 for "Payment due within 7 days")
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Contract Terms */}
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Contract Terms & Conditions
-                        </h3>
-                        
-                        <div className="space-y-3">
-                          <FormLabel className="text-sm font-medium">Standard Clauses</FormLabel>
-                          <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                            {STANDARD_CONTRACT_CLAUSES.map((clause) => (
-                              <FormField
-                                key={clause.id}
-                                control={form.control}
-                                name={`contractClauses.${clause.id}`}
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                      <FormLabel className="text-sm font-normal cursor-pointer">
-                                        {clause.text}
-                                      </FormLabel>
-                                      {clause.description && (
-                                        <FormDescription className="text-xs">
-                                          {clause.description}
-                                        </FormDescription>
-                                      )}
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Custom Clauses */}
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <FormLabel className="text-sm font-medium">Custom Clauses</FormLabel>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const current = form.getValues("customClauses") || [];
-                                form.setValue("customClauses", [...current, ""]);
-                              }}
-                              className="text-xs"
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add Clause
-                            </Button>
-                          </div>
-                          
-                          <FormField
-                            control={form.control}
-                            name="customClauses"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <div className="space-y-2">
-                                    {(field.value || []).map((clause: string, index: number) => (
-                                      <div key={index} className="flex items-center space-x-2">
-                                        <Input
-                                          value={clause}
-                                          onChange={(e) => {
-                                            const newClauses = [...(field.value || [])];
-                                            newClauses[index] = e.target.value;
-                                            field.onChange(newClauses);
-                                          }}
-                                          placeholder="Enter custom contract clause..."
-                                          className="flex-1"
-                                        />
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => {
-                                            const newClauses = [...(field.value || [])];
-                                            newClauses.splice(index, 1);
-                                            field.onChange(newClauses);
-                                          }}
-                                        >
-                                          <X className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    ))}
-                                    {(!field.value || field.value.length === 0) && (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                                        No custom clauses added yet. Click "Add Clause" to create your own terms.
-                                      </p>
-                                    )}
-                                  </div>
-                                </FormControl>
-                                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                                  Add your own custom contract terms and conditions. These will appear alongside selected standard clauses.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* Bank Details */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.bank} onOpenChange={() => toggleSection('bank')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <CreditCard className="w-5 h-5 text-primary" />
-                          <span>Bank Details</span>
-                        </div>
-                        {expandedSections.bank ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="bankDetails"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Bank Account Information</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} placeholder="Bank Name: Your Bank&#10;Account: 12345678&#10;Sort Code: 12-34-56" rows={4} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
                     )}
-                  />
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* AI Pricing Guide */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.pricing} onOpenChange={() => toggleSection('pricing')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
-                          <span>AI Pricing Guide</span>
-                        </div>
-                        {expandedSections.pricing ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-6">
-                      <div className="bg-primary/5 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-                        <div className="flex items-start space-x-3">
-                          <Music className="w-5 h-5 text-primary mt-0.5" />
-                          <div>
-                            <h4 className="font-medium text-primary-900 dark:text-primary/10">Smart Quote Generation</h4>
-                            <p className="text-sm text-primary/90 dark:text-primary-300 mt-1">
-                              Configure your pricing structure for AI-powered quote generation. These settings help the AI create accurate, professional quotes automatically.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="aiPricingEnabled"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base font-medium">Enable AI Pricing</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Allow AI to generate pricing information in quotes and responses
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="baseHourlyRate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">Base Hourly Rate (£)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  {...field} 
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                                  placeholder="130.00" 
-                                />
-                              </FormControl>
-                              <div className="text-xs text-muted-foreground">
-                                Used to calculate the base price (Rate × Minimum Hours)
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="minimumBookingHours"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">Minimum Booking Hours</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.5" 
-                                  {...field} 
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                                  placeholder="2.0" 
-                                />
-                              </FormControl>
-                              <div className="text-xs text-muted-foreground">
-                                Minimum number of hours for any booking
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="additionalHourRate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">Additional Hour Rate (£)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  {...field} 
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                                  placeholder="60.00" 
-                                />
-                              </FormControl>
-                              <div className="text-xs text-muted-foreground">
-                                Rate per hour beyond the minimum booking
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* DJ Service Rate - only show if DJ is primary or secondary instrument */}
-                        {(() => {
-                          const primaryInstrument = form.watch('primaryInstrument');
-                          const secondaryInstruments = form.watch('secondaryInstruments') || [];
-                          return primaryInstrument === 'dj' || secondaryInstruments.includes('dj');
-                        })() && (
-                          <FormField
-                            control={form.control}
-                            name="djServiceRate"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">DJ Service Rate (£)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="0.01" 
-                                    {...field} 
-                                    value={field.value?.toString() || ""}
-                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                                    placeholder="300.00" 
-                                  />
-                                </FormControl>
-                                <div className="text-xs text-muted-foreground">
-                                  Additional charge for DJ services
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="pricingNotes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Pricing Notes</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                value={field.value || ""}
-                                placeholder="Special pricing information, package deals, or other notes to include in quotes"
-                                rows={3} 
-                              />
-                            </FormControl>
-                            <div className="text-xs text-muted-foreground">
-                              Additional pricing information for AI to include in quotes
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="specialOffers"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Current Special Offers</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                value={field.value || ""}
-                                placeholder="Limited time offers, seasonal discounts, or promotional packages"
-                                rows={3} 
-                              />
-                            </FormControl>
-                            <div className="text-xs text-muted-foreground">
-                              Special offers for AI to mention in responses when appropriate
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                        <div className="flex items-start space-x-3">
-                          <div className="w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-700 flex items-center justify-center mt-0.5">
-                            <span className="text-xs font-bold text-amber-800 dark:text-amber-200">£</span>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-amber-900 dark:text-amber-100">Current Pricing Examples</h4>
-                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1 space-y-1">
-                              <div>• 2 hours sax: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours'))).toFixed(0)}</div>
-                              <div>• 3 hours sax: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours')) + Number(form.watch('additionalHourRate'))).toFixed(0)}</div>
-                              <div>• 2 hours sax + DJ: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours')) + Number(form.watch('djServiceRate'))).toFixed(0)}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Travel expenses are now always included in performance fee - toggle removed for simplicity */}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* Instrument Settings */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.instruments} onOpenChange={() => toggleSection('instruments')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
-                          <span>Instrument & AI Context</span>
-                        </div>
-                        {expandedSections.instruments ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        Set your primary instrument for contextual AI template generation
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="primaryInstrument"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Primary Instrument</FormLabel>
-                            <Select 
-                              value={field.value || selectedInstrument} 
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                handleInstrumentChange(value);
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select your primary instrument" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {getAvailableInstruments()
-                                  .filter(instrument => !form.watch('secondaryInstruments')?.includes(instrument))
-                                  .map((instrument) => (
-                                    <SelectItem key={instrument} value={instrument}>
-                                      {getInstrumentDisplayName(instrument)}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            <div className="text-xs text-gray-500 mt-1">
-                              This helps AI generate appropriate pricing and service packages for your {selectedInstrument ? getInstrumentDisplayName(selectedInstrument) : 'instrument'} gigs
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Secondary Instruments */}
-                      <FormField
-                        control={form.control}
-                        name="secondaryInstruments"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Secondary Instruments</FormLabel>
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                {field.value?.length > 0 ? (
-                                  field.value?.map((instrument, index) => (
-                                    <div key={index} className="flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
-                                      <span>{getInstrumentDisplayName(instrument)}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const updated = field.value?.filter((_, i) => i !== index) || [];
-                                          field.onChange(updated);
-                                          
-                                          // Secondary instruments don't auto-modify gig types - users manage manually
-                                        }}
-                                        className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
-                                      >
-                                        ×
-                                      </button>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="text-sm text-gray-500 italic">No secondary instruments selected</div>
-                                )}
-                                {/* Add a "Clear All" button if there are secondary instruments */}
-                                {field.value?.length > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      field.onChange([]);
-                                      // Clear All doesn't auto-modify gig types - users manage manually
-                                    }}
-                                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline"
-                                  >
-                                    Clear All
-                                  </button>
-                                )}
-                              </div>
-                              <Select 
-                                value="" // Always reset to empty after selection
-                                onValueChange={(value) => {
-                                  if (value && !field.value?.includes(value) && value !== form.watch('primaryInstrument')) {
-                                    const updated = [...(field.value || []), value];
-                                    field.onChange(updated);
-                                    
-                                    // Update available gig types when secondary instruments change
-                                    const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
-                                    const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
-                                      return [...acc, ...instrumentGigTypes];
-                                    }, [] as string[]);
-                                    
-                                    // Remove duplicates - gig types now managed through customGigTypes field
-                                    const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                  }
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Add secondary instrument" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getAvailableInstruments()
-                                    .filter(instrument => 
-                                      instrument !== form.watch('primaryInstrument') && 
-                                      !field.value?.includes(instrument)
-                                    )
-                                    .map((instrument) => (
-                                      <SelectItem key={instrument} value={instrument}>
-                                        {getInstrumentDisplayName(instrument)}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              Add other instruments you play. AI will consider these for multi-service bookings. Click the × to remove individual instruments or "Clear All" to remove all secondary instruments.
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Gig types are now managed behind the scenes - populated on initial instrument selection */}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-
-              {/* Performance Settings */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.performance} onOpenChange={() => toggleSection('performance')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <SettingsIcon className="w-5 h-5 text-primary" />
-                          <span>Performance Settings</span>
-                        </div>
-                        {expandedSections.performance ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        Configure display options and performance preferences
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="bookingDisplayLimit"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
-                            <FormControl>
-                              <div className="space-y-3">
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id="limit-50"
-                                    name="bookingDisplayLimit"
-                                    value="50"
-                                    checked={field.value === "50"}
-                                    onChange={() => field.onChange("50")}
-                                    className="text-primary"
-                                  />
-                                  <label htmlFor="limit-50" className="text-sm font-medium cursor-pointer">
-                                    All future bookings + 50 past bookings (Recommended)
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id="limit-all"
-                                    name="bookingDisplayLimit"
-                                    value="all"
-                                    checked={field.value === "all"}
-                                    onChange={() => field.onChange("all")}
-                                    className="text-primary"
-                                  />
-                                  <label htmlFor="limit-all" className="text-sm font-medium cursor-pointer">
-                                    Show all bookings
-                                  </label>
-                                </div>
-                              </div>
-                            </FormControl>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Choose your booking display preference. The recommended setting shows all upcoming gigs plus recent history, ensuring you never miss future bookings.
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      {/* Distance Units Preference */}
-                      <FormField
-                        control={form.control}
-                        name="distanceUnits"
-                        render={({ field }) => (
-                          <FormItem className="mt-6">
-                            <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
-                            <FormControl>
-                              <div className="space-y-3">
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id="miles"
-                                    name="distanceUnits"
-                                    value="miles"
-                                    checked={field.value === "miles"}
-                                    onChange={() => field.onChange("miles")}
-                                    className="text-primary"
-                                  />
-                                  <label htmlFor="miles" className="text-sm font-medium cursor-pointer">
-                                    Miles
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id="km"
-                                    name="distanceUnits"
-                                    value="km"
-                                    checked={field.value === "km"}
-                                    onChange={() => field.onChange("km")}
-                                    className="text-primary"
-                                  />
-                                  <label htmlFor="km" className="text-sm font-medium cursor-pointer">
-                                    Kilometers
-                                  </label>
-                                </div>
-                              </div>
-                            </FormControl>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Choose how distances are displayed in mileage calculations
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* Widget URL Management */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.widget} onOpenChange={() => toggleSection('widget')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Link className="w-5 h-5 text-primary" />
-                          <span>Booking Widget</span>
-                        </div>
-                        {expandedSections.widget ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        Share a direct booking form with your clients
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <div className="flex items-start space-x-3">
-                          <Link className="w-5 h-5 text-blue-600 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Standalone Booking Widget</h4>
-                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                              Generate a unique URL that clients can use to send booking requests directly to you. 
-                              No login required - perfect for sharing on your website or in your email signature.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        {!widgetUrl && (
-                          <div className="text-center p-6">
-                            <p className="text-gray-600 dark:text-gray-400 mb-4">
-                              Get your permanent booking widget URL and QR code to start accepting direct booking requests.
-                            </p>
-                            <Button
-                              type="button"
-                              onClick={getOrCreateWidgetUrl}
-                              disabled={isGeneratingToken}
-                              className="bg-primary hover:bg-primary/90"
-                            >
-                              {isGeneratingToken ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
-                                  <Link className="w-4 h-4 mr-2" />
-                                  Get My Widget & QR Code
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {widgetUrl && (
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
-                                Your Booking Widget URL
-                              </label>
-                              <div className="flex items-center space-x-2">
-                                <Input
-                                  value={widgetUrl}
-                                  readOnly
-                                  className="flex-1 font-mono text-sm bg-gray-50 dark:bg-gray-800"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={copyWidgetUrl}
-                                  className="shrink-0"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => window.open(widgetUrl, '_blank')}
-                                  className="shrink-0"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            {/* QR Code Display */}
-                            {qrCodeUrl && (
-                              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                                <h5 className="font-medium text-blue-900 dark:text-blue-100 text-sm mb-3">QR Code for Mobile Access</h5>
-                                <div className="flex items-start space-x-4">
-                                  <img 
-                                    src={qrCodeUrl} 
-                                    alt="Widget QR Code" 
-                                    className="w-32 h-32 border border-gray-200 dark:border-gray-600 rounded-lg bg-white"
-                                  />
-                                  <div className="flex-1">
-                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
-                                      Clients can scan this QR code with their phone to quickly access your booking form.
-                                    </p>
-                                    <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                                      <li>• Perfect for business cards or flyers</li>
-                                      <li>• Print and display at events</li>
-                                      <li>• Share in social media posts</li>
-                                    </ul>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                              <h5 className="font-medium text-green-900 dark:text-green-100 text-sm mb-2">How to use your widget:</h5>
-                              <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
-                                <li>• Share this URL directly with potential clients</li>
-                                <li>• Add it to your website or email signature</li>
-                                <li>• Clients can send booking requests without creating an account</li>
-                                <li>• All requests appear in your dashboard automatically</li>
-                              </ul>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* App Theme Selector */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.appThemes} onOpenChange={() => toggleSection('appThemes')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Palette className="w-5 h-5 text-primary" />
-                          <span>App Theme</span>
-                        </div>
-                        {expandedSections.appThemes ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        Choose your preferred visual theme for the MusoBuddy interface
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Themes</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.values(themes).filter(theme => theme.id !== 'custom').map((theme) => (
-                            <div
-                              key={theme.id}
-                              onClick={() => {
-                                console.log('🎨 User clicked theme:', theme.id);
-                                setTheme(theme.id);
-                                // FIXED: Also update the form field so the theme color gets saved to database
-                                form.setValue('themeAccentColor', theme.colors.primary);
-                                console.log('🎨 Updated form themeAccentColor:', theme.colors.primary);
-                              }}
-                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                currentTheme === theme.id
-                                  ? 'border-theme-primary bg-theme-primary/10'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-theme-primary/50'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div 
-                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                                  style={{ backgroundColor: theme.colors.primary }}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-sm" style={{ 
-                                    fontFamily: theme.fonts.heading,
-                                    color: currentTheme === theme.id ? theme.colors.primary : 'inherit'
-                                  }}>
-                                    {theme.name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {theme.description}
-                                  </p>
-                                </div>
-                                {currentTheme === theme.id && (
-                                  <div className="w-5 h-5 rounded-full bg-theme-primary flex items-center justify-center">
-                                    <div className="w-2 h-2 rounded-full bg-white" />
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {/* Theme Preview */}
-                              <div className="mt-3 p-3 rounded border" style={{ 
-                                backgroundColor: theme.colors.background,
-                                borderColor: theme.colors.primary + '20'
-                              }}>
-                                <div className="flex items-center justify-between">
-                                  <div 
-                                    className="text-xs font-medium"
-                                    style={{ 
-                                      color: theme.colors.text,
-                                      fontFamily: theme.fonts.heading
-                                    }}
-                                  >
-                                    Sample Dashboard
-                                  </div>
-                                  <div 
-                                    className="w-3 h-3 rounded"
-                                    style={{ backgroundColor: theme.colors.accent }}
-                                  />
-                                </div>
-                                <div className="mt-2 space-y-1">
-                                  <div 
-                                    className="h-2 rounded"
-                                    style={{ backgroundColor: theme.colors.primary, width: '60%' }}
-                                  />
-                                  <div 
-                                    className="h-2 rounded"
-                                    style={{ backgroundColor: theme.colors.secondary, width: '40%' }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {/* Custom Color Theme Option */}
-                          <div
-                            className={`p-4 rounded-lg border-2 transition-all ${
-                              currentTheme === 'custom'
-                                ? 'border-theme-primary bg-theme-primary/10'
-                                : 'border-gray-200 dark:border-gray-600 hover:border-theme-primary/50'
-                            }`}
-                          >
-                            <div 
-                              onClick={() => {
-                                console.log('🎨 User clicked custom theme');
-                                console.log('🎨 Current theme before:', currentTheme);
-                                setTheme('custom');
-                                console.log('🎨 Set theme to custom');
-                                const colorToUse = customColor || '#8b5cf6';
-                                form.setValue('themeAccentColor', colorToUse);
-                                console.log('🎨 Updated form themeAccentColor with:', colorToUse);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div 
-                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                                  style={{ backgroundColor: customColor || '#8b5cf6' }}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-sm" style={{ 
-                                    color: currentTheme === 'custom' ? (customColor || '#8b5cf6') : 'inherit'
-                                  }}>
-                                    Custom Color
-                                  </h4>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Choose your own custom accent color
-                                  </p>
-                                </div>
-                                {currentTheme === 'custom' && (
-                                  <div className="w-5 h-5 rounded-full bg-theme-primary flex items-center justify-center">
-                                    <div className="w-2 h-2 rounded-full bg-white" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* Color Picker - Only show when custom theme is selected */}
-                            {currentTheme === 'custom' && (
-                              <div className="mt-4 space-y-3 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-dashed border-gray-300">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  🎨 Pick your custom color:
-                                </label>
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="color"
-                                    value={customColor || '#8b5cf6'}
-                                    onChange={(e) => {
-                                      const newColor = e.target.value;
-                                      console.log('🎨 User picked custom color:', newColor);
-                                      setCustomColor(newColor);
-                                      form.setValue('themeAccentColor', newColor);
-                                      console.log('🎨 Updated form themeAccentColor:', newColor);
-                                    }}
-                                    className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
-                                  />
-                                  <div className="flex-1">
-                                    <input
-                                      type="text"
-                                      value={customColor || '#8b5cf6'}
-                                      onChange={(e) => {
-                                        const newColor = e.target.value;
-                                        if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
-                                          setCustomColor(newColor);
-                                          form.setValue('themeAccentColor', newColor);
-                                        }
-                                      }}
-                                      placeholder="#8b5cf6"
-                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-theme-primary focus:border-transparent"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Enter a hex color code (e.g., #ff0066)
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Theme Preview - same as other themes */}
-                            <div className="mt-3 p-3 rounded border" style={{ 
-                              backgroundColor: themes.custom.colors.background,
-                              borderColor: (customColor || themes.custom.colors.primary) + '20'
-                            }}>
-                              <div className="flex items-center justify-between">
-                                <div 
-                                  className="text-xs font-medium"
-                                  style={{ 
-                                    color: themes.custom.colors.text,
-                                    fontFamily: themes.custom.fonts.heading
-                                  }}
-                                >
-                                  Sample Dashboard
-                                </div>
-                                <div 
-                                  className="w-3 h-3 rounded"
-                                  style={{ backgroundColor: themes.custom.colors.accent }}
-                                />
-                              </div>
-                              <div className="mt-2 space-y-1">
-                                <div 
-                                  className="h-2 rounded"
-                                  style={{ backgroundColor: customColor || themes.custom.colors.primary, width: '60%' }}
-                                />
-                                <div 
-                                  className="h-2 rounded"
-                                  style={{ backgroundColor: themes.custom.colors.secondary, width: '40%' }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                            Current Theme: {themes[currentTheme].name}
-                          </h4>
-                          <p className="text-xs text-blue-700 dark:text-blue-300">
-                            {themes[currentTheme].description}
-                          </p>
-                          {currentTheme === 'custom' && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                              ✨ You've selected a custom color theme. Your chosen color will be used throughout the app and in generated documents.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-
-              {/* Save Button */}
-              <div className="flex justify-end pt-4 pb-8 md:pb-4">
-                <Button
-                  type="submit"
-                  disabled={saveSettings.isPending || !hasChanges}
-                  onClick={(e) => {
-                    
-                    
-                    
-                    
-                    // Don't prevent default - let the form submit naturally
-                  }}
-                  className={`px-8 py-2 border-0 transition-all duration-300 ${
-                    hasChanges && !saveSettings.isPending
-                      ? 'bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg hover:scale-105'
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {saveSettings.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {hasChanges ? 'Save Settings' : 'No Changes'}
-                    </>
-                  )}
-                </Button>
-
-              </div>
-            </form>
-          </Form>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+          
+          {/* Settings Content */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Render active section */}
+                {renderActiveSection()}
+                
+                {/* Save Button */}
+                <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
+                  <Button
+                    type="submit"
+                    disabled={saveSettings.isPending || !hasChanges}
+                    className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    {saveSettings.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {hasChanges ? 'Save Settings' : 'No Changes'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         </div>
       </div>
 
