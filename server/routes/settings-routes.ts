@@ -1433,7 +1433,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
     }
   }));
 
-  // Get gig types for booking form - generate fresh using OpenAI based on user's instrument
+  // Get gig types for booking form - combine stored AI-generated and custom gig types
   app.get('/api/gig-types', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
@@ -1442,34 +1442,45 @@ This email was sent via MusoBuddy Professional Music Management Platform
       }
       
       const settings = await storage.getSettings(userId);
-      const primaryInstrument = settings?.primaryInstrument || 'musician';
       
-      console.log(`🤖 Generating fresh gig types for instrument: ${primaryInstrument}`);
-      
-      // Use the original function that was designed to generate gig types
-      const { getGigTypeNamesForInstrument } = await import('@shared/instrument-gig-presets');
-      const gigTypes = await getGigTypeNamesForInstrument(primaryInstrument);
-      
-      if (gigTypes && gigTypes.length > 0) {
-        console.log(`✅ Generated ${gigTypes.length} gig types for ${primaryInstrument} using original system`);
-        res.json(gigTypes);
-        return;
+      // Get AI-generated gig types (stored when instrument was selected)
+      let aiGigTypes: string[] = [];
+      if (settings?.gigTypes) {
+        if (typeof settings.gigTypes === 'string') {
+          try {
+            aiGigTypes = JSON.parse(settings.gigTypes);
+          } catch (e) {
+            aiGigTypes = [];
+          }
+        } else if (Array.isArray(settings.gigTypes)) {
+          aiGigTypes = settings.gigTypes;
+        }
       }
       
-      // Fallback if OpenAI fails
-      const fallbackGigTypes = [
-        "Wedding Ceremony",
-        "Corporate Event", 
-        "Private Party",
-        "Restaurant Performance"
-      ];
+      // Get custom gig types added by user
+      let customGigTypes: string[] = [];
+      if (settings?.customGigTypes) {
+        if (typeof settings.customGigTypes === 'string') {
+          try {
+            customGigTypes = JSON.parse(settings.customGigTypes);
+          } catch (e) {
+            customGigTypes = [];
+          }
+        } else if (Array.isArray(settings.customGigTypes)) {
+          customGigTypes = settings.customGigTypes;
+        }
+      }
       
-      console.log(`⚠️ Using fallback gig types for ${primaryInstrument}`);
-      res.json(fallbackGigTypes);
+      // Combine both sources and remove duplicates
+      const allGigTypes = [...new Set([...aiGigTypes, ...customGigTypes])];
+      allGigTypes.sort();
+      
+      console.log(`📋 Returning ${allGigTypes.length} gig types (${aiGigTypes.length} AI + ${customGigTypes.length} custom) for user ${userId}`);
+      res.json(allGigTypes);
       
     } catch (error: any) {
-      console.error('❌ Failed to generate gig types:', error);
-      res.status(500).json({ error: 'Failed to generate gig types' });
+      console.error('❌ Failed to fetch gig types:', error);
+      res.status(500).json({ error: 'Failed to fetch gig types' });
     }
   });
 

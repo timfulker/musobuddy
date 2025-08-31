@@ -15,6 +15,7 @@ import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
@@ -194,8 +195,8 @@ export default function NewBookingPage({
     enabled: !clientMode, // Skip for client mode
   });
 
-  // Extract gig types from user settings - now using customGigTypes field
-  const userGigTypes = userSettings && Array.isArray((userSettings as any).customGigTypes) ? (userSettings as any).customGigTypes : [];
+  // Import the useGigTypes hook to get fresh AI-generated gig types
+  const { gigTypes: userGigTypes } = useGigTypes();
 
   // Calculate mileage between user's business address and venue
   // Handler for adding custom gig types
@@ -1533,14 +1534,14 @@ export default function NewBookingPage({
                             } else {
                               setShowCustomGigInput(true);
                             }
-                          }} value={gigTypes.includes(field.value as any) ? field.value : (showCustomGigInput ? 'custom' : '')}>
+                          }} value={userGigTypes.includes(field.value as any) ? field.value : (showCustomGigInput ? 'custom' : '')}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select gig type or choose 'Custom' to create your own" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
+                              {userGigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
                                 <SelectItem key={index} value={gigType}>
                                   {gigType}
                                 </SelectItem>
