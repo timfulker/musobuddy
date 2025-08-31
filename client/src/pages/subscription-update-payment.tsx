@@ -88,7 +88,7 @@ export default function SubscriptionUpdatePayment() {
             <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
               <Gift className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800 dark:text-green-200">
-                As a beta tester, you'll receive 12 months free plus a 30% lifetime discount!
+                As a beta tester, you'll receive 90 days free trial instead of 30 days!
               </AlertDescription>
             </Alert>
           )}
@@ -104,7 +104,7 @@ export default function SubscriptionUpdatePayment() {
             </ul>
             {isBetaTester && (
               <p className="text-green-600 dark:text-green-400 font-medium mt-3">
-                Special beta pricing will be applied automatically!
+                Your 90-day trial starts after payment setup!
               </p>
             )}
           </div>

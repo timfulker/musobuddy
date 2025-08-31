@@ -61,7 +61,7 @@ export function hasAccess(user: User | null | undefined): boolean {
     return true;
   }
   
-  // Assigned accounts always have access (includes test accounts)
+  // Assigned accounts always have access (complimentary accounts only, NOT test accounts)
   if (isAssigned) {
     console.log('✅ Assigned account has full access');
     return true;

@@ -30,8 +30,9 @@ export function hasAccess(user: User | null | undefined): boolean {
   // Admins always have access
   if (isAdmin) return true;
   
-  // Assigned accounts always have access (includes test accounts)
-  if (isAssigned) return true;
+  // Assigned accounts always have access (complimentary accounts only, NOT test accounts)
+  // Test accounts must go through normal payment flow in Stripe test mode
+  if (isAssigned && !user.email?.includes('+test')) return true;
   
   // Check if still in trial period
   if (trialEndsAt) {
@@ -63,10 +64,13 @@ export function getUserStatus(user: User | null | undefined) {
   // Check user type
   if (isAdmin) return { type: 'admin', message: 'Admin Account' };
   
+  // Test accounts are NOT assigned accounts - they go through normal payment flow in test mode
+  if (user.email?.includes('+test')) {
+    // Test accounts follow the same flow as regular users but use Stripe test mode
+    // They are NOT complimentary accounts
+  }
+  
   if (isAssigned) {
-    if (user.email?.includes('+test')) {
-      return { type: 'test', message: 'Test Account' };
-    }
     return { type: 'assigned', message: 'Complimentary Account' };
   }
   
