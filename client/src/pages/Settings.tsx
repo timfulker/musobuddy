@@ -1166,30 +1166,15 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
                 <FormControl>
-                  <div className="flex gap-2 p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('50')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        field.value === '50' 
-                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Show 50 bookings
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('all')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        field.value === 'all' 
-                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Show all bookings
-                    </button>
-                  </div>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select booking display limit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50">Show 50 bookings</SelectItem>
+                      <SelectItem value="all">Show all bookings</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
                   Controls how many bookings are displayed on the bookings page
