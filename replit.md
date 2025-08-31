@@ -63,7 +63,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging with auto-scrolling, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
@@ -72,7 +72,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Compliance Tracking**: Document management with expiry date monitoring and alerts.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
 - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
-- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling (auto-conversion to dateless bookings) and manual detail extraction with review.
+- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
 - **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
 ## External Dependencies

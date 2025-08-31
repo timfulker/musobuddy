@@ -613,7 +613,6 @@ export const userSettings = pgTable("user_settings", {
   emailSignature: text("email_signature"), // Custom email signature for templates
   
   // Invoice Settings
-  invoicePaymentTerms: varchar("invoice_payment_terms").default("days_after"), // "on_receipt" or "days_after"
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
   
   // Distance Unit Preference
