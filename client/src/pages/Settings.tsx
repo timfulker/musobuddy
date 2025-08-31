@@ -1166,20 +1166,17 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
                 <FormControl>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
                     <span className={`text-sm font-medium ${field.value === '50' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Show 50 bookings
                     </span>
                     <Switch
+                      {...field}
                       checked={field.value === 'all'}
                       onCheckedChange={(checked) => {
-                        const newValue = checked ? 'all' : '50';
-                        field.onChange(newValue);
-                        console.log('Booking limit changed to:', newValue, 'field.value now:', field.value);
-                        // Force a re-render by triggering form validation
-                        form.trigger('bookingDisplayLimit');
+                        field.onChange(checked ? 'all' : '50');
                       }}
-                      className="data-[state=checked]:bg-green-500"
+                      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                     />
                     <span className={`text-sm font-medium ${field.value === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Show all bookings
