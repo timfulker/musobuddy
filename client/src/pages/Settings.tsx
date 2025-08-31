@@ -49,7 +49,7 @@ const THEME_FONTS = [
 ];
 
 const THEME_COLORS = [
-  "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
+  "#191970", "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
 ];
 
 // Standard contract clauses that users can select
@@ -1158,48 +1158,74 @@ export default function Settings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="bookingDisplayLimit"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Show All Bookings</FormLabel>
-                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                    Toggle between showing 50 bookings or all bookings
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value === 'all'}
-                    onCheckedChange={(checked) => field.onChange(checked ? 'all' : '50')}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="distanceUnits"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Use Kilometers</FormLabel>
-                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                    Toggle between miles and kilometers for distance display
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value === 'km'}
-                    onCheckedChange={(checked) => field.onChange(checked ? 'km' : 'miles')}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+        <div className="space-y-6">
+          {/* Booking Display Limit */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Booking Display Limit
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => form.setValue('bookingDisplayLimit', '50')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                  form.watch('bookingDisplayLimit') === '50'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Show 50 bookings
+              </button>
+              <button
+                type="button"
+                onClick={() => form.setValue('bookingDisplayLimit', 'all')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                  form.watch('bookingDisplayLimit') === 'all'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Show all bookings
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Controls how many bookings are displayed on the bookings page
+            </p>
+          </div>
+
+          {/* Distance Units */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Distance Units
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => form.setValue('distanceUnits', 'miles')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                  form.watch('distanceUnits') === 'miles'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Miles
+              </button>
+              <button
+                type="button"
+                onClick={() => form.setValue('distanceUnits', 'km')}
+                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                  form.watch('distanceUnits') === 'km'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }`}
+              >
+                Kilometers
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Units used for displaying distances to venues
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -1284,118 +1310,68 @@ export default function Settings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="themeTemplate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Theme Template</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select theme template" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {THEME_TEMPLATES.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex flex-col">
-                          <span>{template.label}</span>
-                          <span className="text-xs text-muted-foreground">{template.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="themeTone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Theme Tone</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select theme tone" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {THEME_TONES.map((tone) => (
-                      <SelectItem key={tone.id} value={tone.id}>
-                        <div className="flex flex-col">
-                          <span>{tone.label}</span>
-                          <span className="text-xs text-muted-foreground">{tone.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="themeFont"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Font Family</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select font" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {THEME_FONTS.map((font) => (
-                      <SelectItem key={font.id} value={font.id}>
-                        <div className="flex flex-col">
-                          <span>{font.label}</span>
-                          <span className="text-xs text-muted-foreground">{font.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="themeAccentColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Accent Color</FormLabel>
-                <div className="flex items-center space-x-2">
-                  <FormControl>
-                    <Input {...field} value={field.value || ""} placeholder="#673ab7" />
-                  </FormControl>
-                  <div className="flex space-x-1">
-                    {THEME_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => field.onChange(color)}
-                        className="w-6 h-6 rounded border-2 border-gray-300 hover:border-gray-500"
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="space-y-6">
+          {/* Preset Colors */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Choose Theme Color
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {THEME_COLORS.map((color) => {
+                const colorNames = {
+                  "#191970": "Midnight Blue",
+                  "#673ab7": "Purple", 
+                  "#ff0066": "Pink",
+                  "#00bcd4": "Cyan",
+                  "#4caf50": "Green",
+                  "#f44336": "Red",
+                  "#ff9800": "Orange",
+                  "#9c27b0": "Deep Purple",
+                  "#3f51b5": "Indigo"
+                };
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => form.setValue('themeAccentColor', color)}
+                    className={`p-4 rounded-lg border-2 text-white font-medium text-sm transition-all ${
+                      form.watch('themeAccentColor') === color
+                        ? 'border-white shadow-lg scale-105'
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  >
+                    {colorNames[color]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Custom Color Picker */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Or Choose Custom Color
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                value={form.watch('themeAccentColor') || "#191970"}
+                onChange={(e) => form.setValue('themeAccentColor', e.target.value)}
+                className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={form.watch('themeAccentColor') || "#191970"}
+                onChange={(e) => form.setValue('themeAccentColor', e.target.value)}
+                placeholder="#191970"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Enter a hex color code or use the color picker to create your custom theme
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

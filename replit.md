@@ -1,5 +1,3 @@
-# MusoBuddy
-
 ### Overview
 MusoBuddy is a platform designed to streamline administrative tasks for musicians by centralizing bookings, contracts, and invoicing. Its core purpose is to provide a user-friendly, scalable solution for music career management, reducing administrative burden through features like AI-powered email parsing. The project aims to become the global standard for music career management, enhancing efficiency for music professionals and enabling them to focus on their art. The business vision is to become the leading platform for music career management globally, capitalizing on the underserved market of independent musicians and small-to-medium music enterprises.
 
@@ -47,7 +45,6 @@ Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contra
 Client portal system architecture: Implemented dual-portal system with clear separation of concerns. React Client Portal handles mandatory contract signing fields (client phone, address, venue address) before signing, while Dynamic Collaborative Form manages post-signing event planning collaboration (venue contacts, music preferences, logistics). Switched from static R2 HTML storage to dynamic server-side rendering, ensuring collaborative forms always display fresh database data without manual regeneration. Fixed critical field mapping inconsistencies between snake_case database columns and camelCase frontend expectations. All collaborative fields now sync bidirectionally in real-time between booking forms and client collaborative forms.
 
 ### System Architecture
-
 **Frontend**
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, supporting dynamic PDF theming and WCAG 2.0 luminance for text contrast.
@@ -75,7 +72,6 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
 ### External Dependencies
-
 - **Cloud Services**:
     - Cloudflare R2
     - Neon Database (PostgreSQL)
