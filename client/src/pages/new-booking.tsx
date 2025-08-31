@@ -15,8 +15,6 @@ import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { COMMON_GIG_TYPES } from "@shared/gig-types";
-import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
@@ -101,10 +99,8 @@ export default function NewBookingPage({
   
   // Conditional authentication - only use auth in musician mode
   const authData = clientMode ? { user: null, isLoading: false, error: null } : useAuth();
-  const gigTypesData = clientMode ? { gigTypes: [] } : useGigTypes();
   
   const user = authData?.user || null;
-  const gigTypes = gigTypesData?.gigTypes || [];
   
   // Check if we're editing an existing booking - support both URL param and prop
   const urlParams = new URLSearchParams(window.location.search);
