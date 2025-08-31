@@ -1172,7 +1172,11 @@ export default function Settings() {
                     </span>
                     <Switch
                       checked={field.value === 'all'}
-                      onCheckedChange={(checked) => field.onChange(checked ? 'all' : '50')}
+                      onCheckedChange={(checked) => {
+                        const newValue = checked ? 'all' : '50';
+                        field.onChange(newValue);
+                        console.log('Booking limit changed to:', newValue);
+                      }}
                       className="data-[state=checked]:bg-green-500"
                     />
                     <span className={`text-sm font-medium ${field.value === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -1201,7 +1205,11 @@ export default function Settings() {
                     </span>
                     <Switch
                       checked={field.value === 'km'}
-                      onCheckedChange={(checked) => field.onChange(checked ? 'km' : 'miles')}
+                      onCheckedChange={(checked) => {
+                        const newValue = checked ? 'km' : 'miles';
+                        field.onChange(newValue);
+                        console.log('Distance unit changed to:', newValue);
+                      }}
                       className="data-[state=checked]:bg-green-500"
                     />
                     <span className={`text-sm font-medium ${field.value === 'km' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
