@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X, Shield } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X, Shield, Sparkles, Upload, Download, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -370,6 +371,7 @@ export default function Settings() {
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
   const { currentTheme, setTheme, customColor, setCustomColor } = useTheme();
+  const [location, navigate] = useLocation();
   
   // Debug: Log current theme state
   console.log('🎨 Settings component - current theme:', currentTheme);
@@ -1407,19 +1409,57 @@ export default function Settings() {
       <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
         <CardTitle className="flex items-center space-x-2 text-lg">
           <FileText className="w-5 h-5 text-primary" />
-          <span>Templates</span>
+          <span>Email Templates</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="text-center py-8">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Templates Management</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Manage your invoice and contract templates here.
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Manage your automated response templates for enquiries, bookings, and client communications.
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Template customization features coming soon.
-          </p>
+          
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <h4 className="font-semibold mb-2">Template Categories</h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• Initial Inquiry Responses</li>
+                <li>• Booking Confirmations</li>
+                <li>• Contract & Agreements</li>
+                <li>• Invoice & Payment</li>
+                <li>• Follow-up & Thank You</li>
+                <li>• Polite Declines</li>
+              </ul>
+            </div>
+            
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <h4 className="font-semibold mb-2">AI Features</h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• AI-Generated Responses</li>
+                <li>• Personalized Content</li>
+                <li>• Variable Replacement</li>
+                <li>• Client History Context</li>
+                <li>• Professional Tone Options</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="flex space-x-3">
+            <Button 
+              onClick={() => navigate('/templates')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Manage Templates
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/templates')}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Generate
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -1434,15 +1474,103 @@ export default function Settings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="text-center py-8">
-          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Compliance Settings</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Manage your data protection and compliance settings here.
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Manage your insurance, licenses, and certifications to stay compliant for professional performances.
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Compliance management features coming soon.
-          </p>
+          
+          {/* Status Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Valid</p>
+                  <p className="font-semibold text-green-600">0</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-orange-600" />
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Expiring</p>
+                  <p className="font-semibold text-orange-600">0</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Expired</p>
+                  <p className="font-semibold text-red-600">0</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
+                  <p className="font-semibold text-primary">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Required Documents Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Shield className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-sm">Public Liability Insurance</h4>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Essential protection covering claims from third parties. Most venues require £2-10 million coverage.
+              </p>
+            </div>
+            
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <h4 className="font-semibold text-sm">PAT Testing Certificate</h4>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Annual testing of portable electrical equipment. Required for amplifiers, keyboards, and other gear.
+              </p>
+            </div>
+            
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Music className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold text-sm">Music Performance License</h4>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                PRS/PPL licenses for performing copyrighted music. Often handled by venues but worth having for outdoor events.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex space-x-3">
+            <Button 
+              onClick={() => navigate('/compliance')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Document
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/compliance')}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Files
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -1904,7 +2032,7 @@ export default function Settings() {
                       ></div>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {completedSections}/{settingsSections.filter(s => s.id !== 'templates' && s.id !== 'compliance').length} completed ({Math.round((completedSections / settingsSections.filter(s => s.id !== 'templates' && s.id !== 'compliance').length) * 100)}%)
+                      {completedSections}/{settingsSections.length} completed ({completionPercentage}%)
                     </span>
                   </div>
                 </div>
@@ -1913,45 +2041,73 @@ export default function Settings() {
           </div>
         </header>
 
-        {/* Unified Settings Content */}
-        <div className="p-6 max-w-4xl mx-auto">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* Render all sections in one page */}
-              {renderBusinessSection()}
-              {renderEmailSection()}
-              {renderContractSection()}
-              {renderBankSection()}
-              {renderPricingSection()}
-              {renderInstrumentsSection()}
-              {renderPerformanceSection()}
-              {renderWidgetSection()}
-              {renderThemesSection()}
-              {renderTemplatesSection()}
-              {renderComplianceSection()}
-              
-              {/* Save Button */}
-              <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
-                <Button
-                  type="submit"
-                  disabled={saveSettings.isPending || !hasChanges}
-                  className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  {saveSettings.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {hasChanges ? 'Save Settings' : 'No Changes'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
+        {/* Settings Layout with Sidebar */}
+        <div className="flex min-h-[calc(100vh-120px)]">
+          {/* Settings Navigation Sidebar */}
+          <div className="w-80 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+            <nav className="space-y-2">
+              {settingsSections.map((section) => {
+                const Icon = section.icon;
+                const isCompleted = form?.getValues ? section.checkCompletion(currentFormData) : false;
+                const isActive = activeSection === section.id;
+                
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-all ${
+                      isActive 
+                        ? 'bg-primary/10 border-l-4 border-primary text-primary' 
+                        : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{section.label}</span>
+                    </div>
+                    {isCompleted && (
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+          
+          {/* Settings Content */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Render active section */}
+                {renderActiveSection()}
+                
+                {/* Save Button */}
+                <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
+                  <Button
+                    type="submit"
+                    disabled={saveSettings.isPending || !hasChanges}
+                    className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    {saveSettings.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {hasChanges ? 'Save Settings' : 'No Changes'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         </div>
       </div>
 

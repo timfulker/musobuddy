@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 import { Link, useLocation } from "wouter";
 import { getThemeTextColor } from "@/lib/colorUtils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { 
@@ -26,10 +26,6 @@ import {
   Mail,
   Lock,
   AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  UserCog,
-  FileType,
   Cog
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
@@ -46,24 +42,55 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location, navigate] = useLocation();
   const { isDesktop } = useResponsive();
   const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
   const { counts } = useNotifications();
+  
+  // Persist admin status in localStorage to prevent flickering during auth churn
+  const [stableIsAdmin, setStableIsAdmin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('userIsAdmin') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  
+  const [stableIsBeta, setStableIsBeta] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('userIsBeta') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  
+  // Debounce status updates to prevent flickering during rapid auth state changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (user?.isAdmin === true) {
+        setStableIsAdmin(true);
+        localStorage.setItem('userIsAdmin', 'true');
+      } else if (user?.isAdmin === false) {
+        setStableIsAdmin(false);
+        localStorage.setItem('userIsAdmin', 'false');
+      }
+      
+      if ((user as any)?.isBetaTester === true) {
+        setStableIsBeta(true);
+        localStorage.setItem('userIsBeta', 'true');
+      } else if ((user as any)?.isBetaTester === false) {
+        setStableIsBeta(false);
+        localStorage.setItem('userIsBeta', 'false');
+      }
+    }, 100); // 100ms debounce to let auth churn settle
 
-  // Check if any settings-related page is active to auto-expand
-  const settingsPages = ['/settings', '/templates', '/compliance'];
-  const isSettingsActive = settingsPages.some(page => location === page);
+    return () => clearTimeout(timeoutId);
+  }, [user?.isAdmin, (user as any)?.isBetaTester]);
   
   const handleLogout = () => {
+    // Clear stable status on logout
+    localStorage.removeItem('userIsAdmin');
+    localStorage.removeItem('userIsBeta');
     // Navigate to logout page for proper cleanup and redirect
     navigate('/logout');
   };
-
-  // Auto-expand settings if on a settings page
-  useEffect(() => {
-    if (isSettingsActive) {
-      setSettingsExpanded(true);
-    }
-  }, [isSettingsActive]);
 
   const isActive = (path: string) => {
     return location === path;
@@ -197,99 +224,33 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <NotificationBadge count={counts.overdueInvoices} />
           </Link>
 
-          {/* Admin Panel - only show for admin users */}
-          {user?.isAdmin && (
-            <Link 
-              href="/admin" 
-              onClick={() => window.innerWidth < 768 && onClose()}
-              className={cn(
-                getNavLinkClass("/admin"),
-                isActive("/admin") ? 'bg-primary text-primary-foreground' : '',
-                'relative'
-              )}
-            >
-              <Crown className="w-5 h-5 text-yellow-500" />
-              <span>Admin Panel</span>
-            </Link>
-          )}
+          {/* Admin Panel - always render but hide for non-admin to prevent layout shift */}
+          <Link 
+            href="/admin" 
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/admin"),
+              isActive("/admin") ? 'bg-primary text-primary-foreground' : '',
+              'relative'
+            )}
+            style={{ display: stableIsAdmin ? 'flex' : 'none' }}
+          >
+            <Crown className="w-5 h-5 text-yellow-500" />
+            <span>Admin Panel</span>
+          </Link>
 
           
-          {/* Settings Section with Collapsible Submenu */}
-          <div className="space-y-1">
-            <button 
-              onClick={() => setSettingsExpanded(!settingsExpanded)}
-              className={cn(
-                "w-full flex items-center justify-between px-4 py-3 font-medium transition-all duration-200 rounded-lg text-left",
-                isSettingsActive ? 'bg-primary text-primary-foreground' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-              )}
-            >
-              <div className="flex items-center space-x-3">
-                <Cog className="w-5 h-5" />
-                <span>Settings</span>
-              </div>
-              {settingsExpanded ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-            
-            {/* Collapsible Settings Submenu */}
-            {settingsExpanded && (
-              <div className="ml-4 space-y-1 border-l-2 border-slate-200 dark:border-slate-600 pl-4">
-                <Link 
-                  href="/settings" 
-                  onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={cn(
-                    getNavLinkClass("/settings"),
-                    isActive("/settings") ? 'bg-primary text-primary-foreground' : ''
-                  )}
-                  data-active={isActive("/settings")}
-                  data-theme={currentTheme}
-                  style={{ 
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <UserCog className="w-4 h-4" />
-                  <span>User Settings</span>
-                </Link>
-                
-                <Link 
-                  href="/templates" 
-                  onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={cn(
-                    getNavLinkClass("/templates"),
-                    isActive("/templates") ? 'bg-primary text-primary-foreground' : ''
-                  )}
-                  data-active={isActive("/templates")}
-                  data-theme={currentTheme}
-                  style={{ 
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <FileType className="w-4 h-4" />
-                  <span>Templates</span>
-                </Link>
-                
-                <Link 
-                  href="/compliance" 
-                  onClick={() => window.innerWidth < 768 && onClose()} 
-                  className={cn(
-                    getNavLinkClass("/compliance"),
-                    isActive("/compliance") ? 'bg-primary text-primary-foreground' : ''
-                  )}
-                  data-active={isActive("/compliance")}
-                  data-theme={currentTheme}
-                  style={{ 
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <Shield className="w-4 h-4" />
-                  <span>Compliance</span>
-                </Link>
-              </div>
+          <Link 
+            href="/settings" 
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/settings"),
+              isActive("/settings") ? 'bg-primary text-primary-foreground' : ''
             )}
-          </div>
+          >
+            <Cog className="w-5 h-5" />
+            <span>Settings</span>
+          </Link>
           
 
           
@@ -306,21 +267,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span style={{ color: 'inherit' }}>User Guide</span>
           </Link>
           
-          {/* Beta Feedback section - only show for beta testers and admin */}
-          {((user as any)?.isBetaTester || (user as any)?.isAdmin) && (
-            <Link 
-              href="/feedback" 
-              onClick={() => window.innerWidth < 768 && onClose()} 
-              className={getNavLinkClass("/feedback")}
-              style={{ 
-                color: isActive("/feedback") ? getThemeTextColor(currentTheme) : '#1e293b',
-                backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent'
-              }}
-            >
-              <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
-              <span style={{ color: 'inherit' }}>Beta Feedback</span>
-            </Link>
-          )}
+          {/* Beta Feedback section - always render but hide for non-beta users to prevent layout shift */}
+          <Link 
+            href="/feedback" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/feedback")}
+            style={{ 
+              color: isActive("/feedback") ? getThemeTextColor(currentTheme) : '#1e293b',
+              backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent',
+              display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
+            }}
+          >
+            <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Beta Feedback</span>
+          </Link>
         </nav>
 
         {/* User Profile */}
