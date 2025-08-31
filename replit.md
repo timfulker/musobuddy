@@ -1,7 +1,7 @@
 # MusoBuddy
 
 ## Overview
-MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, including bookings, contracts, and invoicing. Its core purpose is to provide a user-friendly, scalable solution for music career management, significantly reducing administrative burden through features like AI-powered email parsing and response generation. The project aims to empower musicians by becoming the global standard for music career management, addressing the market potential in administrative efficiency for music professionals.
+MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, covering bookings, contracts, and invoicing. Its primary purpose is to provide a user-friendly, scalable solution for music career management, significantly reducing administrative burden through features like AI-powered email parsing and response generation. The project aims to empower musicians by becoming the global standard for music career management, addressing the market potential in administrative efficiency for music professionals.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -63,7 +63,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ### System Design Choices
-- **UI/UX Decisions**: Responsive design (single app adapting to mobile/desktop), streamlined action buttons, centralized messaging, auto-scrolling on booking pages, consistent sidebar navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design, streamlined action buttons, centralized messaging, auto-scrolling, consistent sidebar navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, simplified travel expense integration, manual re-processing, and sort persistence. Includes gig sheet generation.
 - **Document Management**: Multi-document upload, categorization, and secure cloud storage.
