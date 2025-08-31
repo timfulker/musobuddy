@@ -19,17 +19,12 @@ interface DatabaseUser {
   lastName: string;
   isAdmin: boolean;
   isBetaTester: boolean;
-  tier: string;
-  plan: string;
-  created_via_stripe: boolean;
-  createdViaStripe: boolean;  // CamelCase version
-  trial_status: string;
-  trialStatus: string;  // CamelCase version
-  isSubscribed: boolean;
+  isAssigned: boolean;
+  trialEndsAt: Date | string | null;
+  hasPaid: boolean;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   onboardingCompleted: boolean;
-  hasCompletedPayment: boolean;
   emailPrefix: string | null;
 }
 
@@ -90,11 +85,11 @@ export function useAuth() {
             console.log('✅ Database user fetched:', { 
               email: databaseUser.email, 
               isAdmin: databaseUser.isAdmin,
-              tier: databaseUser.tier,
-              plan: databaseUser.plan,
-              createdViaStripe: databaseUser.createdViaStripe,
-              hasCompletedPayment: databaseUser.hasCompletedPayment,
-              fullData: databaseUser  // Log full data to debug
+              isBetaTester: databaseUser.isBetaTester,
+              isAssigned: databaseUser.isAssigned,
+              trialEndsAt: databaseUser.trialEndsAt,
+              hasPaid: databaseUser.hasPaid,
+              onboardingCompleted: databaseUser.onboardingCompleted
             });
             
             // Merge Firebase user with database user data
