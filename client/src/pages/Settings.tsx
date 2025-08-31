@@ -1163,23 +1163,19 @@ export default function Settings() {
             control={form.control}
             name="bookingDisplayLimit"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Show All Bookings</FormLabel>
+                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    Toggle between showing 50 bookings or all bookings
+                  </FormDescription>
+                </div>
                 <FormControl>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select booking display limit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="50">Show 50 bookings</SelectItem>
-                      <SelectItem value="all">Show all bookings</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Switch
+                    checked={field.value === 'all'}
+                    onCheckedChange={(checked) => field.onChange(checked ? 'all' : '50')}
+                  />
                 </FormControl>
-                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                  Controls how many bookings are displayed on the bookings page
-                </FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -1188,38 +1184,19 @@ export default function Settings() {
             control={form.control}
             name="distanceUnits"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Use Kilometers</FormLabel>
+                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    Toggle between miles and kilometers for distance display
+                  </FormDescription>
+                </div>
                 <FormControl>
-                  <div className="flex gap-2 p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('miles')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        field.value === 'miles' 
-                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Miles
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('km')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        field.value === 'km' 
-                          ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-white shadow-sm' 
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Kilometers
-                    </button>
-                  </div>
+                  <Switch
+                    checked={field.value === 'km'}
+                    onCheckedChange={(checked) => field.onChange(checked ? 'km' : 'miles')}
+                  />
                 </FormControl>
-                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                  Units used for displaying distances to venues
-                </FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
