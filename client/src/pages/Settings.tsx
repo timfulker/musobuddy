@@ -1175,7 +1175,9 @@ export default function Settings() {
                       onCheckedChange={(checked) => {
                         const newValue = checked ? 'all' : '50';
                         field.onChange(newValue);
-                        console.log('Booking limit changed to:', newValue);
+                        console.log('Booking limit changed to:', newValue, 'field.value now:', field.value);
+                        // Force a re-render by triggering form validation
+                        form.trigger('bookingDisplayLimit');
                       }}
                       className="data-[state=checked]:bg-green-500"
                     />
@@ -1208,7 +1210,9 @@ export default function Settings() {
                       onCheckedChange={(checked) => {
                         const newValue = checked ? 'km' : 'miles';
                         field.onChange(newValue);
-                        console.log('Distance unit changed to:', newValue);
+                        console.log('Distance unit changed to:', newValue, 'field.value now:', field.value);
+                        // Force a re-render by triggering form validation
+                        form.trigger('distanceUnits');
                       }}
                       className="data-[state=checked]:bg-green-500"
                     />
