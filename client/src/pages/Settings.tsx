@@ -395,8 +395,6 @@ export default function Settings() {
   const [initialData, setInitialData] = useState<SettingsFormData | null>(null);
   const [formInitialized, setFormInitialized] = useState(false);
   
-  // Active section for sidebar navigation
-  const [activeSection, setActiveSection] = useState('business');
   
   // Define all settings sections with completion logic
   const settingsSections = [
@@ -476,31 +474,6 @@ export default function Settings() {
     }
   ];
 
-  // Function to render the active section content
-  const renderActiveSection = () => {
-    switch (activeSection) {
-      case 'business':
-        return renderBusinessSection();
-      case 'email':
-        return renderEmailSection();
-      case 'contract':
-        return renderContractSection();
-      case 'bank':
-        return renderBankSection();
-      case 'pricing':
-        return renderPricingSection();
-      case 'instruments':
-        return renderInstrumentsSection();
-      case 'performance':
-        return renderPerformanceSection();
-      case 'widget':
-        return renderWidgetSection();
-      case 'themes':
-        return renderThemesSection();
-      default:
-        return renderBusinessSection();
-    }
-  };
 
   // Render functions for each settings section
   const renderBusinessSection = () => (
@@ -1847,73 +1820,43 @@ export default function Settings() {
           </div>
         </header>
 
-        {/* Settings Layout with Sidebar */}
-        <div className="flex min-h-[calc(100vh-120px)]">
-          {/* Settings Navigation Sidebar */}
-          <div className="w-80 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-            <nav className="space-y-2">
-              {settingsSections.map((section) => {
-                const Icon = section.icon;
-                const isCompleted = form?.getValues ? section.checkCompletion(currentFormData) : false;
-                const isActive = activeSection === section.id;
-                
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-all ${
-                      isActive 
-                        ? 'bg-primary/10 border-l-4 border-primary text-primary' 
-                        : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{section.label}</span>
-                    </div>
-                    {isCompleted && (
-                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-          
-          {/* Settings Content */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Render active section */}
-                {renderActiveSection()}
-                
-                {/* Save Button */}
-                <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
-                  <Button
-                    type="submit"
-                    disabled={saveSettings.isPending || !hasChanges}
-                    className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    {saveSettings.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        {hasChanges ? 'Save Settings' : 'No Changes'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
+        {/* Settings Content - Single Page */}
+        <div className="max-w-4xl mx-auto p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* All sections rendered continuously */}
+              {renderBusinessSection()}
+              {renderEmailSection()}
+              {renderContractSection()}
+              {renderBankSection()}
+              {renderPricingSection()}
+              {renderInstrumentsSection()}
+              {renderPerformanceSection()}
+              {renderWidgetSection()}
+              {renderThemesSection()}
+              
+              {/* Save Button */}
+              <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
+                <Button
+                  type="submit"
+                  disabled={saveSettings.isPending || !hasChanges}
+                  className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  {saveSettings.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      {hasChanges ? 'Save Settings' : 'No Changes'}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </div>
       </div>
 
