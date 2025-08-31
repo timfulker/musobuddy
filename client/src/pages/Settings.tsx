@@ -466,13 +466,6 @@ export default function Settings() {
     }
   ];
 
-  // Calculate completion stats using existing form fields
-  const currentFormData = form?.getValues() || {};
-  const completedSections = settingsSections.filter(section => 
-    section.checkCompletion(currentFormData)
-  ).length;
-  const completionPercentage = Math.round((completedSections / settingsSections.length) * 100);
-
   // Function to render the active section content
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -1111,6 +1104,13 @@ export default function Settings() {
       </div>
     );
   }
+
+  // Calculate completion stats using existing form fields (after form is initialized)
+  const currentFormData = form?.getValues() || {};
+  const completedSections = settingsSections.filter(section => 
+    section.checkCompletion(currentFormData)
+  ).length;
+  const completionPercentage = Math.round((completedSections / settingsSections.length) * 100);
 
   return (
     <div className="min-h-screen bg-background layout-consistent">
