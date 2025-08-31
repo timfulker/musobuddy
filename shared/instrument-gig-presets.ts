@@ -937,20 +937,10 @@ export async function getGigTypeNamesForInstrument(instrument: string): Promise<
       temperature: 0.7,
       messages: [{
         role: "user", 
-        content: `Generate a comprehensive list of 20-25 specific gig types that a professional musician who plays ${instrument} would typically perform.
-
-Include various venues, event types, and performance contexts. Be very specific (e.g., "Wedding Reception" not just "Wedding", "Corporate Networking Event" not just "Corporate").
-
-Consider all these contexts:
-- Weddings (ceremony, drinks reception, evening party)
-- Corporate events (launches, networking, award ceremonies, staff parties)
-- Private celebrations (birthdays, anniversaries, engagement parties)
-- Venues (restaurants, hotels, bars, clubs, festivals)
-- Special occasions (Christmas, New Year, graduation balls)
-- Professional contexts (recording sessions, cruise ships, fashion shows)
+        content: `Provide up to 20 gig types based on the following instrument: ${instrument}
 
 Return ONLY a JSON array of specific gig type names, no other text:
-["Wedding Reception", "Corporate Networking Event", "Birthday Party"]`
+["Wedding Ceremony", "Corporate Event", "Private Party"]`
       }]
     });
 
