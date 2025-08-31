@@ -140,6 +140,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
+        emailVerified: req.user?.emailVerified || false, // Add Firebase email verification status
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
@@ -184,6 +185,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
+        emailVerified: req.user?.emailVerified || false, // Add Firebase email verification status
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
