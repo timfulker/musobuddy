@@ -66,20 +66,10 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
       formData.append('document', file);
       formData.append('documentType', documentType);
 
-      // Firebase auth is handled automatically
-      const headers: any = {};
-
-      const response = await fetch(`/api/bookings/${booking.id}/documents`, {
+      const response = await apiRequest(`/api/bookings/${booking.id}/documents`, {
         method: 'POST',
         body: formData,
-        credentials: 'include',
-        headers,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
 
       return response.json();
     },
@@ -187,7 +177,8 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     return DOCUMENT_TYPES.find(t => t.value === type) || DOCUMENT_TYPES[2]; // Default to 'other'
   };
 
-  const canUploadMore = documents.length < 5;
+  // Only allow upload if we have successfully loaded documents AND under the limit
+  const canUploadMore = !loadingDocuments && documentsResponse?.success !== false && documents.length < 5;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -356,11 +347,14 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
             </>
           )}
 
-          {!canUploadMore && (
+          {!canUploadMore && !loadingDocuments && (
             <Alert>
               <FileText className="h-4 w-4" />
               <AlertDescription>
-                Maximum of 5 documents per booking reached. Remove a document to add a new one.
+                {documentsResponse?.success === false 
+                  ? "Unable to load documents. Please refresh and try again."
+                  : "Maximum of 5 documents per booking reached. Remove a document to add a new one."
+                }
               </AlertDescription>
             </Alert>
           )}
