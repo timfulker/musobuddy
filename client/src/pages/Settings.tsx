@@ -103,6 +103,11 @@ const STANDARD_CONTRACT_CLAUSES = [
     id: "forcemajeure",
     text: "Performance may be cancelled due to circumstances beyond performer's control",
     description: "Standard force majeure protection clause"
+  },
+  {
+    id: "cashPayment",
+    text: "Payment in cash as agreed",
+    description: "Payment to be made in cash according to agreed terms"
   }
 ];
 
@@ -132,7 +137,7 @@ const settingsFormSchema = z.object({
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
-  invoicePaymentTerms: z.enum(["on_receipt", "days_after"]).default("days_after"),
+  invoicePaymentTerms: z.enum(["on_receipt", "3_days", "7_days", "14_days", "30_days", "on_performance", "cash_as_agreed"]).default("7_days"),
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
     payment30: z.boolean().optional(),
@@ -145,6 +150,7 @@ const settingsFormSchema = z.object({
     finalNumbers: z.boolean().optional(),
     noRecording: z.boolean().optional(),
     forcemajeure: z.boolean().optional(),
+    cashPayment: z.boolean().optional(),
   }).optional(),
   customClauses: z.array(z.string()).optional().default([]), // Custom user-added clauses
   emailSignature: z.string().optional().or(z.literal("")),
@@ -215,7 +221,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailSignature: data.email_signature || data.emailSignature || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
-    invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "days_after",
+    invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "7_days",
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
     contractClauses: {
       payment30: data.contract_clauses?.payment30 || data.contractClauses?.payment30 || false,
@@ -228,6 +234,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
       finalNumbers: data.contract_clauses?.finalNumbers || data.contractClauses?.finalNumbers || false,
       noRecording: data.contract_clauses?.noRecording || data.contractClauses?.noRecording || false,
       forcemajeure: data.contract_clauses?.forcemajeure || data.contractClauses?.forcemajeure || false,
+      cashPayment: data.contract_clauses?.cashPayment || data.contractClauses?.cashPayment || false,
     },
     customClauses: Array.isArray(data.custom_clauses || data.customClauses) ? 
                    (data.custom_clauses || data.customClauses) : 
@@ -395,7 +402,7 @@ export default function Settings() {
       label: 'Business Information',
       icon: Building,
       checkCompletion: (data: SettingsFormData) => {
-        return !!(data.businessName && data.businessEmail && data.phone);
+        return !!(data.businessName && data.businessEmail && data.phone && data.addressLine1 && data.city && data.postcode);
       }
     },
     {
@@ -403,7 +410,7 @@ export default function Settings() {
       label: 'Email Settings',
       icon: Mail,
       checkCompletion: (data: SettingsFormData) => {
-        return !!(data.emailFromName && data.emailSignature);
+        return !!(data.emailFromName && data.emailSignature && data.emailPrefix);
       }
     },
     {
@@ -411,9 +418,9 @@ export default function Settings() {
       label: 'Contract & Invoice Settings',
       icon: FileText,
       checkCompletion: (data: SettingsFormData) => {
-        const hasBasicInvoiceSettings = !!(data.defaultInvoiceDueDays);
+        const hasInvoiceSettings = !!(data.invoicePaymentTerms && data.nextInvoiceNumber);
         const hasContractClauses = Object.values(data.contractClauses || {}).some(Boolean);
-        return hasBasicInvoiceSettings && hasContractClauses;
+        return hasInvoiceSettings && hasContractClauses;
       }
     },
     {
@@ -547,17 +554,92 @@ export default function Settings() {
           />
           <FormField
             control={form.control}
-            name="emailFromName"
+            name="website"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                <FormLabel className="text-sm font-medium">Website (Optional)</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ""} placeholder="Your Name" />
+                  <Input {...field} value={field.value || ""} placeholder="https://www.yourwebsite.com" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
+
+        {/* Address Fields */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Business Address</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="addressLine1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Address Line 1</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="123 Main Street" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="addressLine2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Address Line 2 (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="Suite 100" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Town/City</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="London" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="county"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">County (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="Greater London" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="postcode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Postcode</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="SW1A 1AA" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -574,19 +656,43 @@ export default function Settings() {
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="emailFromName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value || ""} placeholder="Your Name" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="emailFromName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="Your Name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emailPrefix"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Email Prefix</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center">
+                      <Input {...field} value={field.value || ""} placeholder="your-name" className="rounded-r-none" />
+                      <span className="bg-gray-50 dark:bg-gray-800 border border-l-0 border-input px-3 py-2 text-sm text-muted-foreground rounded-r-md">
+                        @enquiries.musobuddy.com
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    Your personalized email address for client enquiries
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
           <FormField
             control={form.control}
             name="emailSignature"
@@ -619,8 +725,158 @@ export default function Settings() {
           <span>Contract & Invoice Settings</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Contract settings content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        {/* Invoice Settings */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="nextInvoiceNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="00001" type="number" min="1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="invoicePrefix"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Invoice Prefix (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="INV-" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="invoicePaymentTerms"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
+                    <SelectItem value="3_days">Payment due within 3 days</SelectItem>
+                    <SelectItem value="7_days">Payment due within 7 days</SelectItem>
+                    <SelectItem value="14_days">Payment due within 14 days</SelectItem>
+                    <SelectItem value="30_days">Payment due within 30 days</SelectItem>
+                    <SelectItem value="on_performance">Payment due on date of performance</SelectItem>
+                    <SelectItem value="cash_as_agreed">Payment in cash as agreed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Contract Clauses */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contract Clauses</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {STANDARD_CONTRACT_CLAUSES.map((clause) => (
+              <FormField
+                key={clause.id}
+                control={form.control}
+                name={`contractClauses.${clause.id}`}
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        {clause.text}
+                      </FormLabel>
+                      {clause.description && (
+                        <FormDescription className="text-xs">
+                          {clause.description}
+                        </FormDescription>
+                      )}
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+          
+          {/* Custom Clauses */}
+          <div className="space-y-4 mt-6">
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Custom Clauses</h4>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentClauses = form.getValues('customClauses') || [];
+                  form.setValue('customClauses', [...currentClauses, '']);
+                }}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Custom Clause</span>
+              </Button>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="customClauses"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="space-y-2">
+                    {(field.value || []).map((clause, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={clause}
+                          onChange={(e) => {
+                            const newClauses = [...(field.value || [])];
+                            newClauses[index] = e.target.value;
+                            field.onChange(newClauses);
+                          }}
+                          placeholder="Enter custom contract clause..."
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newClauses = (field.value || []).filter((_, i) => i !== index);
+                            field.onChange(newClauses);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -633,13 +889,41 @@ export default function Settings() {
           <span>Bank Details</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Bank details content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="bankDetails"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Bank Account Details</FormLabel>
+                <FormControl>
+                  <textarea 
+                    {...field} 
+                    value={field.value || ""} 
+                    placeholder="Bank Name: Example Bank&#10;Account Name: Your Business Name&#10;Sort Code: 12-34-56&#10;Account Number: 12345678"
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    rows={6}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                  These details will be included on your invoices for client payments
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );
 
-  const renderPricingSection = () => (
+  const renderPricingSection = () => {
+    const watchedPrimaryInstrument = form.watch('primaryInstrument');
+    const watchedSecondaryInstruments = form.watch('secondaryInstruments') || [];
+    const isDJSelected = watchedPrimaryInstrument === 'dj' || watchedSecondaryInstruments.includes('dj');
+    
+    return (
     <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
       <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
         <CardTitle className="flex items-center space-x-2 text-lg">
@@ -647,25 +931,222 @@ export default function Settings() {
           <span>AI Pricing Guide</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Pricing guide content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="aiPricingEnabled"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Enable AI Pricing Guide</FormLabel>
+                  <FormDescription>
+                    Help AI suggest appropriate pricing for bookings
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="baseHourlyRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Base Hourly Rate (£)</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min="0" placeholder="130" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="minimumBookingHours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Minimum Booking Hours</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min="0.5" step="0.5" placeholder="2" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="additionalHourRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Additional Hour Rate (£)</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min="0" placeholder="60" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {isDJSelected && (
+              <FormField
+                control={form.control}
+                name="djServiceRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">DJ Service Rate (£)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="number" min="0" placeholder="300" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="pricingNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Pricing Notes</FormLabel>
+                  <FormControl>
+                    <textarea 
+                      {...field} 
+                      value={field.value || ""} 
+                      placeholder="Special pricing considerations, seasonal rates, etc."
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      rows={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="specialOffers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Special Offers</FormLabel>
+                  <FormControl>
+                    <textarea 
+                      {...field} 
+                      value={field.value || ""} 
+                      placeholder="Package deals, discounts for multiple bookings, etc."
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      rows={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
-  const renderInstrumentsSection = () => (
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-        <CardTitle className="flex items-center space-x-2 text-lg">
-          <Music className="w-5 h-5 text-primary" />
-          <span>Instrument & AI Context</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Instrument settings content will be added from existing sections.</p>
-      </CardContent>
-    </Card>
-  );
+  const renderInstrumentsSection = () => {
+    const availableInstruments = getAvailableInstruments();
+    const watchedPrimaryInstrument = form.watch('primaryInstrument');
+    const watchedSecondaryInstruments = form.watch('secondaryInstruments') || [];
+    
+    return (
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+        <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Music className="w-5 h-5 text-primary" />
+            <span>Instrument & AI Context</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="primaryInstrument"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Primary Instrument</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your primary instrument" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">None selected</SelectItem>
+                      {availableInstruments.map((instrument) => (
+                        <SelectItem key={instrument} value={instrument}>
+                          {getInstrumentDisplayName(instrument)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    Your main instrument helps AI understand your booking context
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="secondaryInstruments"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Secondary Instruments (Optional)</FormLabel>
+                  <div className="space-y-2">
+                    {availableInstruments
+                      .filter(instrument => instrument !== watchedPrimaryInstrument)
+                      .map((instrument) => {
+                        const isSelected = (field.value || []).includes(instrument);
+                        return (
+                          <div key={instrument} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                const currentValues = field.value || [];
+                                if (checked) {
+                                  field.onChange([...currentValues, instrument]);
+                                } else {
+                                  field.onChange(currentValues.filter(v => v !== instrument));
+                                }
+                              }}
+                            />
+                            <FormLabel className="text-sm font-normal cursor-pointer">
+                              {getInstrumentDisplayName(instrument)}
+                            </FormLabel>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    Select any additional instruments you play
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderPerformanceSection = () => (
     <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
@@ -675,8 +1156,58 @@ export default function Settings() {
           <span>Performance Settings</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Performance settings content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="bookingDisplayLimit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select display limit" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="50">Show 50 bookings</SelectItem>
+                    <SelectItem value="all">Show all bookings</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                  Controls how many bookings are displayed on the bookings page
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="distanceUnits"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select distance units" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="miles">Miles</SelectItem>
+                    <SelectItem value="km">Kilometers</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                  Units used for displaying distances to venues
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );
@@ -689,8 +1220,64 @@ export default function Settings() {
           <span>Booking Widget</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Widget settings content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Generate a permanent booking widget URL that clients can use to request bookings directly.
+          </p>
+          
+          {widgetUrl ? (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Input 
+                  value={widgetUrl} 
+                  readOnly 
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button 
+                  onClick={copyWidgetUrl} 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center space-x-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span>Copy</span>
+                </Button>
+              </div>
+              
+              {qrCodeUrl && (
+                <div className="flex flex-col items-center space-y-2">
+                  <p className="text-sm font-medium">QR Code for easy sharing:</p>
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="Booking Widget QR Code" 
+                    className="w-32 h-32 border rounded-lg"
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Button 
+                onClick={getOrCreateWidgetUrl}
+                disabled={isGeneratingToken}
+                className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
+              >
+                {isGeneratingToken ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Link className="w-4 h-4 mr-2" />
+                    Generate Widget URL
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -703,8 +1290,120 @@ export default function Settings() {
           <span>App Theme</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-muted-foreground">Theme settings content will be added from existing sections.</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="themeTemplate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Theme Template</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select theme template" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {THEME_TEMPLATES.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        <div className="flex flex-col">
+                          <span>{template.label}</span>
+                          <span className="text-xs text-muted-foreground">{template.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="themeTone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Theme Tone</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select theme tone" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {THEME_TONES.map((tone) => (
+                      <SelectItem key={tone.id} value={tone.id}>
+                        <div className="flex flex-col">
+                          <span>{tone.label}</span>
+                          <span className="text-xs text-muted-foreground">{tone.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="themeFont"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Font Family</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select font" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {THEME_FONTS.map((font) => (
+                      <SelectItem key={font.id} value={font.id}>
+                        <div className="flex flex-col">
+                          <span>{font.label}</span>
+                          <span className="text-xs text-muted-foreground">{font.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="themeAccentColor"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Accent Color</FormLabel>
+                <div className="flex items-center space-x-2">
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="#673ab7" />
+                  </FormControl>
+                  <div className="flex space-x-1">
+                    {THEME_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => field.onChange(color)}
+                        className="w-6 h-6 rounded border-2 border-gray-300 hover:border-gray-500"
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );
@@ -971,7 +1670,7 @@ export default function Settings() {
         emailFromName: settings.emailFromName || "",
         emailSignature: settings.emailSignature || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
-        invoicePaymentTerms: settings.invoicePaymentTerms || "days_after",
+        invoicePaymentTerms: settings.invoicePaymentTerms || "7_days",
         defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
@@ -1029,6 +1728,8 @@ export default function Settings() {
         // Gig types
         customGigTypes: Array.isArray(settings.customGigTypes) ? settings.customGigTypes : [],
         // Travel expense integration removed - always include travel in performance fee
+        // Email prefix
+        emailPrefix: settings.emailPrefix || "",
       };
       
       // Set up instrument state
