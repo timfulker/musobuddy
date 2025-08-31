@@ -937,16 +937,19 @@ export async function getGigTypeNamesForInstrument(instrument: string): Promise<
       temperature: 0.7,
       messages: [{
         role: "user", 
-        content: `You are helping a professional ${instrument} player find relevant gig opportunities. Generate ONLY gig types that would specifically require a ${instrument} player's skills and expertise.
+        content: `Generate realistic gig types that a professional ${instrument} player would commonly be hired for. Focus on practical, bookable opportunities that exist in the real music industry.
 
-For ${instrument}, think about:
-- What performance contexts specifically need this instrument?
-- What musical styles and genres suit this instrument?
-- What venues and events specifically book ${instrument} players?
-- What ensemble sizes typically feature this instrument?
+For ${instrument}, prioritize the most common and realistic gigs:
+- Wedding and event performances
+- Teaching and educational work  
+- Recording and studio work
+- Concert and recital performances
+- Religious services and ceremonies
 
-Provide up to 20 SPECIFIC gig types for a ${instrument} player. Return ONLY a JSON array of gig type names, no other text:
-["String Quartet Wedding", "Solo Classical Performance", "Chamber Music Recital"]`
+Return up to 20 practical gig types that ${instrument} players actually get hired for. Use clear, professional names that clients would understand.
+
+Return ONLY a JSON array:
+["String Quartet Wedding", "Wedding Ceremony Soloist", "Private Music Lessons"]`
       }]
     });
 
