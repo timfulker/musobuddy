@@ -932,7 +932,7 @@ export async function getGigTypeNamesForInstrument(instrument: string): Promise<
     console.log(`🤖 Generating gig types for instrument: ${instrument}`);
     
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4", // Use GPT-4 for better instrument-specific results
       max_tokens: 1000,
       temperature: 0.7,
       messages: [{
