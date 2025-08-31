@@ -1,9 +1,13 @@
 // Health Check Routes for System Monitoring
 import { type Express } from "express";
 import { db } from "../core/database";
+import { neon } from "@neondatabase/serverless";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 // Authentication handled by Firebase
+
+// Get the raw SQL connection for health checks
+const sql = neon(process.env.DATABASE_URL_DEV || process.env.DATABASE_URL!);
 
 export function registerHealthRoutes(app: Express) {
   console.log('🏥 Setting up health check routes...');
@@ -12,9 +16,9 @@ export function registerHealthRoutes(app: Express) {
   app.get('/api/health/database', async (req, res) => {
     try {
       // Test database connectivity with a simple query
-      const result = await db.query('SELECT 1 as test');
+      const result = await sql`SELECT 1 as test`;
       
-      if (result.rows && result.rows.length > 0) {
+      if (result && result.length > 0) {
         res.json({
           status: 'healthy',
           message: 'Database connected',

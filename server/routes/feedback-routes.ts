@@ -35,15 +35,22 @@ export function registerFeedbackRoutes(app: Express) {
   // Create new feedback
   app.post('/api/feedback', authenticateWithFirebase, async (req, res) => {
     try {
+      console.log('🔄 Feedback submission started');
       const userId = req.user?.id;
+      console.log('👤 User ID:', userId);
       
       if (!userId) {
+        console.log('❌ No user ID found');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log('🔍 Checking user permissions...');
       // Verify user is beta tester or admin
       const user = await userStorage.getUser(userId);
+      console.log('👤 User data:', { email: user?.email, isBetaTester: user?.isBetaTester, isAdmin: user?.isAdmin });
+      
       if (!user?.isBetaTester && !user?.isAdmin) {
+        console.log('❌ User not authorized for feedback');
         return res.status(403).json({ error: 'Beta tester access required' });
       }
 
@@ -64,7 +71,9 @@ export function registerFeedbackRoutes(app: Express) {
         status: 'open'
       };
 
+      console.log('📝 Creating feedback with data:', feedbackData);
       const newFeedback = await feedbackStorage.createFeedback(feedbackData);
+      console.log('✅ Feedback created successfully:', newFeedback);
       
       res.json({
         message: 'Feedback submitted successfully',
@@ -73,7 +82,12 @@ export function registerFeedbackRoutes(app: Express) {
 
     } catch (error) {
       console.error('❌ Error creating feedback:', error);
-      res.status(500).json({ error: 'Failed to create feedback' });
+      console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({ 
+        error: 'Failed to create feedback',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

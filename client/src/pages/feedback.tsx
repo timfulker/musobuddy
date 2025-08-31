@@ -42,7 +42,7 @@ interface Feedback {
 }
 
 export default function FeedbackPage() {
-  const { user } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -95,7 +95,8 @@ export default function FeedbackPage() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create feedback');
+        console.error('❌ Feedback submission failed:', error);
+        throw new Error(error.details || error.message || `Failed to create feedback (${response.status})`);
       }
       return response.json();
     },
@@ -228,6 +229,20 @@ export default function FeedbackPage() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Show loading state while user data is being fetched
+  if (userLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   // Access control - only beta testers can access this page
   if (!user?.isBetaTester && !user?.isAdmin) {

@@ -1,37 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node:*)",
-      "Bash(rm:*)",
-      "Bash(grep:*)",
-      "Bash(npm install:*)",
       "Bash(curl:*)",
-      "Bash(pkill:*)",
-      "Bash(env)",
-      "Bash(npm run dev:*)",
-      "Bash(kill:*)",
-      "Bash(npx tsx:*)",
-      "Bash(npm run build:*)",
-      "Bash(true)",
-      "Bash(fuser:*)",
-      "Bash(PORT=5001 npm run dev)",
-      "Bash(find:*)",
-      "Bash(sed:*)",
-      "Bash(awk:*)",
-      "Bash(python3:*)",
-      "Bash(chmod:*)",
-      "Bash(pm2 logs:*)",
-      "Bash(journalctl:*)",
-      "Bash(npx kill-port:*)",
-      "Bash(lsof:*)",
-      "Bash(test -f .eslintrc.json)",
-      "Bash(timeout 10 npm run dev)",
-      "Bash(npm run:*)",
-      "Bash(npx tsc:*)",
-      "Bash(PORT=5001 timeout 10 npm run dev)",
-      "Bash(NODE_ENV=development node -e \"\nconst { db } = require(''./server/core/database.js'');\nconst { bookings } = require(''./shared/schema.js'');\n\n(async () => {\n  try {\n    const allBookings = await db.select().from(bookings);\n    console.log(''Total bookings in database:'', allBookings.length);\n    \n    if (allBookings.length > 0) {\n      console.log(''Sample booking IDs:'', allBookings.slice(0, 5).map(b => b.id));\n    }\n  } catch (error) {\n    console.error(''Database query error:'', error);\n  }\n})();\n\")"
+      "Bash(pkill:*)"
     ],
     "deny": [],
+    "ask": [],
     "defaultMode": "acceptEdits"
   }
 }
