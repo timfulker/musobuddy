@@ -62,9 +62,7 @@ function Router() {
 
   // Use useEffect for navigation to prevent render loops
   useEffect(() => {
-    // Skip redirects in preview environment
-    const isPreview = window.location.hostname.includes('replit.dev');
-    if (isPreview) return;
+    // Note: Removed preview environment skip to ensure access control works in Replit
     
     if (isLoading) return; // Skip navigation logic while loading
     
@@ -99,6 +97,18 @@ function Router() {
     const needsPaymentSetup = !hasUserAccess;
     const isProtected = isProtectedRoute(currentPath);
     const paymentRedirectUrl = getPaymentRedirectUrl();
+    
+    // DEBUG: Log all conditions
+    console.log('🐛 ACCESS CONTROL DEBUG:', {
+      email: user.email,
+      hasPaid: user.hasPaid,
+      hasUserAccess,
+      needsPaymentSetup,
+      isProtected,
+      currentPath,
+      paymentRedirectUrl,
+      isAuthenticated
+    });
     
     // Redirect authenticated users who need payment setup from protected routes
     if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {

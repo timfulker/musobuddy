@@ -17,7 +17,7 @@ const ADMIN_BYPASS_EMAILS = [
 ];
 
 /**
- * Check if a user has access to the platform (simplified logic)
+ * Check if a user has access to the platform - HARD RULE: hasPaid must be true
  */
 export function hasAccess(user: User | null | undefined): boolean {
   if (!user) return false;
@@ -25,25 +25,15 @@ export function hasAccess(user: User | null | undefined): boolean {
   // Admin users always have access
   if (user.isAdmin) return true;
   
-  // Check admin bypass emails
+  // Check admin bypass emails (ring-fenced accounts)
   if (user.email && ADMIN_BYPASS_EMAILS.includes(user.email)) return true;
   
-  // Assigned users always have access
-  if (user.isAssigned) return true;
+  // Assigned users always have access (but NOT test accounts)
+  if (user.isAssigned && !user.email?.includes('+test')) return true;
   
-  // Paid users always have access
-  if (user.hasPaid) return true;
-  
-  // Check if trial is still active
-  if (user.trialEndsAt) {
-    const trialEnd = new Date(user.trialEndsAt);
-    if (trialEnd > new Date()) {
-      return true; // Trial still active
-    }
-  }
-  
-  // No access
-  return false;
+  // HARD RULE: No dashboard access without payment setup (has_paid = true)
+  // This includes trial users - they must complete payment setup to access dashboard
+  return user.hasPaid === true;
 }
 
 /**
