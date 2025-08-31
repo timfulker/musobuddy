@@ -17,76 +17,55 @@ export interface InstrumentPreset {
 }
 
 export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
-  // Guitar Instruments
+  // Core Instruments (maintain backward compatibility)
   {
-    instrument: "electric-guitar",
-    displayName: "Electric Guitar",
+    instrument: "dj",
+    displayName: "DJ",
     gigTypes: [
       {
-        id: "rock-gig",
-        name: "Rock Performance",
-        description: "Live rock music performance",
-        defaultDuration: "2-4 hours",
-        priceRange: "£200-500",
-        commonVenues: ["Music venues", "Clubs", "Pubs", "Festivals"]
+        id: "wedding-dj",
+        name: "Wedding DJ",
+        description: "Full DJ service for wedding receptions and celebrations",
+        defaultDuration: "4-6 hours",
+        priceRange: "£400-800",
+        commonVenues: ["Hotels", "Wedding venues", "Marquees", "Function rooms"]
       },
       {
-        id: "wedding-reception",
-        name: "Wedding Reception",
-        description: "Electric guitar for wedding receptions",
-        defaultDuration: "3-4 hours",
+        id: "party-dj",
+        name: "Party DJ",
+        description: "DJ entertainment for private parties and celebrations",
+        defaultDuration: "3-5 hours",
         priceRange: "£300-600",
-        commonVenues: ["Hotels", "Wedding venues", "Function rooms"]
-      }
-    ]
-  },
-  {
-    instrument: "acoustic-guitar",
-    displayName: "Acoustic Guitar",
-    gigTypes: [
+        commonVenues: ["Private homes", "Function rooms", "Clubs", "Outdoor venues"]
+      },
       {
-        id: "acoustic-wedding",
-        name: "Acoustic Wedding",
-        description: "Acoustic guitar for wedding ceremonies and receptions",
+        id: "corporate-dj",
+        name: "Corporate DJ",
+        description: "Professional DJ services for corporate events and functions",
         defaultDuration: "2-4 hours",
-        priceRange: "£250-400",
-        commonVenues: ["Churches", "Hotels", "Outdoor venues", "Wedding venues"]
+        priceRange: "£350-700",
+        commonVenues: ["Hotels", "Conference centers", "Corporate venues", "Function rooms"]
       },
       {
-        id: "restaurant-gig",
-        name: "Restaurant Performance",
-        description: "Background music for restaurants and dining venues",
-        defaultDuration: "2-3 hours",
-        priceRange: "£150-300",
-        commonVenues: ["Restaurants", "Bars", "Cafes", "Hotels"]
+        id: "club-dj",
+        name: "Club DJ",
+        description: "DJ performance at nightclubs and music venues",
+        defaultDuration: "3-6 hours",
+        priceRange: "£200-500",
+        commonVenues: ["Nightclubs", "Music venues", "Bars", "Event spaces"]
+      },
+      {
+        id: "mobile-disco",
+        name: "Mobile Disco",
+        description: "Complete mobile disco service with lighting and sound",
+        defaultDuration: "3-5 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Community halls", "Schools", "Private venues", "Outdoor events"]
       }
     ]
   },
   {
-    instrument: "bass-guitar",
-    displayName: "Bass Guitar",
-    gigTypes: [
-      {
-        id: "wedding-bass",
-        name: "Wedding Reception",
-        description: "Bass accompaniment for wedding bands and receptions",
-        defaultDuration: "3-4 hours",
-        priceRange: "£300-500",
-        commonVenues: ["Hotels", "Wedding venues", "Function rooms", "Marquees"]
-      },
-      {
-        id: "jazz-bass",
-        name: "Jazz Performance",
-        description: "Bass performance for jazz ensembles and venues",
-        defaultDuration: "2-3 hours",
-        priceRange: "£200-400",
-        commonVenues: ["Jazz clubs", "Restaurants", "Hotels", "Private events"]
-      }
-    ]
-  },
-  // Drums
-  {
-    instrument: "drum-kit",
+    instrument: "drums",
     displayName: "Drum Kit",
     gigTypes: [
       {
@@ -104,35 +83,95 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "3-8 hours",
         priceRange: "£100-300",
         commonVenues: ["Recording studios", "Rehearsal rooms", "Home studios"]
+      },
+      {
+        id: "drum-lessons",
+        name: "Drum Lessons",
+        description: "Private drum instruction and teaching",
+        defaultDuration: "30-60 minutes",
+        priceRange: "£25-50",
+        commonVenues: ["Music schools", "Private homes", "Studios", "Online"]
       }
     ]
   },
-  // Keyboards
   {
-    instrument: "keyboard-synthesizer",
-    displayName: "Keyboard / Synthesizer",
+    instrument: "guitar",
+    displayName: "Electric Guitar",
     gigTypes: [
       {
-        id: "wedding-keyboard",
+        id: "acoustic-wedding",
+        name: "Acoustic Wedding",
+        description: "Acoustic guitar for wedding ceremonies and receptions",
+        defaultDuration: "2-4 hours",
+        priceRange: "£250-400",
+        commonVenues: ["Churches", "Hotels", "Outdoor venues", "Wedding venues"]
+      },
+      {
+        id: "restaurant-gig",
+        name: "Restaurant Performance",
+        description: "Background music for restaurants and dining venues",
+        defaultDuration: "2-3 hours",
+        priceRange: "£150-300",
+        commonVenues: ["Restaurants", "Bars", "Cafes", "Hotels"]
+      },
+      {
+        id: "pub-gig",
+        name: "Pub Performance",
+        description: "Live music performance at pubs and bars",
+        defaultDuration: "2-3 sets",
+        priceRange: "£100-200",
+        commonVenues: ["Pubs", "Bars", "Social clubs", "Music venues"]
+      },
+      {
+        id: "private-lesson",
+        name: "Private Lesson",
+        description: "One-on-one guitar instruction",
+        defaultDuration: "45-60 minutes",
+        priceRange: "£25-50",
+        commonVenues: ["Private homes", "Music schools", "Studios", "Online"]
+      },
+      {
+        id: "band-performance",
+        name: "Band Performance",
+        description: "Performance as part of a band or ensemble",
+        defaultDuration: "2-4 hours",
+        priceRange: "£200-400",
+        commonVenues: ["Music venues", "Clubs", "Festivals", "Private events"]
+      }
+    ]
+  },
+  {
+    instrument: "bass",
+    displayName: "Bass Guitar",
+    gigTypes: [
+      {
+        id: "wedding-bass",
         name: "Wedding Reception",
-        description: "Keyboard accompaniment for weddings",
+        description: "Bass accompaniment for wedding bands and receptions",
         defaultDuration: "3-4 hours",
-        priceRange: "£250-500",
+        priceRange: "£300-500",
         commonVenues: ["Hotels", "Wedding venues", "Function rooms", "Marquees"]
       },
       {
-        id: "corporate-keyboard",
+        id: "jazz-bass",
+        name: "Jazz Performance",
+        description: "Bass performance for jazz ensembles and venues",
+        defaultDuration: "2-3 hours",
+        priceRange: "£200-400",
+        commonVenues: ["Jazz clubs", "Restaurants", "Hotels", "Private events"]
+      },
+      {
+        id: "corporate-bass",
         name: "Corporate Event",
-        description: "Keyboard entertainment for corporate functions",
+        description: "Bass accompaniment for corporate entertainment",
         defaultDuration: "2-3 hours",
         priceRange: "£250-450",
         commonVenues: ["Hotels", "Conference centers", "Corporate venues"]
       }
     ]
   },
-  // Vocals
   {
-    instrument: "lead-vocals",
+    instrument: "vocals",
     displayName: "Lead Vocals",
     gigTypes: [
       {
@@ -150,26 +189,57 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 hours",
         priceRange: "£250-500",
         commonVenues: ["Jazz clubs", "Restaurants", "Hotels", "Wine bars"]
+      },
+      {
+        id: "corporate-singer",
+        name: "Corporate Entertainment",
+        description: "Vocal entertainment for corporate events",
+        defaultDuration: "1-3 hours",
+        priceRange: "£300-700",
+        commonVenues: ["Hotels", "Conference centers", "Corporate venues", "Awards ceremonies"]
+      },
+      {
+        id: "tribute-act",
+        name: "Tribute Act",
+        description: "Tribute singing performance",
+        defaultDuration: "2-4 hours",
+        priceRange: "£400-800",
+        commonVenues: ["Clubs", "Hotels", "Function rooms", "Outdoor events"]
       }
     ]
   },
   {
-    instrument: "backing-vocals",
-    displayName: "Backing Vocals",
+    instrument: "keyboard",
+    displayName: "Keyboard / Synthesizer",
     gigTypes: [
       {
-        id: "session-backing",
-        name: "Session Backing Vocals",
-        description: "Studio recording and live backing vocals",
+        id: "wedding-keyboard",
+        name: "Wedding Reception",
+        description: "Keyboard accompaniment for weddings",
+        defaultDuration: "3-4 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Hotels", "Wedding venues", "Function rooms", "Marquees"]
+      },
+      {
+        id: "corporate-keyboard",
+        name: "Corporate Event",
+        description: "Keyboard entertainment for corporate functions",
+        defaultDuration: "2-3 hours",
+        priceRange: "£250-450",
+        commonVenues: ["Hotels", "Conference centers", "Corporate venues"]
+      },
+      {
+        id: "party-keyboard",
+        name: "Private Party",
+        description: "Keyboard entertainment for private celebrations",
         defaultDuration: "2-4 hours",
-        priceRange: "£150-350",
-        commonVenues: ["Recording studios", "Live venues", "Concerts"]
+        priceRange: "£200-400",
+        commonVenues: ["Private homes", "Function rooms", "Community halls"]
       }
     ]
   },
-  // Saxophone
   {
-    instrument: "saxophone-alto-tenor-baritone",
+    instrument: "saxophone",
     displayName: "Saxophone (Alto, Tenor, Baritone)",
     gigTypes: [
       {
@@ -187,10 +257,32 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 sets",
         priceRange: "£150-250",
         commonVenues: ["Jazz clubs", "Music venues", "Bars", "Restaurants"]
+      },
+      {
+        id: "corporate-event",
+        name: "Corporate Event",
+        description: "Professional entertainment for corporate functions",
+        defaultDuration: "1-3 hours",
+        priceRange: "£250-400",
+        commonVenues: ["Hotels", "Conference centers", "Corporate offices", "Restaurants"]
       }
     ]
   },
-  // Trumpet
+  // NEW INSTRUMENTS - Additional options from the comprehensive list
+  {
+    instrument: "acoustic-guitar",
+    displayName: "Acoustic Guitar",
+    gigTypes: [
+      {
+        id: "acoustic-solo",
+        name: "Acoustic Solo",
+        description: "Solo acoustic guitar performance",
+        defaultDuration: "2-3 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Cafes", "Restaurants", "Private events", "Gardens"]
+      }
+    ]
+  },
   {
     instrument: "trumpet",
     displayName: "Trumpet",
@@ -213,7 +305,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Trombone
   {
     instrument: "trombone",
     displayName: "Trombone",
@@ -236,9 +327,8 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Double Bass
   {
-    instrument: "double-bass-upright-bass",
+    instrument: "double-bass",
     displayName: "Double Bass / Upright Bass",
     gigTypes: [
       {
@@ -259,7 +349,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Piano
   {
     instrument: "piano",
     displayName: "Piano",
@@ -282,7 +371,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Vibraphone
   {
     instrument: "vibraphone",
     displayName: "Vibraphone",
@@ -297,7 +385,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Strings
   {
     instrument: "violin",
     displayName: "Violin",
@@ -378,7 +465,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Woodwinds
   {
     instrument: "flute",
     displayName: "Flute",
@@ -452,7 +538,7 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
     ]
   },
   {
-    instrument: "cor-anglais-english-horn",
+    instrument: "cor-anglais",
     displayName: "Cor Anglais (English Horn)",
     gigTypes: [
       {
@@ -479,7 +565,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Brass
   {
     instrument: "french-horn",
     displayName: "French Horn",
@@ -522,7 +607,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Percussion
   {
     instrument: "timpani",
     displayName: "Timpani",
@@ -579,39 +663,22 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // DJ & Electronic
   {
-    instrument: "dj",
-    displayName: "DJ",
+    instrument: "backing-vocals",
+    displayName: "Backing Vocals",
     gigTypes: [
       {
-        id: "wedding-dj",
-        name: "Wedding DJ",
-        description: "Full DJ service for wedding receptions and celebrations",
-        defaultDuration: "4-6 hours",
-        priceRange: "£400-800",
-        commonVenues: ["Hotels", "Wedding venues", "Marquees", "Function rooms"]
-      },
-      {
-        id: "party-dj",
-        name: "Party DJ",
-        description: "DJ entertainment for private parties and celebrations",
-        defaultDuration: "3-5 hours",
-        priceRange: "£300-600",
-        commonVenues: ["Private homes", "Function rooms", "Clubs", "Outdoor venues"]
-      },
-      {
-        id: "corporate-dj",
-        name: "Corporate DJ",
-        description: "Professional DJ services for corporate events and functions",
+        id: "session-backing",
+        name: "Session Backing Vocals",
+        description: "Studio recording and live backing vocals",
         defaultDuration: "2-4 hours",
-        priceRange: "£350-700",
-        commonVenues: ["Hotels", "Conference centers", "Corporate venues", "Function rooms"]
+        priceRange: "£150-350",
+        commonVenues: ["Recording studios", "Live venues", "Concerts"]
       }
     ]
   },
   {
-    instrument: "sampler-drum-machine",
+    instrument: "sampler",
     displayName: "Sampler / Drum Machine",
     gigTypes: [
       {
@@ -638,7 +705,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
       }
     ]
   },
-  // Folk & World Instruments
   {
     instrument: "accordion",
     displayName: "Accordion",
@@ -650,14 +716,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 hours",
         priceRange: "£200-400",
         commonVenues: ["Pubs", "Folk clubs", "Festivals", "Community events"]
-      },
-      {
-        id: "wedding-accordion",
-        name: "Wedding Entertainment",
-        description: "Accordion music for wedding celebrations",
-        defaultDuration: "2-4 hours",
-        priceRange: "£250-500",
-        commonVenues: ["Hotels", "Function rooms", "Outdoor venues", "Community halls"]
       }
     ]
   },
@@ -672,14 +730,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 hours",
         priceRange: "£150-350",
         commonVenues: ["Blues clubs", "Pubs", "Music venues", "Festivals"]
-      },
-      {
-        id: "folk-harmonica",
-        name: "Folk Performance",
-        description: "Traditional harmonica for folk music",
-        defaultDuration: "2-3 hours",
-        priceRange: "£100-300",
-        commonVenues: ["Folk clubs", "Pubs", "Outdoor events", "Community venues"]
       }
     ]
   },
@@ -716,14 +766,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "1-3 hours",
         priceRange: "£200-500",
         commonVenues: ["Cultural centers", "Private events", "Festivals", "Concert halls"]
-      },
-      {
-        id: "world-music-sitar",
-        name: "World Music Performance",
-        description: "Sitar in fusion and world music contexts",
-        defaultDuration: "2-3 hours",
-        priceRange: "£250-450",
-        commonVenues: ["Music venues", "Festivals", "Private events", "Cultural events"]
       }
     ]
   },
@@ -794,14 +836,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 hours",
         priceRange: "£150-350",
         commonVenues: ["Folk clubs", "Pubs", "Restaurants", "Private events"]
-      },
-      {
-        id: "wedding-mandolin",
-        name: "Wedding Ceremony",
-        description: "Acoustic mandolin for intimate weddings",
-        defaultDuration: "30-60 minutes",
-        priceRange: "£200-400",
-        commonVenues: ["Gardens", "Small venues", "Outdoor ceremonies", "Private homes"]
       }
     ]
   },
@@ -816,14 +850,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "2-3 hours",
         priceRange: "£150-350",
         commonVenues: ["Folk clubs", "Pubs", "Festivals", "Outdoor events"]
-      },
-      {
-        id: "country-banjo",
-        name: "Country Music",
-        description: "Banjo for country and bluegrass performances",
-        defaultDuration: "2-4 hours",
-        priceRange: "£200-400",
-        commonVenues: ["Country venues", "Outdoor festivals", "Bars", "Private events"]
       }
     ]
   },
@@ -838,14 +864,6 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "30-90 minutes",
         priceRange: "£150-350",
         commonVenues: ["Gardens", "Beach venues", "Small venues", "Private homes"]
-      },
-      {
-        id: "cafe-ukulele",
-        name: "Cafe Performance",
-        description: "Acoustic ukulele for cafes and small venues",
-        defaultDuration: "1-2 hours",
-        priceRange: "£100-250",
-        commonVenues: ["Cafes", "Coffee shops", "Small restaurants", "Book stores"]
       }
     ]
   }

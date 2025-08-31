@@ -39,7 +39,6 @@ const fullBookingSchema = z.object({
   venueAddress: z.string().optional(),
   venueContactInfo: z.string().optional(),
   fee: z.string().optional(),
-  eventType: z.string().optional(),
   gigType: z.string().optional(),
   equipmentRequirements: z.string().optional(),
   specialRequirements: z.string().optional(),
@@ -132,6 +131,10 @@ export default function NewBookingPage({
   // Track if mileage has been calculated to prevent re-calculation
   const [mileageCalculated, setMileageCalculated] = useState(false);
   
+  // Custom gig type state
+  const [showCustomGigInput, setShowCustomGigInput] = useState(false);
+  const [customGigTypeInput, setCustomGigTypeInput] = useState("");
+  
   // Control map display manually
   const [showMap, setShowMap] = useState(false);
   
@@ -199,6 +202,49 @@ export default function NewBookingPage({
   const userGigTypes = userSettings && Array.isArray((userSettings as any).customGigTypes) ? (userSettings as any).customGigTypes : [];
 
   // Calculate mileage between user's business address and venue
+  // Handler for adding custom gig types
+  const handleAddCustomGigType = async () => {
+    if (!customGigTypeInput.trim()) return;
+    
+    try {
+      const response = await apiRequest('/api/gig-types/custom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gigType: customGigTypeInput.trim()
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Set the form field to the new custom gig type
+        form.setValue('gigType', customGigTypeInput.trim());
+        
+        // Clear the input and hide the custom input
+        setCustomGigTypeInput("");
+        setShowCustomGigInput(false);
+        
+        // Refresh the gig types list
+        queryClient.invalidateQueries({ queryKey: ['/api/gig-types'] });
+        
+        toast({
+          title: "Custom gig type added",
+          description: `"${customGigTypeInput.trim()}" has been saved for future use`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Failed to add custom gig type:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add custom gig type",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const calculateMileage = async (venueAddress: string) => {
     if (!venueAddress || !userSettings) return;
 
@@ -337,7 +383,6 @@ export default function NewBookingPage({
       venueAddress: "",
       venueContactInfo: "",
       fee: "",
-      eventType: "",
       gigType: "",
       equipmentRequirements: "",
       specialRequirements: "",
@@ -445,8 +490,7 @@ export default function NewBookingPage({
         venueAddress: editingBooking.venueAddress || '',
         venueContactInfo: editingBooking.venueContactInfo || '',
         fee: editingBooking.fee ? editingBooking.fee.toString() : '',
-        eventType: editingBooking.eventType || '',
-        gigType: editingBooking.gigType || '',
+        gigType: editingBooking.gigType || editingBooking.eventType || '',
         equipmentRequirements: editingBooking.equipmentRequirements || '',
         specialRequirements: editingBooking.specialRequirements || '',
         performanceDuration: editingBooking.performanceDuration || '',
@@ -554,7 +598,7 @@ export default function NewBookingPage({
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
       const bookingData = {
-        title: `${data.eventType || 'Event'} - ${data.clientName}`,
+        title: `${data.gigType || 'Event'} - ${data.clientName}`,
         clientName: data.clientName,
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
@@ -1484,16 +1528,19 @@ export default function NewBookingPage({
                     name="gigType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Event Type</FormLabel>
+                        <FormLabel>Gig Type</FormLabel>
                         <div className="space-y-2">
                           <Select onValueChange={(value) => {
                             if (value !== 'custom') {
                               field.onChange(value);
+                              setShowCustomGigInput(false);
+                            } else {
+                              setShowCustomGigInput(true);
                             }
-                          }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
+                          }} value={gigTypes.includes(field.value as any) ? field.value : (showCustomGigInput ? 'custom' : '')}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select event type or choose 'Custom' to type your own" />
+                                <SelectValue placeholder="Select gig type or choose 'Custom' to create your own" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -1502,22 +1549,40 @@ export default function NewBookingPage({
                                   {gigType}
                                 </SelectItem>
                               ))}
-                              <SelectItem value="custom">Custom - Type your own</SelectItem>
+                              <SelectItem value="custom">Custom - Create your own</SelectItem>
                             </SelectContent>
                           </Select>
                           
-                          {(!gigTypes.includes(field.value as any) || field.value === '') && (
-                            <FormControl>
-                              <Input 
-                                placeholder="Type custom event type (e.g., Burlesque Show, Masonic Lodge, School Assembly)"
-                                value={gigTypes.includes(field.value as any) ? '' : field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                              />
-                            </FormControl>
+                          {showCustomGigInput && (
+                            <div className="space-y-2">
+                              <FormControl>
+                                <Input 
+                                  placeholder="Type custom gig type (e.g., Burlesque Show, School Assembly)"
+                                  value={customGigTypeInput}
+                                  onChange={(e) => setCustomGigTypeInput(e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && customGigTypeInput.trim()) {
+                                      e.preventDefault();
+                                      handleAddCustomGigType();
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              {customGigTypeInput.trim() && (
+                                <Button 
+                                  type="button" 
+                                  size="sm" 
+                                  onClick={handleAddCustomGigType}
+                                  className="w-full"
+                                >
+                                  Add "{customGigTypeInput}" as custom gig type
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Select from your configured event types or enter a custom one
+                          Select from your gig types or create a custom one that will be saved for future use
                         </div>
                         <FormMessage />
                       </FormItem>

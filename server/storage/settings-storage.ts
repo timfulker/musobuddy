@@ -34,6 +34,10 @@ export class SettingsStorage {
       processedData.customGigTypes = JSON.stringify(processedData.customGigTypes);
     }
     
+    if (processedData.gigTypes && Array.isArray(processedData.gigTypes)) {
+      processedData.gigTypes = JSON.stringify(processedData.gigTypes);
+    }
+    
     if (processedData.secondaryInstruments && Array.isArray(processedData.secondaryInstruments)) {
       processedData.secondaryInstruments = JSON.stringify(processedData.secondaryInstruments);
     }
@@ -63,6 +67,10 @@ export class SettingsStorage {
     // Ensure arrays are properly stringified for database storage
     if (processedUpdates.customGigTypes && Array.isArray(processedUpdates.customGigTypes)) {
       processedUpdates.customGigTypes = JSON.stringify(processedUpdates.customGigTypes);
+    }
+    
+    if (processedUpdates.gigTypes && Array.isArray(processedUpdates.gigTypes)) {
+      processedUpdates.gigTypes = JSON.stringify(processedUpdates.gigTypes);
     }
     
     if (processedUpdates.secondaryInstruments && Array.isArray(processedUpdates.secondaryInstruments)) {

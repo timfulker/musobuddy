@@ -314,31 +314,35 @@ export async function registerSettingsRoutes(app: Express) {
       // Process the request body to combine instrument-based gig types
       const processedBody = { ...req.body };
       
-      // If instruments are being updated, automatically generate combined gig types
-      if (processedBody.primaryInstrument || processedBody.secondaryInstruments) {
+      // If instruments are being updated, automatically generate gig types and store them
+      if (processedBody.primaryInstrument !== undefined || processedBody.secondaryInstruments !== undefined) {
+        // Get current settings to preserve existing data
+        const currentSettings = await storage.getSettings(userId);
+        
+        const primaryInstrument = processedBody.primaryInstrument ?? currentSettings?.primaryInstrument ?? "";
+        const secondaryInstruments = processedBody.secondaryInstruments ?? currentSettings?.secondaryInstruments ?? [];
+        
         const allInstruments = [
-          processedBody.primaryInstrument, 
-          ...(Array.isArray(processedBody.secondaryInstruments) ? processedBody.secondaryInstruments : [])
+          primaryInstrument, 
+          ...(Array.isArray(secondaryInstruments) ? secondaryInstruments : [])
         ].filter(Boolean);
         
-        // Get gig types for all instruments
+        // Get gig types for all selected instruments only (AI-generated)
         const instrumentGigTypes = allInstruments.reduce((acc, instrument) => {
           const gigTypes = getGigTypeNamesForInstrument(instrument);
           return [...acc, ...gigTypes];
         }, [] as string[]);
         
-        // Get existing custom gig types (manually added ones)
-        const existingCustomTypes = Array.isArray(processedBody.customGigTypes) ? processedBody.customGigTypes : [];
+        // Remove duplicates and sort the AI-generated gig types
+        const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)].sort();
         
-        // Combine instrument-based and custom gig types, remove duplicates
-        const combinedGigTypes = [...new Set([...instrumentGigTypes, ...existingCustomTypes])];
+        // Store ONLY the AI-generated gig types in the gigTypes field
+        // Custom gig types remain separate in their own field
+        processedBody.gigTypes = uniqueInstrumentGigTypes;
         
-        // Update the processed body with combined gig types
-        processedBody.customGigTypes = combinedGigTypes;
-        
-        console.log(`🎵 Combined ${allInstruments.length} instruments into ${combinedGigTypes.length} gig types for user ${userId}`);
+        console.log(`🎵 Generated ${uniqueInstrumentGigTypes.length} AI gig types from ${allInstruments.length} instruments for user ${userId}`);
         console.log(`🎵 Instruments:`, allInstruments);
-        console.log(`🎵 Combined gig types:`, combinedGigTypes.slice(0, 10), combinedGigTypes.length > 10 ? `...and ${combinedGigTypes.length - 10} more` : '');
+        console.log(`🎵 AI Gig types:`, uniqueInstrumentGigTypes.slice(0, 10), uniqueInstrumentGigTypes.length > 10 ? `...and ${uniqueInstrumentGigTypes.length - 10} more` : '');
       }
       
       const updatedSettings = await storage.updateSettings(userId, processedBody);
@@ -1398,6 +1402,134 @@ This email was sent via MusoBuddy Professional Music Management Platform
         error: 'Failed to run Glockapps test',
         details: error.message 
       });
+    }
+  });
+
+  // Add a custom gig type
+  app.post('/api/gig-types/custom', 
+    authenticateWithFirebase,
+    generalApiRateLimit,
+    sanitizeInput,
+    asyncHandler(async (req: any, res: any) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { gigType } = req.body;
+      if (!gigType || typeof gigType !== 'string') {
+        return res.status(400).json({ error: 'Gig type name is required' });
+      }
+      
+      const settings = await storage.getSettings(userId);
+      
+      // Parse existing custom gig types
+      let customGigTypes: string[] = [];
+      if (settings?.customGigTypes) {
+        if (typeof settings.customGigTypes === 'string') {
+          try {
+            customGigTypes = JSON.parse(settings.customGigTypes);
+          } catch (e) {
+            customGigTypes = [];
+          }
+        } else if (Array.isArray(settings.customGigTypes)) {
+          customGigTypes = settings.customGigTypes;
+        }
+      }
+      
+      // Add the new custom gig type if it doesn't exist
+      if (!customGigTypes.includes(gigType)) {
+        customGigTypes.push(gigType);
+        customGigTypes.sort();
+        
+        // Update the database
+        await storage.updateSettings(userId, { customGigTypes });
+        
+        console.log(`✅ Added custom gig type "${gigType}" for user ${userId}`);
+        res.json({ success: true, customGigTypes });
+      } else {
+        res.json({ success: true, message: 'Gig type already exists', customGigTypes });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Failed to add custom gig type:', error);
+      res.status(500).json({ error: 'Failed to add custom gig type' });
+    }
+  }));
+
+  // Get gig types for booking form - always generate fresh from instruments
+  app.get('/api/gig-types', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const settings = await storage.getSettings(userId);
+      
+      // Always generate fresh gig types from current instruments
+      const primaryInstrument = settings?.primaryInstrument || "";
+      
+      // Parse secondaryInstruments if it's a JSON string
+      let secondaryInstruments: string[] = [];
+      if (settings?.secondaryInstruments) {
+        if (typeof settings.secondaryInstruments === 'string') {
+          try {
+            secondaryInstruments = JSON.parse(settings.secondaryInstruments);
+          } catch (e) {
+            console.warn('Failed to parse secondaryInstruments:', e);
+            secondaryInstruments = [];
+          }
+        } else if (Array.isArray(settings.secondaryInstruments)) {
+          secondaryInstruments = settings.secondaryInstruments;
+        }
+      }
+      
+      const allInstruments = [
+        primaryInstrument, 
+        ...secondaryInstruments
+      ].filter(Boolean);
+      
+      // Get gig types for all selected instruments (AI-generated)
+      const instrumentGigTypes = allInstruments.reduce((acc, instrument) => {
+        const gigTypes = getGigTypeNamesForInstrument(instrument);
+        return [...acc, ...gigTypes];
+      }, [] as string[]);
+      
+      // Remove duplicates from instrument gig types
+      const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)];
+      
+      // Get custom gig types the user has added manually
+      let customGigTypes: string[] = [];
+      if (settings?.customGigTypes) {
+        if (typeof settings.customGigTypes === 'string') {
+          try {
+            customGigTypes = JSON.parse(settings.customGigTypes);
+          } catch (e) {
+            console.warn('Failed to parse customGigTypes:', e);
+            customGigTypes = [];
+          }
+        } else if (Array.isArray(settings.customGigTypes)) {
+          customGigTypes = settings.customGigTypes;
+        }
+      }
+      
+      // Store ONLY the AI-generated gig types in the gig_types field
+      await storage.updateSettings(userId, { gigTypes: uniqueInstrumentGigTypes });
+      
+      // Combine AI-generated and custom for the booking form dropdown
+      const combinedGigTypes = [...new Set([...uniqueInstrumentGigTypes, ...customGigTypes])].sort();
+      
+      console.log(`🎵 AI-generated: ${uniqueInstrumentGigTypes.length} gig types from ${allInstruments.length} instruments`);
+      console.log(`🎵 Custom types: ${customGigTypes.length} custom gig types`);
+      console.log(`🎵 Total combined: ${combinedGigTypes.length} gig types for dropdown`);
+      
+      res.json(combinedGigTypes);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to fetch gig types:', error);
+      res.status(500).json({ error: 'Failed to fetch gig types' });
     }
   });
 

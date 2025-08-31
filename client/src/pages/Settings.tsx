@@ -391,6 +391,7 @@ export default function Settings() {
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<SettingsFormData | null>(null);
+  const [formInitialized, setFormInitialized] = useState(false);
   
   // Active section for sidebar navigation
   const [activeSection, setActiveSection] = useState('business');
@@ -900,7 +901,8 @@ export default function Settings() {
                 <FormControl>
                   <textarea 
                     {...field} 
-                    value={field.value || ""} 
+                    key={`bank-details-${formInitialized}`}
+                    value={form.getValues('bankDetails') || ""} 
                     placeholder="Bank Name: Example Bank&#10;Account Name: Your Business Name&#10;Sort Code: 12-34-56&#10;Account Number: 12345678"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     rows={6}
@@ -1081,7 +1083,7 @@ export default function Settings() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Primary Instrument</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={form.getValues('primaryInstrument') || ""} key={`primary-instrument-${formInitialized}`}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your primary instrument" />
@@ -1109,21 +1111,23 @@ export default function Settings() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Secondary Instruments (Optional)</FormLabel>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {availableInstruments
                       .filter(instrument => instrument !== watchedPrimaryInstrument)
                       .map((instrument) => {
-                        const isSelected = (field.value || []).includes(instrument);
+                        const currentValues = form.getValues('secondaryInstruments') || [];
+                        const isSelected = currentValues.includes(instrument);
                         return (
                           <div key={instrument} className="flex items-center space-x-2">
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={(checked) => {
-                                const currentValues = field.value || [];
                                 if (checked) {
-                                  field.onChange([...currentValues, instrument]);
+                                  const newValues = [...currentValues, instrument];
+                                  field.onChange(newValues);
                                 } else {
-                                  field.onChange(currentValues.filter(v => v !== instrument));
+                                  const newValues = currentValues.filter(v => v !== instrument);
+                                  field.onChange(newValues);
                                 }
                               }}
                             />
@@ -1491,7 +1495,7 @@ export default function Settings() {
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
-    // Don't set default values here - let the form initialize from settings data
+    defaultValues: initialData || undefined,
   });
 
   // Load existing settings data
@@ -1650,6 +1654,7 @@ export default function Settings() {
 
   // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
   useEffect(() => {
+    console.log('📋 Settings useEffect triggered:', { hasSettings: !!settings, isPending: saveSettings.isPending });
     if (settings && !saveSettings.isPending) {
       
       
@@ -1674,10 +1679,14 @@ export default function Settings() {
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
           const bankData = settings.bankDetails;
-          if (!bankData) return "";
           
-          // If it's already a formatted string, return as-is
-          if (typeof bankData === 'string' && !bankData.startsWith('{')) {
+          // Handle null, undefined, or empty values
+          if (!bankData || bankData === 'null' || bankData === 'undefined') {
+            return "";
+          }
+          
+          // If it's already a formatted string (not JSON), return as-is
+          if (typeof bankData === 'string' && !bankData.startsWith('{') && !bankData.startsWith('[')) {
             return bankData;
           }
           
@@ -1686,17 +1695,25 @@ export default function Settings() {
             const parsed = typeof bankData === 'string' ? JSON.parse(bankData) : bankData;
             if (parsed && typeof parsed === 'object') {
               const lines = [];
-              if (parsed.bankName) lines.push(`Bank Name: ${parsed.bankName}`);
-              if (parsed.accountName) lines.push(`Account Name: ${parsed.accountName}`);
-              if (parsed.sortCode) lines.push(`Sort Code: ${parsed.sortCode}`);
-              if (parsed.accountNumber) lines.push(`Account Number: ${parsed.accountNumber}`);
+              if (parsed.bankName && parsed.bankName !== 'null' && parsed.bankName !== 'undefined') {
+                lines.push(`Bank Name: ${parsed.bankName}`);
+              }
+              if (parsed.accountName && parsed.accountName !== 'null' && parsed.accountName !== 'undefined') {
+                lines.push(`Account Name: ${parsed.accountName}`);
+              }
+              if (parsed.sortCode && parsed.sortCode !== 'null' && parsed.sortCode !== 'undefined') {
+                lines.push(`Sort Code: ${parsed.sortCode}`);
+              }
+              if (parsed.accountNumber && parsed.accountNumber !== 'null' && parsed.accountNumber !== 'undefined') {
+                lines.push(`Account Number: ${parsed.accountNumber}`);
+              }
               return lines.join('\n');
             }
           } catch (error) {
             console.error('Error parsing bank details:', error);
           }
           
-          return bankData || "";
+          return "";
         })(),
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
@@ -1707,8 +1724,8 @@ export default function Settings() {
         pricingNotes: settings.pricingNotes || "",
         specialOffers: settings.specialOffers || "",
         // Instrument settings
-        primaryInstrument: settings.primaryInstrument || "",
-        secondaryInstruments: Array.isArray(settings.secondaryInstruments) ? settings.secondaryInstruments : [],
+        primaryInstrument: settings.primary_instrument || settings.primaryInstrument || "",
+        secondaryInstruments: Array.isArray(settings.secondary_instruments || settings.secondaryInstruments) ? (settings.secondary_instruments || settings.secondaryInstruments) : [],
         bookingDisplayLimit: settings.bookingDisplayLimit || "50",
         distanceUnits: settings.distanceUnits || "miles",
         // Theme settings
@@ -1732,19 +1749,27 @@ export default function Settings() {
       };
       
       // Set up instrument state
-      if (settings.primaryInstrument) {
-        setSelectedInstrument(settings.primaryInstrument);
+      const primaryInstrument = settings.primary_instrument || settings.primaryInstrument;
+      if (primaryInstrument) {
+        setSelectedInstrument(primaryInstrument);
         
         // Gig types are now managed through customGigTypes in the database
       }
       
       
       
-      // Always reset form with loaded data - this is necessary for form to be editable
+      // Reset form with the loaded data
+      console.log('🔄 Resetting form with data:', { primaryInstrument: formData.primaryInstrument, bankDetails: formData.bankDetails?.substring(0, 50) });
       form.reset(formData);
       
-      // Store initial data for comparison
+      // Store initial data for comparison and mark as initialized
       setInitialData(formData);
+      setFormInitialized(true);
+      
+      console.log('✅ Form reset complete. Current values:', { 
+        primaryInstrument: form.getValues('primaryInstrument'), 
+        bankDetails: form.getValues('bankDetails')?.substring(0, 50) 
+      });
       
       // Reset change tracking after form is initialized
       setHasChanges(false);
@@ -1778,7 +1803,9 @@ export default function Settings() {
     saveSettings.mutate(data);
   };
 
-  if (settingsLoading) {
+  // Show loading until we have settings data AND the form has been initialized with that data
+  if (settingsLoading || !settings || !initialData || !formInitialized) {
+    console.log('🔄 Settings loading state:', { settingsLoading, hasSettings: !!settings, hasInitialData: !!initialData, formInitialized });
     return (
       <div className="min-h-screen bg-background layout-consistent">
         <div className="flex items-center justify-center h-64">

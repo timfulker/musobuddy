@@ -591,10 +591,11 @@ export const userSettings = pgTable("user_settings", {
   // Instrument and gig type settings
   primaryInstrument: varchar("primary_instrument"), // saxophone, guitar, piano, violin, drums, dj, etc.
   secondaryInstruments: jsonb("secondary_instruments").default('[]'), // Array of additional instruments
-  customGigTypes: text("custom_gig_types"), // JSON array of combined gig types from instruments + custom types
-  eventTypes: text("event_types"), // Custom event types for enquiry forms
-  instrumentsPlayed: text("instruments_played"), // What instruments/services the user plays
-  customInstruments: text("custom_instruments"), // User-added custom instruments JSON array
+  gigTypes: text("gig_types"), // Generated gig types based on instruments (for booking form)
+  customGigTypes: text("custom_gig_types"), // User's manually added custom gig types
+  eventTypes: text("event_types"), // Event types for booking forms (Wedding, Corporate, etc.)
+  instrumentsPlayed: text("instruments_played"), // Legacy - may be removed later
+  customInstruments: text("custom_instruments"), // Legacy - may be removed later
   // Theme preferences for invoices and contracts
   themeTemplate: varchar("theme_template").default("classic"), // classic, modern, casual, dj, busker
   themeTone: varchar("theme_tone").default("formal"), // formal, casual
