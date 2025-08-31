@@ -1166,24 +1166,19 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
                 <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
-                      <RadioGroupItem value="50" id="limit-50" className="text-primary" />
-                      <FormLabel htmlFor="limit-50" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
-                        Show 50 bookings
-                      </FormLabel>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
-                      <RadioGroupItem value="all" id="limit-all" className="text-primary" />
-                      <FormLabel htmlFor="limit-all" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
-                        Show all bookings
-                      </FormLabel>
-                    </div>
-                  </RadioGroup>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                    <span className={`text-sm font-medium ${field.value === '50' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      Show 50 bookings
+                    </span>
+                    <Switch
+                      checked={field.value === 'all'}
+                      onCheckedChange={(checked) => field.onChange(checked ? 'all' : '50')}
+                      className="data-[state=checked]:bg-green-500"
+                    />
+                    <span className={`text-sm font-medium ${field.value === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      Show all bookings
+                    </span>
+                  </div>
                 </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
                   Controls how many bookings are displayed on the bookings page
@@ -1200,24 +1195,19 @@ export default function Settings() {
               <FormItem className="space-y-3">
                 <FormLabel className="text-sm font-medium">Distance Units</FormLabel>
                 <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
-                      <RadioGroupItem value="miles" id="distance-miles" className="text-primary" />
-                      <FormLabel htmlFor="distance-miles" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
-                        Miles
-                      </FormLabel>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
-                      <RadioGroupItem value="km" id="distance-km" className="text-primary" />
-                      <FormLabel htmlFor="distance-km" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
-                        Kilometers
-                      </FormLabel>
-                    </div>
-                  </RadioGroup>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                    <span className={`text-sm font-medium ${field.value === 'miles' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      Miles
+                    </span>
+                    <Switch
+                      checked={field.value === 'km'}
+                      onCheckedChange={(checked) => field.onChange(checked ? 'km' : 'miles')}
+                      className="data-[state=checked]:bg-green-500"
+                    />
+                    <span className={`text-sm font-medium ${field.value === 'km' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      Kilometers
+                    </span>
+                  </div>
                 </FormControl>
                 <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
                   Units used for displaying distances to venues
