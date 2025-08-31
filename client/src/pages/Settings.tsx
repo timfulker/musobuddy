@@ -1171,15 +1171,15 @@ export default function Settings() {
                     defaultValue={field.value}
                     className="flex flex-col space-y-2"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="50" id="limit-50" />
-                      <FormLabel htmlFor="limit-50" className="text-sm font-normal cursor-pointer">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
+                      <RadioGroupItem value="50" id="limit-50" className="text-primary" />
+                      <FormLabel htmlFor="limit-50" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
                         Show 50 bookings
                       </FormLabel>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="all" id="limit-all" />
-                      <FormLabel htmlFor="limit-all" className="text-sm font-normal cursor-pointer">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
+                      <RadioGroupItem value="all" id="limit-all" className="text-primary" />
+                      <FormLabel htmlFor="limit-all" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
                         Show all bookings
                       </FormLabel>
                     </div>
@@ -1205,15 +1205,15 @@ export default function Settings() {
                     defaultValue={field.value}
                     className="flex flex-col space-y-2"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="miles" id="distance-miles" />
-                      <FormLabel htmlFor="distance-miles" className="text-sm font-normal cursor-pointer">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
+                      <RadioGroupItem value="miles" id="distance-miles" className="text-primary" />
+                      <FormLabel htmlFor="distance-miles" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
                         Miles
                       </FormLabel>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="km" id="distance-km" />
-                      <FormLabel htmlFor="distance-km" className="text-sm font-normal cursor-pointer">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary/30 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all">
+                      <RadioGroupItem value="km" id="distance-km" className="text-primary" />
+                      <FormLabel htmlFor="distance-km" className="text-sm font-medium cursor-pointer flex-1 text-gray-700 dark:text-gray-300">
                         Kilometers
                       </FormLabel>
                     </div>
@@ -1886,14 +1886,6 @@ export default function Settings() {
                       {completedSections}/{settingsSections.length} completed ({completionPercentage}%)
                     </span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.location.href = '/dashboard'}
-                    className="text-primary hover:text-primary"
-                  >
-                    ← Back to Dashboard
-                  </Button>
                 </div>
               </div>
             </div>
