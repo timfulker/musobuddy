@@ -43,13 +43,13 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // 2. User hasn't dismissed the wizard
   // 3. Not in the middle of signup flow (prevents interference with payment redirect)
   // 4. Not on a public route (prevents wizard showing on landing page, etc.)
-  // 5. User has access (payment has been set up) - wizard only shows AFTER payment
+  // 5. User has PAID (not just trial access) - wizard only shows AFTER payment
   const shouldShowWizard = onboardingStatus && 
     !onboardingStatus.onboardingCompleted && 
     !wizardDismissed &&
     !isSignupInProgress &&
     !isPublicRoute(location) &&
-    hasAccess(user); // Only show wizard if user has paid/has access
+    user?.hasPaid === true; // Only show wizard if user has actually paid (not trial users)
 
   if (shouldShowWizard) {
     return (

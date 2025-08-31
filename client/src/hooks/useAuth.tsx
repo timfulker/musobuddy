@@ -188,7 +188,7 @@ export function useAuth() {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (inviteCode?: string) => {
     try {
       setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
@@ -213,14 +213,22 @@ export function useAuth() {
         const firstName = nameParts[0] || 'Google';
         const lastName = nameParts.slice(1).join(' ') || 'User';
         
+        // Include invite code if provided (for beta users)
+        const signupData: any = { 
+          idToken: token, 
+          firstName, 
+          lastName 
+        };
+        
+        if (inviteCode) {
+          signupData.inviteCode = inviteCode;
+          console.log('🎟️ Including beta invite code:', inviteCode);
+        }
+        
         const signupResponse = await fetch('/api/auth/firebase-signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            idToken: token, 
-            firstName, 
-            lastName 
-          })
+          body: JSON.stringify(signupData)
         });
         
         if (!signupResponse.ok) {

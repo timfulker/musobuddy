@@ -55,7 +55,7 @@ export default function LoginPage() {
         const status = await response.json();
         if (!status.hasValidSubscription) {
           console.log('🔄 User needs to complete payment setup');
-          window.location.href = '/subscription-update-payment';
+          window.location.href = '/subscription/update-payment';
         } else {
           console.log('✅ User has valid subscription, redirecting to dashboard');
           window.location.href = '/dashboard';
@@ -196,7 +196,7 @@ export default function LoginPage() {
                     const status = await response.json();
                     if (!status.hasValidSubscription) {
                       console.log('🔄 User needs to complete payment setup');
-                      window.location.href = '/subscription-update-payment';
+                      window.location.href = '/subscription/update-payment';
                     } else {
                       console.log('✅ User has valid subscription, redirecting to dashboard');
                       window.location.href = '/dashboard';
