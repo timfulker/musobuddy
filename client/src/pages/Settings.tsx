@@ -1088,7 +1088,6 @@ export default function Settings() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None selected</SelectItem>
                       {availableInstruments.map((instrument) => (
                         <SelectItem key={instrument} value={instrument}>
                           {getInstrumentDisplayName(instrument)}
@@ -1807,7 +1806,7 @@ export default function Settings() {
   }
 
   // Calculate completion stats using existing form fields (after form is initialized)
-  const currentFormData = form?.getValues() || {};
+  const currentFormData = form?.getValues?.() || {};
   const completedSections = settingsSections.filter(section => 
     section.checkCompletion(currentFormData)
   ).length;
@@ -1866,7 +1865,7 @@ export default function Settings() {
             <nav className="space-y-2">
               {settingsSections.map((section) => {
                 const Icon = section.icon;
-                const isCompleted = section.checkCompletion(currentFormData);
+                const isCompleted = form?.getValues ? section.checkCompletion(currentFormData) : false;
                 const isActive = activeSection === section.id;
                 
                 return (
