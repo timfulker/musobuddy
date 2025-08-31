@@ -937,10 +937,16 @@ export async function getGigTypeNamesForInstrument(instrument: string): Promise<
       temperature: 0.7,
       messages: [{
         role: "user", 
-        content: `Provide up to 20 gig types based on the following instrument: ${instrument}
+        content: `You are helping a professional ${instrument} player find relevant gig opportunities. Generate ONLY gig types that would specifically require a ${instrument} player's skills and expertise.
 
-Return ONLY a JSON array of specific gig type names, no other text:
-["Wedding Ceremony", "Corporate Event", "Private Party"]`
+For ${instrument}, think about:
+- What performance contexts specifically need this instrument?
+- What musical styles and genres suit this instrument?
+- What venues and events specifically book ${instrument} players?
+- What ensemble sizes typically feature this instrument?
+
+Provide up to 20 SPECIFIC gig types for a ${instrument} player. Return ONLY a JSON array of gig type names, no other text:
+["String Quartet Wedding", "Solo Classical Performance", "Chamber Music Recital"]`
       }]
     });
 
