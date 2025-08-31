@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Link, useLocation } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2, MessageSquare } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock, X, Trash2, MessageSquare, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Enquiry } from "@shared/schema";
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ import { auth } from '@/lib/firebase';
 export default function ActionableEnquiries() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const [sortBy, setSortBy] = useState<string>('eventDate');
   
   // Mutation for rejecting bookings
   const rejectBookingMutation = useMutation({
@@ -198,8 +200,43 @@ export default function ActionableEnquiries() {
     return enquiry.status === "new";
   };
 
+  // Sort function for enquiries
+  const sortEnquiries = (enquiries: any[], sortBy: string) => {
+    return [...enquiries].sort((a, b) => {
+      switch (sortBy) {
+        case 'eventDate':
+          const dateA = new Date(a.eventDate || 0);
+          const dateB = new Date(b.eventDate || 0);
+          return dateA.getTime() - dateB.getTime();
+        
+        case 'createdAt':
+          const createdA = new Date(a.createdAt || 0);
+          const createdB = new Date(b.createdAt || 0);
+          return createdB.getTime() - createdA.getTime(); // Most recent first
+        
+        case 'clientName':
+          const nameA = (a.clientName || '').toLowerCase();
+          const nameB = (b.clientName || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        
+        case 'fee':
+          const feeA = typeof a.fee === 'string' ? (a.fee === 'TBC' ? 0 : parseInt(a.fee) || 0) : (a.fee || 0);
+          const feeB = typeof b.fee === 'string' ? (b.fee === 'TBC' ? 0 : parseInt(b.fee) || 0) : (b.fee || 0);
+          return feeB - feeA; // Highest first
+        
+        case 'status':
+          const statusA = (a.status || '').toLowerCase();
+          const statusB = (b.status || '').toLowerCase();
+          return statusA.localeCompare(statusB);
+        
+        default:
+          return 0;
+      }
+    });
+  };
+
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
-  const actionableEnquiries = (enquiries as any[]).filter((enquiry: any) => {
+  const filteredEnquiries = (enquiries as any[]).filter((enquiry: any) => {
     // Exclude all actioned statuses from action required
     const excludeStatuses = [
       'completed', 'rejected', 'cancelled', 'confirmed', 
@@ -223,6 +260,9 @@ export default function ActionableEnquiries() {
     // Only include new status bookings that need responses
     return (enquiry.status === 'new');
   });
+
+  // Apply sorting to the filtered enquiries
+  const actionableEnquiries = sortEnquiries(filteredEnquiries, sortBy);
 
   const renderEnquiryCard = (enquiry: any, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate?.toString() || '');
@@ -486,13 +526,27 @@ export default function ActionableEnquiries() {
   return (
     <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Clock className="w-5 h-5 text-primary" />
-          <span>Action Required</span>
-          <Badge variant="secondary" className="ml-auto">
-            {actionableEnquiries.length} items
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <span>Action Required</span>
+            <Badge variant="secondary">
+              {actionableEnquiries.length} items
+            </Badge>
+          </CardTitle>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="eventDate">Event Date</SelectItem>
+              <SelectItem value="createdAt">Date Received</SelectItem>
+              <SelectItem value="clientName">Client Name</SelectItem>
+              <SelectItem value="fee">Fee (High to Low)</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {actionableEnquiries.map((enquiry) => renderEnquiryCard(enquiry))}

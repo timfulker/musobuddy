@@ -18,6 +18,8 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette, Receipt, FileText, Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
@@ -130,6 +132,8 @@ const settingsFormSchema = z.object({
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
+  invoicePaymentTerms: z.enum(["on_receipt", "days_after"]).default("days_after"),
+  defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
     payment30: z.boolean().optional(),
     deposit50: z.boolean().optional(),
@@ -211,6 +215,8 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailSignature: data.email_signature || data.emailSignature || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
+    invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "days_after",
+    defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
     contractClauses: {
       payment30: data.contract_clauses?.payment30 || data.contractClauses?.payment30 || false,
       deposit50: data.contract_clauses?.deposit50 || data.contractClauses?.deposit50 || false,
@@ -666,6 +672,8 @@ export default function Settings() {
         emailFromName: settings.emailFromName || "",
         emailSignature: settings.emailSignature || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
+        invoicePaymentTerms: settings.invoicePaymentTerms || "days_after",
+        defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
           const bankData = settings.bankDetails;
@@ -1170,6 +1178,61 @@ export default function Settings() {
                               </FormItem>
                             )}
                           />
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="invoicePaymentTerms"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                                <FormControl>
+                                  <RadioGroup
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    className="flex flex-col space-y-2"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="on_receipt" id="on_receipt" />
+                                      <Label htmlFor="on_receipt">Payment Due on Receipt</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="days_after" id="days_after" />
+                                      <Label htmlFor="days_after">Payment Due in X Days</Label>
+                                    </div>
+                                  </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          {form.watch("invoicePaymentTerms") === "days_after" && (
+                            <FormField
+                              control={form.control}
+                              name="defaultInvoiceDueDays"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm font-medium">Number of Days</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      {...field} 
+                                      type="number"
+                                      min="1"
+                                      max="365"
+                                      placeholder="7"
+                                      className="w-32"
+                                    />
+                                  </FormControl>
+                                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                                    Days after issue (e.g., 7 for "Payment due within 7 days")
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
                         </div>
                       </div>
 

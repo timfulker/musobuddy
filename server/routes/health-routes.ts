@@ -15,10 +15,71 @@ export function registerHealthRoutes(app: Express) {
   // Database health check
   app.get('/api/health/database', async (req, res) => {
     try {
-      // Test database connectivity and check feedback table structure
+      // Test database connectivity
       const healthResult = await sql`SELECT 1 as test`;
       
-      // Also check feedback table structure and row count for debugging
+      // Check for delete feedback request (if deleteid query param)
+      if (req.query.deleteid) {
+        console.log('🗑️ Delete feedback request via health endpoint');
+        console.log('🎯 Feedback ID to delete:', req.query.deleteid);
+        
+        try {
+          // Import the feedback storage here
+          const { feedbackStorage } = await import('../storage/feedback-storage');
+          const deletedFeedback = await feedbackStorage.deleteFeedback(req.query.deleteid as string);
+          console.log('✅ Feedback deleted successfully:', deletedFeedback);
+          
+          return res.json({
+            status: 'healthy',
+            message: 'Feedback deleted successfully',
+            deletedFeedback: deletedFeedback,
+            timestamp: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('❌ Error deleting feedback:', error);
+          return res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete feedback',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      // Check if we need to fix the feedback table (if fix=true query param)
+      if (req.query.fix === 'true') {
+        console.log('🛠️ Fixing feedback table schema...');
+        
+        // Drop existing table (since id column is TEXT instead of SERIAL)
+        await sql`DROP TABLE IF EXISTS feedback`;
+        console.log('✅ Dropped old feedback table');
+        
+        // Create table with correct schema
+        await sql`
+          CREATE TABLE feedback (
+            id SERIAL PRIMARY KEY,
+            user_id VARCHAR NOT NULL,
+            type VARCHAR NOT NULL CHECK (type IN ('bug', 'feature', 'improvement', 'other')),
+            title VARCHAR NOT NULL,
+            description TEXT NOT NULL,
+            priority VARCHAR DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+            status VARCHAR DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+            page VARCHAR,
+            admin_notes TEXT,
+            resolved_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log('✅ Created feedback table with correct schema');
+        
+        // Create indexes
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)`;
+        console.log('✅ Created indexes');
+      }
+      
+      // Check feedback table structure
       const schemaResult = await sql`
         SELECT column_name, data_type, column_default, is_nullable 
         FROM information_schema.columns 
@@ -31,7 +92,7 @@ export function registerHealthRoutes(app: Express) {
       if (healthResult && healthResult.length > 0) {
         res.json({
           status: 'healthy',
-          message: 'Database connected',
+          message: req.query.fix === 'true' ? 'Database connected and feedback table fixed' : 'Database connected',
           timestamp: new Date().toISOString(),
           feedbackIdColumn: schemaResult && schemaResult.length > 0 ? schemaResult[0] : 'Not found',
           feedbackRowCount: rowCount
@@ -270,26 +331,58 @@ export function registerHealthRoutes(app: Express) {
     res.send(emailPreview);
   });
 
-  // Debug endpoint to check feedback table structure in development
+  // Debug endpoint to fix feedback table schema in development
   if (process.env.NODE_ENV === 'development') {
-    app.get('/api/health/feedback-schema', async (req, res) => {
+    app.get('/api/health/fix-feedback-table', async (req, res) => {
       try {
-        console.log('🔍 Checking feedback table schema...');
+        console.log('🛠️ Fixing feedback table schema...');
+        
+        // Drop existing table (since id column is TEXT instead of SERIAL)
+        await sql`DROP TABLE IF EXISTS feedback`;
+        console.log('✅ Dropped old feedback table');
+        
+        // Create table with correct schema
+        await sql`
+          CREATE TABLE feedback (
+            id SERIAL PRIMARY KEY,
+            user_id VARCHAR NOT NULL,
+            type VARCHAR NOT NULL CHECK (type IN ('bug', 'feature', 'improvement', 'other')),
+            title VARCHAR NOT NULL,
+            description TEXT NOT NULL,
+            priority VARCHAR DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+            status VARCHAR DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+            page VARCHAR,
+            admin_notes TEXT,
+            resolved_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log('✅ Created feedback table with correct schema');
+        
+        // Create indexes
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)`;
+        console.log('✅ Created indexes');
+        
+        // Verify the fix
         const result = await sql`
           SELECT column_name, data_type, column_default, is_nullable 
           FROM information_schema.columns 
-          WHERE table_name = 'feedback' 
-          ORDER BY ordinal_position
+          WHERE table_name = 'feedback' AND column_name = 'id'
         `;
-        console.log('📋 Feedback table schema:', result);
+        
         res.json({
-          message: 'Feedback table schema',
-          columns: result
+          message: 'Feedback table fixed successfully',
+          idColumn: result[0],
+          status: 'success'
         });
+        
       } catch (error) {
-        console.error('❌ Failed to check feedback schema:', error);
+        console.error('❌ Failed to fix feedback schema:', error);
         res.status(500).json({
-          error: 'Schema check failed',
+          error: 'Schema fix failed',
           details: error instanceof Error ? error.message : 'Unknown error'
         });
       }

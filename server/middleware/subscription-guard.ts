@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = new Set([
   '/api/health',
   '/api/feedback/test-table', // Development testing endpoint
   '/api/health/feedback-schema', // Development schema check
+  '/api/health/fix-feedback-table', // Development table fix
   '/api/stripe/webhook',
   '/api/stripe/create-checkout',
   '/api/stripe/portal',

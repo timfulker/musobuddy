@@ -95,6 +95,27 @@ export class FeedbackStorage {
 
     return feedbackItem || null;
   }
+
+  /**
+   * Delete feedback by ID (admin only)
+   */
+  async deleteFeedback(feedbackId: string): Promise<Feedback> {
+    console.log('🗑️ Storage: Attempting to delete feedback ID:', feedbackId);
+    console.log('🗑️ Storage: Parsed ID:', parseInt(feedbackId));
+    
+    const [deletedFeedback] = await db
+      .delete(feedback)
+      .where(eq(feedback.id, parseInt(feedbackId)))
+      .returning();
+
+    console.log('🗑️ Storage: Delete result:', deletedFeedback);
+    
+    if (!deletedFeedback) {
+      throw new Error(`Feedback with ID ${feedbackId} not found or could not be deleted`);
+    }
+
+    return deletedFeedback;
+  }
 }
 
 export const feedbackStorage = new FeedbackStorage();

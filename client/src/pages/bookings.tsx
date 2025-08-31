@@ -110,6 +110,7 @@ export default function UnifiedBookings() {
   
   // Shared state
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previousStatusFilter, setPreviousStatusFilter] = useState<string>('all');
@@ -180,6 +181,15 @@ export default function UnifiedBookings() {
     }
   }, [fullScreenCalendarOpen, hoverTimeout, hideTimeout]);
 
+  // Debounce search query to prevent constant reloading while typing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
@@ -230,18 +240,18 @@ export default function UnifiedBookings() {
   };
 
   // Determine if we should fetch ALL bookings (when searching/filtering)
-  const shouldFetchAll = searchQuery.length >= 2 || statusFilter !== 'all' || 
+  const shouldFetchAll = debouncedSearchQuery.length >= 2 || statusFilter !== 'all' || 
                          dateFilter !== 'all' || conflictFilter;
 
   // Build query parameters for the all endpoint
   const buildQueryParams = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.append('search', searchQuery);
+    if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
     if (statusFilter !== 'all') params.append('status', statusFilter);
     if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
     if (conflictFilter) params.append('hasConflict', 'true');
     // Don't apply limit when actively searching/filtering
-    if (searchQuery || statusFilter !== 'all' || dateFilter !== 'all') {
+    if (debouncedSearchQuery || statusFilter !== 'all' || dateFilter !== 'all') {
       params.append('applyLimit', 'false');
     }
     return params.toString();
@@ -250,7 +260,7 @@ export default function UnifiedBookings() {
   // Fetch data - use different endpoint based on whether we're searching/filtering
   const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery({
     queryKey: shouldFetchAll 
-      ? ["/api/bookings/all", searchQuery, statusFilter, dateFilter, conflictFilter]
+      ? ["/api/bookings/all", debouncedSearchQuery, statusFilter, dateFilter, conflictFilter]
       : ["/api/bookings"],
     retry: 2,
     queryFn: async () => {
@@ -260,7 +270,7 @@ export default function UnifiedBookings() {
       
       // Log what we're fetching
       console.log(`🎯 Attempting to fetch from: ${endpoint}`);
-      console.log(`🎯 shouldFetchAll=${shouldFetchAll}, search="${searchQuery}", status=${statusFilter}, date=${dateFilter}`);
+      console.log(`🎯 shouldFetchAll=${shouldFetchAll}, search="${debouncedSearchQuery}", status=${statusFilter}, date=${dateFilter}`);
       
       const response = await apiRequest(endpoint);
       
@@ -764,7 +774,7 @@ export default function UnifiedBookings() {
     });
 
     return shouldFetchAll ? toSort : filtered;
-  }, [bookings, searchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
+  }, [bookings, searchQuery, debouncedSearchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
 
   const toggleSelectAll = () => {
     const isAllSelected = filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length;
@@ -1479,6 +1489,7 @@ export default function UnifiedBookings() {
                         variant="outline" 
                         onClick={() => {
                           setSearchQuery("");
+                          setDebouncedSearchQuery("");
                           setStatusFilter("all");
                           setDateFilter("all");
                           setConflictFilter(false);
@@ -1647,6 +1658,7 @@ export default function UnifiedBookings() {
                       size="sm"
                       onClick={() => {
                         setSearchQuery('');
+                        setDebouncedSearchQuery('');
                         setStatusFilter('all');
                         setPreviousStatusFilter('all');
                         setDateFilter('all');
@@ -2020,7 +2032,7 @@ export default function UnifiedBookings() {
                                                   }}
                                                   className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                                                 >
-                                                  🎵 Apply on Encore
+                                                  🎵 {groupBooking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
                                                 </Button>
                                                 <div className="flex items-center gap-2 text-sm">
                                                   <span className="text-gray-600">Applied:</span>
@@ -2331,7 +2343,7 @@ export default function UnifiedBookings() {
                                   }}
                                   className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                                 >
-                                  🎵 Apply on Encore
+                                  🎵 {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
                                 </Button>
                               )}
                               
@@ -2767,7 +2779,7 @@ export default function UnifiedBookings() {
                                                   }}
                                                   className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                                                 >
-                                                  Apply on Encore
+                                                  {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
                                                 </Button>
                                               )}
                                             </div>
@@ -2950,7 +2962,7 @@ export default function UnifiedBookings() {
                                                     }}
                                                     className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                                                   >
-                                                    Apply on Encore
+                                                    {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
                                                   </Button>
                                                 )}
                                               </div>
@@ -3632,7 +3644,7 @@ export default function UnifiedBookings() {
                     }}
                     className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
                   >
-                    Apply on Encore
+                    {hoveredBooking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
                   </Button>
                 )}
               </div>

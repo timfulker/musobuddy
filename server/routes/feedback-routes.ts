@@ -113,6 +113,25 @@ export function registerFeedbackRoutes(app: Express) {
         return res.status(400).json({ error: 'Status is required' });
       }
 
+      // Handle delete request via special status
+      if (status === 'DELETE_FEEDBACK_ITEM' && adminNotes === 'ADMIN_DELETE_REQUEST') {
+        console.log('🗑️ Delete feedback request via special status');
+        console.log('🎯 Feedback ID to delete:', feedbackId);
+        
+        try {
+          const deletedFeedback = await feedbackStorage.deleteFeedback(feedbackId);
+          console.log('✅ Feedback deleted successfully:', deletedFeedback);
+          
+          return res.json({
+            message: 'Feedback deleted successfully',
+            feedback: deletedFeedback
+          });
+        } catch (error) {
+          console.error('❌ Error deleting feedback:', error);
+          return res.status(500).json({ error: 'Failed to delete feedback' });
+        }
+      }
+
       const updatedFeedback = await feedbackStorage.updateFeedbackStatus(
         feedbackId, 
         status, 
@@ -127,6 +146,48 @@ export function registerFeedbackRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Error updating feedback status:', error);
       res.status(500).json({ error: 'Failed to update feedback status' });
+    }
+  });
+
+  // Delete feedback (admin only)
+  app.delete('/api/feedback/:id', authenticateWithFirebase, async (req, res) => {
+    try {
+      console.log('🗑️ Delete feedback request started');
+      console.log('🔐 Auth header:', req.headers.authorization ? 'Present' : 'Missing');
+      
+      const userId = req.user?.id;
+      const feedbackId = req.params.id;
+      
+      console.log('👤 User ID from auth:', userId);
+      console.log('🎯 Feedback ID to delete:', feedbackId);
+      
+      if (!userId) {
+        console.log('❌ No user ID found in request');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Check if user is admin
+      const user = await userStorage.getUser(userId);
+      console.log('👤 User data:', { email: user?.email, isAdmin: user?.isAdmin });
+      
+      if (!user?.isAdmin) {
+        console.log('❌ User is not admin');
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // Delete the feedback
+      console.log('🗑️ Attempting to delete feedback...');
+      const deletedFeedback = await feedbackStorage.deleteFeedback(feedbackId);
+      console.log('✅ Feedback deleted successfully:', deletedFeedback);
+      
+      res.json({
+        message: 'Feedback deleted successfully',
+        feedback: deletedFeedback
+      });
+
+    } catch (error) {
+      console.error('❌ Error deleting feedback:', error);
+      res.status(500).json({ error: 'Failed to delete feedback' });
     }
   });
 

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { MessageSquare, Bug, Lightbulb, Settings, AlertCircle, Plus } from "lucide-react";
+import { MessageSquare, Bug, Lightbulb, Settings, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 interface Feedback {
   id: string;
@@ -165,6 +165,44 @@ export default function FeedbackPage() {
     },
   });
 
+  // Delete feedback mutation (admin only)
+  const deleteFeedbackMutation = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      
+      const response = await fetch(`/api/feedback/${feedbackId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete feedback');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('🗑️ Frontend: Delete success response:', data);
+      toast({
+        title: "Success",
+        description: data?.message || "Feedback deleted successfully",
+      });
+      // Force a hard refresh of the feedback data
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback'] });
+      queryClient.refetchQueries({ queryKey: ['/api/feedback'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete feedback",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmitFeedback = () => {
     if (!feedbackForm.title || !feedbackForm.description) {
       toast({
@@ -199,6 +237,12 @@ export default function FeedbackPage() {
     setSelectedFeedback(feedback);
     setAdminReply(feedback.adminNotes || "");
     setAdminReplyOpen(true);
+  };
+
+  const handleDeleteFeedback = (feedbackId: string, feedbackTitle: string) => {
+    if (confirm(`Are you sure you want to delete the feedback "${feedbackTitle}"? This action cannot be undone.`)) {
+      deleteFeedbackMutation.mutate(feedbackId);
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -489,6 +533,16 @@ export default function FeedbackPage() {
                             className="text-sm"
                           >
                             Reply
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteFeedback(item.id, item.title)}
+                            className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={deleteFeedbackMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
                           </Button>
                           <Select
                             value={item.status}
