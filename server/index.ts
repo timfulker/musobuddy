@@ -1078,29 +1078,6 @@ app.get('/api/email-queue/status', async (req, res) => {
   }
 
   // Original webhook route using the shared handler function
-  // Development webhook test endpoint
-  app.post('/api/stripe-webhook-dev', express.raw({ type: 'application/json' }), async (req, res) => {
-    console.log('🧪 DEV: Stripe webhook test received');
-    console.log('🧪 DEV: Headers:', req.headers);
-    console.log('🧪 DEV: Body length:', req.body?.length);
-    
-    try {
-      // In development, just log the payload without signature verification
-      const event = JSON.parse(req.body.toString());
-      console.log('🧪 DEV: Event type:', event.type);
-      console.log('🧪 DEV: Event data:', JSON.stringify(event, null, 2));
-      
-      res.status(200).json({ 
-        received: true, 
-        type: event.type,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('🧪 DEV: Error parsing webhook:', error);
-      res.status(400).json({ error: 'Invalid JSON' });
-    }
-  });
-
   app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
     return handleStripeWebhook(req, res);
   });
