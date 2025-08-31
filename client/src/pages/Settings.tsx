@@ -48,8 +48,12 @@ const THEME_FONTS = [
   { id: "roboto", label: "Roboto", description: "Contemporary sans-serif" },
 ];
 
-const THEME_COLORS = [
-  "#191970", "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
+const THEME_OPTIONS = [
+  { id: "purple", color: "#8b5cf6", name: "Purple" },
+  { id: "ocean-blue", color: "#0ea5e9", name: "Ocean Blue" },
+  { id: "forest-green", color: "#16a34a", name: "Forest Green" },
+  { id: "clean-pro-audio", color: "#e53935", name: "Clean Pro Audio" },
+  { id: "midnight-blue", color: "#191970", name: "Midnight Blue" }
 ];
 
 // Standard contract clauses that users can select
@@ -1316,35 +1320,28 @@ export default function Settings() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Choose Theme Color
             </label>
-            <div className="grid grid-cols-3 gap-3">
-              {THEME_COLORS.map((color) => {
-                const colorNames = {
-                  "#191970": "Midnight Blue",
-                  "#673ab7": "Purple", 
-                  "#ff0066": "Pink",
-                  "#00bcd4": "Cyan",
-                  "#4caf50": "Green",
-                  "#f44336": "Red",
-                  "#ff9800": "Orange",
-                  "#9c27b0": "Deep Purple",
-                  "#3f51b5": "Indigo"
-                };
-                return (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => form.setValue('themeAccentColor', color)}
-                    className={`p-4 rounded-lg border-2 text-white font-medium text-sm transition-all ${
-                      form.watch('themeAccentColor') === color
-                        ? 'border-white shadow-lg scale-105'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  >
-                    {colorNames[color]}
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {THEME_OPTIONS.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => {
+                    // Save color to form
+                    form.setValue('themeAccentColor', theme.color);
+                    
+                    // Immediately apply theme
+                    setTheme(theme.id as ThemeName);
+                  }}
+                  className={`p-4 rounded-lg border-2 text-white font-medium text-sm transition-all ${
+                    form.watch('themeAccentColor') === theme.color
+                      ? 'border-white shadow-lg scale-105'
+                      : 'border-transparent hover:border-gray-300'
+                  }`}
+                  style={{ backgroundColor: theme.color }}
+                >
+                  {theme.name}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1357,13 +1354,21 @@ export default function Settings() {
               <input
                 type="color"
                 value={form.watch('themeAccentColor') || "#191970"}
-                onChange={(e) => form.setValue('themeAccentColor', e.target.value)}
+                onChange={(e) => {
+                  form.setValue('themeAccentColor', e.target.value);
+                  setCustomColor(e.target.value);
+                  setTheme('custom');
+                }}
                 className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
               />
               <input
                 type="text"
                 value={form.watch('themeAccentColor') || "#191970"}
-                onChange={(e) => form.setValue('themeAccentColor', e.target.value)}
+                onChange={(e) => {
+                  form.setValue('themeAccentColor', e.target.value);
+                  setCustomColor(e.target.value);
+                  setTheme('custom');
+                }}
                 placeholder="#191970"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
