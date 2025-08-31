@@ -562,7 +562,6 @@ export const userSettings = pgTable("user_settings", {
   userId: varchar("user_id").notNull().unique(),
   businessName: varchar("business_name"),
   businessEmail: varchar("business_email"),
-  businessAddress: text("business_address"), // Legacy field for backward compatibility
   addressLine1: varchar("address_line1"),
   addressLine2: varchar("address_line2"),
   city: varchar("city"),
@@ -572,7 +571,6 @@ export const userSettings = pgTable("user_settings", {
   website: varchar("website"),
   taxNumber: varchar("tax_number"),
   bankDetails: text("bank_details"),
-  defaultTerms: text("default_terms"), // Legacy - kept for backward compatibility
   contractClauses: jsonb("contract_clauses").default('{}'), // Standard contract clauses selection
   customClauses: jsonb("custom_clauses").default('[]'), // Custom user-added clauses
   emailFromName: varchar("email_from_name"),
@@ -591,11 +589,8 @@ export const userSettings = pgTable("user_settings", {
   // Instrument and gig type settings
   primaryInstrument: varchar("primary_instrument"), // saxophone, guitar, piano, violin, drums, dj, etc.
   secondaryInstruments: jsonb("secondary_instruments").default('[]'), // Array of additional instruments
-  gigTypes: text("gig_types"), // Generated gig types based on instruments (for booking form)
+  gigTypes: text("gig_types"), // AI-generated gig types based on selected instruments
   customGigTypes: text("custom_gig_types"), // User's manually added custom gig types
-  eventTypes: text("event_types"), // Event types for booking forms (Wedding, Corporate, etc.)
-  instrumentsPlayed: text("instruments_played"), // Legacy - may be removed later
-  customInstruments: text("custom_instruments"), // Legacy - may be removed later
   // Theme preferences for invoices and contracts
   themeTemplate: varchar("theme_template").default("classic"), // classic, modern, casual, dj, busker
   themeTone: varchar("theme_tone").default("formal"), // formal, casual

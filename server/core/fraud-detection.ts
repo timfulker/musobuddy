@@ -3,7 +3,7 @@ import { users, userSettings, fraudPreventionLog } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
 export interface FraudAlert {
-  type: 'duplicate_business_address' | 'duplicate_ip' | 'duplicate_device' | 'multiple_signals';
+  type: 'duplicate_ip' | 'duplicate_device' | 'multiple_signals';
   newUserId: string;
   newUserEmail: string;
   matchingUsers: Array<{
@@ -45,23 +45,7 @@ export class FraudDetectionService {
         .where(eq(userSettings.userId, userId))
         .limit(1);
         
-      // Check 1: Business Address Duplicates
-      if (settings && settings.length > 0 && settings[0].businessAddress) {
-        const businessMatches = await this.checkBusinessAddressDuplicates(
-          userId, 
-          settings[0].businessAddress
-        );
-        if (businessMatches.length > 0) {
-          alerts.push({
-            type: 'duplicate_business_address',
-            newUserId: userId,
-            newUserEmail: currentUser.email || '',
-            matchingUsers: businessMatches,
-            riskScore: 85, // High risk
-            details: `Business address "${settings[0].businessAddress}" matches ${businessMatches.length} existing accounts`
-          });
-        }
-      }
+      // Business address check removed - column no longer exists
       
       // Check 2: IP Address Duplicates  
       if (currentUser.signupIpAddress) {
@@ -131,37 +115,7 @@ export class FraudDetectionService {
     }
   }
   
-  /**
-   * Check for business address duplicates in last 90 days
-   */
-  private async checkBusinessAddressDuplicates(
-    excludeUserId: string, 
-    businessAddress: string
-  ): Promise<Array<{userId: string; email: string; createdAt: Date; trialStatus: string}>> {
-    const matches = await db
-      .select({
-        userId: users.id,
-        email: users.email,
-        createdAt: users.createdAt,
-        trialStatus: users.trialStatus
-      })
-      .from(users)
-      .innerJoin(userSettings, eq(users.id, userSettings.userId))
-      .where(
-        and(
-          eq(userSettings.businessAddress, businessAddress),
-          sql`${users.id} != ${excludeUserId}`,
-          sql`${users.createdAt} > NOW() - INTERVAL '90 days'`
-        )
-      );
-      
-    return matches.map(m => ({
-      userId: m.userId,
-      email: m.email || '',
-      createdAt: m.createdAt || new Date(),
-      trialStatus: m.trialStatus || 'unknown'
-    }));
-  }
+  // Business address duplicate check removed - column no longer exists
   
   /**
    * Check for IP address duplicates in last 30 days

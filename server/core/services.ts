@@ -815,7 +815,6 @@ This email was sent via MusoBuddy Professional Music Management Platform
     const businessName = userSettings?.businessName || 'MusoBuddy';
     const businessEmail = userSettings?.businessEmail || '';
     const businessPhone = userSettings?.businessPhone || '';
-    const businessAddress = userSettings?.businessAddress || '';
     
     return `
       <br><br>
@@ -823,7 +822,6 @@ This email was sent via MusoBuddy Professional Music Management Platform
         <strong>${businessName}</strong><br>
         ${businessEmail ? `Email: ${businessEmail}<br>` : ''}
         ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
-        ${businessAddress ? `${businessAddress}<br>` : ''}
         <br>
         <em>Powered by MusoBuddy - Music Business Management</em>
       </div>

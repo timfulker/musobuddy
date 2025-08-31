@@ -56,10 +56,9 @@ export function generateContractSigningPage(
   if (userSettings?.county) addressParts.push(userSettings.county);
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
   
-  // Fall back to legacy businessAddress if no individual fields
   const businessAddress = addressParts.length > 0 
     ? escapeHtml(addressParts.join(', '))
-    : escapeHtml(userSettings?.businessAddress || userSettings?.business_address || 'Address not provided');
+    : 'Address not provided';
   const businessEmail = escapeHtml(userSettings?.businessEmail || userSettings?.business_email || '');
   const businessPhone = escapeHtml(userSettings?.phone || 'Phone not provided');
   

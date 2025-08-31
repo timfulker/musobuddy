@@ -189,7 +189,6 @@ export async function registerSettingsRoutes(app: Express) {
         const transformedDefaults = {
           businessName: "",
           businessEmail: "",
-          businessAddress: "",
           addressLine1: "",
           addressLine2: "",
           city: "",
@@ -200,7 +199,6 @@ export async function registerSettingsRoutes(app: Express) {
           taxNumber: "",
           emailFromName: "",
           nextInvoiceNumber: 1,
-          defaultTerms: "",
           bankDetails: "",
           aiPricingEnabled: true,
           baseHourlyRate: 130,
@@ -328,10 +326,11 @@ export async function registerSettingsRoutes(app: Express) {
         ].filter(Boolean);
         
         // Get gig types for all selected instruments only (AI-generated)
-        const instrumentGigTypes = allInstruments.reduce((acc, instrument) => {
-          const gigTypes = getGigTypeNamesForInstrument(instrument);
-          return [...acc, ...gigTypes];
-        }, [] as string[]);
+        const instrumentGigTypes = [];
+        for (const instrument of allInstruments) {
+          const gigTypes = await getGigTypeNamesForInstrument(instrument);
+          instrumentGigTypes.push(...gigTypes);
+        }
         
         // Remove duplicates and sort the AI-generated gig types
         const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)].sort();
@@ -1245,7 +1244,6 @@ This email was sent via MusoBuddy Professional Music Management Platform
         businessName: userSettings?.businessName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || undefined,
         businessEmail: userSettings?.businessEmail || user?.email || undefined,
         phone: userSettings?.phone || undefined,
-        businessAddress: userSettings?.businessAddress || undefined,
         addressLine1: userSettings?.addressLine1 || undefined,
         addressLine2: userSettings?.addressLine2 || undefined,
         city: userSettings?.city || undefined,
@@ -1492,10 +1490,11 @@ This email was sent via MusoBuddy Professional Music Management Platform
       ].filter(Boolean);
       
       // Get gig types for all selected instruments (AI-generated)
-      const instrumentGigTypes = allInstruments.reduce((acc, instrument) => {
-        const gigTypes = getGigTypeNamesForInstrument(instrument);
-        return [...acc, ...gigTypes];
-      }, [] as string[]);
+      const instrumentGigTypes = [];
+      for (const instrument of allInstruments) {
+        const gigTypes = await getGigTypeNamesForInstrument(instrument);
+        instrumentGigTypes.push(...gigTypes);
+      }
       
       // Remove duplicates from instrument gig types
       const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)];

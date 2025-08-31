@@ -111,12 +111,7 @@ function getTermsSection(userSettings: UserSettings | null): string {
           </div>
         </div>
     </div>`;
-  } else if (userSettings?.defaultTerms && userSettings.defaultTerms.trim()) {
-    // Fallback to legacy defaultTerms
-    const escapedTerms = userSettings.defaultTerms
-      .split('\n')
-      .map(line => line.trim() ? `${escapeHtml(line)}<br>` : '<br>')
-      .join('');
+  } else {
     termsHtml = `
     <!-- Terms & Conditions -->
     <div class="section">
@@ -195,10 +190,6 @@ function formatBusinessAddress(userSettings: UserSettings | null): string {
     addressParts.push(userSettings.postcode);
   }
   
-  // Fall back to legacy businessAddress if no individual fields are set
-  if (addressParts.length === 0 && userSettings.businessAddress) {
-    return userSettings.businessAddress.replace(/\n/g, '<br>');
-  }
   
   // Join the address parts with line breaks
   return addressParts.length > 0 ? addressParts.join('<br>') : 'Address not provided';

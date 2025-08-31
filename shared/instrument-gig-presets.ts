@@ -251,6 +251,14 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         commonVenues: ["Churches", "Hotels", "Registry Offices", "Outdoor venues"]
       },
       {
+        id: "wedding-reception",
+        name: "Wedding Reception",
+        description: "Reception entertainment and background music",
+        defaultDuration: "2-4 hours",
+        priceRange: "£300-500",
+        commonVenues: ["Hotels", "Wedding venues", "Function rooms", "Marquees"]
+      },
+      {
         id: "jazz-club",
         name: "Jazz Club",
         description: "Performance at jazz venues and music clubs",
@@ -265,6 +273,38 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "1-3 hours",
         priceRange: "£250-400",
         commonVenues: ["Hotels", "Conference centers", "Corporate offices", "Restaurants"]
+      },
+      {
+        id: "private-party",
+        name: "Private Party",
+        description: "Entertainment for private celebrations and parties",
+        defaultDuration: "2-3 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Private homes", "Function rooms", "Gardens", "Clubs"]
+      },
+      {
+        id: "restaurant-performance",
+        name: "Restaurant Performance",
+        description: "Background music for dining establishments",
+        defaultDuration: "2-4 hours",
+        priceRange: "£150-300",
+        commonVenues: ["Restaurants", "Cafes", "Wine bars", "Hotels"]
+      },
+      {
+        id: "funeral-service",
+        name: "Funeral Service",
+        description: "Respectful musical accompaniment for funeral services",
+        defaultDuration: "30-60 minutes",
+        priceRange: "£150-250",
+        commonVenues: ["Churches", "Crematoria", "Function rooms", "Outdoor venues"]
+      },
+      {
+        id: "festival-performance",
+        name: "Festival Performance",
+        description: "Live performance at festivals and outdoor events",
+        defaultDuration: "30-90 minutes",
+        priceRange: "£200-400",
+        commonVenues: ["Festival stages", "Outdoor venues", "Parks", "Community events"]
       }
     ]
   },
@@ -876,9 +916,73 @@ export function getGigTypesForInstrument(instrument: string): GigType[] {
 }
 
 // Helper function to get gig type names for a specific instrument (returns strings)
-export function getGigTypeNamesForInstrument(instrument: string): string[] {
+export async function getGigTypeNamesForInstrument(instrument: string): Promise<string[]> {
+  try {
+    // Import OpenAI here to avoid circular dependencies
+    const { OpenAI } = await import("openai");
+    
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.warn('⚠️ OPENAI_API_KEY not set, using fallback gig types');
+      return getFallbackGigTypes(instrument);
+    }
+
+    const openai = new OpenAI({ apiKey });
+    
+    console.log(`🤖 Generating gig types for instrument: ${instrument}`);
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      max_tokens: 1000,
+      temperature: 0.7,
+      messages: [{
+        role: "user", 
+        content: `Generate a comprehensive list of 20-25 specific gig types that a professional musician who plays ${instrument} would typically perform.
+
+Include various venues, event types, and performance contexts. Be very specific (e.g., "Wedding Reception" not just "Wedding", "Corporate Networking Event" not just "Corporate").
+
+Consider all these contexts:
+- Weddings (ceremony, drinks reception, evening party)
+- Corporate events (launches, networking, award ceremonies, staff parties)
+- Private celebrations (birthdays, anniversaries, engagement parties)
+- Venues (restaurants, hotels, bars, clubs, festivals)
+- Special occasions (Christmas, New Year, graduation balls)
+- Professional contexts (recording sessions, cruise ships, fashion shows)
+
+Return ONLY a JSON array of specific gig type names, no other text:
+["Wedding Reception", "Corporate Networking Event", "Birthday Party"]`
+      }]
+    });
+
+    const content = response.choices[0]?.message?.content || '';
+    
+    try {
+      const gigTypes = JSON.parse(content.trim());
+      if (Array.isArray(gigTypes) && gigTypes.length > 0) {
+        console.log(`✅ Generated ${gigTypes.length} OpenAI gig types for ${instrument}`);
+        return gigTypes;
+      }
+    } catch (parseError) {
+      console.warn(`⚠️ Failed to parse OpenAI response for ${instrument}, using fallback`);
+    }
+    
+    return getFallbackGigTypes(instrument);
+    
+  } catch (error: any) {
+    console.error(`❌ OpenAI gig type generation failed for ${instrument}:`, error.message);
+    return getFallbackGigTypes(instrument);
+  }
+}
+
+function getFallbackGigTypes(instrument: string): string[] {
+  // Use the existing static preset as fallback
   const preset = INSTRUMENT_GIG_PRESETS.find(p => p.instrument === instrument);
-  return preset?.gigTypes.map(gt => gt.name) || [];
+  return preset?.gigTypes.map(gt => gt.name) || [
+    "Wedding Ceremony",
+    "Corporate Event", 
+    "Private Party",
+    "Restaurant Performance"
+  ];
 }
 
 // Helper function to get all available instruments

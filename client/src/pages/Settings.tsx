@@ -125,7 +125,6 @@ const CUSTOM_TITLES = [
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   businessEmail: z.string().min(1, "Business email is required").email("Please enter a valid email address"),
-  businessAddress: z.string().optional().or(z.literal("")), // Legacy field for backward compatibility
   addressLine1: z.string().min(1, "Address line 1 is required"),
   addressLine2: z.string().optional().or(z.literal("")),
   city: z.string().min(1, "City is required"),
@@ -208,7 +207,6 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   return {
     businessName: data.business_name || data.businessName || "",
     businessEmail: data.business_email || data.businessEmail || "",
-    businessAddress: data.business_address || data.businessAddress || "",
     addressLine1: data.address_line1 || data.addressLine1 || "",
     addressLine2: data.address_line2 || data.addressLine2 || "",
     city: data.city || "",
@@ -1662,7 +1660,6 @@ export default function Settings() {
       const formData = {
         businessName: settings.businessName || "",
         businessEmail: settings.businessEmail || "",
-        businessAddress: settings.businessAddress || "",
         addressLine1: settings.addressLine1 || "",
         addressLine2: settings.addressLine2 || "",
         city: settings.city || "",

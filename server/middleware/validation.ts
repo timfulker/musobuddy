@@ -126,7 +126,6 @@ export const schemas = {
     // Business Details
     businessName: z.string().trim().min(1, 'Business name required').max(100, 'Business name too long').optional(),
     businessEmail: z.string().email('Invalid email format').optional(),
-    businessAddress: z.string().max(500, 'Address too long').optional(),
     addressLine1: z.string().max(200, 'Address line too long').optional(),
     addressLine2: z.string().max(200, 'Address line too long').optional(),
     city: z.string().max(100, 'City name too long').optional(),
@@ -139,7 +138,6 @@ export const schemas = {
     
     // Financial Settings
     nextInvoiceNumber: z.number().int().min(1, 'Invoice number must be at least 1').optional(),
-    defaultTerms: z.string().max(1000, 'Terms too long').optional(),
     bankDetails: z.string().max(1000, 'Bank details too long').optional(),
     defaultInvoiceDueDays: z.number().int().min(1, 'Due days must be at least 1').max(365, 'Due days too large').optional(),
     

@@ -2,10 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 
 // Custom hook to fetch stored gig types from database
 export const useGigTypes = () => {
-  // Simply fetch the stored gig types from the database
+  // Fetch AI-generated + custom gig types from instruments
   const { data: gigTypes, isLoading, error } = useQuery({
-    queryKey: ['/api/gig-types'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['gig-types'],
+    queryFn: async () => {
+      const response = await fetch('/api/gig-types', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch gig types');
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
   });
 

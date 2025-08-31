@@ -16,7 +16,6 @@ export class SettingsStorage {
   async createSettings(data: {
     userId: string;
     businessName?: string;
-    businessAddress?: string;
     businessPhone?: string;
     businessEmail?: string;
     businessWebsite?: string;
