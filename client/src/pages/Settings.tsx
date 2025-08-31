@@ -395,6 +395,8 @@ export default function Settings() {
   const [initialData, setInitialData] = useState<SettingsFormData | null>(null);
   const [formInitialized, setFormInitialized] = useState(false);
   
+  // Active section for sidebar navigation
+  const [activeSection, setActiveSection] = useState('business');
   
   // Define all settings sections with completion logic
   const settingsSections = [
@@ -474,6 +476,31 @@ export default function Settings() {
     }
   ];
 
+  // Function to render the active section content
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'business':
+        return renderBusinessSection();
+      case 'email':
+        return renderEmailSection();
+      case 'contract':
+        return renderContractSection();
+      case 'bank':
+        return renderBankSection();
+      case 'pricing':
+        return renderPricingSection();
+      case 'instruments':
+        return renderInstrumentsSection();
+      case 'performance':
+        return renderPerformanceSection();
+      case 'widget':
+        return renderWidgetSection();
+      case 'themes':
+        return renderThemesSection();
+      default:
+        return renderBusinessSection();
+    }
+  };
 
   // Render functions for each settings section
   const renderBusinessSection = () => (
