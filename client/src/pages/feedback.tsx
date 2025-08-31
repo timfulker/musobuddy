@@ -45,26 +45,6 @@ export default function FeedbackPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Access control - only beta testers can access this page
-  if (!user?.isBetaTester && !user?.isAdmin) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Beta Tester Access Required
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 max-w-md">
-              This feedback system is currently available to beta testers only. 
-              Contact the administrator for beta testing access.
-            </p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
   
   const [newFeedbackOpen, setNewFeedbackOpen] = useState(false);
   const [feedbackForm, setFeedbackForm] = useState({
@@ -78,15 +58,35 @@ export default function FeedbackPage() {
   // Fetch feedback
   const { data: feedback, isLoading: feedbackLoading } = useQuery<Feedback[]>({
     queryKey: ['/api/feedback'],
+    queryFn: async () => {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      
+      const response = await fetch('/api/feedback', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedback');
+      }
+      return response.json();
+    },
   });
 
   // Create feedback mutation
   const createFeedbackMutation = useMutation({
     mutationFn: async (feedbackData: any) => {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(feedbackData),
       });
@@ -123,10 +123,15 @@ export default function FeedbackPage() {
   // Update feedback status (admin only)
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes?: string }) => {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      
       const response = await fetch(`/api/feedback/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ status, adminNotes }),
       });
@@ -194,12 +199,34 @@ export default function FeedbackPage() {
     }
   };
 
+  // Access control - only beta testers can access this page
+  if (!user?.isBetaTester && !user?.isAdmin) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Beta Tester Access Required
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md">
+              This feedback system is currently available to beta testers only. 
+              Contact the administrator for beta testing access.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Beta Feedback System</h1>
+            <h1 className="text-3xl font-bold">
+              {user?.isAdmin ? "Feedback Management" : "Beta Feedback System"}
+            </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               {user?.isAdmin 
                 ? "View and manage all beta tester feedback submissions"
@@ -208,13 +235,15 @@ export default function FeedbackPage() {
             </p>
           </div>
           
-          <Dialog open={newFeedbackOpen} onOpenChange={setNewFeedbackOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                New Feedback
-              </Button>
-            </DialogTrigger>
+          {/* Only show "New Feedback" button for non-admin users */}
+          {!user?.isAdmin && (
+            <Dialog open={newFeedbackOpen} onOpenChange={setNewFeedbackOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Feedback
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Submit Feedback</DialogTitle>
@@ -293,6 +322,7 @@ export default function FeedbackPage() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
 
         {/* Feedback List */}
@@ -307,7 +337,10 @@ export default function FeedbackPage() {
               <p>Loading feedback...</p>
             ) : !feedback || feedback.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                No feedback submitted yet. Click "New Feedback" to get started!
+                {user?.isAdmin 
+                  ? "No feedback submitted by beta testers yet."
+                  : "No feedback submitted yet. Click \"New Feedback\" to get started!"
+                }
               </p>
             ) : (
               <div className="space-y-4">
