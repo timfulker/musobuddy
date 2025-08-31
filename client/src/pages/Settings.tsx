@@ -1170,14 +1170,19 @@ export default function Settings() {
                     <span className={`text-sm font-medium ${field.value === '50' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Show 50 bookings
                     </span>
-                    <Switch
-                      {...field}
-                      checked={field.value === 'all'}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked ? 'all' : '50');
-                      }}
-                      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(field.value === '50' ? 'all' : '50')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                        field.value === 'all' ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
+                          field.value === 'all' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                     <span className={`text-sm font-medium ${field.value === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Show all bookings
                     </span>
@@ -1202,17 +1207,19 @@ export default function Settings() {
                     <span className={`text-sm font-medium ${field.value === 'miles' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Miles
                     </span>
-                    <Switch
-                      checked={field.value === 'km'}
-                      onCheckedChange={(checked) => {
-                        const newValue = checked ? 'km' : 'miles';
-                        field.onChange(newValue);
-                        console.log('Distance unit changed to:', newValue, 'field.value now:', field.value);
-                        // Force a re-render by triggering form validation
-                        form.trigger('distanceUnits');
-                      }}
-                      className="data-[state=checked]:bg-green-500"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(field.value === 'miles' ? 'km' : 'miles')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                        field.value === 'km' ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out ${
+                          field.value === 'km' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                     <span className={`text-sm font-medium ${field.value === 'km' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                       Kilometers
                     </span>
