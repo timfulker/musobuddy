@@ -177,7 +177,7 @@ export class UserStorage {
   async createUser(data: {
     id: string;
     email: string;
-    password: string;
+    password?: string;
     firstName?: string;
     lastName?: string;
     phoneNumber?: string;
@@ -185,17 +185,25 @@ export class UserStorage {
     tier?: string;
     isAdmin?: boolean;
     isBetaTester?: boolean;
+    isAssigned?: boolean;
+    hasPaid?: boolean;
+    trialEndsAt?: Date | null;
     quickAddToken?: string;
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
     firebaseUid?: string;
+    signupIpAddress?: string;
+    deviceFingerprint?: string;
+    lastLoginAt?: Date;
+    lastLoginIP?: string;
+    fraudScore?: number;
     createdAt?: Date;
   }) {
     // Password should already be hashed by caller
     const result = await db.insert(users).values({
       id: data.id,
       email: data.email,
-      password: data.password,
+      password: data.password || '',
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber,
@@ -203,10 +211,18 @@ export class UserStorage {
       tier: data.tier || 'free',
       isAdmin: data.isAdmin || false,
       isBetaTester: data.isBetaTester || false,
+      isAssigned: data.isAssigned || false,
+      hasPaid: data.hasPaid || false,
+      trialEndsAt: data.trialEndsAt || null,
       quickAddToken: data.quickAddToken,
       emailPrefix: data.emailPrefix,
       stripeCustomerId: data.stripeCustomerId,
       firebaseUid: data.firebaseUid,
+      signupIpAddress: data.signupIpAddress,
+      deviceFingerprint: data.deviceFingerprint,
+      lastLoginAt: data.lastLoginAt,
+      lastLoginIP: data.lastLoginIP,
+      fraudScore: data.fraudScore || 0,
       createdAt: data.createdAt || new Date(),
       updatedAt: new Date(),
     }).returning();
