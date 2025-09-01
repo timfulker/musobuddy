@@ -208,12 +208,28 @@ export function registerGoogleCalendarRoutes(app: Express) {
         return res.status(404).json({ error: 'Google Calendar not connected' });
       }
 
-      console.log('🔄 [SYNC] Integration found, initializing Google Calendar service...');
+      console.log('🔄 [SYNC] Integration found:', {
+        hasRefreshToken: !!integration.googleRefreshToken,
+        refreshTokenLength: integration.googleRefreshToken?.length,
+        syncEnabled: integration.syncEnabled,
+        calendarId: integration.googleCalendarId
+      });
       
+      if (!integration.googleRefreshToken) {
+        console.error('❌ [SYNC] No refresh token in integration for user:', userId);
+        return res.status(400).json({ error: 'Google Calendar integration incomplete. Please reconnect your Google Calendar.' });
+      }
+      
+      console.log('🔄 [SYNC] Initializing Google Calendar service...');
       const googleCalendarService = new GoogleCalendarService();
-      console.log('🔄 [SYNC] Initializing with refresh token (length):', integration.googleRefreshToken?.length);
-      await googleCalendarService.initializeForUser(integration.googleRefreshToken);
-      console.log('✅ [SYNC] Google Calendar service initialized successfully');
+      
+      try {
+        await googleCalendarService.initializeForUser(integration.googleRefreshToken);
+        console.log('✅ [SYNC] Google Calendar service initialized successfully');
+      } catch (initError) {
+        console.error('❌ [SYNC] Failed to initialize Google Calendar service:', initError);
+        throw new Error(`Google Calendar authentication failed: ${initError.message}`);
+      }
       
       let exported = 0;
       let updated = 0;

@@ -8,11 +8,20 @@ export class GoogleCalendarService {
   private calendar: any;
 
   constructor() {
-    this.oauth2Client = new OAuth2Client(
-      process.env.GOOGLE_OAUTH_CLIENT_ID,
-      process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-      process.env.GOOGLE_OAUTH_REDIRECT_URI
-    );
+    const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+    const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI;
+    
+    if (!clientId || !clientSecret || !redirectUri) {
+      console.error('❌ Missing Google OAuth environment variables:', {
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+        hasRedirectUri: !!redirectUri
+      });
+      throw new Error('Google Calendar service not configured. Missing OAuth credentials.');
+    }
+    
+    this.oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
   }
 
   // Initialize with user's refresh token
