@@ -18,6 +18,7 @@ import { setupRegeneratePortalRoutes } from "./regenerate-portal";
 import { registerMapsRoutes } from "./maps-routes";
 import { setupWhat3WordsRoutes } from "./what3words-routes";
 import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
+import { registerCalendarImportRoutes } from "./calendar-import-routes";
 import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
 import { registerNotificationRoutes } from "./notification-routes";
@@ -76,6 +77,9 @@ export async function registerRoutes(app: Express) {
 
   // Register Google Calendar routes
   registerGoogleCalendarRoutes(app);
+  
+  // Register calendar import routes
+  registerCalendarImportRoutes(app);
   
   // Register onboarding routes  
   registerOnboardingRoutes(app);
