@@ -4,6 +4,7 @@ import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '../shared/schema';
+import { aiPDFOptimizer } from './ai-pdf-optimizer';
 // Import the booking calculation functions
 // Note: We'll inline the logic to avoid import issues between server and client
 
@@ -268,7 +269,120 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateUnifiedContractHTML(contract, userSettings, signatureDetails);
+    let html = generateUnifiedContractHTML(contract, userSettings, signatureDetails);
+    
+    // AI-powered PDF optimization
+    try {
+      console.log('🤖 Analyzing contract content for AI optimization...');
+      
+      // Extract selected clauses for AI analysis
+      const selectedClauses: string[] = [];
+      const customClauses: string[] = [];
+      
+      if (userSettings?.contractClauses) {
+        const clauseMap = {
+          payment30: "Payment due within 30 days of performance",
+          deposit50: "50% deposit required to secure booking (non-refundable)",
+          cancellation7: "Cancellations within 7 days forfeit deposit",
+          equipmentOwnership: "All equipment remains property of performer",
+          powerSupply: "Client must provide adequate and safe power supply",
+          venueAccess: "Client must provide safe and reasonable venue access for load-in/out",
+          weatherProtection: "Client must provide weather protection for outdoor events",
+          finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
+          noRecording: "No recording or broadcasting without performer's written consent",
+          forcemajeure: "Neither party liable for cancellation due to events beyond their control",
+          deposit: "50% deposit required to secure booking (non-refundable)",
+          balancePayment: "Remaining fee due before event / on the day",
+          cancellation: "Cancellations within 7 days forfeit deposit",
+          equipment: "All equipment remains property of performer",
+          power: "Client must provide adequate and safe power supply",
+          access: "Client must provide safe and reasonable venue access",
+          weather: "Client must provide weather protection for outdoor events",
+          numbers: "Final guest numbers must be confirmed 48 hours prior",
+          recording: "No recording or broadcasting without written consent",
+          forceMajeure: "Neither party liable for cancellation due to force majeure",
+          publicLiability: "Public Liability Insurance: Covered for all performance services",
+          alcoholPolicy: "Alcohol Policy: Performer reserves the right to refuse service in unsafe environments",
+          soundLevels: "Sound Levels: Performance will comply with venue and local authority requirements",
+          overtime: "Overtime: Additional charges apply for performances extending beyond agreed time",
+          merchandising: "Merchandising: Performer retains rights to sell merchandise unless otherwise agreed",
+          imageRights: "Image Rights: Performer may use event images/videos for promotional purposes unless restricted",
+          substitution: "Substitution: Performer may provide suitable substitute if unable to perform due to illness",
+          disputes: "Disputes: Any disagreements will be resolved through mediation before legal action"
+        };
+        
+        for (const [key, value] of Object.entries(clauseMap)) {
+          if (userSettings.contractClauses[key as keyof typeof clauseMap]) {
+            selectedClauses.push(value);
+          }
+        }
+      }
+      
+      // Add custom clauses - handle new format with {text, enabled} objects
+      if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
+        userSettings.customClauses.forEach(clause => {
+          // Handle new format: {text: string, enabled: boolean}
+          if (typeof clause === 'object' && clause.text && clause.enabled) {
+            customClauses.push(clause.text);
+          }
+          // Handle legacy format: string
+          else if (typeof clause === 'string' && clause.trim() !== '') {
+            customClauses.push(clause);
+          }
+        });
+      }
+      
+      const totals = calculateContractTotals(contract, userSettings);
+      
+      const aiOptimization = await aiPDFOptimizer.optimizeContractLayout({
+        clientName: contract.clientName || 'Client Name TBC',
+        venue: contract.venue || 'Venue TBC',
+        venueAddress: contract.venueAddress || 'Venue Address TBC',
+        eventDate: contract.eventDate || 'Date TBC',
+        selectedClauses,
+        customClauses,
+        performanceFee: `£${totals.totalAmount.toFixed(2)}`,
+        depositAmount: contract.deposit ? `£${parseFloat(contract.deposit).toFixed(2)}` : undefined,
+        additionalNotes: contract.specialRequirements || contract.equipmentRequirements
+      });
+      
+      // Apply AI adjustments to HTML
+      if (Object.keys(aiOptimization.adjustments).length > 0) {
+        console.log('✅ Applying AI adjustments:', aiOptimization.reasoning);
+        
+        // Build custom CSS from AI adjustments
+        const customCSS = Object.entries(aiOptimization.adjustments)
+          .map(([property, value]) => {
+            const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+            return `${cssProperty}: ${value};`;
+          })
+          .join(' ');
+        
+        // Inject AI optimizations into the HTML
+        html = html.replace(
+          '<style>',
+          `<style>
+        /* AI PDF Optimization Adjustments */
+        .container {
+          ${customCSS}
+        }
+        .section {
+          ${aiOptimization.adjustments.pageBreakBefore ? `page-break-before: ${aiOptimization.adjustments.pageBreakBefore};` : ''}
+          ${aiOptimization.adjustments.pageBreakAfter ? `page-break-after: ${aiOptimization.adjustments.pageBreakAfter};` : ''}
+          ${aiOptimization.adjustments.paddingTop ? `padding-top: ${aiOptimization.adjustments.paddingTop};` : ''}
+          ${aiOptimization.adjustments.paddingBottom ? `padding-bottom: ${aiOptimization.adjustments.paddingBottom};` : ''}
+        }
+        .terms-section {
+          ${aiOptimization.adjustments.lineHeight ? `line-height: ${aiOptimization.adjustments.lineHeight};` : ''}
+          ${aiOptimization.adjustments.fontSize ? `font-size: ${aiOptimization.adjustments.fontSize};` : ''}
+        }`
+        );
+      } else {
+        console.log('ℹ️ No AI adjustments needed for this contract');
+      }
+    } catch (aiError) {
+      console.warn('⚠️ AI optimization failed, continuing with default layout:', aiError.message);
+    }
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 

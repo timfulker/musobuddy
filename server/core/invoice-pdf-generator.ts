@@ -10,6 +10,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Invoice, UserSettings, Booking } from '@shared/schema';
 import { storage } from './storage';
+import { aiPDFOptimizer } from './ai-pdf-optimizer';
 
 // Helper function to generate configurable invoice terms
 function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: string): string {
@@ -169,9 +170,116 @@ export async function generateInvoicePDF(
   try {
     const page = await browser.newPage();
     
-    // CSS-OPTIMIZED: Generate HTML with built-in page break controls (NO AI)
-    console.log('📄 Using CSS-optimized invoice template (under 5 seconds)...');
-    const html = generateOptimizedInvoiceHTML(invoice, userSettings, booking);
+    // CSS-OPTIMIZED: Generate HTML with built-in page break controls + AI enhancement
+    console.log('📄 Using CSS-optimized invoice template with AI optimization...');
+    let html = generateOptimizedInvoiceHTML(invoice, userSettings, booking);
+    
+    // AI-powered PDF optimization
+    try {
+      console.log('🤖 Analyzing invoice content for AI optimization...');
+      
+      // Extract selected clauses for AI analysis
+      const selectedClauses: string[] = [];
+      const customClauses: string[] = [];
+      
+      if (userSettings?.invoiceClauses) {
+        const clauseMap = {
+          paymentTerms: "Payment is due as specified above",
+          vatStatus: "VAT Status: Not VAT registered - no VAT charged",
+          publicLiability: "Public Liability Insurance: Covered for all services",
+          latePayment: "Late Payment: Additional charges apply for overdue invoices",
+          disputeProcess: "Disputes: Contact within 30 days of invoice date",
+          paymentDue: "Payment Due: Payment required within 14 days of invoice date",
+          latePaymentCharge: "Late Payment: Additional 5% charge per week or statutory interest under the Late Payment of Commercial Debts Act",
+          depositPolicy: "Deposit Policy: Any deposit already paid is non-refundable and deducted from the final balance",
+          cancellation: "Cancellation: Client cancellations within 7 days of the event incur full invoice amount",
+          paymentMethods: "Payment Methods: Accepted by bank transfer (details provided), no cash/cheques unless agreed in advance",
+          bankDetails: "Bank Details: See payment section for account details",
+          expenses: "Expenses: Travel, parking, tolls, and accommodation (if agreed) will be added where applicable",
+          ownershipRecordings: "Ownership of Recordings: Any recordings, videos, or photographs taken by the performer remain the property of the performer unless otherwise agreed",
+          taxCompliance: "Tax Compliance: This invoice is issued in accordance with HMRC guidelines",
+          queries: "Queries: Any disputes or questions about this invoice must be raised within 7 days of issue"
+        };
+        
+        for (const [key, value] of Object.entries(clauseMap)) {
+          if (userSettings.invoiceClauses[key as keyof typeof clauseMap]) {
+            selectedClauses.push(value);
+          }
+        }
+      }
+      
+      // Add custom clauses - handle new format with {text, enabled} objects
+      if (userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)) {
+        userSettings.customInvoiceClauses.forEach(clause => {
+          // Handle new format: {text: string, enabled: boolean}
+          if (typeof clause === 'object' && clause.text && clause.enabled) {
+            customClauses.push(clause.text);
+          }
+          // Handle legacy format: string
+          else if (typeof clause === 'string' && clause.trim() !== '') {
+            customClauses.push(clause);
+          }
+        });
+      }
+      
+      // Extract line items
+      const items = [];
+      if (invoice.description && invoice.amount) {
+        items.push({
+          description: invoice.description,
+          amount: `£${parseFloat(invoice.amount).toFixed(2)}`
+        });
+      }
+      
+      const aiOptimization = await aiPDFOptimizer.optimizeInvoiceLayout({
+        clientName: invoice.clientName || 'Client Name TBC',
+        venue: booking?.venue || 'Venue TBC',
+        venueAddress: booking?.venueAddress || 'Venue Address TBC',
+        eventDate: booking?.eventDate || invoice.eventDate || 'Date TBC',
+        selectedClauses,
+        customClauses,
+        totalAmount: `£${parseFloat(invoice.amount || '0').toFixed(2)}`,
+        items,
+        additionalNotes: invoice.notes
+      });
+      
+      // Apply AI adjustments to HTML
+      if (Object.keys(aiOptimization.adjustments).length > 0) {
+        console.log('✅ Applying AI adjustments to invoice:', aiOptimization.reasoning);
+        
+        // Build custom CSS from AI adjustments
+        const customCSS = Object.entries(aiOptimization.adjustments)
+          .map(([property, value]) => {
+            const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+            return `${cssProperty}: ${value};`;
+          })
+          .join(' ');
+        
+        // Inject AI optimizations into the HTML
+        html = html.replace(
+          '<style>',
+          `<style>
+        /* AI PDF Optimization Adjustments */
+        .invoice-container {
+          ${customCSS}
+        }
+        .invoice-section {
+          ${aiOptimization.adjustments.pageBreakBefore ? `page-break-before: ${aiOptimization.adjustments.pageBreakBefore};` : ''}
+          ${aiOptimization.adjustments.pageBreakAfter ? `page-break-after: ${aiOptimization.adjustments.pageBreakAfter};` : ''}
+          ${aiOptimization.adjustments.paddingTop ? `padding-top: ${aiOptimization.adjustments.paddingTop};` : ''}
+          ${aiOptimization.adjustments.paddingBottom ? `padding-bottom: ${aiOptimization.adjustments.paddingBottom};` : ''}
+        }
+        .terms-section {
+          ${aiOptimization.adjustments.lineHeight ? `line-height: ${aiOptimization.adjustments.lineHeight};` : ''}
+          ${aiOptimization.adjustments.fontSize ? `font-size: ${aiOptimization.adjustments.fontSize};` : ''}
+        }`
+        );
+      } else {
+        console.log('ℹ️ No AI adjustments needed for this invoice');
+      }
+    } catch (aiError) {
+      console.warn('⚠️ AI optimization failed, continuing with default layout:', aiError.message);
+    }
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
