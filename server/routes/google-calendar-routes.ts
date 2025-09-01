@@ -201,11 +201,23 @@ export function registerGoogleCalendarRoutes(app: Express) {
       console.log('🔄 [SYNC] Direction:', direction, 'linkUnknownEvents:', linkUnknownEvents);
 
       console.log('🔄 [SYNC] Fetching Google Calendar integration...');
-      const integration = await storage.getGoogleCalendarIntegration(userId);
+      let integration;
+      try {
+        integration = await storage.getGoogleCalendarIntegration(userId);
+      } catch (dbError) {
+        console.error('❌ [SYNC] Database error fetching integration:', dbError);
+        return res.status(500).json({ 
+          error: 'Database error', 
+          details: 'Failed to check Google Calendar connection. Please try again.' 
+        });
+      }
       
       if (!integration) {
         console.error('❌ [SYNC] No Google Calendar integration found for user:', userId);
-        return res.status(404).json({ error: 'Google Calendar not connected' });
+        return res.status(404).json({ 
+          error: 'Google Calendar not connected',
+          details: 'Please connect your Google Calendar first.'
+        });
       }
 
       console.log('🔄 [SYNC] Integration found:', {
@@ -238,15 +250,39 @@ export function registerGoogleCalendarRoutes(app: Express) {
       let aiUsed = 0;
       
       // Get all current data
-      const bookings = await storage.getBookings(userId);
+      console.log('🔄 [SYNC] Fetching user bookings...');
+      let bookings;
+      try {
+        bookings = await storage.getBookings(userId);
+      } catch (bookingError) {
+        console.error('❌ [SYNC] Failed to fetch bookings:', bookingError);
+        return res.status(500).json({ 
+          error: 'Failed to fetch bookings', 
+          details: 'Could not retrieve your bookings for sync. Please try again.' 
+        });
+      }
+      
       const eligibleBookings = bookings.filter(booking => 
         booking.eventDate && 
         booking.status !== 'cancelled' && 
         booking.status !== 'rejected'
       );
       
-      const googleSync = await googleCalendarService.performFullSync('primary');
-      const googleEvents = googleSync.events || [];
+      console.log(`🔄 [SYNC] Found ${eligibleBookings.length} eligible bookings out of ${bookings.length} total`);
+      
+      console.log('🔄 [SYNC] Fetching Google Calendar events...');
+      let googleEvents = [];
+      try {
+        const googleSync = await googleCalendarService.performFullSync('primary');
+        googleEvents = googleSync.events || [];
+        console.log(`🔄 [SYNC] Retrieved ${googleEvents.length} Google Calendar events`);
+      } catch (googleError) {
+        console.error('❌ [SYNC] Google Calendar API error:', googleError);
+        return res.status(500).json({ 
+          error: 'Google Calendar API error', 
+          details: 'Failed to fetch Google Calendar events. Your connection may have expired - please reconnect your Google Calendar.' 
+        });
+      }
       
       console.log(`🔄 Processing ${eligibleBookings.length} MusoBuddy bookings and ${googleEvents.length} Google events`);
       
