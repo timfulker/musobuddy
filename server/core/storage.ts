@@ -192,13 +192,6 @@ export class Storage {
     return bookingStorage.updateBookingInvoiceDocument(id, cloudUrl, storageKey, filename);
   }
 
-  async addBookingDocument(id: number, cloudUrl: string, storageKey: string, filename: string, documentType: string) {
-    return bookingStorage.addBookingDocument(id, cloudUrl, storageKey, filename, documentType);
-  }
-
-  async getBookingDocuments(bookingId: number, userId: string) {
-    return bookingStorage.getBookingDocuments(bookingId, userId);
-  }
 
   async getAllBookings() {
     return bookingStorage.getAllBookings();
@@ -622,9 +615,6 @@ export class Storage {
     return invoiceStorage.getOverdueInvoicesCount(userId);
   }
 
-  async getExpiringDocumentsCount(userId: string) {
-    return miscStorage.getExpiringDocumentsCount(userId);
-  }
 
   // ===== MESSAGE NOTIFICATION METHODS =====
   async createMessageNotification(notificationData: any) {

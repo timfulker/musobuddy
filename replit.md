@@ -1,7 +1,7 @@
-### Overview
+# Overview
 MusoBuddy is a platform designed to centralize and streamline administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burdens, automate workflows, improve communication, and provide robust tools for financial and logistical management. The project aims to simplify the business side of music, aspiring to become the global standard for music career management for independent musicians and small-to-medium music enterprises.
 
-### User Preferences
+# User Preferences
 Preferred communication style: Simple, everyday language.
 Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
@@ -25,7 +25,7 @@ Address book navigation: "View Details" button on client cards in address book n
 Messages centralization: Reorganized message system into centralized "Messages" page with tabbed interface. Combined client message replies and unparseable messages into single location for better UX. Moved "Messages" menu item up in sidebar below "Bookings" for improved navigation hierarchy. Dashboard retains message summary widget with total and unread counts.
 Bookings page auto-scroll: Page automatically scrolls to the next upcoming booking (earliest future date) when arriving naturally on the bookings page, instead of showing the furthest future booking. This positions users at the most relevant booking for daily workflow management.
 Edit booking page sidebar: Added sidebar navigation to the edit booking page (new-booking.tsx) for consistent navigation experience. Sidebar appears on desktop devices, matching the dashboard layout and providing quick access to all system sections while editing bookings.
-Email footer branding: User prefers simple "Sent via MusoBuddy" instead of "Music Management" which sounds too much like an agency.
+Email footer branding: User prefers simple "Sent via MusoBuddy" instead of "Music Management" which sounds too much like an general agency.
 Email template display: Enhanced HTML email templates work correctly in Gmail and and Apple Mail. Spark email client displays plain text version due to its security restrictions (normal behavior). Professional gradient headers, signature cards, and styling display properly in major email clients.
 Mobile strategy: Implementing enhanced responsive design (Option 1) - single app that adapts intelligently to mobile vs desktop. Essential mobile features: invoice sending, booking list view, client lookup, basic booking entry. Complex features hidden on mobile: contract creation, detailed settings, complex forms. Future roadmap includes native mobile apps (Android/iOS) and PC desktop applications (Mac/PC) in coming months.
 Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
@@ -44,14 +44,14 @@ Time format standardization: Both booking form and contract form now use identic
 Contract PDF luminance-aware branding: MusoBuddy logo text and tagline in contract PDFs now dynamically adjust color based on theme background luminance for optimal visibility. On dark themes like midnight blue, text appears in white/light colors; on light themes, it appears in dark colors. This ensures WCAG 2.0 compliant contrast ratios and professional branding visibility across all theme colors.
 Client portal system architecture: Implemented dual-portal system with clear separation of concerns. React Client Portal handles mandatory contract signing fields (client phone, address, venue address) before signing, while Dynamic Collaborative Form manages post-signing event planning collaboration (venue contacts, music preferences, logistics). Switched from static R2 HTML storage to dynamic server-side rendering, ensuring collaborative forms always display fresh database data without manual regeneration. Fixed critical field mapping inconsistencies between snake_case database columns and camelCase frontend expectations. All collaborative fields now sync bidirectionally in real-time between booking forms and client collaborative forms.
 
-### System Architecture
-**Frontend**
+# System Architecture
+## Frontend
 - **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
 - **Styling**: Tailwind CSS with shadcn/ui and Radix UI, supporting dynamic PDF theming and WCAG 2.0 luminance for text contrast.
 - **State Management**: React Query.
 - **Forms**: React Hook Form with Zod validation.
 
-**Backend**
+## Backend
 - **Runtime**: Node.js with Express.js (TypeScript, ES modules).
 - **Authentication**: Pure Firebase authentication (Google Sign-in, email/password) with Firebase Admin SDK for token verification and subscription-based access control.
 - **File Storage**: Cloudflare R2 for PDF storage.
@@ -59,19 +59,20 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
 - **AI Integration**: Dual AI models for unlimited usage.
 
-**System Design Choices**
+## System Design Choices
 - **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
-- **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
-- **Document Management**: Multi-document upload, categorization, and secure cloud storage with expiry date monitoring and alerts.
-- **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
-- **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
-- **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-- **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
-- **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
-- **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
+- **Technical Implementations**:
+    - **User Management**: Two-tier system (Admin, User).
+    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
+    - **Document Management**: Multi-document upload, categorization, and secure cloud storage with expiry date monitoring and alerts.
+    - **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
+    - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
+    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
+    - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
+    - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
+    - **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
-### External Dependencies
+# External Dependencies
 - **Cloud Services**:
     - Cloudflare R2
     - Neon Database (PostgreSQL)

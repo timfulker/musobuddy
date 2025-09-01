@@ -31,8 +31,6 @@ import HoverResponseMenu from "@/components/hover-response-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
-import BookingDocumentsManager from "@/components/booking-documents-manager";
-import { BookingDocumentIndicator } from "@/components/booking-document-indicator";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
 import WorkflowStageMeter from "@/components/workflow-stage-meter";
@@ -135,9 +133,6 @@ export default function UnifiedBookings() {
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
   const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
   
-  // Document upload dialog states
-  const [documentUploadDialogOpen, setDocumentUploadDialogOpen] = useState(false);
-  const [selectedBookingForDocument, setSelectedBookingForDocument] = useState<any>(null);
   
   // Communication history dialog states
   const [communicationHistoryDialogOpen, setCommunicationHistoryDialogOpen] = useState(false);
@@ -634,10 +629,6 @@ export default function UnifiedBookings() {
     setSendComplianceDialogOpen(true);
   };
   
-  const openDocumentManagerDialog = (booking: any) => {
-    setSelectedBookingForDocument(booking);
-    setDocumentUploadDialogOpen(true);
-  };
   
   // Navigation to conversation page - replaces old dialog
   const openConversation = (booking: any) => {
@@ -1938,15 +1929,6 @@ export default function UnifiedBookings() {
                                                 </h3>
                                                 {/* Unified Workflow Stage Display */}
                                                 <WorkflowStageMeter booking={groupBooking} />
-                                                {/* Document indicator - includes both new and legacy documents */}
-                                                <BookingDocumentIndicator 
-                                                  bookingId={groupBooking.id}
-                                                  booking={groupBooking}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openDocumentManagerDialog(groupBooking);
-                                                  }}
-                                                />
                                                 {/* Compliance indicator - shows available compliance documents */}
                                                 <ComplianceIndicator 
                                                   bookingId={groupBooking.id}
@@ -2228,15 +2210,6 @@ export default function UnifiedBookings() {
                                   </h3>
                                   {/* Unified Workflow Stage Display */}
                                   <WorkflowStageMeter booking={booking} />
-                                  {/* Document indicator - includes both new and legacy documents */}
-                                  <BookingDocumentIndicator 
-                                    bookingId={booking.id}
-                                    booking={booking}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openDocumentManagerDialog(booking);
-                                    }}
-                                  />
                                   {/* Compliance indicator - shows available compliance documents */}
                                   <ComplianceIndicator 
                                     bookingId={booking.id}
@@ -2748,15 +2721,6 @@ export default function UnifiedBookings() {
                                             <Badge className={getStatusColor(booking.status || 'new')}>
                                               {booking.status?.replace('_', ' ') || 'New'}
                                             </Badge>
-                                            {/* Document indicator - includes both new and legacy documents */}
-                                            <BookingDocumentIndicator 
-                                              bookingId={booking.id}
-                                              booking={booking}
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                openDocumentManagerDialog(booking);
-                                              }}
-                                            />
                                             {/* Compliance indicator - shows available compliance documents */}
                                             <ComplianceIndicator 
                                               bookingId={booking.id}
@@ -2931,15 +2895,6 @@ export default function UnifiedBookings() {
                                                   Document (Legacy)
                                                 </Badge>
                                               )}
-                                              {/* Document indicator - includes both new and legacy documents */}
-                                              <BookingDocumentIndicator 
-                                                bookingId={booking.id}
-                                                booking={booking}
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  openDocumentManagerDialog(booking);
-                                                }}
-                                              />
                                               {/* Compliance indicator - shows available compliance documents */}
                                               <ComplianceIndicator 
                                                 bookingId={booking.id}
@@ -3057,15 +3012,6 @@ export default function UnifiedBookings() {
         booking={selectedBookingForCompliance}
       />
 
-      {/* Document Manager Dialog */}
-      <BookingDocumentsManager
-        booking={selectedBookingForDocument}
-        isOpen={documentUploadDialogOpen}
-        onClose={() => {
-          setDocumentUploadDialogOpen(false);
-          setSelectedBookingForDocument(null);
-        }}
-      />
       
       <ConflictResolutionDialog
         isOpen={conflictResolutionDialogOpen}
@@ -3617,10 +3563,6 @@ export default function UnifiedBookings() {
                       case 'send_compliance':
                         setSelectedBookingForCompliance(booking);
                         setComplianceDialogOpen(true);
-                        break;
-                      case 'manage_documents':
-                        setSelectedBookingForDocument(booking);
-                        setDocumentUploadDialogOpen(true);
                         break;
                       default:
                         // Status change (like rejected)

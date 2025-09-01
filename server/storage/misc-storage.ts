@@ -367,17 +367,6 @@ export class MiscStorage {
     return parseInt(result[0]?.count || '0', 10);
   }
 
-  async getExpiringDocumentsCount(userId: string) {
-    // Count compliance documents expiring in next 30 days
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(complianceDocuments)
-      .where(and(
-        eq(complianceDocuments.userId, userId),
-        sql`${complianceDocuments.expiryDate} BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'`
-      ));
-    // Ensure we return a number, not a string
-    return parseInt(String(result[0]?.count || 0), 10);
-  }
 
   // ===== MESSAGE NOTIFICATION METHODS =====
 
