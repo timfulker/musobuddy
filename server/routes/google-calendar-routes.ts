@@ -381,9 +381,37 @@ export function registerGoogleCalendarRoutes(app: Express) {
         estimatedCost: aiUsed * 0.033
       });
 
-    } catch (error) {
-      console.error('❌ Manual sync failed:', error);
-      res.status(500).json({ error: 'Sync failed', details: error.message });
+    } catch (error: any) {
+      console.error('❌ [SYNC] Manual sync failed:', error);
+      console.error('❌ [SYNC] Error name:', error.name);
+      console.error('❌ [SYNC] Error message:', error.message);
+      console.error('❌ [SYNC] Error code:', error.code);
+      console.error('❌ [SYNC] Stack trace:', error.stack);
+      
+      // More specific error handling
+      let errorMessage = 'Sync failed';
+      let errorDetails = error.message || 'Unknown error';
+      
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Google Calendar authentication failed';
+        errorDetails = 'Your Google Calendar connection has expired. Please reconnect your Google Calendar.';
+      } else if (error.message?.includes('refresh_token')) {
+        errorMessage = 'Google Calendar token expired';
+        errorDetails = 'Your Google Calendar token has expired. Please reconnect your Google Calendar.';
+      } else if (error.message?.includes('calendar')) {
+        errorMessage = 'Google Calendar API error';
+        errorDetails = `Google Calendar service error: ${error.message}`;
+      }
+      
+      res.status(500).json({ 
+        error: errorMessage, 
+        details: errorDetails,
+        debugInfo: process.env.NODE_ENV === 'development' ? {
+          name: error.name,
+          code: error.code,
+          originalMessage: error.message
+        } : undefined
+      });
     }
   });
 
