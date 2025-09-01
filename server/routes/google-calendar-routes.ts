@@ -252,15 +252,22 @@ export function registerGoogleCalendarRoutes(app: Express) {
       let newSyncToken = null;
       
       try {
-        // Use incremental sync if we have a sync token, otherwise full sync
-        if (integration.syncToken) {
+        // Force full sync if we need to expand date range, otherwise use incremental
+        const shouldForceFullSync = integration.syncToken && integration.lastSyncAt && 
+                                   (new Date() - new Date(integration.lastSyncAt)) > (7 * 24 * 60 * 60 * 1000); // Force full sync if > 7 days
+        
+        if (integration.syncToken && !shouldForceFullSync) {
           console.log('🔄 Performing incremental sync...');
           const incrementalSync = await googleCalendarService.performIncrementalSync(integration.syncToken, 'primary');
           googleEvents = incrementalSync.events || [];
           newSyncToken = incrementalSync.syncToken;
           console.log(`📅 Incremental sync found ${googleEvents.length} changed events`);
         } else {
-          console.log('🔄 Performing initial full sync...');
+          if (shouldForceFullSync) {
+            console.log('🔄 Performing full sync (periodic refresh)...');
+          } else {
+            console.log('🔄 Performing initial full sync...');
+          }
           const fullSync = await googleCalendarService.performFullSync('primary');
           googleEvents = fullSync.events || [];
           newSyncToken = fullSync.syncToken;

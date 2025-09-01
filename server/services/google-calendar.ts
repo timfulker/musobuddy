@@ -194,7 +194,7 @@ export class GoogleCalendarService {
           pageToken: nextPageToken,
           showDeleted: true,
           timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
-          timeMax: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Next year
+          timeMax: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // Next 3 years
         });
 
         allEvents = allEvents.concat(response.data.items || []);
