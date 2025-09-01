@@ -90,8 +90,9 @@ export function registerCalendarImportRoutes(app: Express) {
               duration = Math.round(durationMs / (1000 * 60 * 60 * 100)) / 100;
             }
 
-            // Create booking from calendar event
+            // Create booking from calendar event with proper user_id
             const bookingData = {
+              userId: userId, // Explicitly include user_id
               clientName: event.summary || 'Imported Event',
               clientEmail: event.organizer || '',
               clientPhone: '',
@@ -108,22 +109,26 @@ export function registerCalendarImportRoutes(app: Express) {
               source: 'calendar_import'
             };
 
-            // Check for duplicate events (same date, time, and title)
+            // Enhanced duplicate checking (same date, time, title, and venue)
             const existingBookings = await storage.getBookings(userId);
-            const isDuplicate = existingBookings.some(booking => 
-              booking.eventDate === bookingData.eventDate &&
-              booking.eventTime === bookingData.eventTime &&
-              booking.clientName === bookingData.clientName
-            );
+            const isDuplicate = existingBookings.some(booking => {
+              const sameDate = booking.eventDate === bookingData.eventDate;
+              const sameTime = booking.eventTime === bookingData.eventTime;
+              const sameName = booking.clientName?.toLowerCase().trim() === bookingData.clientName?.toLowerCase().trim();
+              const sameVenue = booking.venue?.toLowerCase().trim() === bookingData.venue?.toLowerCase().trim();
+              
+              // Consider it a duplicate if date, time, and name match (venue is optional as it might vary)
+              return sameDate && sameTime && sameName;
+            });
 
             if (isDuplicate) {
-              console.log(`⏭️ Skipping duplicate event: ${event.summary} on ${bookingData.eventDate}`);
+              console.log(`⏭️ Skipping duplicate event: ${event.summary} on ${bookingData.eventDate} at ${eventTime || 'all day'}`);
               skipped++;
               continue;
             }
 
-            // Create the booking
-            await storage.createBooking(userId, bookingData);
+            // Create the booking - method only takes one parameter (the bookingData with userId included)
+            await storage.createBooking(bookingData);
             imported++;
             console.log(`✅ Imported event: ${event.summary} on ${bookingData.eventDate}`);
 
