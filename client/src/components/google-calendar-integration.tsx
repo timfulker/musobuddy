@@ -131,9 +131,6 @@ export default function GoogleCalendarIntegration() {
   // Manual sync mutation
   const syncMutation = useMutation({
     mutationFn: async (direction: string) => {
-      console.log('🚀 Frontend: Making API request to /api/google-calendar/sync');
-      console.log('📋 Frontend: Request data:', { direction, linkUnknownEvents: direction === 'import' || direction === 'bidirectional' });
-      
       const response = await apiRequest('/api/google-calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,11 +139,7 @@ export default function GoogleCalendarIntegration() {
           linkUnknownEvents: direction === 'import' || direction === 'bidirectional'
         }),
       });
-      
-      console.log('📨 Frontend: API response status:', response.status);
-      const data = await response.json();
-      console.log('📨 Frontend: API response data:', data);
-      return data;
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
@@ -195,9 +188,7 @@ export default function GoogleCalendarIntegration() {
   };
 
   const handleSync = (direction: string) => {
-    console.log('🔄 Frontend: Sync button clicked with direction:', direction);
     setIsSyncing(true);
-    console.log('📤 Frontend: Calling syncMutation.mutate...');
     syncMutation.mutate(direction);
     setTimeout(() => setIsSyncing(false), 3000);
   };
