@@ -15,7 +15,6 @@ import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
@@ -195,8 +194,8 @@ export default function NewBookingPage({
     enabled: !clientMode, // Skip for client mode
   });
 
-  // Import the useGigTypes hook to get fresh AI-generated gig types
-  const { gigTypes: userGigTypes } = useGigTypes();
+  // Get gig types directly from user settings gig_types field
+  const userGigTypes = userSettings?.gigTypes || [];
 
   // Calculate mileage between user's business address and venue
   // Handler for adding custom gig types
