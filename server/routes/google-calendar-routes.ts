@@ -188,11 +188,13 @@ export function registerGoogleCalendarRoutes(app: Express) {
 
   // Manual sync trigger (ID-based with minimal AI)
   app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
-    console.log('🚀 Google Calendar sync endpoint hit!');
-    console.log('📋 Request body:', req.body);
+    console.log('🚀 [SYNC] Google Calendar sync endpoint hit!');
+    console.log('🔐 [SYNC] Auth headers:', req.headers.authorization ? 'Present' : 'Missing');
+    console.log('📋 [SYNC] Request body:', req.body);
+    console.log('👤 [SYNC] Authenticated user:', req.user);
     try {
       const userId = req.user?.id;
-      console.log('👤 User ID:', userId);
+      console.log('👤 [SYNC] User ID:', userId);
       const { direction = 'export', linkUnknownEvents = false } = req.body;
       let integration;
       try {
