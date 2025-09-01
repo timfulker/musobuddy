@@ -372,9 +372,6 @@ export default function Settings() {
   const isMobile = !isDesktop;
   const { currentTheme, setTheme, customColor, setCustomColor } = useTheme();
   const [location, navigate] = useLocation();
-  
-  // Debug: Log current theme state
-  console.log('🎨 Settings component - current theme:', currentTheme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument state

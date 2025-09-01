@@ -59,14 +59,6 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
 
   const documents = documentsResponse?.documents || [];
 
-  // Debug logging to see what's happening with the API response
-  console.log('📄 Documents API Response:', {
-    documentsResponse,
-    loadingDocuments,
-    canUploadMore: !loadingDocuments && documentsResponse?.success !== false && documents.length < 5,
-    bookingId: booking?.id
-  });
-
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async ({ file, documentType }: { file: File; documentType: string }) => {

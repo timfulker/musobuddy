@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -107,8 +107,13 @@ export default function Invoices() {
     }
   }, [userSettings, form]);
 
+  // Track if URL parameters have been processed
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
+
   // Check for URL parameters to auto-open dialog and pre-fill with booking/enquiry data
   useEffect(() => {
+    if (urlParamsProcessed) return;
+
     const params = new URLSearchParams(window.location.search);
     const createNew = params.get('create');
     const action = params.get('action');
@@ -117,6 +122,7 @@ export default function Invoices() {
     
     if (createNew === 'true' || action === 'create') {
       setIsDialogOpen(true);
+      setUrlParamsProcessed(true);
       
       // Pre-fill with booking data if bookingId is provided
       if (bookingId) {
@@ -136,7 +142,6 @@ export default function Invoices() {
                 : "";
               
               const parsedBookingId = parseInt(bookingId);
-              console.log('📝 Setting form with bookingId:', parsedBookingId, 'from URL param:', bookingId);
               
               form.reset({
                 contractId: undefined,
@@ -201,7 +206,7 @@ export default function Invoices() {
         }
       }
     }
-  }, [location, enquiries, userSettings, form, toast]);
+  }, [location, enquiries, userSettings, urlParamsProcessed]);
 
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");
@@ -1004,11 +1009,14 @@ export default function Invoices() {
                   <DialogTitle>
                     {editAndResendMode ? "Edit Invoice & Resend" : editingInvoice ? "Edit Invoice" : "Create New Invoice"}
                   </DialogTitle>
-                  {editAndResendMode && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Invoice number {editingInvoice?.invoiceNumber} will remain unchanged for tax compliance.
-                    </p>
-                  )}
+                  <DialogDescription>
+                    {editAndResendMode 
+                      ? `Edit and resend invoice ${editingInvoice?.invoiceNumber}. The invoice number will remain unchanged for tax compliance.`
+                      : editingInvoice 
+                        ? "Edit the details of this invoice."
+                        : "Create a new invoice for a client. You can auto-fill information from an existing contract."
+                    }
+                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -1212,6 +1220,9 @@ export default function Invoices() {
               <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Send Invoice Email</DialogTitle>
+                  <DialogDescription>
+                    Send the invoice email to your client. You can customize the message before sending.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   {invoiceToSend && (
