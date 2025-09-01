@@ -38,6 +38,7 @@ const fullBookingSchema = z.object({
   venueContactInfo: z.string().optional(),
   fee: z.string().optional(),
   gigType: z.string().optional(),
+  eventType: z.string().optional(),
   equipmentRequirements: z.string().optional(),
   specialRequirements: z.string().optional(),
   performanceDuration: z.string().optional(),
@@ -382,6 +383,7 @@ export default function NewBookingPage({
       venueContactInfo: "",
       fee: "",
       gigType: "",
+      eventType: "",
       equipmentRequirements: "",
       specialRequirements: "",
       performanceDuration: "",
@@ -476,6 +478,7 @@ export default function NewBookingPage({
         return '';
       };
 
+      
       form.reset({
         clientName: editingBooking.clientName || '',
         clientEmail: editingBooking.clientEmail || '',
@@ -488,7 +491,8 @@ export default function NewBookingPage({
         venueAddress: editingBooking.venueAddress || '',
         venueContactInfo: editingBooking.venueContactInfo || '',
         fee: editingBooking.fee ? editingBooking.fee.toString() : '',
-        gigType: editingBooking.gigType || editingBooking.eventType || '',
+        gigType: editingBooking.gigType || '',
+        eventType: editingBooking.eventType || '',
         equipmentRequirements: editingBooking.equipmentRequirements || '',
         specialRequirements: editingBooking.specialRequirements || '',
         performanceDuration: editingBooking.performanceDuration || '',
@@ -610,6 +614,7 @@ export default function NewBookingPage({
         fee: data.fee ? parseFloat(data.fee) : null,
 
         gigType: data.gigType || null,
+        eventType: data.eventType || null,
         equipmentRequirements: data.equipmentRequirements || null,
         specialRequirements: data.specialRequirements || null,
         performanceDuration: data.performanceDuration || null,
@@ -672,6 +677,7 @@ export default function NewBookingPage({
         fee: data.fee ? parseFloat(data.fee) : null,
 
         gigType: data.gigType || null,
+        eventType: data.eventType || null,
         equipmentRequirements: data.equipmentRequirements || null,
         specialRequirements: data.specialRequirements || null,
         performanceDuration: data.performanceDuration || null,
@@ -1190,6 +1196,40 @@ export default function NewBookingPage({
                       )}
                     />
                   </div>
+                  
+                  {/* Event Type */}
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="eventType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700">Event Type</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20">
+                                <SelectValue placeholder="Select event type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Wedding">Wedding</SelectItem>
+                              <SelectItem value="Corporate Event">Corporate Event</SelectItem>
+                              <SelectItem value="Birthday Party">Birthday Party</SelectItem>
+                              <SelectItem value="Private Party">Private Party</SelectItem>
+                              <SelectItem value="Festival">Festival</SelectItem>
+                              <SelectItem value="Concert">Concert</SelectItem>
+                              <SelectItem value="Club Night">Club Night</SelectItem>
+                              <SelectItem value="Charity Event">Charity Event</SelectItem>
+                              <SelectItem value="Anniversary">Anniversary</SelectItem>
+                              <SelectItem value="Christmas Party">Christmas Party</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
                 
                 {/* Venue Information */}
@@ -1528,14 +1568,17 @@ export default function NewBookingPage({
                       <FormItem>
                         <FormLabel>Gig Type</FormLabel>
                         <div className="space-y-2">
-                          <Select onValueChange={(value) => {
-                            if (value !== 'custom') {
-                              field.onChange(value);
-                              setShowCustomGigInput(false);
-                            } else {
-                              setShowCustomGigInput(true);
-                            }
-                          }} value={userGigTypes.includes(field.value as any) ? field.value : (showCustomGigInput ? 'custom' : '')}>
+                          <Select 
+                            key={`gig-type-${field.value}`} 
+                            onValueChange={(value) => {
+                              if (value !== 'custom') {
+                                field.onChange(value);
+                                setShowCustomGigInput(false);
+                              } else {
+                                setShowCustomGigInput(true);
+                              }
+                            }} 
+                            value={field.value || ''}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select gig type or choose 'Custom' to create your own" />

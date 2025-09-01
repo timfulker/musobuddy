@@ -44,7 +44,7 @@ export function useBookingDocuments(bookingId: number, booking?: any): UseBookin
           setDocumentCount(totalCount);
         }
       } catch (err: any) {
-        console.error('📄 Error fetching documents for booking', bookingId, ':', err.message);
+        // Silently handle fetch errors to avoid console spam
         if (mounted) {
           // If API fails, still check for legacy document
           let legacyDocCount = 0;

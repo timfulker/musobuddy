@@ -98,17 +98,6 @@ function Router() {
     const isProtected = isProtectedRoute(currentPath);
     const paymentRedirectUrl = getPaymentRedirectUrl();
     
-    // DEBUG: Log all conditions
-    console.log('🐛 ACCESS CONTROL DEBUG:', {
-      email: user.email,
-      hasPaid: user.hasPaid,
-      hasUserAccess,
-      needsPaymentSetup,
-      isProtected,
-      currentPath,
-      paymentRedirectUrl,
-      isAuthenticated
-    });
     
     // Redirect authenticated users who need payment setup from protected routes
     if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {

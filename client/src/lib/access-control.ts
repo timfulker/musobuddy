@@ -57,41 +57,25 @@ export function hasAccess(user: User | null | undefined): boolean {
   
   // Admins always have access
   if (isAdmin) {
-    console.log('✅ Admin user has full access');
     return true;
   }
   
   // Assigned accounts always have access (complimentary accounts only, NOT test accounts)
   if (isAssigned) {
-    console.log('✅ Assigned account has full access');
     return true;
   }
   
   // SECURITY: Email verification required for payment access
   if (!hasVerifiedEmail(user)) {
-    console.log('🔒 Access denied - email verification required', {
-      email: user.email,
-      emailVerified: user.emailVerified,
-      isAdmin: user.isAdmin,
-      isAssigned: user.isAssigned
-    });
     return false;
   }
   
   // HARD RULE: No dashboard access without payment setup (has_paid = true)
   // This includes trial users - they must complete payment setup to access dashboard
   if (hasPaid) {
-    console.log('✅ Payment setup completed - user has access');
     return true;
   }
   
-  console.log('🔒 Access denied - payment required', {
-    email: user.email,
-    emailVerified: user.emailVerified,
-    trialEndsAt: trialEndsAt,
-    hasPaid: hasPaid,
-    fullUser: user
-  });
   return false;
 }
 

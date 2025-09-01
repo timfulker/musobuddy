@@ -53,9 +53,8 @@ export function useAuth() {
         // Give Firebase a moment to restore persisted session
         setTimeout(() => {
           if (auth.currentUser) {
-            console.log('🔥 CLEAN auth state (restored):', auth.currentUser.email);
+            // Auth state restored
           } else {
-            console.log('🔥 CLEAN auth state: no user');
             setAuthState({
               user: null,
               isLoading: false,
@@ -68,7 +67,6 @@ export function useAuth() {
       }
       
       setAuthInitialized(true);
-      console.log('🔥 CLEAN auth state:', firebaseUser?.email || 'no user');
       
       if (firebaseUser) {
         try {
@@ -82,16 +80,6 @@ export function useAuth() {
           
           if (response.ok) {
             const databaseUser = await response.json();
-            console.log('✅ Database user fetched:', { 
-              email: databaseUser.email,
-              emailVerified: databaseUser.emailVerified, // CRITICAL: Check if this is present
-              isAdmin: databaseUser.isAdmin,
-              isBetaTester: databaseUser.isBetaTester,
-              isAssigned: databaseUser.isAssigned,
-              trialEndsAt: databaseUser.trialEndsAt,
-              hasPaid: databaseUser.hasPaid,
-              onboardingCompleted: databaseUser.onboardingCompleted
-            });
             
             // Merge Firebase user with database user data
             const mergedUser = {
@@ -115,7 +103,6 @@ export function useAuth() {
             });
           }
         } catch (error) {
-          console.error('❌ Error fetching database user:', error);
           setAuthState({
             user: firebaseUser,
             isLoading: false,

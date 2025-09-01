@@ -387,6 +387,7 @@ export const bookings = pgTable("bookings", {
   clientAddress: text("client_address"),
   what3words: varchar("what3words"), // Precise location using what3words
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
+  eventType: varchar("event_type"), // Type of event: Wedding, Corporate, Birthday, etc.
   fee: decimal("fee", { precision: 10, scale: 2 }),
   equipmentRequirements: text("equipment_requirements"),
   specialRequirements: text("special_requirements"),
@@ -611,6 +612,7 @@ export const userSettings = pgTable("user_settings", {
   emailSignature: text("email_signature"), // Custom email signature for templates
   
   // Invoice Settings
+  invoicePaymentTerms: varchar("invoice_payment_terms").default("7_days"), // Payment terms: on_receipt, 3_days, 7_days, 14_days, 30_days, on_performance, cash_as_agreed
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
   
   // Distance Unit Preference

@@ -18,7 +18,7 @@ export function BookingDocumentIndicator({ bookingId, booking, onClick }: Bookin
         const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
         return await response.json();
       } catch (error) {
-        console.error('📄 Error fetching documents for booking', bookingId, ':', error);
+        // Silently handle fetch errors to avoid console spam
         return { documents: [] };
       }
     },
