@@ -186,6 +186,14 @@ export class GoogleCalendarService {
     let allEvents: any[] = [];
 
     try {
+      const timeMin = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(); // Last year
+      const timeMax = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(); // Next 3 years
+      
+      console.log('📅 [SYNC] Fetching Google Calendar events with date range:');
+      console.log(`  - From: ${timeMin} (${new Date(timeMin).toLocaleDateString()})`);
+      console.log(`  - To: ${timeMax} (${new Date(timeMax).toLocaleDateString()})`);
+      console.log(`  - Calendar ID: ${calendarId}`);
+      
       do {
         const response = await this.calendar.events.list({
           calendarId,
@@ -193,11 +201,26 @@ export class GoogleCalendarService {
           singleEvents: true,
           pageToken: nextPageToken,
           showDeleted: true,
-          timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
-          timeMax: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // Next 3 years
+          timeMin,
+          timeMax,
         });
 
-        allEvents = allEvents.concat(response.data.items || []);
+        const pageEvents = response.data.items || [];
+        console.log(`📄 [SYNC] Retrieved ${pageEvents.length} events in this page`);
+        
+        // Log events from 2026 specifically
+        const events2026 = pageEvents.filter(e => {
+          const eventDate = e.start?.dateTime || e.start?.date;
+          return eventDate && eventDate.includes('2026');
+        });
+        if (events2026.length > 0) {
+          console.log(`🎯 [SYNC] Found ${events2026.length} events from 2026:`);
+          events2026.forEach(e => {
+            console.log(`  - "${e.summary}" on ${e.start?.dateTime || e.start?.date} (status: ${e.status})`);
+          });
+        }
+        
+        allEvents = allEvents.concat(pageEvents);
         nextPageToken = response.data.nextPageToken;
 
       } while (nextPageToken);
