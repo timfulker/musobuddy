@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { GoogleCalendarService } from "../services/google-calendar";
 import { AIEventMatcher } from "../services/ai-event-matcher";
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
@@ -187,20 +187,10 @@ export function registerGoogleCalendarRoutes(app: Express) {
   });
 
   // Manual sync trigger (ID-based with minimal AI)
-  app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
-      console.log('🔄 [SYNC] Starting sync - userId:', userId);
-      
-      if (!userId) {
-        console.error('❌ [SYNC] No userId found in req.user');
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-      
       const { direction = 'export', linkUnknownEvents = false } = req.body;
-      console.log('🔄 [SYNC] Direction:', direction, 'linkUnknownEvents:', linkUnknownEvents);
-
-      console.log('🔄 [SYNC] Fetching Google Calendar integration...');
       let integration;
       try {
         integration = await storage.getGoogleCalendarIntegration(userId);
@@ -213,33 +203,24 @@ export function registerGoogleCalendarRoutes(app: Express) {
       }
       
       if (!integration) {
-        console.error('❌ [SYNC] No Google Calendar integration found for user:', userId);
         return res.status(404).json({ 
           error: 'Google Calendar not connected',
           details: 'Please connect your Google Calendar first.'
         });
       }
-
-      console.log('🔄 [SYNC] Integration found:', {
-        hasRefreshToken: !!integration.googleRefreshToken,
-        refreshTokenLength: integration.googleRefreshToken?.length,
-        syncEnabled: integration.syncEnabled,
-        calendarId: integration.googleCalendarId
-      });
       
       if (!integration.googleRefreshToken) {
-        console.error('❌ [SYNC] No refresh token in integration for user:', userId);
-        return res.status(400).json({ error: 'Google Calendar integration incomplete. Please reconnect your Google Calendar.' });
+        return res.status(400).json({ 
+          error: 'Google Calendar integration incomplete', 
+          details: 'Please reconnect your Google Calendar.' 
+        });
       }
-      
-      console.log('🔄 [SYNC] Initializing Google Calendar service...');
       const googleCalendarService = new GoogleCalendarService();
       
       try {
         await googleCalendarService.initializeForUser(integration.googleRefreshToken);
-        console.log('✅ [SYNC] Google Calendar service initialized successfully');
       } catch (initError) {
-        console.error('❌ [SYNC] Failed to initialize Google Calendar service:', initError);
+        console.error('Failed to initialize Google Calendar service:', initError);
         throw new Error(`Google Calendar authentication failed: ${initError.message}`);
       }
       
@@ -250,12 +231,11 @@ export function registerGoogleCalendarRoutes(app: Express) {
       let aiUsed = 0;
       
       // Get all current data
-      console.log('🔄 [SYNC] Fetching user bookings...');
       let bookings;
       try {
         bookings = await storage.getBookings(userId);
       } catch (bookingError) {
-        console.error('❌ [SYNC] Failed to fetch bookings:', bookingError);
+        console.error('Failed to fetch bookings:', bookingError);
         return res.status(500).json({ 
           error: 'Failed to fetch bookings', 
           details: 'Could not retrieve your bookings for sync. Please try again.' 
@@ -268,16 +248,12 @@ export function registerGoogleCalendarRoutes(app: Express) {
         booking.status !== 'rejected'
       );
       
-      console.log(`🔄 [SYNC] Found ${eligibleBookings.length} eligible bookings out of ${bookings.length} total`);
-      
-      console.log('🔄 [SYNC] Fetching Google Calendar events...');
       let googleEvents = [];
       try {
         const googleSync = await googleCalendarService.performFullSync('primary');
         googleEvents = googleSync.events || [];
-        console.log(`🔄 [SYNC] Retrieved ${googleEvents.length} Google Calendar events`);
       } catch (googleError) {
-        console.error('❌ [SYNC] Google Calendar API error:', googleError);
+        console.error('Google Calendar API error:', googleError);
         return res.status(500).json({ 
           error: 'Google Calendar API error', 
           details: 'Failed to fetch Google Calendar events. Your connection may have expired - please reconnect your Google Calendar.' 
@@ -434,35 +410,23 @@ export function registerGoogleCalendarRoutes(app: Express) {
       });
 
     } catch (error: any) {
-      console.error('❌ [SYNC] Manual sync failed:', error);
-      console.error('❌ [SYNC] Error name:', error.name);
-      console.error('❌ [SYNC] Error message:', error.message);
-      console.error('❌ [SYNC] Error code:', error.code);
-      console.error('❌ [SYNC] Stack trace:', error.stack);
+      console.error('Manual sync failed:', error);
       
       // More specific error handling
       let errorMessage = 'Sync failed';
       let errorDetails = error.message || 'Unknown error';
       
-      if (error.code === 'auth/invalid-credential') {
+      if (error.message?.includes('refresh_token') || error.code === 'auth/invalid-credential') {
         errorMessage = 'Google Calendar authentication failed';
         errorDetails = 'Your Google Calendar connection has expired. Please reconnect your Google Calendar.';
-      } else if (error.message?.includes('refresh_token')) {
-        errorMessage = 'Google Calendar token expired';
-        errorDetails = 'Your Google Calendar token has expired. Please reconnect your Google Calendar.';
       } else if (error.message?.includes('calendar')) {
         errorMessage = 'Google Calendar API error';
-        errorDetails = `Google Calendar service error: ${error.message}`;
+        errorDetails = 'Failed to communicate with Google Calendar. Please try again later.';
       }
       
       res.status(500).json({ 
         error: errorMessage, 
-        details: errorDetails,
-        debugInfo: process.env.NODE_ENV === 'development' ? {
-          name: error.name,
-          code: error.code,
-          originalMessage: error.message
-        } : undefined
+        details: errorDetails
       });
     }
   });

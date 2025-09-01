@@ -29,20 +29,10 @@ export function useUploadDocument() {
       formData.append('document', file);
       formData.append('documentType', documentType);
 
-      const response = await fetch(`/api/bookings/${bookingId}/documents/upload`, {
+      return apiRequest(`/api/bookings/${bookingId}/documents/upload`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
         body: formData,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload document');
-      }
-
-      return response.json();
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch documents for this booking
