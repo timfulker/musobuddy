@@ -123,7 +123,7 @@ class ClientPortalService {
       const token = this.generatePortalToken();
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://musobuddy.replit.app'
-        : `https://${process.env.REPL_SLUG || 'musobuddy'}.${process.env.REPL_OWNER || 'timfulkermusic'}.repl.dev`;
+        : 'https://musobuddy.replit.app';
       
       // Generate fallback portal URL (standalone - no dashboard sidebar)
       const fallbackUrl = `${baseUrl}/api/portal/${contractId}?token=${token}`;
