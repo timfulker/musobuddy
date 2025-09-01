@@ -22,7 +22,9 @@ export const useGigTypes = () => {
 
   console.log('🎵 useGigTypes Debug:', {
     totalGigTypes: gigTypes?.length || 0,
-    djGigTypesIncluded: gigTypes?.filter((gt: string) => gt.toLowerCase().includes('dj')) || [],
+    gigTypesList: gigTypes || [],
+    isLoading,
+    error: error?.message || null,
     gigTypesLoaded: !!gigTypes
   });
 
