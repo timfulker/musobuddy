@@ -9,7 +9,7 @@ import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Invoice, UserSettings, Booking } from '@shared/schema';
-import { storage } from '../storage';
+import { storage } from './storage';
 
 // Theme color mapping for PDF generation
 function getThemeColor(userSettings: UserSettings | null): string {
