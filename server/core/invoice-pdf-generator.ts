@@ -115,7 +115,7 @@ export async function generateInvoicePDF(
   let booking: Booking | null = null;
   if (invoice.bookingId) {
     try {
-      booking = await storage.getBookingById(invoice.bookingId, invoice.userId);
+      booking = await storage.getBookingByIdAndUser(invoice.bookingId, invoice.userId);
       console.log('📋 Retrieved booking data for invoice:', { 
         bookingId: invoice.bookingId,
         performanceDuration: booking?.performanceDuration,
