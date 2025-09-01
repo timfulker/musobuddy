@@ -31,7 +31,7 @@ const upload = multer({
 router.get('/api/bookings/:bookingId/documents', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
-    const userId = (req as any).user?.userId || (req.session as any)?.userId;
+    const userId = req.user?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
@@ -80,7 +80,7 @@ router.post('/api/bookings/:bookingId/documents',
   try {
     const { bookingId } = req.params;
     const { documentType = 'other' } = req.body;
-    const userId = (req as any).user?.userId || (req.session as any)?.userId;
+    const userId = req.user?.id;
     
     console.log(`📄 Processing upload - userId: ${userId}, bookingId: ${bookingId}, type: ${documentType}`);
     console.log(`📄 File received:`, req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
@@ -181,7 +181,7 @@ router.post('/api/bookings/:bookingId/documents',
 router.get('/api/bookings/:bookingId/document', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
-    const userId = (req as any).user?.userId || (req.session as any)?.userId;
+    const userId = req.user?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
@@ -230,7 +230,7 @@ router.get('/api/bookings/:bookingId/document', authenticateWithFirebase, async 
 router.delete('/api/bookings/:bookingId/document', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { bookingId } = req.params;
-    const userId = (req as any).user?.userId || (req.session as any)?.userId;
+    const userId = req.user?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
@@ -282,7 +282,7 @@ router.delete('/api/bookings/:bookingId/document', authenticateWithFirebase, asy
 router.delete('/api/documents/:documentId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { documentId } = req.params;
-    const userId = (req as any).user?.userId || (req.session as any)?.userId;
+    const userId = req.user?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });

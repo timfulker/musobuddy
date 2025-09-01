@@ -4,7 +4,7 @@ import chromium from '@sparticuz/chromium';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '../shared/schema';
-import { aiPDFOptimizer } from './ai-pdf-optimizer';
+import { aiPDFOptimizer } from './core/ai-pdf-optimizer';
 // Import the booking calculation functions
 // Note: We'll inline the logic to avoid import issues between server and client
 
