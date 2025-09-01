@@ -3,7 +3,7 @@ import multer from 'multer';
 import { nanoid } from 'nanoid';
 import { db } from '../core/database';
 import { bookings, bookingDocuments } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { uploadToCloudflareR2 } from '../core/cloud-storage';
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
@@ -33,7 +33,10 @@ router.get('/api/bookings/:bookingId/documents', authenticateWithFirebase, async
     const { bookingId } = req.params;
     const userId = req.user?.id;
     
+    console.log(`📄 [GET Documents] bookingId: ${bookingId}, userId: ${userId}, req.user:`, req.user);
+    
     if (!userId) {
+      console.error('❌ [GET Documents] No userId found in req.user');
       return res.status(401).json({ error: 'Not authenticated' });
     }
     
@@ -57,7 +60,7 @@ router.get('/api/bookings/:bookingId/documents', authenticateWithFirebase, async
       .select()
       .from(bookingDocuments)
       .where(eq(bookingDocuments.bookingId, parseInt(bookingId)))
-      .orderBy(bookingDocuments.uploadedAt);
+      .orderBy(desc(bookingDocuments.uploadedAt));
     
     res.json({
       success: true,

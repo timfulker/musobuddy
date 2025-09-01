@@ -49,8 +49,15 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     queryKey: [`/api/bookings/${booking?.id}/documents`],
     queryFn: async () => {
       if (!booking?.id) return { success: false, documents: [] };
-      const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
-      return response.json();
+      try {
+        const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
+        const data = await response.json();
+        console.log('📄 Documents response:', data);
+        return data;
+      } catch (error) {
+        console.error('📄 Failed to fetch documents:', error);
+        return { success: false, documents: [], error: error.message };
+      }
     },
     enabled: !!booking?.id && isOpen,
     retry: false,
