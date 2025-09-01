@@ -176,35 +176,60 @@ export class GoogleCalendarService {
     }
   }
 
-  // Perform full sync - get all events
+  // Perform full sync - get all events from all calendars
   async performFullSync(calendarId: string = 'primary') {
     if (!this.calendar) {
       throw new Error('Calendar service not initialized');
     }
 
-    let nextPageToken: string | undefined;
     let allEvents: any[] = [];
 
     try {
-      do {
-        const response = await this.calendar.events.list({
-          calendarId,
-          maxResults: 250,
-          singleEvents: true,
-          pageToken: nextPageToken,
-          showDeleted: true,
-          timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
-          timeMax: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // Next 3 years
-        });
+      // First, get list of all calendars
+      const calendarListResponse = await this.calendar.calendarList.list();
+      const calendars = calendarListResponse.data.items || [];
+      
+      console.log(`📚 Found ${calendars.length} calendars to sync from`);
+      
+      // Sync events from each calendar
+      for (const cal of calendars) {
+        // Skip calendars that are not selected or are holidays calendars
+        if (cal.selected === false || cal.id.includes('#holiday')) {
+          continue;
+        }
+        
+        console.log(`📅 Syncing from calendar: ${cal.summary || cal.id}`);
+        
+        let nextPageToken: string | undefined;
+        do {
+          const response = await this.calendar.events.list({
+            calendarId: cal.id,
+            maxResults: 250,
+            singleEvents: true,
+            pageToken: nextPageToken,
+            showDeleted: true,
+            timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
+            timeMax: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // Next 3 years
+          });
 
-        allEvents = allEvents.concat(response.data.items || []);
-        nextPageToken = response.data.nextPageToken;
+          const events = response.data.items || [];
+          // Add calendar info to each event for tracking
+          events.forEach(event => {
+            event.calendarId = cal.id;
+            event.calendarName = cal.summary || cal.id;
+          });
+          
+          allEvents = allEvents.concat(events);
+          nextPageToken = response.data.nextPageToken;
 
-      } while (nextPageToken);
+        } while (nextPageToken);
+      }
 
+      console.log(`📊 Total events found across all calendars: ${allEvents.length}`);
+      
       return {
         events: allEvents,
-        syncToken: nextPageToken,
+        syncToken: null, // Can't use sync tokens with multiple calendars
       };
     } catch (error) {
       console.error('❌ Full sync failed:', error);
