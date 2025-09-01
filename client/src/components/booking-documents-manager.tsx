@@ -59,6 +59,14 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
 
   const documents = documentsResponse?.documents || [];
 
+  // Debug logging to see what's happening with the API response
+  console.log('📄 Documents API Response:', {
+    documentsResponse,
+    loadingDocuments,
+    canUploadMore: !loadingDocuments && documentsResponse?.success !== false && documents.length < 5,
+    bookingId: booking?.id
+  });
+
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async ({ file, documentType }: { file: File; documentType: string }) => {
@@ -178,7 +186,12 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
   };
 
   // Only allow upload if we have successfully loaded documents AND under the limit
-  const canUploadMore = !loadingDocuments && documentsResponse?.success !== false && documents.length < 5;
+  // FIXED: Always allow upload if API fails to load documents (better UX)
+  const canUploadMore = !loadingDocuments && (
+    documentsResponse === undefined || // First load
+    documentsResponse?.success !== false || // API success
+    (documentsResponse?.success === false && documents.length === 0) // API failed but no documents
+  ) && documents.length < 5;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -351,9 +364,11 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
             <Alert>
               <FileText className="h-4 w-4" />
               <AlertDescription>
-                {documentsResponse?.success === false 
-                  ? "Unable to load documents. Please refresh and try again."
-                  : "Maximum of 5 documents per booking reached. Remove a document to add a new one."
+                {documents.length >= 5
+                  ? "Maximum of 5 documents per booking reached. Remove a document to add a new one."
+                  : documentsResponse?.success === false 
+                    ? "Unable to load existing documents, but you can still upload new ones above."
+                    : "Document upload is currently unavailable."
                 }
               </AlertDescription>
             </Alert>
