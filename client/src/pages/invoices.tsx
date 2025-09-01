@@ -24,6 +24,7 @@ import { auth } from '@/lib/firebase';
 
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
+  bookingId: z.number().optional(), // Link to booking for dynamic data
   clientName: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
   ccEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
@@ -78,6 +79,7 @@ export default function Invoices() {
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       contractId: undefined, // Optional contract selection
+      bookingId: undefined, // Optional booking link
       clientName: "", 
       clientEmail: "",
       ccEmail: "",
@@ -131,6 +133,7 @@ export default function Invoices() {
               
               form.reset({
                 contractId: undefined,
+                bookingId: parseInt(bookingId), // Store the booking ID
                 clientName: booking.clientName || "",
                 clientEmail: booking.clientEmail || "",
                 ccEmail: "",
@@ -172,6 +175,7 @@ export default function Invoices() {
           
           form.reset({
             contractId: undefined,
+            bookingId: undefined, // No booking for enquiries
             clientName: selectedEnquiry.clientName || "",
             clientEmail: selectedEnquiry.clientEmail || "",
             ccEmail: "",
@@ -387,6 +391,7 @@ export default function Invoices() {
     // Pre-fill form with invoice data - fix field mappings
     form.reset({
       contractId: invoice.contractId || undefined,
+      bookingId: invoice.bookingId || undefined, // Preserve booking link
       clientName: invoice.clientName,
       clientEmail: invoice.clientEmail || "",
       ccEmail: invoice.ccEmail || "",

@@ -18,7 +18,8 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(NODE_ENV=development npx tsx server/migrations/remove_redundant_columns.ts)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": [],

@@ -17,12 +17,61 @@ export class BookingStorage {
     // Convert date strings to Date objects and apply field mapping (same as getBookingsByUser)
     return {
       ...booking,
+      // Map critical fields for invoice generation
+      performanceDuration: (booking as any).performance_duration || booking.performanceDuration,
+      gigType: (booking as any).gig_type || booking.gigType,
       venueAddress: (booking as any).venue_address || booking.venueAddress,
       applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
-      venueContact: booking.venueContact,
-      soundTechContact: booking.soundTechContact,
-      soundCheckTime: booking.soundCheckTime,
-      stageSize: booking.stageSize,
+      venueContact: (booking as any).venue_contact || booking.venueContact,
+      soundTechContact: (booking as any).sound_tech_contact || booking.soundTechContact,
+      soundCheckTime: (booking as any).sound_check_time || booking.soundCheckTime,
+      stageSize: (booking as any).stage_size || booking.stageSize,
+      powerEquipment: (booking as any).power_equipment || booking.powerEquipment,
+      styleMood: (booking as any).style_mood || booking.styleMood,
+      mustPlaySongs: (booking as any).must_play_songs || booking.mustPlaySongs,
+      avoidSongs: (booking as any).avoid_songs || booking.avoidSongs,
+      setOrder: (booking as any).set_order || booking.setOrder,
+      firstDanceSong: (booking as any).first_dance_song || booking.firstDanceSong,
+      processionalSong: (booking as any).processional_song || booking.processionalSong,
+      signingRegisterSong: (booking as any).signing_register_song || booking.signingRegisterSong,
+      recessionalSong: (booking as any).recessional_song || booking.recessionalSong,
+      specialDedications: (booking as any).special_dedications || booking.specialDedications,
+      guestAnnouncements: (booking as any).guest_announcements || booking.guestAnnouncements,
+      loadInInfo: (booking as any).load_in_info || booking.loadInInfo,
+      weatherContingency: (booking as any).weather_contingency || booking.weatherContingency,
+      parkingPermitRequired: (booking as any).parking_permit_required || booking.parkingPermitRequired,
+      mealProvided: (booking as any).meal_provided || booking.mealProvided,
+      dietaryRequirements: (booking as any).dietary_requirements || booking.dietaryRequirements,
+      sharedNotes: (booking as any).shared_notes || booking.sharedNotes,
+      referenceTracks: (booking as any).reference_tracks || booking.referenceTracks,
+      photoPermission: (booking as any).photo_permission || booking.photoPermission,
+      encoreAllowed: (booking as any).encore_allowed || booking.encoreAllowed,
+      encoreSuggestions: (booking as any).encore_suggestions || booking.encoreSuggestions,
+      eventDate: booking.eventDate ? new Date(booking.eventDate) : null,
+      createdAt: booking.createdAt ? new Date(booking.createdAt) : null,
+      updatedAt: booking.updatedAt ? new Date(booking.updatedAt) : null,
+    };
+  }
+
+  async getBookingByIdAndUser(id: number, userId: string) {
+    const result = await db.select().from(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+    const booking = result[0] || null;
+    
+    if (!booking) return null;
+    
+    // Apply the same field mapping as getBooking for consistency
+    return {
+      ...booking,
+      // Map snake_case database fields to camelCase
+      performanceDuration: (booking as any).performance_duration || booking.performanceDuration,
+      gigType: (booking as any).gig_type || booking.gigType,
+      venueAddress: (booking as any).venue_address || booking.venueAddress,
+      applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
+      venueContact: (booking as any).venue_contact || booking.venueContact,
+      soundTechContact: (booking as any).sound_tech_contact || booking.soundTechContact,
+      soundCheckTime: (booking as any).sound_check_time || booking.soundCheckTime,
+      stageSize: (booking as any).stage_size || booking.stageSize,
       powerEquipment: (booking as any).power_equipment || booking.powerEquipment,
       styleMood: (booking as any).style_mood || booking.styleMood,
       mustPlaySongs: (booking as any).must_play_songs || booking.mustPlaySongs,
@@ -59,6 +108,9 @@ export class BookingStorage {
     // Also ensure proper field mapping from snake_case to camelCase
     return results.map(booking => ({
       ...booking,
+      // Map critical fields for invoice generation
+      performanceDuration: (booking as any).performance_duration || booking.performanceDuration,
+      gigType: (booking as any).gig_type || booking.gigType,
       // Explicitly map snake_case fields to camelCase for frontend compatibility
       venueAddress: (booking as any).venue_address || booking.venueAddress,
       applyNowLink: (booking as any).apply_now_link || booking.applyNowLink,
