@@ -13,47 +13,43 @@ import { storage } from './storage';
 
 // Helper function to generate configurable invoice terms
 function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: string): string {
-  if (!userSettings?.invoiceTerms) {
-    // Fallback to default terms if no settings
-    return `• Payment is due as specified above<br>
-            • VAT Status: Not VAT registered - no VAT is charged on this invoice<br>
-            • Public Liability Insurance: Covered for all performance services<br>
-            • Cancellations must be made at least 48 hours in advance<br>
-            • For queries about this invoice, please contact ${businessEmail}`;
-  }
-
-  const terms = userSettings.invoiceTerms;
   const termsList: string[] = [];
 
-  if (terms.paymentDue) {
-    termsList.push('Payment is due as specified above');
+  // Check for invoice clauses (new structure)
+  if (userSettings?.invoiceClauses) {
+    const clauses = userSettings.invoiceClauses;
+    
+    if (clauses.paymentTerms) {
+      termsList.push('Payment is due as specified above');
+    }
+    
+    if (clauses.vatStatus) {
+      termsList.push('VAT Status: Not VAT registered - no VAT is charged on this invoice');
+    }
+    
+    if (clauses.publicLiability) {
+      termsList.push('Public Liability Insurance: Covered for all performance services');
+    }
+    
+    if (clauses.latePayment) {
+      termsList.push('Late payment fees may apply after the due date');
+    }
+    
+    if (clauses.disputeProcess) {
+      termsList.push('Any disputes must be raised within 14 days of invoice date');
+    }
   }
   
-  if (terms.vatStatus) {
-    termsList.push('VAT Status: Not VAT registered - no VAT is charged on this invoice');
-  }
-  
-  if (terms.publicLiability) {
-    termsList.push('Public Liability Insurance: Covered for all performance services');
-  }
-  
-  if (terms.cancellation48) {
-    termsList.push('Cancellations must be made at least 48 hours in advance');
-  }
-  
-  if (terms.contactQuery) {
-    termsList.push(`For queries about this invoice, please contact ${businessEmail}`);
+  // Add custom invoice clauses if they exist
+  if (userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)) {
+    const customClauses = userSettings.customInvoiceClauses.filter(clause => clause && clause.trim() !== '');
+    termsList.push(...customClauses);
   }
 
-  // Add custom invoice terms if they exist
-  if (userSettings.customInvoiceTerms && Array.isArray(userSettings.customInvoiceTerms)) {
-    const customTerms = userSettings.customInvoiceTerms.filter(term => term.trim() !== '');
-    termsList.push(...customTerms);
-  }
-
-  // If no terms selected, show default message
+  // If no terms selected, provide a minimal default set
   if (termsList.length === 0) {
-    return 'No specific terms and conditions have been configured for this invoice.';
+    return `• Payment is due as specified above<br>
+            • For queries about this invoice, please contact ${businessEmail}`;
   }
 
   return termsList.map(term => `• ${term}`).join('<br>');
