@@ -1146,7 +1146,10 @@ ${businessName}</p>
         }
 
         // Get ALL bookings (not limited by display settings)
+        console.log(`🔍 [DUPLICATES] About to fetch bookings for user: ${userId} (type: ${typeof userId})`);
+        
         const allBookings = await storage.getBookingsByUser(userId);
+        console.log(`🔍 [DUPLICATES] User ${userId} has ${allBookings.length} total bookings`);
         
         // Group bookings by date, time, and client name to find duplicates
         const groups: { [key: string]: any[] } = {};
@@ -1161,6 +1164,7 @@ ${businessName}</p>
         
         // Find groups with more than one booking (duplicates)
         const duplicateGroups = Object.values(groups).filter(group => group.length > 1);
+        console.log(`🔍 [DUPLICATES] Found ${Object.keys(groups).length} groups total, ${duplicateGroups.length} have duplicates`);
         
         // Sort each group by creation date (oldest first)
         duplicateGroups.forEach(group => {
