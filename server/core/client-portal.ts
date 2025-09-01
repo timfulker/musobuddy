@@ -92,9 +92,7 @@ class ClientPortalService {
       } else {
         console.log(`✅ [CLIENT-PORTAL] Using existing collaboration token for booking ${bookingId}`);
       }
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://musobuddy.replit.app'
-        : 'https://musobuddy.replit.app';
+      const baseUrl = 'https://www.musobuddy.com';
       
       // Generate the correct client portal URL (booking collaboration format)
       const portalUrl = `${baseUrl}/booking/${bookingId}/collaborate?token=${token}`;
@@ -121,9 +119,7 @@ class ClientPortalService {
       
       // Fallback: Generate portal URL for the contract
       const token = this.generatePortalToken();
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://musobuddy.replit.app'
-        : 'https://musobuddy.replit.app';
+      const baseUrl = 'https://www.musobuddy.com';
       
       // Generate fallback portal URL (standalone - no dashboard sidebar)
       const fallbackUrl = `${baseUrl}/api/portal/${contractId}?token=${token}`;
