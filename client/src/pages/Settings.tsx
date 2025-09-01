@@ -713,7 +713,7 @@ export default function Settings() {
           {/* Contract Clauses Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contract Clauses</h3>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="contractClauses.deposit"
@@ -726,7 +726,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Deposit: A deposit of [amount]% is required upon booking confirmation
+                      Deposit: 50% deposit required to secure booking
                     </FormLabel>
                   </FormItem>
                 )}
@@ -744,7 +744,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Cancellation: 48 hours notice required for cancellations
+                      Cancellation: 48 hours notice required
                     </FormLabel>
                   </FormItem>
                 )}
@@ -762,8 +762,158 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Equipment: Professional sound equipment will be provided as specified
+                      Equipment: All equipment remains property of performer
                     </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.powerSupply"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Power: Client must provide adequate power supply
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.venueAccess"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Access: Client must provide reasonable venue access
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.weatherProtection"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Weather: Client must provide weather protection for outdoor events
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.finalNumbers"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Numbers: Final guest numbers must be confirmed 48 hours prior
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.noRecording"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Recording: No recording without written consent
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* Custom Contract Clauses */}
+            <div className="space-y-4 mt-6">
+              <div className="flex items-center justify-between">
+                <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Custom Contract Clauses</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentClauses = form.getValues('customClauses') || [];
+                    form.setValue('customClauses', [...currentClauses, '']);
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Custom Clause</span>
+                </Button>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="customClauses"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="space-y-2">
+                      {(Array.isArray(field.value) ? field.value : []).map((clause, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            value={clause}
+                            onChange={(e) => {
+                              const currentClauses = Array.isArray(field.value) ? field.value : [];
+                              const newClauses = [...currentClauses];
+                              newClauses[index] = e.target.value;
+                              field.onChange(newClauses);
+                            }}
+                            placeholder="Enter custom contract clause..."
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const currentClauses = Array.isArray(field.value) ? field.value : [];
+                              const newClauses = currentClauses.filter((_, i) => i !== index);
+                              field.onChange(newClauses);
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
