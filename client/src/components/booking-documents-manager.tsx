@@ -69,7 +69,12 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     refetchOnWindowFocus: true,
   });
 
-  const documents = documentsResponse?.documents || [];
+  // Handle both array and object responses
+  const documents = Array.isArray(documentsResponse?.documents) 
+    ? documentsResponse.documents 
+    : documentsResponse?.documents 
+      ? Object.values(documentsResponse.documents)
+      : [];
 
   // Upload mutation
   const uploadMutation = useMutation({
