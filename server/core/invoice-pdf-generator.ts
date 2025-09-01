@@ -22,37 +22,53 @@ function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: 
 
   const termsList: string[] = [];
 
+  // Standard invoice clauses mapping - expanded set
+  const clauseMap = {
+    // Legacy clause names (for backward compatibility)
+    paymentTerms: "Payment is due as specified above",
+    vatStatus: "VAT Status: Not VAT registered - no VAT charged",
+    publicLiability: "Public Liability Insurance: Covered for all services",
+    latePayment: "Late Payment: Additional charges apply for overdue invoices",
+    disputeProcess: "Disputes: Contact within 30 days of invoice date",
+    // New expanded invoice clauses
+    paymentDue: "Payment Due: Payment required within 14 days of invoice date",
+    latePaymentCharge: "Late Payment: Additional 5% charge per week or statutory interest under the Late Payment of Commercial Debts Act",
+    depositPolicy: "Deposit Policy: Any deposit already paid is non-refundable and deducted from the final balance",
+    cancellation: "Cancellation: Client cancellations within 7 days of the event incur full invoice amount",
+    paymentMethods: "Payment Methods: Accepted by bank transfer (details provided), no cash/cheques unless agreed in advance",
+    bankDetails: "Bank Details: See payment section for account details",
+    expenses: "Expenses: Travel, parking, tolls, and accommodation (if agreed) will be added where applicable",
+    ownershipRecordings: "Ownership of Recordings: Any recordings, videos, or photographs taken by the performer remain the property of the performer unless otherwise agreed",
+    taxCompliance: "Tax Compliance: This invoice is issued in accordance with HMRC guidelines",
+    queries: "Queries: Any disputes or questions about this invoice must be raised within 7 days of issue"
+  };
+
   // Check for invoice clauses (new structure)
   if (userSettings?.invoiceClauses) {
     const clauses = userSettings.invoiceClauses;
     console.log('✅ Using NEW invoiceClauses structure:', clauses);
     
-    if (clauses.paymentTerms) {
-      termsList.push('Payment is due as specified above');
-    }
-    
-    if (clauses.vatStatus) {
-      termsList.push('VAT Status: Not VAT registered - no VAT is charged on this invoice');
-    }
-    
-    if (clauses.publicLiability) {
-      termsList.push('Public Liability Insurance: Covered for all performance services');
-    }
-    
-    if (clauses.latePayment) {
-      termsList.push('Late payment fees may apply after the due date');
-    }
-    
-    if (clauses.disputeProcess) {
-      termsList.push('Any disputes must be raised within 14 days of invoice date');
+    // Add all selected clauses from the mapping
+    for (const [key, value] of Object.entries(clauseMap)) {
+      if (clauses[key as keyof typeof clauseMap]) {
+        termsList.push(value);
+      }
     }
   }
   
-  // Add custom invoice clauses if they exist
+  // Add custom invoice clauses - handle new format with {text, enabled} objects
   if (userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)) {
-    const customClauses = userSettings.customInvoiceClauses.filter(clause => clause && clause.trim() !== '');
-    console.log('✅ Using NEW customInvoiceClauses:', customClauses);
-    termsList.push(...customClauses);
+    userSettings.customInvoiceClauses.forEach(clause => {
+      // Handle new format: {text: string, enabled: boolean}
+      if (typeof clause === 'object' && clause.text && clause.enabled) {
+        termsList.push(clause.text);
+      }
+      // Handle legacy format: string
+      else if (typeof clause === 'string' && clause.trim() !== '') {
+        termsList.push(clause);
+      }
+    });
+    console.log('✅ Using NEW customInvoiceClauses (processed):', termsList);
   }
 
   // Legacy code removed - only using new clause structure

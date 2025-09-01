@@ -116,13 +116,28 @@ const settingsFormSchema = z.object({
     enabled: z.boolean().default(true)
   })).optional().default([]),
   invoiceClauses: z.object({
+    // Legacy clause names (kept for backward compatibility)
     paymentTerms: z.boolean().optional(),
     vatStatus: z.boolean().optional(),
     publicLiability: z.boolean().optional(),
     latePayment: z.boolean().optional(),
     disputeProcess: z.boolean().optional(),
+    // New expanded invoice clauses
+    paymentDue: z.boolean().optional(),
+    latePaymentCharge: z.boolean().optional(),
+    depositPolicy: z.boolean().optional(),
+    cancellation: z.boolean().optional(),
+    paymentMethods: z.boolean().optional(),
+    bankDetails: z.boolean().optional(),
+    expenses: z.boolean().optional(),
+    ownershipRecordings: z.boolean().optional(),
+    taxCompliance: z.boolean().optional(),
+    queries: z.boolean().optional(),
   }).optional(),
-  customInvoiceClauses: z.array(z.string()).optional().default([]),
+  customInvoiceClauses: z.array(z.object({
+    text: z.string(),
+    enabled: z.boolean().default(true)
+  })).optional().default([]),
   emailSignature: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
@@ -251,11 +266,41 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
       publicLiability: data.invoice_clauses?.publicLiability || data.invoiceClauses?.publicLiability || false,
       latePayment: data.invoice_clauses?.latePayment || data.invoiceClauses?.latePayment || false,
       disputeProcess: data.invoice_clauses?.disputeProcess || data.invoiceClauses?.disputeProcess || false,
+      // New expanded invoice clauses
+      paymentDue: data.invoice_clauses?.paymentDue || data.invoiceClauses?.paymentDue || false,
+      latePaymentCharge: data.invoice_clauses?.latePaymentCharge || data.invoiceClauses?.latePaymentCharge || false,
+      depositPolicy: data.invoice_clauses?.depositPolicy || data.invoiceClauses?.depositPolicy || false,
+      cancellation: data.invoice_clauses?.cancellation || data.invoiceClauses?.cancellation || false,
+      paymentMethods: data.invoice_clauses?.paymentMethods || data.invoiceClauses?.paymentMethods || false,
+      bankDetails: data.invoice_clauses?.bankDetails || data.invoiceClauses?.bankDetails || false,
+      expenses: data.invoice_clauses?.expenses || data.invoiceClauses?.expenses || false,
+      ownershipRecordings: data.invoice_clauses?.ownershipRecordings || data.invoiceClauses?.ownershipRecordings || false,
+      taxCompliance: data.invoice_clauses?.taxCompliance || data.invoiceClauses?.taxCompliance || false,
+      queries: data.invoice_clauses?.queries || data.invoiceClauses?.queries || false,
     },
-    customInvoiceClauses: Array.isArray(data.custom_invoice_clauses || data.customInvoiceClauses) ? 
-                          (data.custom_invoice_clauses || data.customInvoiceClauses) : 
-                          (typeof (data.custom_invoice_clauses || data.customInvoiceClauses) === 'string' ? 
-                           JSON.parse((data.custom_invoice_clauses || data.customInvoiceClauses) || '[]') : []),
+    customInvoiceClauses: (() => {
+      const clauses = data.custom_invoice_clauses || data.customInvoiceClauses;
+      if (Array.isArray(clauses)) {
+        // Check if it's the new format with objects or old format with strings
+        if (clauses.length > 0 && typeof clauses[0] === 'object') {
+          return clauses;
+        }
+        // Convert old string format to new object format
+        return clauses.map(text => ({ text, enabled: true }));
+      }
+      if (typeof clauses === 'string') {
+        const parsed = JSON.parse(clauses || '[]');
+        if (Array.isArray(parsed)) {
+          // Check if parsed is already in new format
+          if (parsed.length > 0 && typeof parsed[0] === 'object') {
+            return parsed;
+          }
+          // Convert old format
+          return parsed.map(text => ({ text, enabled: true }));
+        }
+      }
+      return [];
+    })(),
     bankDetails: (() => {
       const bankData = data.bank_details || data.bankDetails;
       if (!bankData) return "";
@@ -1319,6 +1364,187 @@ export default function Settings() {
                   </FormItem>
                 )}
               />
+              
+              {/* New expanded invoice clauses */}
+              <FormField
+                control={form.control}
+                name="invoiceClauses.paymentDue"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Payment Due: Payment required within 14 days of invoice date
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.latePaymentCharge"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Late Payment: Additional 5% charge per week or statutory interest
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.depositPolicy"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Deposit Policy: Any deposit paid is non-refundable and deducted from final balance
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.cancellation"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Cancellation: Client cancellations within 7 days of event incur full invoice amount
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.paymentMethods"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Payment Methods: Bank transfer only, no cash/cheques unless agreed
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.bankDetails"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Bank Details: See payment section for account details
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.expenses"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Expenses: Travel, parking, tolls, and accommodation added where applicable
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.ownershipRecordings"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Ownership: Any recordings remain property of performer unless agreed
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.taxCompliance"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Tax Compliance: This invoice is issued in accordance with HMRC guidelines
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.queries"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Queries: Any disputes must be raised within 7 days of issue
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
             </div>
             
             {/* Custom Invoice Clauses */}
@@ -1331,7 +1557,7 @@ export default function Settings() {
                   size="sm"
                   onClick={() => {
                     const currentClauses = form.getValues('customInvoiceClauses') || [];
-                    form.setValue('customInvoiceClauses', [...currentClauses, '']);
+                    form.setValue('customInvoiceClauses', [...currentClauses, { text: '', enabled: true }]);
                   }}
                   className="flex items-center space-x-2"
                 >
@@ -1348,12 +1574,21 @@ export default function Settings() {
                     <div className="space-y-2">
                       {(Array.isArray(field.value) ? field.value : []).map((clause, index) => (
                         <div key={index} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={clause.enabled || false}
+                            onCheckedChange={(checked) => {
+                              const currentClauses = Array.isArray(field.value) ? field.value : [];
+                              const newClauses = [...currentClauses];
+                              newClauses[index] = { ...clause, enabled: checked as boolean };
+                              field.onChange(newClauses);
+                            }}
+                          />
                           <Input
-                            value={clause}
+                            value={clause.text || ''}
                             onChange={(e) => {
                               const currentClauses = Array.isArray(field.value) ? field.value : [];
                               const newClauses = [...currentClauses];
-                              newClauses[index] = e.target.value;
+                              newClauses[index] = { ...clause, text: e.target.value };
                               field.onChange(newClauses);
                             }}
                             placeholder="Enter custom invoice clause..."
