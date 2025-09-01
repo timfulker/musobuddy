@@ -94,10 +94,10 @@ class ClientPortalService {
       }
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? 'https://musobuddy.replit.app'
-        : `https://${process.env.REPL_SLUG || 'musobuddy'}.${process.env.REPL_OWNER || 'timfulkermusic'}.replit.dev`;
+        : 'https://musobuddy.replit.app';
       
-      // Generate the correct client portal URL (standalone - no dashboard sidebar)
-      const portalUrl = `${baseUrl}/api/portal/${contractId}?token=${token}`;
+      // Generate the correct client portal URL (booking collaboration format)
+      const portalUrl = `${baseUrl}/booking/${bookingId}/collaborate?token=${token}`;
 
       // Generate QR code for the collaboration URL
       const qrCodeDataUrl = await QRCode.toDataURL(portalUrl, {
