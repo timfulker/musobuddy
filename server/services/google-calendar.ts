@@ -189,40 +189,131 @@ export class GoogleCalendarService {
       const calendarListResponse = await this.calendar.calendarList.list();
       const calendars = calendarListResponse.data.items || [];
       
-      console.log(`📚 Found ${calendars.length} calendars to sync from`);
+      console.log(`📚 Found ${calendars.length} calendars to sync from:`);
+      calendars.forEach((cal, index) => {
+        console.log(`  ${index + 1}. "${cal.summary}" (ID: ${cal.id}, Selected: ${cal.selected}, Primary: ${cal.primary})`);
+      });
+      
+      // Check specifically for Tim Fulker - Gigs calendar
+      const timFulkerCal = calendars.find(cal => cal.summary === 'Tim Fulker - Gigs');
+      if (timFulkerCal) {
+        console.log(`🎯 Found Tim Fulker - Gigs calendar: ID=${timFulkerCal.id}, Selected=${timFulkerCal.selected}`);
+      } else {
+        console.log(`❌ Tim Fulker - Gigs calendar not found in list!`);
+        // Check for similar names
+        const similarCals = calendars.filter(cal => 
+          (cal.summary || '').toLowerCase().includes('tim') || 
+          (cal.summary || '').toLowerCase().includes('fulker') ||
+          (cal.summary || '').toLowerCase().includes('gig')
+        );
+        if (similarCals.length > 0) {
+          console.log(`🔍 Similar calendar names found:`);
+          similarCals.forEach(cal => console.log(`  - "${cal.summary}" (${cal.id})`));
+        }
+      }
       
       // Sync events from each calendar
       for (const cal of calendars) {
-        // Skip calendars that are not selected or are holidays calendars
-        if (cal.selected === false || cal.id.includes('#holiday')) {
+        // Skip holidays calendars, but be more careful about the selected property
+        if (cal.id.includes('#holiday')) {
+          console.log(`⏭️ Skipping holiday calendar: ${cal.summary || cal.id}`);
           continue;
         }
         
-        console.log(`📅 Syncing from calendar: ${cal.summary || cal.id}`);
+        // Log all calendar details for debugging
+        console.log(`🔍 Calendar details: ${cal.summary || cal.id}`, {
+          id: cal.id,
+          selected: cal.selected,
+          accessRole: cal.accessRole,
+          primary: cal.primary
+        });
         
-        let nextPageToken: string | undefined;
-        do {
-          const response = await this.calendar.events.list({
-            calendarId: cal.id,
-            maxResults: 250,
-            singleEvents: true,
-            pageToken: nextPageToken,
-            showDeleted: true,
-            timeMin: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // Last year
-            timeMax: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // Next 3 years
-          });
+        // Only skip if explicitly set to false (not undefined/null)
+        if (cal.selected === false) {
+          console.log(`⏭️ Skipping unselected calendar: ${cal.summary || cal.id}`);
+          continue;
+        }
+        
+        console.log(`📅 Syncing from calendar: ${cal.summary || cal.id} (ID: ${cal.id})`);
+        
+        // Try both singleEvents settings to see if there's a difference
+        // This is a workaround for reported bugs with secondary calendars
+        let allCalendarEvents: any[] = [];
+        
+        for (const singleEventsMode of [false, true]) {
+          console.log(`  🔄 Trying singleEvents=${singleEventsMode} for ${cal.summary || cal.id}`);
+          let nextPageToken: string | undefined;
+          let currentModeEvents: any[] = [];
+          
+          do {
+            const response = await this.calendar.events.list({
+              calendarId: cal.id,
+              maxResults: 2500, // Increased from 250
+              singleEvents: true, // Back to true - the most reliable setting
+              pageToken: nextPageToken,
+              // Remove showDeleted - might be filtering out events
+              timeMin: new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 2 years back
+              timeMax: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 5 years forward
+            });
 
-          const events = response.data.items || [];
-          // Add calendar info to each event for tracking
-          events.forEach(event => {
-            event.calendarId = cal.id;
-            event.calendarName = cal.summary || cal.id;
+            const events = response.data.items || [];
+            currentModeEvents = currentModeEvents.concat(events);
+            nextPageToken = response.data.nextPageToken;
+
+          } while (nextPageToken);
+          
+          console.log(`  📊 singleEvents=${singleEventsMode} returned ${currentModeEvents.length} events`);
+          
+          // On first run (singleEvents=false), store events
+          if (singleEventsMode === false) {
+            allCalendarEvents = currentModeEvents;
+          } else {
+            // On second run (singleEvents=true), check if we got more events
+            if (currentModeEvents.length > allCalendarEvents.length) {
+              console.log(`  ⚠️ singleEvents=true found more events (${currentModeEvents.length} vs ${allCalendarEvents.length}), using those instead`);
+              allCalendarEvents = currentModeEvents;
+            }
+          }
+        }
+        
+        const events = allCalendarEvents;
+        console.log(`  📋 Final event count for ${cal.summary || cal.id}: ${events.length}`);
+        
+        // Log events from Tim Fulker - Gigs calendar specifically
+        if (cal.summary === 'Tim Fulker - Gigs') {
+          console.log(`  🔍 Events in Tim Fulker - Gigs calendar:`);
+          events.forEach((event, index) => {
+            console.log(`    ${index + 1}. "${event.summary}" on ${event.start?.dateTime || event.start?.date} (Status: ${event.status})`);
           });
           
-          allEvents = allEvents.concat(events);
-          nextPageToken = response.data.nextPageToken;
-
-        } while (nextPageToken);
+          // Specific check for June 30, 2026 events
+          const june30Events = events.filter(event => {
+            const eventDate = event.start?.dateTime || event.start?.date;
+            return eventDate && eventDate.includes('2026-06-30');
+          });
+          console.log(`  📅 Events specifically on June 30, 2026: ${june30Events.length}`);
+          june30Events.forEach(event => {
+            console.log(`    ✅ "${event.summary}" at ${event.start?.dateTime || event.start?.date}`);
+          });
+          
+          // Check our date range
+          const timeMin = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+          const timeMax = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
+          const testDate = new Date('2026-06-30T19:00:00Z');
+          console.log(`  📊 Date range check:`);
+          console.log(`    Min: ${timeMin}`);
+          console.log(`    Max: ${timeMax}`);
+          console.log(`    Test Event: ${testDate.toISOString()}`);
+          console.log(`    In range: ${testDate >= new Date(timeMin) && testDate <= new Date(timeMax)}`);
+        }
+        
+        // Add calendar info to each event for tracking
+        events.forEach(event => {
+          event.calendarId = cal.id;
+          event.calendarName = cal.summary || cal.id;
+        });
+        
+        allEvents = allEvents.concat(events);
       }
 
       console.log(`📊 Total events found across all calendars: ${allEvents.length}`);

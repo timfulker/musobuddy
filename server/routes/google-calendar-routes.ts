@@ -268,7 +268,7 @@ export function registerGoogleCalendarRoutes(app: Express) {
           } else {
             console.log('🔄 Performing initial full sync...');
           }
-          const fullSync = await googleCalendarService.performFullSync('primary');
+          const fullSync = await googleCalendarService.performFullSync();
           googleEvents = fullSync.events || [];
           newSyncToken = fullSync.syncToken;
           console.log(`📅 Full sync found ${googleEvents.length} total events`);
@@ -280,7 +280,7 @@ export function registerGoogleCalendarRoutes(app: Express) {
         if (integration.syncToken && googleError.message?.includes('sync')) {
           console.log('⚠️ Incremental sync failed, falling back to full sync');
           try {
-            const fullSync = await googleCalendarService.performFullSync('primary');
+            const fullSync = await googleCalendarService.performFullSync();
             googleEvents = fullSync.events || [];
             newSyncToken = fullSync.syncToken;
           } catch (fallbackError) {
@@ -387,10 +387,35 @@ export function registerGoogleCalendarRoutes(app: Express) {
       
       // Handle unlinked Google Calendar events (optional AI matching)
       if (direction === 'import' || direction === 'bidirectional') {
+        console.log(`🔍 Filtering ${googleEvents.length} Google events for unlinked events...`);
+        
+        // Debug: Check all events from Tim Fulker - Gigs calendar
+        const timFulkerEvents = googleEvents.filter(event => event.calendarName === 'Tim Fulker - Gigs');
+        console.log(`📋 Found ${timFulkerEvents.length} events from Tim Fulker - Gigs calendar:`);
+        timFulkerEvents.forEach(event => {
+          const hasValidDate = event.start?.dateTime || event.start?.date;
+          const isNotCancelled = event.status !== 'cancelled';
+          const hasNoMusoBuddyId = !event.extendedProperties?.private?.musobuddyId;
+          
+          console.log(`  - "${event.summary}" (${event.start?.dateTime || event.start?.date})`);
+          console.log(`    Status: ${event.status}, HasValidDate: ${!!hasValidDate}, NoMusoBuddyId: ${hasNoMusoBuddyId}`);
+          console.log(`    Extended properties:`, event.extendedProperties);
+          console.log(`    Will be included: ${hasNoMusoBuddyId && isNotCancelled && hasValidDate}`);
+          
+          // Special check for "Test Gig" events
+          if (event.summary && event.summary.includes('Test Gig')) {
+            console.log(`    🎯 TEST GIG FOUND! Summary: "${event.summary}"`);
+            console.log(`    🎯 Date: ${event.start?.dateTime || event.start?.date}`);
+            console.log(`    🎯 Status: ${event.status}`);
+            console.log(`    🎯 Extended props: ${JSON.stringify(event.extendedProperties)}`);
+            console.log(`    🎯 Will pass filter: ${hasNoMusoBuddyId && isNotCancelled && hasValidDate}`);
+          }
+        });
+        
         const unlinkedEvents = googleEvents.filter(event => 
           !event.extendedProperties?.private?.musobuddyId &&
           event.status !== 'cancelled' &&
-          event.start?.dateTime || event.start?.date // Has a valid date
+          (event.start?.dateTime || event.start?.date) // Has a valid date - fixed parentheses
         );
         
         unlinkedGoogleEvents = unlinkedEvents.length;
