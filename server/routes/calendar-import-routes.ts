@@ -110,7 +110,8 @@ export function registerCalendarImportRoutes(app: Express) {
             };
 
             // Enhanced duplicate checking (same date, time, title, and venue)
-            const existingBookings = await storage.getBookings(userId);
+            // Use getBookingsByUser to get ALL bookings, not just the recent 50 for performance
+            const existingBookings = await storage.getBookingsByUser(userId);
             const isDuplicate = existingBookings.some(booking => {
               const sameDate = booking.eventDate === bookingData.eventDate;
               const sameTime = booking.eventTime === bookingData.eventTime;
