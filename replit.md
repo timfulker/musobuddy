@@ -60,16 +60,15 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ## System Design Choices
-- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, and a dual client portal system with luminance-aware branding for PDFs.
+- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, dual client portal system with luminance-aware branding for PDFs. Includes auto-scrolling, simplified booking card actions, and manual auto-fill control.
 - **Technical Implementations**:
     - **User Management**: Two-tier system (Admin, User).
-    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, and sort persistence. Includes gig sheet generation and clear Encore booking management toggle.
+    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, and Encore booking management. Streamlined unparseable message handling and manual detail extraction for conversations.
     - **Document Management**: Multi-document upload, categorization, and secure cloud storage with expiry date monitoring and alerts.
-    - **Contract Generation**: Dynamic PDF generation, digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
+    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
-    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling.
-    - **System Isolation**: Critical components (invoice/contract generation) are isolated for reliability.
-    - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic. Centralized "Messages" page with streamlined unparseable message handling and manual detail extraction.
+    - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
+    - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
     - **Client Portal**: Dual-portal system for contract signing and post-signing event planning collaboration, with real-time bidirectional sync and dynamic server-side rendering.
 
 # External Dependencies

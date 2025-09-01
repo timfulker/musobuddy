@@ -1,5 +1,6 @@
 import { db } from "../core/database";
-import { bookings, bookingConflicts } from "../../shared/schema";
+import { bookings, bookingConflicts, bookingDocuments } from "../../shared/schema";
+import type { InsertBookingDocument, BookingDocument } from "../../shared/document-schemas";
 import { eq, and, desc, or, sql, gte, lte, notInArray, inArray } from "drizzle-orm";
 
 export class BookingStorage {
@@ -621,6 +622,48 @@ export class BookingStorage {
       ));
     
     return parseInt(String(result[0]?.count || 0), 10);
+  }
+
+  // Document Management Methods
+  async getBookingDocuments(bookingId: number, userId: string): Promise<BookingDocument[]> {
+    return await this.db
+      .select()
+      .from(bookingDocuments)
+      .where(and(
+        eq(bookingDocuments.bookingId, bookingId),
+        eq(bookingDocuments.userId, userId)
+      ))
+      .orderBy(desc(bookingDocuments.uploadedAt));
+  }
+
+  async addBookingDocument(document: InsertBookingDocument): Promise<BookingDocument> {
+    const [inserted] = await this.db
+      .insert(bookingDocuments)
+      .values(document)
+      .returning();
+    return inserted;
+  }
+
+  async deleteBookingDocument(documentId: number, userId: string): Promise<boolean> {
+    const result = await this.db
+      .delete(bookingDocuments)
+      .where(and(
+        eq(bookingDocuments.id, documentId),
+        eq(bookingDocuments.userId, userId)
+      ));
+    return result.rowCount > 0;
+  }
+
+  async getBookingDocument(documentId: number, userId: string): Promise<BookingDocument | null> {
+    const [document] = await this.db
+      .select()
+      .from(bookingDocuments)
+      .where(and(
+        eq(bookingDocuments.id, documentId),
+        eq(bookingDocuments.userId, userId)
+      ))
+      .limit(1);
+    return document || null;
   }
 }
 

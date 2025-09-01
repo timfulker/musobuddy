@@ -22,6 +22,7 @@ import IndividualFieldLock from "@/components/individual-field-lock";
 import BookingMap from "@/components/BookingMap";
 import Sidebar from "@/components/sidebar";
 import { useResponsive } from "@/hooks/useResponsive";
+import { BookingDocuments } from "@/components/BookingDocuments";
 
 // Enhanced schema for full booking creation
 const fullBookingSchema = z.object({
@@ -2147,6 +2148,10 @@ export default function NewBookingPage({
               </CardContent>
             </Card>
 
+            {/* Document Management - Only show in edit mode */}
+            {isEditMode && editBookingId && (
+              <BookingDocuments bookingId={parseInt(editBookingId)} />
+            )}
 
             {/* Enhanced Action Buttons */}
             <div className="relative">

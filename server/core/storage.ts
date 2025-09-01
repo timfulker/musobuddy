@@ -717,6 +717,23 @@ export class Storage {
   async deleteBetaInviteCode(id: number) {
     return miscStorage.deleteBetaInviteCode(id);
   }
+
+  // ===== DOCUMENT METHODS =====
+  async getBookingDocuments(bookingId: number, userId: string) {
+    return bookingStorage.getBookingDocuments(bookingId, userId);
+  }
+
+  async addBookingDocument(document: any) {
+    return bookingStorage.addBookingDocument(document);
+  }
+
+  async deleteBookingDocument(documentId: number, userId: string) {
+    return bookingStorage.deleteBookingDocument(documentId, userId);
+  }
+
+  async getBookingDocument(documentId: number, userId: string) {
+    return bookingStorage.getBookingDocument(documentId, userId);
+  }
 }
 
 export const storage = new Storage();

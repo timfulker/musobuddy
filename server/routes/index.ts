@@ -25,6 +25,7 @@ import { messageNotificationRoutes } from "./message-notification-routes";
 import { setupCommunicationRoutes } from "./communication-routes";
 import { setupBookingCollaborationRoutes } from "./booking-collaboration-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
+import documentRoutes from "./document-routes";
 // AI token routes removed - unlimited AI usage for all users
 
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
@@ -45,6 +46,9 @@ export async function registerRoutes(app: Express) {
   await registerContractRoutes(app);
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
+  
+  // Register document management routes
+  app.use('/api', documentRoutes);
   await registerSettingsRoutes(app);
   registerComplianceRoutes(app);
   await registerAdminRoutes(app);
