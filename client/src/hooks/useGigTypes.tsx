@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
-// Custom hook to fetch stored gig types from database
+// Custom hook to fetch user gig types from database bookings
 export const useGigTypes = () => {
-  // Fetch AI-generated + custom gig types from instruments
+  // Fetch gig types from user's existing bookings
   const { data: gigTypes, isLoading, error } = useQuery({
-    queryKey: ['gig-types'],
+    queryKey: ['user-gig-types'],
     queryFn: async () => {
-      const response = await fetch('/api/gig-types', {
+      const response = await fetch('/api/user-gig-types', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

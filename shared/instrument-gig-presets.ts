@@ -61,6 +61,294 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         defaultDuration: "3-5 hours",
         priceRange: "£300-600",
         commonVenues: ["Community halls", "Schools", "Private venues", "Outdoor events"]
+      },
+      {
+        id: "wedding-disco",
+        name: "Wedding Disco",
+        description: "Traditional disco setup for wedding celebrations",
+        defaultDuration: "4-5 hours",
+        priceRange: "£350-650",
+        commonVenues: ["Wedding venues", "Hotels", "Function rooms", "Village halls"]
+      },
+      {
+        id: "festival-dj",
+        name: "Festival DJ",
+        description: "Large outdoor festival performances",
+        defaultDuration: "1-3 hours",
+        priceRange: "£300-1000",
+        commonVenues: ["Festival stages", "Outdoor venues", "Music festivals", "Event grounds"]
+      },
+      {
+        id: "radio-dj",
+        name: "Radio DJ",
+        description: "Live radio show hosting and broadcasting",
+        defaultDuration: "2-4 hours",
+        priceRange: "£150-400",
+        commonVenues: ["Radio stations", "Online broadcasts", "Event broadcasting", "Studio work"]
+      },
+      {
+        id: "karaoke-dj",
+        name: "Karaoke DJ",
+        description: "Interactive karaoke hosting and entertainment",
+        defaultDuration: "3-5 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Pubs", "Bars", "Private parties", "Corporate events"]
+      },
+      {
+        id: "school-dj",
+        name: "School DJ",
+        description: "Age-appropriate entertainment for school events",
+        defaultDuration: "2-4 hours",
+        priceRange: "£200-450",
+        commonVenues: ["Schools", "Youth centers", "Educational events", "Proms"]
+      },
+      {
+        id: "birthday-dj",
+        name: "Birthday DJ",
+        description: "Birthday party entertainment for all ages",
+        defaultDuration: "3-4 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Private homes", "Function rooms", "Parks", "Community centers"]
+      },
+      {
+        id: "charity-dj",
+        name: "Charity DJ",
+        description: "Fundraising events and charity functions",
+        defaultDuration: "3-6 hours",
+        priceRange: "£200-600",
+        commonVenues: ["Community halls", "Hotels", "Outdoor venues", "Charity venues"]
+      },
+      {
+        id: "retirement-dj",
+        name: "Retirement DJ",
+        description: "Music for retirement parties and mature audiences",
+        defaultDuration: "3-4 hours",
+        priceRange: "£300-550",
+        commonVenues: ["Function rooms", "Hotels", "Private venues", "Community centers"]
+      },
+      {
+        id: "anniversary-dj",
+        name: "Anniversary DJ",
+        description: "Celebration music for wedding anniversaries",
+        defaultDuration: "3-5 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Hotels", "Function rooms", "Private venues", "Restaurants"]
+      },
+      {
+        id: "graduation-dj",
+        name: "Graduation DJ",
+        description: "Entertainment for graduation celebrations",
+        defaultDuration: "2-4 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Schools", "Universities", "Function rooms", "Hotels"]
+      },
+      {
+        id: "halloween-dj",
+        name: "Halloween DJ",
+        description: "Themed entertainment for Halloween events",
+        defaultDuration: "3-5 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Clubs", "Function rooms", "Private venues", "Community halls"]
+      },
+      {
+        id: "christmas-dj",
+        name: "Christmas DJ",
+        description: "Festive entertainment for Christmas parties",
+        defaultDuration: "3-6 hours",
+        priceRange: "£350-750",
+        commonVenues: ["Hotels", "Function rooms", "Corporate venues", "Private parties"]
+      },
+      {
+        id: "new-year-dj",
+        name: "New Year DJ",
+        description: "Countdown celebrations and New Year events",
+        defaultDuration: "4-8 hours",
+        priceRange: "£500-1200",
+        commonVenues: ["Hotels", "Clubs", "Function rooms", "Private venues"]
+      },
+      {
+        id: "outdoor-dj",
+        name: "Outdoor DJ",
+        description: "Weather-resistant setups for outdoor events",
+        defaultDuration: "3-6 hours",
+        priceRange: "£400-800",
+        commonVenues: ["Gardens", "Parks", "Outdoor venues", "Festivals"]
+      },
+      {
+        id: "beach-dj",
+        name: "Beach DJ",
+        description: "Specialist beach and seaside entertainment",
+        defaultDuration: "3-5 hours",
+        priceRange: "£450-850",
+        commonVenues: ["Beach venues", "Coastal locations", "Outdoor festivals", "Summer events"]
+      },
+      {
+        id: "silent-disco",
+        name: "Silent Disco",
+        description: "Wireless headphone disco experiences",
+        defaultDuration: "2-4 hours",
+        priceRange: "£400-900",
+        commonVenues: ["Any venue", "Outdoor spaces", "Noise-restricted areas", "Unique venues"]
+      },
+      {
+        id: "tribute-dj",
+        name: "Tribute DJ",
+        description: "Era-specific or artist tribute performances",
+        defaultDuration: "2-4 hours",
+        priceRange: "£350-700",
+        commonVenues: ["Clubs", "Function rooms", "Themed venues", "Private parties"]
+      },
+      {
+        id: "sports-dj",
+        name: "Sports DJ",
+        description: "Entertainment for sports events and ceremonies",
+        defaultDuration: "2-6 hours",
+        priceRange: "£300-800",
+        commonVenues: ["Sports venues", "Stadiums", "Sports clubs", "Award ceremonies"]
+      },
+      {
+        id: "fashion-dj",
+        name: "Fashion DJ",
+        description: "Music for fashion shows and brand events",
+        defaultDuration: "2-4 hours",
+        priceRange: "£400-1000",
+        commonVenues: ["Fashion venues", "Hotels", "Corporate venues", "Pop-up locations"]
+      },
+      {
+        id: "product-launch-dj",
+        name: "Product Launch DJ",
+        description: "Brand activation and product launch entertainment",
+        defaultDuration: "2-4 hours",
+        priceRange: "£450-900",
+        commonVenues: ["Corporate venues", "Hotels", "Exhibition centers", "Pop-up venues"]
+      },
+      {
+        id: "awards-dj",
+        name: "Awards DJ",
+        description: "Entertainment for award ceremonies",
+        defaultDuration: "3-5 hours",
+        priceRange: "£500-1000",
+        commonVenues: ["Hotels", "Conference centers", "Award venues", "Corporate locations"]
+      },
+      {
+        id: "conference-dj",
+        name: "Conference DJ",
+        description: "Background music and entertainment for conferences",
+        defaultDuration: "1-3 hours",
+        priceRange: "£250-600",
+        commonVenues: ["Conference centers", "Hotels", "Corporate venues", "Exhibition halls"]
+      },
+      {
+        id: "trade-show-dj",
+        name: "Trade Show DJ",
+        description: "Exhibition and trade show entertainment",
+        defaultDuration: "4-8 hours",
+        priceRange: "£400-900",
+        commonVenues: ["Exhibition centers", "Trade venues", "Convention centers", "Show grounds"]
+      },
+      {
+        id: "cocktail-dj",
+        name: "Cocktail DJ",
+        description: "Sophisticated background music for cocktail events",
+        defaultDuration: "2-4 hours",
+        priceRange: "£350-700",
+        commonVenues: ["Hotels", "Bars", "Restaurants", "Corporate venues"]
+      },
+      {
+        id: "dinner-dj",
+        name: "Dinner DJ",
+        description: "Background music during dinner service",
+        defaultDuration: "2-3 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Restaurants", "Hotels", "Function rooms", "Private dining"]
+      },
+      {
+        id: "brunch-dj",
+        name: "Brunch DJ",
+        description: "Relaxed morning and afternoon entertainment",
+        defaultDuration: "2-4 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Restaurants", "Hotels", "Rooftop venues", "Brunch venues"]
+      },
+      {
+        id: "sunset-dj",
+        name: "Sunset DJ",
+        description: "Golden hour and sunset entertainment",
+        defaultDuration: "2-4 hours",
+        priceRange: "£400-800",
+        commonVenues: ["Rooftop venues", "Beach locations", "Outdoor venues", "Scenic locations"]
+      },
+      {
+        id: "yacht-dj",
+        name: "Yacht DJ",
+        description: "Luxury boat and yacht entertainment",
+        defaultDuration: "3-6 hours",
+        priceRange: "£600-1500",
+        commonVenues: ["Yachts", "Boats", "Marina venues", "Waterfront locations"]
+      },
+      {
+        id: "private-jet-dj",
+        name: "Private Jet DJ",
+        description: "Ultra-luxury travel entertainment",
+        defaultDuration: "1-8 hours",
+        priceRange: "£1000-3000",
+        commonVenues: ["Private jets", "Luxury travel", "VIP transport", "Elite events"]
+      },
+      {
+        id: "mansion-dj",
+        name: "Mansion DJ",
+        description: "High-end private residence entertainment",
+        defaultDuration: "3-8 hours",
+        priceRange: "£500-1500",
+        commonVenues: ["Private mansions", "Luxury homes", "Estate venues", "VIP residences"]
+      },
+      {
+        id: "castle-dj",
+        name: "Castle DJ",
+        description: "Historic venue and castle entertainment",
+        defaultDuration: "4-6 hours",
+        priceRange: "£600-1200",
+        commonVenues: ["Castles", "Historic venues", "Stately homes", "Heritage locations"]
+      },
+      {
+        id: "rooftop-dj",
+        name: "Rooftop DJ",
+        description: "High-rise and rooftop venue entertainment",
+        defaultDuration: "3-6 hours",
+        priceRange: "£450-900",
+        commonVenues: ["Rooftop bars", "Sky lounges", "High-rise venues", "City views"]
+      },
+      {
+        id: "warehouse-dj",
+        name: "Warehouse DJ",
+        description: "Industrial and warehouse space events",
+        defaultDuration: "4-8 hours",
+        priceRange: "£400-1000",
+        commonVenues: ["Warehouses", "Industrial spaces", "Underground venues", "Raw venues"]
+      },
+      {
+        id: "gallery-dj",
+        name: "Gallery DJ",
+        description: "Art gallery openings and cultural events",
+        defaultDuration: "2-4 hours",
+        priceRange: "£350-700",
+        commonVenues: ["Art galleries", "Museums", "Cultural venues", "Exhibition spaces"]
+      },
+      {
+        id: "popup-dj",
+        name: "Pop-up DJ",
+        description: "Temporary and pop-up venue entertainment",
+        defaultDuration: "2-6 hours",
+        priceRange: "£300-800",
+        commonVenues: ["Pop-up venues", "Temporary spaces", "Street events", "Guerrilla venues"]
+      },
+      {
+        id: "virtual-dj",
+        name: "Virtual DJ",
+        description: "Online streaming and virtual event entertainment",
+        defaultDuration: "1-4 hours",
+        priceRange: "£200-600",
+        commonVenues: ["Live streams", "Virtual venues", "Online events", "Hybrid events"]
       }
     ]
   },
