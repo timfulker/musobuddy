@@ -188,12 +188,17 @@ export function registerGoogleCalendarRoutes(app: Express) {
 
   // Manual sync trigger (ID-based with minimal AI)
   app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+    console.log('🚀 Google Calendar sync endpoint hit!');
+    console.log('📋 Request body:', req.body);
     try {
       const userId = req.user?.id;
+      console.log('👤 User ID:', userId);
       const { direction = 'export', linkUnknownEvents = false } = req.body;
       let integration;
       try {
+        console.log('🔍 Fetching Google Calendar integration for user:', userId);
         integration = await storage.getGoogleCalendarIntegration(userId);
+        console.log('✅ Integration found:', integration ? 'yes' : 'no');
       } catch (dbError) {
         console.error('❌ [SYNC] Database error fetching integration:', dbError);
         return res.status(500).json({ 
