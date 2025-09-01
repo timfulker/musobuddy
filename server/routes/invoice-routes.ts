@@ -325,6 +325,77 @@ export function registerInvoiceRoutes(app: Express) {
     }
   });
 
+  // Get invoice PDF
+  app.get('/api/invoices/:id/pdf', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+
+      const invoice = await storage.getInvoiceByIdAndUser(invoiceId, userId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      const userSettings = await storage.getSettings(userId);
+      console.log('📄 Generating PDF for invoice:', invoice.invoiceNumber);
+      console.log('📋 User settings invoice clauses:', userSettings?.invoiceClauses);
+      console.log('📝 User custom invoice clauses:', userSettings?.customInvoiceClauses);
+      
+      const { generateInvoicePDF } = await import('../core/invoice-pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader('Cache-Control', 'no-cache'); // Don't cache to ensure fresh clauses
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate invoice PDF:', error);
+      res.status(500).json({ error: 'Failed to generate invoice PDF' });
+    }
+  });
+
+  // Download invoice PDF
+  app.get('/api/invoices/:id/download', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+
+      const invoice = await storage.getInvoiceByIdAndUser(invoiceId, userId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      const userSettings = await storage.getSettings(userId);
+      const { generateInvoicePDF } = await import('../core/invoice-pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to download invoice PDF:', error);
+      res.status(500).json({ error: 'Failed to download invoice PDF' });
+    }
+  });
+
   // Bulk delete invoices
   app.post('/api/invoices/bulk-delete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {

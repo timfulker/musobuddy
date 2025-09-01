@@ -230,8 +230,8 @@ export async function registerSettingsRoutes(app: Express) {
           themeCustomTitle: "",
           bookingDisplayLimit: "50",
           emailPrefix: user?.emailPrefix || null,
-          invoiceTerms: {},
-          customInvoiceTerms: []
+          invoiceClauses: {},
+          customInvoiceClauses: []
         };
         
         return res.json(transformedDefaults);
@@ -296,33 +296,33 @@ export async function registerSettingsRoutes(app: Express) {
         }
       }
 
-      // Parse invoiceTerms field from database
-      if (responseSettings.invoiceTerms) {
+      // Parse invoiceClauses field from database (JSONB field)
+      if (responseSettings.invoiceClauses) {
         try {
-          if (typeof responseSettings.invoiceTerms === 'string') {
-            responseSettings.invoiceTerms = JSON.parse(responseSettings.invoiceTerms);
+          if (typeof responseSettings.invoiceClauses === 'string') {
+            responseSettings.invoiceClauses = JSON.parse(responseSettings.invoiceClauses);
           }
         } catch (error) {
-          console.error('❌ Failed to parse invoiceTerms, defaulting to empty object:', error);
-          responseSettings.invoiceTerms = {};
+          console.error('❌ Failed to parse invoiceClauses, defaulting to empty object:', error);
+          responseSettings.invoiceClauses = {};
         }
       }
 
-      // Parse customInvoiceTerms field from database
-      if (responseSettings.customInvoiceTerms) {
+      // Parse customInvoiceClauses field from database (JSONB field)
+      if (responseSettings.customInvoiceClauses) {
         try {
-          if (typeof responseSettings.customInvoiceTerms === 'string') {
+          if (typeof responseSettings.customInvoiceClauses === 'string') {
             // Try to parse as JSON, but handle corrupted format
-            let termsString = responseSettings.customInvoiceTerms;
+            let clausesString = responseSettings.customInvoiceClauses;
             // Fix corrupted JSON format: {"item1","item2"} -> ["item1","item2"]
-            if (termsString.startsWith('{') && termsString.includes('","')) {
-              termsString = '[' + termsString.slice(1, -1) + ']';
+            if (clausesString.startsWith('{') && clausesString.includes('","')) {
+              clausesString = '[' + clausesString.slice(1, -1) + ']';
             }
-            responseSettings.customInvoiceTerms = JSON.parse(termsString);
+            responseSettings.customInvoiceClauses = JSON.parse(clausesString);
           }
         } catch (error) {
-          console.error('❌ Failed to parse customInvoiceTerms, defaulting to empty array:', error);
-          responseSettings.customInvoiceTerms = [];
+          console.error('❌ Failed to parse customInvoiceClauses, defaulting to empty array:', error);
+          responseSettings.customInvoiceClauses = [];
         }
       }
       
@@ -362,7 +362,7 @@ export async function registerSettingsRoutes(app: Express) {
       // PHASE 1 LOGGING: Backend API received data
       console.log('🔍 PHASE 1 - Backend API received data:');
       console.log('  📋 Contract Clauses:', JSON.stringify(req.body.contractClauses, null, 2));
-      console.log('  📄 Invoice Terms:', JSON.stringify(req.body.invoiceTerms, null, 2));
+      console.log('  📄 Invoice Clauses:', JSON.stringify(req.body.invoiceClauses, null, 2));
       console.log('  🔧 Request body keys:', Object.keys(req.body));
       
       // Process the request body to combine instrument-based gig types
@@ -403,7 +403,7 @@ export async function registerSettingsRoutes(app: Express) {
       // PHASE 1 LOGGING: Data being sent to storage layer
       console.log('🔍 PHASE 1 - Data being sent to storage.updateSettings:');
       console.log('  📋 Contract Clauses:', JSON.stringify(processedBody.contractClauses, null, 2));
-      console.log('  📄 Invoice Terms:', JSON.stringify(processedBody.invoiceTerms, null, 2));
+      console.log('  📄 Invoice Clauses:', JSON.stringify(processedBody.invoiceClauses, null, 2));
       
       const updatedSettings = await storage.updateSettings(userId, processedBody);
       console.log(`✅ Updated settings for user ${userId}`);

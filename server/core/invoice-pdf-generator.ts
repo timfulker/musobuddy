@@ -13,11 +13,19 @@ import { storage } from './storage';
 
 // Helper function to generate configurable invoice terms
 function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: string): string {
+  console.log('🔍 GENERATING INVOICE TERMS - UserSettings:', JSON.stringify({
+    hasInvoiceClauses: !!userSettings?.invoiceClauses,
+    invoiceClauses: userSettings?.invoiceClauses,
+    hasCustomInvoiceClauses: !!(userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)),
+    customInvoiceClauses: userSettings?.customInvoiceClauses
+  }, null, 2));
+
   const termsList: string[] = [];
 
   // Check for invoice clauses (new structure)
   if (userSettings?.invoiceClauses) {
     const clauses = userSettings.invoiceClauses;
+    console.log('✅ Using NEW invoiceClauses structure:', clauses);
     
     if (clauses.paymentTerms) {
       termsList.push('Payment is due as specified above');
@@ -43,11 +51,17 @@ function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: 
   // Add custom invoice clauses if they exist
   if (userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)) {
     const customClauses = userSettings.customInvoiceClauses.filter(clause => clause && clause.trim() !== '');
+    console.log('✅ Using NEW customInvoiceClauses:', customClauses);
     termsList.push(...customClauses);
   }
 
+  // Legacy code removed - only using new clause structure
+
+  console.log('📋 Final terms list:', termsList);
+
   // If no terms selected, provide a minimal default set
   if (termsList.length === 0) {
+    console.log('⚠️ No terms found, using minimal default');
     return `• Payment is due as specified above<br>
             • For queries about this invoice, please contact ${businessEmail}`;
   }
