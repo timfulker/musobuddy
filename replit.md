@@ -60,10 +60,10 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ## System Design Choices
-- **UI/UX Decisions**: Responsive design, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, dual client portal system with luminance-aware branding for PDFs. Includes auto-scrolling, simplified booking card actions, and manual auto-fill control.
+- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, dual client portal system with luminance-aware branding for PDFs. Includes auto-scrolling, simplified booking card actions, and manual auto-fill control for venue names.
 - **Technical Implementations**:
     - **User Management**: Two-tier system (Admin, User).
-    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, and Encore booking management. Streamlined unparseable message handling and manual detail extraction for conversations.
+    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, and Encore booking management. Streamlined unparseable message handling and manual detail extraction for conversations. Travel expenses are simplified into a single performance fee display.
     - **Document Management**: Multi-document upload, categorization, and secure cloud storage with expiry date monitoring and alerts.
     - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, and support for multiple CC recipients. Automatic PDF regeneration on edit.
