@@ -6,7 +6,10 @@ import type { BookingDocument } from '../../../shared/document-schemas';
 export function useBookingDocuments(bookingId: number) {
   return useQuery({
     queryKey: ['booking-documents', bookingId],
-    queryFn: () => apiRequest(`/api/bookings/${bookingId}/documents`),
+    queryFn: async () => {
+      const response = await apiRequest(`/api/bookings/${bookingId}/documents`);
+      return await response.json();
+    },
     enabled: !!bookingId,
   });
 }
@@ -29,10 +32,11 @@ export function useUploadDocument() {
       formData.append('document', file);
       formData.append('documentType', documentType);
 
-      return apiRequest(`/api/bookings/${bookingId}/documents/upload`, {
+      const response = await apiRequest(`/api/bookings/${bookingId}/documents/upload`, {
         method: 'POST',
         body: formData,
       });
+      return await response.json();
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch documents for this booking
@@ -49,9 +53,10 @@ export function useDeleteDocument() {
 
   return useMutation({
     mutationFn: async ({ bookingId, documentId }: { bookingId: number; documentId: number }) => {
-      return apiRequest(`/api/bookings/${bookingId}/documents/${documentId}`, {
+      const response = await apiRequest(`/api/bookings/${bookingId}/documents/${documentId}`, {
         method: 'DELETE',
       });
+      return await response.json();
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch documents for this booking
@@ -66,7 +71,8 @@ export function useDeleteDocument() {
 export function useGetDocumentDownload() {
   return useMutation({
     mutationFn: async ({ bookingId, documentId }: { bookingId: number; documentId: number }) => {
-      return apiRequest(`/api/bookings/${bookingId}/documents/${documentId}/download`);
+      const response = await apiRequest(`/api/bookings/${bookingId}/documents/${documentId}/download`);
+      return await response.json();
     },
   });
 }
