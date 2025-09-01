@@ -252,9 +252,8 @@ export function registerGoogleCalendarRoutes(app: Express) {
       let newSyncToken = null;
       
       try {
-        // Force full sync if we need to expand date range, otherwise use incremental
-        const shouldForceFullSync = integration.syncToken && integration.lastSyncAt && 
-                                   (new Date() - new Date(integration.lastSyncAt)) > (7 * 24 * 60 * 60 * 1000); // Force full sync if > 7 days
+        // Force full sync to pick up the expanded date range for this fix
+        const shouldForceFullSync = true; // Temporarily force full sync to ensure we get the Test Gig event
         
         if (integration.syncToken && !shouldForceFullSync) {
           console.log('🔄 Performing incremental sync...');
@@ -272,6 +271,13 @@ export function registerGoogleCalendarRoutes(app: Express) {
           googleEvents = fullSync.events || [];
           newSyncToken = fullSync.syncToken;
           console.log(`📅 Full sync found ${googleEvents.length} total events`);
+          
+          // Debug: Log some event summaries to see what we're getting
+          console.log('🔍 Events found:');
+          googleEvents.slice(0, 10).forEach(event => {
+            const eventDate = event.start?.dateTime || event.start?.date;
+            console.log(`  - "${event.summary}" on ${eventDate} (status: ${event.status})`);
+          });
         }
       } catch (googleError) {
         console.error('Google Calendar API error:', googleError);
