@@ -93,7 +93,9 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
       return response.json();
     },
     onSuccess: () => {
+      // Force immediate refetch of documents
       queryClient.invalidateQueries({ queryKey: [`/api/bookings/${booking.id}/documents`] });
+      queryClient.refetchQueries({ queryKey: [`/api/bookings/${booking.id}/documents`] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       toast({
         title: "Success",
