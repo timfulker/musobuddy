@@ -707,11 +707,9 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                     <div class="payment-block">
                         <h4>Payment Terms</h4>
                         <div class="payment-details">
-                            Due within 2 days of invoice date.
                             <div class="due-date-highlight">
                                 Due: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
                             </div>
-                            <small>Late fee: 2% per month.</small>
                         </div>
                     </div>
                 </div>
@@ -720,7 +718,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="terms-section">
                     <div class="terms-title">Terms & Conditions</div>
                     <div class="terms-content">
-                        • Payment is due within 2 days of invoice date as specified above<br>
+                        • Payment is due as specified above<br>
                         • VAT Status: Not VAT registered - no VAT is charged on this invoice<br>
                         • Public Liability Insurance: Covered for all performance services<br>
                         • Cancellations must be made at least 48 hours in advance<br>

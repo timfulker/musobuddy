@@ -666,7 +666,7 @@ export function generateContractSigningPage(
 
                                 <strong>Deposit:</strong> £${deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
 
-                                <strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.
+                                <strong>Late Payment:</strong> Any payment received after the due date may incur additional charges as per agreed terms.
                             </div>
                         </div>
 

@@ -97,12 +97,27 @@ export default function Invoices() {
     },
   });
 
-  // Auto-set due date using user's default setting
+  // Helper function to convert payment terms to days
+  const getPaymentTermsDays = (paymentTerms: string): number => {
+    switch (paymentTerms) {
+      case "on_receipt": return 0;
+      case "3_days": return 3;
+      case "7_days": return 7;
+      case "14_days": return 14;
+      case "30_days": return 30;
+      case "on_performance": return 0; // Due on performance date
+      case "cash_as_agreed": return 0; // Immediate payment
+      default: return 7; // Fallback to 7 days
+    }
+  };
+
+  // Auto-set due date using user's payment terms setting
   useEffect(() => {
-    if (userSettings?.defaultInvoiceDueDays) {
-      // Use user's setting for default due days
+    if (userSettings?.invoicePaymentTerms) {
+      // Use user's payment terms setting to calculate due date
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + (userSettings.defaultInvoiceDueDays || 7));
+      const daysToAdd = getPaymentTermsDays(userSettings.invoicePaymentTerms);
+      dueDate.setDate(dueDate.getDate() + daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
   }, [userSettings, form]);
@@ -131,9 +146,10 @@ export default function Invoices() {
           .then(response => response.json())
           .then(booking => {
             if (booking) {
-              // Calculate due date using user's default setting
+              // Calculate due date using user's payment terms setting
               const dueDate = new Date();
-              const dueDays = userSettings?.defaultInvoiceDueDays || 7;
+              const dueDays = userSettings?.invoicePaymentTerms ? 
+                getPaymentTermsDays(userSettings.invoicePaymentTerms) : 7;
               dueDate.setDate(dueDate.getDate() + dueDays);
               
               // Calculate performance date from event date
@@ -177,9 +193,10 @@ export default function Invoices() {
       } else if (enquiryId && enquiries && enquiries.length > 0) {
         const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
         if (selectedEnquiry) {
-          // Calculate due date using user's default setting
+          // Calculate due date using user's payment terms setting
           const dueDate = new Date();
-          const dueDays = userSettings?.defaultInvoiceDueDays || 7;
+          const dueDays = userSettings?.invoicePaymentTerms ? 
+            getPaymentTermsDays(userSettings.invoicePaymentTerms) : 7;
           dueDate.setDate(dueDate.getDate() + dueDays);
           
           // Calculate performance date from event date
