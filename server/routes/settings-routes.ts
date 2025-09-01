@@ -223,7 +223,9 @@ export async function registerSettingsRoutes(app: Express) {
           themeShowTerms: true,
           themeCustomTitle: "",
           bookingDisplayLimit: "50",
-          emailPrefix: user?.emailPrefix || null
+          emailPrefix: user?.emailPrefix || null,
+          invoiceTerms: {},
+          customInvoiceTerms: []
         };
         
         return res.json(transformedDefaults);
@@ -234,6 +236,16 @@ export async function registerSettingsRoutes(app: Express) {
         ...settings,
         emailPrefix: user?.emailPrefix || null
       };
+      
+      // DEBUG: Log invoice terms before parsing
+      console.log('🔍 GET SETTINGS DEBUG - Raw settings from DB:', {
+        invoiceTerms: settings.invoiceTerms,
+        customInvoiceTerms: settings.customInvoiceTerms,
+        hasInvoiceTerms: !!settings.invoiceTerms,
+        hasCustomInvoiceTerms: !!settings.customInvoiceTerms,
+        invoiceTermsType: typeof settings.invoiceTerms,
+        customInvoiceTermsType: typeof settings.customInvoiceTerms
+      });
       
       // Parse JSON strings that may be corrupted from earlier storage
       if (responseSettings.customGigTypes) {
@@ -286,6 +298,36 @@ export async function registerSettingsRoutes(app: Express) {
           responseSettings.customClauses = [];
         }
       }
+
+      // Parse invoiceTerms field from database
+      if (responseSettings.invoiceTerms) {
+        try {
+          if (typeof responseSettings.invoiceTerms === 'string') {
+            responseSettings.invoiceTerms = JSON.parse(responseSettings.invoiceTerms);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse invoiceTerms, defaulting to empty object:', error);
+          responseSettings.invoiceTerms = {};
+        }
+      }
+
+      // Parse customInvoiceTerms field from database
+      if (responseSettings.customInvoiceTerms) {
+        try {
+          if (typeof responseSettings.customInvoiceTerms === 'string') {
+            // Try to parse as JSON, but handle corrupted format
+            let termsString = responseSettings.customInvoiceTerms;
+            // Fix corrupted JSON format: {"item1","item2"} -> ["item1","item2"]
+            if (termsString.startsWith('{') && termsString.includes('","')) {
+              termsString = '[' + termsString.slice(1, -1) + ']';
+            }
+            responseSettings.customInvoiceTerms = JSON.parse(termsString);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse customInvoiceTerms, defaulting to empty array:', error);
+          responseSettings.customInvoiceTerms = [];
+        }
+      }
       
       // Parse gigTypes field from database gig_types column
       if (responseSettings.gigTypes) {
@@ -299,6 +341,14 @@ export async function registerSettingsRoutes(app: Express) {
         }
       }
       
+      // DEBUG: Log final response invoice terms
+      console.log('🔍 GET SETTINGS DEBUG - Final response invoice terms:', {
+        invoiceTerms: responseSettings.invoiceTerms,
+        customInvoiceTerms: responseSettings.customInvoiceTerms,
+        hasInvoiceTerms: !!responseSettings.invoiceTerms,
+        hasCustomInvoiceTerms: !!responseSettings.customInvoiceTerms
+      });
+      
       res.json(responseSettings);
       
     } catch (error) {
@@ -308,18 +358,32 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Update user settings
-  app.patch('/api/settings', 
+  app.patch('/api/settings-test', (req: any, res: any, next: any) => {
+    console.log('🟢 RAW PATCH /api/settings-test route REACHED!');
+    next();
+  },
     authenticateWithFirebase,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
+      console.log('🟢 PATCH /api/settings route HIT!');
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
       console.log(`⚙️ Updating settings for user ${userId}:`, req.body);
+      
+      // DEBUG: Log invoice terms specifically
+      console.log('🔍 BACKEND DEBUG - Invoice terms received:', {
+        invoiceTerms: req.body.invoiceTerms,
+        customInvoiceTerms: req.body.customInvoiceTerms,
+        hasInvoiceTerms: !!req.body.invoiceTerms,
+        hasCustomInvoiceTerms: !!req.body.customInvoiceTerms,
+        invoiceTermsType: typeof req.body.invoiceTerms,
+        customInvoiceTermsType: typeof req.body.customInvoiceTerms
+      });
       
       // Process the request body to combine instrument-based gig types
       const processedBody = { ...req.body };

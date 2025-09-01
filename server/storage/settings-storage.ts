@@ -45,6 +45,16 @@ export class SettingsStorage {
       processedData.customClauses = JSON.stringify(processedData.customClauses);
     }
     
+    // Handle invoice terms object
+    if (processedData.invoiceTerms && typeof processedData.invoiceTerms === 'object') {
+      processedData.invoiceTerms = JSON.stringify(processedData.invoiceTerms);
+    }
+    
+    // Handle custom invoice terms array
+    if (processedData.customInvoiceTerms && Array.isArray(processedData.customInvoiceTerms)) {
+      processedData.customInvoiceTerms = JSON.stringify(processedData.customInvoiceTerms);
+    }
+    
     const result = await db.insert(userSettings).values({
       ...processedData,
       createdAt: new Date(),
@@ -78,6 +88,20 @@ export class SettingsStorage {
     
     if (processedUpdates.customClauses && Array.isArray(processedUpdates.customClauses)) {
       processedUpdates.customClauses = JSON.stringify(processedUpdates.customClauses);
+    }
+    
+    // Handle invoice terms object
+    if (processedUpdates.invoiceTerms && typeof processedUpdates.invoiceTerms === 'object') {
+      console.log('🔍 STORAGE DEBUG - Stringifying invoiceTerms:', processedUpdates.invoiceTerms);
+      processedUpdates.invoiceTerms = JSON.stringify(processedUpdates.invoiceTerms);
+      console.log('🔍 STORAGE DEBUG - Stringified invoiceTerms:', processedUpdates.invoiceTerms);
+    }
+    
+    // Handle custom invoice terms array
+    if (processedUpdates.customInvoiceTerms && Array.isArray(processedUpdates.customInvoiceTerms)) {
+      console.log('🔍 STORAGE DEBUG - Stringifying customInvoiceTerms:', processedUpdates.customInvoiceTerms);
+      processedUpdates.customInvoiceTerms = JSON.stringify(processedUpdates.customInvoiceTerms);
+      console.log('🔍 STORAGE DEBUG - Stringified customInvoiceTerms:', processedUpdates.customInvoiceTerms);
     }
 
     const result = await db.update(userSettings)

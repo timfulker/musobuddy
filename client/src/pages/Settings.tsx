@@ -57,6 +57,35 @@ const THEME_OPTIONS = [
   { id: "midnight-blue", color: "#191970", name: "Midnight Blue" }
 ];
 
+// Standard invoice terms that users can select  
+const STANDARD_INVOICE_TERMS = [
+  {
+    id: "paymentDue",
+    text: "Payment is due as specified above",
+    description: "Reference to payment terms section"
+  },
+  {
+    id: "vatStatus",
+    text: "VAT Status: Not VAT registered - no VAT is charged on this invoice", 
+    description: "VAT registration status"
+  },
+  {
+    id: "publicLiability",
+    text: "Public Liability Insurance: Covered for all performance services",
+    description: "Insurance coverage confirmation"
+  },
+  {
+    id: "cancellation48",
+    text: "Cancellations must be made at least 48 hours in advance",
+    description: "Cancellation policy"
+  },
+  {
+    id: "contactQuery",
+    text: "For queries about this invoice, please contact [email]",
+    description: "Contact information (email will be auto-filled)"
+  },
+];
+
 // Standard contract clauses that users can select
 const STANDARD_CONTRACT_CLAUSES = [
   {
@@ -143,6 +172,14 @@ const settingsFormSchema = z.object({
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
   invoicePaymentTerms: z.enum(["on_receipt", "3_days", "7_days", "14_days", "30_days", "on_performance", "cash_as_agreed"]).default("7_days"),
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
+  invoiceTerms: z.object({
+    paymentDue: z.boolean().optional(),
+    vatStatus: z.boolean().optional(),
+    publicLiability: z.boolean().optional(),
+    cancellation48: z.boolean().optional(),
+    contactQuery: z.boolean().optional(),
+  }).optional(),
+  customInvoiceTerms: z.array(z.string()).optional().default([]), // Custom user-added invoice terms
   contractClauses: z.object({
     payment30: z.boolean().optional(),
     deposit50: z.boolean().optional(),
@@ -226,6 +263,17 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
     invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "7_days",
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
+    invoiceTerms: {
+      paymentDue: data.invoice_terms?.paymentDue || data.invoiceTerms?.paymentDue || false,
+      vatStatus: data.invoice_terms?.vatStatus || data.invoiceTerms?.vatStatus || false,
+      publicLiability: data.invoice_terms?.publicLiability || data.invoiceTerms?.publicLiability || false,
+      cancellation48: data.invoice_terms?.cancellation48 || data.invoiceTerms?.cancellation48 || false,
+      contactQuery: data.invoice_terms?.contactQuery || data.invoiceTerms?.contactQuery || false,
+    },
+    customInvoiceTerms: Array.isArray(data.custom_invoice_terms || data.customInvoiceTerms) ? 
+                       (data.custom_invoice_terms || data.customInvoiceTerms) : 
+                       (typeof (data.custom_invoice_terms || data.customInvoiceTerms) === 'string' ? 
+                        JSON.parse((data.custom_invoice_terms || data.customInvoiceTerms) || '[]') : []),
     contractClauses: {
       payment30: data.contract_clauses?.payment30 || data.contractClauses?.payment30 || false,
       deposit50: data.contract_clauses?.deposit50 || data.contractClauses?.deposit50 || false,
@@ -749,65 +797,6 @@ export default function Settings() {
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         {/* Invoice Settings */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Settings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="nextInvoiceNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="00001" type="number" min="1" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="invoicePrefix"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Invoice Prefix (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} value={field.value || ""} placeholder="INV-" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <FormField
-            control={form.control}
-            name="invoicePaymentTerms"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select payment terms" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
-                    <SelectItem value="3_days">Payment due within 3 days</SelectItem>
-                    <SelectItem value="7_days">Payment due within 7 days</SelectItem>
-                    <SelectItem value="14_days">Payment due within 14 days</SelectItem>
-                    <SelectItem value="30_days">Payment due within 30 days</SelectItem>
-                    <SelectItem value="on_performance">Payment due on date of performance</SelectItem>
-                    <SelectItem value="cash_as_agreed">Payment in cash as agreed</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         {/* Contract Clauses */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contract Clauses</h3>
@@ -885,6 +874,161 @@ export default function Settings() {
                           onClick={() => {
                             const newClauses = (field.value || []).filter((_, i) => i !== index);
                             field.onChange(newClauses);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Invoice Settings */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="nextInvoiceNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="00001" type="number" min="1" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="invoicePrefix"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Invoice Prefix (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="INV-" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="invoicePaymentTerms"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
+                    <SelectItem value="3_days">Payment due within 3 days</SelectItem>
+                    <SelectItem value="7_days">Payment due within 7 days</SelectItem>
+                    <SelectItem value="14_days">Payment due within 14 days</SelectItem>
+                    <SelectItem value="30_days">Payment due within 30 days</SelectItem>
+                    <SelectItem value="on_performance">Payment due on date of performance</SelectItem>
+                    <SelectItem value="cash_as_agreed">Payment in cash as agreed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Invoice Terms */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Terms & Conditions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {STANDARD_INVOICE_TERMS.map((term) => (
+              <FormField
+                key={term.id}
+                control={form.control}
+                name={`invoiceTerms.${term.id}`}
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        {term.text}
+                      </FormLabel>
+                      {term.description && (
+                        <FormDescription className="text-xs">
+                          {term.description}
+                        </FormDescription>
+                      )}
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+          
+          {/* Custom Invoice Terms */}
+          <div className="space-y-4 mt-6">
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Custom Invoice Terms</h4>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentTerms = form.getValues('customInvoiceTerms');
+                  const termsArray = Array.isArray(currentTerms) ? currentTerms : [];
+                  form.setValue('customInvoiceTerms', [...termsArray, '']);
+                }}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Custom Term</span>
+              </Button>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="customInvoiceTerms"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="space-y-2">
+                    {(Array.isArray(field.value) ? field.value : []).map((term, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={term}
+                          onChange={(e) => {
+                            const currentTerms = Array.isArray(field.value) ? field.value : [];
+                            const newTerms = [...currentTerms];
+                            newTerms[index] = e.target.value;
+                            field.onChange(newTerms);
+                          }}
+                          placeholder="Enter custom invoice term..."
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const currentTerms = Array.isArray(field.value) ? field.value : [];
+                            const newTerms = currentTerms.filter((_, i) => i !== index);
+                            field.onChange(newTerms);
                           }}
                           className="text-red-600 hover:text-red-800"
                         >
@@ -1684,14 +1828,37 @@ export default function Settings() {
         secondaryInstruments: Array.isArray(data.secondaryInstruments) ? 
           data.secondaryInstruments : [],
         customGigTypes: Array.isArray(data.customGigTypes) ? 
-          data.customGigTypes : []
+          data.customGigTypes : [],
+        // Ensure invoice terms are properly included
+        invoiceTerms: data.invoiceTerms || {},
+        customInvoiceTerms: Array.isArray(data.customInvoiceTerms) ? 
+          data.customInvoiceTerms : []
       };
       
+      // DEBUG: Log what we're sending to the API
+      console.log('🔍 SETTINGS SAVE DEBUG - Form data:', {
+        invoiceTerms: data.invoiceTerms,
+        customInvoiceTerms: data.customInvoiceTerms,
+        hasInvoiceTerms: !!data.invoiceTerms,
+        hasCustomInvoiceTerms: !!data.customInvoiceTerms,
+        invoiceTermsType: typeof data.invoiceTerms,
+        customInvoiceTermsType: typeof data.customInvoiceTerms
+      });
+      console.log('🔍 SETTINGS SAVE DEBUG - Invoice terms detailed:', JSON.stringify(data.invoiceTerms, null, 2));
+      console.log('🔍 SETTINGS SAVE DEBUG - Processed data:', {
+        invoiceTerms: processedData.invoiceTerms,
+        customInvoiceTerms: processedData.customInvoiceTerms
+      });
+      console.log('🔍 SETTINGS SAVE DEBUG - Full processed data keys:', Object.keys(processedData));
+      
       // Use apiRequest which handles authentication properly
-      return await apiRequest('/api/settings', {
+      console.log('🔍 SETTINGS SAVE DEBUG - Making API request to /api/settings-test...');
+      const response = await apiRequest('/api/settings-test', {
         method: 'PATCH',
         body: JSON.stringify(processedData),
       });
+      console.log('🔍 SETTINGS SAVE DEBUG - API response status:', response.status);
+      return response;
     },
     onSuccess: async (response) => {
       const data = await response.json();
@@ -1715,6 +1882,12 @@ export default function Settings() {
     },
     onError: (error) => {
       console.error('❌ Error saving settings:', error);
+      console.log('🔍 SETTINGS SAVE DEBUG - Error details:', {
+        error: error,
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack
+      });
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
@@ -1820,6 +1993,17 @@ export default function Settings() {
     if (settings && !saveSettings.isPending) {
       
       
+      // DEBUG: Log raw settings data from API before transformation
+      console.log('🔍 SETTINGS API DEBUG - Raw data from API:', {
+        invoiceTerms: settings.invoiceTerms,
+        customInvoiceTerms: settings.customInvoiceTerms,
+        hasInvoiceTerms: !!settings.invoiceTerms,
+        hasCustomInvoiceTerms: !!settings.customInvoiceTerms,
+        invoiceTermsType: typeof settings.invoiceTerms,
+        customInvoiceTermsType: typeof settings.customInvoiceTerms,
+        allKeysWithInvoice: Object.keys(settings).filter(key => key.toLowerCase().includes('invoice'))
+      });
+      
       // Create the form data object with actual values
       const formData = {
         businessName: settings.businessName || "",
@@ -1837,6 +2021,17 @@ export default function Settings() {
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         invoicePaymentTerms: settings.invoicePaymentTerms || "7_days",
         defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
+        invoiceTerms: {
+          paymentDue: settings.invoice_terms?.paymentDue || settings.invoiceTerms?.paymentDue || false,
+          vatStatus: settings.invoice_terms?.vatStatus || settings.invoiceTerms?.vatStatus || false,
+          publicLiability: settings.invoice_terms?.publicLiability || settings.invoiceTerms?.publicLiability || false,
+          cancellation48: settings.invoice_terms?.cancellation48 || settings.invoiceTerms?.cancellation48 || false,
+          contactQuery: settings.invoice_terms?.contactQuery || settings.invoiceTerms?.contactQuery || false,
+        },
+        customInvoiceTerms: Array.isArray(settings.custom_invoice_terms || settings.customInvoiceTerms) ? 
+                           (settings.custom_invoice_terms || settings.customInvoiceTerms) : 
+                           (typeof (settings.custom_invoice_terms || settings.customInvoiceTerms) === 'string' ? 
+                            JSON.parse((settings.custom_invoice_terms || settings.customInvoiceTerms) || '[]') : []),
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
           const bankData = settings.bankDetails;
@@ -1921,6 +2116,15 @@ export default function Settings() {
       
       // Reset form with the loaded data
       console.log('🔄 Resetting form with data:', { primaryInstrument: formData.primaryInstrument, bankDetails: formData.bankDetails?.substring(0, 50) });
+      
+      // DEBUG: Log invoice terms in form data
+      console.log('🔍 FORM RESET DEBUG - Invoice terms in formData:', {
+        invoiceTerms: formData.invoiceTerms,
+        customInvoiceTerms: formData.customInvoiceTerms,
+        hasInvoiceTerms: !!formData.invoiceTerms,
+        hasCustomInvoiceTerms: !!formData.customInvoiceTerms,
+        allKeys: Object.keys(formData)
+      });
       form.reset(formData);
       
       // Store initial data for comparison and mark as initialized

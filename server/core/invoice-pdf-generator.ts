@@ -11,6 +11,54 @@ import { join } from 'path';
 import type { Invoice, UserSettings, Booking } from '@shared/schema';
 import { storage } from './storage';
 
+// Helper function to generate configurable invoice terms
+function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: string): string {
+  if (!userSettings?.invoiceTerms) {
+    // Fallback to default terms if no settings
+    return `• Payment is due as specified above<br>
+            • VAT Status: Not VAT registered - no VAT is charged on this invoice<br>
+            • Public Liability Insurance: Covered for all performance services<br>
+            • Cancellations must be made at least 48 hours in advance<br>
+            • For queries about this invoice, please contact ${businessEmail}`;
+  }
+
+  const terms = userSettings.invoiceTerms;
+  const termsList: string[] = [];
+
+  if (terms.paymentDue) {
+    termsList.push('Payment is due as specified above');
+  }
+  
+  if (terms.vatStatus) {
+    termsList.push('VAT Status: Not VAT registered - no VAT is charged on this invoice');
+  }
+  
+  if (terms.publicLiability) {
+    termsList.push('Public Liability Insurance: Covered for all performance services');
+  }
+  
+  if (terms.cancellation48) {
+    termsList.push('Cancellations must be made at least 48 hours in advance');
+  }
+  
+  if (terms.contactQuery) {
+    termsList.push(`For queries about this invoice, please contact ${businessEmail}`);
+  }
+
+  // Add custom invoice terms if they exist
+  if (userSettings.customInvoiceTerms && Array.isArray(userSettings.customInvoiceTerms)) {
+    const customTerms = userSettings.customInvoiceTerms.filter(term => term.trim() !== '');
+    termsList.push(...customTerms);
+  }
+
+  // If no terms selected, show default message
+  if (termsList.length === 0) {
+    return 'No specific terms and conditions have been configured for this invoice.';
+  }
+
+  return termsList.map(term => `• ${term}`).join('<br>');
+}
+
 // Theme color mapping for PDF generation
 function getThemeColor(userSettings: UserSettings | null): string {
   console.log('🎨 INVOICE PDF DEBUG: userSettings received:', {
@@ -718,11 +766,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="terms-section">
                     <div class="terms-title">Terms & Conditions</div>
                     <div class="terms-content">
-                        • Payment is due as specified above<br>
-                        • VAT Status: Not VAT registered - no VAT is charged on this invoice<br>
-                        • Public Liability Insurance: Covered for all performance services<br>
-                        • Cancellations must be made at least 48 hours in advance<br>
-                        • For queries about this invoice, please contact ${businessEmail}
+                        ${generateInvoiceTerms(userSettings, businessEmail)}
                     </div>
                 </div>
             </div>
