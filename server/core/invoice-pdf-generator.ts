@@ -57,53 +57,6 @@ function getLogoBase64(): string {
   }
 }
 
-// Helper function to format performance duration
-function formatPerformanceDuration(booking: Booking | null): string {
-  if (!booking?.performanceDuration) {
-    return 'Standard Set (approx. 3 hours)'; // Fallback for backwards compatibility
-  }
-  
-  const duration = booking.performanceDuration.trim();
-  
-  // If it already looks formatted, use as-is
-  if (duration.toLowerCase().includes('hours') || duration.toLowerCase().includes('minutes')) {
-    return duration;
-  }
-  
-  // If it's just a number, assume hours
-  const numericMatch = duration.match(/^\d+$/);
-  if (numericMatch) {
-    const hours = parseInt(numericMatch[0]);
-    return `${hours} hour${hours !== 1 ? 's' : ''}`;
-  }
-  
-  // Otherwise use as-is but ensure it's readable
-  return duration || 'TBD';
-}
-
-// Helper function to format gig type/event type
-function formatEventType(booking: Booking | null): string {
-  if (!booking?.gigType) {
-    return 'Music Performance'; // Fallback for backwards compatibility
-  }
-  
-  const gigType = booking.gigType.trim();
-  
-  // Convert common abbreviations to full descriptions
-  const gigTypeMap: Record<string, string> = {
-    'Sax': 'Saxophone Performance',
-    'DJ': 'DJ Service',
-    'Band': 'Live Band Performance',
-    'Duo': 'Duo Performance',
-    'Solo': 'Solo Performance',
-    'Acoustic': 'Acoustic Performance',
-    'Wedding': 'Wedding Performance',
-    'Corporate': 'Corporate Event',
-    'Private': 'Private Event'
-  };
-  
-  return gigTypeMap[gigType] || `${gigType} Performance`;
-}
 
 export async function generateInvoicePDF(
   invoice: Invoice,
@@ -111,20 +64,6 @@ export async function generateInvoicePDF(
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
   
-  // Fetch booking data if bookingId is available
-  let booking: Booking | null = null;
-  if (invoice.bookingId) {
-    try {
-      booking = await storage.getBookingByIdAndUser(invoice.bookingId, invoice.userId);
-      console.log('📋 Retrieved booking data for invoice:', { 
-        bookingId: invoice.bookingId,
-        performanceDuration: booking?.performanceDuration,
-        gigType: booking?.gigType 
-      });
-    } catch (error) {
-      console.warn('⚠️ Could not fetch booking data for invoice:', error);
-    }
-  }
   
   // Deployment-ready Puppeteer configuration
   const browser = await puppeteer.launch({
@@ -685,8 +624,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                     <div class="service-description">Live Saxophone & DJ Performance</div>
                                     <div class="service-details">
                                         Venue: ${invoice.venueAddress || 'TBD'}<br>
-                                        Duration: ${formatPerformanceDuration(booking)}<br>
-                                        Event Type: ${formatEventType(booking)}
+                                        Duration: Standard Set (approx. 3 hours)<br>
+                                        Event Type: Music Performance
                                     </div>
                                 </td>
                                 <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
