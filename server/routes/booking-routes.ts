@@ -1174,7 +1174,6 @@ ${businessName}</p>
           return dateA.getTime() - dateB.getTime();
         });
 
-        console.log(`🔍 Found ${duplicateGroups.length} duplicate groups for user ${userId}`);
         
         res.json({
           success: true,
