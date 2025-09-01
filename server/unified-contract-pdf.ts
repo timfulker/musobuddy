@@ -56,18 +56,39 @@ function getSecondaryColor(primaryColor: string): string {
 
 // Helper function to generate terms section (moved out of template literal to avoid parsing issues)
 function getTermsSection(userSettings: UserSettings | null): string {
-  // Standard clauses mapping
+  // Standard clauses mapping - expanded set
   const clauseMap = {
+    // Legacy clause names (for backward compatibility)
     payment30: "Payment due within 30 days of performance",
-    deposit50: "50% deposit required to secure booking", 
+    deposit50: "50% deposit required to secure booking (non-refundable)", 
     cancellation7: "Cancellations within 7 days forfeit deposit",
     equipmentOwnership: "All equipment remains property of performer",
-    powerSupply: "Client must provide adequate power supply",
-    venueAccess: "Client must provide reasonable venue access for setup",
+    powerSupply: "Client must provide adequate and safe power supply",
+    venueAccess: "Client must provide safe and reasonable venue access for load-in/out",
     weatherProtection: "Client must provide weather protection for outdoor events",
-    finalNumbers: "Final guest numbers must be confirmed 7 days prior",
-    noRecording: "No recording or broadcasting without written consent",
-    forcemajeure: "Performance may be cancelled due to circumstances beyond performer's control"
+    finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
+    noRecording: "No recording or broadcasting without performer's written consent",
+    forcemajeure: "Neither party liable for cancellation due to events beyond their control",
+    
+    // New expanded clause names
+    deposit: "50% deposit required to secure booking (non-refundable)",
+    balancePayment: "Remaining fee due before event / on the day",
+    cancellation: "Client cancellations within 7 days of event incur full fee",
+    performerCancellation: "Performer will use best efforts to provide a suitable replacement",
+    access: "Client must provide safe and reasonable venue access for load-in/out",
+    power: "Client must provide adequate and safe power supply",
+    equipment: "All equipment remains property of performer; client responsible for damage caused by guests",
+    spaceAndSafety: "Stage/performance area must be flat, covered, and safe",
+    weather: "Client must provide weather protection for outdoor events",
+    soundLimits: "Client responsible for venue sound restrictions or curfews",
+    overtime: "Extra performance time charged at £100 per 30 minutes",
+    guestNumbers: "Final numbers must be confirmed 48 hours prior",
+    mealsRefreshments: "Client to provide suitable food and drink if performance exceeds 3 hours including setup",
+    parkingTravel: "Client to cover parking fees; accommodation required if venue is over 50 miles or finish after midnight",
+    recording: "No recording or broadcasting without performer's written consent",
+    insurance: "Performer holds Public Liability Insurance; client responsible for venue licences (PRS/PPL)",
+    forceMajeure: "Neither party liable for cancellation due to events beyond their control (illness, accidents, extreme weather, etc.)",
+    governingLaw: "Contract subject to the laws of England & Wales"
   };
   
   // Helper function to escape HTML
@@ -92,8 +113,20 @@ function getTermsSection(userSettings: UserSettings | null): string {
     }
   }
   
-  // Get custom clauses
-  const customClauses = userSettings?.customClauses || [];
+  // Get custom clauses - handle new format with {text, enabled} objects
+  const customClauses: string[] = [];
+  if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
+    userSettings.customClauses.forEach(clause => {
+      // Handle new format: {text: string, enabled: boolean}
+      if (typeof clause === 'object' && clause.text && clause.enabled) {
+        customClauses.push(clause.text);
+      }
+      // Handle legacy format: string
+      else if (typeof clause === 'string' && clause.trim()) {
+        customClauses.push(clause);
+      }
+    });
+  }
   const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
   
   let termsHtml = '';

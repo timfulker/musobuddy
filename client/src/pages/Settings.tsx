@@ -87,15 +87,34 @@ const settingsFormSchema = z.object({
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
     deposit: z.boolean().optional(),
+    balancePayment: z.boolean().optional(),
     cancellation: z.boolean().optional(),
+    performerCancellation: z.boolean().optional(),
+    access: z.boolean().optional(),
+    power: z.boolean().optional(),
     equipment: z.boolean().optional(),
+    spaceAndSafety: z.boolean().optional(),
+    weather: z.boolean().optional(),
+    soundLimits: z.boolean().optional(),
+    overtime: z.boolean().optional(),
+    guestNumbers: z.boolean().optional(),
+    mealsRefreshments: z.boolean().optional(),
+    parkingTravel: z.boolean().optional(),
+    recording: z.boolean().optional(),
+    insurance: z.boolean().optional(),
+    forceMajeure: z.boolean().optional(),
+    governingLaw: z.boolean().optional(),
+    // Legacy names for backward compatibility
     powerSupply: z.boolean().optional(),
     venueAccess: z.boolean().optional(),
     weatherProtection: z.boolean().optional(),
     finalNumbers: z.boolean().optional(),
     noRecording: z.boolean().optional(),
   }).optional(),
-  customClauses: z.array(z.string()).optional().default([]),
+  customClauses: z.array(z.object({
+    text: z.string(),
+    enabled: z.boolean().default(true)
+  })).optional().default([]),
   invoiceClauses: z.object({
     paymentTerms: z.boolean().optional(),
     vatStatus: z.boolean().optional(),
@@ -175,18 +194,57 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
     contractClauses: {
       deposit: data.contract_clauses?.deposit || data.contractClauses?.deposit || false,
+      balancePayment: data.contract_clauses?.balancePayment || data.contractClauses?.balancePayment || false,
       cancellation: data.contract_clauses?.cancellation || data.contractClauses?.cancellation || false,
+      performerCancellation: data.contract_clauses?.performerCancellation || data.contractClauses?.performerCancellation || false,
+      access: data.contract_clauses?.access || data.contractClauses?.access || data.contract_clauses?.venueAccess || data.contractClauses?.venueAccess || false,
+      power: data.contract_clauses?.power || data.contractClauses?.power || data.contract_clauses?.powerSupply || data.contractClauses?.powerSupply || false,
       equipment: data.contract_clauses?.equipment || data.contractClauses?.equipment || false,
-      powerSupply: data.contract_clauses?.powerSupply || data.contractClauses?.powerSupply || false,
-      venueAccess: data.contract_clauses?.venueAccess || data.contractClauses?.venueAccess || false,
-      weatherProtection: data.contract_clauses?.weatherProtection || data.contractClauses?.weatherProtection || false,
-      finalNumbers: data.contract_clauses?.finalNumbers || data.contractClauses?.finalNumbers || false,
-      noRecording: data.contract_clauses?.noRecording || data.contractClauses?.noRecording || false,
+      spaceAndSafety: data.contract_clauses?.spaceAndSafety || data.contractClauses?.spaceAndSafety || false,
+      weather: data.contract_clauses?.weather || data.contractClauses?.weather || data.contract_clauses?.weatherProtection || data.contractClauses?.weatherProtection || false,
+      soundLimits: data.contract_clauses?.soundLimits || data.contractClauses?.soundLimits || false,
+      overtime: data.contract_clauses?.overtime || data.contractClauses?.overtime || false,
+      guestNumbers: data.contract_clauses?.guestNumbers || data.contractClauses?.guestNumbers || data.contract_clauses?.finalNumbers || data.contractClauses?.finalNumbers || false,
+      mealsRefreshments: data.contract_clauses?.mealsRefreshments || data.contractClauses?.mealsRefreshments || false,
+      parkingTravel: data.contract_clauses?.parkingTravel || data.contractClauses?.parkingTravel || false,
+      recording: data.contract_clauses?.recording || data.contractClauses?.recording || data.contract_clauses?.noRecording || data.contractClauses?.noRecording || false,
+      insurance: data.contract_clauses?.insurance || data.contractClauses?.insurance || false,
+      forceMajeure: data.contract_clauses?.forceMajeure || data.contractClauses?.forceMajeure || false,
+      governingLaw: data.contract_clauses?.governingLaw || data.contractClauses?.governingLaw || false,
     },
-    customClauses: Array.isArray(data.custom_clauses || data.customClauses) ? 
-                   (data.custom_clauses || data.customClauses) : 
-                   (typeof (data.custom_clauses || data.customClauses) === 'string' ? 
-                    JSON.parse((data.custom_clauses || data.customClauses) || '[]') : []),
+    customClauses: (() => {
+      const rawCustomClauses = data.custom_clauses || data.customClauses;
+      if (!rawCustomClauses) return [];
+      
+      // Check if it's already in the new format (array of objects)
+      if (Array.isArray(rawCustomClauses) && rawCustomClauses.length > 0 && typeof rawCustomClauses[0] === 'object' && 'text' in rawCustomClauses[0]) {
+        return rawCustomClauses;
+      }
+      
+      // Convert from old format (array of strings) to new format
+      if (Array.isArray(rawCustomClauses)) {
+        return rawCustomClauses.map(clause => ({ text: clause, enabled: true }));
+      }
+      
+      // Parse JSON string if needed
+      if (typeof rawCustomClauses === 'string') {
+        try {
+          const parsed = JSON.parse(rawCustomClauses);
+          if (Array.isArray(parsed)) {
+            // Check if parsed is already in new format
+            if (parsed.length > 0 && typeof parsed[0] === 'object' && 'text' in parsed[0]) {
+              return parsed;
+            }
+            // Convert from old format
+            return parsed.map(clause => ({ text: clause, enabled: true }));
+          }
+        } catch (e) {
+          console.error('Failed to parse custom clauses:', e);
+        }
+      }
+      
+      return [];
+    })(),
     invoiceClauses: {
       paymentTerms: data.invoice_clauses?.paymentTerms || data.invoiceClauses?.paymentTerms || false,
       vatStatus: data.invoice_clauses?.vatStatus || data.invoiceClauses?.vatStatus || false,
@@ -723,7 +781,25 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Deposit: 50% deposit required to secure booking
+                      Deposit: 50% deposit required to secure booking (non-refundable)
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.balancePayment"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Balance Payment: Remaining fee due before event / on the day
                     </FormLabel>
                   </FormItem>
                 )}
@@ -741,7 +817,61 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Cancellation: 48 hours notice required
+                      Cancellation: Client cancellations within 7 days of event incur full fee
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.performerCancellation"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Performer Cancellation: Will provide suitable replacement if needed
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.access"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Access: Client must provide safe and reasonable venue access for load-in/out
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.power"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Power: Client must provide adequate and safe power supply
                     </FormLabel>
                   </FormItem>
                 )}
@@ -759,7 +889,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Equipment: All equipment remains property of performer
+                      Equipment: Remains property of performer; client responsible for damage by guests
                     </FormLabel>
                   </FormItem>
                 )}
@@ -767,7 +897,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="contractClauses.powerSupply"
+                name="contractClauses.spaceAndSafety"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -777,7 +907,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Power: Client must provide adequate power supply
+                      Space & Safety: Stage/performance area must be flat, covered, and safe
                     </FormLabel>
                   </FormItem>
                 )}
@@ -785,25 +915,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="contractClauses.venueAccess"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Access: Client must provide reasonable venue access
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.weatherProtection"
+                name="contractClauses.weather"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -821,7 +933,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="contractClauses.finalNumbers"
+                name="contractClauses.soundLimits"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -831,7 +943,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Numbers: Final guest numbers must be confirmed 48 hours prior
+                      Sound Limits: Client responsible for venue sound restrictions or curfews
                     </FormLabel>
                   </FormItem>
                 )}
@@ -839,7 +951,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="contractClauses.noRecording"
+                name="contractClauses.overtime"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -849,7 +961,133 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Recording: No recording without written consent
+                      Overtime: Extra performance time charged at £100 per 30 minutes
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.guestNumbers"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Guest Numbers: Final numbers must be confirmed 48 hours prior
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.mealsRefreshments"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Meals/Refreshments: Provide food/drink if performance exceeds 3 hours
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.parkingTravel"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Parking/Travel: Client covers parking; accommodation if over 50 miles
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.recording"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Recording: No recording or broadcasting without performer's written consent
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.insurance"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Insurance: Performer holds PLI; client responsible for venue licences (PRS/PPL)
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.forceMajeure"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Force Majeure: Neither party liable for events beyond control
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contractClauses.governingLaw"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Governing Law: Contract subject to the laws of England & Wales
                     </FormLabel>
                   </FormItem>
                 )}
@@ -866,7 +1104,7 @@ export default function Settings() {
                   size="sm"
                   onClick={() => {
                     const currentClauses = form.getValues('customClauses') || [];
-                    form.setValue('customClauses', [...currentClauses, '']);
+                    form.setValue('customClauses', [...currentClauses, { text: '', enabled: true }]);
                   }}
                   className="flex items-center space-x-2"
                 >
@@ -882,18 +1120,29 @@ export default function Settings() {
                   <FormItem>
                     <div className="space-y-2">
                       {(Array.isArray(field.value) ? field.value : []).map((clause, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <Input
-                            value={clause}
-                            onChange={(e) => {
-                              const currentClauses = Array.isArray(field.value) ? field.value : [];
-                              const newClauses = [...currentClauses];
-                              newClauses[index] = e.target.value;
-                              field.onChange(newClauses);
-                            }}
-                            placeholder="Enter custom contract clause..."
-                            className="flex-1"
-                          />
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="flex flex-row items-start space-x-3 space-y-0 flex-1">
+                            <Checkbox
+                              checked={clause.enabled || false}
+                              onCheckedChange={(checked) => {
+                                const currentClauses = Array.isArray(field.value) ? field.value : [];
+                                const newClauses = [...currentClauses];
+                                newClauses[index] = { ...newClauses[index], enabled: checked as boolean };
+                                field.onChange(newClauses);
+                              }}
+                            />
+                            <Input
+                              value={clause.text || ''}
+                              onChange={(e) => {
+                                const currentClauses = Array.isArray(field.value) ? field.value : [];
+                                const newClauses = [...currentClauses];
+                                newClauses[index] = { ...newClauses[index], text: e.target.value };
+                                field.onChange(newClauses);
+                              }}
+                              placeholder="Enter custom contract clause..."
+                              className="flex-1 text-sm"
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
