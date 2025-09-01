@@ -18,7 +18,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
-import BookingDocumentsManager from "@/components/booking-documents-manager";
 import IndividualFieldLock from "@/components/individual-field-lock";
 import BookingMap from "@/components/BookingMap";
 import Sidebar from "@/components/sidebar";
@@ -122,8 +121,6 @@ export default function NewBookingPage({
     error: null
   });
   
-  // Document management dialog state
-  const [documentsManagerOpen, setDocumentsManagerOpen] = useState(false);
   
   // Track if mileage has been calculated to prevent re-calculation
   const [mileageCalculated, setMileageCalculated] = useState(false);
@@ -141,12 +138,6 @@ export default function NewBookingPage({
     enabled: !clientMode, // Skip for client mode
   });
   
-  // Get documents for the booking being edited (only for musicians, not clients)
-  const { data: documentsResponse, isLoading: documentsLoading } = useQuery({
-    queryKey: [`/api/bookings/${editBookingId}/documents`],
-    enabled: isEditMode && !!editBookingId && !clientMode, // Skip for client mode
-    retry: false,
-  });
 
   // Get conflicts for the current booking (only in edit mode for musicians)
   const { data: conflictsData = [] } = useQuery({
@@ -159,7 +150,6 @@ export default function NewBookingPage({
     conflict.bookingId === parseInt(editBookingId!) || conflict.conflictingBookingId === parseInt(editBookingId!)
   );
   
-  const bookingDocuments = documentsResponse?.documents || [];
   
   // Fetch specific booking if in edit mode
   // For client mode, use collaboration endpoint; for musician mode, use regular endpoint
@@ -2158,123 +2148,6 @@ export default function NewBookingPage({
             </Card>
 
 
-            {/* Document Management Section - Hide in client mode */}
-            {editingBooking && !clientMode && (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
-                  <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                      <Paperclip className="w-4 h-4 text-white" />
-                    </div>
-                    Documents
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  {documentsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full"></div>
-                      <span className="ml-2 text-gray-600">Loading documents...</span>
-                    </div>
-                  ) : bookingDocuments.length > 0 ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600">
-                          {bookingDocuments.length} document{bookingDocuments.length !== 1 ? 's' : ''} uploaded
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDocumentsManagerOpen(true)}
-                          className="bg-white hover:bg-green-50"
-                        >
-                          <Upload className="w-4 h-4 mr-1" />
-                          Manage Documents
-                        </Button>
-                      </div>
-                      
-                      {bookingDocuments.slice(0, 3).map((doc: any) => (
-                        <div key={doc.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <Paperclip className="w-4 h-4 text-green-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-green-800 text-sm">
-                                {doc.documentName}
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
-                                  {doc.documentType.charAt(0).toUpperCase() + doc.documentType.slice(1)}
-                                </span>
-                                <span className="text-xs text-green-600">
-                                  {new Date(doc.uploadedAt).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => window.open(doc.documentUrl, '_blank')}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = doc.documentUrl;
-                                link.download = doc.documentName;
-                                link.click();
-                              }}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Download className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {bookingDocuments.length > 3 && (
-                        <p className="text-sm text-gray-500 text-center">
-                          and {bookingDocuments.length - 3} more... 
-                          <Button
-                            type="button"
-                            variant="link"
-                            size="sm"
-                            onClick={() => setDocumentsManagerOpen(true)}
-                            className="h-auto p-0 ml-1"
-                          >
-                            View all
-                          </Button>
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                      <Paperclip className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 mb-2">No documents uploaded yet</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setDocumentsManagerOpen(true)}
-                        className="bg-white hover:bg-gray-100"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Documents
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
             {/* Enhanced Action Buttons */}
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
@@ -2311,18 +2184,6 @@ export default function NewBookingPage({
           </form>
         </Form>
         
-        {/* Documents Manager Dialog */}
-        {editingBooking && (
-          <BookingDocumentsManager
-            booking={editingBooking}
-            isOpen={documentsManagerOpen}
-            onClose={() => {
-              setDocumentsManagerOpen(false);
-              // Refetch documents when dialog closes
-              queryClient.invalidateQueries({ queryKey: [`/api/bookings/${editBookingId}/documents`] });
-            }}
-          />
-        )}
         </div>
       </div>
     </div>
