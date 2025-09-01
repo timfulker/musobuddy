@@ -49,15 +49,19 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     queryKey: [`/api/bookings/${booking?.id}/documents`],
     queryFn: async () => {
       if (!booking?.id) {
-        console.log('📄 No booking ID provided');
         return { success: false, documents: [] };
       }
-      console.log(`📄 Fetching documents for booking ${booking.id}...`);
       try {
         const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
-        console.log('📄 Response status:', response.status);
         const data = await response.json();
-        console.log('📄 Documents response:', data);
+        
+        // Check if we got a proper response structure
+        if (data && data.success && Array.isArray(data.documents)) {
+          return data;
+        } else if (data && data.documents && typeof data.documents === 'object' && !Array.isArray(data.documents)) {
+          // If documents is an object, convert to empty array to avoid bad data
+          return { success: true, documents: [] };
+        }
         return data;
       } catch (error: any) {
         console.error('📄 Failed to fetch documents:', error);
@@ -69,12 +73,10 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     refetchOnWindowFocus: true,
   });
 
-  // Handle both array and object responses
+  // Ensure we only work with valid document arrays
   const documents = Array.isArray(documentsResponse?.documents) 
-    ? documentsResponse.documents 
-    : documentsResponse?.documents 
-      ? Object.values(documentsResponse.documents)
-      : [];
+    ? documentsResponse.documents.filter(doc => doc && doc.id && doc.documentName)
+    : [];
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -195,17 +197,7 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
   };
 
   // Allow upload when not loading and under the limit
-  // Simplified: Show upload section unless we're over the limit
   const canUploadMore = !loadingDocuments && documents.length < 5;
-  
-  // Debug logging
-  console.log('📄 Upload availability check:', {
-    loadingDocuments,
-    documentsResponse,
-    documentsLength: documents.length,
-    canUploadMore,
-    queryError
-  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

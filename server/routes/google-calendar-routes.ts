@@ -190,18 +190,30 @@ export function registerGoogleCalendarRoutes(app: Express) {
   app.post('/api/google-calendar/sync', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
+      console.log('🔄 [SYNC] Starting sync - userId:', userId);
+      
+      if (!userId) {
+        console.error('❌ [SYNC] No userId found in req.user');
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
       const { direction = 'export', linkUnknownEvents = false } = req.body;
+      console.log('🔄 [SYNC] Direction:', direction, 'linkUnknownEvents:', linkUnknownEvents);
 
+      console.log('🔄 [SYNC] Fetching Google Calendar integration...');
       const integration = await storage.getGoogleCalendarIntegration(userId);
       
       if (!integration) {
+        console.error('❌ [SYNC] No Google Calendar integration found for user:', userId);
         return res.status(404).json({ error: 'Google Calendar not connected' });
       }
 
-      console.log('🔄 ID-based sync triggered for user:', userId, 'direction:', direction);
+      console.log('🔄 [SYNC] Integration found, initializing Google Calendar service...');
       
       const googleCalendarService = new GoogleCalendarService();
+      console.log('🔄 [SYNC] Initializing with refresh token (length):', integration.googleRefreshToken?.length);
       await googleCalendarService.initializeForUser(integration.googleRefreshToken);
+      console.log('✅ [SYNC] Google Calendar service initialized successfully');
       
       let exported = 0;
       let updated = 0;

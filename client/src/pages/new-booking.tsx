@@ -2316,7 +2316,11 @@ export default function NewBookingPage({
           <BookingDocumentsManager
             booking={editingBooking}
             isOpen={documentsManagerOpen}
-            onClose={() => setDocumentsManagerOpen(false)}
+            onClose={() => {
+              setDocumentsManagerOpen(false);
+              // Refetch documents when dialog closes
+              queryClient.invalidateQueries({ queryKey: [`/api/bookings/${editBookingId}/documents`] });
+            }}
           />
         )}
         </div>

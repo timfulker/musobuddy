@@ -28,7 +28,8 @@
       "Bash(NODE_ENV=development npx tsx server/migrations/revert_invoice_clauses.ts)",
       "Read(/home/runner/**)",
       "Bash(NODE_ENV=development npx tsx test-document-upload.ts)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(NODE_ENV=development npx tsx -e \"\nimport { db } from ''./server/core/database.js'';\nimport { googleCalendarIntegration } from ''./shared/schema.js'';\n\nasync function checkTable() {\n  try {\n    const result = await db.select().from(googleCalendarIntegration).limit(1);\n    console.log(''✅ Google Calendar table exists and is accessible'');\n  } catch (error) {\n    console.error(''❌ Google Calendar table issue:'', error.message);\n  }\n}\n\ncheckTable().catch(console.error);\n\")"
     ],
     "deny": [],
     "ask": [],
