@@ -45,16 +45,21 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
   const [uploading, setUploading] = useState(false);
 
   // Query to get all documents for this booking
-  const { data: documentsResponse, isLoading: loadingDocuments, refetch } = useQuery({
+  const { data: documentsResponse, isLoading: loadingDocuments, error: queryError, refetch } = useQuery({
     queryKey: [`/api/bookings/${booking?.id}/documents`],
     queryFn: async () => {
-      if (!booking?.id) return { success: false, documents: [] };
+      if (!booking?.id) {
+        console.log('📄 No booking ID provided');
+        return { success: false, documents: [] };
+      }
+      console.log(`📄 Fetching documents for booking ${booking.id}...`);
       try {
         const response = await apiRequest(`/api/bookings/${booking.id}/documents`);
+        console.log('📄 Response status:', response.status);
         const data = await response.json();
         console.log('📄 Documents response:', data);
         return data;
-      } catch (error) {
+      } catch (error: any) {
         console.error('📄 Failed to fetch documents:', error);
         return { success: false, documents: [], error: error.message };
       }
@@ -191,6 +196,15 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     documentsResponse?.success !== false || // API success
     (documentsResponse?.success === false && documents.length === 0) // API failed but no documents
   ) && documents.length < 5;
+  
+  // Debug logging
+  console.log('📄 Upload availability check:', {
+    loadingDocuments,
+    documentsResponse,
+    documentsLength: documents.length,
+    canUploadMore,
+    queryError
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
