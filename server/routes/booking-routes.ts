@@ -1135,6 +1135,121 @@ ${businessName}</p>
     })
   );
 
+  // Find duplicate bookings
+  app.get('/api/bookings/duplicates', 
+    authenticateWithFirebase,
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = req.user?.id;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        // Get ALL bookings (not limited by display settings)
+        const allBookings = await storage.getBookingsByUser(userId);
+        
+        // Group bookings by date, time, and client name to find duplicates
+        const groups: { [key: string]: any[] } = {};
+        
+        allBookings.forEach(booking => {
+          const key = `${booking.eventDate}-${booking.eventTime || 'no-time'}-${(booking.clientName || '').toLowerCase().trim()}`;
+          if (!groups[key]) {
+            groups[key] = [];
+          }
+          groups[key].push(booking);
+        });
+        
+        // Find groups with more than one booking (duplicates)
+        const duplicateGroups = Object.values(groups).filter(group => group.length > 1);
+        
+        // Sort each group by creation date (oldest first)
+        duplicateGroups.forEach(group => {
+          group.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        });
+        
+        // Sort groups by event date
+        duplicateGroups.sort((a, b) => {
+          const dateA = new Date(a[0].eventDate || 0);
+          const dateB = new Date(b[0].eventDate || 0);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+        console.log(`🔍 Found ${duplicateGroups.length} duplicate groups for user ${userId}`);
+        
+        res.json({
+          success: true,
+          duplicateGroups,
+          totalGroups: duplicateGroups.length,
+          totalDuplicates: duplicateGroups.reduce((sum, group) => sum + group.length - 1, 0) // Exclude original from count
+        });
+
+      } catch (error: any) {
+        console.error('❌ Failed to find duplicates:', error);
+        res.status(500).json({ 
+          error: 'Failed to find duplicates',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
+  // Remove duplicate bookings
+  app.post('/api/bookings/remove-duplicates', 
+    authenticateWithFirebase,
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = req.user?.id;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const { bookingIds } = req.body;
+        
+        if (!Array.isArray(bookingIds) || bookingIds.length === 0) {
+          return res.status(400).json({ error: 'bookingIds array required' });
+        }
+
+        let removedCount = 0;
+        const errors: string[] = [];
+
+        // Remove each specified booking
+        for (const bookingId of bookingIds) {
+          try {
+            // Verify ownership before deletion
+            const booking = await storage.getBooking(bookingId, userId);
+            if (!booking) {
+              errors.push(`Booking ${bookingId} not found or not owned by user`);
+              continue;
+            }
+
+            await storage.deleteBooking(bookingId, userId);
+            removedCount++;
+            console.log(`✅ Removed duplicate booking ${bookingId}: ${booking.clientName} on ${booking.eventDate}`);
+          } catch (error: any) {
+            console.error(`❌ Failed to remove booking ${bookingId}:`, error);
+            errors.push(`Failed to remove booking ${bookingId}: ${error.message}`);
+          }
+        }
+
+        console.log(`🧹 Removed ${removedCount} duplicate bookings for user ${userId}`);
+        
+        res.json({
+          success: true,
+          removedCount,
+          errors: errors.length > 0 ? errors : undefined,
+          message: `Successfully removed ${removedCount} duplicate bookings${errors.length > 0 ? ` (${errors.length} errors)` : ''}`
+        });
+
+      } catch (error: any) {
+        console.error('❌ Failed to remove duplicates:', error);
+        res.status(500).json({ 
+          error: 'Failed to remove duplicates',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+    })
+  );
+
 
   console.log('✅ Booking routes configured');
 }

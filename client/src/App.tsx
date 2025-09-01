@@ -53,6 +53,7 @@ import BookingSummary from "@/pages/booking-summary";
 import BookingCollaborate from "@/pages/booking-collaborate";
 import LogoutPage from "@/pages/logout";
 import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
+import DuplicateManager from "@/pages/DuplicateManager";
 
 import { useEffect, lazy } from "react";
 
@@ -158,6 +159,7 @@ function Router() {
       {/* Protected routes - require authentication */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/bookings" component={Bookings} />
+      <Route path="/bookings/duplicates" component={DuplicateManager} />
       <Route path="/mobile-bookings" component={lazy(() => import('@/pages/mobile-bookings'))} />
       <Route path="/new-booking" component={NewBooking} />
 
