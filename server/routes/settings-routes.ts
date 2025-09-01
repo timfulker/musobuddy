@@ -12,6 +12,12 @@ import { getGigTypeNamesForInstrument } from '@shared/instrument-gig-presets';
 export async function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
   
+  // CRITICAL: Test if any settings routes are being hit
+  app.use('/api/settings', (req, res, next) => {
+    console.log('🚨 ROUTE TEST - Any /api/settings request received:', req.method, req.url);
+    next();
+  });
+  
   // Import Mailgun route manager for lead email setup
   const { mailgunRoutes } = await import('../core/mailgun-routes');
 

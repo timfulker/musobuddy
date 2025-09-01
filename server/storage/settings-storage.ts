@@ -58,8 +58,10 @@ export class SettingsStorage {
   async updateSettings(userId: string, updates: any) {
     // PHASE 1 LOGGING: Storage layer received data
     console.log('🔍 PHASE 1 - Storage.updateSettings received data:');
-    console.log('  📋 Contract Clauses:', JSON.stringify(updates.contractClauses, null, 2));
-    console.log('  📄 Invoice Terms:', JSON.stringify(updates.invoiceTerms, null, 2));
+    console.log('  📋 Contract Clauses:', JSON.stringify(updates.contract_clauses, null, 2));
+    console.log('  📝 Custom Clauses:', JSON.stringify(updates.custom_clauses, null, 2));
+    console.log('  📄 Invoice Clauses:', JSON.stringify(updates.invoice_clauses, null, 2));
+    console.log('  📝 Custom Invoice Clauses:', JSON.stringify(updates.custom_invoice_clauses, null, 2));
     
     const existing = await this.getSettings(userId);
     
@@ -71,7 +73,7 @@ export class SettingsStorage {
     // Process arrays before saving to database
     const processedUpdates = { ...updates };
     
-    // Ensure arrays are properly stringified for database storage
+    // Ensure arrays are properly stringified for database storage (non-JSONB fields)
     if (processedUpdates.customGigTypes && Array.isArray(processedUpdates.customGigTypes)) {
       processedUpdates.customGigTypes = JSON.stringify(processedUpdates.customGigTypes);
     }
@@ -84,16 +86,35 @@ export class SettingsStorage {
       processedUpdates.secondaryInstruments = JSON.stringify(processedUpdates.secondaryInstruments);
     }
     
-    if (processedUpdates.customClauses && Array.isArray(processedUpdates.customClauses)) {
-      processedUpdates.customClauses = JSON.stringify(processedUpdates.customClauses);
+    if (processedUpdates.custom_clauses && Array.isArray(processedUpdates.custom_clauses)) {
+      processedUpdates.custom_clauses = JSON.stringify(processedUpdates.custom_clauses);
     }
     
-    // Invoice terms and custom invoice terms are JSONB fields - no need to stringify
+    if (processedUpdates.custom_invoice_clauses && Array.isArray(processedUpdates.custom_invoice_clauses)) {
+      processedUpdates.custom_invoice_clauses = JSON.stringify(processedUpdates.custom_invoice_clauses);
+    }
+    
+    // Handle invoice_clauses - ensure it's passed as an object for JSONB field
+    // The field comes from frontend as both 'invoiceClauses' and 'invoice_clauses'
+    if (processedUpdates.invoiceClauses && !processedUpdates.invoice_clauses) {
+      processedUpdates.invoice_clauses = processedUpdates.invoiceClauses;
+      delete processedUpdates.invoiceClauses;
+    }
+    
+    // Handle contract_clauses - ensure it's passed as an object for JSONB field  
+    if (processedUpdates.contractClauses && !processedUpdates.contract_clauses) {
+      processedUpdates.contract_clauses = processedUpdates.contractClauses;
+      delete processedUpdates.contractClauses;
+    }
+    
+    // Contract clauses and invoice clauses are JSONB fields - no need to stringify
 
     // PHASE 1 LOGGING: Final data being sent to database
     console.log('🔍 PHASE 1 - Final data being sent to database:');
-    console.log('  📋 Contract Clauses:', JSON.stringify(processedUpdates.contractClauses, null, 2));
-    console.log('  📄 Invoice Terms:', JSON.stringify(processedUpdates.invoiceTerms, null, 2));
+    console.log('  📋 Contract Clauses (contract_clauses):', JSON.stringify(processedUpdates.contract_clauses, null, 2));
+    console.log('  📝 Custom Clauses (custom_clauses):', JSON.stringify(processedUpdates.custom_clauses, null, 2));
+    console.log('  📄 Invoice Clauses (invoice_clauses):', JSON.stringify(processedUpdates.invoice_clauses, null, 2));
+    console.log('  📝 Custom Invoice Clauses (custom_invoice_clauses):', JSON.stringify(processedUpdates.custom_invoice_clauses, null, 2));
 
     const result = await db.update(userSettings)
       .set({ ...processedUpdates, updatedAt: new Date() })
@@ -103,8 +124,9 @@ export class SettingsStorage {
     // PHASE 1 LOGGING: Database update result
     console.log('🔍 PHASE 1 - Database update result:');
     console.log('  📋 Contract Clauses:', JSON.stringify(result[0]?.contractClauses, null, 2));
-    console.log('  📄 Invoice Terms:', JSON.stringify(result[0]?.invoiceTerms, null, 2));
-    console.log('  📝 Custom Invoice Terms:', JSON.stringify(result[0]?.customInvoiceTerms, null, 2));
+    console.log('  📝 Custom Clauses:', JSON.stringify(result[0]?.customClauses, null, 2));
+    console.log('  📄 Invoice Clauses:', JSON.stringify(result[0]?.invoiceClauses, null, 2));
+    console.log('  📝 Custom Invoice Clauses:', JSON.stringify(result[0]?.customInvoiceClauses, null, 2));
     
     return result[0];
   }

@@ -23,7 +23,9 @@
       "Bash(NODE_ENV=development npx tsx server/migrations/add_performance_fields_to_invoices.ts)",
       "Bash(sqlite3:*)",
       "Bash(NODE_ENV=development npx tsx server/migrations/add_invoice_payment_terms.ts)",
-      "Bash(NODE_ENV=development npx tsx server/migrations/add_invoice_terms.ts)"
+      "Bash(NODE_ENV=development npx tsx server/migrations/add_invoice_terms.ts)",
+      "Bash(NODE_ENV=development npx tsx server/migrations/replace_invoice_terms_with_clauses.ts)",
+      "Bash(NODE_ENV=development npx tsx server/migrations/revert_invoice_clauses.ts)"
     ],
     "deny": [],
     "ask": [],

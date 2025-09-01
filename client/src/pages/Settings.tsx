@@ -96,14 +96,14 @@ const settingsFormSchema = z.object({
     noRecording: z.boolean().optional(),
   }).optional(),
   customClauses: z.array(z.string()).optional().default([]),
-  invoiceTerms: z.object({
-    paymentDue: z.boolean().optional(),
+  invoiceClauses: z.object({
+    paymentTerms: z.boolean().optional(),
     vatStatus: z.boolean().optional(),
     publicLiability: z.boolean().optional(),
-    cancellation48: z.boolean().optional(),
-    contactQuery: z.boolean().optional(),
+    latePayment: z.boolean().optional(),
+    disputeProcess: z.boolean().optional(),
   }).optional(),
-  customInvoiceTerms: z.array(z.string()).optional().default([]),
+  customInvoiceClauses: z.array(z.string()).optional().default([]),
   emailSignature: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
@@ -173,34 +173,31 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
     invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "7_days",
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
-    invoiceTerms: {
-      paymentDue: data.invoice_terms?.paymentDue || data.invoiceTerms?.paymentDue || false,
-      vatStatus: data.invoice_terms?.vatStatus || data.invoiceTerms?.vatStatus || false,
-      publicLiability: data.invoice_terms?.publicLiability || data.invoiceTerms?.publicLiability || false,
-      cancellation48: data.invoice_terms?.cancellation48 || data.invoiceTerms?.cancellation48 || false,
-      contactQuery: data.invoice_terms?.contactQuery || data.invoiceTerms?.contactQuery || false,
-    },
-    customInvoiceTerms: Array.isArray(data.custom_invoice_terms || data.customInvoiceTerms) ? 
-                       (data.custom_invoice_terms || data.customInvoiceTerms) : 
-                       (typeof (data.custom_invoice_terms || data.customInvoiceTerms) === 'string' ? 
-                        JSON.parse((data.custom_invoice_terms || data.customInvoiceTerms) || '[]') : []),
     contractClauses: {
-      payment30: data.contract_clauses?.payment30 || data.contractClauses?.payment30 || false,
-      deposit50: data.contract_clauses?.deposit50 || data.contractClauses?.deposit50 || false,
-      cancellation7: data.contract_clauses?.cancellation7 || data.contractClauses?.cancellation7 || false,
-      equipmentOwnership: data.contract_clauses?.equipmentOwnership || data.contractClauses?.equipmentOwnership || false,
+      deposit: data.contract_clauses?.deposit || data.contractClauses?.deposit || false,
+      cancellation: data.contract_clauses?.cancellation || data.contractClauses?.cancellation || false,
+      equipment: data.contract_clauses?.equipment || data.contractClauses?.equipment || false,
       powerSupply: data.contract_clauses?.powerSupply || data.contractClauses?.powerSupply || false,
       venueAccess: data.contract_clauses?.venueAccess || data.contractClauses?.venueAccess || false,
       weatherProtection: data.contract_clauses?.weatherProtection || data.contractClauses?.weatherProtection || false,
       finalNumbers: data.contract_clauses?.finalNumbers || data.contractClauses?.finalNumbers || false,
       noRecording: data.contract_clauses?.noRecording || data.contractClauses?.noRecording || false,
-      forcemajeure: data.contract_clauses?.forcemajeure || data.contractClauses?.forcemajeure || false,
-      cashPayment: data.contract_clauses?.cashPayment || data.contractClauses?.cashPayment || false,
     },
     customClauses: Array.isArray(data.custom_clauses || data.customClauses) ? 
                    (data.custom_clauses || data.customClauses) : 
                    (typeof (data.custom_clauses || data.customClauses) === 'string' ? 
                     JSON.parse((data.custom_clauses || data.customClauses) || '[]') : []),
+    invoiceClauses: {
+      paymentTerms: data.invoice_clauses?.paymentTerms || data.invoiceClauses?.paymentTerms || false,
+      vatStatus: data.invoice_clauses?.vatStatus || data.invoiceClauses?.vatStatus || false,
+      publicLiability: data.invoice_clauses?.publicLiability || data.invoiceClauses?.publicLiability || false,
+      latePayment: data.invoice_clauses?.latePayment || data.invoiceClauses?.latePayment || false,
+      disputeProcess: data.invoice_clauses?.disputeProcess || data.invoiceClauses?.disputeProcess || false,
+    },
+    customInvoiceClauses: Array.isArray(data.custom_invoice_clauses || data.customInvoiceClauses) ? 
+                          (data.custom_invoice_clauses || data.customInvoiceClauses) : 
+                          (typeof (data.custom_invoice_clauses || data.customInvoiceClauses) === 'string' ? 
+                           JSON.parse((data.custom_invoice_clauses || data.customInvoiceClauses) || '[]') : []),
     bankDetails: (() => {
       const bankData = data.bank_details || data.bankDetails;
       if (!bankData) return "";
@@ -939,6 +936,33 @@ export default function Settings() {
               />
               <FormField
                 control={form.control}
+                name="invoicePaymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment terms" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
+                        <SelectItem value="3_days">Payment due within 3 days</SelectItem>
+                        <SelectItem value="7_days">Payment due within 7 days</SelectItem>
+                        <SelectItem value="14_days">Payment due within 14 days</SelectItem>
+                        <SelectItem value="30_days">Payment due within 30 days</SelectItem>
+                        <SelectItem value="on_performance">Payment due on performance</SelectItem>
+                        <SelectItem value="cash_as_agreed">Cash payment as agreed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="invoicePrefix"
                 render={({ field }) => (
                   <FormItem>
@@ -953,13 +977,13 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Invoice Terms & Conditions Section */}
+          {/* Invoice Clauses Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Terms & Conditions</h3>
-            <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Invoice Clauses</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="invoiceTerms.paymentDue"
+                name="invoiceClauses.paymentTerms"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -977,7 +1001,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="invoiceTerms.vatStatus"
+                name="invoiceClauses.vatStatus"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -987,7 +1011,7 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      VAT Status: Not VAT registered - no VAT is charged on this invoice
+                      VAT Status: Not VAT registered - no VAT charged
                     </FormLabel>
                   </FormItem>
                 )}
@@ -995,7 +1019,7 @@ export default function Settings() {
               
               <FormField
                 control={form.control}
-                name="invoiceTerms.publicLiability"
+                name="invoiceClauses.publicLiability"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
@@ -1005,13 +1029,110 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      Public Liability Insurance: Covered for all performance services
+                      Public Liability Insurance: Covered for all services
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.latePayment"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Late Payment: Additional charges apply for overdue invoices
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="invoiceClauses.disputeProcess"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Disputes: Contact within 30 days of invoice date
                     </FormLabel>
                   </FormItem>
                 )}
               />
             </div>
+            
+            {/* Custom Invoice Clauses */}
+            <div className="space-y-4 mt-6">
+              <div className="flex items-center justify-between">
+                <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Custom Invoice Clauses</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentClauses = form.getValues('customInvoiceClauses') || [];
+                    form.setValue('customInvoiceClauses', [...currentClauses, '']);
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Custom Clause</span>
+                </Button>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="customInvoiceClauses"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="space-y-2">
+                      {(Array.isArray(field.value) ? field.value : []).map((clause, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            value={clause}
+                            onChange={(e) => {
+                              const currentClauses = Array.isArray(field.value) ? field.value : [];
+                              const newClauses = [...currentClauses];
+                              newClauses[index] = e.target.value;
+                              field.onChange(newClauses);
+                            }}
+                            placeholder="Enter custom invoice clause..."
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const currentClauses = Array.isArray(field.value) ? field.value : [];
+                              const newClauses = currentClauses.filter((_, i) => i !== index);
+                              field.onChange(newClauses);
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
+
           
         </div>
 
@@ -1794,6 +1915,24 @@ export default function Settings() {
   // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
+      // Get current settings to merge with form data
+      const currentSettings = settings || {};
+      
+      // Merge contract clauses with existing ones
+      const mergedContractClauses = {
+        ...currentSettings.contractClauses,
+        ...data.contractClauses
+      };
+      
+      // Merge invoice clauses with existing ones
+      const mergedInvoiceClauses = {
+        ...currentSettings.invoiceClauses,
+        ...data.invoiceClauses
+      };
+      
+      
+      
+      
       // Ensure arrays are properly formatted for JSON transmission
       const processedData = {
         ...data,
@@ -1801,25 +1940,29 @@ export default function Settings() {
           data.secondaryInstruments : [],
         customGigTypes: Array.isArray(data.customGigTypes) ? 
           data.customGigTypes : [],
-        // Ensure contract clauses are properly included
-        contractClauses: data.contractClauses || {},
+        // Use merged contract clauses
+        contractClauses: mergedContractClauses,
         customClauses: Array.isArray(data.customClauses) ? 
           data.customClauses : [],
-        // Ensure invoice terms are properly included
-        invoiceTerms: data.invoiceTerms || {},
-        customInvoiceTerms: Array.isArray(data.customInvoiceTerms) ? 
-          data.customInvoiceTerms : []
+        // Use merged invoice clauses
+        invoiceClauses: mergedInvoiceClauses,
+        customInvoiceClauses: Array.isArray(data.customInvoiceClauses) ? 
+          data.customInvoiceClauses : []
       };
       
       
-      // REBUILD: Ensure contract clauses and invoice terms are properly included
-      processedData.contractClauses = data.contractClauses || {};
-      processedData.invoiceTerms = data.invoiceTerms || {};
+      // Map camelCase form data to snake_case database fields
+      processedData.contract_clauses = mergedContractClauses;
+      processedData.custom_clauses = data.customClauses || [];
+      processedData.invoice_clauses = mergedInvoiceClauses;
+      processedData.custom_invoice_clauses = data.customInvoiceClauses || [];
       
       // PHASE 1 LOGGING: Frontend mutation data
       console.log('🔍 PHASE 1 - Frontend mutation sending data:');
-      console.log('  📋 Contract Clauses:', JSON.stringify(processedData.contractClauses, null, 2));
-      console.log('  📄 Invoice Terms:', JSON.stringify(processedData.invoiceTerms, null, 2));
+      console.log('  📋 Contract Clauses (contract_clauses):', JSON.stringify(processedData.contract_clauses, null, 2));
+      console.log('  📝 Custom Clauses (custom_clauses):', JSON.stringify(processedData.custom_clauses, null, 2));
+      console.log('  📄 Invoice Clauses (invoice_clauses):', JSON.stringify(processedData.invoice_clauses, null, 2));
+      console.log('  📝 Custom Invoice Clauses (custom_invoice_clauses):', JSON.stringify(processedData.custom_invoice_clauses, null, 2));
       console.log('  🔧 Full processed data keys:', Object.keys(processedData));
       
       // Use apiRequest which handles authentication properly
@@ -1976,17 +2119,6 @@ export default function Settings() {
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         invoicePaymentTerms: settings.invoicePaymentTerms || "7_days",
         defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
-        invoiceTerms: {
-          paymentDue: settings.invoice_terms?.paymentDue || settings.invoiceTerms?.paymentDue || false,
-          vatStatus: settings.invoice_terms?.vatStatus || settings.invoiceTerms?.vatStatus || false,
-          publicLiability: settings.invoice_terms?.publicLiability || settings.invoiceTerms?.publicLiability || false,
-          cancellation48: settings.invoice_terms?.cancellation48 || settings.invoiceTerms?.cancellation48 || false,
-          contactQuery: settings.invoice_terms?.contactQuery || settings.invoiceTerms?.contactQuery || false,
-        },
-        customInvoiceTerms: Array.isArray(settings.custom_invoice_terms || settings.customInvoiceTerms) ? 
-                           (settings.custom_invoice_terms || settings.customInvoiceTerms) : 
-                           (typeof (settings.custom_invoice_terms || settings.customInvoiceTerms) === 'string' ? 
-                            JSON.parse((settings.custom_invoice_terms || settings.customInvoiceTerms) || '[]') : []),
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
           const bankData = settings.bankDetails;
@@ -2054,6 +2186,12 @@ export default function Settings() {
         themeCustomTitle: settings.themeCustomTitle || "",
         // Gig types
         customGigTypes: Array.isArray(settings.customGigTypes) ? settings.customGigTypes : [],
+        // Contract clauses
+        contractClauses: settings.contractClauses || {},
+        customClauses: Array.isArray(settings.customClauses) ? settings.customClauses : [],
+        // Invoice clauses
+        invoiceClauses: settings.invoiceClauses || {},
+        customInvoiceClauses: Array.isArray(settings.customInvoiceClauses) ? settings.customInvoiceClauses : [],
         // Travel expense integration removed - always include travel in performance fee
         // Email prefix
         emailPrefix: settings.emailPrefix || "",

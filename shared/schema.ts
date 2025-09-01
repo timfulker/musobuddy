@@ -614,8 +614,8 @@ export const userSettings = pgTable("user_settings", {
   // Invoice Settings
   invoicePaymentTerms: varchar("invoice_payment_terms").default("7_days"), // Payment terms: on_receipt, 3_days, 7_days, 14_days, 30_days, on_performance, cash_as_agreed
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
-  invoiceTerms: jsonb("invoice_terms").default('{}'), // Invoice terms & conditions selection
-  customInvoiceTerms: jsonb("custom_invoice_terms").default('[]'), // Custom user-added invoice terms
+  invoiceClauses: jsonb("invoice_clauses").default('{}'), // Invoice clauses selection
+  customInvoiceClauses: jsonb("custom_invoice_clauses").default('[]'), // Custom user-added invoice clauses
   
   // Distance Unit Preference
   distanceUnits: varchar("distance_units").default("miles"), // "miles" or "km" - user preference for distance display
