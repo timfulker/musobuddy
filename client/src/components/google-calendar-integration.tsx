@@ -329,16 +329,21 @@ export default function GoogleCalendarIntegration() {
             <Button 
               variant="outline" 
               onClick={() => handleSync('export')}
-              disabled={isSyncing || syncMutation.isPending}
+              disabled={isSyncing || syncMutation.isPending || calendarStatus.syncDirection === 'import_only'}
               className="flex items-center gap-1 h-8 text-xs px-2"
-              style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
+              style={{ 
+                backgroundColor: '#ffffff !important', 
+                border: '1px solid #d1d5db !important', 
+                color: calendarStatus.syncDirection === 'import_only' ? '#9ca3af !important' : '#111827 !important',
+                opacity: calendarStatus.syncDirection === 'import_only' ? '0.5' : '1'
+              }}
             >
               <Upload className="w-3 h-3" />
               Export
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => handleSync('import')}
+              onClick={() => handleSync(calendarStatus.syncDirection || 'import')}
               disabled={isSyncing || syncMutation.isPending}
               className="flex items-center gap-1 h-8 text-xs px-2"
               style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
@@ -348,7 +353,7 @@ export default function GoogleCalendarIntegration() {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => handleSync('bidirectional')}
+              onClick={() => handleSync(calendarStatus.syncDirection || 'bidirectional')}
               disabled={isSyncing || syncMutation.isPending}
               className="flex items-center gap-1 h-8 text-xs px-2"
               style={{ backgroundColor: '#ffffff !important', border: '1px solid #d1d5db !important', color: '#111827 !important' }}
