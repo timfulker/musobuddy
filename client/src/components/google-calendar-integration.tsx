@@ -134,7 +134,10 @@ export default function GoogleCalendarIntegration() {
       const response = await apiRequest('/api/google-calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ direction }),
+        body: JSON.stringify({ 
+          direction,
+          linkUnknownEvents: direction === 'import' || direction === 'bidirectional'
+        }),
       });
       return response.json();
     },
@@ -142,7 +145,7 @@ export default function GoogleCalendarIntegration() {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       toast({
         title: "Sync Complete",
-        description: `Exported ${data.exported} events, imported ${data.imported} events`,
+        description: `Exported ${data.exported || 0} events, updated ${data.updated || 0} existing, imported ${data.imported || 0} new bookings`,
       });
     },
     onError: () => {

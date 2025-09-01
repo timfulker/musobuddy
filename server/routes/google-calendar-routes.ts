@@ -342,42 +342,98 @@ export function registerGoogleCalendarRoutes(app: Express) {
         unlinkedGoogleEvents = unlinkedEvents.length;
         
         if (linkUnknownEvents && unlinkedEvents.length > 0) {
-          console.log(`🤖 Using AI to link ${unlinkedEvents.length} unlinked Google events`);
-          const aiMatcher = new AIEventMatcher();
+          console.log(`📥 Importing ${unlinkedEvents.length} unlinked Google events as MusoBuddy bookings`);
           
-          for (const googleEvent of unlinkedEvents.slice(0, 10)) { // Limit to 10 for cost control
+          for (const googleEvent of unlinkedEvents.slice(0, 20)) { // Process up to 20 events
             try {
-              // Find unlinked MusoBuddy bookings
-              const unlinkedBookings = eligibleBookings.filter(booking => 
-                !googleEvents.some(ge => ge.extendedProperties?.private?.musobuddyId === booking.id.toString())
-              );
+              // Create new MusoBuddy booking from Google Calendar event
+              const eventDate = new Date(googleEvent.start?.dateTime || googleEvent.start?.date);
+              const endDate = googleEvent.end?.dateTime ? new Date(googleEvent.end?.dateTime) : null;
               
-              if (unlinkedBookings.length > 0) {
-                // Try to match this Google event to a MusoBuddy booking
-                let bestMatch = null;
-                let bestScore = 0;
+              // Extract time from datetime if available
+              let eventTime = null;
+              if (googleEvent.start?.dateTime) {
+                const startDate = new Date(googleEvent.start.dateTime);
+                eventTime = `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`;
+              }
+              
+              // Calculate duration in hours if end time is available
+              let duration = null;
+              if (endDate && googleEvent.start?.dateTime) {
+                const durationMs = endDate.getTime() - eventDate.getTime();
+                duration = Math.round(durationMs / (1000 * 60 * 60 * 100)) / 100; // Round to 2 decimal places
+              }
+              
+              // Extract client name from event title
+              let clientName = 'Unknown Client';
+              if (googleEvent.summary) {
+                // Try to extract client name from summary
+                const patterns = [
+                  /^([^-]+)\s*-\s*/, // "John Smith - Wedding"
+                  /for\s+([^,\n]+)/i, // "Event for Jane Doe"
+                  /with\s+([^,\n]+)/i, // "Meeting with John"
+                ];
                 
-                for (const booking of unlinkedBookings) {
-                  const matchResult = await aiMatcher.compareEvents(booking, googleEvent, true);
-                  if (matchResult.isMatch && matchResult.matchScore > bestScore && matchResult.matchScore > 0.8) {
-                    bestMatch = booking;
-                    bestScore = matchResult.matchScore;
+                for (const pattern of patterns) {
+                  const match = googleEvent.summary.match(pattern);
+                  if (match) {
+                    clientName = match[1].trim();
+                    break;
                   }
                 }
                 
-                if (bestMatch) {
-                  // Link them by updating the Google event with MusoBuddy ID
-                  await googleCalendarService.updateEventFromBooking(
-                    googleEvent.id,
-                    bestMatch,
-                    'primary'
-                  );
-                  console.log(`🔗 Linked Google event ${googleEvent.id} to MusoBuddy booking ${bestMatch.id}`);
-                  aiUsed++;
+                // If no pattern matches, use the full summary as client name
+                if (clientName === 'Unknown Client') {
+                  clientName = googleEvent.summary.trim();
                 }
               }
-            } catch (aiError) {
-              console.error(`❌ AI linking failed for event ${googleEvent.id}:`, aiError.message);
+              
+              // Create the booking
+              const newBooking = {
+                clientName: clientName,
+                clientEmail: '', // Not available from Google Calendar
+                clientPhone: '', // Not available from Google Calendar
+                eventDate: eventDate.toISOString().split('T')[0], // YYYY-MM-DD format
+                eventTime: eventTime,
+                duration: duration,
+                venue: googleEvent.location || '',
+                venueAddress: googleEvent.location || '',
+                eventType: 'Imported from Google Calendar',
+                fee: null, // Not available from Google Calendar
+                deposit: null,
+                notes: `Imported from Google Calendar\nOriginal event: ${googleEvent.summary || 'Untitled Event'}`,
+                status: 'confirmed' as const,
+                source: 'google_calendar',
+                googleCalendarEventId: googleEvent.id
+              };
+              
+              // Create the booking in storage
+              const createdBooking = await storage.createBooking(userId, newBooking);
+              
+              // Update the Google Calendar event to link it with the new MusoBuddy booking
+              try {
+                const updatedEvent = {
+                  ...googleEvent,
+                  extendedProperties: {
+                    ...googleEvent.extendedProperties,
+                    private: {
+                      ...googleEvent.extendedProperties?.private,
+                      musobuddyId: createdBooking.id.toString(),
+                      musobuddyType: 'booking'
+                    }
+                  }
+                };
+                
+                await googleCalendarService.updateEvent(googleEvent.id, updatedEvent, 'primary');
+              } catch (updateError) {
+                console.log(`⚠️ Could not update Google event ${googleEvent.id} with MusoBuddy ID: ${updateError.message}`);
+              }
+              
+              imported++;
+              console.log(`📥 Imported Google event "${googleEvent.summary}" as MusoBuddy booking ${createdBooking.id}`);
+              
+            } catch (importError) {
+              console.error(`❌ Failed to import Google event ${googleEvent.id}:`, importError.message);
             }
           }
         }
