@@ -194,20 +194,10 @@ export default function NewBookingPage({
     enabled: !clientMode, // Skip for client mode
   });
 
-  // Get gig types directly from user settings gig_types field
-  const userGigTypes = (() => {
-    if (!userSettings?.gigTypes) return [];
-    if (Array.isArray(userSettings.gigTypes)) return userSettings.gigTypes;
-    if (typeof userSettings.gigTypes === 'string') {
-      try {
-        const parsed = JSON.parse(userSettings.gigTypes);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  })();
+  // Combine both gigTypes (from database) and customGigTypes (user-added) fields
+  const gigTypesFromDB = Array.isArray(userSettings?.gigTypes) ? userSettings.gigTypes : [];
+  const customGigTypes = Array.isArray(userSettings?.customGigTypes) ? userSettings.customGigTypes : [];
+  const userGigTypes = [...gigTypesFromDB, ...customGigTypes];
 
   // Calculate mileage between user's business address and venue
   // Handler for adding custom gig types

@@ -287,6 +287,18 @@ export async function registerSettingsRoutes(app: Express) {
         }
       }
       
+      // Parse gigTypes field from database gig_types column
+      if (responseSettings.gigTypes) {
+        try {
+          if (typeof responseSettings.gigTypes === 'string') {
+            responseSettings.gigTypes = JSON.parse(responseSettings.gigTypes);
+          }
+        } catch (error) {
+          console.error('❌ Failed to parse gigTypes, defaulting to empty array:', error);
+          responseSettings.gigTypes = [];
+        }
+      }
+      
       res.json(responseSettings);
       
     } catch (error) {
