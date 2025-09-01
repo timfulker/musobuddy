@@ -249,25 +249,68 @@ export function registerGoogleCalendarRoutes(app: Express) {
       );
       
       let googleEvents = [];
+      let newSyncToken = null;
+      
       try {
-        const googleSync = await googleCalendarService.performFullSync('primary');
-        googleEvents = googleSync.events || [];
+        // Use incremental sync if we have a sync token, otherwise full sync
+        if (integration.syncToken) {
+          console.log('🔄 Performing incremental sync...');
+          const incrementalSync = await googleCalendarService.performIncrementalSync(integration.syncToken, 'primary');
+          googleEvents = incrementalSync.events || [];
+          newSyncToken = incrementalSync.syncToken;
+          console.log(`📅 Incremental sync found ${googleEvents.length} changed events`);
+        } else {
+          console.log('🔄 Performing initial full sync...');
+          const fullSync = await googleCalendarService.performFullSync('primary');
+          googleEvents = fullSync.events || [];
+          newSyncToken = fullSync.syncToken;
+          console.log(`📅 Full sync found ${googleEvents.length} total events`);
+        }
       } catch (googleError) {
         console.error('Google Calendar API error:', googleError);
-        return res.status(500).json({ 
-          error: 'Google Calendar API error', 
-          details: 'Failed to fetch Google Calendar events. Your connection may have expired - please reconnect your Google Calendar.' 
-        });
+        
+        // If incremental sync fails, fall back to full sync
+        if (integration.syncToken && googleError.message?.includes('sync')) {
+          console.log('⚠️ Incremental sync failed, falling back to full sync');
+          try {
+            const fullSync = await googleCalendarService.performFullSync('primary');
+            googleEvents = fullSync.events || [];
+            newSyncToken = fullSync.syncToken;
+          } catch (fallbackError) {
+            return res.status(500).json({ 
+              error: 'Google Calendar API error', 
+              details: 'Failed to fetch Google Calendar events. Your connection may have expired - please reconnect your Google Calendar.' 
+            });
+          }
+        } else {
+          return res.status(500).json({ 
+            error: 'Google Calendar API error', 
+            details: 'Failed to fetch Google Calendar events. Your connection may have expired - please reconnect your Google Calendar.' 
+          });
+        }
       }
       
       console.log(`🔄 Processing ${eligibleBookings.length} MusoBuddy bookings and ${googleEvents.length} Google events`);
       
-      // Export MusoBuddy bookings to Google Calendar (ID-first approach with duplicate prevention)
+      // Export MusoBuddy bookings to Google Calendar (incremental approach)
       if (direction === 'export' || direction === 'bidirectional') {
         let processed = 0;
-        const batchSize = 50; // Process in batches to avoid timeout
+        const batchSize = 50;
         
-        for (const booking of eligibleBookings) {
+        // If this is an incremental sync, only process bookings modified since last sync
+        let bookingsToProcess = eligibleBookings;
+        if (integration.syncToken && integration.lastSyncAt) {
+          const lastSync = new Date(integration.lastSyncAt);
+          bookingsToProcess = eligibleBookings.filter(booking => {
+            const bookingUpdated = new Date(booking.updatedAt || booking.createdAt);
+            return bookingUpdated > lastSync;
+          });
+          console.log(`📋 Incremental export: processing ${bookingsToProcess.length} of ${eligibleBookings.length} recently modified bookings`);
+        } else {
+          console.log(`📋 Full export: processing all ${bookingsToProcess.length} bookings`);
+        }
+        
+        for (const booking of bookingsToProcess) {
           try {
             // Look for existing Google event with this booking's ID
             const linkedEvent = googleEvents.find(event => 
@@ -284,34 +327,38 @@ export function registerGoogleCalendarRoutes(app: Express) {
               updated++;
               console.log(`🔄 Updated linked Google event for booking ${booking.id}`);
             } else {
-              // Check for potential duplicate by date/time/venue before creating
-              const bookingDate = new Date(booking.eventDate);
-              const bookingDateStr = bookingDate.toISOString().split('T')[0];
+              // Check for possible duplicates only in full sync mode
+              let isDuplicate = false;
+              if (!integration.syncToken) {
+                const bookingDate = new Date(booking.eventDate);
+                const bookingDateStr = bookingDate.toISOString().split('T')[0];
+                
+                const possibleDuplicate = googleEvents.find(event => {
+                  if (event.status === 'cancelled') return false;
+                  
+                  const eventDate = new Date(event.start?.dateTime || event.start?.date);
+                  const eventDateStr = eventDate.toISOString().split('T')[0];
+                  
+                  // Check if same date
+                  if (bookingDateStr !== eventDateStr) return false;
+                  
+                  // Check if similar summary or location
+                  const eventSummary = (event.summary || '').toLowerCase();
+                  const eventLocation = (event.location || '').toLowerCase();
+                  const bookingVenue = (booking.venue || '').toLowerCase();
+                  const bookingClient = (booking.clientName || '').toLowerCase();
+                  
+                  return (eventSummary.includes(bookingClient) || eventSummary.includes(bookingVenue) ||
+                         eventLocation.includes(bookingVenue));
+                });
+                
+                if (possibleDuplicate) {
+                  console.log(`⚠️ Skipping booking ${booking.id} - possible duplicate found in calendar`);
+                  isDuplicate = true;
+                }
+              }
               
-              const possibleDuplicate = googleEvents.find(event => {
-                if (event.status === 'cancelled') return false;
-                
-                const eventDate = new Date(event.start?.dateTime || event.start?.date);
-                const eventDateStr = eventDate.toISOString().split('T')[0];
-                
-                // Check if same date
-                if (bookingDateStr !== eventDateStr) return false;
-                
-                // Check if similar summary or location
-                const eventSummary = (event.summary || '').toLowerCase();
-                const eventLocation = (event.location || '').toLowerCase();
-                const bookingVenue = (booking.venue || '').toLowerCase();
-                const bookingClient = (booking.clientName || '').toLowerCase();
-                
-                // If summary contains client name or venue, it's likely the same event
-                return (eventSummary.includes(bookingClient) || eventSummary.includes(bookingVenue) ||
-                       eventLocation.includes(bookingVenue));
-              });
-              
-              if (possibleDuplicate) {
-                console.log(`⚠️ Skipping booking ${booking.id} - possible duplicate found in calendar`);
-                console.log(`   Existing event: ${possibleDuplicate.summary} on ${possibleDuplicate.start?.dateTime}`);
-              } else {
+              if (!isDuplicate) {
                 // Create new event with embedded MusoBuddy ID
                 await googleCalendarService.createEventFromBooking(booking, 'primary');
                 exported++;
@@ -322,8 +369,8 @@ export function registerGoogleCalendarRoutes(app: Express) {
             processed++;
             // Add small delay every batch to prevent overwhelming the API
             if (processed % batchSize === 0) {
-              console.log(`⏸ Processed ${processed}/${eligibleBookings.length} bookings, pausing briefly...`);
-              await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second pause
+              console.log(`⏸ Processed ${processed}/${bookingsToProcess.length} bookings, pausing briefly...`);
+              await new Promise(resolve => setTimeout(resolve, 500)); // Reduced to 500ms
             }
           } catch (eventError) {
             console.error(`❌ Failed to sync booking ${booking.id}:`, eventError.message);
@@ -342,9 +389,23 @@ export function registerGoogleCalendarRoutes(app: Express) {
         unlinkedGoogleEvents = unlinkedEvents.length;
         
         if (linkUnknownEvents && unlinkedEvents.length > 0) {
-          console.log(`📥 Importing ${unlinkedEvents.length} unlinked Google events as MusoBuddy bookings`);
+          // Only import new events in incremental mode, or limit to recent events in full mode
+          let eventsToImport = unlinkedEvents;
+          if (integration.syncToken && integration.lastSyncAt) {
+            // In incremental mode, only process events created/modified since last sync
+            const lastSync = new Date(integration.lastSyncAt);
+            eventsToImport = unlinkedEvents.filter(event => {
+              const eventUpdated = new Date(event.updated);
+              return eventUpdated > lastSync;
+            });
+            console.log(`📥 Incremental import: processing ${eventsToImport.length} of ${unlinkedEvents.length} recently changed events`);
+          } else {
+            // In full mode, limit to reasonable number to avoid overwhelming
+            eventsToImport = unlinkedEvents.slice(0, 20);
+            console.log(`📥 Full import: processing ${eventsToImport.length} of ${unlinkedEvents.length} unlinked events`);
+          }
           
-          for (const googleEvent of unlinkedEvents.slice(0, 20)) { // Process up to 20 events
+          for (const googleEvent of eventsToImport) {
             try {
               // Create new MusoBuddy booking from Google Calendar event
               const eventDate = new Date(googleEvent.start?.dateTime || googleEvent.start?.date);
@@ -439,9 +500,10 @@ export function registerGoogleCalendarRoutes(app: Express) {
         }
       }
       
-      // Update last sync time
+      // Update last sync time and sync token
       await storage.updateGoogleCalendarIntegration(userId, {
-        lastSyncAt: new Date()
+        lastSyncAt: new Date(),
+        syncToken: newSyncToken
       });
       
       let message = `Exported ${exported} new, updated ${updated} existing`;
