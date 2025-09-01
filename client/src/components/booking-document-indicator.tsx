@@ -32,15 +32,10 @@ export function BookingDocumentIndicator({ bookingId, booking, onClick }: Bookin
   const hasLegacyDocuments = booking?.documentUrl && booking.documentUrl.trim();
   const hasDocuments = hasNewDocuments || hasLegacyDocuments;
   
-  console.log(`📄 Booking ${bookingId} - isLoading: ${isLoading}, hasDocuments: ${hasDocuments}, documentsData:`, documentsData);
-  
   // Don't show anything if loading
   if (isLoading) {
-    console.log(`📄 Booking ${bookingId} - returning null due to loading`);
     return null;
   }
-  
-  console.log(`📄 Booking ${bookingId} - rendering badge`);
   
   // Show badge for document management (upload/view)
   return (

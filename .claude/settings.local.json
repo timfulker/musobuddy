@@ -19,7 +19,8 @@
       "Bash(find:*)",
       "Bash(NODE_ENV=development npx tsx server/migrations/remove_redundant_columns.ts)",
       "Bash(git restore:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(NODE_ENV=development npx tsx server/migrations/add_performance_fields_to_invoices.ts)"
     ],
     "deny": [],
     "ask": [],

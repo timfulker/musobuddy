@@ -38,6 +38,8 @@ const invoiceFormSchema = z.object({
   performanceDate: z.string().optional(),
   performanceFee: z.string().optional(),
   depositPaid: z.string().optional(),
+  performanceDuration: z.string().optional(), // Performance duration from booking
+  gigType: z.string().optional(), // Gig type from booking
 });
 
 export default function Invoices() {
@@ -90,6 +92,8 @@ export default function Invoices() {
       performanceDate: "",
       performanceFee: "",
       depositPaid: "",
+      performanceDuration: "", // Performance duration from booking
+      gigType: "", // Gig type from booking
     },
   });
 
@@ -131,9 +135,12 @@ export default function Invoices() {
                 ? new Date(booking.eventDate).toISOString().split('T')[0]
                 : "";
               
+              const parsedBookingId = parseInt(bookingId);
+              console.log('📝 Setting form with bookingId:', parsedBookingId, 'from URL param:', bookingId);
+              
               form.reset({
                 contractId: undefined,
-                bookingId: parseInt(bookingId), // Store the booking ID
+                bookingId: parsedBookingId, // Store the booking ID
                 clientName: booking.clientName || "",
                 clientEmail: booking.clientEmail || "",
                 ccEmail: "",
@@ -144,6 +151,8 @@ export default function Invoices() {
                 performanceDate: performanceDate,
                 performanceFee: booking.fee || "",
                 depositPaid: "",
+                performanceDuration: booking.performanceDuration || "", // Load from booking
+                gigType: booking.gigType || "", // Load from booking
               });
               
               toast({
@@ -186,6 +195,8 @@ export default function Invoices() {
             performanceDate: performanceDate,
             performanceFee: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
             depositPaid: "",
+            performanceDuration: "", // Empty for enquiries
+            gigType: "", // Empty for enquiries
           });
         }
       }
@@ -402,6 +413,8 @@ export default function Invoices() {
       performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
       performanceFee: invoice.fee ? invoice.fee.toString() : "",
       depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
+      performanceDuration: invoice.performanceDuration || "", // Preserve from invoice
+      gigType: invoice.gigType || "", // Preserve from invoice
     });
     setIsDialogOpen(true);
   };
@@ -409,8 +422,8 @@ export default function Invoices() {
 
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
-    
-    
+    console.log('📤 Submitting invoice with data:', data);
+    console.log('📤 BookingId being sent:', data.bookingId);
     
     // Client-side validation with user-friendly prompts
     const validationIssues = [];
@@ -1141,6 +1154,36 @@ export default function Invoices() {
                             <FormLabel>Performance Date</FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Performance Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="performanceDuration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Performance Duration</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. 2 x 45 min sets" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gigType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Event Type</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. Wedding, Corporate Event" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -58,6 +58,8 @@ export class InvoiceStorage {
         dueDate: new Date(invoiceData.dueDate),
         status: invoiceData.status || "draft",
         paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
+        performanceDuration: invoiceData.performanceDuration || null,
+        gigType: invoiceData.gigType || null,
         cloudStorageUrl: invoiceData.cloudStorageUrl || null,
         cloudStorageKey: invoiceData.cloudStorageKey || null,
         shareToken: shareToken, // Secure token for public access
@@ -92,6 +94,8 @@ export class InvoiceStorage {
           dueDate: new Date(uniqueInvoiceData.dueDate),
           status: uniqueInvoiceData.status || "draft",
           paidAt: uniqueInvoiceData.paidAt ? new Date(uniqueInvoiceData.paidAt) : null,
+          performanceDuration: uniqueInvoiceData.performanceDuration || null,
+          gigType: uniqueInvoiceData.gigType || null,
           cloudStorageUrl: uniqueInvoiceData.cloudStorageUrl || null,
           cloudStorageKey: uniqueInvoiceData.cloudStorageKey || null,
           shareToken: shareToken,
@@ -126,6 +130,8 @@ export class InvoiceStorage {
     if (updates.dueDate !== undefined) setData.dueDate = new Date(updates.dueDate);
     if (updates.status !== undefined) setData.status = updates.status;
     if (updates.paidAt !== undefined) setData.paidAt = updates.paidAt ? new Date(updates.paidAt) : null;
+    if (updates.performanceDuration !== undefined) setData.performanceDuration = updates.performanceDuration;
+    if (updates.gigType !== undefined) setData.gigType = updates.gigType;
     if (updates.cloudStorageUrl !== undefined) setData.cloudStorageUrl = updates.cloudStorageUrl;
     if (updates.cloudStorageKey !== undefined) setData.cloudStorageKey = updates.cloudStorageKey;
 

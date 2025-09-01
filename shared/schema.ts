@@ -353,6 +353,8 @@ export const invoices = pgTable("invoices", {
   fee: decimal("fee", { precision: 10, scale: 2 }),
   depositPaid: decimal("deposit_paid", { precision: 10, scale: 2 }).default("0"),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount due (fee minus deposit)
+  performanceDuration: text("performance_duration"), // Duration details (e.g., "2 x 45 min sets")
+  gigType: text("gig_type"), // Event type (e.g., "Wedding", "Corporate Event")
   dueDate: timestamp("due_date").notNull(),
   status: varchar("status").notNull().default("draft"), // draft, sent, paid, overdue
   paidAt: timestamp("paid_at"),
