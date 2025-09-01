@@ -45,15 +45,7 @@ export class SettingsStorage {
       processedData.customClauses = JSON.stringify(processedData.customClauses);
     }
     
-    // Handle invoice terms object
-    if (processedData.invoiceTerms && typeof processedData.invoiceTerms === 'object') {
-      processedData.invoiceTerms = JSON.stringify(processedData.invoiceTerms);
-    }
-    
-    // Handle custom invoice terms array
-    if (processedData.customInvoiceTerms && Array.isArray(processedData.customInvoiceTerms)) {
-      processedData.customInvoiceTerms = JSON.stringify(processedData.customInvoiceTerms);
-    }
+    // Invoice terms and custom invoice terms are JSONB fields - no need to stringify
     
     const result = await db.insert(userSettings).values({
       ...processedData,
@@ -64,9 +56,15 @@ export class SettingsStorage {
   }
 
   async updateSettings(userId: string, updates: any) {
+    // PHASE 1 LOGGING: Storage layer received data
+    console.log('🔍 PHASE 1 - Storage.updateSettings received data:');
+    console.log('  📋 Contract Clauses:', JSON.stringify(updates.contractClauses, null, 2));
+    console.log('  📄 Invoice Terms:', JSON.stringify(updates.invoiceTerms, null, 2));
+    
     const existing = await this.getSettings(userId);
     
     if (!existing) {
+      console.log('🔍 PHASE 1 - No existing settings, calling createSettings');
       return await this.createSettings({ userId, ...updates });
     }
 
@@ -90,24 +88,23 @@ export class SettingsStorage {
       processedUpdates.customClauses = JSON.stringify(processedUpdates.customClauses);
     }
     
-    // Handle invoice terms object
-    if (processedUpdates.invoiceTerms && typeof processedUpdates.invoiceTerms === 'object') {
-      console.log('🔍 STORAGE DEBUG - Stringifying invoiceTerms:', processedUpdates.invoiceTerms);
-      processedUpdates.invoiceTerms = JSON.stringify(processedUpdates.invoiceTerms);
-      console.log('🔍 STORAGE DEBUG - Stringified invoiceTerms:', processedUpdates.invoiceTerms);
-    }
-    
-    // Handle custom invoice terms array
-    if (processedUpdates.customInvoiceTerms && Array.isArray(processedUpdates.customInvoiceTerms)) {
-      console.log('🔍 STORAGE DEBUG - Stringifying customInvoiceTerms:', processedUpdates.customInvoiceTerms);
-      processedUpdates.customInvoiceTerms = JSON.stringify(processedUpdates.customInvoiceTerms);
-      console.log('🔍 STORAGE DEBUG - Stringified customInvoiceTerms:', processedUpdates.customInvoiceTerms);
-    }
+    // Invoice terms and custom invoice terms are JSONB fields - no need to stringify
+
+    // PHASE 1 LOGGING: Final data being sent to database
+    console.log('🔍 PHASE 1 - Final data being sent to database:');
+    console.log('  📋 Contract Clauses:', JSON.stringify(processedUpdates.contractClauses, null, 2));
+    console.log('  📄 Invoice Terms:', JSON.stringify(processedUpdates.invoiceTerms, null, 2));
 
     const result = await db.update(userSettings)
       .set({ ...processedUpdates, updatedAt: new Date() })
       .where(eq(userSettings.userId, userId))
       .returning();
+    
+    // PHASE 1 LOGGING: Database update result
+    console.log('🔍 PHASE 1 - Database update result:');
+    console.log('  📋 Contract Clauses:', JSON.stringify(result[0]?.contractClauses, null, 2));
+    console.log('  📄 Invoice Terms:', JSON.stringify(result[0]?.invoiceTerms, null, 2));
+    console.log('  📝 Custom Invoice Terms:', JSON.stringify(result[0]?.customInvoiceTerms, null, 2));
     
     return result[0];
   }

@@ -574,8 +574,7 @@ export const userSettings = pgTable("user_settings", {
   website: varchar("website"),
   taxNumber: varchar("tax_number"),
   bankDetails: text("bank_details"),
-  contractClauses: jsonb("contract_clauses").default('{}'), // Standard contract clauses selection
-  customClauses: jsonb("custom_clauses").default('[]'), // Custom user-added clauses
+  contractClauses: jsonb("contract_clauses").default('{}'), // Contract clauses selection
   emailFromName: varchar("email_from_name"),
   invoicePrefix: varchar("invoice_prefix"), // Custom invoice prefix (e.g., "JS" for Jake Stanley)
   nextInvoiceNumber: integer("next_invoice_number").default(1),
@@ -615,7 +614,6 @@ export const userSettings = pgTable("user_settings", {
   invoicePaymentTerms: varchar("invoice_payment_terms").default("7_days"), // Payment terms: on_receipt, 3_days, 7_days, 14_days, 30_days, on_performance, cash_as_agreed
   defaultInvoiceDueDays: integer("default_invoice_due_days").default(7), // Default days until invoice is due
   invoiceTerms: jsonb("invoice_terms").default('{}'), // Invoice terms & conditions selection
-  customInvoiceTerms: jsonb("custom_invoice_terms").default('[]'), // Custom user-added invoice terms
   
   // Distance Unit Preference
   distanceUnits: varchar("distance_units").default("miles"), // "miles" or "km" - user preference for distance display

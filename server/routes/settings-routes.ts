@@ -237,15 +237,6 @@ export async function registerSettingsRoutes(app: Express) {
         emailPrefix: user?.emailPrefix || null
       };
       
-      // DEBUG: Log invoice terms before parsing
-      console.log('🔍 GET SETTINGS DEBUG - Raw settings from DB:', {
-        invoiceTerms: settings.invoiceTerms,
-        customInvoiceTerms: settings.customInvoiceTerms,
-        hasInvoiceTerms: !!settings.invoiceTerms,
-        hasCustomInvoiceTerms: !!settings.customInvoiceTerms,
-        invoiceTermsType: typeof settings.invoiceTerms,
-        customInvoiceTermsType: typeof settings.customInvoiceTerms
-      });
       
       // Parse JSON strings that may be corrupted from earlier storage
       if (responseSettings.customGigTypes) {
@@ -341,13 +332,6 @@ export async function registerSettingsRoutes(app: Express) {
         }
       }
       
-      // DEBUG: Log final response invoice terms
-      console.log('🔍 GET SETTINGS DEBUG - Final response invoice terms:', {
-        invoiceTerms: responseSettings.invoiceTerms,
-        customInvoiceTerms: responseSettings.customInvoiceTerms,
-        hasInvoiceTerms: !!responseSettings.invoiceTerms,
-        hasCustomInvoiceTerms: !!responseSettings.customInvoiceTerms
-      });
       
       res.json(responseSettings);
       
@@ -358,32 +342,22 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Update user settings
-  app.patch('/api/settings-test', (req: any, res: any, next: any) => {
-    console.log('🟢 RAW PATCH /api/settings-test route REACHED!');
-    next();
-  },
+  app.patch('/api/settings',
     authenticateWithFirebase,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
-      console.log('🟢 PATCH /api/settings route HIT!');
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      console.log(`⚙️ Updating settings for user ${userId}:`, req.body);
-      
-      // DEBUG: Log invoice terms specifically
-      console.log('🔍 BACKEND DEBUG - Invoice terms received:', {
-        invoiceTerms: req.body.invoiceTerms,
-        customInvoiceTerms: req.body.customInvoiceTerms,
-        hasInvoiceTerms: !!req.body.invoiceTerms,
-        hasCustomInvoiceTerms: !!req.body.customInvoiceTerms,
-        invoiceTermsType: typeof req.body.invoiceTerms,
-        customInvoiceTermsType: typeof req.body.customInvoiceTerms
-      });
+      // PHASE 1 LOGGING: Backend API received data
+      console.log('🔍 PHASE 1 - Backend API received data:');
+      console.log('  📋 Contract Clauses:', JSON.stringify(req.body.contractClauses, null, 2));
+      console.log('  📄 Invoice Terms:', JSON.stringify(req.body.invoiceTerms, null, 2));
+      console.log('  🔧 Request body keys:', Object.keys(req.body));
       
       // Process the request body to combine instrument-based gig types
       const processedBody = { ...req.body };
@@ -419,6 +393,11 @@ export async function registerSettingsRoutes(app: Express) {
         console.log(`🎵 Instruments:`, allInstruments);
         console.log(`🎵 AI Gig types:`, uniqueInstrumentGigTypes.slice(0, 10), uniqueInstrumentGigTypes.length > 10 ? `...and ${uniqueInstrumentGigTypes.length - 10} more` : '');
       }
+      
+      // PHASE 1 LOGGING: Data being sent to storage layer
+      console.log('🔍 PHASE 1 - Data being sent to storage.updateSettings:');
+      console.log('  📋 Contract Clauses:', JSON.stringify(processedBody.contractClauses, null, 2));
+      console.log('  📄 Invoice Terms:', JSON.stringify(processedBody.invoiceTerms, null, 2));
       
       const updatedSettings = await storage.updateSettings(userId, processedBody);
       console.log(`✅ Updated settings for user ${userId}`);
