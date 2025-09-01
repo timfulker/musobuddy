@@ -1221,23 +1221,30 @@ export async function getGigTypeNamesForInstrument(instrument: string): Promise<
     
     const response = await openai.chat.completions.create({
       model: "gpt-4", // Use GPT-4 for better instrument-specific results
-      max_tokens: 1000,
+      max_tokens: 3000,
       temperature: 0.7,
       messages: [{
         role: "user", 
-        content: `Generate realistic gig types that a professional ${instrument} player would commonly be hired for. Focus on practical, bookable opportunities that exist in the real music industry.
+        content: `Generate a comprehensive list of realistic gig types that a professional ${instrument} player would commonly be hired for. I need an extensive list covering ALL possible bookable opportunities in the music industry.
 
-For ${instrument}, prioritize the most common and realistic gigs:
-- Wedding and event performances
-- Teaching and educational work  
-- Recording and studio work
-- Concert and recital performances
+Include these categories for ${instrument}:
+- Wedding ceremonies, receptions, and anniversaries
+- Corporate events, conferences, and product launches  
+- Private parties, birthdays, and celebrations
+- Restaurant and cocktail performances
+- Teaching (private lessons, group classes, workshops)
+- Recording sessions and studio work
+- Concert performances and recitals
 - Religious services and ceremonies
+- Jazz clubs and entertainment venues
+- Festivals and outdoor events
+- Holiday and seasonal performances
+- Specialty events (charity, fundraisers, art galleries)
 
-Return up to 20 practical gig types that ${instrument} players actually get hired for. Use clear, professional names that clients would understand.
+Please provide exactly 40 distinct, realistic gig types that ${instrument} players actually get hired for. Be comprehensive and include both common and specialized opportunities. Use clear, professional names that clients would recognize and book.
 
-Return ONLY a JSON array:
-["String Quartet Wedding", "Wedding Ceremony Soloist", "Private Music Lessons"]`
+Return ONLY a JSON array with exactly 40 entries:
+["Wedding Ceremony Music", "Corporate Event Entertainment", "Private Music Lessons"]`
       }]
     });
 
