@@ -633,8 +633,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                     <div class="service-description">Live Saxophone & DJ Performance</div>
                                     <div class="service-details">
                                         Venue: ${invoice.venueAddress || 'TBD'}<br>
-                                        Duration: ${booking?.performanceDuration || 'Standard Set (approx. 3 hours)'}<br>
-                                        Event Type: ${booking?.gigType || 'Music Performance'}
+                                        Duration: ${invoice.performanceDuration || booking?.performanceDuration || 'Standard Set (approx. 3 hours)'}<br>
+                                        Event Type: ${invoice.gigType || booking?.gigType || 'Music Performance'}
                                     </div>
                                 </td>
                                 <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
