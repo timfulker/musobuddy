@@ -3,6 +3,7 @@ import multer from 'multer';
 import { storage } from '../core/storage';
 import { uploadDocumentToR2, deleteDocumentFromR2, generateDocumentDownloadUrl } from '../core/document-storage';
 import { insertBookingDocumentSchema, uploadDocumentSchema } from '../../shared/document-schemas';
+import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ const upload = multer({
 });
 
 // Get documents for a booking
-router.get('/bookings/:bookingId/documents', async (req, res) => {
+router.get('/bookings/:bookingId/documents', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -62,7 +63,7 @@ router.get('/bookings/:bookingId/documents', async (req, res) => {
 });
 
 // Upload document for a booking
-router.post('/bookings/:bookingId/documents/upload', upload.single('document'), async (req, res) => {
+router.post('/bookings/:bookingId/documents/upload', authenticateWithFirebase, upload.single('document'), async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -135,7 +136,7 @@ router.post('/bookings/:bookingId/documents/upload', upload.single('document'), 
 });
 
 // Delete a document
-router.delete('/bookings/:bookingId/documents/:documentId', async (req, res) => {
+router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);
@@ -188,7 +189,7 @@ router.delete('/bookings/:bookingId/documents/:documentId', async (req, res) => 
 });
 
 // Download/view a document
-router.get('/bookings/:bookingId/documents/:documentId/download', async (req, res) => {
+router.get('/bookings/:bookingId/documents/:documentId/download', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);

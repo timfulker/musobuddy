@@ -60,7 +60,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ## System Design Choices
-- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, dual client portal system with luminance-aware branding for PDFs. Includes auto-scrolling, simplified booking card actions, and manual auto-fill control for venue names.
+- **UI/UX Decisions**: Responsive design (mobile/desktop adaptation), streamlined actions, centralized messaging, consistent navigation, simplified branding, enhanced HTML email templates, dual client portal system with luminance-aware branding for PDFs. Includes auto-scrolling, simplified booking card actions, and manual auto-fill control for venue names.
 - **Technical Implementations**:
     - **User Management**: Two-tier system (Admin, User).
     - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, comprehensive forms, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, and Encore booking management. Streamlined unparseable message handling and manual detail extraction for conversations. Travel expenses are simplified into a single performance fee display.
