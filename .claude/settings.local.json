@@ -27,7 +27,8 @@
       "Bash(NODE_ENV=development npx tsx server/migrations/replace_invoice_terms_with_clauses.ts)",
       "Bash(NODE_ENV=development npx tsx server/migrations/revert_invoice_clauses.ts)",
       "Read(/home/runner/**)",
-      "Bash(NODE_ENV=development npx tsx test-document-upload.ts)"
+      "Bash(NODE_ENV=development npx tsx test-document-upload.ts)",
+      "Bash(env)"
     ],
     "deny": [],
     "ask": [],

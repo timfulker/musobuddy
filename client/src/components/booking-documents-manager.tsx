@@ -189,13 +189,9 @@ export default function BookingDocumentsManager({ booking, isOpen, onClose }: Bo
     return DOCUMENT_TYPES.find(t => t.value === type) || DOCUMENT_TYPES[2]; // Default to 'other'
   };
 
-  // Only allow upload if we have successfully loaded documents AND under the limit
-  // FIXED: Always allow upload if API fails to load documents (better UX)
-  const canUploadMore = !loadingDocuments && (
-    documentsResponse === undefined || // First load
-    documentsResponse?.success !== false || // API success
-    (documentsResponse?.success === false && documents.length === 0) // API failed but no documents
-  ) && documents.length < 5;
+  // Allow upload when not loading and under the limit
+  // Simplified: Show upload section unless we're over the limit
+  const canUploadMore = !loadingDocuments && documents.length < 5;
   
   // Debug logging
   console.log('📄 Upload availability check:', {
