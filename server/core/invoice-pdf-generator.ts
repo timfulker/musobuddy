@@ -64,6 +64,15 @@ export async function generateInvoicePDF(
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
   
+  // Fetch booking data if bookingId is available
+  let booking: Booking | null = null;
+  if (invoice.bookingId) {
+    try {
+      booking = await storage.getBookingByIdAndUser(invoice.bookingId, invoice.userId);
+    } catch (error) {
+      console.warn('⚠️ Could not fetch booking data for invoice:', error);
+    }
+  }
   
   // Deployment-ready Puppeteer configuration
   const browser = await puppeteer.launch({
@@ -88,7 +97,7 @@ export async function generateInvoicePDF(
     
     // CSS-OPTIMIZED: Generate HTML with built-in page break controls (NO AI)
     console.log('📄 Using CSS-optimized invoice template (under 5 seconds)...');
-    const html = generateOptimizedInvoiceHTML(invoice, userSettings);
+    const html = generateOptimizedInvoiceHTML(invoice, userSettings, booking);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
@@ -109,7 +118,7 @@ export async function generateInvoicePDF(
   }
 }
 
-function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null): string {
+function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null, booking: Booking | null): string {
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'Tim Fulker | SaxDJ';
   const businessPhone = userSettings?.phone || '07764 190034';
@@ -624,8 +633,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                     <div class="service-description">Live Saxophone & DJ Performance</div>
                                     <div class="service-details">
                                         Venue: ${invoice.venueAddress || 'TBD'}<br>
-                                        Duration: Standard Set (approx. 3 hours)<br>
-                                        Event Type: Music Performance
+                                        Duration: ${booking?.performanceDuration || 'Standard Set (approx. 3 hours)'}<br>
+                                        Event Type: ${booking?.gigType || 'Music Performance'}
                                     </div>
                                 </td>
                                 <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
