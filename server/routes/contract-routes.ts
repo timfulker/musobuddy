@@ -738,8 +738,13 @@ export function registerContractRoutes(app: Express) {
         // First regenerate the signing page with the updated status
         const signingPageResult = await uploadContractSigningPage(updateResult, userSettings);
         
-        // Then generate the signed PDF
-        const uploadResult = await uploadContractToCloud(updateResult, userSettings);
+        // Then generate the signed PDF with signature details
+        const signatureDetails = {
+          signedAt: updateResult.signedAt,
+          signatureName: updateResult.clientSignature,
+          clientIpAddress: updateResult.clientIpAddress
+        };
+        const uploadResult = await uploadContractToCloud(updateResult, userSettings, signatureDetails);
         
         if (uploadResult.success) {
           pdfUrl = uploadResult.url;
