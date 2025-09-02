@@ -43,11 +43,11 @@ function getThemeColor(userSettings: UserSettings | null): string {
 function getSecondaryColor(primaryColor: string): string {
   // Simple approach: if it's a known theme color, use predefined secondary
   const colorMap: Record<string, string> = {
-    '#8b5cf6': '#a855f7', // Purple
+    '#8b5cf6': '#7c3aed', // Purple - darker
     '#0ea5e9': '#0284c7', // Ocean Blue
     '#34d399': '#10b981', // Forest Green
-    '#f87171': '#9ca3af', // Clean Pro Audio
-    '#191970': '#1e3a8a', // Midnight Blue
+    '#f87171': '#ef4444', // Clean Pro Audio
+    '#191970': '#000051', // Midnight Blue - darker
   };
 
   return colorMap[primaryColor] || primaryColor; // Fallback to same color
@@ -232,8 +232,8 @@ function generateTermsSection(userSettings: UserSettings | null, contract?: any)
 
   // Categorize clauses
   const categories: { [key: string]: string[] } = {
-    'Payment Terms': [],
     'Performance & Equipment': [],
+    'Payment Terms': [],
     'Cancellation & Rescheduling': [],
     'General Terms': []
   };
@@ -253,27 +253,75 @@ function generateTermsSection(userSettings: UserSettings | null, contract?: any)
   });
 
   let termsHtml = `
-    <div class="section">
-        <h2 class="section-title">Terms & Conditions</h2>
-        <div class="terms-container">`;
+    <!-- Terms & Conditions -->
+    <div class="terms-section-container">
+        <h2 class="section-header">
+            <span class="section-number">04</span>
+            <span class="section-title-text">Terms & Conditions</span>
+        </h2>`;
 
-  for (const [category, terms] of Object.entries(categories)) {
-    if (terms.length > 0) {
-      termsHtml += `
+  let hasTerms = false;
+
+  // Performance & Equipment first (if exists)
+  if (categories['Performance & Equipment'].length > 0) {
+    hasTerms = true;
+    termsHtml += `
         <div class="terms-category">
-            <h3 class="terms-category-title">${category}</h3>
-            <div class="terms-list">
-                ${terms.map(term => `<div class="term-item">${escapeHtml(term)}</div>`).join('')}
-            </div>
+            <h3 class="terms-category-title">Performance & Equipment</h3>
+            <ul class="terms-list">
+                ${categories['Performance & Equipment'].map(term => 
+                  `<li class="term-item">${escapeHtml(term)}</li>`
+                ).join('')}
+            </ul>
         </div>`;
-    }
+  }
+
+  // Payment Terms (if exists)  
+  if (categories['Payment Terms'].length > 0) {
+    hasTerms = true;
+    termsHtml += `
+        <div class="terms-category">
+            <h3 class="terms-category-title">Payment Terms</h3>
+            <ul class="terms-list">
+                ${categories['Payment Terms'].map(term => 
+                  `<li class="term-item">${escapeHtml(term)}</li>`
+                ).join('')}
+            </ul>
+        </div>`;
+  }
+
+  // Cancellation (if exists)
+  if (categories['Cancellation & Rescheduling'].length > 0) {
+    hasTerms = true;
+    termsHtml += `
+        <div class="terms-category">
+            <h3 class="terms-category-title">Cancellation & Rescheduling</h3>
+            <ul class="terms-list">
+                ${categories['Cancellation & Rescheduling'].map(term => 
+                  `<li class="term-item">${escapeHtml(term)}</li>`
+                ).join('')}
+            </ul>
+        </div>`;
+  }
+
+  // General Terms (if exists)
+  if (categories['General Terms'].length > 0) {
+    hasTerms = true;
+    termsHtml += `
+        <div class="terms-category">
+            <h3 class="terms-category-title">General Terms</h3>
+            <ul class="terms-list">
+                ${categories['General Terms'].map(term => 
+                  `<li class="term-item">${escapeHtml(term)}</li>`
+                ).join('')}
+            </ul>
+        </div>`;
   }
 
   termsHtml += `
-        </div>
     </div>`;
 
-  return termsHtml;
+  return hasTerms ? termsHtml : '';
 }
 
 // MAIN EXPORT: Unified contract PDF generator
@@ -389,7 +437,7 @@ export async function generateContractPDF(
           '<style>',
           `<style>
         /* AI PDF Optimization Adjustments */
-        .contract-container {
+        .container {
           ${customCSS}
         }`
         );
@@ -405,10 +453,10 @@ export async function generateContractPDF(
       format: 'A4', 
       printBackground: true,
       margin: {
-        top: '0.75in',
-        right: '0.75in',
-        bottom: '0.75in',
-        left: '0.75in'
+        top: '10mm',
+        right: '10mm', 
+        bottom: '10mm',
+        left: '10mm'
       }
     });
 
@@ -457,7 +505,7 @@ function generateUnifiedContractHTML(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Contract - ${contract.contractNumber}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
         * {
             margin: 0;
@@ -467,22 +515,18 @@ function generateUnifiedContractHTML(
 
         @page {
             size: A4;
-            margin: 15mm;
+            margin: 0;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
             line-height: 1.6;
-            color: #1f2937;
+            color: #1a1a1a;
             background: white;
-            font-size: 10pt;
+            font-size: 11pt;
         }
 
-        /* CRITICAL: Page break control classes */
-        .page-break-before {
-            page-break-before: always;
-        }
-
+        /* Page break controls */
         .avoid-break {
             page-break-inside: avoid;
             break-inside: avoid;
@@ -491,374 +535,500 @@ function generateUnifiedContractHTML(
         .keep-together {
             page-break-inside: avoid;
             break-inside: avoid;
-            orphans: 4;
-            widows: 4;
+            orphans: 3;
+            widows: 3;
         }
 
-        /* Container */
-        .contract-container {
-            max-width: 100%;
+        /* Main container */
+        .contract-wrapper {
+            width: 210mm;
+            min-height: 297mm;
             margin: 0 auto;
             background: white;
+            position: relative;
         }
 
-        /* Professional Header */
+        /* BOLD MODERN HEADER */
         .contract-header {
             background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
-            color: ${headerTextColor};
-            padding: 30px;
-            border-radius: 12px 12px 0 0;
+            padding: 40px 40px 30px;
             position: relative;
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-            page-break-after: avoid;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .header-content {
+        .contract-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(35deg);
+        }
+
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
         }
 
-        .logo-section {
-            flex-grow: 1;
+        .logo-group {
+            color: ${headerTextColor};
         }
 
         .company-name {
-            font-size: 28pt;
+            font-size: 32pt;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 4px;
+            letter-spacing: -1px;
+            line-height: 1;
+            margin-bottom: 5px;
         }
 
         .tagline {
-            font-size: 11pt;
-            opacity: 0.9;
-            font-style: italic;
-        }
-
-        .contract-title {
-            font-size: 20pt;
-            font-weight: 700;
-            margin-top: 20px;
-            margin-bottom: 8px;
-        }
-
-        .contract-number {
-            font-size: 9pt;
+            font-size: 13pt;
             opacity: 0.85;
-            font-family: 'Courier New', monospace;
+            font-style: italic;
+            font-weight: 500;
         }
 
         .status-badge {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 9pt;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 11pt;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .status-signed {
-            background: #10b981;
-            border-color: #059669;
-            color: white;
-        }
-
-        .status-sent {
-            background: #3b82f6;
-            border-color: #2563eb;
-            color: white;
+            letter-spacing: 1.5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .status-draft {
-            background: #6b7280;
-            border-color: #4b5563;
-            color: white;
+            background: #fbbf24;
+            color: #78350f;
         }
 
-        /* Content sections with page break control */
-        .section {
+        .status-sent {
+            background: #60a5fa;
+            color: #1e3a8a;
+        }
+
+        .status-signed {
+            background: #34d399;
+            color: #064e3b;
+        }
+
+        .header-main {
+            position: relative;
+            z-index: 1;
+        }
+
+        .contract-title {
+            font-size: 36pt;
+            font-weight: 800;
+            color: ${headerTextColor};
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .contract-number {
+            font-size: 10pt;
+            color: ${headerTextColor};
+            opacity: 0.8;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        /* Content area */
+        .contract-content {
+            padding: 40px;
+        }
+
+        /* Section headers with numbers */
+        .section-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 25px;
-            page-break-inside: avoid;
+            position: relative;
         }
 
-        .section-title {
-            font-size: 14pt;
+        .section-number {
+            background: ${primaryColor};
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
-            color: #111827;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid ${primaryColor};
-            page-break-after: avoid;
+            font-size: 14pt;
+            margin-right: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
         }
 
-        /* Two-column party section */
-        .parties-grid {
+        .section-title-text {
+            font-size: 18pt;
+            font-weight: 700;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50px;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, ${primaryColor}, transparent);
+        }
+
+        /* MODERN CARD LAYOUTS */
+        .parties-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
+            gap: 25px;
+            margin: 30px 0;
         }
 
         .party-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            border-left: 3px solid ${primaryColor};
-            page-break-inside: avoid;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
         }
 
-        .party-label {
-            font-size: 9pt;
+        .party-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: ${primaryColor};
+        }
+
+        .party-type {
+            font-size: 10pt;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6b7280;
-            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            color: ${primaryColor};
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .party-icon {
+            font-size: 16pt;
+            margin-right: 10px;
         }
 
         .party-name {
-            font-size: 11pt;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 8px;
+            font-size: 14pt;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 12px;
         }
 
         .party-details {
-            font-size: 9pt;
+            font-size: 10pt;
             color: #4b5563;
-            line-height: 1.5;
+            line-height: 1.8;
         }
 
-        /* Event details cards */
+        .party-details strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        /* Performance details grid */
         .details-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
+            gap: 20px;
+            margin: 30px 0;
         }
 
         .detail-card {
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            page-break-inside: avoid;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .detail-card:hover {
+            border-color: ${primaryColor};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
         .detail-label {
-            font-size: 8pt;
+            font-size: 9pt;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: #6b7280;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
 
         .detail-value {
-            font-size: 11pt;
-            font-weight: 600;
-            color: #111827;
+            font-size: 14pt;
+            font-weight: 700;
+            color: #111;
         }
 
-        /* Financial section */
-        .financial-section {
-            background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
-            border: 2px solid ${primaryColor};
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        /* FINANCIAL SECTION - BOLD & MODERN */
+        .financial-container {
+            background: linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}10 100%);
+            border: 3px solid ${primaryColor};
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         }
 
-        .payment-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .payment-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
+        .financial-title {
             text-align: center;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 16pt;
+            font-weight: 700;
+            color: ${primaryColor};
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .payment-boxes {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+        }
+
+        .payment-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 2px solid transparent;
+        }
+
+        .payment-box.highlight {
+            border-color: ${primaryColor};
+            transform: scale(1.05);
         }
 
         .payment-label {
-            font-size: 8pt;
+            font-size: 9pt;
             font-weight: 600;
             text-transform: uppercase;
             color: #6b7280;
-            margin-bottom: 4px;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
         }
 
         .payment-amount {
-            font-size: 16pt;
-            font-weight: 700;
-            color: #111827;
+            font-size: 24pt;
+            font-weight: 800;
+            color: ${primaryColor};
+            line-height: 1;
         }
 
-        /* Terms section with smart breaks */
-        .terms-container {
+        .payment-note {
+            font-size: 8pt;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        /* Requirements section */
+        .requirements-container {
+            margin: 30px 0;
+        }
+
+        .requirement-box {
+            background: #fef3c7;
+            border-left: 5px solid #f59e0b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .requirement-title {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .requirement-text {
+            font-size: 10pt;
+            color: #78350f;
+            line-height: 1.8;
+        }
+
+        /* TERMS SECTION - CLEAN & ORGANIZED */
+        .terms-section-container {
+            margin: 40px 0;
             page-break-inside: auto;
         }
 
         .terms-category {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
             page-break-inside: avoid;
-            break-inside: avoid;
         }
 
         .terms-category-title {
-            font-size: 11pt;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 10px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #e5e7eb;
-            page-break-after: avoid;
+            font-size: 12pt;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid ${primaryColor}30;
         }
 
         .terms-list {
-            background: #f9fafb;
-            border-radius: 6px;
-            padding: 12px;
-            border-left: 3px solid ${primaryColor};
+            list-style: none;
+            padding: 0;
         }
 
         .term-item {
             position: relative;
-            padding-left: 20px;
-            margin-bottom: 8px;
-            font-size: 9pt;
+            padding-left: 30px;
+            margin-bottom: 12px;
+            font-size: 10pt;
             color: #4b5563;
-            line-height: 1.5;
+            line-height: 1.8;
             page-break-inside: avoid;
         }
 
-        .term-item:before {
-            content: "✓";
+        .term-item::before {
+            content: '✓';
             position: absolute;
             left: 0;
-            color: ${primaryColor};
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background: ${primaryColor};
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
             font-weight: bold;
         }
 
-        .term-item:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Requirements box */
-        .requirements-section {
-            background: #fef3c7;
-            border: 1px solid #fbbf24;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
+        /* SIGNATURE SECTION - PROFESSIONAL */
+        .signature-container {
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
             page-break-inside: avoid;
         }
 
-        .requirements-title {
-            font-size: 10pt;
-            font-weight: 600;
-            color: #92400e;
-            margin-bottom: 8px;
+        .signature-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        .requirements-text {
-            font-size: 9pt;
-            color: #78350f;
-            line-height: 1.5;
-        }
-
-        /* Signature section - always keep together */
-        .signature-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px dashed #d1d5db;
-            page-break-inside: avoid;
-            page-break-before: auto;
+        .signature-title {
+            font-size: 18pt;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 10px;
         }
 
         .signature-instruction {
-            text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             color: #6b7280;
-            margin-bottom: 20px;
         }
 
         .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            page-break-inside: avoid;
+            gap: 30px;
         }
 
         .signature-box {
-            background: #f9fafb;
-            border: 2px dashed #9ca3af;
-            border-radius: 8px;
-            padding: 20px;
+            background: white;
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 30px;
             text-align: center;
-            min-height: 120px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .signature-box.signed {
-            border: 2px solid ${primaryColor};
-            background: #f0fdf4;
+            border: 3px solid ${primaryColor};
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
         }
 
-        .signature-role {
-            font-size: 9pt;
-            font-weight: 600;
+        .signer-role {
+            font-size: 10pt;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 1px;
             color: #6b7280;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
-        .signature-name {
-            font-size: 11pt;
-            font-weight: 600;
-            color: #111827;
-            margin-top: 8px;
+        .signer-name {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #111;
+            margin: 10px 0;
         }
 
         .signature-date {
-            font-size: 8pt;
+            font-size: 9pt;
             color: #6b7280;
-            margin-top: 4px;
+            margin-top: 10px;
         }
 
-        .signature-status {
-            font-size: 8pt;
+        .signature-checkmark {
             color: #10b981;
-            margin-top: 8px;
-            font-weight: 600;
+            font-size: 20pt;
+            margin-bottom: 10px;
         }
 
         /* Footer */
         .contract-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+            background: #1f2937;
+            color: white;
+            padding: 30px 40px;
             text-align: center;
-            font-size: 8pt;
-            color: #6b7280;
-            page-break-inside: avoid;
+            margin-top: 50px;
+        }
+
+        .footer-content {
+            font-size: 9pt;
+            opacity: 0.9;
+            line-height: 1.8;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            font-size: 11pt;
+            color: ${primaryColor};
         }
 
         /* Print optimizations */
@@ -872,12 +1042,11 @@ function generateUnifiedContractHTML(
                 break-after: avoid;
             }
 
-            .section {
+            .keep-together {
                 break-inside: avoid;
             }
 
-            /* Force new page before signatures if near bottom */
-            .signature-section {
+            .signature-container {
                 break-before: auto;
                 break-inside: avoid;
             }
@@ -885,145 +1054,187 @@ function generateUnifiedContractHTML(
     </style>
 </head>
 <body>
-    <div class="contract-container">
-        <!-- Header - Keep together -->
+    <div class="contract-wrapper">
+        <!-- BOLD MODERN HEADER -->
         <div class="contract-header avoid-break">
-            <div class="header-content">
-                <div class="logo-section">
+            <div class="header-top">
+                <div class="logo-group">
                     <div class="company-name">MusoBuddy</div>
                     <div class="tagline">Less admin, more music</div>
-                    <div class="contract-title">Performance Contract</div>
-                    <div class="contract-number">Contract #${contract.contractNumber}</div>
                 </div>
                 <div class="status-badge status-${contract.status}">
-                    ${contract.status.toUpperCase()}
+                    ${contract.status === 'draft' ? 'DRAFT' : contract.status === 'sent' ? 'SENT' : 'EXECUTED'}
                 </div>
+            </div>
+            <div class="header-main">
+                <h1 class="contract-title">Performance Contract</h1>
+                <div class="contract-number">Contract #${contract.contractNumber}</div>
             </div>
         </div>
 
-        <!-- Contract Parties - Keep together -->
-        <div class="section keep-together">
-            <h2 class="section-title">Contract Parties</h2>
-            <div class="parties-grid">
-                <div class="party-card">
-                    <div class="party-label">🎵 Performer</div>
-                    <div class="party-name">${businessName}</div>
-                    <div class="party-details">
-                        ${userSettings?.businessEmail ? `${userSettings.businessEmail}<br>` : ''}
-                        ${userSettings?.phone ? `${userSettings.phone}<br>` : ''}
-                        ${formatBusinessAddress(userSettings)}
+        <div class="contract-content">
+            <!-- CONTRACT PARTIES -->
+            <div class="keep-together">
+                <h2 class="section-header">
+                    <span class="section-number">01</span>
+                    <span class="section-title-text">Contract Parties</span>
+                </h2>
+
+                <div class="parties-container">
+                    <div class="party-card">
+                        <div class="party-type">
+                            <span class="party-icon">🎵</span>
+                            PERFORMER
+                        </div>
+                        <div class="party-name">${businessName}</div>
+                        <div class="party-details">
+                            ${userSettings?.businessEmail ? `<strong>Email:</strong> ${userSettings.businessEmail}<br>` : ''}
+                            ${userSettings?.phone ? `<strong>Phone:</strong> ${userSettings.phone}<br>` : ''}
+                            ${userSettings ? `<strong>Address:</strong><br>${formatBusinessAddress(userSettings)}` : ''}
+                        </div>
                     </div>
-                </div>
-                <div class="party-card">
-                    <div class="party-label">👤 Client</div>
-                    <div class="party-name">${contract.clientName || 'Client Name TBC'}</div>
-                    <div class="party-details">
-                        ${contract.clientEmail ? `${contract.clientEmail}<br>` : ''}
-                        ${contract.clientPhone ? `${contract.clientPhone}<br>` : ''}
-                        ${contract.clientAddress ? contract.clientAddress.replace(/\n/g, '<br>') : ''}
+
+                    <div class="party-card">
+                        <div class="party-type">
+                            <span class="party-icon">👤</span>
+                            CLIENT
+                        </div>
+                        <div class="party-name">${contract.clientName || 'Client Name TBC'}</div>
+                        <div class="party-details">
+                            ${contract.clientEmail ? `<strong>Email:</strong> ${contract.clientEmail}<br>` : ''}
+                            ${contract.clientPhone ? `<strong>Phone:</strong> ${contract.clientPhone}<br>` : ''}
+                            ${contract.clientAddress ? `<strong>Address:</strong><br>${contract.clientAddress.replace(/\n/g, '<br>')}` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Performance Details - Keep together -->
-        <div class="section keep-together">
-            <h2 class="section-title">Performance Details</h2>
-            <div class="details-grid">
-                <div class="detail-card">
-                    <div class="detail-label">Event Date</div>
-                    <div class="detail-value">${eventDateStr}</div>
-                </div>
-                <div class="detail-card">
-                    <div class="detail-label">Performance Time</div>
-                    <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
-                </div>
-                <div class="detail-card">
-                    <div class="detail-label">Venue</div>
-                    <div class="detail-value">${contract.venue || 'TBC'}</div>
-                </div>
-                <div class="detail-card">
-                    <div class="detail-label">Venue Address</div>
-                    <div class="detail-value">${contract.venueAddress || 'See venue details'}</div>
+            <!-- PERFORMANCE DETAILS -->
+            <div class="keep-together">
+                <h2 class="section-header">
+                    <span class="section-number">02</span>
+                    <span class="section-title-text">Performance Details</span>
+                </h2>
+
+                <div class="details-grid">
+                    <div class="detail-card">
+                        <div class="detail-label">📅 Event Date</div>
+                        <div class="detail-value">${eventDateStr.split(',')[0]}<br><span style="font-size: 11pt; font-weight: 500;">${eventDateStr.split(',').slice(1).join(',')}</span></div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">⏰ Performance Time</div>
+                        <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">📍 Venue</div>
+                        <div class="detail-value">${contract.venue || 'Venue TBC'}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">🗺️ Venue Address</div>
+                        <div class="detail-value" style="font-size: 11pt;">${contract.venueAddress || 'Address TBC'}</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Financial Terms - Keep together -->
-        <div class="section keep-together">
-            <h2 class="section-title">Financial Terms</h2>
-            <div class="financial-section">
-                <div class="payment-grid">
-                    <div class="payment-item">
-                        <div class="payment-label">Total Fee</div>
-                        <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
+            <!-- FINANCIAL TERMS -->
+            <div class="keep-together">
+                <h2 class="section-header">
+                    <span class="section-number">03</span>
+                    <span class="section-title-text">Financial Terms</span>
+                </h2>
+
+                <div class="financial-container">
+                    <h3 class="financial-title">Performance Fee Structure</h3>
+                    <div class="payment-boxes">
+                        <div class="payment-box ${depositAmount === 0 ? 'highlight' : ''}">
+                            <div class="payment-label">Total Performance Fee</div>
+                            <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
+                        </div>
+                        ${depositAmount > 0 ? `
+                        <div class="payment-box">
+                            <div class="payment-label">Deposit Required</div>
+                            <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
+                            <div class="payment-note">Non-refundable</div>
+                        </div>
+                        <div class="payment-box highlight">
+                            <div class="payment-label">Balance Due</div>
+                            <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
+                            <div class="payment-note">On performance day</div>
+                        </div>
+                        ` : ''}
                     </div>
-                    ${depositAmount > 0 ? `
-                    <div class="payment-item">
-                        <div class="payment-label">Deposit</div>
-                        <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
+                </div>
+            </div>
+
+            <!-- PERFORMANCE REQUIREMENTS -->
+            ${(contract.equipmentRequirements || contract.specialRequirements) ? `
+            <div class="keep-together">
+                <h2 class="section-header">
+                    <span class="section-number">04</span>
+                    <span class="section-title-text">Performance Requirements</span>
+                </h2>
+
+                <div class="requirements-container">
+                    ${contract.equipmentRequirements ? `
+                    <div class="requirement-box">
+                        <div class="requirement-title">🎤 Equipment Requirements</div>
+                        <div class="requirement-text">${contract.equipmentRequirements.replace(/\n/g, '<br>')}</div>
                     </div>
-                    <div class="payment-item">
-                        <div class="payment-label">Balance</div>
-                        <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
+                    ` : ''}
+                    ${contract.specialRequirements ? `
+                    <div class="requirement-box">
+                        <div class="requirement-title">⭐ Special Requirements</div>
+                        <div class="requirement-text">${contract.specialRequirements.replace(/\n/g, '<br>')}</div>
                     </div>
                     ` : ''}
                 </div>
             </div>
-        </div>
-
-        <!-- Requirements if any -->
-        ${(contract.equipmentRequirements || contract.specialRequirements) ? `
-        <div class="section keep-together">
-            <h2 class="section-title">Performance Requirements</h2>
-            ${contract.equipmentRequirements ? `
-            <div class="requirements-section">
-                <div class="requirements-title">Equipment Requirements</div>
-                <div class="requirements-text">${contract.equipmentRequirements.replace(/\n/g, '<br>')}</div>
-            </div>
             ` : ''}
-            ${contract.specialRequirements ? `
-            <div class="requirements-section">
-                <div class="requirements-title">Special Requirements</div>
-                <div class="requirements-text">${contract.specialRequirements.replace(/\n/g, '<br>')}</div>
-            </div>
-            ` : ''}
-        </div>
-        ` : ''}
 
-        <!-- Terms & Conditions - Smart breaking -->
-        ${userSettings?.themeShowTerms !== false ? generateTermsSection(userSettings, contract) : ''}
+            <!-- TERMS & CONDITIONS -->
+            ${userSettings?.themeShowTerms !== false ? generateTermsSection(userSettings, contract) : ''}
 
-        <!-- Signatures - Always keep together -->
-        <div class="signature-section keep-together">
-            <h2 class="section-title">Digital Signatures</h2>
-            <p class="signature-instruction">
-                By signing below, both parties agree to the terms and conditions set forth in this contract.
-            </p>
-            <div class="signature-grid">
-                <div class="signature-box signed">
-                    <div class="signature-role">Performer</div>
-                    <div class="signature-name">${businessName}</div>
-                    <div class="signature-date">Signed on ${new Date(contract.createdAt || new Date()).toLocaleDateString('en-GB')}</div>
-                    <div class="signature-status">✓ Digitally Signed</div>
+            <!-- SIGNATURE SECTION -->
+            <div class="signature-container keep-together">
+                <div class="signature-header">
+                    <h2 class="signature-title">Digital Signatures</h2>
+                    <p class="signature-instruction">
+                        By signing below, both parties agree to the terms and conditions set forth in this contract.
+                    </p>
                 </div>
-                <div class="signature-box ${isSigned ? 'signed' : ''}">
-                    <div class="signature-role">Client</div>
-                    <div class="signature-name">${isSigned ? signatureName : contract.clientName}</div>
-                    ${isSigned && signedAt ? `
-                        <div class="signature-date">Signed on ${signedAt.toLocaleDateString('en-GB')}</div>
-                        <div class="signature-status">✓ Digitally Signed</div>
-                    ` : `
-                        <div class="signature-date">Awaiting signature</div>
-                    `}
+
+                <div class="signature-grid">
+                    <div class="signature-box signed">
+                        <div class="signature-checkmark">✓</div>
+                        <div class="signer-role">PERFORMER</div>
+                        <div class="signer-name">${businessName}</div>
+                        <div class="signature-date">
+                            Digitally signed on ${new Date(contract.createdAt || new Date()).toLocaleDateString('en-GB')}
+                        </div>
+                    </div>
+
+                    <div class="signature-box ${isSigned ? 'signed' : ''}">
+                        ${isSigned ? '<div class="signature-checkmark">✓</div>' : ''}
+                        <div class="signer-role">CLIENT</div>
+                        <div class="signer-name">${isSigned ? signatureName : contract.clientName}</div>
+                        <div class="signature-date">
+                            ${isSigned && signedAt ? 
+                                `Digitally signed on ${signedAt.toLocaleDateString('en-GB')}` : 
+                                'Awaiting signature'
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
+        <!-- FOOTER -->
         <div class="contract-footer avoid-break">
-            Generated on ${new Date().toLocaleDateString('en-GB')} • 
-            <strong>MusoBuddy</strong> - Less admin, more music
+            <div class="footer-content">
+                Contract generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}<br>
+                <span class="footer-brand">MusoBuddy</span> • Professional Music Business Management<br>
+                Empowering musicians with professional business tools
+            </div>
         </div>
     </div>
 </body>
