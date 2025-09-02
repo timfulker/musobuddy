@@ -331,15 +331,15 @@ export function registerIsolatedRoutes(app: Express) {
       }
 
       const userSettings = await storage.getSettings(contract.userId);
-      const { generateAIContractPDF } = await import('../ai-powered-contract-pdf');
-      
       const signatureDetails = contract.status === 'signed' ? {
         signedAt: new Date(contract.signedAt || contract.updatedAt || new Date()),
         signatureName: contract.clientSignature || 'Digital Signature',
         clientIpAddress: contract.clientIpAddress || undefined
       } : undefined;
       
-      const pdfBuffer = await generateAIContractPDF(contract, userSettings, signatureDetails);
+      // Use the services layer to avoid duplicate Puppeteer instances
+      const { EmailService } = await import('../core/services');
+      const pdfBuffer = await EmailService.generateContractPDF(contract, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}${contract.status === 'signed' ? '-Signed' : ''}.pdf"`);

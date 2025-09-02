@@ -118,11 +118,10 @@ export async function uploadContractToCloud(
   try {
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
-    // Generate PDF using the AI-POWERED contract PDF generator with signature data
-    console.log('🤖 Importing AI-POWERED contract PDF generator...');
-    const { generateAIContractPDF } = await import('../ai-powered-contract-pdf');
-    console.log('📄 Generating contract PDF with AI generator (no wasted API calls)...');
-    const pdfBuffer = await generateAIContractPDF(contract, userSettings, signatureDetails);
+    // Use the services layer (which now handles Sonnet template)
+    console.log('🎨 Using services layer with Sonnet template...');
+    const { EmailService } = await import('./services');
+    const pdfBuffer = await EmailService.generateContractPDF(contract, userSettings);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
     

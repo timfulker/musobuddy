@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Contract</title>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-light: #c4b5fd;
+            --gray: #64748b;
+            --light-gray: #f1f5f9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: #fff;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .contract-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--primary-light);
+        }
+
+        .logo {
+            color: var(--primary);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .contract-status {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .contract-number {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .detail-group {
+            margin-bottom: 1rem;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+        }
+
+        .terms {
+            margin-top: 2rem;
+        }
+
+        .terms ul {
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+
+        .terms li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .terms li::before {
+            content: "•";
+            color: var(--primary);
+            position: absolute;
+            left: -1rem;
+        }
+
+        .signatures {
+            margin-top: 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .signature-box {
+            border-top: 1px solid var(--gray);
+            padding-top: 1rem;
+        }
+
+        .signature-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .financial {
+            background: white;
+            border: 2px solid var(--primary-light);
+        }
+
+        .amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+            
+            .section {
+                break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .signatures {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-status">DRAFT</div>
+    
+    <header class="contract-header">
+        <div class="logo">MusoBuddy</div>
+        <div class="tagline">Less admin, more music</div>
+        <div class="contract-number">Contract #: 30/08/2025 - Kelly Boyd</div>
+    </header>
+
+    <div class="section">
+        <h2 class="section-title">📋 Contract Details</h2>
+        <div class="grid">
+            <div>
+                <div class="detail-group">
+                    <div class="detail-label">Client</div>
+                    <div class="detail-value">Kelly Boyd</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">timfulker@gmail.com</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value">07989676155</div>
+                </div>
+            </div>
+            <div>
+                <div class="detail-group">
+                    <div class="detail-label">Business</div>
+                    <div class="detail-value">Tim Fulker Music</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">timfulkermusic@gmail.com</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value">07764190034</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">📅 Event Details</h2>
+        <div class="grid">
+            <div>
+                <div class="detail-group">
+                    <div class="detail-label">Date</div>
+                    <div class="detail-value">Saturday, 30 August 2025</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Time</div>
+                    <div class="detail-value">19:00 - 22:00</div>
+                </div>
+            </div>
+            <div>
+                <div class="detail-group">
+                    <div class="detail-label">Venue</div>
+                    <div class="detail-value">Kelly's House</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Address</div>
+                    <div class="detail-value">94, Hambledon Road, Waterlooville, PO7 6UP</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section financial">
+        <h2 class="section-title">💰 Financial Terms</h2>
+        <div class="grid">
+            <div class="detail-group">
+                <div class="detail-label">Total Performance Fee</div>
+                <div class="detail-value amount">£310.00</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Deposit Required</div>
+                <div class="detail-value amount">£23.00</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Balance Due</div>
+                <div class="detail-value amount">£287.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">📝 Requirements</h2>
+        <div class="detail-group">
+            <div class="detail-label">Equipment</div>
+            <div class="detail-value">1 PA speaker</div>
+        </div>
+        <div class="detail-group">
+            <div class="detail-label">Special Requirements</div>
+            <div class="detail-value">vegan</div>
+        </div>
+    </div>
+
+    <div class="section terms">
+        <h2 class="section-title">📋 Terms & Conditions</h2>
+        <ul>
+            <li>Client must provide adequate and safe power supply</li>
+            <li>Client must provide safe and reasonable venue access for load-in/out</li>
+            <li>All equipment remains property of performer; client responsible for damage caused by guests</li>
+            <li>Performer holds Public Liability Insurance; client responsible for venue licences (PRS/PPL)</li>
+            <li>Client responsible for venue sound restrictions or curfews</li>
+            <li>Stage/performance area must be flat, covered, and safe</li>
+            <li>Client to provide suitable food and drink if performance exceeds 3 hours including setup</li>
+            <li>This Agreement becomes legally binding upon signature by both parties. The Client agrees to pay a non-refundable booking fee of £23.00 within 3 days of signing. The booking will not be confirmed until the booking fee is received, and the Artist reserves the right to release the date if payment is not made.</li>
+            <li>Client to cover parking fees; accommodation required if venue is over 50 miles or finish after midnight</li>
+            <li>Payment due on date of performance</li>
+            <li>Neither party liable for cancellation due to events beyond their control (illness, accidents, extreme weather, etc.)</li>
+            <li>Client must provide weather protection for outdoor events</li>
+            <li>No recording or broadcasting without performer's written consent</li>
+            <li>Contract subject to the laws of England & Wales</li>
+            <li>Final numbers must be confirmed 48 hours prior</li>
+            <li>Performer will use best efforts to provide a suitable replacement</li>
+        </ul>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-label">Client Signature</div>
+            <div class="signature-label">Date</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-label">Performer Signature</div>
+            <div class="signature-label">Date</div>
+        </div>
+    </div>
+</body>
+</html>

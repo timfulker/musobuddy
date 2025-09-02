@@ -132,41 +132,50 @@ export class EmailService {
     }
   }
 
-  // Contract PDF generation - AI-powered or template fallback
+  // Contract PDF generation using Sonnet template with FIXED page breaks
   async generateContractPDF(contract: any, userSettings: any, options?: { useAI?: boolean }): Promise<Buffer> {
-    const useAI = options?.useAI ?? true; // Default to AI system
-    
     try {
-      if (useAI) {
-        console.log('🤖 Using AI-powered contract PDF generation...');
-        const { generateAIContractPDF } = await import('../ai-powered-contract-pdf');
-        const result = await generateAIContractPDF(contract, userSettings);
-        console.log('✅ AI contract PDF generation completed, buffer size:', result.length);
-        return result;
-      } else {
-        console.log('🚀 Using template-based contract PDF generation...');
-        const { generateContractPDF } = await import('../unified-contract-pdf');
-        const result = await generateContractPDF(contract, userSettings);
-        console.log('✅ Template contract PDF generation completed, buffer size:', result.length);
-        return result;
-      }
+      console.log('🎨 Using Sonnet template with FIXED page breaks (no API calls)...');
+      
+      const { generateSonnetContractHTML } = await import('../sonnet-contract-generator');
+      const puppeteer = await import('puppeteer');
+      const chromium = await import('@sparticuz/chromium');
+      
+      const html = generateSonnetContractHTML(contract, userSettings);
+      console.log('📄 Generating PDF with fixed Sonnet template...');
+      
+      const browser = await puppeteer.default.launch({
+        args: [
+          ...chromium.default.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ],
+        defaultViewport: chromium.default.defaultViewport,
+        executablePath: await chromium.default.executablePath(),
+        headless: chromium.default.headless,
+      });
+      
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      const pdfBuffer = await page.pdf({ 
+        format: 'A4', 
+        printBackground: true,
+        margin: { top: '0.75in', right: '0.75in', bottom: '0.75in', left: '0.75in' }
+      });
+      
+      await browser.close();
+      console.log('✅ Sonnet contract with fixed page breaks completed, buffer size:', pdfBuffer.length);
+      
+      return Buffer.from(pdfBuffer);
     } catch (error: any) {
-      // Fallback to template system if AI fails
-      if (useAI) {
-        console.warn('⚠️ AI contract generation failed, falling back to template system:', error.message);
-        try {
-          const { generateContractPDF } = await import('../unified-contract-pdf');
-          const result = await generateContractPDF(contract, userSettings);
-          console.log('✅ Template fallback completed, buffer size:', result.length);
-          return result;
-        } catch (fallbackError: any) {
-          console.error('💥 Both AI and template generation failed:', fallbackError);
-          throw new Error(`Contract PDF generation failed: ${fallbackError.message}`);
-        }
-      } else {
-        console.error('💥 Template contract generation failed:', error);
-        throw new Error(`Contract PDF generation failed: ${error.message}`);
-      }
+      console.error('💥 Sonnet contract generation failed:', error);
+      throw new Error(`Contract PDF generation failed: ${error.message}`);
     }
   }
 
