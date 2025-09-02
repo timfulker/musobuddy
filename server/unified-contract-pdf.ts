@@ -130,29 +130,117 @@ function getTermsSection(userSettings: UserSettings | null): string {
   }
   const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
   
+  // Group terms by category for better organization (matching signing page)
+  const paymentTerms: string[] = [];
+  const performanceTerms: string[] = [];
+  const cancellationTerms: string[] = [];
+  const generalTerms: string[] = [];
+  
+  // Categorize each clause based on keywords
+  allClauses.forEach(clause => {
+    const lowerClause = clause.toLowerCase();
+    if (lowerClause.includes('payment') || lowerClause.includes('deposit') || lowerClause.includes('fee') || 
+        lowerClause.includes('£') || lowerClause.includes('charged') || lowerClause.includes('overtime')) {
+      paymentTerms.push(clause);
+    } else if (lowerClause.includes('cancellation') || lowerClause.includes('cancel') || 
+               lowerClause.includes('reschedul') || lowerClause.includes('refund')) {
+      cancellationTerms.push(clause);
+    } else if (lowerClause.includes('performance') || lowerClause.includes('equipment') || 
+               lowerClause.includes('venue') || lowerClause.includes('stage') || lowerClause.includes('setup') ||
+               lowerClause.includes('access') || lowerClause.includes('power') || lowerClause.includes('sound')) {
+      performanceTerms.push(clause);
+    } else {
+      generalTerms.push(clause);
+    }
+  });
+  
   let termsHtml = '';
   
-  // If user has selected clauses or legacy defaultTerms, use them
+  // If user has selected clauses, organize them into categories
   if (allClauses.length > 0) {
-    const escapedClauses = allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>');
     termsHtml = `
     <!-- Terms & Conditions -->
     <div class="section">
-        <h2 class="section-title">Terms & Conditions</h2>
+        <h2 class="section-title">Terms & Conditions</h2>`;
+    
+    // Add Performance & Equipment section if there are terms
+    if (performanceTerms.length > 0) {
+      termsHtml += `
+        <div class="terms-subsection">
+          <h3 class="terms-subtitle">Performance & Equipment</h3>
+          <div class="requirements-box">
+            ${performanceTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
+          </div>
+        </div>`;
+    }
+    
+    // Add Payment Terms section if there are terms
+    if (paymentTerms.length > 0) {
+      termsHtml += `
+        <div class="terms-subsection">
+          <h3 class="terms-subtitle">Payment Terms</h3>
+          <div class="requirements-box">
+            ${paymentTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
+          </div>
+        </div>`;
+    }
+    
+    // Add Cancellation & Rescheduling section if there are terms
+    if (cancellationTerms.length > 0) {
+      termsHtml += `
+        <div class="terms-subsection">
+          <h3 class="terms-subtitle">Cancellation & Rescheduling</h3>
+          <div class="requirements-box">
+            ${cancellationTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
+          </div>
+        </div>`;
+    }
+    
+    // Add General Terms section if there are terms
+    if (generalTerms.length > 0) {
+      termsHtml += `
+        <div class="terms-subsection">
+          <h3 class="terms-subtitle">General Terms</h3>
+          <div class="requirements-box">
+            ${generalTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
+          </div>
+        </div>`;
+    }
+    
+    // If no categorization happened (shouldn't occur), fall back to simple list
+    if (performanceTerms.length === 0 && paymentTerms.length === 0 && 
+        cancellationTerms.length === 0 && generalTerms.length === 0) {
+      termsHtml += `
         <div class="terms-section">
           <div class="requirements-box">
-            ${escapedClauses}
+            ${allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>')}
           </div>
-        </div>
+        </div>`;
+    }
+    
+    termsHtml += `
     </div>`;
   } else {
+    // Fallback to default terms if no custom terms are configured
+    const defaultTerms = [
+      "Payment due within 30 days of performance",
+      "50% deposit required to secure booking (non-refundable)",
+      "Cancellations within 7 days forfeit deposit",
+      "All equipment remains property of performer",
+      "Client must provide adequate and safe power supply",
+      "Client must provide safe and reasonable venue access for load-in/out",
+      "Client must provide weather protection for outdoor events",
+      "No recording or broadcasting without performer's written consent",
+      "Neither party liable for cancellation due to events beyond their control"
+    ];
+    
     termsHtml = `
     <!-- Terms & Conditions -->
     <div class="section">
         <h2 class="section-title">Terms & Conditions</h2>
         <div class="terms-section">
           <div class="requirements-box">
-            ${escapedTerms}
+            ${defaultTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
           </div>
         </div>
     </div>`;
@@ -744,11 +832,21 @@ function generateUnifiedContractHTML(
             margin-top: 20px;
         }
         
+        .terms-subsection {
+            margin-bottom: 25px;
+        }
+        
+        .terms-subsection:last-child {
+            margin-bottom: 0;
+        }
+        
         .terms-subtitle {
             font-size: 16px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 10px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e5e7eb;
         }
         
         .terms-list {
@@ -780,7 +878,8 @@ function generateUnifiedContractHTML(
             border-left: 4px solid \${primaryColor};
             border: 1px solid #e2e8f0;
             color: #4a5568;
-            line-height: 1.6;
+            line-height: 1.8;
+            font-size: 15px;
         }
         
 

@@ -1,5 +1,5 @@
 # Overview
-MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burdens, improve communication, and provide comprehensive tools for financial and logistical management within the music industry. The project aims to become a global standard for career management for independent musicians and small-to-medium music enterprises, offering a robust solution for streamlined operations.
+MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burdens, improve communication, and provide comprehensive tools for financial and logistical management within the music industry. The project aims to become a global standard for career management for independent musicians and small-to-medium music enterprises, offering a robust solution for streamlined operations and significant market potential.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -7,7 +7,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
 Email notifications: Both client AND performer receive confirmation emails when contracts are signed.
 SMS notifications: Premium feature only due to Twilio costs - Core plan users get email notifications, Premium users can enable SMS notifications for critical alerts (new bookings, overdue payments).
-Problem-solving approach: When user reports "X was working last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
+Problem-solving approach: When user reports "X was working last last week but now it's broken" - FIND and RESTORE the original working system rather than rebuilding from scratch. This avoids creating conflicting duplicate systems.
 Authentication system: DO NOT rebuild authentication system from scratch - causes more problems than ironically creating conflicting duplicate systems. Make minimal surgical fixes only.
 Lead email format: User prefers clean email format without "leads" prefix - uses `prefix@enquiries.musobuddy.com` instead of `prefix-leads@mg.musobuddy.com`.
 Theme auto-save: User expects theme changes to automatically save to database when selected in UI, not require manual "Save" button click. Frontend theme updates immediately but database sync needs to happen automatically for PDF generation consistency.
