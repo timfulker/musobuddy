@@ -132,22 +132,41 @@ export class EmailService {
     }
   }
 
-  // Contract PDF generation using professional template
-  async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
+  // Contract PDF generation - AI-powered or template fallback
+  async generateContractPDF(contract: any, userSettings: any, options?: { useAI?: boolean }): Promise<Buffer> {
+    const useAI = options?.useAI ?? true; // Default to AI system
+    
     try {
-      console.log('🚀 Calling professional contract PDF generator...');
-      
-      const { generateContractPDF } = await import('../unified-contract-pdf');
-      console.log('✅ Professional contract PDF generator imported successfully');
-      
-      console.log('🎯 Generating professional contract PDF...');
-      const result = await generateContractPDF(contract, userSettings);
-      console.log('✅ Professional contract PDF generation completed, buffer size:', result.length);
-      
-      return result;
+      if (useAI) {
+        console.log('🤖 Using AI-powered contract PDF generation...');
+        const { generateAIContractPDF } = await import('../ai-powered-contract-pdf');
+        const result = await generateAIContractPDF(contract, userSettings);
+        console.log('✅ AI contract PDF generation completed, buffer size:', result.length);
+        return result;
+      } else {
+        console.log('🚀 Using template-based contract PDF generation...');
+        const { generateContractPDF } = await import('../unified-contract-pdf');
+        const result = await generateContractPDF(contract, userSettings);
+        console.log('✅ Template contract PDF generation completed, buffer size:', result.length);
+        return result;
+      }
     } catch (error: any) {
-      console.error('💥 CRITICAL ERROR in generateContractPDF:', error);
-      throw new Error(`Contract PDF generation failed: ${error.message}`);
+      // Fallback to template system if AI fails
+      if (useAI) {
+        console.warn('⚠️ AI contract generation failed, falling back to template system:', error.message);
+        try {
+          const { generateContractPDF } = await import('../unified-contract-pdf');
+          const result = await generateContractPDF(contract, userSettings);
+          console.log('✅ Template fallback completed, buffer size:', result.length);
+          return result;
+        } catch (fallbackError: any) {
+          console.error('💥 Both AI and template generation failed:', fallbackError);
+          throw new Error(`Contract PDF generation failed: ${fallbackError.message}`);
+        }
+      } else {
+        console.error('💥 Template contract generation failed:', error);
+        throw new Error(`Contract PDF generation failed: ${error.message}`);
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { registerContractRoutes } from "./contract-routes";
+import { registerAIContractTestRoutes } from "./ai-contract-test-routes";
 import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
 import { registerSettingsRoutes } from "./settings-routes";
@@ -45,6 +46,12 @@ export async function registerRoutes(app: Express) {
   
   // Register all other route modules
   await registerContractRoutes(app);
+  
+  // Register AI contract test routes (development only)
+  if (process.env.NODE_ENV === 'development') {
+    registerAIContractTestRoutes(app);
+  }
+  
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
   

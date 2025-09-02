@@ -10,7 +10,9 @@
       "Bash(npx tsx:*)",
       "Bash(npm run build:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY node test-ai-contract.mjs)",
+      "Bash(npx ts-node:*)"
     ],
     "deny": [],
     "ask": [],
