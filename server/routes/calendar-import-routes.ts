@@ -113,13 +113,22 @@ export function registerCalendarImportRoutes(app: Express) {
           try {
             // Skip events without a start date
             if (!event.start) {
+              console.log(`⏭️ Skipping event without start date: ${event.summary}`);
               skipped++;
               continue;
             }
 
             // Convert event to booking format
+            console.log(`📅 Processing event: ${event.summary}, start: ${event.start}`);
             const eventDate = new Date(event.start);
             const endDate = event.end ? new Date(event.end) : null;
+            
+            // Check if date parsing worked correctly
+            if (isNaN(eventDate.getTime())) {
+              console.log(`❌ Failed to parse date for event: ${event.summary}, raw start: ${event.start}`);
+              errors++;
+              continue;
+            }
             
             // Extract time from datetime
             let eventTime = null;
@@ -152,6 +161,13 @@ export function registerCalendarImportRoutes(app: Express) {
               status: 'confirmed' as const,
               source: 'calendar_import'
             };
+            
+            console.log(`📅 Booking data prepared:`, {
+              date: bookingData.eventDate,
+              time: bookingData.eventTime,
+              name: bookingData.clientName,
+              venue: bookingData.venue
+            });
 
             // ENHANCED duplicate checking - multi-layer detection to prevent manual re-imports
             // Since Google Calendar sync is removed, users will manually import .ics files repeatedly
@@ -193,15 +209,16 @@ export function registerCalendarImportRoutes(app: Express) {
             });
 
             if (isDuplicate) {
-              console.log(`⏭️ Skipping duplicate event: ${event.summary} on ${bookingData.eventDate} at ${eventTime || 'all day'}`);
+              console.log(`⏭️ DUPLICATE DETECTED - Skipping: ${event.summary} on ${bookingData.eventDate} at ${bookingData.eventTime || 'all day'}`);
               skipped++;
               continue;
             }
 
+            console.log(`✅ No duplicate found, creating booking...`);
             // Create the booking - method only takes one parameter (the bookingData with userId included)
             await storage.createBooking(bookingData);
             imported++;
-            console.log(`✅ Imported event: ${event.summary} on ${bookingData.eventDate}`);
+            console.log(`✅ Successfully imported: ${event.summary} on ${bookingData.eventDate}`);
 
           } catch (eventError) {
             console.error(`❌ Failed to import event ${event.summary}:`, eventError);
