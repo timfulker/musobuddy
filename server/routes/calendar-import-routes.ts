@@ -169,12 +169,16 @@ export function registerCalendarImportRoutes(app: Express) {
             // Create booking from calendar event with proper user_id
             const bookingData = {
               userId: userId, // Explicitly include user_id
+              title: event.summary || 'Imported Event', // REQUIRED field - must be set
               clientName: event.summary || 'Imported Event',
               clientEmail: event.organizer || '',
               clientPhone: '',
               eventDate: eventDate.toISOString().split('T')[0],
               eventTime: eventTime,
-              duration: duration,
+              eventEndTime: endDate && !event.start.dateOnly 
+                ? `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}` 
+                : null,
+              performanceDuration: duration ? `${duration} hours` : null,
               venue: event.location || '',
               venueAddress: event.location || '',
               eventType: 'Imported from Calendar',
@@ -195,9 +199,13 @@ export function registerCalendarImportRoutes(app: Express) {
             // ENHANCED duplicate checking - multi-layer detection to prevent manual re-imports
             // Since Google Calendar sync is removed, users will manually import .ics files repeatedly
             // We need VERY robust duplicate detection to prevent database pollution
-            const existingBookings = await storage.getBookingsByUser(userId);
+            const existingBookings = await storage.getBookings(userId);
             const isDuplicate = existingBookings.some(booking => {
-              const sameDate = booking.eventDate === bookingData.eventDate;
+              // Convert booking.eventDate to string for comparison if it's a Date object
+              const bookingDateStr = booking.eventDate instanceof Date 
+                ? booking.eventDate.toISOString().split('T')[0]
+                : booking.eventDate;
+              const sameDate = bookingDateStr === bookingData.eventDate;
               const sameTime = booking.eventTime === bookingData.eventTime;
               const sameName = booking.clientName?.toLowerCase().trim() === bookingData.clientName?.toLowerCase().trim();
               const sameVenue = booking.venue?.toLowerCase().trim() === bookingData.venue?.toLowerCase().trim();
@@ -239,9 +247,16 @@ export function registerCalendarImportRoutes(app: Express) {
 
             console.log(`✅ No duplicate found, creating booking...`);
             // Create the booking - method only takes one parameter (the bookingData with userId included)
-            await storage.createBooking(bookingData);
-            imported++;
-            console.log(`✅ Successfully imported: ${event.summary} on ${bookingData.eventDate}`);
+            try {
+              const createdBooking = await storage.createBooking(bookingData);
+              imported++;
+              console.log(`✅ Successfully imported: ${event.summary} on ${bookingData.eventDate} with ID: ${createdBooking?.id}`);
+            } catch (dbError) {
+              console.error(`❌❌❌ DATABASE ERROR creating booking for "${event.summary}":`, dbError);
+              console.error(`❌❌❌ Failed booking data:`, JSON.stringify(bookingData, null, 2));
+              errors++;
+              continue;
+            }
 
           } catch (eventError) {
             console.error(`❌❌❌ CRITICAL ERROR importing event "${event.summary}":`, eventError);
@@ -267,10 +282,12 @@ export function registerCalendarImportRoutes(app: Express) {
         });
 
       } catch (error) {
-        console.error('❌ Calendar import failed:', error);
+        console.error('❌❌❌ FATAL: Calendar import failed:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({ 
           error: 'Failed to import calendar', 
-          details: error.message 
+          details: error.message,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
       }
     }
