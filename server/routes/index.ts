@@ -45,7 +45,6 @@ export async function registerRoutes(app: Express) {
   
   // Register all other route modules
   await registerContractRoutes(app);
-  
   await registerInvoiceRoutes(app);
   await registerBookingRoutes(app);
   
