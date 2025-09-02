@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { registerContractRoutes } from "./contract-routes";
-import { registerAIContractTestRoutes } from "./ai-contract-test-routes";
 import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
 import { registerSettingsRoutes } from "./settings-routes";
