@@ -389,7 +389,7 @@ export async function generateContractPDF(
           '<style>',
           `<style>
         /* AI PDF Optimization Adjustments */
-        .container {
+        .contract-container {
           ${customCSS}
         }`
         );
