@@ -62,15 +62,35 @@ function getMinutesDifference(time1: string, time2: string): number {
 }
 
 export function registerCalendarImportRoutes(app: Express) {
+  console.log('📅 [CALENDAR ROUTES] Registering calendar import routes...');
+  
   // Debug middleware to check if route is hit
   app.post('/api/calendar/import',
     (req, res, next) => {
-      console.log('🔍 Calendar import route hit');
-      console.log('🔍 Headers:', req.headers);
-      console.log('🔍 Has Authorization header:', !!req.headers.authorization);
+      console.log('🔍 [CALENDAR IMPORT] Route hit - incoming request');
+      console.log('🔍 [CALENDAR IMPORT] Method:', req.method);
+      console.log('🔍 [CALENDAR IMPORT] URL:', req.url);
+      console.log('🔍 [CALENDAR IMPORT] Content-Type:', req.headers['content-type']);
+      console.log('🔍 [CALENDAR IMPORT] Has Authorization header:', !!req.headers.authorization);
+      next();
+    },
+    (req, res, next) => {
+      console.log('🔍 [CALENDAR IMPORT] Before multer middleware');
       next();
     },
     upload.single('icsFile'),
+    (req, res, next) => {
+      console.log('🔍 [CALENDAR IMPORT] After multer middleware');
+      console.log('🔍 [CALENDAR IMPORT] File present:', !!req.file);
+      if (req.file) {
+        console.log('🔍 [CALENDAR IMPORT] File details:', {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        });
+      }
+      next();
+    },
     authenticateWithFirebase,
     async (req: AuthenticatedRequest, res) => {
       try {

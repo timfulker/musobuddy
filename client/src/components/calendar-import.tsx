@@ -27,14 +27,30 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   // Local Calendar File Import
   const fileImportMutation = useMutation({
     mutationFn: async (file: File) => {
+      console.log('📤 [CALENDAR IMPORT] Starting file upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+      
       const formData = new FormData();
       formData.append('icsFile', file);
       
-      const response = await apiRequest('/api/calendar/import', {
-        method: 'POST',
-        body: formData,
-      });
-      return response.json();
+      console.log('📤 [CALENDAR IMPORT] Making API request to /api/calendar/import');
+      
+      try {
+        const response = await apiRequest('/api/calendar/import', {
+          method: 'POST',
+          body: formData,
+        });
+        console.log('✅ [CALENDAR IMPORT] Got response:', response.status);
+        const result = await response.json();
+        console.log('✅ [CALENDAR IMPORT] Response data:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ [CALENDAR IMPORT] Request failed:', error);
+        throw error;
+      }
     },
     onSuccess: (result) => {
       setImportResult(result);
