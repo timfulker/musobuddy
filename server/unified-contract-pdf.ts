@@ -5,8 +5,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '../shared/schema';
 import { aiPDFOptimizer } from './core/ai-pdf-optimizer';
-// Import the booking calculation functions
-// Note: We'll inline the logic to avoid import issues between server and client
 
 // Simplified contract totals calculation - TRAVEL ALWAYS INCLUDED IN PERFORMANCE FEE
 function calculateContractTotals(contract: any, userSettings?: UserSettings) {
@@ -76,214 +74,6 @@ function getPaymentTermsText(paymentTerms: string): string {
   }
 }
 
-// Helper function to generate terms section (moved out of template literal to avoid parsing issues)
-function getTermsSection(userSettings: UserSettings | null, contract?: any): string {
-  // Standard clauses mapping - expanded set
-  const clauseMap = {
-    // Legacy clause names (for backward compatibility)
-    payment30: "Payment due within 30 days of performance",
-    deposit50: "50% deposit required to secure booking (non-refundable)", 
-    cancellation7: "Cancellations within 7 days forfeit deposit",
-    equipmentOwnership: "All equipment remains property of performer",
-    powerSupply: "Client must provide adequate and safe power supply",
-    venueAccess: "Client must provide safe and reasonable venue access for load-in/out",
-    weatherProtection: "Client must provide weather protection for outdoor events",
-    finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
-    noRecording: "No recording or broadcasting without performer's written consent",
-    forcemajeure: "Neither party liable for cancellation due to events beyond their control",
-    
-    // New expanded clause names
-    deposit: "50% deposit required to secure booking (non-refundable)",
-    balancePayment: "Remaining fee due before event / on the day",
-    cancellation: "Client cancellations within 7 days of event incur full fee",
-    performerCancellation: "Performer will use best efforts to provide a suitable replacement",
-    access: "Client must provide safe and reasonable venue access for load-in/out",
-    power: "Client must provide adequate and safe power supply",
-    equipment: "All equipment remains property of performer; client responsible for damage caused by guests",
-    spaceAndSafety: "Stage/performance area must be flat, covered, and safe",
-    weather: "Client must provide weather protection for outdoor events",
-    soundLimits: "Client responsible for venue sound restrictions or curfews",
-    overtime: "Extra performance time charged at £100 per 30 minutes",
-    guestNumbers: "Final numbers must be confirmed 48 hours prior",
-    mealsRefreshments: "Client to provide suitable food and drink if performance exceeds 3 hours including setup",
-    parkingTravel: "Client to cover parking fees; accommodation required if venue is over 50 miles or finish after midnight",
-    recording: "No recording or broadcasting without performer's written consent",
-    insurance: "Performer holds Public Liability Insurance; client responsible for venue licences (PRS/PPL)",
-    forceMajeure: "Neither party liable for cancellation due to events beyond their control (illness, accidents, extreme weather, etc.)",
-    governingLaw: "Contract subject to the laws of England & Wales"
-  };
-  
-  // Helper function to escape HTML
-  const escapeHtml = (text: string): string => {
-    return text
-      .split('&').join('&amp;')
-      .split('<').join('&lt;')
-      .split('>').join('&gt;')
-      .split('"').join('&quot;')
-      .split("'").join('&#39;')
-      .split('`').join('&#96;')
-      .split('$').join('&#36;');
-  };
-  
-  // Get selected standard clauses
-  const selectedClauses: string[] = [];
-  if (userSettings?.contractClauses) {
-    for (const [key, value] of Object.entries(userSettings.contractClauses)) {
-      if (value && clauseMap[key as keyof typeof clauseMap]) {
-        selectedClauses.push(clauseMap[key as keyof typeof clauseMap]);
-      }
-    }
-  }
-  
-  // Add payment terms clause if set
-  if (userSettings?.contractClauses?.paymentTerms) {
-    const paymentTermsText = getPaymentTermsText(userSettings.contractClauses.paymentTerms);
-    selectedClauses.push(paymentTermsText);
-  }
-  
-  // Get custom clauses - handle new format with {text, enabled} objects
-  const customClauses: string[] = [];
-  if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
-    userSettings.customClauses.forEach(clause => {
-      // Handle new format: {text: string, enabled: boolean}
-      if (typeof clause === 'object' && clause.text && clause.enabled) {
-        customClauses.push(clause.text);
-      }
-      // Handle legacy format: string
-      else if (typeof clause === 'string' && clause.trim()) {
-        customClauses.push(clause);
-      }
-    });
-  }
-  // Add conditional deposit clause if deposit amount is specified
-  if (contract && contract.deposit && parseFloat(contract.deposit) > 0) {
-    const depositAmount = parseFloat(contract.deposit).toFixed(2);
-    const depositDays = contract.depositDays || 7;
-    const depositClause = `This Agreement becomes legally binding upon signature by both parties. The Client agrees to pay a non-refundable booking fee of £${depositAmount} within ${depositDays} days of signing. The booking will not be confirmed until the booking fee is received, and the Artist reserves the right to release the date if payment is not made.`;
-    selectedClauses.unshift(depositClause); // Add at the beginning since it's a critical clause
-  }
-  
-  const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
-  
-  // Group terms by category for better organization (matching signing page)
-  const paymentTerms: string[] = [];
-  const performanceTerms: string[] = [];
-  const cancellationTerms: string[] = [];
-  const generalTerms: string[] = [];
-  
-  // Categorize each clause based on keywords
-  allClauses.forEach(clause => {
-    const lowerClause = clause.toLowerCase();
-    if (lowerClause.includes('payment') || lowerClause.includes('deposit') || lowerClause.includes('fee') || 
-        lowerClause.includes('£') || lowerClause.includes('charged') || lowerClause.includes('overtime')) {
-      paymentTerms.push(clause);
-    } else if (lowerClause.includes('cancellation') || lowerClause.includes('cancel') || 
-               lowerClause.includes('reschedul') || lowerClause.includes('refund')) {
-      cancellationTerms.push(clause);
-    } else if (lowerClause.includes('performance') || lowerClause.includes('equipment') || 
-               lowerClause.includes('venue') || lowerClause.includes('stage') || lowerClause.includes('setup') ||
-               lowerClause.includes('access') || lowerClause.includes('power') || lowerClause.includes('sound')) {
-      performanceTerms.push(clause);
-    } else {
-      generalTerms.push(clause);
-    }
-  });
-  
-  let termsHtml = '';
-  
-  // If user has selected clauses, organize them into categories
-  if (allClauses.length > 0) {
-    termsHtml = `
-    <!-- Terms & Conditions -->
-    <div class="section">
-        <h2 class="section-title">Terms & Conditions</h2>`;
-    
-    // Add Performance & Equipment section if there are terms
-    if (performanceTerms.length > 0) {
-      termsHtml += `
-        <div class="terms-subsection">
-          <h3 class="terms-subtitle">Performance & Equipment</h3>
-          <div class="requirements-box">
-            ${performanceTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
-          </div>
-        </div>`;
-    }
-    
-    // Add Payment Terms section if there are terms
-    if (paymentTerms.length > 0) {
-      termsHtml += `
-        <div class="terms-subsection">
-          <h3 class="terms-subtitle">Payment Terms</h3>
-          <div class="requirements-box">
-            ${paymentTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
-          </div>
-        </div>`;
-    }
-    
-    // Add Cancellation & Rescheduling section if there are terms
-    if (cancellationTerms.length > 0) {
-      termsHtml += `
-        <div class="terms-subsection">
-          <h3 class="terms-subtitle">Cancellation & Rescheduling</h3>
-          <div class="requirements-box">
-            ${cancellationTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
-          </div>
-        </div>`;
-    }
-    
-    // Add General Terms section if there are terms
-    if (generalTerms.length > 0) {
-      termsHtml += `
-        <div class="terms-subsection">
-          <h3 class="terms-subtitle">General Terms</h3>
-          <div class="requirements-box">
-            ${generalTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
-          </div>
-        </div>`;
-    }
-    
-    // If no categorization happened (shouldn't occur), fall back to simple list
-    if (performanceTerms.length === 0 && paymentTerms.length === 0 && 
-        cancellationTerms.length === 0 && generalTerms.length === 0) {
-      termsHtml += `
-        <div class="terms-section">
-          <div class="requirements-box">
-            ${allClauses.map(clause => `• ${escapeHtml(clause)}`).join('<br>')}
-          </div>
-        </div>`;
-    }
-    
-    termsHtml += `
-    </div>`;
-  } else {
-    // Fallback to default terms if no custom terms are configured
-    const defaultTerms = [
-      "Payment due within 30 days of performance",
-      "50% deposit required to secure booking (non-refundable)",
-      "Cancellations within 7 days forfeit deposit",
-      "All equipment remains property of performer",
-      "Client must provide adequate and safe power supply",
-      "Client must provide safe and reasonable venue access for load-in/out",
-      "Client must provide weather protection for outdoor events",
-      "No recording or broadcasting without performer's written consent",
-      "Neither party liable for cancellation due to events beyond their control"
-    ];
-    
-    termsHtml = `
-    <!-- Terms & Conditions -->
-    <div class="section">
-        <h2 class="section-title">Terms & Conditions</h2>
-        <div class="terms-section">
-          <div class="requirements-box">
-            ${defaultTerms.map(term => `• ${escapeHtml(term)}`).join('<br>')}
-          </div>
-        </div>
-    </div>`;
-  }
-  
-  return termsHtml;
-}
-
 function getLogoBase64(): string {
   try {
     const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-midnight-blue.png');
@@ -347,9 +137,143 @@ function formatBusinessAddress(userSettings: UserSettings | null): string {
     addressParts.push(userSettings.postcode);
   }
   
-  
   // Join the address parts with line breaks
   return addressParts.length > 0 ? addressParts.join('<br>') : 'Address not provided';
+}
+
+// Helper function to escape HTML
+function escapeHtml(text: string): string {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Enhanced terms section with smart page breaking
+function generateTermsSection(userSettings: UserSettings | null, contract?: any): string {
+  const clauseMap = {
+    // Legacy clause names (for backward compatibility)
+    payment30: "Payment due within 30 days of performance",
+    deposit50: "50% deposit required to secure booking (non-refundable)", 
+    cancellation7: "Cancellations within 7 days forfeit deposit",
+    equipmentOwnership: "All equipment remains property of performer",
+    powerSupply: "Client must provide adequate and safe power supply",
+    venueAccess: "Client must provide safe and reasonable venue access for load-in/out",
+    weatherProtection: "Client must provide weather protection for outdoor events",
+    finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
+    noRecording: "No recording or broadcasting without performer's written consent",
+    forcemajeure: "Neither party liable for cancellation due to events beyond their control",
+    
+    // New expanded clause names
+    deposit: "50% deposit required to secure booking (non-refundable)",
+    balancePayment: "Remaining fee due before event / on the day",
+    cancellation: "Client cancellations within 7 days of event incur full fee",
+    performerCancellation: "Performer will use best efforts to provide a suitable replacement",
+    access: "Client must provide safe and reasonable venue access for load-in/out",
+    power: "Client must provide adequate and safe power supply",
+    equipment: "All equipment remains property of performer; client responsible for damage caused by guests",
+    spaceAndSafety: "Stage/performance area must be flat, covered, and safe",
+    weather: "Client must provide weather protection for outdoor events",
+    soundLimits: "Client responsible for venue sound restrictions or curfews",
+    overtime: "Extra performance time charged at £100 per 30 minutes",
+    guestNumbers: "Final numbers must be confirmed 48 hours prior",
+    mealsRefreshments: "Client to provide suitable food and drink if performance exceeds 3 hours including setup",
+    parkingTravel: "Client to cover parking fees; accommodation required if venue is over 50 miles or finish after midnight",
+    recording: "No recording or broadcasting without performer's written consent",
+    insurance: "Performer holds Public Liability Insurance; client responsible for venue licences (PRS/PPL)",
+    forceMajeure: "Neither party liable for cancellation due to events beyond their control (illness, accidents, extreme weather, etc.)",
+    governingLaw: "Contract subject to the laws of England & Wales"
+  };
+
+  const selectedClauses: string[] = [];
+  const customClauses: string[] = [];
+
+  // Collect selected standard clauses
+  if (userSettings?.contractClauses) {
+    for (const [key, value] of Object.entries(userSettings.contractClauses)) {
+      if (value && clauseMap[key as keyof typeof clauseMap]) {
+        selectedClauses.push(clauseMap[key as keyof typeof clauseMap]);
+      }
+    }
+  }
+
+  // Add payment terms if set
+  if (userSettings?.contractClauses?.paymentTerms) {
+    selectedClauses.push(getPaymentTermsText(userSettings.contractClauses.paymentTerms));
+  }
+
+  // Collect custom clauses
+  if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
+    userSettings.customClauses.forEach(clause => {
+      if (typeof clause === 'object' && clause.text && clause.enabled) {
+        customClauses.push(clause.text);
+      } else if (typeof clause === 'string' && clause.trim()) {
+        customClauses.push(clause);
+      }
+    });
+  }
+
+  // Add deposit clause if applicable
+  if (contract && contract.deposit && parseFloat(contract.deposit) > 0) {
+    const depositAmount = parseFloat(contract.deposit).toFixed(2);
+    const depositDays = contract.depositDays || 7;
+    selectedClauses.unshift(`This Agreement becomes legally binding upon signature. A non-refundable booking fee of £${depositAmount} is required within ${depositDays} days.`);
+  }
+
+  const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
+
+  if (allClauses.length === 0) {
+    return ''; // No terms to display
+  }
+
+  // Categorize clauses
+  const categories: { [key: string]: string[] } = {
+    'Payment Terms': [],
+    'Performance & Equipment': [],
+    'Cancellation & Rescheduling': [],
+    'General Terms': []
+  };
+
+  allClauses.forEach(clause => {
+    const lower = clause.toLowerCase();
+    if (lower.includes('payment') || lower.includes('deposit') || lower.includes('fee') || lower.includes('£')) {
+      categories['Payment Terms'].push(clause);
+    } else if (lower.includes('cancel') || lower.includes('reschedul')) {
+      categories['Cancellation & Rescheduling'].push(clause);
+    } else if (lower.includes('equipment') || lower.includes('venue') || lower.includes('performance') || 
+               lower.includes('stage') || lower.includes('power') || lower.includes('access')) {
+      categories['Performance & Equipment'].push(clause);
+    } else {
+      categories['General Terms'].push(clause);
+    }
+  });
+
+  let termsHtml = `
+    <div class="section">
+        <h2 class="section-title">Terms & Conditions</h2>
+        <div class="terms-container">`;
+
+  for (const [category, terms] of Object.entries(categories)) {
+    if (terms.length > 0) {
+      termsHtml += `
+        <div class="terms-category">
+            <h3 class="terms-category-title">${category}</h3>
+            <div class="terms-list">
+                ${terms.map(term => `<div class="term-item">${escapeHtml(term)}</div>`).join('')}
+            </div>
+        </div>`;
+    }
+  }
+
+  termsHtml += `
+        </div>
+    </div>`;
+
+  return termsHtml;
 }
 
 // MAIN EXPORT: Unified contract PDF generator
@@ -394,11 +318,10 @@ export async function generateContractPDF(
     const page = await browser.newPage();
     let html = generateUnifiedContractHTML(contract, userSettings, signatureDetails);
     
-    // AI-powered PDF optimization
+    // AI-powered PDF optimization (keeping your existing logic)
     try {
       console.log('🤖 Analyzing contract content for AI optimization...');
       
-      // Extract selected clauses for AI analysis
       const selectedClauses: string[] = [];
       const customClauses: string[] = [];
       
@@ -414,24 +337,6 @@ export async function generateContractPDF(
           finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
           noRecording: "No recording or broadcasting without performer's written consent",
           forcemajeure: "Neither party liable for cancellation due to events beyond their control",
-          deposit: "50% deposit required to secure booking (non-refundable)",
-          balancePayment: "Remaining fee due before event / on the day",
-          cancellation: "Cancellations within 7 days forfeit deposit",
-          equipment: "All equipment remains property of performer",
-          power: "Client must provide adequate and safe power supply",
-          access: "Client must provide safe and reasonable venue access",
-          weather: "Client must provide weather protection for outdoor events",
-          numbers: "Final guest numbers must be confirmed 48 hours prior",
-          recording: "No recording or broadcasting without written consent",
-          forceMajeure: "Neither party liable for cancellation due to force majeure",
-          publicLiability: "Public Liability Insurance: Covered for all performance services",
-          alcoholPolicy: "Alcohol Policy: Performer reserves the right to refuse service in unsafe environments",
-          soundLevels: "Sound Levels: Performance will comply with venue and local authority requirements",
-          overtime: "Overtime: Additional charges apply for performances extending beyond agreed time",
-          merchandising: "Merchandising: Performer retains rights to sell merchandise unless otherwise agreed",
-          imageRights: "Image Rights: Performer may use event images/videos for promotional purposes unless restricted",
-          substitution: "Substitution: Performer may provide suitable substitute if unable to perform due to illness",
-          disputes: "Disputes: Any disagreements will be resolved through mediation before legal action"
         };
         
         for (const [key, value] of Object.entries(clauseMap)) {
@@ -440,22 +345,17 @@ export async function generateContractPDF(
           }
         }
         
-        // Add payment terms clause if set
         if (userSettings.contractClauses.paymentTerms) {
           const paymentTermsText = getPaymentTermsText(userSettings.contractClauses.paymentTerms);
           selectedClauses.push(paymentTermsText);
         }
       }
       
-      // Add custom clauses - handle new format with {text, enabled} objects
       if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
         userSettings.customClauses.forEach(clause => {
-          // Handle new format: {text: string, enabled: boolean}
           if (typeof clause === 'object' && clause.text && clause.enabled) {
             customClauses.push(clause.text);
-          }
-          // Handle legacy format: string
-          else if (typeof clause === 'string' && clause.trim() !== '') {
+          } else if (typeof clause === 'string' && clause.trim() !== '') {
             customClauses.push(clause);
           }
         });
@@ -475,11 +375,9 @@ export async function generateContractPDF(
         additionalNotes: contract.specialRequirements || contract.equipmentRequirements
       });
       
-      // Apply AI adjustments to HTML
       if (Object.keys(aiOptimization.adjustments).length > 0) {
         console.log('✅ Applying AI adjustments:', aiOptimization.reasoning);
         
-        // Build custom CSS from AI adjustments
         const customCSS = Object.entries(aiOptimization.adjustments)
           .map(([property, value]) => {
             const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
@@ -487,23 +385,12 @@ export async function generateContractPDF(
           })
           .join(' ');
         
-        // Inject AI optimizations into the HTML
         html = html.replace(
           '<style>',
           `<style>
         /* AI PDF Optimization Adjustments */
         .container {
           ${customCSS}
-        }
-        .section {
-          ${aiOptimization.adjustments.pageBreakBefore ? `page-break-before: ${aiOptimization.adjustments.pageBreakBefore};` : ''}
-          ${aiOptimization.adjustments.pageBreakAfter ? `page-break-after: ${aiOptimization.adjustments.pageBreakAfter};` : ''}
-          ${aiOptimization.adjustments.paddingTop ? `padding-top: ${aiOptimization.adjustments.paddingTop};` : ''}
-          ${aiOptimization.adjustments.paddingBottom ? `padding-bottom: ${aiOptimization.adjustments.paddingBottom};` : ''}
-        }
-        .terms-section {
-          ${aiOptimization.adjustments.lineHeight ? `line-height: ${aiOptimization.adjustments.lineHeight};` : ''}
-          ${aiOptimization.adjustments.fontSize ? `font-size: ${aiOptimization.adjustments.fontSize};` : ''}
         }`
         );
       } else {
@@ -550,28 +437,17 @@ function generateUnifiedContractHTML(
     day: 'numeric'
   }) : 'Date TBC';
 
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto;" alt="MusoBuddy Logo" />` : '';
-
-  // Determine if contract is signed and get signature info
   const isSigned = contract.status === 'signed' || signatureDetails;
   const signedAt = signatureDetails?.signedAt || (contract.signedAt ? new Date(contract.signedAt) : null);
   const signatureName = signatureDetails?.signatureName || contract.clientSignature || 'Digital Signature';
 
-  // Get dynamic theme colors
   const primaryColor = getThemeColor(userSettings);
   const secondaryColor = getSecondaryColor(primaryColor);
-  
-  // Calculate WCAG 2.0 text contrast (same as invoice system)
   const headerTextColor = getContrastTextColor(primaryColor);
-  const luminanceValue = getLuminance(primaryColor);
-  
-  // Make logo text luminance-aware for better visibility
-  const logoColor = headerTextColor; // Use same luminance logic as header text
-  
-  console.log(`🎨 CONTRACT PDF: Using theme colors - Primary: ${primaryColor}, Secondary: ${secondaryColor}`);
-  console.log(`🎨 LUMINANCE: Color ${primaryColor} has luminance ${luminanceValue.toFixed(3)} → Text color: ${headerTextColor}`);
-  console.log(`🎨 LOGO: Using luminance-aware logo text (${logoColor}) for optimal visibility`);
+
+  // Calculate totals for display
+  const totals = calculateContractTotals(contract, userSettings);
+  const depositAmount = parseFloat(contract.deposit || '0');
 
   return `
 <!DOCTYPE html>
@@ -581,666 +457,581 @@ function generateUnifiedContractHTML(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Contract - ${contract.contractNumber}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #ffffff;
+        @page {
+            size: A4;
+            margin: 15mm;
         }
         
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: white;
+            font-size: 10pt;
+        }
+        
+        /* CRITICAL: Page break control classes */
+        .page-break-before {
+            page-break-before: always;
+        }
+        
+        .avoid-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .keep-together {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            orphans: 4;
+            widows: 4;
+        }
+        
+        /* Container */
         .contract-container {
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            border-radius: 12px;
-            overflow: hidden;
         }
         
-        /* Header */
+        /* Professional Header */
         .contract-header {
             background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
             color: ${headerTextColor};
-            padding: 40px;
-            text-align: center;
+            padding: 30px;
+            border-radius: 12px 12px 0 0;
             position: relative;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+            page-break-after: avoid;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
         
         .logo-section {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-        
-        .metronome-container {
-            width: 80px;
-            height: 80px;
-            background: #191970;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(25, 25, 112, 0.3);
-            flex-shrink: 0;
-        }
-        
-        .metronome-body {
-            width: 24px;
-            height: 38px;
-            background: white;
-            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
-            position: relative;
-        }
-        
-        .metronome-arm {
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%) rotate(10deg);
-            width: 2.5px;
-            height: 24px;
-            background: #191970;
-            border-radius: 1px;
-            transform-origin: bottom center;
+            flex-grow: 1;
         }
         
         .company-name {
-            font-size: 42px;
-            font-weight: 700;
-            letter-spacing: -1px;
-            color: ${logoColor};
-            line-height: 1;
-            margin-bottom: 8px;
+            font-size: 28pt;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
         }
         
         .tagline {
-            font-size: 18px;
-            color: ${headerTextColor};
-            opacity: 0.8;
+            font-size: 11pt;
+            opacity: 0.9;
             font-style: italic;
-            font-weight: 500;
         }
         
         .contract-title {
-            font-size: 32px;
-            font-weight: 800;
-            margin: 25px 0 15px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-size: 20pt;
+            font-weight: 700;
+            margin-top: 20px;
+            margin-bottom: 8px;
         }
         
         .contract-number {
-            font-size: 16px;
-            opacity: 0.9;
-            font-weight: 500;
+            font-size: 9pt;
+            opacity: 0.85;
+            font-family: 'Courier New', monospace;
         }
         
-        /* Status Badge */
         .status-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 10px 18px;
-            border-radius: 25px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
         
         .status-signed {
-            background: rgba(16, 185, 129, 0.9);
+            background: #10b981;
+            border-color: #059669;
             color: white;
         }
         
         .status-sent {
-            background: rgba(59, 130, 246, 0.9);
+            background: #3b82f6;
+            border-color: #2563eb;
             color: white;
         }
         
         .status-draft {
-            background: rgba(107, 114, 128, 0.9);
+            background: #6b7280;
+            border-color: #4b5563;
             color: white;
         }
         
-        /* Content */
-        .contract-content {
-            padding: 40px;
-        }
-        
+        /* Content sections with page break control */
         .section {
-            margin-bottom: 35px;
-            break-inside: avoid-page;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
         }
         
         .section-title {
-            font-size: 22px;
+            font-size: 14pt;
             font-weight: 700;
-            color: #000000;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid ${secondaryColor};
+            color: #111827;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid ${primaryColor};
+            page-break-after: avoid;
         }
         
-        /* Parties Section */
-        .parties-section {
+        /* Two-column party section */
+        .parties-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 25px;
-        }
-        
-        .party-box {
-            background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
-            padding: 25px;
-            border-radius: 12px;
-            border-left: 4px solid \${primaryColor};
-            border: 1px solid #e2e8f0;
-        }
-        
-        .party-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #000000;
-            margin-bottom: 15px;
-        }
-        
-        .party-details {
-            font-size: 15px;
-            line-height: 1.6;
-        }
-        
-        .party-details {
-            color: #4a5568;
-        }
-        
-        .party-details strong {
-            color: #2d3748;
-        }
-        
-        /* Event Details Grid */
-        .event-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
-            margin-bottom: 25px;
-            break-inside: avoid;
+            margin-bottom: 20px;
             page-break-inside: avoid;
         }
         
-        .detail-card {
-            background: linear-gradient(135deg, #f8f9ff 0%, #e3e7ff 100%);
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid \${primaryColor};
-            border: 1px solid #e2e8f0;
-            break-inside: avoid;
+        .party-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 3px solid ${primaryColor};
             page-break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         
-        .detail-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #000000;
+        .party-label {
+            font-size: 9pt;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            color: #6b7280;
             margin-bottom: 8px;
         }
         
-        .detail-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2d3748;
+        .party-name {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
         }
         
-        /* Venue Details Group - Keep venue fields together */
-        .venue-details-group {
-            break-inside: avoid;
-            page-break-inside: avoid;
-            break-before: avoid;
+        .party-details {
+            font-size: 9pt;
+            color: #6b7280;
+            line-height: 1.5;
         }
         
-        /* Payment Section - Updated to remove red and match invoice style */
-        .payment-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid \${primaryColor};
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 20px;
-        }
-        
-        .payment-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #000000;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        .payment-details {
+        /* Event details grid */
+        .event-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 25px;
+            page-break-inside: avoid;
         }
         
-        .payment-item {
-            text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        .event-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         
-        .payment-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
+        .event-label {
+            font-size: 9pt;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            color: #6b7280;
+            margin-bottom: 8px;
         }
         
-        .payment-amount {
-            font-size: 26px;
-            font-weight: 800;
-            color: #000000;
+        .event-value {
+            font-size: 11pt;
+            color: #111827;
+            font-weight: 500;
         }
         
-        .payment-instructions {
-            background: white;
+        /* Venue details - grouped to prevent page breaks */
+        .venue-group {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .venue-name {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        
+        .venue-address {
+            font-size: 10pt;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        
+        /* Financial section */
+        .financial-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            margin-top: 20px;
-        }
-        
-        .payment-instructions strong {
-            color: #000000;
-            font-size: 16px;
-        }
-        
-        /* Terms */
-        .terms-section {
-            margin-top: 20px;
-        }
-        
-        .terms-subsection {
             margin-bottom: 25px;
+            page-break-inside: avoid;
         }
         
-        .terms-subsection:last-child {
-            margin-bottom: 0;
-        }
-        
-        .terms-subtitle {
-            font-size: 16px;
+        .financial-title {
+            font-size: 13pt;
             font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #e5e7eb;
+            color: #111827;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .fee-breakdown {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .fee-label {
+            font-size: 10pt;
+            color: #4b5563;
+        }
+        
+        .fee-amount {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #111827;
+            text-align: right;
+        }
+        
+        .total-row {
+            border-top: 2px solid ${primaryColor};
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+        
+        .total-label {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #111827;
+        }
+        
+        .total-amount {
+            font-size: 16pt;
+            font-weight: 800;
+            color: ${primaryColor};
+            text-align: right;
+        }
+        
+        .deposit-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 16px;
+            font-size: 9pt;
+            color: #92400e;
+        }
+        
+        /* Terms section */
+        .terms-container {
+            page-break-inside: avoid;
+        }
+        
+        .terms-category {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        
+        .terms-category-title {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .terms-list {
-            list-style: none;
-            padding: 0;
+            margin-left: 0;
         }
         
-        .terms-list li {
-            background: #f9fafb;
-            margin-bottom: 10px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            border-left: 4px solid \${primaryColor};
+        .term-item {
+            font-size: 9pt;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-bottom: 6px;
+            padding-left: 16px;
             position: relative;
-            color: #4a5568;
         }
         
-        .terms-list li:before {
-            content: "✓";
-            color: \${primaryColor};
+        .term-item:before {
+            content: "•";
+            color: ${primaryColor};
             font-weight: bold;
-            margin-right: 10px;
+            position: absolute;
+            left: 0;
         }
-        
-        .requirements-box {
-            background: #f9fafb;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid \${primaryColor};
-            border: 1px solid #e2e8f0;
-            color: #4a5568;
-            line-height: 1.8;
-            font-size: 15px;
-        }
-        
-
         
         /* Signature section */
         .signature-section {
-            margin-top: 50px;
-            padding-top: 40px;
-            border-top: 2px dashed #cbd5e1;
+            page-break-before: auto;
             page-break-inside: avoid;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 3px solid ${primaryColor};
+        }
+        
+        .signature-title {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #111827;
+            text-align: center;
+            margin-bottom: 20px;
         }
         
         .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 40px;
             margin-top: 30px;
         }
         
         .signature-box {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border: 2px dashed #94a3b8;
-            border-radius: 12px;
-            padding: 30px;
             text-align: center;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .signed-box {
-            border: 2px solid \${primaryColor};
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-        }
-        
-        .signature-role {
-            font-size: 14px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 20px;
+            page-break-inside: avoid;
         }
         
         .signature-line {
-            border-top: 2px solid #334155;
-            margin: 20px auto;
-            width: 200px;
+            height: 2px;
+            background: #e5e7eb;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .signature-label {
+            font-size: 9pt;
+            color: #6b7280;
+            margin-bottom: 20px;
         }
         
         .signature-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-top: 15px;
+            font-size: 10pt;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
         }
         
         .signature-date {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 10px;
+            font-size: 8pt;
+            color: #6b7280;
         }
         
-        .signature-status {
-            font-size: 11px;
-            margin-top: 10px;
+        .signed-indicator {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin-bottom: 12px;
         }
         
         /* Footer */
         .contract-footer {
-            background: #f8f9fa;
-            padding: 30px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
             text-align: center;
-            border-top: 1px solid #e2e8f0;
-            margin-top: 30px;
+            font-size: 8pt;
+            color: #9ca3af;
+            page-break-inside: avoid;
         }
         
-        .footer-text {
-            font-size: 12px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-        
-        .footer-logo {
-            font-weight: 700;
-            color: ${primaryColor};
+        .powered-by {
+            margin-top: 12px;
+            font-style: italic;
         }
         
         /* Print optimizations */
         @media print {
             .contract-container {
                 box-shadow: none;
-                border-radius: 0;
             }
             
-            .signature-section {
-                page-break-inside: avoid;
-                break-inside: avoid;
+            .contract-header {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
             }
             
-            .signature-grid {
-                page-break-inside: avoid;
+            .page-break-before {
+                page-break-before: always;
             }
         }
     </style>
 </head>
 <body>
     <div class="contract-container">
-        <!-- Header -->
+        <!-- Professional Header -->
         <div class="contract-header">
-            <div class="status-badge status-${contract.status}">
-                ${contract.status.toUpperCase()}
-            </div>
-            <div class="logo-section">
-                <div class="metronome-container">
-                    <div class="metronome-body">
-                        <div class="metronome-arm"></div>
-                    </div>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="company-name">${businessName}</div>
+                    <div class="tagline">Professional Music Services</div>
+                    <div class="contract-title">Performance Contract</div>
+                    <div class="contract-number">Contract #${contract.contractNumber}</div>
                 </div>
-                <div>
-                    <div class="company-name">MusoBuddy</div>
-                    <div class="tagline">Less admin, more music</div>
+                <div class="status-badge ${isSigned ? 'status-signed' : (contract.status === 'sent' ? 'status-sent' : 'status-draft')}">
+                    ${isSigned ? 'Signed' : (contract.status === 'sent' ? 'Sent' : 'Draft')}
                 </div>
             </div>
-            <div class="contract-title">Performance Contract</div>
-            <div class="contract-number">Contract #${contract.contractNumber}</div>
         </div>
-
-        <!-- Main Content -->
-        <div class="contract-content">
-            <!-- Parties Section -->
-            <div class="section">
-                <h2 class="section-title">Contract Parties</h2>
-                <div class="parties-section">
-                    <div class="party-box">
-                        <div class="party-title">🎵 PERFORMER</div>
-                        <div class="party-details">
-                            <strong>${businessName}</strong><br>
-                            ${userSettings?.businessEmail ? `Email: ${userSettings.businessEmail}<br>` : ''}
-                            ${userSettings?.phone ? `Phone: ${userSettings.phone}<br>` : ''}
-                            ${formatBusinessAddress(userSettings)}
-                        </div>
-                    </div>
-                    <div class="party-box">
-                        <div class="party-title">👤 CLIENT</div>
-                        <div class="party-details">
-                            <strong>${contract.clientName}</strong><br>
-                            ${contract.clientEmail ? `Email: ${contract.clientEmail}<br>` : ''}
-                            ${contract.clientPhone ? `Phone: ${contract.clientPhone}<br>` : ''}
-                            ${contract.clientAddress ? contract.clientAddress.replace(/\n/g, '<br>') : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Details -->
-            <div class="section">
-                <h2 class="section-title">Performance Details</h2>
-                <div class="event-details">
-                    <div class="detail-card">
-                        <div class="detail-label">Event Date</div>
-                        <div class="detail-value">${eventDateStr}</div>
-                    </div>
-                    <div class="detail-card">
-                        <div class="detail-label">Performance Time</div>
-                        <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
+        
+        <!-- Parties Section -->
+        <div class="section">
+            <h2 class="section-title">Contracting Parties</h2>
+            <div class="parties-grid">
+                <div class="party-card">
+                    <div class="party-label">Performer</div>
+                    <div class="party-name">${businessName}</div>
+                    <div class="party-details">
+                        ${formatBusinessAddress(userSettings)}<br>
+                        ${userSettings?.phone ? `Phone: ${userSettings.phone}<br>` : ''}
+                        ${userSettings?.businessEmail ? `Email: ${userSettings.businessEmail}` : ''}
                     </div>
                 </div>
                 
-                <!-- Venue details in separate group to avoid page breaks -->
-                <div class="venue-details-group">
-                    <div class="event-details">
-                        <div class="detail-card">
-                            <div class="detail-label">Venue</div>
-                            <div class="detail-value">${contract.venue || 'TBC'}</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Venue Address</div>
-                            <div class="detail-value">${contract.venueAddress || 'See venue name'}</div>
-                        </div>
+                <div class="party-card">
+                    <div class="party-label">Client</div>
+                    <div class="party-name">${contract.clientName || 'Client Name TBC'}</div>
+                    <div class="party-details">
+                        ${contract.clientEmail ? `Email: ${contract.clientEmail}<br>` : ''}
+                        ${contract.clientPhone ? `Phone: ${contract.clientPhone}<br>` : ''}
+                        ${contract.clientAddress ? escapeHtml(contract.clientAddress) : 'Address TBC'}
                     </div>
                 </div>
             </div>
-
-            <!-- Payment Terms -->
-            <div class="section">
-                <h2 class="section-title">Financial Terms</h2>
-                <div class="payment-section">
-                    <div class="payment-title">Performance Fee Structure</div>
-                    <div class="payment-details">
-                        ${(() => {
-                            const totals = calculateContractTotals(contract, userSettings);
-                            const depositAmount = parseFloat(contract.deposit || '0');
-                            return totals.showSeparateTravel ? `
-                        <div class="payment-item">
-                            <div class="payment-label">Performance Fee</div>
-                            <div class="payment-amount">£${totals.performanceFee.toFixed(2)}</div>
-                        </div>
-                        <div class="payment-item">
-                            <div class="payment-label">Travel Expenses</div>
-                            <div class="payment-amount">£${totals.travelExpenses.toFixed(2)}</div>
-                        </div>
-                        <div class="payment-item" style="border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px; font-weight: bold;">
-                            <div class="payment-label">Total Fee</div>
-                            <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
-                        </div>
-                        ${depositAmount > 0 ? `
-                        <div class="payment-item">
-                            <div class="payment-label">Deposit Required</div>
-                            <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
-                        </div>
-                        <div class="payment-item">
-                            <div class="payment-label">Balance Due</div>
-                            <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
-                        </div>
-                        ` : ''}
-                        ` : `
-                        <div class="payment-item">
-                            <div class="payment-label">Total Performance Fee</div>
-                            <div class="payment-amount">£${totals.totalAmount.toFixed(2)}</div>
-                        </div>
-                        ${depositAmount > 0 ? `
-                        <div class="payment-item">
-                            <div class="payment-label">Deposit Required</div>
-                            <div class="payment-amount">£${depositAmount.toFixed(2)}</div>
-                        </div>
-                        <div class="payment-item">
-                            <div class="payment-label">Balance Due</div>
-                            <div class="payment-amount">£${(totals.totalAmount - depositAmount).toFixed(2)}</div>
-                        </div>
-                        ` : ''}
-                        `;
-                        })()}
-                    </div>
-                    
-                    ${contract.paymentInstructions ? `
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fecaca;">
-                        <strong>Payment Instructions:</strong><br>
-                        ${contract.paymentInstructions.replace(/\n/g, '<br>')}
-                    </div>
-                    ` : ''}
+        </div>
+        
+        <!-- Event Details Section -->
+        <div class="section">
+            <h2 class="section-title">Event Details</h2>
+            <div class="event-grid">
+                <div class="event-card">
+                    <div class="event-label">Event Date</div>
+                    <div class="event-value">${eventDateStr}</div>
                 </div>
-            </div>
-
-            <!-- Requirements -->
-            ${(contract.equipmentRequirements || contract.specialRequirements) ? `
-            <div class="section">
-                <h2 class="section-title">Performance Requirements</h2>
-                ${contract.equipmentRequirements ? `
-                <div class="terms-section">
-                    <div class="terms-subtitle">Equipment Requirements</div>
-                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid ${primaryColor};">
-                        ${contract.equipmentRequirements.replace(/\n/g, '<br>')}
-                    </p>
-                </div>
-                ` : ''}
-                ${contract.specialRequirements ? `
-                <div class="terms-section">
-                    <div class="terms-subtitle">Special Requirements</div>
-                    <p style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid ${primaryColor};">
-                        ${contract.specialRequirements.replace(/\n/g, '<br>')}
-                    </p>
-                </div>
-                ` : ''}
-            </div>
-            ` : ''}
-
-${userSettings?.themeShowTerms !== false ? getTermsSection(userSettings, contract) : ''}
-            </div>
-
-            <!-- Signature Section -->
-            <div class="signature-section">
-                <h2 class="section-title">Digital Signatures</h2>
-                <p style="text-align: center; color: #64748b; margin-bottom: 20px;">
-                    By signing below, both parties agree to the terms and conditions set forth in this contract.
-                </p>
                 
-                <div class="signature-grid">
-                    <!-- Performer Signature -->
-                    <div class="signature-box signed-box">
-                        <div class="signature-role">PERFORMER</div>
+                <div class="event-card">
+                    <div class="event-label">Event Time</div>
+                    <div class="event-value">${contract.eventTime || 'Time TBC'}</div>
+                </div>
+                
+                <div class="event-card">
+                    <div class="event-label">Event Type</div>
+                    <div class="event-value">${contract.eventType || 'Performance'}</div>
+                </div>
+                
+                <div class="event-card">
+                    <div class="event-label">Duration</div>
+                    <div class="event-value">${contract.duration || 'TBC'}</div>
+                </div>
+            </div>
+            
+            <!-- Venue Details (grouped to prevent breaks) -->
+            <div class="event-card venue-group">
+                <div class="event-label">Venue</div>
+                <div class="venue-name">${contract.venue || 'Venue TBC'}</div>
+                ${contract.venueAddress ? `<div class="venue-address">${escapeHtml(contract.venueAddress)}</div>` : '<div class="venue-address">Venue address TBC</div>'}
+            </div>
+        </div>
+        
+        <!-- Financial Section -->
+        <div class="financial-section">
+            <div class="financial-title">Financial Agreement</div>
+            <div class="fee-breakdown">
+                <div class="fee-label">Performance Fee (including travel)</div>
+                <div class="fee-amount">£${totals.totalAmount.toFixed(2)}</div>
+                
+                ${depositAmount > 0 ? `
+                <div class="fee-label total-row total-label">Booking Deposit Required</div>
+                <div class="fee-amount total-row">£${depositAmount.toFixed(2)}</div>
+                ` : ''}
+                
+                <div class="fee-label total-row total-label">Total Contract Value</div>
+                <div class="total-amount total-row">£${totals.totalAmount.toFixed(2)}</div>
+            </div>
+            
+            ${depositAmount > 0 ? `
+            <div class="deposit-info">
+                <strong>Deposit Required:</strong> A non-refundable booking deposit of £${depositAmount.toFixed(2)} is required within ${contract.depositDays || 7} days of signing this contract to secure the booking.
+            </div>` : ''}
+        </div>
+        
+        <!-- Terms & Conditions -->
+        ${userSettings?.themeShowTerms !== false ? generateTermsSection(userSettings, contract) : ''}
+        
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="signature-title">Agreement Signatures</div>
+            <p style="text-align: center; color: #6b7280; margin-bottom: 20px; font-size: 9pt;">
+                By signing below, both parties agree to the terms and conditions set forth in this contract.
+            </p>
+            
+            <div class="signature-grid">
+                <div class="signature-box">
+                    <div class="signature-label">Performer Signature</div>
+                    <div class="signature-line"></div>
+                    <div class="signature-name">${businessName}</div>
+                    <div class="signature-date">Date: ${new Date().toLocaleDateString('en-GB')}</div>
+                </div>
+                
+                <div class="signature-box">
+                    <div class="signature-label">Client Signature</div>
+                    ${isSigned ? `
+                        <div class="signed-indicator">✓ Digitally Signed</div>
+                        <div class="signature-name">${signatureName}</div>
+                        <div class="signature-date">Signed: ${signedAt ? signedAt.toLocaleDateString('en-GB') + ' at ' + signedAt.toLocaleTimeString('en-GB') : 'Date TBC'}</div>
+                    ` : `
                         <div class="signature-line"></div>
-                        <div class="signature-name">${businessName}</div>
-                        <div class="signature-date">Digital signature by contract generation</div>
-                        <div class="signature-status" style="color: #10b981;">✓ Signed on ${new Date(contract.createdAt || new Date()).toLocaleDateString('en-GB')}</div>
-                    </div>
-                    
-                    <!-- Client Signature -->
-                    <div class="signature-box ${isSigned ? 'signed-box' : ''}">
-                        <div class="signature-role">CLIENT</div>
-                        ${isSigned && signedAt ? `
-                            <div class="signature-line"></div>
-                            <div class="signature-name">${signatureName}</div>
-                            <div class="signature-date">Digitally signed on ${signedAt.toLocaleDateString('en-GB')}</div>
-                            <div class="signature-status" style="color: ${primaryColor};">✓ Signed at ${signedAt.toLocaleTimeString('en-GB')}</div>
-                        ` : `
-                            <div class="signature-line"></div>
-                            <div class="signature-name">${contract.clientName}</div>
-                            <div class="signature-date">Date: _______________</div>
-                            <div class="signature-status" style="color: #94a3b8;">${contract.status === 'sent' ? 'Awaiting digital signature' : 'Unsigned'}</div>
-                        `}
-                    </div>
+                        <div class="signature-name">${contract.clientName || 'Client Name'}</div>
+                        <div class="signature-date">Date: _______________</div>
+                    `}
                 </div>
             </div>
         </div>
-
+        
         <!-- Footer -->
         <div class="contract-footer">
-            <div class="footer-text">
-                Contract generated on ${new Date(contract.createdAt || new Date()).toLocaleDateString('en-GB')}<br>
-                <span class="footer-logo">MusoBuddy</span> - Less admin, more music<br>
-                Empowering musicians with professional business tools
-            </div>
+            <div>This contract is generated and managed by MusoBuddy Professional Services</div>
+            <div class="powered-by">Simplifying music business administration since 2024</div>
         </div>
     </div>
 </body>
-</html>
-  `;
+</html>`;
 }
-
-// Additional export for services.ts compatibility
-export default {
-  generateContractPDF
-};
