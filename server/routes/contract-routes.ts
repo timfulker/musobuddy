@@ -769,24 +769,33 @@ export function registerContractRoutes(app: Express) {
         const { EmailService } = await import('../core/services');
         const emailService = new EmailService();
         
+        // Get the final PDF URL - use the newly generated one if available, otherwise fall back to existing
+        const finalPdfUrl = pdfUrl || updateResult.cloudStorageUrl;
+        
+        // Update the contract object with the final PDF URL for email templates
+        const contractForEmail = {
+          ...updateResult,
+          cloudStorageUrl: finalPdfUrl
+        };
+        
         // Send client portal email with QR code and collaborative access
-        if (updateResult.clientEmail) {
+        if (contractForEmail.clientEmail) {
           const signingConfirmationResult = await contractSigningEmailService.sendSigningConfirmation(
-            updateResult,
+            contractForEmail,
             userSettings,
             emailService
           );
           if (signingConfirmationResult.success) {
-            console.log(`✉️ [CONTRACT-SIGN] Client portal email sent to: ${updateResult.clientEmail}`);
+            console.log(`✉️ [CONTRACT-SIGN] Client portal email sent to: ${contractForEmail.clientEmail}`);
           } else {
             console.error(`❌ [CONTRACT-SIGN] Failed to send client portal email:`, signingConfirmationResult.error);
           }
         }
         
-        // ALSO send to performer/business owner
+        // ALSO send to performer/business owner - using the SAME final PDF URL
         if (userSettings?.businessEmail) {
           const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
-          const performerSubject = `✅ Contract Signed by ${updateResult.clientName} - ${updateResult.contractNumber}`;
+          const performerSubject = `✅ Contract Signed by ${contractForEmail.clientName} - ${contractForEmail.contractNumber}`;
           const performerHtml = `
             <!DOCTYPE html>
             <html>
@@ -798,27 +807,27 @@ export function registerContractRoutes(app: Express) {
               <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: ${themeColor};">✅ Contract Successfully Signed!</h2>
                 
-                <p>Great news! Your contract has been signed by <strong>${updateResult.clientName}</strong>.</p>
+                <p>Great news! Your contract has been signed by <strong>${contractForEmail.clientName}</strong>.</p>
                 
                 <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${themeColor};">
                   <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
-                  <p><strong>Contract Number:</strong> ${updateResult.contractNumber}</p>
-                  <p><strong>Client:</strong> ${updateResult.clientName}</p>
-                  <p><strong>Event Date:</strong> ${new Date(updateResult.eventDate).toLocaleDateString('en-GB')}</p>
-                  <p><strong>Venue:</strong> ${updateResult.venue}</p>
-                  <p><strong>Fee:</strong> £${updateResult.fee}</p>
+                  <p><strong>Contract Number:</strong> ${contractForEmail.contractNumber}</p>
+                  <p><strong>Client:</strong> ${contractForEmail.clientName}</p>
+                  <p><strong>Event Date:</strong> ${new Date(contractForEmail.eventDate).toLocaleDateString('en-GB')}</p>
+                  <p><strong>Venue:</strong> ${contractForEmail.venue}</p>
+                  <p><strong>Fee:</strong> £${contractForEmail.fee}</p>
                 </div>
                 
                 <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
                   <p style="margin: 0;"><strong>Signing Information:</strong></p>
-                  <p style="margin: 5px 0;">Signed by: ${updateResult.clientSignature}</p>
-                  <p style="margin: 5px 0;">Date: ${new Date(updateResult.signedAt).toLocaleString('en-GB')}</p>
-                  <p style="margin: 5px 0;">IP Address: ${updateResult.clientIpAddress}</p>
+                  <p style="margin: 5px 0;">Signed by: ${contractForEmail.clientSignature}</p>
+                  <p style="margin: 5px 0;">Date: ${new Date(contractForEmail.signedAt).toLocaleString('en-GB')}</p>
+                  <p style="margin: 5px 0;">IP Address: ${contractForEmail.clientIpAddress}</p>
                 </div>
                 
-                ${pdfUrl ? `
+                ${finalPdfUrl ? `
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${pdfUrl}" 
+                  <a href="${finalPdfUrl}" 
                      style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                     📄 View Signed Contract PDF
                   </a>
