@@ -94,6 +94,7 @@ export function registerCalendarImportRoutes(app: Express) {
     authenticateWithFirebase,
     async (req: AuthenticatedRequest, res) => {
       try {
+        console.log('🚨🚨🚨 CALENDAR IMPORT ROUTE HIT! 🚨🚨🚨');
         console.log('✅ Past authentication, user:', req.user?.id);
         const userId = req.user?.id;
         
@@ -120,6 +121,8 @@ export function registerCalendarImportRoutes(app: Express) {
         let imported = 0;
         let skipped = 0;
         let errors = 0;
+
+        console.log(`⚡⚡⚡ STARTING EVENT PROCESSING - Total items: ${Object.keys(parsedCalendar).length}`);
 
         // Process each event in the calendar
         for (const key in parsedCalendar) {
@@ -241,7 +244,13 @@ export function registerCalendarImportRoutes(app: Express) {
             console.log(`✅ Successfully imported: ${event.summary} on ${bookingData.eventDate}`);
 
           } catch (eventError) {
-            console.error(`❌ Failed to import event ${event.summary}:`, eventError);
+            console.error(`❌❌❌ CRITICAL ERROR importing event "${event.summary}":`, eventError);
+            console.error(`❌❌❌ Event details:`, { 
+              summary: event.summary, 
+              dtstart: event.dtstart, 
+              dtend: event.dtend,
+              location: event.location
+            });
             errors++;
           }
         }
