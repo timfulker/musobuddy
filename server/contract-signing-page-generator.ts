@@ -76,6 +76,210 @@ export function generateContractSigningPage(
   
   console.log('🎨 [CONTRACT-SIGNING] Using theme colors:', { themeColor, themeDarkColor });
 
+  // Helper function to generate dynamic terms section using user's custom settings
+  function generateUserTermsSection(): string {
+    // Standard clauses mapping - same as contract PDF system
+    const clauseMap = {
+      // Legacy clause names (for backward compatibility)
+      payment30: "Payment due within 30 days of performance",
+      deposit50: "50% deposit required to secure booking (non-refundable)", 
+      cancellation7: "Cancellations within 7 days forfeit deposit",
+      equipmentOwnership: "All equipment remains property of performer",
+      powerSupply: "Client must provide adequate and safe power supply",
+      venueAccess: "Client must provide safe and reasonable venue access for load-in/out",
+      weatherProtection: "Client must provide weather protection for outdoor events",
+      finalNumbers: "Final guest numbers must be confirmed 48 hours prior",
+      noRecording: "No recording or broadcasting without performer's written consent",
+      forcemajeure: "Neither party liable for cancellation due to events beyond their control",
+      
+      // New expanded clause names
+      deposit: "50% deposit required to secure booking (non-refundable)",
+      balancePayment: "Remaining fee due before event / on the day",
+      cancellation: "Client cancellations within 7 days of event incur full fee",
+      performerCancellation: "Performer will use best efforts to provide a suitable replacement",
+      access: "Client must provide safe and reasonable venue access for load-in/out",
+      power: "Client must provide adequate and safe power supply",
+      equipment: "All equipment remains property of performer; client responsible for damage caused by guests",
+      spaceAndSafety: "Stage/performance area must be flat, covered, and safe",
+      weather: "Client must provide weather protection for outdoor events",
+      soundLimits: "Client responsible for venue sound restrictions or curfews",
+      overtime: "Extra performance time charged at £100 per 30 minutes",
+      guestNumbers: "Final numbers must be confirmed 48 hours prior",
+      mealsRefreshments: "Client to provide suitable food and drink if performance exceeds 3 hours including setup",
+      parkingTravel: "Client to cover parking fees; accommodation required if venue is over 50 miles or finish after midnight",
+      recording: "No recording or broadcasting without performer's written consent",
+      insurance: "Performer holds Public Liability Insurance; client responsible for venue licences (PRS/PPL)",
+      forceMajeure: "Neither party liable for cancellation due to events beyond their control (illness, accidents, extreme weather, etc.)",
+      governingLaw: "Contract subject to the laws of England & Wales"
+    };
+    
+    // Get selected standard clauses
+    const selectedClauses: string[] = [];
+    if (userSettings?.contractClauses) {
+      for (const [key, value] of Object.entries(userSettings.contractClauses)) {
+        if (value && clauseMap[key as keyof typeof clauseMap]) {
+          selectedClauses.push(clauseMap[key as keyof typeof clauseMap]);
+        }
+      }
+    }
+    
+    // Get custom clauses - handle new format with {text, enabled} objects
+    const customClauses: string[] = [];
+    if (userSettings?.customClauses && Array.isArray(userSettings.customClauses)) {
+      userSettings.customClauses.forEach(clause => {
+        // Handle new format: {text: string, enabled: boolean}
+        if (typeof clause === 'object' && clause.text && clause.enabled) {
+          customClauses.push(clause.text);
+        }
+        // Handle legacy format: string
+        else if (typeof clause === 'string' && clause.trim()) {
+          customClauses.push(clause);
+        }
+      });
+    }
+    
+    const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
+    
+    // If user has custom terms, use them; otherwise use default terms
+    if (allClauses.length > 0) {
+      // Group terms by category for better organization
+      const paymentTerms: string[] = [];
+      const performanceTerms: string[] = [];
+      const cancellationTerms: string[] = [];
+      const generalTerms: string[] = [];
+      
+      // Categorize each clause based on keywords
+      allClauses.forEach(clause => {
+        const lowerClause = clause.toLowerCase();
+        if (lowerClause.includes('payment') || lowerClause.includes('deposit') || lowerClause.includes('fee') || 
+            lowerClause.includes('£') || lowerClause.includes('charged') || lowerClause.includes('overtime')) {
+          paymentTerms.push(clause);
+        } else if (lowerClause.includes('cancellation') || lowerClause.includes('cancel') || 
+                   lowerClause.includes('reschedul') || lowerClause.includes('refund')) {
+          cancellationTerms.push(clause);
+        } else if (lowerClause.includes('performance') || lowerClause.includes('equipment') || 
+                   lowerClause.includes('venue') || lowerClause.includes('stage') || lowerClause.includes('setup') ||
+                   lowerClause.includes('access') || lowerClause.includes('power') || lowerClause.includes('sound')) {
+          performanceTerms.push(clause);
+        } else {
+          generalTerms.push(clause);
+        }
+      });
+      
+      let sectionsHtml = '';
+      
+      // Add Performance & Equipment section if there are terms
+      if (performanceTerms.length > 0) {
+        sectionsHtml += `
+          <div class="terms-section">
+            <div class="terms-subtitle">Performance & Equipment</div>
+            <ul class="terms-list">
+              ${performanceTerms.map(term => `<li>${escapeHtml(term)}</li>`).join('')}
+            </ul>
+          </div>`;
+      }
+      
+      // Add Payment Terms section if there are terms
+      if (paymentTerms.length > 0) {
+        sectionsHtml += `
+          <div class="terms-section">
+            <div class="terms-subtitle">Payment Terms</div>
+            <ul class="terms-list">
+              ${paymentTerms.map(term => `<li>${escapeHtml(term)}</li>`).join('')}
+            </ul>
+          </div>`;
+      }
+      
+      // Add Cancellation & Rescheduling section if there are terms
+      if (cancellationTerms.length > 0) {
+        sectionsHtml += `
+          <div class="terms-section">
+            <div class="terms-subtitle">Cancellation & Rescheduling</div>
+            <ul class="terms-list">
+              ${cancellationTerms.map(term => `<li>${escapeHtml(term)}</li>`).join('')}
+            </ul>
+          </div>`;
+      }
+      
+      // Add General Terms section if there are terms
+      if (generalTerms.length > 0) {
+        sectionsHtml += `
+          <div class="terms-section">
+            <div class="terms-subtitle">General Terms</div>
+            <ul class="terms-list">
+              ${generalTerms.map(term => `<li>${escapeHtml(term)}</li>`).join('')}
+            </ul>
+          </div>`;
+      }
+      
+      // If no categorization happened (shouldn't occur), fall back to simple list
+      if (!sectionsHtml) {
+        sectionsHtml = `
+          <div class="terms-section">
+            <ul class="terms-list">
+              ${allClauses.map(clause => `<li>${escapeHtml(clause)}</li>`).join('')}
+            </ul>
+          </div>`;
+      }
+      
+      return sectionsHtml;
+    } else {
+      // Fallback to default terms if no custom terms are configured
+      return `
+        <div class="terms-section">
+          <div class="terms-subtitle">Professional Performance Standards</div>
+          <ul class="terms-list">
+            <li>Professional musical performance delivered to industry standards with appropriate attire</li>
+            <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
+            <li>The performer maintains professional liability insurance as required for musical performances</li>
+            <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
+            <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
+            <li>All musical instruments and equipment remain the exclusive property of the performer</li>
+            <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
+            <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
+          </ul>
+        </div>
+
+        <div class="terms-section">
+          <div class="terms-subtitle">Payment Terms & Conditions</div>
+          <div class="requirements-box">
+            <strong>Payment Due Date:</strong> Full payment of £${(parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
+
+            <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
+
+            <strong>Deposit:</strong> £${deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
+
+            <strong>Late Payment:</strong> Any payment received after the due date may incur additional charges as per agreed terms.
+          </div>
+        </div>
+
+        <div class="terms-section">
+          <div class="terms-subtitle">Cancellation & Refund Policy</div>
+          <div class="requirements-box">
+            <strong>Client Cancellation:</strong><br>
+            • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
+            • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
+            • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
+
+            <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
+
+            <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
+          </div>
+        </div>
+
+        <div class="terms-section">
+          <div class="terms-subtitle">Legal Framework</div>
+          <ul class="terms-list">
+            <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
+            <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
+            <li>Contract governed by the laws of England and Wales</li>
+            <li>This contract constitutes the entire agreement between parties</li>
+            <li>Both parties confirm they have authority to enter this agreement</li>
+          </ul>
+        </div>`;
+    }
+  }
+
   // Format dates safely
   const eventDate = new Date(contract.eventDate || contract.event_date);
   const eventDateFormatted = eventDate.toLocaleDateString('en-GB', {
@@ -642,58 +846,7 @@ export function generateContractSigningPage(
 
                     <div class="section">
                         <div class="section-title">Terms & Conditions</div>
-
-                        <div class="terms-section">
-                            <div class="terms-subtitle">Professional Performance Standards</div>
-                            <ul class="terms-list">
-                                <li>Professional musical performance delivered to industry standards with appropriate attire</li>
-                                <li>Punctual arrival and setup at the agreed time with performance duration as specified</li>
-                                <li>The performer maintains professional liability insurance as required for musical performances</li>
-                                <li>Both parties agree to a 'Safe Space' principle providing a working environment free from harassment and discrimination</li>
-                                <li>The equipment and instruments of the performer are not available for use by any other person, except by specific permission</li>
-                                <li>All musical instruments and equipment remain the exclusive property of the performer</li>
-                                <li>The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue</li>
-                                <li>The client shall not make or permit any audio/visual recording or transmission without prior written consent</li>
-                            </ul>
-                        </div>
-
-                        <div class="terms-section">
-                            <div class="terms-subtitle">Payment Terms & Conditions</div>
-                            <div class="requirements-box">
-                                <strong>Payment Due Date:</strong> Full payment of £${(parseFloat(fee) + parseFloat(travelExpenses)).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.<br><br>
-
-                                <strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).<br><br>
-
-                                <strong>Deposit:</strong> £${deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.<br><br>
-
-                                <strong>Late Payment:</strong> Any payment received after the due date may incur additional charges as per agreed terms.
-                            </div>
-                        </div>
-
-                        <div class="terms-section">
-                            <div class="terms-subtitle">Cancellation & Refund Policy</div>
-                            <div class="requirements-box">
-                                <strong>Client Cancellation:</strong><br>
-                                • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee<br>
-                                • 30 days or less before event: Full performance fee becomes due regardless of cancellation<br>
-                                • Same day cancellation: Full fee due plus any additional costs incurred<br><br>
-
-                                <strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.<br><br>
-
-                                <strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.
-                            </div>
-                        </div>
-
-                        <div class="terms-section">
-                            <div class="terms-subtitle">Legal Framework</div>
-                            <ul class="terms-list">
-                                <li>This agreement may not be modified except by mutual consent, in writing signed by both parties</li>
-                                <li>Any rider attached and signed by both parties shall be deemed incorporated into this agreement</li>
-                                <li>Contract governed by the laws of England and Wales</li>
-                                <li>This contract constitutes the entire agreement between parties</li>
-                                <li>Both parties confirm they have authority to enter this agreement</li>
-                            </ul>
-                        </div>
+                        ${generateUserTermsSection()}
                     </div>
                 </div>
             </div>
