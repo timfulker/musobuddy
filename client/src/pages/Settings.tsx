@@ -810,334 +810,358 @@ export default function Settings() {
         {/* REBUILT CONTRACT & INVOICE SETTINGS SECTION */}
         <div className="space-y-8">
           
-          {/* Contract Clauses Section */}
-          <div className="space-y-4">
+          {/* Contract Clauses Section - Organized by PDF Categories */}
+          <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contract Clauses</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contractClauses.deposit"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Deposit: 50% deposit required to secure booking (non-refundable)
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.balancePayment"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Balance Payment: Remaining fee due before event / on the day
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.cancellation"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Cancellation: Client cancellations within 7 days of event incur full fee
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.performerCancellation"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Performer Cancellation: Will provide suitable replacement if needed
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.access"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Access: Client must provide safe and reasonable venue access for load-in/out
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.power"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Power: Client must provide adequate and safe power supply
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.equipment"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Equipment: Remains property of performer; client responsible for damage by guests
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.spaceAndSafety"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Space & Safety: Stage/performance area must be flat, covered, and safe
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.weather"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Weather: Client must provide weather protection for outdoor events
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.soundLimits"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Sound Limits: Client responsible for venue sound restrictions or curfews
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.overtime"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Overtime: Extra performance time charged at £100 per 30 minutes
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.guestNumbers"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Guest Numbers: Final numbers must be confirmed 48 hours prior
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.mealsRefreshments"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Meals/Refreshments: Provide food/drink if performance exceeds 3 hours
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.parkingTravel"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Parking/Travel: Client covers parking; accommodation if over 50 miles
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.recording"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Recording: No recording or broadcasting without performer's written consent
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.insurance"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Insurance: Performer holds PLI; client responsible for venue licences (PRS/PPL)
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.forceMajeure"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Force Majeure: Neither party liable for events beyond control
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contractClauses.governingLaw"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm font-normal cursor-pointer">
-                      Governing Law: Contract subject to the laws of England & Wales
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
+            
+            {/* Performance & Equipment Section */}
+            <div className="space-y-3">
+              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">Performance & Equipment</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="contractClauses.access"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Access: Client must provide safe and reasonable venue access for load-in/out
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.power"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Power: Client must provide adequate and safe power supply
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.equipment"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Equipment: Remains property of performer; client responsible for damage by guests
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.spaceAndSafety"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Space & Safety: Stage/performance area must be flat, covered, and safe
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.weather"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Weather: Client must provide weather protection for outdoor events
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.soundLimits"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Sound Limits: Client responsible for venue sound restrictions or curfews
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
+
+            {/* Payment Terms Section */}
+            <div className="space-y-3">
+              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">Payment Terms</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="contractClauses.deposit"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Deposit: 50% deposit required to secure booking (non-refundable)
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.balancePayment"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Balance Payment: Remaining fee due before event / on the day
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.overtime"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Overtime: Extra performance time charged at £100 per 30 minutes
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Cancellation & Rescheduling Section */}
+            <div className="space-y-3">
+              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">Cancellation & Rescheduling</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="contractClauses.cancellation"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Cancellation: Client cancellations within 7 days of event incur full fee
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.performerCancellation"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Performer Cancellation: Will provide suitable replacement if needed
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* General Terms Section */}
+            <div className="space-y-3">
+              <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">General Terms</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="contractClauses.guestNumbers"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Guest Numbers: Final numbers must be confirmed 48 hours prior
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.mealsRefreshments"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Meals/Refreshments: Provide food/drink if performance exceeds 3 hours
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.parkingTravel"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Parking/Travel: Client covers parking; accommodation if over 50 miles
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.recording"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Recording: No recording or broadcasting without performer's written consent
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.insurance"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Insurance: Performer holds PLI; client responsible for venue licences (PRS/PPL)
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.forceMajeure"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Force Majeure: Neither party liable for events beyond control
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="contractClauses.governingLaw"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Governing Law: Contract subject to the laws of England & Wales
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
             
             {/* Custom Contract Clauses */}
             <div className="space-y-4 mt-6">
