@@ -1,5 +1,5 @@
 # Overview
-MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burdens, improve communication, and provide comprehensive tools for financial and logistical management within the music industry. The project aims to become a global standard for career management for independent musicians and small-to-medium music enterprises, offering a robust solution for logistical and financial challenges.
+MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burdens, improve communication, and provide comprehensive tools for financial and logistical management within the music industry. The project aims to become a global standard for career management for independent musicians and small-to-medium music enterprises, offering a robust solution for logistical and financial challenges with global market potential.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -60,12 +60,12 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ## System Design Choices
-- **UI/UX Decisions**: Responsive design adapting to mobile/desktop; streamlined primary actions for bookings; centralized and tabbed messaging system; consistent navigation with auto-scrolling to relevant bookings; simplified email branding; enhanced HTML email templates; dual client portal system (contract signing and collaborative planning) with dynamic server-side rendering and real-time bidirectional sync; luminance-aware PDF branding for optimal readability.
+- **UI/UX Decisions**: Responsive design (mobile/desktop adaptation); streamlined primary actions for bookings; centralized, tabbed messaging; consistent navigation with auto-scrolling to relevant bookings; simplified email branding; enhanced HTML email templates; dual client portal system (contract signing and collaborative planning) with dynamic server-side rendering and real-time bidirectional sync; luminance-aware PDF branding.
 - **Technical Implementations**:
     - **User Management**: Two-tier system (Admin, User).
     - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
     - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting to prevent stale data.
+    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
     - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
