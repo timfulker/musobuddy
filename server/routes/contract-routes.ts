@@ -174,9 +174,9 @@ export function registerContractRoutes(app: Express) {
       // Get user settings for the contract owner
       const userSettings = await storage.getSettings(contract.userId);
       
-      // Generate the signing page HTML
-      const { generateContractSigningPage } = await import('../contract-signing-page-generator');
-      const signingPageHtml = generateContractSigningPage(contract, userSettings);
+      // Generate the signing page HTML using AI
+      const { generateContractSigningPage } = await import('../ai-contract-signing-page-generator');
+      const signingPageHtml = await generateContractSigningPage(contract, userSettings);
       
       res.setHeader('Content-Type', 'text/html');
       res.send(signingPageHtml);

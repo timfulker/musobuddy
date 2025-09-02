@@ -331,7 +331,7 @@ export function registerIsolatedRoutes(app: Express) {
       }
 
       const userSettings = await storage.getSettings(contract.userId);
-      const { generateContractPDF } = await import('../unified-contract-pdf');
+      const { generateAIContractPDF } = await import('../ai-powered-contract-pdf');
       
       const signatureDetails = contract.status === 'signed' ? {
         signedAt: new Date(contract.signedAt || contract.updatedAt || new Date()),
@@ -339,7 +339,7 @@ export function registerIsolatedRoutes(app: Express) {
         clientIpAddress: contract.clientIpAddress || undefined
       } : undefined;
       
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      const pdfBuffer = await generateAIContractPDF(contract, userSettings, signatureDetails);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}${contract.status === 'signed' ? '-Signed' : ''}.pdf"`);
