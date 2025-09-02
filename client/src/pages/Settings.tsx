@@ -85,7 +85,7 @@ const settingsFormSchema = z.object({
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
-    paymentTerms: z.enum(["28_days_before", "14_days_before", "7_days_before", "on_performance", "on_receipt", "7_days_after", "14_days_after", "28_days_after"]).optional(),
+    paymentTerms: z.enum(["28_days_before", "14_days_before", "7_days_before", "on_performance", "7_days_after", "14_days_after", "28_days_after"]).optional(),
     deposit: z.boolean().optional(),
     balancePayment: z.boolean().optional(),
     cancellation: z.boolean().optional(),
@@ -958,7 +958,6 @@ export default function Settings() {
                         <SelectItem value="14_days_before">Payment due 14 days prior to performance</SelectItem>
                         <SelectItem value="7_days_before">Payment due 7 days prior to performance</SelectItem>
                         <SelectItem value="on_performance">Payment due on date of performance</SelectItem>
-                        <SelectItem value="on_receipt">Payment due on receipt of invoice</SelectItem>
                         <SelectItem value="7_days_after">Payment due within 7 days of performance</SelectItem>
                         <SelectItem value="14_days_after">Payment due within 14 days of performance</SelectItem>
                         <SelectItem value="28_days_after">Payment due within 28 days of performance</SelectItem>
@@ -2520,10 +2519,14 @@ export default function Settings() {
       
       // Don't reset the form immediately - let it keep the user's changes
       
+      // Invalidate settings cache to refresh data immediately
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      // The form will be updated when the settings query refreshes
+      
       // Store the new data as initial data for comparison
       setInitialData(data);
       
-      // Invalidate settings cache to refresh data
+      // Invalidate and refetch settings to get fresh data - but state variables already updated above
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
@@ -2718,48 +2721,10 @@ export default function Settings() {
         // Gig types
         customGigTypes: Array.isArray(settings.customGigTypes) ? settings.customGigTypes : [],
         // Contract clauses
-        contractClauses: {
-          paymentTerms: "7_days_after",
-          deposit: false,
-          balancePayment: true,
-          cancellation: false,
-          performerCancellation: true,
-          access: false,
-          power: false,
-          equipment: false,
-          spaceAndSafety: true,
-          weather: true,
-          soundLimits: false,
-          overtime: false,
-          guestNumbers: true,
-          mealsRefreshments: true,
-          parkingTravel: false,
-          recording: true,
-          insurance: true,
-          forceMajeure: true,
-          governingLaw: true,
-          ...settings.contractClauses
-        },
+        contractClauses: settings.contractClauses || {},
         customClauses: Array.isArray(settings.customClauses) ? settings.customClauses : [],
         // Invoice clauses
-        invoiceClauses: {
-          paymentTerms: true,
-          vatStatus: true,
-          publicLiability: true,
-          latePayment: false,
-          disputeProcess: true,
-          paymentDue: false,
-          latePaymentCharge: false,
-          depositPolicy: false,
-          cancellation: false,
-          paymentMethods: true,
-          bankDetails: true,
-          expenses: false,
-          ownershipRecordings: false,
-          taxCompliance: true,
-          queries: true,
-          ...settings.invoiceClauses
-        },
+        invoiceClauses: settings.invoiceClauses || {},
         customInvoiceClauses: Array.isArray(settings.customInvoiceClauses) ? settings.customInvoiceClauses : [],
         // Travel expense integration removed - always include travel in performance fee
         // Email prefix
@@ -2793,28 +2758,26 @@ export default function Settings() {
       // Reset change tracking after form is initialized
       setHasChanges(false);
     }
-  }, [settings, form]);
+  }, [settings, form, saveSettings.isPending]);
 
-  // Form watcher for detecting actual user changes (not programmatic resets)
+  // Simple form watcher for detecting changes - only start watching after initial data is loaded
   useEffect(() => {
-    if (!initialData || !formInitialized) return;
+    if (!initialData) return;
 
     let subscription: any = null;
     
+    // Add a small delay to ensure form is fully initialized before starting to watch
     const timeoutId = setTimeout(() => {
-      subscription = form.watch((data, { name, type }) => {
-        // Only trigger on user input, not programmatic changes
-        if (type === 'change') {
-          setHasChanges(true);
-        }
+      subscription = form.watch(() => {
+        setHasChanges(true);
       });
-    }, 200);
+    }, 100);
     
     return () => {
       clearTimeout(timeoutId);
       if (subscription) subscription.unsubscribe();
     };
-  }, [form, initialData, formInitialized]);
+  }, [form, initialData]);
 
   // Removed all instrument and gig type functions - feature moved to documentation
 
@@ -2945,14 +2908,8 @@ export default function Settings() {
               <form onSubmit={(e) => {
                 console.log('Form onSubmit triggered');
                 e.preventDefault();
-                // Prevent submission if save is already in progress
-                if (saveSettings.isPending) {
-                  console.log('Save already in progress, skipping submission');
-                  return;
-                }
                 form.handleSubmit(onSubmit, (errors) => {
                   console.log('Form validation errors:', errors);
-                  console.log('Validation error details:', JSON.stringify(errors, null, 2));
                 })(e);
               }} className="space-y-6">
                 {/* Render active section */}

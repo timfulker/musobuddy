@@ -8,9 +8,7 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(npx tsx:*)",
-      "Bash(npm run build:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": [],
