@@ -118,10 +118,11 @@ export async function uploadContractToCloud(
   try {
     console.log(`☁️ Uploading contract #${contract.id} to cloud storage...`);
     
-    // Use the services layer (which now handles Sonnet template)
-    console.log('🎨 Using services layer with Sonnet template...');
-    const { EmailService } = await import('./services');
-    const pdfBuffer = await EmailService.generateContractPDF(contract, userSettings);
+    // Generate PDF using the UNIFIED contract PDF generator with signature data
+    console.log('📥 Importing UNIFIED contract PDF generator...');
+    const { generateContractPDF } = await import('../unified-contract-pdf');
+    console.log('📄 Generating contract PDF with UNIFIED generator...');
+    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
     console.log(`📄 Contract PDF generated, size: ${pdfBuffer.length} bytes`);
     
@@ -194,9 +195,9 @@ export async function uploadContractSigningPage(
       riderNotes: (contract as any).additionalInfo?.substring(0, 50) || ''
     });
     
-    // Generate HTML signing page using the AI-powered generator
-    const { generateContractSigningPage } = await import('../ai-contract-signing-page-generator');
-    const signingPageHtml = await generateContractSigningPage(contract, userSettings);
+    // Generate HTML signing page using the dedicated generator
+    const { generateContractSigningPage } = await import('../contract-signing-page-generator.js');
+    const signingPageHtml = generateContractSigningPage(contract, userSettings);
     
     // Create storage key for signing page
     const contractDate = new Date(contract.createdAt || new Date());
