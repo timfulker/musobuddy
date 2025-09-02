@@ -55,6 +55,27 @@ function getSecondaryColor(primaryColor: string): string {
   return colorMap[primaryColor] || primaryColor; // Fallback to same color
 }
 
+// Helper function to convert payment terms setting to readable text
+function getPaymentTermsText(paymentTerms: string): string {
+  switch (paymentTerms) {
+    case "28_days_before": return "Payment due 28 days prior to performance date";
+    case "14_days_before": return "Payment due 14 days prior to performance date";
+    case "7_days_before": return "Payment due 7 days prior to performance date";
+    case "on_performance": return "Payment due on date of performance";
+    case "7_days_after": return "Payment due within 7 days of performance";
+    case "14_days_after": return "Payment due within 14 days of performance";
+    case "28_days_after": return "Payment due within 28 days of performance";
+    // Legacy terms (for backward compatibility)
+    case "on_receipt": return "Payment due on receipt of invoice";
+    case "3_days": return "Payment due within 3 days";
+    case "7_days": return "Payment due within 7 days";
+    case "14_days": return "Payment due within 14 days";
+    case "30_days": return "Payment due within 30 days";
+    case "cash_as_agreed": return "Cash payment as agreed";
+    default: return "Payment due within 7 days of performance";
+  }
+}
+
 // Helper function to generate terms section (moved out of template literal to avoid parsing issues)
 function getTermsSection(userSettings: UserSettings | null, contract?: any): string {
   // Standard clauses mapping - expanded set
@@ -112,6 +133,12 @@ function getTermsSection(userSettings: UserSettings | null, contract?: any): str
         selectedClauses.push(clauseMap[key as keyof typeof clauseMap]);
       }
     }
+  }
+  
+  // Add payment terms clause if set
+  if (userSettings?.contractClauses?.paymentTerms) {
+    const paymentTermsText = getPaymentTermsText(userSettings.contractClauses.paymentTerms);
+    selectedClauses.push(paymentTermsText);
   }
   
   // Get custom clauses - handle new format with {text, enabled} objects
@@ -411,6 +438,12 @@ export async function generateContractPDF(
           if (userSettings.contractClauses[key as keyof typeof clauseMap]) {
             selectedClauses.push(value);
           }
+        }
+        
+        // Add payment terms clause if set
+        if (userSettings.contractClauses.paymentTerms) {
+          const paymentTermsText = getPaymentTermsText(userSettings.contractClauses.paymentTerms);
+          selectedClauses.push(paymentTermsText);
         }
       }
       

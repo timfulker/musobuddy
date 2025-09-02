@@ -85,7 +85,7 @@ const settingsFormSchema = z.object({
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
-    paymentTerms: z.enum(["on_receipt", "3_days", "7_days", "14_days", "30_days", "on_performance", "cash_as_agreed"]).optional(),
+    paymentTerms: z.enum(["28_days_before", "14_days_before", "7_days_before", "on_performance", "7_days_after", "14_days_after", "28_days_after"]).optional(),
     deposit: z.boolean().optional(),
     balancePayment: z.boolean().optional(),
     cancellation: z.boolean().optional(),
@@ -210,7 +210,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
     contractClauses: {
-      paymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || data.contract_clauses?.paymentTerms || data.contractClauses?.paymentTerms || "7_days",
+      paymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || data.contract_clauses?.paymentTerms || data.contractClauses?.paymentTerms || "7_days_after",
       deposit: data.contract_clauses?.deposit || data.contractClauses?.deposit || false,
       balancePayment: data.contract_clauses?.balancePayment || data.contractClauses?.balancePayment || false,
       cancellation: data.contract_clauses?.cancellation || data.contractClauses?.cancellation || false,
@@ -947,20 +947,20 @@ export default function Settings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Payment Terms</FormLabel>
-                    <Select value={field.value || "7_days"} onValueChange={field.onChange}>
+                    <Select value={field.value || "7_days_after"} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select payment terms" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
-                        <SelectItem value="3_days">Payment due within 3 days</SelectItem>
-                        <SelectItem value="7_days">Payment due within 7 days</SelectItem>
-                        <SelectItem value="14_days">Payment due within 14 days</SelectItem>
-                        <SelectItem value="30_days">Payment due within 30 days</SelectItem>
-                        <SelectItem value="on_performance">Payment due on day of performance</SelectItem>
-                        <SelectItem value="cash_as_agreed">Cash payment as agreed</SelectItem>
+                        <SelectItem value="28_days_before">Payment due 28 days prior to performance</SelectItem>
+                        <SelectItem value="14_days_before">Payment due 14 days prior to performance</SelectItem>
+                        <SelectItem value="7_days_before">Payment due 7 days prior to performance</SelectItem>
+                        <SelectItem value="on_performance">Payment due on date of performance</SelectItem>
+                        <SelectItem value="7_days_after">Payment due within 7 days of performance</SelectItem>
+                        <SelectItem value="14_days_after">Payment due within 14 days of performance</SelectItem>
+                        <SelectItem value="28_days_after">Payment due within 28 days of performance</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription className="text-xs">

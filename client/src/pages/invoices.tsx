@@ -97,30 +97,52 @@ export default function Invoices() {
     },
   });
 
-  // Helper function to convert payment terms to days
+  // Helper function to convert payment terms to days relative to performance date
   const getPaymentTermsDays = (paymentTerms: string): number => {
     switch (paymentTerms) {
-      case "on_receipt": return 0;
+      case "28_days_before": return -28; // 28 days before performance
+      case "14_days_before": return -14; // 14 days before performance
+      case "7_days_before": return -7; // 7 days before performance
+      case "on_performance": return 0; // Due on performance date
+      case "7_days_after": return 7; // 7 days after performance
+      case "14_days_after": return 14; // 14 days after performance
+      case "28_days_after": return 28; // 28 days after performance
+      // Legacy terms (for backward compatibility)
+      case "on_receipt": return 7; // Fallback to 7 days after performance
       case "3_days": return 3;
       case "7_days": return 7;
       case "14_days": return 14;
-      case "30_days": return 30;
-      case "on_performance": return 0; // Due on performance date
-      case "cash_as_agreed": return 0; // Immediate payment
-      default: return 7; // Fallback to 7 days
+      case "30_days": return 28; // Map to 28 days after
+      case "cash_as_agreed": return 0;
+      default: return 7; // Fallback to 7 days after performance
     }
   };
 
   // Auto-set due date using user's payment terms setting from contract clauses
   useEffect(() => {
     if (userSettings?.contractClauses?.paymentTerms) {
-      // Use user's payment terms setting to calculate due date
-      const dueDate = new Date();
+      // Get current performance date from form or use current date as fallback
+      const performanceDate = form.getValues("performanceDate");
+      const baseDate = performanceDate ? new Date(performanceDate) : new Date();
+      
       const daysToAdd = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
+      const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
   }, [userSettings, form]);
+
+  // Update due date when performance date changes
+  const performanceDate = form.watch("performanceDate");
+  useEffect(() => {
+    if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
+      const performanceDateObj = new Date(performanceDate);
+      const daysToAdd = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
+      const dueDate = new Date(performanceDateObj);
+      dueDate.setDate(dueDate.getDate() + daysToAdd);
+      form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+    }
+  }, [performanceDate, userSettings, form]);
 
   // Track if URL parameters have been processed
   const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
@@ -146,16 +168,23 @@ export default function Invoices() {
           .then(response => response.json())
           .then(booking => {
             if (booking) {
-              // Calculate due date using user's payment terms setting from contract clauses
-              const dueDate = new Date();
-              const dueDays = userSettings?.contractClauses?.paymentTerms ? 
-                getPaymentTermsDays(userSettings.contractClauses.paymentTerms) : 7;
-              dueDate.setDate(dueDate.getDate() + dueDays);
-              
               // Calculate performance date from event date
               const performanceDate = booking.eventDate 
                 ? new Date(booking.eventDate).toISOString().split('T')[0]
                 : "";
+                
+              // Calculate due date using user's payment terms setting relative to performance date
+              let dueDate: Date;
+              if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
+                const performanceDateObj = new Date(performanceDate);
+                const dueDays = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
+                dueDate = new Date(performanceDateObj);
+                dueDate.setDate(dueDate.getDate() + dueDays);
+              } else {
+                // Fallback to current date + 7 days if no performance date
+                dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 7);
+              }
               
               const parsedBookingId = parseInt(bookingId);
               
@@ -193,16 +222,23 @@ export default function Invoices() {
       } else if (enquiryId && enquiries && enquiries.length > 0) {
         const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
         if (selectedEnquiry) {
-          // Calculate due date using user's payment terms setting from contract clauses
-          const dueDate = new Date();
-          const dueDays = userSettings?.contractClauses?.paymentTerms ? 
-            getPaymentTermsDays(userSettings.contractClauses.paymentTerms) : 7;
-          dueDate.setDate(dueDate.getDate() + dueDays);
-          
           // Calculate performance date from event date
           const performanceDate = selectedEnquiry.eventDate 
             ? new Date(selectedEnquiry.eventDate).toISOString().split('T')[0]
             : "";
+            
+          // Calculate due date using user's payment terms setting relative to performance date
+          let dueDate: Date;
+          if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
+            const performanceDateObj = new Date(performanceDate);
+            const dueDays = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
+            dueDate = new Date(performanceDateObj);
+            dueDate.setDate(dueDate.getDate() + dueDays);
+          } else {
+            // Fallback to current date + 7 days if no performance date
+            dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 7);
+          }
           
           form.reset({
             contractId: undefined,
