@@ -111,12 +111,12 @@ export default function Invoices() {
     }
   };
 
-  // Auto-set due date using user's payment terms setting
+  // Auto-set due date using user's payment terms setting from contract clauses
   useEffect(() => {
-    if (userSettings?.invoicePaymentTerms) {
+    if (userSettings?.contractClauses?.paymentTerms) {
       // Use user's payment terms setting to calculate due date
       const dueDate = new Date();
-      const daysToAdd = getPaymentTermsDays(userSettings.invoicePaymentTerms);
+      const daysToAdd = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
       dueDate.setDate(dueDate.getDate() + daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
@@ -146,10 +146,10 @@ export default function Invoices() {
           .then(response => response.json())
           .then(booking => {
             if (booking) {
-              // Calculate due date using user's payment terms setting
+              // Calculate due date using user's payment terms setting from contract clauses
               const dueDate = new Date();
-              const dueDays = userSettings?.invoicePaymentTerms ? 
-                getPaymentTermsDays(userSettings.invoicePaymentTerms) : 7;
+              const dueDays = userSettings?.contractClauses?.paymentTerms ? 
+                getPaymentTermsDays(userSettings.contractClauses.paymentTerms) : 7;
               dueDate.setDate(dueDate.getDate() + dueDays);
               
               // Calculate performance date from event date
@@ -193,10 +193,10 @@ export default function Invoices() {
       } else if (enquiryId && enquiries && enquiries.length > 0) {
         const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
         if (selectedEnquiry) {
-          // Calculate due date using user's payment terms setting
+          // Calculate due date using user's payment terms setting from contract clauses
           const dueDate = new Date();
-          const dueDays = userSettings?.invoicePaymentTerms ? 
-            getPaymentTermsDays(userSettings.invoicePaymentTerms) : 7;
+          const dueDays = userSettings?.contractClauses?.paymentTerms ? 
+            getPaymentTermsDays(userSettings.contractClauses.paymentTerms) : 7;
           dueDate.setDate(dueDate.getDate() + dueDays);
           
           // Calculate performance date from event date

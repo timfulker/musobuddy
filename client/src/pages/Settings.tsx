@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -80,12 +80,12 @@ const settingsFormSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   website: z.string().optional().or(z.literal("")),
   taxNumber: z.string().optional().or(z.literal("")),
-  emailFromName: z.string().min(1, "Email from name is required"),
+  emailFromName: z.string().optional().or(z.literal("")),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
-  invoicePaymentTerms: z.enum(["on_receipt", "3_days", "7_days", "14_days", "30_days", "on_performance", "cash_as_agreed"]).default("7_days"),
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
+    paymentTerms: z.enum(["on_receipt", "3_days", "7_days", "14_days", "30_days", "on_performance", "cash_as_agreed"]).optional(),
     deposit: z.boolean().optional(),
     balancePayment: z.boolean().optional(),
     cancellation: z.boolean().optional(),
@@ -137,7 +137,10 @@ const settingsFormSchema = z.object({
   customInvoiceClauses: z.array(z.object({
     text: z.string(),
     enabled: z.boolean().default(true)
-  })).optional().default([]),
+  })).optional().default([]).transform((clauses) => {
+    // Filter out empty clauses to prevent validation issues
+    return clauses ? clauses.filter(c => c.text && c.text.trim() !== '') : [];
+  }),
   emailSignature: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
@@ -205,9 +208,9 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailSignature: data.email_signature || data.emailSignature || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
-    invoicePaymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || "7_days",
     defaultInvoiceDueDays: data.default_invoice_due_days || data.defaultInvoiceDueDays || 7,
     contractClauses: {
+      paymentTerms: data.invoice_payment_terms || data.invoicePaymentTerms || data.contract_clauses?.paymentTerms || data.contractClauses?.paymentTerms || "7_days",
       deposit: data.contract_clauses?.deposit || data.contractClauses?.deposit || false,
       balancePayment: data.contract_clauses?.balancePayment || data.contractClauses?.balancePayment || false,
       cancellation: data.contract_clauses?.cancellation || data.contractClauses?.cancellation || false,
@@ -280,26 +283,31 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     },
     customInvoiceClauses: (() => {
       const clauses = data.custom_invoice_clauses || data.customInvoiceClauses;
+      let result = [];
+      
       if (Array.isArray(clauses)) {
         // Check if it's the new format with objects or old format with strings
         if (clauses.length > 0 && typeof clauses[0] === 'object') {
-          return clauses;
+          result = clauses;
+        } else {
+          // Convert old string format to new object format
+          result = clauses.map(text => ({ text, enabled: true }));
         }
-        // Convert old string format to new object format
-        return clauses.map(text => ({ text, enabled: true }));
-      }
-      if (typeof clauses === 'string') {
+      } else if (typeof clauses === 'string') {
         const parsed = JSON.parse(clauses || '[]');
         if (Array.isArray(parsed)) {
           // Check if parsed is already in new format
           if (parsed.length > 0 && typeof parsed[0] === 'object') {
-            return parsed;
+            result = parsed;
+          } else {
+            // Convert old format
+            result = parsed.map(text => ({ text, enabled: true }));
           }
-          // Convert old format
-          return parsed.map(text => ({ text, enabled: true }));
         }
       }
-      return [];
+      
+      // Filter out empty clauses to prevent validation issues
+      return result.filter(c => c && c.text && c.text.trim() !== '');
     })(),
     bankDetails: (() => {
       const bankData = data.bank_details || data.bankDetails;
@@ -470,7 +478,7 @@ export default function Settings() {
       label: 'Email Settings',
       icon: Mail,
       checkCompletion: (data: SettingsFormData) => {
-        return !!(data.emailFromName && data.emailSignature && data.emailPrefix);
+        return !!(data.emailSignature && data.emailPrefix);
       }
     },
     {
@@ -478,7 +486,7 @@ export default function Settings() {
       label: 'Contract & Invoice Settings',
       icon: FileText,
       checkCompletion: (data: SettingsFormData) => {
-        const hasInvoiceSettings = !!(data.invoicePaymentTerms && data.nextInvoiceNumber);
+        const hasInvoiceSettings = !!(data.contractClauses?.paymentTerms && data.nextInvoiceNumber);
         const hasContractClauses = Object.values(data.contractClauses || {}).some(Boolean);
         return hasInvoiceSettings && hasContractClauses;
       }
@@ -931,6 +939,37 @@ export default function Settings() {
             {/* Payment Terms Section */}
             <div className="space-y-3">
               <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">Payment Terms</h4>
+              
+              {/* Payment Terms Dropdown */}
+              <FormField
+                control={form.control}
+                name="contractClauses.paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Payment Terms</FormLabel>
+                    <Select value={field.value || "7_days"} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment terms" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
+                        <SelectItem value="3_days">Payment due within 3 days</SelectItem>
+                        <SelectItem value="7_days">Payment due within 7 days</SelectItem>
+                        <SelectItem value="14_days">Payment due within 14 days</SelectItem>
+                        <SelectItem value="30_days">Payment due within 30 days</SelectItem>
+                        <SelectItem value="on_performance">Payment due on day of performance</SelectItem>
+                        <SelectItem value="cash_as_agreed">Cash payment as agreed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription className="text-xs">
+                      This payment term will appear on both contracts and invoices
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
@@ -1252,33 +1291,6 @@ export default function Settings() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="invoicePaymentTerms"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Payment Terms</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment terms" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="on_receipt">Payment due on receipt</SelectItem>
-                        <SelectItem value="3_days">Payment due within 3 days</SelectItem>
-                        <SelectItem value="7_days">Payment due within 7 days</SelectItem>
-                        <SelectItem value="14_days">Payment due within 14 days</SelectItem>
-                        <SelectItem value="30_days">Payment due within 30 days</SelectItem>
-                        <SelectItem value="on_performance">Payment due on performance</SelectItem>
-                        <SelectItem value="cash_as_agreed">Cash payment as agreed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="invoicePrefix"
@@ -1929,36 +1941,42 @@ export default function Settings() {
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Booking Display Limit
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  form.setValue('bookingDisplayLimit', '50');
-                  setHasChanges(true);
-                }}
-                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                  form.watch('bookingDisplayLimit') === '50'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                }`}
-              >
-                Show 50 bookings
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  form.setValue('bookingDisplayLimit', 'all');
-                  setHasChanges(true);
-                }}
-                className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                  form.watch('bookingDisplayLimit') === 'all'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                }`}
-              >
-                Show all bookings
-              </button>
-            </div>
+            <Controller
+              name="bookingDisplayLimit"
+              control={form.control}
+              render={({ field }) => (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      field.onChange('50');
+                      setHasChanges(true);
+                    }}
+                    className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                      field.value === '50'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                    }`}
+                  >
+                    Show 50 bookings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      field.onChange('all');
+                      setHasChanges(true);
+                    }}
+                    className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                      field.value === 'all'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                    }`}
+                  >
+                    Show all bookings
+                  </button>
+                </div>
+              )}
+            />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Controls how many bookings are displayed on the bookings page
             </p>
@@ -2634,7 +2652,6 @@ export default function Settings() {
         emailFromName: settings.emailFromName || "",
         emailSignature: settings.emailSignature || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
-        invoicePaymentTerms: settings.invoicePaymentTerms || "7_days",
         defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
@@ -2767,6 +2784,9 @@ export default function Settings() {
 
 
   const onSubmit = (data: SettingsFormData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Has changes:', hasChanges);
+    console.log('Save settings pending:', saveSettings.isPending);
     saveSettings.mutate(data);
   };
 
@@ -2885,7 +2905,13 @@ export default function Settings() {
           {/* Settings Content */}
           <div className="flex-1 p-6 overflow-y-auto">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={(e) => {
+                console.log('Form onSubmit triggered');
+                e.preventDefault();
+                form.handleSubmit(onSubmit, (errors) => {
+                  console.log('Form validation errors:', errors);
+                })(e);
+              }} className="space-y-6">
                 {/* Render active section */}
                 {renderActiveSection()}
                 
@@ -2894,6 +2920,7 @@ export default function Settings() {
                   <Button
                     type="submit"
                     disabled={saveSettings.isPending || !hasChanges}
+                    onClick={() => console.log('Save button clicked, hasChanges:', hasChanges, 'isPending:', saveSettings.isPending)}
                     className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     {saveSettings.isPending ? (
