@@ -366,6 +366,7 @@ export function registerContractRoutes(app: Express) {
         eventEndTime: req.body.eventEndTime || "",
         fee: req.body.fee,
         deposit: req.body.deposit || "0.00",
+        depositDays: req.body.depositDays || 7,
         travelExpenses: travelAmount,
         paymentInstructions: req.body.paymentInstructions || null,
         equipmentRequirements: req.body.equipmentRequirements || null,

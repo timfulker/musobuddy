@@ -46,6 +46,7 @@ const contractFormSchema = z.object({
   eventEndTime: z.string().optional(),
   performanceDuration: z.string().optional(),
   deposit: z.string().optional(),
+  depositDays: z.number().optional(),
   travelExpenses: z.string().optional(), // Travel expenses field
   originalFee: z.string().optional(), // Hidden field to track original fee when combined
   originalTravelExpenses: z.string().optional(), // Hidden field to track original travel
@@ -119,6 +120,7 @@ export default function Contracts() {
       venueAddress: "",
       fee: "",
       deposit: "",
+      depositDays: 7,
       travelExpenses: "",
       paymentInstructions: "",
       equipmentRequirements: "",
@@ -179,6 +181,7 @@ export default function Contracts() {
         venueAddress: "",
         fee: "",
         deposit: "",
+        depositDays: 7,
         travelExpenses: "",
         originalFee: "",
         originalTravelExpenses: "",
@@ -662,6 +665,7 @@ export default function Contracts() {
     }
     
     form.setValue('deposit', contract.deposit || '');
+    form.setValue('depositDays', contract.depositDays || 7);
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
     form.setValue('specialRequirements', contract.specialRequirements || '');
@@ -1163,6 +1167,31 @@ export default function Contracts() {
                                 <FormControl>
                                   <Input type="number" placeholder="100" {...field} value={field.value || ""} />
                                 </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="depositDays"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Deposit Due (Days)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    placeholder="7" 
+                                    {...field} 
+                                    value={field.value || 7}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 7)}
+                                  />
+                                </FormControl>
+                                <div className="text-xs text-gray-500">
+                                  Number of days client has to pay deposit after signing
+                                </div>
                                 <FormMessage />
                               </FormItem>
                             )}

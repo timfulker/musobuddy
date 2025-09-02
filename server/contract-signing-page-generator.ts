@@ -42,6 +42,7 @@ export function generateContractSigningPage(
   const totalFee = baseFee + travelExpensesAmount;
   const fee = escapeHtml(totalFee.toFixed(2));
   const deposit = escapeHtml(contract.deposit?.toString() || '0.00');
+  const depositDays = contract.depositDays || contract.deposit_days || 7;
   const travelExpenses = escapeHtml(travelExpensesAmount.toFixed(2));
   const paymentInstructions = escapeHtml(contract.paymentInstructions || contract.payment_instructions || 'Payment due on completion of performance');
   const equipmentRequirements = escapeHtml(contract.equipmentRequirements || contract.equipment_requirements || 'Standard performance setup as discussed');

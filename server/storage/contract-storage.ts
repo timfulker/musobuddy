@@ -54,6 +54,7 @@ export class ContractStorage {
         performanceDuration: contractData.performanceDuration || null,
         fee: contractData.fee || "0.00",
         deposit: contractData.deposit || "0.00",
+        depositDays: contractData.depositDays || 7,
         travelExpenses: contractData.travelExpenses || "0.00",
         paymentInstructions: contractData.paymentInstructions || null,
         equipmentRequirements: contractData.equipmentRequirements || null,

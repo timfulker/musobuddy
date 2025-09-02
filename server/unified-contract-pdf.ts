@@ -56,7 +56,7 @@ function getSecondaryColor(primaryColor: string): string {
 }
 
 // Helper function to generate terms section (moved out of template literal to avoid parsing issues)
-function getTermsSection(userSettings: UserSettings | null): string {
+function getTermsSection(userSettings: UserSettings | null, contract?: any): string {
   // Standard clauses mapping - expanded set
   const clauseMap = {
     // Legacy clause names (for backward compatibility)
@@ -128,6 +128,14 @@ function getTermsSection(userSettings: UserSettings | null): string {
       }
     });
   }
+  // Add conditional deposit clause if deposit amount is specified
+  if (contract && contract.deposit && parseFloat(contract.deposit) > 0) {
+    const depositAmount = parseFloat(contract.deposit).toFixed(2);
+    const depositDays = contract.depositDays || 7;
+    const depositClause = `This Agreement becomes legally binding upon signature by both parties. The Client agrees to pay a non-refundable booking fee of £${depositAmount} within ${depositDays} days of signing. The booking will not be confirmed until the booking fee is received, and the Artist reserves the right to release the date if payment is not made.`;
+    selectedClauses.unshift(depositClause); // Add at the beginning since it's a critical clause
+  }
+  
   const allClauses = [...selectedClauses, ...customClauses].filter(clause => clause && clause.trim());
   
   // Group terms by category for better organization (matching signing page)
@@ -1146,7 +1154,7 @@ function generateUnifiedContractHTML(
             </div>
             ` : ''}
 
-${userSettings?.themeShowTerms !== false ? getTermsSection(userSettings) : ''}
+${userSettings?.themeShowTerms !== false ? getTermsSection(userSettings, contract) : ''}
             </div>
 
             <!-- Signature Section -->
