@@ -1933,10 +1933,8 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Booking Display Limit clicked: 50');
                   form.setValue('bookingDisplayLimit', '50');
                   setHasChanges(true);
-                  console.log('✅ Form updated, hasChanges set to true');
                 }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('bookingDisplayLimit') === '50'
@@ -1949,10 +1947,8 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Booking Display Limit clicked: all');
                   form.setValue('bookingDisplayLimit', 'all');
                   setHasChanges(true);
-                  console.log('✅ Form updated, hasChanges set to true');
                 }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('bookingDisplayLimit') === 'all'
@@ -1977,10 +1973,8 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Distance Units clicked: miles');
                   form.setValue('distanceUnits', 'miles');
                   setHasChanges(true);
-                  console.log('✅ Form updated, hasChanges set to true');
                 }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('distanceUnits') === 'miles'
@@ -1993,10 +1987,8 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Distance Units clicked: km');
                   form.setValue('distanceUnits', 'km');
                   setHasChanges(true);
-                  console.log('✅ Form updated, hasChanges set to true');
                 }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('distanceUnits') === 'km'
@@ -2775,11 +2767,6 @@ export default function Settings() {
 
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log('🚀 FORM SUBMIT - Data being sent:', {
-      bookingDisplayLimit: data.bookingDisplayLimit,
-      distanceUnits: data.distanceUnits,
-      hasChanges: hasChanges
-    });
     saveSettings.mutate(data);
   };
 
@@ -2819,14 +2806,6 @@ export default function Settings() {
   ).length;
   const completionPercentage = Math.round((completedSections / settingsSections.length) * 100);
 
-  // Debug current form state
-  console.log('🔍 RENDER DEBUG:', {
-    hasChanges,
-    bookingDisplayLimit: currentFormData.bookingDisplayLimit,
-    distanceUnits: currentFormData.distanceUnits,
-    formInitialized,
-    saveButtonDisabled: saveSettings.isPending || !hasChanges
-  });
 
   return (
     <div className="min-h-screen bg-background layout-consistent">
@@ -2914,7 +2893,7 @@ export default function Settings() {
                 <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
                   <Button
                     type="submit"
-                    disabled={saveSettings.isPending}
+                    disabled={saveSettings.isPending || !hasChanges}
                     className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     {saveSettings.isPending ? (
@@ -2925,7 +2904,7 @@ export default function Settings() {
                     ) : (
                       <>
                         <Save className="w-4 h-4 mr-2" />
-                        Save Settings
+                        {hasChanges ? 'Save Settings' : 'No Changes'}
                       </>
                     )}
                   </Button>
