@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { isPublicRoute, hasAccess } from "@/lib/access-control";
-import OnboardingWizard from "./onboarding-wizard";
+import WelcomePage from "./welcome-page";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -17,11 +17,14 @@ interface OnboardingStatus {
 
 export default function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { isAuthenticated, user } = useAuth();
-  const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const [location, setLocation] = useLocation();
   
   // Check if we're in the middle of a signup flow
   const isSignupInProgress = localStorage.getItem('signup-in-progress') === 'true';
+  
+  // Check if user has already seen the welcome page (persists across sessions)
+  const hasSeenWelcome = localStorage.getItem(`welcome-seen-${user?.id}`) === 'true';
 
   const { data: onboardingStatus, isLoading } = useQuery<OnboardingStatus>({
     queryKey: ['/api/onboarding/status'],
@@ -38,32 +41,32 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
     return <>{children}</>;
   }
 
-  // Only show onboarding wizard if:
+  // Only show welcome page if:
   // 1. User hasn't completed onboarding
-  // 2. User hasn't dismissed the wizard
-  // 3. Not in the middle of signup flow (prevents interference with payment redirect)
-  // 4. Not on a public route (prevents wizard showing on landing page, etc.)
-  // 5. User has PAID (not just trial access) - wizard only shows AFTER payment
-  const shouldShowWizard = onboardingStatus && 
+  // 2. User hasn't dismissed the welcome page in this session
+  // 3. User hasn't seen the welcome page before (not on subsequent logins)
+  // 4. Not in the middle of signup flow (prevents interference with payment redirect)
+  // 5. Not on a public route (prevents welcome showing on landing page, etc.)
+  // 6. User has PAID (not just trial access) - welcome only shows AFTER payment
+  const shouldShowWelcome = onboardingStatus && 
     !onboardingStatus.onboardingCompleted && 
-    !wizardDismissed &&
+    !welcomeDismissed &&
+    !hasSeenWelcome &&
     !isSignupInProgress &&
     !isPublicRoute(location) &&
-    user?.hasPaid === true; // Only show wizard if user has actually paid (not trial users)
+    user?.hasPaid === true; // Only show welcome if user has actually paid (not trial users)
 
-  if (shouldShowWizard) {
+  if (shouldShowWelcome) {
     return (
       <>
         {children}
-        <OnboardingWizard 
-          isOpen={true} 
+        <WelcomePage 
           onComplete={() => {
-            // Mark as dismissed and redirect to dashboard
-            setWizardDismissed(true);
-            // Use wouter for navigation to prevent page reload
-            setLocation('/dashboard');
+            // Mark as seen for future logins
+            localStorage.setItem(`welcome-seen-${user?.id}`, 'true');
+            // Mark as dismissed for this session
+            setWelcomeDismissed(true);
           }}
-          onDismiss={() => setWizardDismissed(true)}
           user={user}
         />
       </>

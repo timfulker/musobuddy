@@ -132,21 +132,49 @@ export class EmailService {
     }
   }
 
-  // Contract PDF generation using professional template
-  async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
+  // Contract PDF generation using Sonnet template with FIXED page breaks
+  async generateContractPDF(contract: any, userSettings: any, options?: { useAI?: boolean }): Promise<Buffer> {
     try {
-      console.log('🚀 Calling professional contract PDF generator...');
+      console.log('🎨 Using Sonnet template with FIXED page breaks (no API calls)...');
       
-      const { generateContractPDF } = await import('../unified-contract-pdf');
-      console.log('✅ Professional contract PDF generator imported successfully');
+      const { generateSonnetContractHTML } = await import('../sonnet-contract-generator');
+      const puppeteer = await import('puppeteer');
+      const chromium = await import('@sparticuz/chromium');
       
-      console.log('🎯 Generating professional contract PDF...');
-      const result = await generateContractPDF(contract, userSettings);
-      console.log('✅ Professional contract PDF generation completed, buffer size:', result.length);
+      const html = generateSonnetContractHTML(contract, userSettings);
+      console.log('📄 Generating PDF with fixed Sonnet template...');
       
-      return result;
+      const browser = await puppeteer.default.launch({
+        args: [
+          ...chromium.default.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ],
+        defaultViewport: chromium.default.defaultViewport,
+        executablePath: await chromium.default.executablePath(),
+        headless: chromium.default.headless,
+      });
+      
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      const pdfBuffer = await page.pdf({ 
+        format: 'A4', 
+        printBackground: true,
+        margin: { top: '0.75in', right: '0.75in', bottom: '0.75in', left: '0.75in' }
+      });
+      
+      await browser.close();
+      console.log('✅ Sonnet contract with fixed page breaks completed, buffer size:', pdfBuffer.length);
+      
+      return Buffer.from(pdfBuffer);
     } catch (error: any) {
-      console.error('💥 CRITICAL ERROR in generateContractPDF:', error);
+      console.error('💥 Sonnet contract generation failed:', error);
       throw new Error(`Contract PDF generation failed: ${error.message}`);
     }
   }
