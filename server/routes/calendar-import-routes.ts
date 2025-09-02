@@ -121,6 +121,16 @@ export function registerCalendarImportRoutes(app: Express) {
         let imported = 0;
         let skipped = 0;
         let errors = 0;
+        let notVevent = 0;
+        let noStartDate = 0;
+        let invalidDate = 0;
+        let duplicates = 0;
+        let pastEvents = 0;
+        
+        // Check if we should skip past events (from request body)
+        const skipPastEvents = req.body?.skipPastEvents || false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
 
         console.log(`⚡⚡⚡ STARTING EVENT PROCESSING - Total items: ${Object.keys(parsedCalendar).length}`);
 
@@ -130,6 +140,7 @@ export function registerCalendarImportRoutes(app: Express) {
           
           // Only process VEVENT types (actual calendar events)
           if (event.type !== 'VEVENT') {
+            notVevent++;
             continue;
           }
 
@@ -137,6 +148,7 @@ export function registerCalendarImportRoutes(app: Express) {
             // Skip events without a start date
             if (!event.start) {
               console.log(`⏭️ Skipping event without start date: ${event.summary}`);
+              noStartDate++;
               skipped++;
               continue;
             }
@@ -149,7 +161,16 @@ export function registerCalendarImportRoutes(app: Express) {
             // Check if date parsing worked correctly
             if (isNaN(eventDate.getTime())) {
               console.log(`❌ Failed to parse date for event: ${event.summary}, raw start: ${event.start}`);
+              invalidDate++;
               errors++;
+              continue;
+            }
+            
+            // Optionally skip past events
+            if (skipPastEvents && eventDate < today) {
+              console.log(`⏭️ Skipping past event: ${event.summary} on ${eventDate.toISOString().split('T')[0]}`);
+              pastEvents++;
+              skipped++;
               continue;
             }
             
@@ -241,6 +262,7 @@ export function registerCalendarImportRoutes(app: Express) {
 
             if (isDuplicate) {
               console.log(`⏭️ DUPLICATE DETECTED - Skipping: ${event.summary} on ${bookingData.eventDate} at ${bookingData.eventTime || 'all day'}`);
+              duplicates++;
               skipped++;
               continue;
             }
@@ -270,15 +292,34 @@ export function registerCalendarImportRoutes(app: Express) {
           }
         }
 
-        const message = `Successfully imported ${imported} events. Skipped ${skipped} duplicates/invalid. ${errors} errors.`;
+        // Get total count of bookings after import
+        const totalBookingsAfterImport = await storage.getBookings(userId);
+        const totalCount = totalBookingsAfterImport.length;
+        
+        const message = `Successfully imported ${imported} events. Skipped ${skipped} (${duplicates} duplicates, ${pastEvents} past events, ${noStartDate} no start date, ${notVevent} not events). ${errors} errors (${invalidDate} invalid dates).`;
         console.log(`📊 Import complete: ${message}`);
+        console.log(`📊 Breakdown: Total items: ${Object.keys(parsedCalendar).length}, VEVENT: ${Object.keys(parsedCalendar).length - notVevent}, Imported: ${imported}, Duplicates: ${duplicates}, Past Events: ${pastEvents}, No Start: ${noStartDate}, Invalid Date: ${invalidDate}, Other Errors: ${errors - invalidDate}`);
+        console.log(`📊 Total bookings in database after import: ${totalCount}`);
 
         res.json({
           success: true,
           imported,
           skipped,
           errors,
-          message
+          message,
+          totalBookingsInDatabase: totalCount,
+          displayNote: totalCount > 70 ? `Note: You have ${totalCount} total bookings in the database. Your display is limited to the 50 most recent past events plus future events. Change this in Settings > Performance.` : null,
+          breakdown: {
+            totalItems: Object.keys(parsedCalendar).length,
+            vevents: Object.keys(parsedCalendar).length - notVevent,
+            imported,
+            duplicates,
+            noStartDate,
+            invalidDate,
+            notVevent,
+            pastEvents,
+            otherErrors: errors - invalidDate
+          }
         });
 
       } catch (error) {

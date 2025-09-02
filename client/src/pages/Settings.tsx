@@ -1932,7 +1932,10 @@ export default function Settings() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => form.setValue('bookingDisplayLimit', '50')}
+                onClick={() => {
+                  form.setValue('bookingDisplayLimit', '50');
+                  setHasChanges(true);
+                }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('bookingDisplayLimit') === '50'
                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
@@ -1943,7 +1946,10 @@ export default function Settings() {
               </button>
               <button
                 type="button"
-                onClick={() => form.setValue('bookingDisplayLimit', 'all')}
+                onClick={() => {
+                  form.setValue('bookingDisplayLimit', 'all');
+                  setHasChanges(true);
+                }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('bookingDisplayLimit') === 'all'
                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
@@ -1966,7 +1972,10 @@ export default function Settings() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => form.setValue('distanceUnits', 'miles')}
+                onClick={() => {
+                  form.setValue('distanceUnits', 'miles');
+                  setHasChanges(true);
+                }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('distanceUnits') === 'miles'
                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
@@ -1977,7 +1986,10 @@ export default function Settings() {
               </button>
               <button
                 type="button"
-                onClick={() => form.setValue('distanceUnits', 'km')}
+                onClick={() => {
+                  form.setValue('distanceUnits', 'km');
+                  setHasChanges(true);
+                }}
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                   form.watch('distanceUnits') === 'km'
                     ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
