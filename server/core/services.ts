@@ -132,49 +132,19 @@ export class EmailService {
     }
   }
 
-  // Contract PDF generation using Sonnet template with FIXED page breaks
+  // Contract PDF generation using unified contract generator
   async generateContractPDF(contract: any, userSettings: any, options?: { useAI?: boolean }): Promise<Buffer> {
     try {
-      console.log('🎨 Using Sonnet template with FIXED page breaks (no API calls)...');
+      console.log('🎨 Using unified contract PDF generator...');
       
-      const { generateSonnetContractHTML } = await import('../sonnet-contract-generator');
-      const puppeteer = await import('puppeteer');
-      const chromium = await import('@sparticuz/chromium');
+      const { generateContractPDF: unifiedGenerateContractPDF } = await import('../unified-contract-pdf');
       
-      const html = generateSonnetContractHTML(contract, userSettings);
-      console.log('📄 Generating PDF with fixed Sonnet template...');
+      const result = await unifiedGenerateContractPDF(contract, userSettings);
+      console.log('✅ Unified contract PDF generation completed, buffer size:', result.length);
       
-      const browser = await puppeteer.default.launch({
-        args: [
-          ...chromium.default.args,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-extensions'
-        ],
-        defaultViewport: chromium.default.defaultViewport,
-        executablePath: await chromium.default.executablePath(),
-        headless: chromium.default.headless,
-      });
-      
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'domcontentloaded' });
-      const pdfBuffer = await page.pdf({ 
-        format: 'A4', 
-        printBackground: true,
-        margin: { top: '0.75in', right: '0.75in', bottom: '0.75in', left: '0.75in' }
-      });
-      
-      await browser.close();
-      console.log('✅ Sonnet contract with fixed page breaks completed, buffer size:', pdfBuffer.length);
-      
-      return Buffer.from(pdfBuffer);
+      return result;
     } catch (error: any) {
-      console.error('💥 Sonnet contract generation failed:', error);
+      console.error('💥 Contract generation failed:', error);
       throw new Error(`Contract PDF generation failed: ${error.message}`);
     }
   }
