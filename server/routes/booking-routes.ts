@@ -8,6 +8,17 @@ import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { cleanEncoreTitle } from '../core/booking-formatter';
 import OpenAI from 'openai';
 
+// Helper function for time comparison in duplicate detection
+function getMinutesDifference(time1: string, time2: string): number {
+  const [h1, m1] = time1.split(':').map(Number);
+  const [h2, m2] = time2.split(':').map(Number);
+  
+  const minutes1 = h1 * 60 + m1;
+  const minutes2 = h2 * 60 + m2;
+  
+  return minutes1 - minutes2;
+}
+
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
 
@@ -206,6 +217,45 @@ export function registerBookingRoutes(app: Express) {
         encoreAllowed: req.body.encoreAllowed !== undefined ? req.body.encoreAllowed : true,
         encoreSuggestions: req.body.encoreSuggestions || null
       };
+      
+      // ENHANCED DUPLICATE DETECTION for manual entry
+      // Prevent users from accidentally creating duplicate bookings when manually entering data
+      if (bookingData.eventDate && bookingData.clientName) {
+        const existingBookings = await storage.getBookingsByUser(userId);
+        const isDuplicate = existingBookings.some(booking => {
+          const sameDate = booking.eventDate === bookingData.eventDate;
+          const sameTime = booking.eventTime === bookingData.eventTime;
+          const sameName = booking.clientName?.toLowerCase().trim() === bookingData.clientName?.toLowerCase().trim();
+          
+          // LAYER 1: Exact match (date + time + name)
+          if (sameDate && sameTime && sameName) {
+            return true;
+          }
+          
+          // LAYER 2: All-day event match (same date + name, no specific time)
+          if (sameDate && !bookingData.eventTime && !booking.eventTime && sameName) {
+            return true;
+          }
+          
+          // LAYER 3: Close time match (within 30 minutes) for same date/name
+          if (sameDate && sameName && bookingData.eventTime && booking.eventTime) {
+            const timeDiff = getMinutesDifference(bookingData.eventTime, booking.eventTime);
+            if (Math.abs(timeDiff) <= 30) { // Within 30 minutes
+              return true;
+            }
+          }
+          
+          return false;
+        });
+
+        if (isDuplicate) {
+          console.log(`⚠️ Duplicate booking detected for user ${userId}: ${bookingData.clientName} on ${bookingData.eventDate} at ${bookingData.eventTime || 'all day'}`);
+          return res.status(409).json({ 
+            error: 'Duplicate booking detected',
+            message: `A booking for ${bookingData.clientName} on ${bookingData.eventDate} ${bookingData.eventTime ? 'at ' + bookingData.eventTime : ''} already exists.`
+          });
+        }
+      }
       
       const newBooking = await storage.createBooking(bookingData);
       console.log(`✅ Created booking #${newBooking.id} for user ${userId}`);

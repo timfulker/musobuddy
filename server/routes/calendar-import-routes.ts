@@ -17,6 +17,50 @@ const upload = multer({
   }
 });
 
+// Helper functions for enhanced duplicate detection
+function calculateSimilarity(str1: string, str2: string): number {
+  if (!str1 || !str2) return 0;
+  
+  // Simple Levenshtein distance-based similarity
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  
+  if (longer.length === 0) return 1;
+  
+  const distance = levenshteinDistance(longer, shorter);
+  return (longer.length - distance) / longer.length;
+}
+
+function levenshteinDistance(str1: string, str2: string): number {
+  const matrix = Array(str2.length + 1).fill(0).map(() => Array(str1.length + 1).fill(0));
+  
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j - 1][i] + 1,     // deletion
+        matrix[j][i - 1] + 1,     // insertion
+        matrix[j - 1][i - 1] + cost // substitution
+      );
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
+
+function getMinutesDifference(time1: string, time2: string): number {
+  const [h1, m1] = time1.split(':').map(Number);
+  const [h2, m2] = time2.split(':').map(Number);
+  
+  const minutes1 = h1 * 60 + m1;
+  const minutes2 = h2 * 60 + m2;
+  
+  return minutes1 - minutes2;
+}
+
 export function registerCalendarImportRoutes(app: Express) {
   // Debug middleware to check if route is hit
   app.post('/api/calendar/import',
@@ -109,8 +153,9 @@ export function registerCalendarImportRoutes(app: Express) {
               source: 'calendar_import'
             };
 
-            // Enhanced duplicate checking (same date, time, title, and venue)
-            // Use getBookingsByUser to get ALL bookings, not just the recent 50 for performance
+            // ENHANCED duplicate checking - multi-layer detection to prevent manual re-imports
+            // Since Google Calendar sync is removed, users will manually import .ics files repeatedly
+            // We need VERY robust duplicate detection to prevent database pollution
             const existingBookings = await storage.getBookingsByUser(userId);
             const isDuplicate = existingBookings.some(booking => {
               const sameDate = booking.eventDate === bookingData.eventDate;
@@ -118,8 +163,33 @@ export function registerCalendarImportRoutes(app: Express) {
               const sameName = booking.clientName?.toLowerCase().trim() === bookingData.clientName?.toLowerCase().trim();
               const sameVenue = booking.venue?.toLowerCase().trim() === bookingData.venue?.toLowerCase().trim();
               
-              // Consider it a duplicate if date, time, and name match (venue is optional as it might vary)
-              return sameDate && sameTime && sameName;
+              // LAYER 1: Exact match (date + time + name)
+              if (sameDate && sameTime && sameName) {
+                return true;
+              }
+              
+              // LAYER 2: All-day event match (same date + name, no specific time)
+              if (sameDate && !bookingData.eventTime && !booking.eventTime && sameName) {
+                return true;
+              }
+              
+              // LAYER 3: Fuzzy venue matching for same date/time/name (addresses slight variations)
+              if (sameDate && sameTime && sameName && bookingData.venue && booking.venue) {
+                const venueSimlarity = calculateSimilarity(bookingData.venue.toLowerCase(), booking.venue.toLowerCase());
+                if (venueSimlarity > 0.8) { // 80% similarity threshold
+                  return true;
+                }
+              }
+              
+              // LAYER 4: Close time match (within 30 minutes) for same date/name
+              if (sameDate && sameName && bookingData.eventTime && booking.eventTime) {
+                const timeDiff = getMinutesDifference(bookingData.eventTime, booking.eventTime);
+                if (Math.abs(timeDiff) <= 30) { // Within 30 minutes
+                  return true;
+                }
+              }
+              
+              return false;
             });
 
             if (isDuplicate) {

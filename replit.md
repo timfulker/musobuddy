@@ -60,16 +60,15 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 - **AI Integration**: Dual AI models for unlimited usage.
 
 ## System Design Choices
-- **UI/UX Decisions**: Responsive design adapting to mobile/desktop, streamlined primary actions, centralized and tabbed messaging system, consistent navigation with auto-scrolling to relevant bookings, simplified branding, enhanced HTML email templates, dual client portal system for contract signing and collaborative planning, and luminance-aware PDF branding.
+- **UI/UX Decisions**: Responsive design adapting to mobile/desktop; streamlined primary actions for bookings; centralized and tabbed messaging system; consistent navigation with auto-scrolling to relevant bookings; simplified email branding; enhanced HTML email templates; dual client portal system (contract signing and collaborative planning) with dynamic server-side rendering and real-time bidirectional sync; luminance-aware PDF branding for optimal readability.
 - **Technical Implementations**:
     - **User Management**: Two-tier system (Admin, User).
     - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
     - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting.
+    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting to prevent stale data.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
     - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
-    - **Client Portal**: Dual-portal system with dynamic server-side rendering and real-time bidirectional sync for collaborative fields.
 
 # External Dependencies
 - **Cloud Services**: Cloudflare R2, Neon Database (PostgreSQL)

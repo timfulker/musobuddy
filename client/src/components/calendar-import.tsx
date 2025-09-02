@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, CheckCircle, AlertCircle, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import GoogleCalendarIntegration from "./google-calendar-integration";
 import { useDialogLuminanceAware } from "@/hooks/use-luminance-aware";
 
 interface CalendarImportProps {
@@ -16,14 +14,6 @@ interface CalendarImportProps {
 }
 
 export default function CalendarImport({ onImportComplete }: CalendarImportProps) {
-  // Check Google Calendar status to show appropriate tab
-  const { data: calendarStatus } = useQuery({
-    queryKey: ['/api/google-calendar/status'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/google-calendar/status');
-      return response.json();
-    },
-  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importStep, setImportStep] = useState<'select' | 'importing' | 'complete'>('select');
@@ -105,34 +95,18 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Calendar className="w-4 h-4 mr-2" />
-          Calendar Sync
+          Calendar Import
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto calendar-integration-dialog p-4">
         <DialogHeader>
           <DialogTitle>Calendar Integration</DialogTitle>
           <DialogDescription>
-            Sync your bookings with your calendar using Google Calendar integration or import from .ics files
+            Import your existing bookings from Google Calendar, Apple Calendar, or other calendar apps
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue={calendarStatus?.connected ? "google" : "import"} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="google" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Google Calendar
-            </TabsTrigger>
-            <TabsTrigger value="import" className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Import File
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="google" className="mt-6">
-            <GoogleCalendarIntegration />
-          </TabsContent>
-          
-          <TabsContent value="import" className="mt-6">
+        <div className="mt-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-medium mb-2">Import Calendar File (.ics)</h3>
               <p className="text-muted-foreground">
@@ -217,8 +191,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
                 </div>
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
