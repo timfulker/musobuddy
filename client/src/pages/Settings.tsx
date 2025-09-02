@@ -1163,7 +1163,7 @@ export default function Settings() {
             </div>
           </div>
             
-            {/* Custom Contract Clauses */}
+          {/* Custom Contract Clauses */}
             <div className="space-y-4 mt-6">
               <div className="flex items-center justify-between">
                 <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Custom Contract Clauses</h4>
@@ -1639,9 +1639,6 @@ export default function Settings() {
                 )}
               />
             </div>
-          </div>
-
-          
         </div>
 
       </CardContent>
