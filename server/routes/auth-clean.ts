@@ -564,6 +564,68 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Stripe session verification endpoint
+  app.post('/api/stripe/verify-session', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      console.log('🔍 Verifying Stripe session:', sessionId);
+      
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
+        apiVersion: '2024-12-18.acacia' 
+      });
+      
+      // Retrieve the session from Stripe
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      // Get customer email
+      const customerEmail = session.customer_email || session.metadata?.userEmail;
+      
+      if (!customerEmail) {
+        console.error('❌ No customer email found in session');
+        return res.status(400).json({ error: 'No customer email found' });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(customerEmail);
+      
+      if (!user) {
+        console.error('❌ User not found for email:', customerEmail);
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      console.log('✅ Session verified for user:', user.email);
+      
+      // Return user data (the webhook should have already updated hasPaid)
+      res.json({
+        success: true,
+        user: {
+          userId: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          hasPaid: user.hasPaid
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Session verification failed:', error);
+      res.status(500).json({ 
+        error: 'Session verification failed',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Note: Firebase authentication endpoint is defined earlier in the file at line 208
 
 
