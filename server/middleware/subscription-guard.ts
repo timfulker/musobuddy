@@ -19,6 +19,7 @@ const PUBLIC_ROUTES = new Set([
   '/api/stripe/webhook',
   '/api/stripe/create-checkout',
   '/api/stripe/portal',
+  '/api/stripe/verify-session',
   '/api/mailgun/webhook',
   '/api/google-maps/autocomplete',
   '/api/what3words/convert',
