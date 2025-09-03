@@ -42,14 +42,13 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   }
 
   // Only show welcome page if:
-  // 1. User hasn't completed onboarding
+  // 1. User hasn't seen the welcome page before (first time only, not on subsequent logins)
   // 2. User hasn't dismissed the welcome page in this session
-  // 3. User hasn't seen the welcome page before (not on subsequent logins)
-  // 4. Not in the middle of signup flow (prevents interference with payment redirect)
-  // 5. Not on a public route (prevents welcome showing on landing page, etc.)
-  // 6. User has PAID (not just trial access) - welcome only shows AFTER payment
+  // 3. Not in the middle of signup flow (prevents interference with payment redirect)
+  // 4. Not on a public route (prevents welcome showing on landing page, etc.)
+  // 5. User has PAID (not just trial access) - welcome only shows AFTER payment
+  // Note: Removed onboardingCompleted check - welcome shows regardless of completion status
   const shouldShowWelcome = onboardingStatus && 
-    !onboardingStatus.onboardingCompleted && 
     !welcomeDismissed &&
     !hasSeenWelcome &&
     !isSignupInProgress &&

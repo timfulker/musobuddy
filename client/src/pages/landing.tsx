@@ -8,7 +8,7 @@ export default function LandingPage() {
       {/* Announcement Bar */}
       <div className="bg-primary text-white text-center py-3 px-4">
         <p className="text-sm font-medium">
-          14-day free trial - Professional gig management starts in minutes
+          30-day free trial - Professional gig management starts in minutes
         </p>
       </div>
 
@@ -311,7 +311,7 @@ export default function LandingPage() {
             </div>
             <Link href="/signup">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4 text-lg font-medium mb-6">
-                Try it free for 14 days
+                Try it free for 30 days
               </Button>
             </Link>
             <p className="text-gray-600">Cancel anytime with one click - no contracts, no hassles, no questions asked</p>
@@ -394,7 +394,7 @@ export default function LandingPage() {
             </p>
             <Link href="/signup">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4 text-lg font-medium">
-                Try it free for 14 days
+                Try it free for 30 days
               </Button>
             </Link>
           </div>

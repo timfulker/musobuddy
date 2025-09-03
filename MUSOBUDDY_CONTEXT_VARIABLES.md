@@ -38,7 +38,7 @@ MusoBuddy is a comprehensive music business management platform that helps freel
 
 ## PRICING MODEL: 
 - **Core Tier**: £9.99/month - Unlimited bookings, contracts, invoices, email templates, compliance tracking, cloud storage, client management
-- **Trial Period**: 14-day free trial with credit card required for Core tier
+- **Trial Period**: 30-day free trial with credit card required for Core tier
 - **Payment Processing**: Stripe integration with test mode for beta testing
 - **Target Market**: UK musicians (pricing in GBP, phone verification via SMS)
 

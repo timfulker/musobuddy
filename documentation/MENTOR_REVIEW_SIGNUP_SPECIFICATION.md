@@ -7,10 +7,10 @@ This document outlines the complete user registration, trial management, and onb
 ## Executive Summary
 
 **Current State:** Admin-only user creation with email/password authentication
-**Target State:** Public SaaS with self-registration, phone verification, 14-day auto-upgrade trials, and comprehensive fraud prevention
+**Target State:** Public SaaS with self-registration, phone verification, 30-day auto-upgrade trials, and comprehensive fraud prevention
 
 **Key Decisions Made:**
-- 14-day trial with card required at signup
+- 30-day trial with card required at signup
 - Phone verification for fraud prevention
 - Auto-upgrade to paid subscription unless cancelled
 - One-time permanent email prefix assignment
@@ -27,7 +27,7 @@ This document outlines the complete user registration, trial management, and onb
 **Single Tier Focus:**
 - **Core Subscription:** £9.99/month only
 - **Full Feature Set:** All current MusoBuddy features included
-- **Trial Experience:** 14-day trial of complete Core tier
+- **Trial Experience:** 30-day trial of complete Core tier
 - **Value Proposition:** Professional booking management with email automation
 
 **Rationale for Single Tier:**
@@ -216,7 +216,7 @@ Public Landing Page (musobuddy.com)
 ├── Pricing: Single Core tier (£9.99/month) - Phase 1 simplification
 ├── Demo preview: Interactive sandbox or video walkthrough
 ├── Social proof: Testimonials and user logos
-├── Call-to-action: "Start 14-Day Free Trial"
+├── Call-to-action: "Start 30-Day Free Trial"
 └── Login link for existing users
 ```
 
@@ -250,8 +250,8 @@ Registration Form
 
 **Rationale:** Higher conversion rates (40-60% vs 15-25%), filters serious users, prevents musician procrastination patterns
 
-**B) Trial Duration: ✅ 14 DAYS**
-- **Chosen:** 14-day trial period
+**B) Trial Duration: ✅ 30 DAYS**
+- **Chosen:** 30-day trial period
 - **Alternative 1:** 7-day trial (more urgency)
 - **Alternative 2:** 30-day trial (more evaluation time)
 
@@ -313,7 +313,7 @@ Email Verification
 ```
 Stripe Trial Configuration
 ├── Create Stripe customer record
-├── Set up subscription with 14-day trial
+├── Set up subscription with 30-day trial
 ├── Configure trial end behavior (auto-convert)
 ├── Store subscription ID and customer ID
 └── Set up webhook handling for subscription events
@@ -517,7 +517,7 @@ If "johndoe" is taken, suggest:
 ### Email System Integration with Trial/Billing
 
 **Trial Period Email Access:**
-- Full email routing active during 14-day trial
+- Full email routing active during 30-day trial
 - No restrictions on incoming email volume
 - Complete booking creation and management
 - Professional email signatures and branding
@@ -1028,7 +1028,7 @@ const TRIAL_CONFIG = {
 
 ### Strategic Questions for Review
 
-1. **Trial Duration:** Is 14 days optimal for musician evaluation patterns, or should we consider 7/21 days?
+1. **Trial Duration:** Is 30 days optimal for musician evaluation patterns, or should we consider 7/14/21 days?
 
 2. **Card Requirement:** Does the card-required model align with our target market sophistication and trust levels?
 

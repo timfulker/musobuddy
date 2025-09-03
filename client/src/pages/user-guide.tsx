@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import BetaStepGuide from '@/components/beta-step-guide';
 import { 
   Mail, 
   FileText, 
@@ -16,11 +17,20 @@ import {
   Users,
   CheckCircle,
   ArrowRight,
+  ArrowLeft,
   PlayCircle,
   BookOpen,
   Lightbulb,
   Target,
-  Menu
+  Menu,
+  AlertTriangle,
+  MessageSquare,
+  Bug,
+  HelpCircle,
+  Shield,
+  Zap,
+  Star,
+  Clock
 } from 'lucide-react';
 
 interface GuideStep {
@@ -34,6 +44,46 @@ interface GuideStep {
 }
 
 const guideSteps: GuideStep[] = [
+  {
+    id: 'step-by-step',
+    title: '🎯 Interactive Step-by-Step Guide',
+    description: 'Complete your first MusoBuddy workflow in 45-60 minutes',
+    icon: <Target className="h-5 w-5" />,
+    steps: [
+      'Click "Start Step-by-Step Guide" below to begin your complete MusoBuddy onboarding',
+      'This interactive guide walks you through creating your first booking, contract, and invoice',
+      'Takes 45-60 minutes and covers everything you need to know',
+      'Perfect for first-time users who want hands-on experience',
+      'Includes real-time progress tracking and helpful tips',
+      'You can pause and resume at any time'
+    ],
+    tips: [
+      'This is the recommended starting point for all new beta testers',
+      'You\'ll create real test data that you can delete later',
+      'Follow along in a separate browser tab for the best experience',
+      'Take screenshots of anything confusing for feedback'
+    ]
+  },
+  {
+    id: 'beta-welcome',
+    title: '🚀 Welcome Beta Testers!',
+    description: 'Important information for beta participants',
+    icon: <Star className="h-5 w-5" />,
+    steps: [
+      'Welcome to the MusoBuddy Beta Program! You\'re helping shape the future of musician admin',
+      'This is a BETA version - expect some features to evolve and improve based on your feedback',
+      'Your data is safe and secure, but we recommend keeping backup records during beta period',
+      'Report any bugs, issues, or suggestions through the Feedback page (accessible via the sidebar)',
+      'Check for updates regularly - we\'re releasing improvements based on beta feedback',
+      'Join our beta community discussions for tips and shared experiences'
+    ],
+    tips: [
+      'Beta access is free during the testing period - take advantage of all features',
+      'Document any workflows that don\'t feel intuitive - this helps us improve',
+      'Try different browsers (Chrome, Safari, Firefox) to help us test compatibility',
+      'Your feedback directly influences which features we prioritize for the full release'
+    ]
+  },
   {
     id: 'getting-started',
     title: 'Getting Started',
@@ -266,13 +316,140 @@ const guideSteps: GuideStep[] = [
       'Client details auto-fill when creating new contracts',
       'Useful for tracking repeat customers'
     ]
+  },
+  {
+    id: 'beta-testing-workflow',
+    title: '🧪 Beta Testing Best Practices',
+    description: 'How to effectively test MusoBuddy features',
+    icon: <Zap className="h-5 w-5" />,
+    steps: [
+      'Test real scenarios: Use actual client data and booking information when possible',
+      'Try edge cases: Test with unusual dates, long text, special characters, and empty fields',
+      'Test on different devices: Check functionality on desktop, tablet, and mobile',
+      'Test different browsers: Chrome, Safari, Firefox, and Edge if possible',
+      'Test workflows end-to-end: Create a booking → Generate contract → Send invoice → Mark as paid',
+      'Document what works well and what doesn\'t feel intuitive',
+      'Take screenshots of any bugs or confusing interfaces for feedback reports'
+    ],
+    tips: [
+      'Focus on YOUR typical workflow - how would you actually use this in your business?',
+      'Don\'t be afraid to break things - that\'s how we find issues to fix',
+      'Test features you might not normally use - they might surprise you',
+      'Pay attention to loading times and report anything that feels slow'
+    ]
+  },
+  {
+    id: 'common-issues',
+    title: '⚠️ Known Issues & Workarounds',
+    description: 'Current beta limitations and temporary solutions',
+    icon: <AlertTriangle className="h-5 w-5" />,
+    steps: [
+      'Email parsing may occasionally miss complex formatting - manually edit extracted data as needed',
+      'Large file uploads (>10MB) may timeout - resize images/documents before uploading',
+      'Calendar sync may take up to 5 minutes to reflect changes - refresh page if updates don\'t appear',
+      'Contract generation works best with Chrome/Safari - try different browser if PDFs don\'t generate',
+      'Mobile interface optimized for portrait mode - rotate device if interface appears cramped',
+      'Some email providers may mark MusoBuddy emails as spam initially - check spam folders',
+      'Logout/login if you experience session errors or features not loading properly'
+    ],
+    tips: [
+      'Keep this guide bookmarked - we update it regularly with new workarounds',
+      'Most issues resolve themselves with a page refresh or browser restart',
+      'Report new issues even if you find a workaround - helps us prioritize fixes',
+      'Check the feedback page for updates from other beta testers'
+    ]
+  },
+  {
+    id: 'troubleshooting',
+    title: '🔧 Troubleshooting Guide',
+    description: 'Quick fixes for common problems',
+    icon: <HelpCircle className="h-5 w-5" />,
+    steps: [
+      'PAGE WON\'T LOAD: Refresh browser, clear cache, try incognito/private browsing mode',
+      'FEATURES MISSING: Ensure you\'re logged in and have completed initial settings setup',
+      'EMAIL NOT WORKING: Check spam folder, verify email forwarding setup, try different email client',
+      'PDF WON\'T GENERATE: Try different browser, disable ad blockers, ensure popup blocker allows MusoBuddy',
+      'DATA NOT SAVING: Check internet connection, wait for page to fully load before submitting forms',
+      'MOBILE ISSUES: Update browser app, clear browser cache, try desktop version if critical',
+      'LOGIN PROBLEMS: Reset password, clear cookies, check email for verification messages'
+    ],
+    tips: [
+      'Take a screenshot before trying fixes - helps us identify patterns',
+      'Note your browser, device, and operating system when reporting issues',
+      'Try the same action in different browsers to isolate browser-specific issues',
+      'Most issues are resolved within 24-48 hours of reporting'
+    ]
+  },
+  {
+    id: 'feedback-reporting',
+    title: '📝 How to Report Feedback',
+    description: 'Help us improve MusoBuddy with your insights',
+    icon: <MessageSquare className="h-5 w-5" />,
+    steps: [
+      'Use the Feedback page in the sidebar - it\'s the fastest way to reach the development team',
+      'Include specific details: What were you trying to do? What happened instead?',
+      'Attach screenshots for visual issues - a picture is worth 1000 words',
+      'Rate the severity: Critical (blocks you from working) vs. Minor (inconvenient but workable)',
+      'Suggest improvements: If you have ideas for better workflows, we want to hear them',
+      'Follow up on submitted feedback - we may ask clarifying questions',
+      'Join beta tester discussions - share tips and learn from other users'
+    ],
+    tips: [
+      'Good feedback example: "When I try to generate a contract for a wedding booking, the PDF includes the wrong date. Screenshot attached."',
+      'Poor feedback example: "Contracts don\'t work" (too vague to investigate)',
+      'Feature requests are welcome - tell us what\'s missing from your current workflow',
+      'Positive feedback helps too - let us know what you love about MusoBuddy!'
+    ]
+  },
+  {
+    id: 'beta-security',
+    title: '🔒 Beta Security & Privacy',
+    description: 'Your data protection during beta testing',
+    icon: <Shield className="h-5 w-5" />,
+    steps: [
+      'All data is encrypted in transit and at rest using industry-standard security',
+      'Beta environment uses the same security measures as our production systems',
+      'Your business data is never shared with third parties or other beta testers',
+      'Regular automated backups ensure your data is protected against loss',
+      'You can export your data at any time through the Settings page',
+      'Account deletion removes all your data permanently within 30 days',
+      'Security updates are applied immediately as they become available'
+    ],
+    tips: [
+      'Use strong passwords and enable two-factor authentication if available',
+      'Don\'t share your login credentials with others during beta testing',
+      'Report any suspicious activity or security concerns immediately',
+      'Keep personal client data secure - don\'t screenshot sensitive information for feedback'
+    ]
+  },
+  {
+    id: 'beta-timeline',
+    title: '⏰ Beta Timeline & What\'s Next',
+    description: 'Beta program roadmap and expectations',
+    icon: <Clock className="h-5 w-5" />,
+    steps: [
+      'Beta Phase 1 (Current): Core features testing with limited user group',
+      'Beta Phase 2 (Coming Soon): Extended feature set with more beta testers',
+      'Release Candidate: Final testing with all launch features enabled',
+      'Public Launch: General availability with onboarding for all musicians',
+      'Post-Launch: Continued feature development based on user feedback',
+      'Your beta access continues through launch - no need to re-register',
+      'Grandfathered pricing available for committed beta testers'
+    ],
+    tips: [
+      'Beta testers get early access to new features before general release',
+      'Your feedback directly influences the launch timeline and feature priorities',
+      'Keep testing regularly - the more you use it, the better we can make it',
+      'Consider upgrading to paid plans during beta for the best pricing'
+    ]
   }
 ];
 
 export default function UserGuide() {
-  const [selectedStep, setSelectedStep] = useState<string>('email-setup');
+  const [selectedStep, setSelectedStep] = useState<string>('step-by-step');
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showStepGuide, setShowStepGuide] = useState(false);
   const { isMobile } = useResponsive();
 
   const currentStep = guideSteps.find(step => step.id === selectedStep);
@@ -284,6 +461,54 @@ export default function UserGuide() {
   const resetProgress = () => {
     setCompletedSteps(new Set());
   };
+
+  // Show the interactive step guide if requested
+  if (showStepGuide) {
+    return (
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        
+        <div className="flex-1 flex flex-col content-container main-content">
+          <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Target className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
+                  Interactive Step-by-Step Guide
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">Complete MusoBuddy workflow in 45-60 minutes</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowStepGuide(false)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Guide Menu
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4">
+            <BetaStepGuide onComplete={() => {
+              setShowStepGuide(false);
+              markAsComplete('step-by-step');
+            }} />
+          </div>
+        </div>
+        
+        {isMobile && <MobileNav />}
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -302,8 +527,11 @@ export default function UserGuide() {
               <Menu className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">User Guide</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">Complete step-by-step guide to using MusoBuddy</p>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Star className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
+                Beta Tester Guide
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">Complete guide for MusoBuddy beta testers with troubleshooting & feedback</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -323,10 +551,10 @@ export default function UserGuide() {
             <div className="hidden md:block w-80 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
               <div className="p-4">
                 <h2 className="font-bold mb-6 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                  <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
+                  <div className="p-2 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg">
+                    <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                   </div>
-                  Getting Started
+                  Beta Testing Guide
                 </h2>
                 <div className="space-y-3">
                   {guideSteps.map((step, index) => (
@@ -380,10 +608,10 @@ export default function UserGuide() {
               <div className="md:hidden mb-4">
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <h2 className="font-bold mb-4 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                    <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
+                    <div className="p-2 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg">
+                      <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                     </div>
-                    Getting Started
+                    Beta Testing Guide
                   </h2>
                   <div className="space-y-2">
                     {guideSteps.map((step, index) => (
@@ -489,30 +717,40 @@ export default function UserGuide() {
                         {/* Action Buttons */}
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <Button
-                              onClick={() => markAsComplete(currentStep.id)}
-                              disabled={completedSteps.has(currentStep.id)}
-                              className={`${
-                                completedSteps.has(currentStep.id) 
-                                  ? 'bg-green-600 hover:bg-green-700' 
-                                  : 'bg-green-600 hover:bg-green-700'
-                              } shadow-md w-full md:w-auto`}
-                            >
-                              {completedSteps.has(currentStep.id) ? (
-                                <>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Completed
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Mark as Complete
-                                </>
-                              )}
-                            </Button>
+                            {currentStep.id === 'step-by-step' ? (
+                              <Button
+                                onClick={() => setShowStepGuide(true)}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-white shadow-lg w-full md:w-auto text-lg py-3 px-6"
+                              >
+                                <Target className="h-5 w-5 mr-2" />
+                                Start Step-by-Step Guide
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={() => markAsComplete(currentStep.id)}
+                                disabled={completedSteps.has(currentStep.id)}
+                                className={`${
+                                  completedSteps.has(currentStep.id) 
+                                    ? 'bg-green-600 hover:bg-green-700' 
+                                    : 'bg-green-600 hover:bg-green-700'
+                                } shadow-md w-full md:w-auto`}
+                              >
+                                {completedSteps.has(currentStep.id) ? (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Completed
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark as Complete
+                                  </>
+                                )}
+                              </Button>
+                            )}
 
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                              {selectedStep !== 'email-setup' && (
+                              {selectedStep !== 'step-by-step' && (
                                 <Button
                                   variant="outline"
                                   className="border-purple-300 text-primary hover:bg-purple-50 dark:border-purple-600 dark:text-purple-400 dark:hover:bg-purple-900/20 flex-1 md:flex-none"
@@ -527,7 +765,7 @@ export default function UserGuide() {
                                 </Button>
                               )}
                               
-                              {selectedStep !== 'client-management' && (
+                              {selectedStep !== 'beta-timeline' && (
                                 <Button
                                   className="bg-primary hover:bg-purple-700 shadow-md flex-1 md:flex-none"
                                   onClick={() => {
