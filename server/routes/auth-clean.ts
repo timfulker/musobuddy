@@ -123,6 +123,37 @@ export function setupAuthRoutes(app: Express) {
 
 
 
+  // Public endpoint to check if user is authenticated (no auth required)
+  app.get('/api/auth/check', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.json({ authenticated: false });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      try {
+        const firebaseUser = await verifyFirebaseToken(token);
+        if (firebaseUser) {
+          const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
+          return res.json({ 
+            authenticated: true,
+            hasPaid: user?.hasPaid || false,
+            email: user?.email
+          });
+        }
+      } catch (error) {
+        // Token invalid
+      }
+      
+      return res.json({ authenticated: false });
+    } catch (error) {
+      return res.json({ authenticated: false });
+    }
+  });
+  
   // Get current user endpoint - uses Firebase authentication
   app.get('/api/auth/user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {

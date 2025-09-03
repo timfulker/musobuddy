@@ -1082,16 +1082,16 @@ app.get('/api/email-queue/status', async (req, res) => {
     return handleStripeWebhook(req, res);
   });
 
-  // Register all API routes FIRST so they exist when middleware checks them
-  console.log('🔄 Registering all modular routes...');
-  const { registerRoutes } = await import('./routes');
-  await registerRoutes(app);
-
   // Apply global subscription protection AFTER routes (so req.user is set)
   console.log('🔒 Setting up global subscription protection...');
   const { subscriptionGuard } = await import('./middleware/subscription-guard');
   app.use(subscriptionGuard);
   console.log('✅ Global subscription guard active for all /api/* routes');
+
+  // Register all API routes
+  console.log('🔄 Registering all modular routes...');
+  const { registerRoutes } = await import('./routes');
+  await registerRoutes(app);
 
   // Start server
   // Replit provides PORT env variable, default to 5000
