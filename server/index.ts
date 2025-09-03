@@ -1087,11 +1087,11 @@ app.get('/api/email-queue/status', async (req, res) => {
   const { registerRoutes } = await import('./routes');
   await registerRoutes(app);
 
-  // TEMPORARILY DISABLED: Subscription guard causing auth issues
-  // console.log('🔒 Setting up global subscription protection...');
-  // const { subscriptionGuard } = await import('./middleware/subscription-guard');
-  // app.use(subscriptionGuard);
-  // console.log('✅ Global subscription guard active for all /api/* routes');
+  // Apply global subscription protection AFTER routes (so req.user is set)
+  console.log('🔒 Setting up global subscription protection...');
+  const { subscriptionGuard } = await import('./middleware/subscription-guard');
+  app.use(subscriptionGuard);
+  console.log('✅ Global subscription guard active for all /api/* routes');
 
   // Start server
   // Replit provides PORT env variable, default to 5000
