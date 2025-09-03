@@ -614,46 +614,37 @@ export function setupAuthRoutes(app: Express) {
       
       // Retrieve the session from Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ['payment_intent'] // Critical: expand to get PaymentIntent details
+        expand: ['payment_intent', 'subscription'] // Expand both payment_intent and subscription
       });
       
       if (!session) {
         return res.status(404).json({ error: 'Session not found' });
       }
       
-      // SECURITY CRITICAL: Verify actual payment completion via PaymentIntent
-      const paymentIntent = session.payment_intent as any;
-      if (!paymentIntent) {
-        console.error('❌ No PaymentIntent found in session');
-        return res.status(400).json({ error: 'Invalid payment session' });
+      // Check if session is complete (works for both subscriptions and one-time payments)
+      if (session.status !== 'complete') {
+        console.error('❌ Session not complete:', session.status);
+        return res.status(400).json({ error: 'Session not complete' });
       }
       
-      // BULLETPROOF: Check PaymentIntent status - this is the authoritative payment source
-      const isPaymentSucceeded = paymentIntent.status === 'succeeded';
-      const amountReceived = paymentIntent.amount_received || 0;
-      const expectedAmount = session.amount_total || 0;
-      
-      if (!isPaymentSucceeded) {
-        console.error('❌ Payment not succeeded:', {
-          paymentIntentStatus: paymentIntent.status,
-          sessionStatus: session.status,
+      // For subscription mode (trial setup), just verify the session is complete
+      if (session.mode === 'subscription') {
+        console.log('✅ Subscription session verified:', {
+          sessionId: session.id,
+          subscription: session.subscription,
+          status: session.status,
           paymentStatus: session.payment_status
         });
-        return res.status(402).json({ 
-          error: 'Payment not completed',
-          details: `Payment status: ${paymentIntent.status}`
-        });
-      }
-      
-      if (amountReceived !== expectedAmount || expectedAmount === 0) {
-        console.error('❌ Payment amount mismatch:', {
-          expected: expectedAmount,
-          received: amountReceived
-        });
-        return res.status(402).json({ 
-          error: 'Payment amount invalid',
-          details: 'Amount mismatch detected'
-        });
+        // Session is complete, user has set up their trial/subscription
+      } else if (session.mode === 'payment') {
+        // For one-time payments, verify the payment_intent
+        const paymentIntent = session.payment_intent as any;
+        if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+          console.error('❌ Payment not succeeded');
+          return res.status(402).json({ 
+            error: 'Payment not completed'
+          });
+        }
       }
       
       // Get customer email

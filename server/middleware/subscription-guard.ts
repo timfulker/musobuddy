@@ -17,6 +17,8 @@ const PUBLIC_ROUTES = new Set([
   '/api/health/feedback-schema', // Development schema check
   '/api/health/fix-feedback-table', // Development table fix
   '/api/stripe/webhook',
+  '/api/stripe-webhook', // CRITICAL: Main Stripe webhook endpoint
+  '/api/webhook/stripe', // Alternative webhook endpoint
   '/api/stripe/create-checkout',
   '/api/stripe/portal',
   '/api/stripe/verify-session',
