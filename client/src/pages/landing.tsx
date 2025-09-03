@@ -408,7 +408,7 @@ export default function LandingPage() {
           {/* About Us Statement */}
           <div className="text-center mb-12">
             <h4 className="text-2xl font-semibold mb-6">About Us</h4>
-            <p className="text-lg text-gray-300 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-xl text-gray-200 leading-relaxed max-w-3xl mx-auto">
               MusoBuddy was built by people who understand that musicians should spend time 
               making music, not wrestling with paperwork. We're a UK-based team dedicated to 
               giving freelance musicians the professional tools they deserve at a price that 
@@ -419,11 +419,11 @@ export default function LandingPage() {
           {/* Contact Information */}
           <div className="text-center mb-12">
             <h4 className="text-xl font-semibold mb-4">Get in Touch</h4>
-            <p className="text-gray-300 mb-2">
+            <p className="text-gray-200 mb-2 text-lg">
               📧 <a href="mailto:hello@musobuddy.com" className="text-yellow-400 hover:text-yellow-300">hello@musobuddy.com</a>
             </p>
-            <p className="text-gray-300 mb-2">📍 United Kingdom</p>
-            <p className="text-gray-300 mb-4">🕒 Support: Monday-Friday, 9 AM - 6 PM GMT</p>
+            <p className="text-gray-200 mb-2 text-lg">📍 United Kingdom</p>
+            <p className="text-gray-200 mb-4 text-lg">🕒 Support: Monday-Friday, 9 AM - 6 PM GMT</p>
             <p className="text-yellow-400 italic">We actually respond to emails - usually within hours, not days.</p>
           </div>
 
@@ -432,19 +432,19 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
               <div>
                 <h5 className="font-semibold mb-2">Privacy Policy</h5>
-                <p className="text-sm text-gray-400">How we protect your data (spoiler: very seriously)</p>
+                <p className="text-base text-gray-300">How we protect your data (spoiler: very seriously)</p>
               </div>
               <div>
                 <h5 className="font-semibold mb-2">Terms of Service</h5>
-                <p className="text-sm text-gray-400">Fair, straightforward terms written in plain English</p>
+                <p className="text-base text-gray-300">Fair, straightforward terms written in plain English</p>
               </div>
               <div>
                 <h5 className="font-semibold mb-2">Security</h5>
-                <p className="text-sm text-gray-400">Bank-level protection for your business information</p>
+                <p className="text-base text-gray-300">Bank-level protection for your business information</p>
               </div>
               <div>
                 <h5 className="font-semibold mb-2">GDPR Compliance</h5>
-                <p className="text-sm text-gray-400">Your data rights respected and protected</p>
+                <p className="text-base text-gray-300">Your data rights respected and protected</p>
               </div>
             </div>
           </div>
@@ -455,19 +455,19 @@ export default function LandingPage() {
             <div className="space-y-4 max-w-2xl mx-auto">
               <div className="flex items-center justify-center">
                 <Check className="h-5 w-5 text-primary/50 mr-3" />
-                <span className="text-gray-300"><strong>UK-Based & Compliant</strong> - Built for UK musicians, by UK musicians</span>
+                <span className="text-gray-200"><strong>UK-Based & Compliant</strong> - Built for UK musicians, by UK musicians</span>
               </div>
               <div className="flex items-center justify-center">
                 <Check className="h-5 w-5 text-primary/50 mr-3" />
-                <span className="text-gray-300"><strong>Secure Cloud Storage</strong> - Enterprise-grade protection, 24/7 accessibility</span>
+                <span className="text-gray-200"><strong>Secure Cloud Storage</strong> - Enterprise-grade protection, 24/7 accessibility</span>
               </div>
               <div className="flex items-center justify-center">
                 <Check className="h-5 w-5 text-primary/50 mr-3" />
-                <span className="text-gray-300"><strong>No Long-Term Contracts</strong> - Cancel anytime, keep your data</span>
+                <span className="text-gray-200"><strong>No Long-Term Contracts</strong> - Cancel anytime, keep your data</span>
               </div>
               <div className="flex items-center justify-center">
                 <Check className="h-5 w-5 text-primary/50 mr-3" />
-                <span className="text-gray-300"><strong>Musician-Focused</strong> - Purpose-built for gig management, not generic business tools</span>
+                <span className="text-gray-200"><strong>Musician-Focused</strong> - Purpose-built for gig management, not generic business tools</span>
               </div>
             </div>
           </div>
@@ -475,7 +475,7 @@ export default function LandingPage() {
           {/* Secondary CTA */}
           <div className="text-center mb-8 bg-gray-800 p-8 rounded-lg">
             <h4 className="text-xl font-semibold mb-4">Still deciding?</h4>
-            <p className="text-gray-300 mb-6">
+            <p className="text-gray-200 mb-6 text-lg">
               Download our free "Professional Musician's Admin Checklist" and see how 
               MusoBuddy handles every item automatically.
             </p>
@@ -490,7 +490,7 @@ export default function LandingPage() {
               <Music className="h-6 w-6 text-white mr-2" />
               <span className="text-lg font-semibold">MusoBuddy</span>
             </div>
-            <p className="text-gray-400">&copy; 2025 MusoBuddy. Professional gig management for UK musicians.</p>
+            <p className="text-gray-300">&copy; 2025 MusoBuddy. Professional gig management for UK musicians.</p>
           </div>
         </div>
       </footer>
