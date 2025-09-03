@@ -663,18 +663,18 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
       
-      console.log('✅ PAYMENT VERIFIED - PaymentIntent succeeded:', {
+      console.log('✅ Session verified for user:', {
         user: user.email,
-        paymentIntentId: paymentIntent.id,
-        amount: amountReceived,
-        currency: paymentIntent.currency,
-        status: paymentIntent.status
+        sessionId: session.id,
+        mode: session.mode,
+        status: session.status
       });
       
-      // ATOMIC UPDATE: Set payment status to true - payment is 100% verified
+      // ATOMIC UPDATE: Set payment status to true - session is complete
       await storage.updateUserById(user.id, { 
         hasPaid: true,
-        stripeCustomerId: session.customer || null
+        stripeCustomerId: session.customer || null,
+        stripeSubscriptionId: session.mode === 'subscription' ? session.subscription : null
       });
       console.log('✅ User payment status updated to PAID');
       
