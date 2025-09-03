@@ -17,16 +17,16 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <Music className="h-8 w-8 text-gray-800" />
-              <h1 className="text-2xl font-semibold text-gray-900">MusoBuddy</h1>
+              <Music className="h-8 w-8 text-gray-300" />
+              <h1 className="text-2xl font-semibold text-gray-100">MusoBuddy</h1>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How it works</a>
-              <a href="#features" className="text-gray-700 hover:text-gray-900 font-medium">For Musicians</a>
-              <a href="#success-stories" className="text-gray-700 hover:text-gray-900 font-medium">Success Stories</a>
-              <a href="#pricing" className="text-gray-700 hover:text-gray-900 font-medium">Pricing</a>
+              <a href="#how-it-works" className="text-gray-300 hover:text-gray-100 font-medium">How it works</a>
+              <a href="#features" className="text-gray-300 hover:text-gray-100 font-medium">For Musicians</a>
+              <a href="#success-stories" className="text-gray-300 hover:text-gray-100 font-medium">Success Stories</a>
+              <a href="#pricing" className="text-gray-300 hover:text-gray-100 font-medium">Pricing</a>
               <Link href="/login">
-                <Button variant="ghost" className="text-gray-700 hover:text-gray-900">
+                <Button variant="ghost" className="text-gray-300 hover:text-gray-100">
                   Login
                 </Button>
               </Link>
@@ -49,7 +49,7 @@ export default function LandingPage() {
             <p className="text-lg md:text-xl text-primary font-medium mb-4 uppercase tracking-wide">
               Freelance Musicians
             </p>
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-100 mb-8 leading-tight">
               Book Gigs, Create Contracts, Send Invoices - All In One Platform
             </h2>
             <p className="text-2xl text-gray-700 max-w-3xl mx-auto mb-12 leading-relaxed">
@@ -82,7 +82,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h3 className="text-4xl font-bold text-gray-900 mb-8">
+              <h3 className="text-4xl font-bold text-gray-100 mb-8">
                 From gig details to signed contract — in seconds
               </h3>
               <p className="text-xl text-gray-700 mb-8 leading-relaxed">
@@ -145,7 +145,7 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16">
             {/* Feature Section 2: Booking Management */}
             <div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-6">
+              <h3 className="text-3xl font-bold text-gray-100 mb-6">
                 End double-booking disasters forever
               </h3>
               <p className="text-lg text-gray-700 mb-6 leading-relaxed">
@@ -170,7 +170,7 @@ export default function LandingPage() {
 
             {/* Feature Section 3: Professional Invoice System */}
             <div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-6">
+              <h3 className="text-3xl font-bold text-gray-100 mb-6">
                 Get paid faster with zero chasing
               </h3>
               <p className="text-lg text-gray-700 mb-6 leading-relaxed">
@@ -201,7 +201,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h3 className="text-4xl font-bold text-gray-900 mb-8">
+              <h3 className="text-4xl font-bold text-gray-100 mb-8">
                 Get booked instantly — just by scanning a QR code
               </h3>
               <p className="text-xl text-gray-700 mb-8 leading-relaxed">
@@ -241,7 +241,7 @@ export default function LandingPage() {
       <section className="py-20 bg-white border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-8">
+            <h3 className="text-4xl font-bold text-gray-100 mb-8">
               See how MusoBuddy works
             </h3>
             <Link href="/signup">
@@ -274,21 +274,21 @@ export default function LandingPage() {
               <div className="flex items-center justify-center h-32 bg-white border border-gray-200 mb-4">
                 <Play className="h-8 w-8 text-gray-400" />
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Contract Generation</h4>
+              <h4 className="font-semibold text-gray-100 mb-2">Contract Generation</h4>
               <p className="text-sm text-gray-600">See contracts in action</p>
             </div>
             <div className="bg-gray-50 border border-gray-200 p-6">
               <div className="flex items-center justify-center h-32 bg-white border border-gray-200 mb-4">
                 <Play className="h-8 w-8 text-gray-400" />
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Invoice Automation</h4>
+              <h4 className="font-semibold text-gray-100 mb-2">Invoice Automation</h4>
               <p className="text-sm text-gray-600">Getting paid made simple</p>
             </div>
             <div className="bg-gray-50 border border-gray-200 p-6">
               <div className="flex items-center justify-center h-32 bg-white border border-gray-200 mb-4">
                 <Play className="h-8 w-8 text-gray-400" />
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Email Integration</h4>
+              <h4 className="font-semibold text-gray-100 mb-2">Email Integration</h4>
               <p className="text-sm text-gray-600">Bookings from emails</p>
             </div>
           </div>
@@ -298,12 +298,12 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <section id="pricing" className="py-20 bg-gray-50 border-t border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-4xl font-bold text-gray-900 mb-8">
+          <h3 className="text-4xl font-bold text-gray-100 mb-8">
             Simple pricing that makes sense
           </h3>
           
           <div className="bg-white border border-gray-200 p-12 mb-8">
-            <div className="text-5xl font-bold text-gray-900 mb-4">£9.99</div>
+            <div className="text-5xl font-bold text-gray-100 mb-4">£9.99</div>
             <div className="text-xl text-gray-700 mb-8">per month</div>
             <div className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
               Save 10+ hours weekly on admin tasks while earning more through professional contracts and faster payments. 
@@ -326,11 +326,11 @@ export default function LandingPage() {
       {/* FAQ Section */}
       <section className="py-20 bg-white border-t border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-4xl font-bold text-center text-gray-900 mb-16">Frequently Asked Questions</h3>
+          <h3 className="text-4xl font-bold text-center text-gray-100 mb-16">Frequently Asked Questions</h3>
           
           <div className="space-y-12">
             <div>
-              <h4 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h4 className="text-2xl font-semibold text-gray-100 mb-4">
                 I'm not tech-savvy - will this be complicated to set up?
               </h4>
               <p className="text-lg text-gray-700 leading-relaxed">
@@ -341,7 +341,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h4 className="text-2xl font-semibold text-gray-100 mb-4">
                 How quickly will I see results?
               </h4>
               <p className="text-lg text-gray-700 leading-relaxed">
@@ -352,7 +352,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h4 className="text-2xl font-semibold text-gray-100 mb-4">
                 Is my client data secure?
               </h4>
               <p className="text-lg text-gray-700 leading-relaxed">
@@ -363,7 +363,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h4 className="text-2xl font-semibold text-gray-100 mb-4">
                 What if I need to cancel?
               </h4>
               <p className="text-lg text-gray-700 leading-relaxed">
@@ -374,7 +374,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h4 className="text-2xl font-semibold text-gray-100 mb-4">
                 What support do you offer?
               </h4>
               <p className="text-lg text-gray-700 leading-relaxed">
@@ -386,7 +386,7 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center mt-16 bg-gray-50 border border-gray-200 p-12">
-            <h4 className="text-2xl font-semibold text-gray-900 mb-6">Still deciding?</h4>
+            <h4 className="text-2xl font-semibold text-gray-100 mb-6">Still deciding?</h4>
             <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
               Getting started takes less time than setting up your equipment. Enter your details, create your first 
               contract, and send it to a client - all in under 10 minutes. No complicated setup, no learning curve, 
