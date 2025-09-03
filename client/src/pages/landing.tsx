@@ -407,7 +407,7 @@ export default function LandingPage() {
           
           {/* About Us Statement */}
           <div className="text-center mb-12">
-            <h4 className="text-2xl font-semibold mb-6">About Us</h4>
+            <h4 className="text-2xl font-semibold mb-6 text-gray-200">About Us</h4>
             <p className="text-xl text-gray-200 leading-relaxed max-w-3xl mx-auto">
               MusoBuddy was built by people who understand that musicians should spend time 
               making music, not wrestling with paperwork. We're a UK-based team dedicated to 
@@ -418,7 +418,7 @@ export default function LandingPage() {
 
           {/* Contact Information */}
           <div className="text-center mb-12">
-            <h4 className="text-xl font-semibold mb-4">Get in Touch</h4>
+            <h4 className="text-xl font-semibold mb-4 text-gray-200">Get in Touch</h4>
             <p className="text-gray-200 mb-2 text-lg">
               📧 <a href="mailto:hello@musobuddy.com" className="text-yellow-400 hover:text-yellow-300">hello@musobuddy.com</a>
             </p>
