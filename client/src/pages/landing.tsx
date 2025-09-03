@@ -431,19 +431,19 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
               <div>
-                <h5 className="font-semibold mb-2">Privacy Policy</h5>
+                <h5 className="font-semibold mb-2 text-gray-200">Privacy Policy</h5>
                 <p className="text-base text-gray-300">How we protect your data (spoiler: very seriously)</p>
               </div>
               <div>
-                <h5 className="font-semibold mb-2">Terms of Service</h5>
+                <h5 className="font-semibold mb-2 text-gray-200">Terms of Service</h5>
                 <p className="text-base text-gray-300">Fair, straightforward terms written in plain English</p>
               </div>
               <div>
-                <h5 className="font-semibold mb-2">Security</h5>
+                <h5 className="font-semibold mb-2 text-gray-200">Security</h5>
                 <p className="text-base text-gray-300">Bank-level protection for your business information</p>
               </div>
               <div>
-                <h5 className="font-semibold mb-2">GDPR Compliance</h5>
+                <h5 className="font-semibold mb-2 text-gray-200">GDPR Compliance</h5>
                 <p className="text-base text-gray-300">Your data rights respected and protected</p>
               </div>
             </div>
@@ -451,7 +451,7 @@ export default function LandingPage() {
 
           {/* Trust Signals */}
           <div className="text-center mb-12">
-            <h4 className="text-xl font-semibold mb-6">Trust Signals</h4>
+            <h4 className="text-xl font-semibold mb-6 text-gray-200">Trust Signals</h4>
             <div className="space-y-4 max-w-2xl mx-auto">
               <div className="flex items-center justify-center">
                 <Check className="h-5 w-5 text-primary/50 mr-3" />
@@ -474,7 +474,7 @@ export default function LandingPage() {
 
           {/* Secondary CTA */}
           <div className="text-center mb-8 bg-gray-800 p-8 rounded-lg">
-            <h4 className="text-xl font-semibold mb-4">Still deciding?</h4>
+            <h4 className="text-xl font-semibold mb-4 text-gray-200">Still deciding?</h4>
             <p className="text-gray-200 mb-6 text-lg">
               Download our free "Professional Musician's Admin Checklist" and see how 
               MusoBuddy handles every item automatically.
@@ -488,7 +488,7 @@ export default function LandingPage() {
           <div className="border-t border-gray-800 pt-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <Music className="h-6 w-6 text-white mr-2" />
-              <span className="text-lg font-semibold">MusoBuddy</span>
+              <span className="text-lg font-semibold text-white">MusoBuddy</span>
             </div>
             <p className="text-gray-300">&copy; 2025 MusoBuddy. Professional gig management for UK musicians.</p>
           </div>
