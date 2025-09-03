@@ -5,6 +5,14 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '../shared/schema';
 import { aiPDFOptimizer } from './core/ai-pdf-optimizer';
+import { LRUCache } from 'lru-cache';
+
+// Cache for AI optimization results based on terms pattern
+// Key: "terms_count:payment_count:performance_count:cancellation_count:general_count:has_requirements"
+const aiOptimizationCache = new LRUCache<string, any>({
+  max: 100, // Store up to 100 different patterns
+  ttl: 1000 * 60 * 60 * 24 * 7, // Cache for 7 days
+});
 
 // Simplified contract totals calculation - TRAVEL ALWAYS INCLUDED IN PERFORMANCE FEE
 function calculateContractTotals(contract: any, userSettings?: UserSettings) {
@@ -411,17 +419,66 @@ export async function generateContractPDF(
 
       const totals = calculateContractTotals(contract, userSettings);
 
-      const aiOptimization = await aiPDFOptimizer.optimizeContractLayout({
-        clientName: contract.clientName || 'Client Name TBC',
-        venue: contract.venue || 'Venue TBC',
-        venueAddress: contract.venueAddress || 'Venue Address TBC',
-        eventDate: contract.eventDate || 'Date TBC',
-        selectedClauses,
-        customClauses,
-        performanceFee: `£${totals.totalAmount.toFixed(2)}`,
-        depositAmount: contract.deposit ? `£${parseFloat(contract.deposit).toFixed(2)}` : undefined,
-        additionalNotes: contract.specialRequirements || contract.equipmentRequirements
+      // Calculate terms categorization for cache key
+      const allClauses = [...selectedClauses, ...customClauses];
+      const categories = {
+        payment: 0,
+        performance: 0,
+        cancellation: 0,
+        general: 0
+      };
+      
+      allClauses.forEach(clause => {
+        const lower = clause.toLowerCase();
+        if (lower.includes('payment') || lower.includes('deposit') || lower.includes('fee') || lower.includes('£')) {
+          categories.payment++;
+        } else if (lower.includes('cancel') || lower.includes('reschedul')) {
+          categories.cancellation++;
+        } else if (lower.includes('equipment') || lower.includes('venue') || lower.includes('performance') || 
+                   lower.includes('stage') || lower.includes('power') || lower.includes('access')) {
+          categories.performance++;
+        } else {
+          categories.general++;
+        }
       });
+      
+      const hasRequirements = !!(contract.specialRequirements || contract.equipmentRequirements);
+      const cacheKey = `${allClauses.length}:${categories.payment}:${categories.performance}:${categories.cancellation}:${categories.general}:${hasRequirements}`;
+      
+      console.log(`🔑 AI optimization cache key: ${cacheKey}`);
+      
+      // Check cache first
+      let aiOptimization = aiOptimizationCache.get(cacheKey);
+      
+      if (aiOptimization) {
+        console.log('✨ Using cached AI optimization (no API call)');
+      } else {
+        console.log('🤖 Calling AI for new optimization pattern');
+        aiOptimization = await aiPDFOptimizer.optimizeContractLayout({
+          clientName: contract.clientName || 'Client Name TBC',
+          venue: contract.venue || 'Venue TBC',
+          venueAddress: contract.venueAddress || 'Venue Address TBC',
+          eventDate: contract.eventDate || 'Date TBC',
+          selectedClauses,
+          customClauses,
+          performanceFee: `£${totals.totalAmount.toFixed(2)}`,
+          depositAmount: contract.deposit ? `£${parseFloat(contract.deposit).toFixed(2)}` : undefined,
+          additionalNotes: contract.specialRequirements || contract.equipmentRequirements,
+          // Add terms categorization data for better AI decisions
+          termsCount: allClauses.length,
+          hasRequirementsSection: hasRequirements,
+          categorizedTermsCounts: {
+            payment: categories.payment,
+            performance: categories.performance,
+            cancellation: categories.cancellation,
+            general: categories.general
+          }
+        });
+        
+        // Cache the result
+        aiOptimizationCache.set(cacheKey, aiOptimization);
+        console.log(`💾 Cached AI optimization for future use`);
+      }
 
       if (Object.keys(aiOptimization.adjustments).length > 0) {
         console.log('✅ Applying AI adjustments:', aiOptimization.reasoning);

@@ -36,6 +36,15 @@ interface ContractContent {
   performanceFee: string;
   depositAmount?: string;
   additionalNotes?: string;
+  // New fields for better layout optimization
+  termsCount?: number;
+  hasRequirementsSection?: boolean;
+  categorizedTermsCounts?: {
+    payment: number;
+    performance: number;
+    cancellation: number;
+    general: number;
+  };
 }
 
 interface InvoiceContent {
@@ -73,8 +82,8 @@ class AIPDFOptimizer {
       console.log('🤖 AI analyzing contract layout for optimization...');
       
       const response = await this.anthropic.messages.create({
-        // "claude-sonnet-4-20250514"
-        model: DEFAULT_MODEL_STR,
+        // Using Haiku for cost efficiency on layout optimization
+        model: 'claude-3-haiku-20240307',
         max_tokens: 800,
         temperature: 0.1,
         system: `You are a PDF layout optimizer. Analyze contract content and suggest CSS adjustments to prevent awkward page breaks and optimize layout. 
@@ -181,10 +190,22 @@ Guidelines:
   private buildContractPrompt(content: ContractContent): string {
     const clauseCount = content.selectedClauses.length;
     const customClauseCount = content.customClauses.length;
+    const totalTerms = content.termsCount || (clauseCount + customClauseCount);
     const venueAddressLength = content.venueAddress.length;
     const customClauseLength = content.customClauses.join(' ').length;
     
-    return `Analyze this contract content for PDF layout optimization:
+    // Enhanced prompt with terms categorization for better AI decisions
+    let termsBreakdown = '';
+    if (content.categorizedTermsCounts) {
+      const cats = content.categorizedTermsCounts;
+      termsBreakdown = `\n\nTERMS CATEGORIZATION:
+- Payment Terms: ${cats.payment} clauses
+- Performance & Equipment: ${cats.performance} clauses
+- Cancellation & Rescheduling: ${cats.cancellation} clauses
+- General Terms: ${cats.general} clauses`;
+    }
+    
+    return `Analyze this contract content for PDF layout optimization, focusing on the Terms & Conditions section:
 
 CLIENT: ${content.clientName}
 VENUE: ${content.venue}
@@ -193,20 +214,25 @@ EVENT DATE: ${content.eventDate}
 PERFORMANCE FEE: ${content.performanceFee}
 ${content.depositAmount ? `DEPOSIT: ${content.depositAmount}` : ''}
 
-SELECTED CLAUSES: ${clauseCount} clauses
-${content.selectedClauses.map((clause, i) => `${i+1}. ${clause}`).join('\n')}
+TERMS & CONDITIONS: ${totalTerms} total terms${termsBreakdown}
 
-CUSTOM CLAUSES: ${customClauseCount} clauses (${customClauseLength} characters total)
-${content.customClauses.map((clause, i) => `${i+1}. ${clause}`).join('\n')}
+${content.hasRequirementsSection ? 'ADDITIONAL REQUIREMENTS SECTION: Yes (equipment/special requirements)' : 'ADDITIONAL REQUIREMENTS SECTION: No'}
 
 ${content.additionalNotes ? `ADDITIONAL NOTES: ${content.additionalNotes}` : ''}
 
-LAYOUT CONCERNS:
-- Long venue address may need more spacing
-- ${clauseCount + customClauseCount} total clauses may crowd page
-- Custom clause content length: ${customClauseLength} characters
+LAYOUT ANALYSIS:
+- Total terms count: ${totalTerms} clauses
+- Venue address length: ${venueAddressLength} characters
+- Has requirements section: ${content.hasRequirementsSection ? 'Yes' : 'No'}
+- Custom clause content: ${customClauseLength} characters
 
-Suggest CSS adjustments to optimize layout and prevent awkward page breaks.`;
+KEY DECISIONS NEEDED:
+1. If terms are 10-15 clauses: May fit on same page with slight adjustment
+2. If terms are 16-25 clauses: Consider forcing new page with margin-top: 300px on .terms-section-container
+3. If terms are 26+ clauses: Definitely force new page, consider reducing font size
+4. If requirements section exists: Terms likely need new page
+
+Suggest CSS adjustments specifically for .terms-section-container to optimize layout and prevent awkward page breaks.`;
   }
 
   private buildInvoicePrompt(content: InvoiceContent): string {
