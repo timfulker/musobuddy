@@ -1082,7 +1082,7 @@ app.get('/api/email-queue/status', async (req, res) => {
     return handleStripeWebhook(req, res);
   });
 
-  // Register all API routes FIRST (so Firebase auth can set req.user)
+  // Register all API routes FIRST so they exist when middleware checks them
   console.log('🔄 Registering all modular routes...');
   const { registerRoutes } = await import('./routes');
   await registerRoutes(app);

@@ -67,6 +67,7 @@ export const subscriptionGuard = async (req: Request, res: Response, next: NextF
 
     // Check if route is public (no auth required)
     if (isPublicRoute(req.path)) {
+      console.log(`✅ [SUBSCRIPTION-GUARD] Public route allowed: ${req.path}`);
       return next();
     }
 

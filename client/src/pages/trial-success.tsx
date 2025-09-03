@@ -83,6 +83,10 @@ export default function TrialSuccessPage() {
                 const tokenData = await tokenResponse.json();
                 await signInWithCustomToken(auth, tokenData.customToken);
                 console.log('✅ User signed into Firebase after payment');
+                
+                // Force refresh of user data to get updated payment status
+                await auth.currentUser?.reload();
+                console.log('🔄 User data refreshed after payment');
               }
               
               toast({

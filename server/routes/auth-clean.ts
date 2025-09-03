@@ -574,6 +574,7 @@ export function setupAuthRoutes(app: Express) {
       }
       
       console.log('🔍 Verifying Stripe session:', sessionId);
+      console.log('🔍 [DEBUG] About to retrieve session from Stripe...');
       
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
@@ -581,10 +582,47 @@ export function setupAuthRoutes(app: Express) {
       });
       
       // Retrieve the session from Stripe
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['payment_intent'] // Critical: expand to get PaymentIntent details
+      });
       
       if (!session) {
         return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      // SECURITY CRITICAL: Verify actual payment completion via PaymentIntent
+      const paymentIntent = session.payment_intent as any;
+      if (!paymentIntent) {
+        console.error('❌ No PaymentIntent found in session');
+        return res.status(400).json({ error: 'Invalid payment session' });
+      }
+      
+      // BULLETPROOF: Check PaymentIntent status - this is the authoritative payment source
+      const isPaymentSucceeded = paymentIntent.status === 'succeeded';
+      const amountReceived = paymentIntent.amount_received || 0;
+      const expectedAmount = session.amount_total || 0;
+      
+      if (!isPaymentSucceeded) {
+        console.error('❌ Payment not succeeded:', {
+          paymentIntentStatus: paymentIntent.status,
+          sessionStatus: session.status,
+          paymentStatus: session.payment_status
+        });
+        return res.status(402).json({ 
+          error: 'Payment not completed',
+          details: `Payment status: ${paymentIntent.status}`
+        });
+      }
+      
+      if (amountReceived !== expectedAmount || expectedAmount === 0) {
+        console.error('❌ Payment amount mismatch:', {
+          expected: expectedAmount,
+          received: amountReceived
+        });
+        return res.status(402).json({ 
+          error: 'Payment amount invalid',
+          details: 'Amount mismatch detected'
+        });
       }
       
       // Get customer email
@@ -603,17 +641,31 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
       
-      console.log('✅ Session verified for user:', user.email);
+      console.log('✅ PAYMENT VERIFIED - PaymentIntent succeeded:', {
+        user: user.email,
+        paymentIntentId: paymentIntent.id,
+        amount: amountReceived,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status
+      });
       
-      // Return user data (the webhook should have already updated hasPaid)
+      // ATOMIC UPDATE: Set payment status to true - payment is 100% verified
+      await storage.updateUserById(user.id, { 
+        hasPaid: true,
+        stripeCustomerId: session.customer || null
+      });
+      console.log('✅ User payment status updated to PAID');
+      
+      // Return user data with updated payment status
+      const updatedUser = await storage.getUserById(user.id);
       res.json({
         success: true,
         user: {
-          userId: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          hasPaid: user.hasPaid
+          userId: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          hasPaid: updatedUser.hasPaid
         }
       });
       

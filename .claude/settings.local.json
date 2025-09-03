@@ -14,7 +14,10 @@
       "Bash(ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY node test-ai-contract.mjs)",
       "Bash(npx ts-node:*)",
       "Bash(chmod:*)",
-      "Bash(/home/runner/workspace/check-responsive.sh)"
+      "Bash(/home/runner/workspace/check-responsive.sh)",
+      "Bash(fuser:*)",
+      "Bash(lsof:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": [],
