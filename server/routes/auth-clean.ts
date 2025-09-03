@@ -538,7 +538,7 @@ export function setupAuthRoutes(app: Express) {
         }],
         mode: 'subscription',
         subscription_data: subscriptionData,
-        success_url: `${req.headers.origin}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${req.headers.origin}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/signup`,
         metadata: {
           userId: userId,
