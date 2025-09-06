@@ -126,6 +126,16 @@ export default function Messages() {
     },
   });
 
+  // Dismiss client message notification (hide from messages view but keep data)
+  const dismissClientMessageMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/notifications/messages/${id}/dismiss`, {
+      method: 'PATCH'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
+    },
+  });
+
   // Delete client message mutation  
   const deleteClientMessageMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/notifications/messages/${id}`, {
@@ -350,12 +360,10 @@ export default function Messages() {
   };
 
   const handleViewClientMessage = async (message: MessageNotification) => {
-    // Mark as read if not already read
-    if (!message.isRead) {
-      markClientMessageAsReadMutation.mutate(message.id);
-    }
+    // Dismiss the notification (hide from messages view but keep data for conversation)
+    dismissClientMessageMutation.mutate(message.id);
     
-    // Navigate to conversation page instead of opening dead URL
+    // Navigate to conversation page
     navigate(`/conversation/${message.bookingId}`);
   };
 

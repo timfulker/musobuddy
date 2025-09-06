@@ -61,6 +61,27 @@ router.patch('/notifications/messages/:id/read', authenticateWithFirebase, async
   }
 });
 
+// Dismiss notification (hide from messages view but keep data for conversation)
+router.patch('/notifications/messages/:id/dismiss', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  try {
+    const notificationId = parseInt(req.params.id);
+    
+    const updatedNotification = await storage.dismissMessageNotification(notificationId);
+    
+    if (!updatedNotification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    res.json({ success: true, notification: updatedNotification });
+  } catch (error: any) {
+    console.error('Error dismissing notification:', error);
+    res.status(500).json({ 
+      error: 'Failed to dismiss notification',
+      details: error.message 
+    });
+  }
+});
+
 // Delete notification
 router.delete('/notifications/messages/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
   try {
