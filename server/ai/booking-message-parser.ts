@@ -784,8 +784,8 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
         dateStr += ` ${currentYear + 1}`;
       }
       
-      // Clean up extra commas and spaces
-      dateStr = dateStr.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+      // Clean up extra commas, ordinal suffixes, and spaces
+      dateStr = dateStr.replace(/,/g, ' ').replace(/\b(\d+)(st|nd|rd|th)\b/g, '$1').replace(/\s+/g, ' ').trim();
       
       try {
         console.log(`📅 Attempting to parse: "${dateStr}"`);
