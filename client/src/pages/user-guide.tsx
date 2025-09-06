@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,8 @@ interface GuideStep {
   videoUrl?: string;
 }
 
-const guideSteps: GuideStep[] = [
+// Beta Tester Guide Steps
+const betaGuideSteps: GuideStep[] = [
   {
     id: 'step-by-step',
     title: '🎯 Interactive Step-by-Step Guide',
@@ -85,6 +87,27 @@ const guideSteps: GuideStep[] = [
     ]
   },
   {
+    id: 'beta-testing-workflow',
+    title: '🧪 Beta Testing Best Practices',
+    description: 'How to effectively test MusoBuddy features',
+    icon: <Zap className="h-5 w-5" />,
+    steps: [
+      'Test real scenarios: Use actual client data and booking information when possible',
+      'Try edge cases: Test with unusual dates, long text, special characters, and empty fields',
+      'Test on different devices: Check functionality on desktop, tablet, and mobile',
+      'Test different browsers: Chrome, Safari, Firefox, and Edge if possible',
+      'Test workflows end-to-end: Create a booking → Generate contract → Send invoice → Mark as paid',
+      'Document what works well and what doesn\'t feel intuitive',
+      'Take screenshots of any bugs or confusing interfaces for feedback reports'
+    ],
+    tips: [
+      'Focus on YOUR typical workflow - how would you actually use this in your business?',
+      'Don\'t be afraid to break things - that\'s how we find issues to fix',
+      'Report both bugs AND suggestions for improvements',
+      'Your testing helps make MusoBuddy better for all musicians'
+    ]
+  },
+  {
     id: 'getting-started',
     title: 'Getting Started',
     description: 'Initial setup and dashboard overview',
@@ -93,12 +116,14 @@ const guideSteps: GuideStep[] = [
       'Login to your MusoBuddy account using your email and password',
       'Complete your business setup in Settings (essential for professional documents)',
       'Familiarize yourself with the dashboard showing key metrics',
-      'Explore the navigation menu: Bookings, Contracts, Invoices, Calendar, and Settings'
+      'Explore the navigation menu: Bookings, Contracts, Invoices, Calendar, and Settings',
+      'Test different features and workflows during the beta period'
     ],
     tips: [
       'The dashboard shows real-time stats: monthly revenue, active bookings, and pending invoices',
       'All pages are responsive and work on mobile devices',
-      'Use the search functionality to quickly find specific bookings or contracts'
+      'Use the search functionality to quickly find specific bookings or contracts',
+      'As a beta tester, your feedback on usability is invaluable'
     ]
   },
   {
@@ -445,13 +470,191 @@ const guideSteps: GuideStep[] = [
   }
 ];
 
+// Regular User Guide Steps (no beta-specific content)
+const regularGuideSteps: GuideStep[] = [
+  {
+    id: 'step-by-step',
+    title: '🎯 Interactive Step-by-Step Guide',
+    description: 'Complete your first MusoBuddy workflow in 45-60 minutes',
+    icon: <Target className="h-5 w-5" />,
+    steps: [
+      'Click "Start Step-by-Step Guide" below to begin your complete MusoBuddy onboarding',
+      'This interactive guide walks you through creating your first booking, contract, and invoice',
+      'Takes 45-60 minutes and covers everything you need to know',
+      'Perfect for first-time users who want hands-on experience',
+      'Includes real-time progress tracking and helpful tips',
+      'You can pause and resume at any time'
+    ],
+    tips: [
+      'This is the recommended starting point for all new users',
+      'You\'ll create real data that you can use in your business',
+      'Follow along in a separate browser tab for the best experience',
+      'Contact support if you need any assistance'
+    ]
+  },
+  {
+    id: 'getting-started',
+    title: 'Getting Started',
+    description: 'Initial setup and dashboard overview',
+    icon: <PlayCircle className="h-5 w-5" />,
+    steps: [
+      'Login to your MusoBuddy account using your email and password',
+      'Complete your business setup in Settings (essential for professional documents)',
+      'Familiarize yourself with the dashboard showing key metrics',
+      'Explore the navigation menu: Bookings, Contracts, Invoices, Calendar, and Settings'
+    ],
+    tips: [
+      'The dashboard shows real-time stats: monthly revenue, active bookings, and pending invoices',
+      'All pages are responsive and work on mobile devices',
+      'Use the search functionality to quickly find specific bookings or contracts'
+    ]
+  },
+  {
+    id: 'email-setup',
+    title: 'Email Forwarding Setup',
+    description: 'Automatically convert emails to enquiries',
+    icon: <Mail className="h-5 w-5" />,
+    steps: [
+      'Forward client emails to leads@musobuddy.com',
+      'AI automatically extracts client details, dates, and venues',
+      'Enquiries appear instantly in your Bookings dashboard',
+      'Review and edit AI-extracted information if needed',
+      'Conflict detection runs automatically for date clashes'
+    ],
+    tips: [
+      'Works with any email provider (Gmail, Outlook, Apple Mail, etc.)',
+      'Forward voice message transcripts for phone enquiries',
+      'Perfect for WhatsApp and SMS screenshots',
+      'AI recognizes Encore booking platform emails with apply-now links'
+    ]
+  },
+  {
+    id: 'booking-management',
+    title: 'Booking Management',
+    description: 'Track enquiries and confirmed bookings',
+    icon: <Calendar className="h-5 w-5" />,
+    steps: [
+      'View all bookings in the main Bookings dashboard',
+      'Use filters to show specific booking statuses or date ranges',
+      'Click any booking to view full details and conversation history',
+      'Convert enquiries to confirmed bookings when clients accept',
+      'Track booking progress from enquiry to payment completion'
+    ],
+    tips: [
+      'Color-coded status system makes it easy to see booking progress at a glance',
+      'Click "View Conversation" to see full email history with each client',
+      'Use the search bar to quickly find bookings by client name or venue'
+    ]
+  },
+  {
+    id: 'contract-generation',
+    title: 'Contract Generation',
+    description: 'Create and send professional contracts',
+    icon: <FileText className="h-5 w-5" />,
+    steps: [
+      'Click "Create Contract" from any confirmed booking',
+      'Review and customize contract terms and pricing',
+      'Add specific requirements or additional clauses if needed',
+      'Generate PDF contract with professional branding',
+      'Send contract link to client for digital signature'
+    ],
+    tips: [
+      'Contracts auto-populate with booking and client details',
+      'Digital signatures are legally binding in most jurisdictions',
+      'You can download signed contracts as PDF files for your records'
+    ]
+  },
+  {
+    id: 'invoice-generation',
+    title: 'Invoice & Payment Tracking',
+    description: 'Generate invoices and track payments',
+    icon: <DollarSign className="h-5 w-5" />,
+    steps: [
+      'Create invoices from confirmed bookings or manually',
+      'Include all agreed fees, deposits, and expenses',
+      'Add payment terms and your business bank details',
+      'Send professional PDF invoices to clients',
+      'Track payment status and send reminders for overdue invoices'
+    ],
+    tips: [
+      'Invoices can be sent before or after performances',
+      'Payment tracking helps you maintain cash flow',
+      'Professional invoices increase likelihood of prompt payment'
+    ]
+  },
+  {
+    id: 'client-management',
+    title: 'Client Address Book',
+    description: 'Manage client contacts and relationships',
+    icon: <Users className="h-5 w-5" />,
+    steps: [
+      'Add clients manually or from enquiries',
+      'Store complete contact information',
+      'Track client booking history',
+      'Search and filter client records',
+      'View client statistics and preferences'
+    ],
+    tips: [
+      'Client details auto-fill when creating new contracts',
+      'Useful for tracking repeat customers',
+      'Search by name, email, or phone number'
+    ]
+  },
+  {
+    id: 'settings-customization',
+    title: 'Settings & Customization',
+    description: 'Configure MusoBuddy for your business',
+    icon: <Settings className="h-5 w-5" />,
+    steps: [
+      'Complete your business profile with logo and contact details',
+      'Set up bank details for invoice generation',
+      'Configure default terms and conditions',
+      'Customize email templates and branding',
+      'Set notification preferences'
+    ],
+    tips: [
+      'Professional business setup improves client perception',
+      'Custom branding appears on all contracts and invoices',
+      'Review settings periodically as your business grows'
+    ]
+  },
+  {
+    id: 'troubleshooting',
+    title: '🔧 Troubleshooting Guide',
+    description: 'Quick fixes for common problems',
+    icon: <HelpCircle className="h-5 w-5" />,
+    steps: [
+      'PAGE WON\'T LOAD: Refresh browser, clear cache, try incognito/private browsing mode',
+      'FEATURES MISSING: Ensure you\'re logged in and have completed initial settings setup',
+      'EMAIL NOT WORKING: Check spam folder, verify email forwarding setup, try different email client',
+      'PDF WON\'T GENERATE: Try different browser, disable ad blockers, ensure popup blocker allows MusoBuddy',
+      'DATA NOT SAVING: Check internet connection, wait for page to fully load before submitting forms',
+      'MOBILE ISSUES: Update browser app, clear browser cache, try desktop version if critical',
+      'LOGIN PROBLEMS: Reset password, clear cookies, check email for verification messages'
+    ],
+    tips: [
+      'Most issues are resolved with a browser refresh',
+      'Contact support if problems persist',
+      'Try different browsers to isolate browser-specific issues',
+      'Keep your browser updated for the best experience'
+    ]
+  }
+];
+
 export default function UserGuide() {
   const [selectedStep, setSelectedStep] = useState<string>('step-by-step');
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showStepGuide, setShowStepGuide] = useState(false);
   const { isMobile } = useResponsive();
+  const { user } = useAuth();
 
+  // Determine if user is a beta tester
+  const isBetaTester = user?.isBetaTester || user?.is_beta_tester || false;
+  
+  // Use appropriate guide steps based on beta status
+  const guideSteps = isBetaTester ? betaGuideSteps : regularGuideSteps;
+  
   const currentStep = guideSteps.find(step => step.id === selectedStep);
 
   const markAsComplete = (stepId: string) => {
