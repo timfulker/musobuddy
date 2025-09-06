@@ -354,6 +354,11 @@ export default function Messages() {
   const handleViewClientMessage = async (message: MessageNotification) => {
     // Navigate to conversation page (dismissal will happen there)
     navigate(`/conversation/${message.bookingId}`);
+    
+    // Invalidate messages cache after a delay to pick up the dismissed notifications
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
+    }, 1000);
   };
 
   const clientUnreadCount = Array.isArray(clientMessages) ? clientMessages.filter((m: MessageNotification) => !m.isRead).length : 0;

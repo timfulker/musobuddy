@@ -149,12 +149,13 @@ export default function Conversation() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('return') === 'messages') {
-      // Small delay to ensure the conversation loads and dismisses notifications
+      // Invalidate messages cache and navigate back
       setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
         navigate('/messages');
       }, 500);
     }
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   // Send reply mutation
   const sendReplyMutation = useMutation({
