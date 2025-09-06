@@ -113,6 +113,11 @@ export default function Dashboard() {
   if (isDesktop) {
     return (
       <div className="min-h-screen bg-background flex">
+        {/* Decorative floating elements */}
+        <div className="floating-decoration floating-decoration-1"></div>
+        <div className="floating-decoration floating-decoration-2"></div>
+        <div className="floating-decoration floating-decoration-3"></div>
+        
         <NotificationSoundManager />
         {/* Desktop Sidebar - Always visible */}
         <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
@@ -149,6 +154,11 @@ export default function Dashboard() {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
+        {/* Decorative floating elements */}
+        <div className="floating-decoration floating-decoration-1"></div>
+        <div className="floating-decoration floating-decoration-2"></div>
+        <div className="floating-decoration floating-decoration-3"></div>
+        
         <NotificationSoundManager />
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="p-4 space-y-6">
@@ -161,6 +171,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Decorative floating elements */}
+      <div className="floating-decoration floating-decoration-1"></div>
+      <div className="floating-decoration floating-decoration-2"></div>
+      <div className="floating-decoration floating-decoration-3"></div>
+      
       <NotificationSoundManager />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

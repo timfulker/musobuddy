@@ -66,6 +66,76 @@ main {
   box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.4);
 }
 
+/* Decorative floating elements */
+.floating-decoration {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.floating-decoration-1 {
+  top: 10%;
+  right: 15%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-accent));
+  transform: translate(30%, -30%);
+  animation: float-slow 20s ease-in-out infinite;
+}
+
+.floating-decoration-2 {
+  bottom: 20%;
+  left: 10%;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, var(--theme-accent), var(--theme-secondary));
+  transform: translate(-20%, 20%);
+  animation: float-medium 15s ease-in-out infinite reverse;
+}
+
+.floating-decoration-3 {
+  top: 60%;
+  right: 5%;
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4));
+  animation: float-fast 12s ease-in-out infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(30%, -30%) rotate(0deg) scale(1); }
+  33% { transform: translate(35%, -25%) rotate(120deg) scale(1.1); }
+  66% { transform: translate(25%, -35%) rotate(240deg) scale(0.9); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translate(-20%, 20%) rotate(0deg) scale(1); }
+  50% { transform: translate(-25%, 15%) rotate(180deg) scale(1.05); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+  25% { transform: translate(10%, -10%) rotate(90deg) scale(1.1); }
+  50% { transform: translate(-5%, 5%) rotate(180deg) scale(0.95); }
+  75% { transform: translate(5%, -5%) rotate(270deg) scale(1.05); }
+}
+
+/* Enhanced feature cards with gradients */
+.feature-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
 /* Card and surface backgrounds */
 .bg-background {
   background: var(--theme-surface) !important;
