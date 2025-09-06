@@ -758,28 +758,34 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     }
   }
 
-  // Enhanced date extraction with better patterns
+  // Enhanced date extraction with better patterns (most specific first!)
+  console.log('🔍 [FALLBACK DEBUG] Starting date extraction on text:', messageText);
   const datePatterns = [
-    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4})/i, // "March 15th 2026"
-    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+next year)?)/i, // "March 15th next year"
-    /(\d{1,2}\/\d{1,2}\/\d{4})/,
-    /(\d{4}-\d{2}-\d{2})/
+    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i, // "March 15th, 2025" or "March 15th 2025" - MUST BE FIRST!
+    /(\d{1,2}\/\d{1,2}\/\d{4})/, // "12/25/2025"
+    /(\d{4}-\d{2}-\d{2})/, // "2025-12-25"
+    /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+next year)?)/i // "March 15th next year" - LAST (less specific)
   ];
   
   for (const pattern of datePatterns) {
     const dateMatch = messageText.match(pattern);
+    console.log(`🔍 Testing pattern: ${pattern} on message: "${messageText.substring(0, 100)}..."`);
     if (dateMatch) {
       let dateStr = dateMatch[1].toLowerCase().trim();
-      console.log(`📅 Found potential date: "${dateStr}"`);
+      console.log(`📅 Found potential date: "${dateStr}" (full match: "${dateMatch[0]}")`);
       
       // Handle "next year" conversion
       if (dateStr.includes('next year')) {
-        dateStr = dateStr.replace('next year', '2026');
+        const currentYear = new Date().getFullYear();
+        dateStr = dateStr.replace('next year', `${currentYear + 1}`);
       } else if (dateStr.match(/\w+\s+\d{1,2}/) && !dateStr.match(/20\d{2}/)) {
         // If it's just "March 15th" without year, default to next occurrence
         const currentYear = new Date().getFullYear();
         dateStr += ` ${currentYear + 1}`;
       }
+      
+      // Clean up extra commas and spaces
+      dateStr = dateStr.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
       
       try {
         console.log(`📅 Attempting to parse: "${dateStr}"`);
