@@ -48,6 +48,18 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // 4. Not on a public route (prevents welcome showing on landing page, etc.)
   // 5. User has PAID (not trial users)
   // 6. Settings are NOT completed (show welcome for incomplete settings)
+  // Debug logging for welcome page logic
+  console.log('🔍 Welcome page debug:', {
+    onboardingStatus,
+    welcomeDismissed,
+    hasSeenWelcome,
+    isSignupInProgress,
+    isPublicRoute: isPublicRoute(location),
+    userHasPaid: user?.hasPaid,
+    onboardingCompleted: onboardingStatus?.onboardingCompleted,
+    location
+  });
+
   const shouldShowWelcome = onboardingStatus && 
     !welcomeDismissed &&
     !hasSeenWelcome &&
@@ -55,6 +67,8 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
     !isPublicRoute(location) &&
     user?.hasPaid === true && // Only show welcome if user has actually paid
     !onboardingStatus.onboardingCompleted; // Show welcome only if settings are incomplete
+    
+  console.log('🔍 Should show welcome:', shouldShowWelcome);
 
   if (shouldShowWelcome) {
     return (
