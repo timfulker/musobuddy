@@ -467,7 +467,7 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
               });
               
               // Store as conversation message for the booking
-              const { cloudStorage } = await import('./core/cloud-storage');
+              const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
               
               const messageHtml = `
 <!DOCTYPE html>
@@ -500,7 +500,12 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
 </html>`;
 
               const fileName = `user${user.id}/booking${targetBooking.id}/messages/encore_followup_${Date.now()}.html`;
-              await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+              const messageBuffer = Buffer.from(messageHtml, 'utf8');
+              await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+                'booking-id': String(targetBooking.id),
+                'user-id': user.id,
+                'message-type': 'encore-followup'
+              });
               
               // Create message notification
               await storage.createMessageNotification({
@@ -545,7 +550,7 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       
       // Store immediately in cloud storage as client message
       try {
-        const { cloudStorage } = await import('./core/cloud-storage');
+        const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
         
         // Create HTML content for the reply message
         const messageHtml = `
@@ -579,7 +584,12 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
 
         // Store as incoming message
         const fileName = `user${userId}/booking${bookingId}/messages/reply_${Date.now()}.html`;
-        await cloudStorage.uploadFile(fileName, messageHtml, 'text/html');
+        const messageBuffer = Buffer.from(messageHtml, 'utf8');
+        await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+          'booking-id': bookingId,
+          'user-id': userId,
+          'message-type': 'client-reply'
+        });
         
         // Create notification entry in database
         await storage.createMessageNotification({

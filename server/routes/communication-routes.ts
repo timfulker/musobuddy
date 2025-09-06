@@ -179,6 +179,10 @@ export function setupCommunicationRoutes(app: any) {
           const downloadResult = await downloadFile(msg.messageUrl);
           let content = 'Message content unavailable';
           
+          if (!downloadResult.success) {
+            console.error(`❌ Failed to download message from R2: ${msg.messageUrl}`, downloadResult.error);
+          }
+          
           if (downloadResult.success && downloadResult.content) {
             // Extract text content from HTML and parse to get only the new reply
             const htmlContent = downloadResult.content;
