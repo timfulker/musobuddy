@@ -215,8 +215,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--theme-primary', theme.colors.primary);
     root.style.setProperty('--theme-secondary', theme.colors.secondary);
     root.style.setProperty('--theme-accent', theme.colors.accent);
+    
+    // Handle gradients vs solid colors properly
     root.style.setProperty('--theme-background', theme.colors.background);
     root.style.setProperty('--theme-surface', theme.colors.surface);
+    
     root.style.setProperty('--theme-text', theme.colors.text);
     root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
     root.style.setProperty('--theme-font-heading', theme.fonts.heading);
@@ -228,40 +231,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     console.log(`🎨 Dynamic text color: ${primaryTextColor} (for ${theme.colors.primary})`);
     
-    // Apply gradient backgrounds or solid colors appropriately
-    const isBackgroundGradient = theme.colors.background.includes('gradient');
-    const isSurfaceGradient = theme.colors.surface.includes('gradient');
+    // Force apply gradients via CSS custom properties
+    console.log(`🎨 Theme colors applied via CSS variables - gradients should now be visible`);
     
-    if (isBackgroundGradient) {
-      document.body.style.backgroundImage = theme.colors.background;
-      document.body.style.backgroundColor = '';
-    } else {
-      document.body.style.backgroundColor = theme.colors.background;
-      document.body.style.backgroundImage = '';
-    }
+    // Apply text color and font to body
     document.body.style.color = theme.colors.text;
     document.body.style.fontFamily = theme.fonts.body;
     
-    // Force apply to main app container
-    const appContainer = document.querySelector('.min-h-screen');
-    if (appContainer) {
-      if (isBackgroundGradient) {
-        (appContainer as HTMLElement).style.backgroundImage = theme.colors.background;
-        (appContainer as HTMLElement).style.backgroundColor = '';
-      } else {
-        (appContainer as HTMLElement).style.backgroundColor = theme.colors.background;
-        (appContainer as HTMLElement).style.backgroundImage = '';
-      }
-      (appContainer as HTMLElement).style.color = theme.colors.text;
-    }
-    
-    // Add CSS custom properties for gradients
-    if (isBackgroundGradient) {
-      root.style.setProperty('--theme-background-gradient', theme.colors.background);
-    }
-    if (isSurfaceGradient) {
-      root.style.setProperty('--theme-surface-gradient', theme.colors.surface);
-    }
+    // The CSS now handles gradient application via --theme-background and --theme-surface variables
     // This prevents conflicts and ensures proper theme application
 
     // IMPROVED: Clean theme class application
