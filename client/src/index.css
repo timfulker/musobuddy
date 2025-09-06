@@ -5,6 +5,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Gradient Background Support */
+body {
+  background: var(--theme-background) !important;
+  background-attachment: fixed;
+}
+
+/* Apply gradient backgrounds to main containers */
+.min-h-screen {
+  background: var(--theme-background) !important;
+  background-attachment: fixed;
+}
+
+/* Apply gradient to main content areas */
+main {
+  background: transparent;
+}
+
+/* Card and surface backgrounds */
+.bg-background {
+  background: var(--theme-surface) !important;
+}
+
+.bg-card, .card {
+  background: var(--theme-surface) !important;
+}
+
+/* Ensure sidebar doesn't interfere with gradient */
+.sidebar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+}
+
 /* Clean, simple contrast system with dynamic luminance-based text color */
 /* MAXIMUM SPECIFICITY - Target sidebar navigation links specifically */
 nav a.bg-primary.text-primary-foreground,
