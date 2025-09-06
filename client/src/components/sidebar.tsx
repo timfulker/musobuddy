@@ -258,7 +258,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             className={getNavLinkClass("/user-guide")}
             style={{ 
-              color: isActive("/user-guide") ? getThemeTextColor(currentTheme) : '#1e293b',
+              color: isActive("/user-guide") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
               backgroundColor: isActive("/user-guide") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -272,7 +272,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             className={getNavLinkClass("/feedback")}
             style={{ 
-              color: isActive("/feedback") ? getThemeTextColor(currentTheme) : '#1e293b',
+              color: isActive("/feedback") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
               backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent',
               display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
             }}
