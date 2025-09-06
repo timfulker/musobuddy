@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -285,14 +284,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 z-10">
-          {/* Theme Toggle Row */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-            </div>
+          {/* Logout Row */}
+          <div className="flex items-center justify-end mb-3">
             <button 
               onClick={handleLogout}
-              className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
