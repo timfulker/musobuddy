@@ -789,6 +789,7 @@ export const messageNotifications = pgTable("message_notifications", {
   subject: varchar("subject").notNull(),
   messageUrl: text("message_url").notNull(), // Cloud storage URL for the message content
   isRead: boolean("is_read").default(false),
+  isDismissed: boolean("is_dismissed").default(false), // Track if notification has been viewed and should be hidden
   createdAt: timestamp("created_at").defaultNow(),
 });
 
