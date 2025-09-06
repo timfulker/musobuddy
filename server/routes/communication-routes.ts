@@ -411,9 +411,9 @@ export function setupCommunicationRoutes(app: any) {
 
       console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId} (${bookingMessages.length} incoming, ${communications.length} outgoing)`);
       
-      // Include unread message notification IDs so frontend can show ignore button
+      // Include undismissed message notification IDs so frontend can dismiss them when viewed
       const unreadNotificationIds = bookingMessages
-        .filter(msg => !msg.isRead)
+        .filter(msg => !msg.isDismissed)
         .map(msg => msg.id);
       
       res.json({

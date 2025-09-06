@@ -145,6 +145,14 @@ export default function Conversation() {
     }
   }, [action]);
 
+  // Auto-dismiss notifications when conversation loads
+  useEffect(() => {
+    if (unreadNotificationIds.length > 0 && !dismissNotificationsMutation.isPending) {
+      console.log('🔄 Auto-dismissing notifications for booking:', bookingId, 'notifications:', unreadNotificationIds);
+      dismissNotificationsMutation.mutate(unreadNotificationIds);
+    }
+  }, [unreadNotificationIds, bookingId]);
+
   // Send reply mutation
   const sendReplyMutation = useMutation({
     mutationFn: async (replyData: { bookingId: number; content: string; recipientEmail: string }) => {
@@ -198,6 +206,27 @@ export default function Conversation() {
         description: error.message || "Something went wrong while ignoring the messages.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Dismiss all notifications for this booking
+  const dismissNotificationsMutation = useMutation({
+    mutationFn: async (notificationIds: number[]) => {
+      const promises = notificationIds.map(id => 
+        apiRequest(`/api/notifications/messages/${id}/dismiss`, {
+          method: 'PATCH'
+        })
+      );
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      console.log('✅ Successfully dismissed all notifications for booking');
+      // Refetch to update the conversation data
+      refetchMessages();
+    },
+    onError: (error: any) => {
+      console.error('❌ Failed to dismiss notifications:', error);
+      // Don't show toast error for dismissal failures - it's not critical
     },
   });
 

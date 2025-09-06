@@ -17,7 +17,8 @@
       "Bash(/home/runner/workspace/check-responsive.sh)",
       "Bash(fuser:*)",
       "Bash(lsof:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": [],
