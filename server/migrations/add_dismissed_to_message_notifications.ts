@@ -18,15 +18,13 @@ export async function addDismissedToMessageNotifications() {
   }
 }
 
-// Run the migration if this file is executed directly
-if (require.main === module) {
-  addDismissedToMessageNotifications()
-    .then(() => {
-      console.log('Migration completed successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Migration failed:', error);
-      process.exit(1);
-    });
-}
+// Run the migration
+addDismissedToMessageNotifications()
+  .then(() => {
+    console.log('Migration completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  });

@@ -386,9 +386,15 @@ export class MiscStorage {
   }
 
   async getMessageNotifications(userId: string, isRead?: boolean) {
+    // Always exclude dismissed messages from the notifications view
+    const baseConditions = [
+      eq(messageNotifications.userId, userId),
+      eq(messageNotifications.isDismissed, false)
+    ];
+    
     const whereClause = isRead !== undefined
-      ? and(eq(messageNotifications.userId, userId), eq(messageNotifications.isRead, isRead))
-      : eq(messageNotifications.userId, userId);
+      ? and(...baseConditions, eq(messageNotifications.isRead, isRead))
+      : and(...baseConditions);
 
     const result = await db.select({
       id: messageNotifications.id,
@@ -440,6 +446,14 @@ export class MiscStorage {
       ))
       .returning();
     return result;
+  }
+
+  async dismissMessageNotification(id: number) {
+    const result = await db.update(messageNotifications)
+      .set({ isDismissed: true })
+      .where(eq(messageNotifications.id, id))
+      .returning();
+    return result[0];
   }
 
   async deleteMessageNotification(id: number) {
