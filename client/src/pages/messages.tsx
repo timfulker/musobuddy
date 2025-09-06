@@ -126,31 +126,7 @@ export default function Messages() {
     },
   });
 
-  // Dismiss client message notification (hide from messages view but keep data)
-  const dismissClientMessageMutation = useMutation({
-    mutationFn: (id: number) => {
-      console.log('🔄 Attempting to dismiss message notification:', id);
-      return apiRequest(`/api/notifications/messages/${id}/dismiss`, {
-        method: 'PATCH'
-      });
-    },
-    onSuccess: (data) => {
-      console.log('✅ Successfully dismissed message notification:', data);
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
-      toast({
-        title: "Message dismissed",
-        description: "Hidden from messages (still available in conversation)",
-      });
-    },
-    onError: (error) => {
-      console.error('❌ Failed to dismiss message notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to dismiss message notification",
-        variant: "destructive"
-      });
-    },
-  });
+  // Dismiss handled on backend when conversation is viewed
 
   // Delete client message mutation  
   const deleteClientMessageMutation = useMutation({
@@ -493,8 +469,10 @@ export default function Messages() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => dismissClientMessageMutation.mutate(message.id)}
-                              disabled={dismissClientMessageMutation.isPending}
+                              onClick={async () => {
+                                // Navigate to conversation briefly to trigger auto-dismiss, then return
+                                navigate(`/conversation/${message.bookingId}?return=messages`);
+                              }}
                               className="h-8"
                               title="Hide from messages (keeps in conversation)"
                             >

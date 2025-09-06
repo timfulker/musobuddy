@@ -411,14 +411,23 @@ export function setupCommunicationRoutes(app: any) {
 
       console.log(`✅ Found ${messages.length} conversation messages for booking ${bookingId} (${bookingMessages.length} incoming, ${communications.length} outgoing)`);
       
-      // Include undismissed message notification IDs so frontend can dismiss them when viewed
-      const unreadNotificationIds = bookingMessages
-        .filter(msg => !msg.isDismissed)
-        .map(msg => msg.id);
+      // Auto-dismiss all undismissed notifications for this booking when conversation is viewed
+      const undismissedNotifications = bookingMessages.filter(msg => !msg.isDismissed);
+      if (undismissedNotifications.length > 0) {
+        console.log(`🔄 Auto-dismissing ${undismissedNotifications.length} notifications for booking ${bookingId}`);
+        const notificationIds = undismissedNotifications.map(msg => msg.id);
+        
+        // Dismiss all notifications for this booking
+        await Promise.all(
+          notificationIds.map(id => storage.dismissMessageNotification(id))
+        );
+        
+        console.log(`✅ Auto-dismissed ${notificationIds.length} notifications for booking ${bookingId}`);
+      }
       
       res.json({
         messages,
-        unreadNotificationIds
+        unreadNotificationIds: [] // Always return empty since we just dismissed them
       });
 
     } catch (error) {
