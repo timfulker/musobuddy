@@ -22,6 +22,50 @@ main {
   background: transparent;
 }
 
+/* Welcome Page Inspired Utility Classes */
+.backdrop-blur-soft {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Enhanced cards with welcome page styling */
+.welcome-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 0;
+}
+
+/* Gradient text effect like welcome page */
+.gradient-text-primary {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 100%;
+}
+
+.gradient-text-blue-purple {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced button effects */
+.button-welcome {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  transition: all 0.3s ease;
+  transform: scale(1);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+}
+
+.button-welcome:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.4);
+}
+
 /* Card and surface backgrounds */
 .bg-background {
   background: var(--theme-surface) !important;
