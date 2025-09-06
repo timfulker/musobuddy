@@ -9,7 +9,6 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "wouter";
 
 export default function MobileHeader() {
@@ -101,9 +100,6 @@ export default function MobileHeader() {
                 </div>
               </Link>
               
-              <div className="px-3 py-3">
-                <ThemeToggle />
-              </div>
             </div>
 
             {/* Footer */}
