@@ -65,7 +65,7 @@ Client portal system architecture: Implemented dual-portal system with clear sep
     - **User Management**: Two-tier system (Admin, User).
     - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
     - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting.
+    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-bustings.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
     - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
