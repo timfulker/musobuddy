@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getContrastTextColor } from '@/lib/colorUtils';
 
-export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue' | 'custom';
-export type ThemeMode = 'light' | 'dark';
+export type ThemeName = 'purple' | 'purple-dark' | 'ocean-blue' | 'ocean-blue-dark' | 'forest-green' | 'forest-green-dark' | 'clean-pro-audio' | 'clean-pro-audio-dark' | 'midnight-blue' | 'midnight-blue-dark' | 'custom';
 
 export interface Theme {
   id: ThemeName;
@@ -115,6 +114,96 @@ export const themes: Record<ThemeName, Theme> = {
       body: 'system-ui, sans-serif'
     }
   },
+  'purple-dark': {
+    id: 'purple-dark',
+    name: 'Classic Purple Dark',
+    description: 'Dark mode version of the classic purple theme',
+    colors: {
+      primary: '#8b5cf6',
+      secondary: '#a855f7',
+      accent: '#6366f1',
+      background: '#0f0f23',
+      surface: '#1a1a2e',
+      text: '#e5e5e5',
+      textSecondary: '#a0a0a0'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
+    }
+  },
+  'ocean-blue-dark': {
+    id: 'ocean-blue-dark',
+    name: 'Ocean Blue Dark',
+    description: 'Dark mode version with deep ocean tones',
+    colors: {
+      primary: '#0ea5e9',
+      secondary: '#0284c7',
+      accent: '#38bdf8',
+      background: '#0a1625',
+      surface: '#1a2332',
+      text: '#e5f1ff',
+      textSecondary: '#a5c0d8'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
+    }
+  },
+  'forest-green-dark': {
+    id: 'forest-green-dark',
+    name: 'Forest Green Dark',
+    description: 'Dark mode version for night forest vibes',
+    colors: {
+      primary: '#34d399',
+      secondary: '#10b981',
+      accent: '#22c55e',
+      background: '#0a1f0a',
+      surface: '#1a2e1a',
+      text: '#e5ffe5',
+      textSecondary: '#a5d8a5'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
+    }
+  },
+  'clean-pro-audio-dark': {
+    id: 'clean-pro-audio-dark',
+    name: 'Clean Pro Audio Dark',
+    description: 'Dark mode professional audio theme',
+    colors: {
+      primary: '#f87171',
+      secondary: '#2c2c2c',
+      accent: '#ffeb3b',
+      background: '#1a1a1a',
+      surface: '#2a2a2a',
+      text: '#e5e5e5',
+      textSecondary: '#a0a0a0'
+    },
+    fonts: {
+      heading: 'IBM Plex Sans, sans-serif',
+      body: 'IBM Plex Sans, sans-serif'
+    }
+  },
+  'midnight-blue-dark': {
+    id: 'midnight-blue-dark',
+    name: 'Midnight Blue Dark',
+    description: 'Deep dark version of midnight blue theme',
+    colors: {
+      primary: '#191970',
+      secondary: '#1e1e3f',
+      accent: '#4169e1',
+      background: '#0a0a1a',
+      surface: '#1a1a2e',
+      text: '#e5e5e5',
+      textSecondary: '#a0a0a0'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
+    }
+  },
   'custom': {
     id: 'custom',
     name: 'Custom Color',
@@ -141,9 +230,7 @@ interface ThemeContextType {
   theme: Theme;
   customColor: string | null;
   setCustomColor: (color: string) => void;
-  mode: ThemeMode;
-  setMode: (mode: ThemeMode) => void;
-  toggleMode: () => void;
+  toggleDarkMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -152,7 +239,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Default to midnight-blue for unauthenticated/public pages
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('midnight-blue');
   const [customColor, setCustomColor] = useState<string | null>(null);
-  const [mode, setMode] = useState<ThemeMode>('light');
 
   useEffect(() => {
     // Check if we're on a public page that should always use midnight-blue
@@ -172,16 +258,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Load theme from localStorage only for authenticated pages
     const savedTheme = localStorage.getItem('musobuddy-theme') as ThemeName;
     const savedCustomColor = localStorage.getItem('musobuddy-custom-color');
-    const savedMode = localStorage.getItem('musobuddy-theme-mode') as ThemeMode;
     
     if (savedTheme && themes[savedTheme]) {
       setCurrentTheme(savedTheme);
     }
     if (savedCustomColor) {
       setCustomColor(savedCustomColor);
-    }
-    if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
-      setMode(savedMode);
     }
   }, []);
 
@@ -217,15 +299,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       theme.colors.secondary = customColor + '88'; // Add transparency
     }
     
-    // Apply dark mode color variations if in dark mode
-    if (mode === 'dark') {
-      // Adjust colors for dark mode
-      theme.colors.background = theme.colors.background === '#f8fafc' ? '#0a0a1a' : '#1a1a2e';
-      theme.colors.surface = '#1a1a2e';
-      theme.colors.text = '#e5e5e5';
-      theme.colors.textSecondary = '#a0a0a0';
-    }
-    
     const root = document.documentElement;
     
     // Set CSS custom properties
@@ -244,7 +317,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const primaryTextColor = getContrastTextColor(theme.colors.primary);
     root.style.setProperty('--theme-primary-text', primaryTextColor);
     
-    console.log(`🎨 Dynamic text color: ${primaryTextColor} (for ${theme.colors.primary})`);;
+    console.log(`🎨 Dynamic text color: ${primaryTextColor} (for ${theme.colors.primary})`);
     
     // Force apply background color immediately to body
     document.body.style.backgroundColor = theme.colors.background;
@@ -257,6 +330,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       (appContainer as HTMLElement).style.backgroundColor = theme.colors.background;
       (appContainer as HTMLElement).style.color = theme.colors.text;
     }
+    // This prevents conflicts and ensures proper theme application
 
     // IMPROVED: Clean theme class application
     // Remove existing theme classes first
@@ -265,7 +339,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.body.classList.remove(`theme-${themeKey}`);
     });
     
-    // Remove existing dark/light classes
+    // Clean up any old dark/light classes
     root.classList.remove('light', 'dark');
     document.body.classList.remove('light', 'dark');
     
@@ -273,9 +347,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(`theme-${currentTheme}`);
     document.body.classList.add(`theme-${currentTheme}`);
     
-    // Add current mode class
-    root.classList.add(mode);
-    document.body.classList.add(mode);
+    // No mode classes needed - themes are self-contained
 
     // CRITICAL: Force refresh sidebar navigation colors after theme change
     setTimeout(() => {
@@ -297,7 +369,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     if (!isPublicPage) {
       localStorage.setItem('musobuddy-theme', currentTheme);
-      localStorage.setItem('musobuddy-theme-mode', mode);
+      // No longer using mode - themes are self-contained
     }
     
     // Save theme and mode to database for PDF generation (only for authenticated pages)
@@ -343,7 +415,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Save theme color to database (with small delay to avoid rapid API calls)
     const saveTimer = setTimeout(saveThemeToDatabase, 1000);
     return () => clearTimeout(saveTimer);
-  }, [currentTheme, customColor, mode]);
+  }, [currentTheme, customColor]);
 
   // Save custom color to localStorage when it changes
   useEffect(() => {
@@ -357,10 +429,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setCurrentTheme(theme);
   };
 
-  const toggleMode = () => {
-    const newMode = mode === 'light' ? 'dark' : 'light';
-    console.log(`🌙 Mode switching from ${mode} to ${newMode}`);
-    setMode(newMode);
+  const toggleDarkMode = () => {
+    // Toggle between light and dark versions of current theme
+    const isDark = currentTheme.endsWith('-dark');
+    let newTheme: ThemeName;
+    
+    if (isDark) {
+      // Switch to light version
+      newTheme = currentTheme.replace('-dark', '') as ThemeName;
+    } else {
+      // Switch to dark version
+      newTheme = (currentTheme + '-dark') as ThemeName;
+    }
+    
+    // Check if the target theme exists
+    if (themes[newTheme]) {
+      console.log(`🌙 Toggling from ${currentTheme} to ${newTheme}`);
+      setCurrentTheme(newTheme);
+    } else {
+      console.log(`⚠️ Dark theme variant ${newTheme} not available`);
+    }
   };
 
   return (
@@ -372,9 +460,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         themes[currentTheme],
       customColor,
       setCustomColor,
-      mode,
-      setMode,
-      toggleMode
+      toggleDarkMode
     }}>
       {children}
     </ThemeContext.Provider>
