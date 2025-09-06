@@ -256,6 +256,86 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   --theme-accent-text: white;
 }
 
+/* Purple Theme Dark Mode */
+.theme-purple.dark {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #0f0f23;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+/* Ocean Blue Theme Dark Mode */
+.theme-ocean-blue.dark {
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-accent: #38bdf8;
+  --theme-background: #0a1625;
+  --theme-surface: #1a2332;
+  --theme-text: #e5f1ff;
+  --theme-text-secondary: #a5c0d8;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Forest Green Theme Dark Mode */
+.theme-forest-green.dark {
+  --theme-primary: #34d399;
+  --theme-secondary: #10b981;
+  --theme-accent: #22c55e;
+  --theme-background: #0a1f0a;
+  --theme-surface: #1a2e1a;
+  --theme-text: #e5ffe5;
+  --theme-text-secondary: #a5d8a5;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: black;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Clean Pro Audio Theme Dark Mode */
+.theme-clean-pro-audio.dark {
+  --theme-primary: #f87171;
+  --theme-secondary: #2c2c2c;
+  --theme-accent: #ffeb3b;
+  --theme-background: #1a1a1a;
+  --theme-surface: #2a2a2a;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: "IBM Plex Sans", sans-serif;
+  --theme-font-body: "IBM Plex Sans", sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Custom Theme Dark Mode */
+.theme-custom.dark {
+  --theme-primary: #8b5cf6; /* Will be overridden by JavaScript */
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #0f0f23;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
 
 /* Apply theme to body and typography */
 body {
