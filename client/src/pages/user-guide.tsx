@@ -652,6 +652,7 @@ export default function UserGuide() {
   // Determine if user is a beta tester
   const isBetaTester = user?.isBetaTester || user?.is_beta_tester || false;
   
+  
   // Use appropriate guide steps based on beta status
   const guideSteps = isBetaTester ? betaGuideSteps : regularGuideSteps;
   
@@ -731,10 +732,24 @@ export default function UserGuide() {
             </Button>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Star className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
-                Beta Tester Guide
+                {isBetaTester ? (
+                  <>
+                    <Star className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
+                    Beta Tester Guide
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-blue-500" />
+                    User Guide
+                  </>
+                )}
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">Complete guide for MusoBuddy beta testers with troubleshooting & feedback</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">
+                {isBetaTester 
+                  ? "Complete guide for MusoBuddy beta testers with troubleshooting & feedback"
+                  : "Complete guide to using MusoBuddy for your music business"
+                }
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -754,10 +769,21 @@ export default function UserGuide() {
             <div className="hidden md:block w-80 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
               <div className="p-4">
                 <h2 className="font-bold mb-6 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                  <div className="p-2 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg">
-                    <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                  </div>
-                  Beta Testing Guide
+                  {isBetaTester ? (
+                    <>
+                      <div className="p-2 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg">
+                        <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      Beta Testing Guide
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-lg">
+                        <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      User Guide
+                    </>
+                  )}
                 </h2>
                 <div className="space-y-3">
                   {guideSteps.map((step, index) => (
