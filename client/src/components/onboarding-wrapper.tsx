@@ -61,8 +61,7 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   });
 
   const shouldShowWelcome = onboardingStatus && 
-    !welcomeDismissed &&
-    !hasSeenWelcome &&
+    !welcomeDismissed && // Not dismissed in current session
     !isSignupInProgress &&
     !isPublicRoute(location) &&
     user?.hasPaid === true && // Only show welcome if user has actually paid
