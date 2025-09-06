@@ -31,8 +31,8 @@ export const themes: Record<ThemeName, Theme> = {
       primary: '#8b5cf6',
       secondary: '#a855f7',
       accent: '#6366f1',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-      surface: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+      background: 'linear-gradient(135deg, #faf7ff 0%, #ede4ff 100%)',
+      surface: 'linear-gradient(135deg, #ffffff 0%, #faf7ff 100%)',
       text: '#1e293b',
       textSecondary: '#64748b'
     },
@@ -86,8 +86,8 @@ export const themes: Record<ThemeName, Theme> = {
       primary: '#f87171',
       secondary: '#9ca3af',
       accent: '#ffeb3b',
-      background: 'linear-gradient(135deg, #e5e5e5 0%, #d4d4d8 100%)',
-      surface: 'linear-gradient(135deg, #fdfdfd 0%, #f4f4f5 100%)',
+      background: 'linear-gradient(135deg, #fef7f7 0%, #fee2e2 100%)',
+      surface: 'linear-gradient(135deg, #ffffff 0%, #fef7f7 100%)',
       text: '#2c2c2c',
       textSecondary: '#555555'
     },
@@ -104,8 +104,8 @@ export const themes: Record<ThemeName, Theme> = {
       primary: '#191970',
       secondary: '#1e1e3f',
       accent: '#4169e1',
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      surface: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+      background: 'linear-gradient(135deg, #f0f8ff 0%, #dbeafe 100%)',
+      surface: 'linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%)',
       text: '#1a1a1a',
       textSecondary: '#4a5568'
     },
