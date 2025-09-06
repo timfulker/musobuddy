@@ -2129,7 +2129,7 @@ export default function Settings() {
                       ? 'border-white shadow-lg scale-105'
                       : 'border-transparent hover:border-gray-300'
                   }`}
-                  style={{ backgroundColor: theme.color }}
+                  style={{ backgroundColor: theme.color, color: '#ffffff' }}
                 >
                   {theme.name}
                 </button>
