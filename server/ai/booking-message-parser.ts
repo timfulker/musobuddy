@@ -105,24 +105,6 @@ interface ParsedBookingData {
   };
 }
 
-// DEBUG: Test function for the failing email
-export async function testFailingEmail(): Promise<void> {
-  const testEmail = `Hi Jake, We've just seen your footage on your website, and we're very impressed. We are getting married on October 26th, 2025 at Clearwell Castle. Would you be available, and can you give us some idea of some prices, please? Kind Regards, Peter Jones`;
-  const testFrom = `Peter Jones <peterjonesfiver@gmail.com>`;
-  
-  console.log('🧪 [TEST] Testing failing email with content:', testEmail);
-  console.log('🧪 [TEST] From field:', testFrom);
-  
-  try {
-    const result = await parseBookingMessage(testEmail, testFrom, null, 'test-user', 'Wedding Inquiry');
-    console.log('🧪 [TEST] RESULT:', result);
-    console.log('🧪 [TEST] Date extracted:', result.eventDate);
-    console.log('🧪 [TEST] Venue extracted:', result.venue);
-    console.log('🧪 [TEST] Client name extracted:', result.clientName);
-  } catch (error) {
-    console.log('🧪 [TEST] ERROR:', error);
-  }
-}
 
 export async function parseBookingMessage(
   messageText: string,
@@ -759,7 +741,6 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
   }
 
   // Enhanced date extraction with better patterns (most specific first!)
-  console.log('🔍 [FALLBACK DEBUG] Starting date extraction on text:', messageText);
   const datePatterns = [
     /(?:on\s+)?(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i, // "March 15th, 2025" or "March 15th 2025" - MUST BE FIRST!
     /(\d{1,2}\/\d{1,2}\/\d{4})/, // "12/25/2025"
@@ -769,10 +750,8 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
   
   for (const pattern of datePatterns) {
     const dateMatch = messageText.match(pattern);
-    console.log(`🔍 Testing pattern: ${pattern} on message: "${messageText.substring(0, 100)}..."`);
     if (dateMatch) {
       let dateStr = dateMatch[1].toLowerCase().trim();
-      console.log(`📅 Found potential date: "${dateStr}" (full match: "${dateMatch[0]}")`);
       
       // Handle "next year" conversion
       if (dateStr.includes('next year')) {
@@ -788,15 +767,13 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
       dateStr = dateStr.replace(/,/g, ' ').replace(/\b(\d+)(st|nd|rd|th)\b/g, '$1').replace(/\s+/g, ' ').trim();
       
       try {
-        console.log(`📅 Attempting to parse: "${dateStr}"`);
         const parsedDate = new Date(dateStr);
         if (!isNaN(parsedDate.getTime()) && parsedDate > new Date()) {
           data.eventDate = parsedDate.toISOString().split('T')[0];
           data.confidence = Math.min(0.8, data.confidence + 0.3);
-          console.log(`✅ Successfully parsed date: ${data.eventDate}`);
         }
       } catch (e) {
-        console.log(`❌ Date parsing failed for: "${dateStr}"`);
+        // Date parsing failed, continue to next pattern
       }
       break;
     }
