@@ -228,16 +228,39 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     console.log(`🎨 Dynamic text color: ${primaryTextColor} (for ${theme.colors.primary})`);
     
-    // Force apply background color immediately to body
-    document.body.style.backgroundColor = theme.colors.background;
+    // Apply gradient backgrounds or solid colors appropriately
+    const isBackgroundGradient = theme.colors.background.includes('gradient');
+    const isSurfaceGradient = theme.colors.surface.includes('gradient');
+    
+    if (isBackgroundGradient) {
+      document.body.style.backgroundImage = theme.colors.background;
+      document.body.style.backgroundColor = '';
+    } else {
+      document.body.style.backgroundColor = theme.colors.background;
+      document.body.style.backgroundImage = '';
+    }
     document.body.style.color = theme.colors.text;
     document.body.style.fontFamily = theme.fonts.body;
     
     // Force apply to main app container
     const appContainer = document.querySelector('.min-h-screen');
     if (appContainer) {
-      (appContainer as HTMLElement).style.backgroundColor = theme.colors.background;
+      if (isBackgroundGradient) {
+        (appContainer as HTMLElement).style.backgroundImage = theme.colors.background;
+        (appContainer as HTMLElement).style.backgroundColor = '';
+      } else {
+        (appContainer as HTMLElement).style.backgroundColor = theme.colors.background;
+        (appContainer as HTMLElement).style.backgroundImage = '';
+      }
       (appContainer as HTMLElement).style.color = theme.colors.text;
+    }
+    
+    // Add CSS custom properties for gradients
+    if (isBackgroundGradient) {
+      root.style.setProperty('--theme-background-gradient', theme.colors.background);
+    }
+    if (isSurfaceGradient) {
+      root.style.setProperty('--theme-surface-gradient', theme.colors.surface);
     }
     // This prevents conflicts and ensures proper theme application
 
