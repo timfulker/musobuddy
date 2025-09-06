@@ -456,6 +456,33 @@ export class MiscStorage {
     return result[0];
   }
 
+  async getAllMessageNotificationsForBooking(userId: string, bookingId: number) {
+    // Get ALL notifications for a specific booking (including dismissed ones for conversation view)
+    const result = await db.select({
+      id: messageNotifications.id,
+      userId: messageNotifications.userId,
+      bookingId: messageNotifications.bookingId,
+      senderEmail: messageNotifications.senderEmail,
+      subject: messageNotifications.subject,
+      messageUrl: messageNotifications.messageUrl,
+      isRead: messageNotifications.isRead,
+      isDismissed: messageNotifications.isDismissed,
+      createdAt: messageNotifications.createdAt,
+      // Join booking data
+      clientName: bookings.clientName,
+      eventDate: bookings.eventDate,
+      venue: bookings.venue
+    })
+    .from(messageNotifications)
+    .leftJoin(bookings, eq(messageNotifications.bookingId, bookings.id))
+    .where(and(
+      eq(messageNotifications.userId, userId),
+      eq(messageNotifications.bookingId, bookingId)
+    ))
+    .orderBy(desc(messageNotifications.createdAt));
+    return result;
+  }
+
   async deleteMessageNotification(id: number) {
     const result = await db.delete(messageNotifications)
       .where(eq(messageNotifications.id, id))

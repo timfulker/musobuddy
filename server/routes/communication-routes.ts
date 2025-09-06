@@ -157,9 +157,8 @@ export function setupCommunicationRoutes(app: any) {
       const { storage } = await import('../core/storage');
       const { downloadFile } = await import('../core/cloud-storage');
       
-      // Get message notifications for this booking (these have messageUrl fields)
-      const messageNotifications = await storage.getMessageNotifications(userId);
-      const bookingMessages = messageNotifications.filter(msg => msg.bookingId === bookingId);
+      // Get ALL message notifications for this booking (including dismissed ones for conversation view)
+      const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
       
       // Also get communications from clientCommunications table (outbound messages)
       const communications = await db

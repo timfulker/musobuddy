@@ -641,6 +641,10 @@ export class Storage {
     return miscStorage.dismissMessageNotification(id);
   }
 
+  async getAllMessageNotificationsForBooking(userId: string, bookingId: number) {
+    return miscStorage.getAllMessageNotificationsForBooking(userId, bookingId);
+  }
+
   async deleteMessageNotification(id: number) {
     return miscStorage.deleteMessageNotification(id);
   }
