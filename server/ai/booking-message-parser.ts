@@ -105,6 +105,25 @@ interface ParsedBookingData {
   };
 }
 
+// DEBUG: Test function for the failing email
+export async function testFailingEmail(): Promise<void> {
+  const testEmail = `Hi Jake, We've just seen your footage on your website, and we're very impressed. We are getting married on October 26th, 2025 at Clearwell Castle. Would you be available, and can you give us some idea of some prices, please? Kind Regards, Peter Jones`;
+  const testFrom = `Peter Jones <peterjonesfiver@gmail.com>`;
+  
+  console.log('🧪 [TEST] Testing failing email with content:', testEmail);
+  console.log('🧪 [TEST] From field:', testFrom);
+  
+  try {
+    const result = await parseBookingMessage(testEmail, testFrom, null, 'test-user', 'Wedding Inquiry');
+    console.log('🧪 [TEST] RESULT:', result);
+    console.log('🧪 [TEST] Date extracted:', result.eventDate);
+    console.log('🧪 [TEST] Venue extracted:', result.venue);
+    console.log('🧪 [TEST] Client name extracted:', result.clientName);
+  } catch (error) {
+    console.log('🧪 [TEST] ERROR:', error);
+  }
+}
+
 export async function parseBookingMessage(
   messageText: string,
   clientContact?: string,

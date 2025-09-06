@@ -21,6 +21,18 @@ function getMinutesDifference(time1: string, time2: string): number {
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
+  
+  // DEBUG: Test endpoint for the failing email (no auth for debugging)
+  app.get('/api/test-failing-email', async (req, res) => {
+    try {
+      const { testFailingEmail } = await import('../ai/booking-message-parser');
+      await testFailingEmail();
+      res.json({ success: true, message: 'Test completed, check console logs' });
+    } catch (error) {
+      console.error('Test failed:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Get bookings for authenticated user with display settings applied
   app.get('/api/bookings', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
