@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getContrastTextColor } from '@/lib/colorUtils';
 
 export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue' | 'custom';
+export type ThemeMode = 'light' | 'dark';
 
 export interface Theme {
   id: ThemeName;
@@ -140,6 +141,9 @@ interface ThemeContextType {
   theme: Theme;
   customColor: string | null;
   setCustomColor: (color: string) => void;
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+  toggleMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -148,6 +152,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Default to midnight-blue for unauthenticated/public pages
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('midnight-blue');
   const [customColor, setCustomColor] = useState<string | null>(null);
+  const [mode, setMode] = useState<ThemeMode>('light');
 
   useEffect(() => {
     // Check if we're on a public page that should always use midnight-blue
@@ -167,12 +172,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Load theme from localStorage only for authenticated pages
     const savedTheme = localStorage.getItem('musobuddy-theme') as ThemeName;
     const savedCustomColor = localStorage.getItem('musobuddy-custom-color');
+    const savedMode = localStorage.getItem('musobuddy-theme-mode') as ThemeMode;
     
     if (savedTheme && themes[savedTheme]) {
       setCurrentTheme(savedTheme);
     }
     if (savedCustomColor) {
       setCustomColor(savedCustomColor);
+    }
+    if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
+      setMode(savedMode);
     }
   }, []);
 
@@ -206,6 +215,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       theme.colors.primary = customColor;
       // Also adjust secondary color to be a slightly darker version
       theme.colors.secondary = customColor + '88'; // Add transparency
+    }
+    
+    // Apply dark mode color variations if in dark mode
+    if (mode === 'dark') {
+      // Adjust colors for dark mode
+      theme.colors.background = theme.colors.background === '#f8fafc' ? '#0a0a1a' : '#1a1a2e';
+      theme.colors.surface = '#1a1a2e';
+      theme.colors.text = '#e5e5e5';
+      theme.colors.textSecondary = '#a0a0a0';
     }
     
     const root = document.documentElement;
@@ -247,9 +265,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.body.classList.remove(`theme-${themeKey}`);
     });
     
+    // Remove existing dark/light classes
+    root.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+    
     // Add current theme class to both html and body for maximum coverage
     root.classList.add(`theme-${currentTheme}`);
     document.body.classList.add(`theme-${currentTheme}`);
+    
+    // Add current mode class
+    root.classList.add(mode);
+    document.body.classList.add(mode);
 
     // CRITICAL: Force refresh sidebar navigation colors after theme change
     setTimeout(() => {
@@ -271,9 +297,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     if (!isPublicPage) {
       localStorage.setItem('musobuddy-theme', currentTheme);
+      localStorage.setItem('musobuddy-theme-mode', mode);
     }
     
-    // CRITICAL FIX: Also save theme color to database for PDF generation (only for authenticated pages)
+    // Save theme and mode to database for PDF generation (only for authenticated pages)
     const saveThemeToDatabase = async () => {
       if (isPublicPage) {
         console.log('🎨 Skipping theme save for public page');
@@ -316,7 +343,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Save theme color to database (with small delay to avoid rapid API calls)
     const saveTimer = setTimeout(saveThemeToDatabase, 1000);
     return () => clearTimeout(saveTimer);
-  }, [currentTheme, customColor]);
+  }, [currentTheme, customColor, mode]);
 
   // Save custom color to localStorage when it changes
   useEffect(() => {
@@ -330,6 +357,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setCurrentTheme(theme);
   };
 
+  const toggleMode = () => {
+    const newMode = mode === 'light' ? 'dark' : 'light';
+    console.log(`🌙 Mode switching from ${mode} to ${newMode}`);
+    setMode(newMode);
+  };
+
   return (
     <ThemeContext.Provider value={{ 
       currentTheme, 
@@ -338,7 +371,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         { ...themes[currentTheme], colors: { ...themes[currentTheme].colors, primary: customColor } } : 
         themes[currentTheme],
       customColor,
-      setCustomColor
+      setCustomColor,
+      mode,
+      setMode,
+      toggleMode
     }}>
       {children}
     </ThemeContext.Provider>
