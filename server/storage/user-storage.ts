@@ -253,6 +253,8 @@ export class UserStorage {
     stripeSubscriptionId: string;
     hasPaid: boolean;
     isAdmin: boolean;
+    isBetaTester: boolean;
+    trialEndsAt: Date | null;
     onboardingCompleted: boolean;
   }>) {
     const updateData: any = { ...data, updatedAt: new Date() };

@@ -87,16 +87,28 @@ export default function TrialSuccessPage() {
                 // Force refresh of user data to get updated payment status from database
                 await refreshUserData();
                 console.log('🔄 User data refreshed after payment');
-              }
-              
-              toast({
-                title: "Welcome to MusoBuddy!",
-                description: "Your account has been created successfully.",
-              });
+                
+                // Small delay to ensure state updates propagate
+                setTimeout(() => {
+                  toast({
+                    title: "Welcome to MusoBuddy!",
+                    description: "Your account has been created successfully.",
+                  });
 
-              // Remove session ID from URL and redirect to dashboard
-              window.history.replaceState({}, document.title, '/trial-success');
-              setLocation('/dashboard');
+                  // Remove session ID from URL and redirect to dashboard
+                  window.history.replaceState({}, document.title, '/trial-success');
+                  setLocation('/dashboard');
+                }, 500);
+              } else {
+                toast({
+                  title: "Welcome to MusoBuddy!",
+                  description: "Your account has been created successfully.",
+                });
+
+                // Remove session ID from URL and redirect to dashboard
+                window.history.replaceState({}, document.title, '/trial-success');
+                setLocation('/dashboard');
+              }
             } else {
               console.error('❌ Stripe authentication failed:', response.status);
               const error = await response.json();

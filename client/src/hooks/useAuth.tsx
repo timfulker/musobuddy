@@ -262,11 +262,13 @@ export function useAuth() {
         if (response.ok) {
           const databaseUser = await response.json();
           console.log('🔄 User data refreshed:', databaseUser);
+          console.log('💰 hasPaid status from database:', databaseUser.hasPaid);
           
           const mergedUser = {
             ...currentUser,
             ...databaseUser
           };
+          console.log('🔀 Merged user hasPaid:', mergedUser.hasPaid);
           
           setAuthState({
             user: mergedUser,
