@@ -85,7 +85,7 @@ const settingsFormSchema = z.object({
   invoicePrefix: z.string().optional().or(z.literal("")), // Invoice number prefix
   defaultInvoiceDueDays: z.coerce.number().min(1, "Payment due days must be at least 1").max(365, "Payment due days cannot exceed 365"),
   contractClauses: z.object({
-    paymentTerms: z.enum(["28_days_before", "14_days_before", "7_days_before", "on_performance", "on_receipt", "7_days_after", "14_days_after", "28_days_after"]).optional(),
+    paymentTerms: z.enum(["28_days_before", "14_days_before", "7_days_before", "on_performance", "on_receipt", "7_days_after", "14_days_after", "28_days_after", "7_days", "14_days", "30_days", "cash_as_agreed", "3_days"]).optional(),
     deposit: z.boolean().optional(),
     balancePayment: z.boolean().optional(),
     cancellation: z.boolean().optional(),
