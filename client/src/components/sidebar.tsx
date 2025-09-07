@@ -26,7 +26,8 @@ import {
   Mail,
   Lock,
   AlertTriangle,
-  Cog
+  Cog,
+  CheckCircle2
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -253,7 +254,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
 
           
-          {/* Beta Feedback section - always render but hide for non-beta users to prevent layout shift */}
+          {/* Beta Testing section - always render but hide for non-beta users to prevent layout shift */}
+          <Link 
+            href="/beta-checklist" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/beta-checklist")}
+            style={{ 
+              color: isActive("/beta-checklist") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
+              backgroundColor: isActive("/beta-checklist") ? 'var(--theme-primary)' : 'transparent',
+              display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
+            }}
+          >
+            <CheckCircle2 className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Beta Checklist</span>
+          </Link>
+          
           <Link 
             href="/feedback" 
             onClick={() => window.innerWidth < 768 && onClose()} 

@@ -25,6 +25,7 @@ import PublicInvoice from "@/pages/public-invoice";
 import QuickAddWidget from "@/pages/quick-add-widget";
 import NewBooking from "@/pages/new-booking";
 import AddressBook from "@/pages/address-book";
+import BetaChecklist from "@/pages/beta-checklist";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import ClientPortal from "@/pages/client-portal";
@@ -178,6 +179,7 @@ function Router() {
       <Route path="/unparseable-messages" component={UnparseableMessages} />
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/feedback" component={Feedback} />
+      <Route path="/beta-checklist" component={BetaChecklist} />
       <Route path="/email-setup" component={EmailSetup} />
       <Route path="/mobile-invoice-sender" component={MobileInvoiceSender} />
       <Route path="/google-calendar-callback" component={GoogleCalendarCallback} />
