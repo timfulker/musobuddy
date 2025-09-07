@@ -168,11 +168,11 @@ export default function TrialSuccessPage() {
     restoreSession();
   }, [isLoading, toast, setLocation]);
 
-  // Watch for when user has paid and redirect to dashboard
+  // Watch for when user has paid and redirect to root for onboarding check
   useEffect(() => {
     if (user && user.hasPaid && !isRestoringSession && !window.location.search.includes('session_id')) {
-      console.log('✅ User has paid, redirecting to dashboard');
-      setLocation('/dashboard');
+      console.log('✅ User has paid, redirecting to app (onboarding wrapper will handle routing)');
+      setLocation('/');
     }
   }, [user, isRestoringSession, setLocation]);
 

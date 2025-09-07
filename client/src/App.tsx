@@ -116,11 +116,10 @@ function Router() {
       if (needsPaymentSetup) {
         console.log('🔄 Redirecting authenticated unpaid user to payment setup');
         setLocation(paymentRedirectUrl);
-      } else {
-        console.log('🔄 Redirecting authenticated paid user to dashboard');
-        setLocation('/dashboard');
+        return;
       }
-      return;
+      // For paid users, let OnboardingWrapper handle routing (welcome screen vs dashboard)
+      console.log('🔄 Paid user at root - OnboardingWrapper will handle routing based on setup completion');
     }
 
     // This check is now handled earlier in the useEffect
