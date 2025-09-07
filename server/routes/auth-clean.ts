@@ -537,7 +537,7 @@ export function setupAuthRoutes(app: Express) {
       
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(stripeKey || '', { 
-        apiVersion: '2024-12-18.acacia' 
+        apiVersion: '2024-12-18' 
       });
       // Use isBeta from frontend if provided, otherwise check database
       const isBetaTester = isBeta || user?.isBetaTester || false;
@@ -671,7 +671,7 @@ export function setupAuthRoutes(app: Express) {
       });
       
       // ATOMIC UPDATE: Set payment status to true - session is complete
-      await storage.updateUserById(user.id, { 
+      await storage.updateUser(user.id, { 
         hasPaid: true,
         stripeCustomerId: session.customer || null,
         stripeSubscriptionId: session.mode === 'subscription' ? session.subscription : null

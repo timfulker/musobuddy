@@ -911,7 +911,7 @@ app.get('/api/email-queue/status', async (req, res) => {
       try {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
-          apiVersion: '2024-12-18.acacia' 
+          apiVersion: '2024-12-18' 
         });
         
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
@@ -1012,7 +1012,7 @@ app.get('/api/email-queue/status', async (req, res) => {
         const customer = subscription.customer;
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
-          apiVersion: '2024-12-18.acacia' 
+          apiVersion: '2024-12-18' 
         });
         
         // Get customer email
