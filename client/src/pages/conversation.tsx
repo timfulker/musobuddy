@@ -93,6 +93,8 @@ export default function Conversation() {
       return await response.json();
     },
     enabled: !!bookingId,
+    refetchOnMount: 'always',
+    staleTime: 0, // Always consider data stale to ensure fresh messages
   });
 
   // Extract messages and unread notification IDs from response
