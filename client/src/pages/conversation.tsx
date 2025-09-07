@@ -52,6 +52,7 @@ export default function Conversation() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [replyContent, setReplyContent] = useState("");
+  const [travelExpenses, setTravelExpenses] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [contextInput, setContextInput] = useState('');
@@ -161,7 +162,7 @@ export default function Conversation() {
 
   // Send reply mutation
   const sendReplyMutation = useMutation({
-    mutationFn: async (replyData: { bookingId: number; content: string; recipientEmail: string }) => {
+    mutationFn: async (replyData: { bookingId: number; content: string; recipientEmail: string; travelExpenses?: string }) => {
       const response = await apiRequest('/api/conversations/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -175,6 +176,7 @@ export default function Conversation() {
         description: "Your message has been sent to the client.",
       });
       setReplyContent("");
+      setTravelExpenses("");
       setIsReplying(false);
       refetchMessages();
       queryClient.invalidateQueries({ queryKey: ['notifications', 'messages'] });
@@ -244,6 +246,7 @@ export default function Conversation() {
       bookingId,
       content: replyContent.trim(),
       recipientEmail: booking.clientEmail,
+      travelExpenses: travelExpenses || undefined,
     });
   };
 
@@ -860,6 +863,29 @@ export default function Conversation() {
               rows={4}
               className="resize-none"
             />
+            
+            {/* Travel Expenses Field */}
+            <div className="flex items-center gap-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-yellow-600" />
+                <Label htmlFor="travel-expenses" className="text-sm font-medium text-yellow-800">
+                  Travel Expenses (£)
+                </Label>
+              </div>
+              <Input
+                id="travel-expenses"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={travelExpenses}
+                onChange={(e) => setTravelExpenses(e.target.value)}
+                className="w-32 bg-white border-yellow-300 focus:border-yellow-500"
+              />
+              <div className="text-xs text-yellow-600">
+                Optional: Include travel expenses in your reply
+              </div>
+            </div>
+            
             {/* Template and AI Helper Buttons */}
             <div className="flex flex-wrap gap-2 mb-4">
               <Button
@@ -1001,6 +1027,7 @@ export default function Conversation() {
                   variant="outline"
                   onClick={() => {
                     setReplyContent("");
+                    setTravelExpenses("");
                     setIsReplying(false);
                   }}
                 >
