@@ -99,8 +99,11 @@ function Router() {
     const paymentRedirectUrl = getPaymentRedirectUrl();
     
     
+    // Don't redirect during auth state transitions or payment flows
+    const isInPaymentFlow = isPaymentReturn || isTrialSuccess;
+    
     // Redirect authenticated users who need payment setup from protected routes
-    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {
+    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl && !isInPaymentFlow && !isLoading) {
       console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
       setLocation(paymentRedirectUrl);
       return;
