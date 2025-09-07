@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { bookings, bookingConflicts, bookingDocuments } from "../../shared/schema";
+import { bookings, bookingConflicts, bookingDocuments, invoices } from "../../shared/schema";
 import type { InsertBookingDocument, BookingDocument } from "../../shared/document-schemas";
 import { eq, and, desc, or, sql, gte, lte, notInArray, inArray } from "drizzle-orm";
 
@@ -270,6 +270,12 @@ export class BookingStorage {
   }
 
   async deleteBooking(id: number, userId: string) {
+    // First, set bookingId to null for any related invoices to avoid foreign key constraint error
+    await db.update(invoices)
+      .set({ bookingId: null })
+      .where(eq(invoices.bookingId, id));
+    
+    // Now delete the booking
     const result = await db.delete(bookings)
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
