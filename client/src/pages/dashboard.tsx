@@ -33,6 +33,19 @@ export default function Dashboard() {
   const isPreview = window.location.hostname.includes('replit.dev') && 
                     window.location.pathname === '/';
 
+  // Check if we're coming from a payment flow
+  useEffect(() => {
+    const isFromPayment = document.referrer.includes('/trial-success') || 
+                         sessionStorage.getItem('payment_completed') === 'true';
+    
+    if (isFromPayment && user && !user.hasPaid && !user.has_paid) {
+      console.log('🔄 Dashboard: Refreshing user data after payment flow');
+      refreshUserData().then(() => {
+        console.log('✅ Dashboard: User data refreshed');
+        sessionStorage.removeItem('payment_completed');
+      });
+    }
+  }, [user, refreshUserData]);
 
   // Handle Stripe session restoration on dashboard load
   useEffect(() => {
