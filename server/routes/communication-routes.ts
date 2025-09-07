@@ -453,8 +453,8 @@ export function setupCommunicationRoutes(app: any) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { bookingId, content, recipientEmail } = req.body;
-      console.log('📧 [CONVERSATION-REPLY] Request body:', { bookingId, content: content?.substring(0, 50) + '...', recipientEmail });
+      const { bookingId, content, recipientEmail, travelExpenses } = req.body;
+      console.log('📧 [CONVERSATION-REPLY] Request body:', { bookingId, content: content?.substring(0, 50) + '...', recipientEmail, travelExpenses });
 
       if (!bookingId || !content || !recipientEmail) {
         console.log('❌ [CONVERSATION-REPLY] Missing required fields:', { bookingId: !!bookingId, content: !!content, recipientEmail: !!recipientEmail });
@@ -580,6 +580,22 @@ export function setupCommunicationRoutes(app: any) {
             <div style="font-size: 16px; color: #2c3e50; line-height: 1.7;">
                 ${formatEmailContent(content)}
             </div>
+            
+            ${travelExpenses ? `
+            <!-- Travel Expenses Section -->
+            <div style="margin-top: 32px; padding: 24px; background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%); border-radius: 10px; border-left: 4px solid #ffa726;">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="font-size: 18px; margin-right: 8px;">🧾</div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #e65100;">Travel Expenses</h3>
+                </div>
+                <p style="margin: 0; font-size: 16px; color: #bf360c; font-weight: 500;">
+                    Travel expenses: <strong>£${parseFloat(travelExpenses).toFixed(2)}</strong>
+                </p>
+                <p style="margin: 8px 0 0 0; font-size: 14px; color: #8d4e00; font-style: italic;">
+                    This covers transportation costs for your event.
+                </p>
+            </div>
+            ` : ''}
             
             <!-- Professional signature card -->
             <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #fafbfc 0%, #f1f3f4 100%); border-radius: 12px; text-align: center; border: 1px solid #e8eaed;">
