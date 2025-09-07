@@ -9,7 +9,7 @@ import { CheckCircle, ArrowRight, Mail, LayoutDashboard, FileText, Receipt, User
 export default function TrialSuccessPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refreshUserData } = useAuth();
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   
   // Debug logging
@@ -84,8 +84,8 @@ export default function TrialSuccessPage() {
                 await signInWithCustomToken(auth, tokenData.customToken);
                 console.log('✅ User signed into Firebase after payment');
                 
-                // Force refresh of user data to get updated payment status
-                await auth.currentUser?.reload();
+                // Force refresh of user data to get updated payment status from database
+                await refreshUserData();
                 console.log('🔄 User data refreshed after payment');
               }
               
