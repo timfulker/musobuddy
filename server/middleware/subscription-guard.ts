@@ -78,13 +78,11 @@ export const subscriptionGuard = async (req: Request, res: Response, next: NextF
     // Cast request to get user info
     const authReq = req as AuthenticatedRequest;
     
-    // Verify authentication first
+    // If no user is authenticated, skip subscription check
+    // The route's own authentication middleware will handle auth requirements
     if (!authReq.user?.id) {
-      console.log(`🔒 [SUBSCRIPTION-GUARD] No authenticated user for ${req.path}`);
-      return res.status(401).json({ 
-        error: 'Authentication required',
-        details: 'Please log in to access this resource'
-      });
+      console.log(`⏭️ [SUBSCRIPTION-GUARD] Skipping check for ${req.path} - no authenticated user (route will handle auth)`);
+      return next();
     }
 
     // Get user subscription status from database
