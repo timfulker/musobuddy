@@ -180,16 +180,17 @@ export default function NewBookingPage({
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
-  // Fetch user's personalized gig types from settings (only for musicians, not clients)
+  // Fetch user's gig types (combines AI-generated and custom types) (only for musicians, not clients)
+  const { data: userGigTypes = [] } = useQuery({
+    queryKey: ['/api/gig-types'],
+    enabled: !clientMode, // Skip for client mode
+  });
+
+  // Also fetch user settings for other form data
   const { data: userSettings } = useQuery({
     queryKey: ['/api/settings'],
     enabled: !clientMode, // Skip for client mode
   });
-
-  // Combine both gigTypes (from database) and customGigTypes (user-added) fields
-  const gigTypesFromDB = Array.isArray(userSettings?.gigTypes) ? userSettings.gigTypes : [];
-  const customGigTypes = Array.isArray(userSettings?.customGigTypes) ? userSettings.customGigTypes : [];
-  const userGigTypes = [...gigTypesFromDB, ...customGigTypes];
 
   // Calculate mileage between user's business address and venue
   // Handler for adding custom gig types
