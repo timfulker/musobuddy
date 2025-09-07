@@ -67,6 +67,7 @@ export default function TrialSuccessPage() {
               
               console.log('✅ Stripe session verified for user:', result.user?.email);
               console.log('✅ Full verification result:', result);
+              console.log('💰 Payment status in verify result:', result.user?.hasPaid);
               
               // Now we need to log the user into Firebase
               const { auth } = await import('@/lib/firebase');
@@ -88,17 +89,15 @@ export default function TrialSuccessPage() {
                 await refreshUserData();
                 console.log('🔄 User data refreshed after payment');
                 
-                // Small delay to ensure state updates propagate
-                setTimeout(() => {
-                  toast({
-                    title: "Welcome to MusoBuddy!",
-                    description: "Your account has been created successfully.",
-                  });
+                // Show success message
+                toast({
+                  title: "Welcome to MusoBuddy!",
+                  description: "Your account has been created successfully.",
+                });
 
-                  // Remove session ID from URL and redirect to dashboard
-                  window.history.replaceState({}, document.title, '/trial-success');
-                  setLocation('/dashboard');
-                }, 500);
+                // Remove session ID from URL but DON'T redirect yet
+                // Let the hasPaid watcher effect handle the redirect
+                window.history.replaceState({}, document.title, '/trial-success');
               } else {
                 toast({
                   title: "Welcome to MusoBuddy!",
@@ -166,6 +165,13 @@ export default function TrialSuccessPage() {
     restoreSession();
   }, [isLoading, toast, setLocation]);
 
+  // Watch for when user has paid and redirect to dashboard
+  useEffect(() => {
+    if (user && user.hasPaid && !isRestoringSession) {
+      console.log('✅ User has paid, redirecting to dashboard');
+      setLocation('/dashboard');
+    }
+  }, [user, isRestoringSession, setLocation]);
 
 
   const handleSetupEmail = () => {

@@ -656,12 +656,19 @@ export function setupAuthRoutes(app: Express) {
       }
       
       // Find user by email
+      console.log('🔍 Looking up user by email:', customerEmail);
       const user = await storage.getUserByEmail(customerEmail);
       
       if (!user) {
         console.error('❌ User not found for email:', customerEmail);
         return res.status(404).json({ error: 'User not found' });
       }
+      
+      console.log('👤 Found user:', { 
+        id: user.id, 
+        email: user.email, 
+        currentHasPaid: user.hasPaid 
+      });
       
       console.log('✅ Session verified for user:', {
         user: user.email,
@@ -671,15 +678,21 @@ export function setupAuthRoutes(app: Express) {
       });
       
       // ATOMIC UPDATE: Set payment status to true - session is complete
-      await storage.updateUser(user.id, { 
+      console.log('🔄 Updating user payment status for:', user.id);
+      const updateResult = await storage.updateUser(user.id, { 
         hasPaid: true,
         stripeCustomerId: session.customer || null,
         stripeSubscriptionId: session.mode === 'subscription' ? session.subscription : null
       });
-      console.log('✅ User payment status updated to PAID');
+      console.log('✅ User payment status updated to PAID, result:', updateResult?.hasPaid);
       
       // Return user data with updated payment status
       const updatedUser = await storage.getUserById(user.id);
+      console.log('📊 Updated user from DB:', { 
+        id: updatedUser.id, 
+        email: updatedUser.email, 
+        hasPaid: updatedUser.hasPaid 
+      });
       res.json({
         success: true,
         user: {
