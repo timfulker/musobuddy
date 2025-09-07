@@ -250,6 +250,8 @@ export class UserStorage {
     tier: string;
     emailPrefix: string;
     stripeCustomerId: string;
+    stripeSubscriptionId: string;
+    hasPaid: boolean;
     isAdmin: boolean;
     onboardingCompleted: boolean;
   }>) {

@@ -671,7 +671,7 @@ export function setupAuthRoutes(app: Express) {
       });
       
       // ATOMIC UPDATE: Set payment status to true - session is complete
-      await storage.updateUserById(user.id, { 
+      await storage.updateUser(user.id, { 
         hasPaid: true,
         stripeCustomerId: session.customer || null,
         stripeSubscriptionId: session.mode === 'subscription' ? session.subscription : null
