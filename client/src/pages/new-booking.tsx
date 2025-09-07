@@ -1513,7 +1513,7 @@ export default function NewBookingPage({
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Performance Fee (£)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
+                          <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
