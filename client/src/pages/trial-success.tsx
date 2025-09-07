@@ -167,7 +167,7 @@ export default function TrialSuccessPage() {
 
   // Watch for when user has paid and redirect to dashboard
   useEffect(() => {
-    if (user && user.hasPaid && !isRestoringSession) {
+    if (user && user.hasPaid && !isRestoringSession && !window.location.search.includes('session_id')) {
       console.log('✅ User has paid, redirecting to dashboard');
       setLocation('/dashboard');
     }
