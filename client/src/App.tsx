@@ -25,7 +25,6 @@ import PublicInvoice from "@/pages/public-invoice";
 import QuickAddWidget from "@/pages/quick-add-widget";
 import NewBooking from "@/pages/new-booking";
 import AddressBook from "@/pages/address-book";
-import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import ClientPortal from "@/pages/client-portal";
@@ -177,7 +176,6 @@ function Router() {
       <Route path="/booking-summary/:bookingId" component={BookingSummary} />
       <Route path="/booking/:bookingId/collaborate" component={BookingCollaborate} />
       <Route path="/unparseable-messages" component={UnparseableMessages} />
-      <Route path="/user-guide" component={UserGuide} />
       <Route path="/system-health" component={SystemHealth} />
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />

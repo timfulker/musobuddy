@@ -253,19 +253,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
 
           
-          <Link 
-            href="/user-guide" 
-            onClick={() => window.innerWidth < 768 && onClose()} 
-            className={getNavLinkClass("/user-guide")}
-            style={{ 
-              color: isActive("/user-guide") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
-              backgroundColor: isActive("/user-guide") ? 'var(--theme-primary)' : 'transparent'
-            }}
-          >
-            <BookOpen className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>User Guide</span>
-          </Link>
-          
           {/* Beta Feedback section - always render but hide for non-beta users to prevent layout shift */}
           <Link 
             href="/feedback" 
