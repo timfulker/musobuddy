@@ -160,9 +160,9 @@ Important: Get the client's actual name AND email from the email signature or bo
 EMAIL: ${messageText}
 JSON:`;
 
-    console.log('🤖 GPT-5: Current date context provided:', currentDate);
-    console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
-    console.log('🤖 GPT-5: User prompt:', userPrompt);
+    console.log('🤖 GPT-4: Current date context provided:', currentDate);
+    console.log('🤖 GPT-4: System prompt length:', systemPrompt.length);
+    console.log('🤖 GPT-4: User prompt:', userPrompt);
 
     // AI usage limits removed - unlimited AI usage for all users
 
@@ -172,9 +172,9 @@ JSON:`;
 
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
-      model: 'gpt-5',
-      max_completion_tokens: 4000, // CRITICAL: GPT-5 reasoning model needs substantial tokens
-      temperature: 1, // GPT-5 only supports default temperature
+      model: 'gpt-4-turbo',
+      max_tokens: 4000, // Use max_tokens for GPT-4
+      temperature: 0.7, // Use a reasonable temperature for GPT-4
       messages: [
         { 
           role: 'system', 
@@ -192,7 +192,7 @@ JSON:`;
     const rawContent = response.choices[0]?.message?.content;
     const usage = response.usage;
     
-    console.log('🔍 GPT-5 TOKEN USAGE:', {
+    console.log('🔍 GPT-4 TOKEN USAGE:', {
       promptTokens: usage?.prompt_tokens || 0,
       completionTokens: usage?.completion_tokens || 0,
       totalTokens: usage?.total_tokens || 0,
@@ -200,7 +200,7 @@ JSON:`;
     });
     
     if (!rawContent || rawContent.trim().length === 0) {
-      console.error('❌ GPT-5 EMPTY RESPONSE - Token Analysis:', {
+      console.error('❌ GPT-4 EMPTY RESPONSE - Token Analysis:', {
         maxAllowed: 4000,
         promptUsed: usage?.prompt_tokens || 0,
         completionUsed: usage?.completion_tokens || 0,
@@ -208,10 +208,10 @@ JSON:`;
         hasContent: !!rawContent,
         contentLength: rawContent?.length || 0
       });
-      throw new Error('GPT-5 returned empty response - likely token exhaustion');
+      throw new Error('GPT-4 returned empty response - likely token exhaustion');
     }
 
-    console.log('🤖 GPT-5 raw response:', rawContent);
+    console.log('🤖 GPT-4 raw response:', rawContent);
     console.log('🤖 GPT-5 response time:', `${responseTime}ms`);
     
     // CRITICAL DEBUG: Log exactly what we sent and received

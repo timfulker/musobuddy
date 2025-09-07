@@ -522,7 +522,14 @@ export function registerBookingRoutes(app: Express) {
       }
       
       // Use OpenAI to extract booking details from the message
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        console.error('❌ OPENAI_API_KEY is missing from environment variables');
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
+      
+      console.log('🔑 Using OpenAI API key:', apiKey.substring(0, 10) + '...');
+      const openai = new OpenAI({ apiKey });
       
       const prompt = `Extract booking details from the following client message. Return a JSON object with any of these fields that can be found in the message:
       - clientName: Full name of the client
@@ -548,7 +555,7 @@ export function registerBookingRoutes(app: Express) {
       ${messageContent}`;
       
       const response = await openai.chat.completions.create({
-        model: "gpt-4o", // Latest OpenAI model per blueprint
+        model: "gpt-4-turbo", // Valid OpenAI model name
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.3, // Lower temperature for accuracy
@@ -632,9 +639,28 @@ export function registerBookingRoutes(app: Express) {
       console.log('📝 Extracted details from message:', cleanedDetails);
       res.json(cleanedDetails);
       
-    } catch (error) {
-      console.error('❌ Failed to extract details:', error);
-      res.status(500).json({ error: 'Failed to extract details from message' });
+    } catch (error: any) {
+      console.error('❌ Failed to extract details:', {
+        error: error.message,
+        stack: error.stack,
+        response: error.response?.data,
+        status: error.response?.status,
+        bookingId: bookingId
+      });
+      
+      // More specific error messages
+      if (error.response?.status === 401) {
+        res.status(500).json({ error: 'OpenAI authentication failed - API key may be invalid' });
+      } else if (error.response?.status === 429) {
+        res.status(500).json({ error: 'OpenAI rate limit exceeded - please try again later' });
+      } else if (error.message?.includes('API key')) {
+        res.status(500).json({ error: 'OpenAI API key issue - please check configuration' });
+      } else {
+        res.status(500).json({ 
+          error: 'Failed to extract details from message',
+          details: error.message 
+        });
+      }
     }
   });
 
