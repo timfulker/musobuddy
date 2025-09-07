@@ -566,7 +566,19 @@ export function registerBookingRoutes(app: Express) {
         temperature: 1, // GPT-5 only supports default temperature
       });
       
-      const extractedDetails = JSON.parse(response.choices[0].message.content);
+      // Safer extraction with proper error handling
+      const content = response?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('OpenAI returned empty or invalid response');
+      }
+      
+      let extractedDetails;
+      try {
+        extractedDetails = JSON.parse(content);
+      } catch (parseError) {
+        console.error('❌ Failed to parse OpenAI JSON response:', content);
+        throw new Error(`Invalid JSON response from OpenAI: ${parseError.message}`);
+      }
       
       // Clean up the extracted data
       const cleanedDetails: any = {};
