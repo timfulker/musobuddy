@@ -52,7 +52,7 @@ export class InvoiceStorage {
         clientAddress: invoiceData.clientAddress || null,
         venueAddress: invoiceData.venueAddress || null,
         eventDate: invoiceData.eventDate ? new Date(invoiceData.eventDate) : null,
-        fee: invoiceData.fee || null,
+        // fee: removed - use bookings.fee as single source of truth
         depositPaid: invoiceData.depositPaid || "0",
         amount: invoiceData.amount,
         dueDate: new Date(invoiceData.dueDate),
@@ -88,7 +88,7 @@ export class InvoiceStorage {
           clientAddress: uniqueInvoiceData.clientAddress || null,
           venueAddress: uniqueInvoiceData.venueAddress || null,
           eventDate: uniqueInvoiceData.eventDate ? new Date(uniqueInvoiceData.eventDate) : null,
-          fee: uniqueInvoiceData.fee || null,
+          // fee: removed - use bookings.fee as single source of truth
           depositPaid: uniqueInvoiceData.depositPaid || "0",
           amount: uniqueInvoiceData.amount,
           dueDate: new Date(uniqueInvoiceData.dueDate),
@@ -124,7 +124,7 @@ export class InvoiceStorage {
     if (updates.clientAddress !== undefined) setData.clientAddress = updates.clientAddress;
     if (updates.venueAddress !== undefined) setData.venueAddress = updates.venueAddress;
     if (updates.eventDate !== undefined) setData.eventDate = updates.eventDate ? new Date(updates.eventDate) : null;
-    if (updates.fee !== undefined) setData.fee = updates.fee;
+    // fee: removed - use bookings.fee as single source of truth
     if (updates.depositPaid !== undefined) setData.depositPaid = updates.depositPaid;
     if (updates.amount !== undefined) setData.amount = updates.amount;
     if (updates.dueDate !== undefined) setData.dueDate = new Date(updates.dueDate);
