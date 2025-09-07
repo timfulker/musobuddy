@@ -555,7 +555,7 @@ export function registerBookingRoutes(app: Express) {
       ${messageContent}`;
       
       const response = await openai.chat.completions.create({
-        model: "gpt-4o", // GPT-4 Omni - valid OpenAI model
+        model: "gpt-5", // As you originally had it
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.3, // Lower temperature for accuracy
