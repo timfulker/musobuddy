@@ -89,6 +89,9 @@ export default function TrialSuccessPage() {
                 await refreshUserData();
                 console.log('🔄 User data refreshed after payment');
                 
+                // Set flag for dashboard to know we came from payment
+                sessionStorage.setItem('payment_completed', 'true');
+                
                 // Show success message
                 toast({
                   title: "Welcome to MusoBuddy!",
