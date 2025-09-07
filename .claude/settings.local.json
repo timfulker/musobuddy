@@ -18,7 +18,10 @@
       "Bash(fuser:*)",
       "Bash(lsof:*)",
       "Bash(npm start)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Read(//tmp/**)",
+      "Bash(env)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": [],

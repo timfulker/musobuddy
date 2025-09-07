@@ -503,11 +503,15 @@ export function registerBookingRoutes(app: Express) {
   // Extract details from message content using AI
   app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     const bookingId = parseInt(req.params.id);
+    console.log(`📝 [EXTRACT-DETAILS] Starting for booking ${bookingId}`);
     try {
       const userId = req.user?.id;
       const { messageContent } = req.body;
       
+      console.log(`📝 [EXTRACT-DETAILS] User ID: ${userId}, Has messageContent: ${!!messageContent}`);
+      
       if (!userId) {
+        console.log(`❌ [EXTRACT-DETAILS] No user ID found`);
         return res.status(401).json({ error: 'Authentication required' });
       }
       
