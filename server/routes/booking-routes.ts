@@ -563,7 +563,7 @@ export function registerBookingRoutes(app: Express) {
         model: "gpt-5", // As you originally had it
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
-        temperature: 0.3, // Lower temperature for accuracy
+        temperature: 1, // GPT-5 only supports default temperature
       });
       
       const extractedDetails = JSON.parse(response.choices[0].message.content);
