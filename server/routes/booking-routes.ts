@@ -504,6 +504,7 @@ export function registerBookingRoutes(app: Express) {
   app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     const bookingId = parseInt(req.params.id);
     console.log(`📝 [EXTRACT-DETAILS] Starting for booking ${bookingId}`);
+    console.log(`📝 [EXTRACT-DETAILS] Request received at ${new Date().toISOString()}`);
     try {
       const userId = req.user?.id;
       const { messageContent } = req.body;

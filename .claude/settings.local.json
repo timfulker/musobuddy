@@ -21,7 +21,9 @@
       "Bash(npm run:*)",
       "Read(//tmp/**)",
       "Bash(env)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": [],

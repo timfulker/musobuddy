@@ -59,6 +59,8 @@ export const authenticateWithFirebase = async (
 ) => {
   const startTime = Date.now();
   
+  console.log(`🔐 [FIREBASE-AUTH-ENTRY] Request to: ${req.path} at ${new Date().toISOString()}`);
+  
   // Extract token
   const token = extractFirebaseToken(req);
   
