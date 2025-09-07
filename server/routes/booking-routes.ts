@@ -617,6 +617,20 @@ export function registerBookingRoutes(app: Express) {
         
         return durationMap[cleaned] || duration; // Return original if no match
       };
+
+      // Helper function to extract clean email address from "Name <email@domain.com>" format
+      const cleanEmailAddress = (email: string): string => {
+        if (!email || typeof email !== 'string') return email;
+        
+        // Check if email is in "Name <email@domain.com>" format
+        const emailMatch = email.match(/<([^>]+@[^>]+)>/);
+        if (emailMatch) {
+          return emailMatch[1].trim();
+        }
+        
+        // Return original if no angle brackets found
+        return email.trim();
+      };
       
       for (const [key, value] of Object.entries(extractedDetails)) {
         if (value !== null && value !== '' && value !== undefined) {
@@ -635,6 +649,10 @@ export function registerBookingRoutes(app: Express) {
           // Special handling for performance duration
           else if (key === 'performanceDuration' && typeof value === 'string') {
             cleanedDetails[key] = standardizePerformanceDuration(value);
+          }
+          // Special handling for email addresses
+          else if (key === 'clientEmail' && typeof value === 'string') {
+            cleanedDetails[key] = cleanEmailAddress(value);
           } else {
             cleanedDetails[key] = value;
           }
