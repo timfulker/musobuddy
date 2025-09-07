@@ -609,7 +609,7 @@ export function setupAuthRoutes(app: Express) {
       
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY || '', { 
-        apiVersion: '2024-12-18.acacia' 
+        apiVersion: '2024-12-18' 
       });
       
       // Retrieve the session from Stripe
