@@ -502,8 +502,8 @@ export function registerBookingRoutes(app: Express) {
 
   // Extract details from message content using AI
   app.post('/api/bookings/:id/extract-details', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    const bookingId = parseInt(req.params.id);
     try {
-      const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
       const { messageContent } = req.body;
       
