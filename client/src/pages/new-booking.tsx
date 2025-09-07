@@ -481,7 +481,7 @@ export default function NewBookingPage({
         venue: editingBooking.venue || '',
         venueAddress: editingBooking.venueAddress || '',
         venueContactInfo: editingBooking.venueContactInfo || '',
-        fee: editingBooking.fee ? editingBooking.fee.toString() : '',
+        fee: editingBooking.fee !== null && editingBooking.fee !== undefined ? editingBooking.fee.toString() : '',
         gigType: editingBooking.gigType || '',
         eventType: editingBooking.eventType || '',
         equipmentRequirements: editingBooking.equipmentRequirements || '',
@@ -495,7 +495,7 @@ export default function NewBookingPage({
         contactPhone: editingBooking.contactPhone || '',
         parkingInfo: editingBooking.parkingInfo || '',
         notes: editingBooking.notes || '',
-        travelExpense: editingBooking.travelExpense ? editingBooking.travelExpense.toString() : '',
+        travelExpense: editingBooking.travelExpense !== null && editingBooking.travelExpense !== undefined ? editingBooking.travelExpense.toString() : '',
         // Collaborative fields
         venueContact: editingBooking.venueContact || '',
         soundTechContact: editingBooking.soundTechContact || '',
