@@ -174,8 +174,8 @@ export default function NewBookingPage({
       return null;
     },
     enabled: isEditMode && !!editBookingId,
-    refetchInterval: 5000, // Poll every 5 seconds for collaborative form updates
     refetchOnWindowFocus: true, // Refresh when user returns to tab
+    staleTime: 30000, // Consider data fresh for 30 seconds to prevent constant refetching
   });
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
