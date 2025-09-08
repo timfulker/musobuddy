@@ -80,6 +80,11 @@ const settingsFormSchema = z.object({
   city: z.string().optional().or(z.literal("")),
   county: z.string().optional().or(z.literal("")),
   postcode: z.string().optional().or(z.literal("")),
+  // Home address fields
+  homeAddressLine1: z.string().optional().or(z.literal("")),
+  homeAddressLine2: z.string().optional().or(z.literal("")),
+  homeCity: z.string().optional().or(z.literal("")),
+  homePostcode: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   website: z.string().optional().or(z.literal("")),
   taxNumber: z.string().optional().or(z.literal("")),
@@ -739,6 +744,68 @@ export default function Settings() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Postcode</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="SW1A 1AA" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Home Address Fields */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Home Address</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="homeAddressLine1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Home Address Line 1</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="123 Home Street" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="homeAddressLine2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Home Address Line 2 (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="Apartment 2B" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="homeCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Home Town/City</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ""} placeholder="London" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="homePostcode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Home Postcode</FormLabel>
                   <FormControl>
                     <Input {...field} value={field.value || ""} placeholder="SW1A 1AA" />
                   </FormControl>
