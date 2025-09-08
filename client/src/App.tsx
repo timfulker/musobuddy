@@ -100,12 +100,7 @@ function Router() {
     
     
     // Redirect authenticated users who need payment setup from protected routes
-    // EXCEPT when coming from payment flow (prevent redirect loop after successful payment)
-    const isFromPaymentFlow = currentPath === '/trial-success' || 
-                             document.referrer.includes('/trial-success') || 
-                             sessionStorage.getItem('payment_completed') === 'true';
-    
-    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl && !isFromPaymentFlow) {
+    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {
       console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
       setLocation(paymentRedirectUrl);
       return;
@@ -116,10 +111,11 @@ function Router() {
       if (needsPaymentSetup) {
         console.log('🔄 Redirecting authenticated unpaid user to payment setup');
         setLocation(paymentRedirectUrl);
-        return;
+      } else {
+        console.log('🔄 Redirecting authenticated paid user to dashboard');
+        setLocation('/dashboard');
       }
-      // For paid users, let OnboardingWrapper handle routing (welcome screen vs dashboard)
-      console.log('🔄 Paid user at root - OnboardingWrapper will handle routing based on setup completion');
+      return;
     }
 
     // This check is now handled earlier in the useEffect
