@@ -1594,5 +1594,6 @@ This email was sent via MusoBuddy Professional Music Management Platform
     }
   });
 
+
   console.log('✅ Settings routes configured');
 }

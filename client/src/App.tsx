@@ -47,7 +47,7 @@ import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
 import GoogleCalendarCallback from "@/pages/google-calendar-callback";
-import OnboardingWrapper from "@/components/onboarding-wrapper";
+// import OnboardingWrapper from "@/components/onboarding-wrapper"; // Temporarily removed
 import BookingSummary from "@/pages/booking-summary";
 import BookingCollaborate from "@/pages/booking-collaborate";
 import LogoutPage from "@/pages/logout";
@@ -224,11 +224,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <TooltipProvider>
-              <OnboardingWrapper>
-                <Toaster />
-                <Router />
-                <SupportChat />
-              </OnboardingWrapper>
+              {/* OnboardingWrapper temporarily removed */}
+              <Toaster />
+              <Router />
+              <SupportChat />
             </TooltipProvider>
           </ThemeProvider>
       </QueryClientProvider>

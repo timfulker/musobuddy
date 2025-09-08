@@ -1842,9 +1842,9 @@ export default function Settings() {
   };
 
   const renderInstrumentsSection = () => {
-    const availableInstruments = getAvailableInstruments();
-    const watchedPrimaryInstrument = form.watch('primaryInstrument');
-    const watchedSecondaryInstruments = form.watch('secondaryInstruments') || [];
+    const availableInstruments = getAvailableInstruments ? getAvailableInstruments() : [];
+    const watchedPrimaryInstrument = form.watch ? form.watch('primaryInstrument') : null;
+    const watchedSecondaryInstruments = form.watch ? form.watch('secondaryInstruments') || [] : [];
     
     return (
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
@@ -1862,7 +1862,27 @@ export default function Settings() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Primary Instrument</FormLabel>
-                  <Select onValueChange={field.onChange} value={form.getValues('primaryInstrument') || ""} key={`primary-instrument-${formInitialized}`}>
+                  <Select 
+                    onValueChange={(value) => {
+                      try {
+                        console.log('🎵 Primary instrument select change:', value);
+                        if (value && typeof value === 'string') {
+                          field.onChange(value); // Update form field
+                          handleInstrumentChange(value); // Handle additional logic
+                        }
+                      } catch (error) {
+                        console.error('❌ Error in primary instrument onValueChange:', error);
+                        // Show error to user as well
+                        toast({
+                          title: "Error",
+                          description: "Failed to update instrument selection. Please try again.",
+                          variant: "destructive"
+                        });
+                      }
+                    }} 
+                    value={form.getValues('primaryInstrument') || ""} 
+                    key={`primary-instrument-${formInitialized}`}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your primary instrument" />
@@ -2434,6 +2454,9 @@ export default function Settings() {
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: initialData || undefined,
+    mode: "onChange",
+    shouldFocusError: false,
+    shouldUseNativeValidation: false
   });
 
   // Load existing settings data
@@ -2541,39 +2564,92 @@ export default function Settings() {
 
   // Handler for instrument selection
   const handleInstrumentChange = (instrument: string) => {
-    setSelectedInstrument(instrument);
+    console.log('🎵 Starting primary instrument change to:', instrument);
     
-    // Update the form with the selected instrument
-    form.setValue('primaryInstrument', instrument);
-    
-    // Remove the new primary instrument from secondary instruments if it's there
-    const currentSecondary = form.getValues('secondaryInstruments') || [];
-    const updatedSecondary = currentSecondary.filter(sec => sec !== instrument);
-    if (updatedSecondary.length !== currentSecondary.length) {
-      form.setValue('secondaryInstruments', updatedSecondary);
+    // Early validation
+    if (!instrument || typeof instrument !== 'string') {
+      console.error('❌ Invalid instrument value:', instrument);
+      return;
     }
     
-    // Only populate gig types if customGigTypes is empty (initial setup)
-    const currentGigTypes = form.getValues('customGigTypes') || [];
-    if (currentGigTypes.length === 0) {
-      const allInstruments = [instrument, ...updatedSecondary].filter(Boolean);
-      const combinedGigTypes = allInstruments.reduce((acc, inst) => {
-        const instrumentGigTypes = getGigTypeNamesForInstrument(inst || '');
-        return [...acc, ...instrumentGigTypes];
-      }, [] as string[]);
+    try {
+      console.log('🎵 Step 1: Setting selected instrument');
+      if (setSelectedInstrument) {
+        setSelectedInstrument(instrument);
+      }
       
-      const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-      form.setValue('customGigTypes', uniqueGigTypes);
+      console.log('🎵 Step 2: Setting form value for primaryInstrument');
+      if (form && form.setValue) {
+        form.setValue('primaryInstrument', instrument);
+      }
       
-      console.log(`🎵 Initial gig types populated: ${uniqueGigTypes.length} types for ${instrument}`);
+      console.log('🎵 Step 3: Getting current secondary instruments');
+      const currentSecondary = form.getValues('secondaryInstruments') || [];
+      console.log('🎵 Current secondary instruments:', currentSecondary);
+      
+      console.log('🎵 Step 4: Filtering secondary instruments');
+      const updatedSecondary = currentSecondary.filter(sec => sec !== instrument);
+      if (updatedSecondary.length !== currentSecondary.length) {
+        console.log('🎵 Step 5: Updating secondary instruments');
+        form.setValue('secondaryInstruments', updatedSecondary);
+      }
+      
+      console.log('🎵 Step 6: Setting hasChanges');
+      if (setHasChanges) {
+        setHasChanges(true);
+      }
+      
+      console.log('🎵 Step 7: Showing toast');
+      const displayName = getInstrumentDisplayName ? getInstrumentDisplayName(instrument) : instrument;
+      if (toast) {
+        toast({
+          title: "Instrument Selected", 
+          description: `Primary instrument set to ${displayName}. Remember to save your settings!`,
+        });
+      }
+      
+      console.log('🎵 Step 8: Scheduling gig type population');
+      // Defer gig type population to avoid state update conflicts
+      setTimeout(() => {
+        try {
+          console.log('🎵 Deferred: Getting current gig types');
+          const currentGigTypes = form.getValues('customGigTypes') || [];
+          if (currentGigTypes.length === 0) {
+            console.log('🎵 Deferred: Populating gig types');
+            const allInstruments = [instrument, ...updatedSecondary].filter(Boolean);
+            const combinedGigTypes = allInstruments.reduce((acc, inst) => {
+              try {
+                // Use static gig types from presets for client-side
+                const preset = INSTRUMENT_GIG_PRESETS?.find(p => p.instrument === inst);
+                const instrumentGigTypes = preset?.gigTypes?.map(gt => gt.name) || [];
+                return [...acc, ...instrumentGigTypes];
+              } catch (error) {
+                console.warn(`Failed to get gig types for ${inst}:`, error);
+                return acc;
+              }
+            }, [] as string[]);
+            
+            const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+            form.setValue('customGigTypes', uniqueGigTypes);
+            
+            console.log(`🎵 Initial gig types populated: ${uniqueGigTypes.length} types for ${instrument}`);
+          }
+        } catch (error) {
+          console.error('Error in deferred gig types population:', error);
+        }
+      }, 100);
+      
+      console.log('🎵 Primary instrument change completed successfully');
+    } catch (error) {
+      console.error('❌ Error in handleInstrumentChange:', error);
+      if (toast) {
+        toast({
+          title: "Error", 
+          description: "Failed to update instrument selection",
+          variant: "destructive"
+        });
+      }
     }
-    
-    setHasChanges(true);
-    
-    toast({
-      title: "Instrument Selected", 
-      description: `Primary instrument set to ${getInstrumentDisplayName(instrument)}. Remember to save your settings!`,
-    });
   };
 
   // API function to update instrument and gig types
@@ -2780,13 +2856,29 @@ export default function Settings() {
       
       
       // Reset form with the loaded data
-      console.log('🔄 Resetting form with data:', { primaryInstrument: formData.primaryInstrument, bankDetails: formData.bankDetails?.substring(0, 50) });
+      console.log('🔄 Resetting form with data:', { 
+        primaryInstrument: formData.primaryInstrument, 
+        bankDetails: formData.bankDetails?.substring(0, 50),
+        emailPrefix: formData.emailPrefix,
+        emailSignature: formData.emailSignature?.substring(0, 50),
+        businessName: formData.businessName,
+        businessEmail: formData.businessEmail
+      });
+      console.log('🔍 Full formData keys:', Object.keys(formData));
+      console.log('🔍 Raw settings keys:', Object.keys(settings));
       
-      form.reset(formData);
-      
-      // Store initial data for comparison and mark as initialized
-      setInitialData(formData);
-      setFormInitialized(true);
+      try {
+        form.reset(formData);
+        
+        // Store initial data for comparison and mark as initialized
+        setInitialData(formData);
+        setFormInitialized(true);
+        console.log('✅ Form reset and initialization completed successfully');
+      } catch (error) {
+        console.error('❌ Error during form reset:', error);
+        // Fallback: just mark as initialized even if reset failed
+        setFormInitialized(true);
+      }
       
       console.log('✅ Form reset complete. Current values:', { 
         primaryInstrument: form.getValues('primaryInstrument'), 
@@ -2824,10 +2916,19 @@ export default function Settings() {
 
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log('Form submitted with data:', data);
-    console.log('Has changes:', hasChanges);
-    console.log('Save settings pending:', saveSettings.isPending);
-    saveSettings.mutate(data);
+    try {
+      console.log('Form submitted with data:', data);
+      console.log('Has changes:', hasChanges);
+      console.log('Save settings pending:', saveSettings.isPending);
+      saveSettings.mutate(data);
+    } catch (error) {
+      console.error('❌ Error in form submission:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Show loading until we have settings data AND the form has been initialized with that data

@@ -25,7 +25,8 @@
       "Bash(netstat:*)",
       "Bash(kill:*)",
       "Bash(git show:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [],

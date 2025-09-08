@@ -46,12 +46,14 @@ export default function OnboardingWrapper({ children }: OnboardingWrapperProps) 
   // 2. User hasn't dismissed the welcome page in this session
   // 3. Not in the middle of signup flow (prevents interference with payment redirect)
   // 4. Not on a public route (prevents welcome showing on landing page, etc.)
-  // 5. User has PAID (not trial users)
-  // 6. Settings are NOT completed (show welcome for incomplete settings)
+  // 5. NOT on the settings page (settings should always be accessible)
+  // 6. User has PAID (not trial users)
+  // 7. Settings are NOT completed (show welcome for incomplete settings)
   const shouldShowWelcome = onboardingStatus && 
     !welcomeDismissed && // Not dismissed in current session
     !isSignupInProgress &&
     !isPublicRoute(location) &&
+    location !== '/settings' && // Never show welcome on settings page
     user?.hasPaid === true && // Only show welcome if user has actually paid
     !onboardingStatus.onboardingCompleted; // Show welcome only if settings are incomplete
 
