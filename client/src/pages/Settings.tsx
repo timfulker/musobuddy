@@ -881,18 +881,13 @@ export default function Settings() {
                 <FormControl>
                   <textarea 
                     value={field.value || ""} 
-                    onChange={(e) => {
-                      console.log('🔍 Email signature field changed to:', e.target.value);
-                      field.onChange(e);
-                      setHasChanges(true);
-                    }}
+                    onChange={field.onChange}
                     onBlur={field.onBlur}
-                    name="email-signature-isolated"
+                    name={field.name}
                     ref={field.ref}
                     placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
                     autoComplete="off"
-                    data-form-type="signature"
-                    id="email-signature-field"
+                    data-form-type="other"
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     rows={4}
                   />
@@ -2993,6 +2988,18 @@ export default function Settings() {
     
     const timeoutId = setTimeout(() => {
       subscription = form.watch((data, { name, type }) => {
+        // DEBUG: Log any field changes to find the synchronization
+        if (type === 'change' && (name === 'businessEmail' || name === 'emailSignature')) {
+          console.log('🔍 FIELD CHANGE DETECTED:', {
+            fieldName: name,
+            newValue: data[name],
+            allEmailFields: {
+              businessEmail: data.businessEmail,
+              emailSignature: data.emailSignature
+            }
+          });
+        }
+        
         // Only trigger on user input, not programmatic changes
         if (type === 'change') {
           setHasChanges(true);
