@@ -196,6 +196,12 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   const response = await apiRequest('/api/settings');
   const data = await response.json();
   
+  console.log('🔍 BACKEND RESPONSE - Checking for field synchronization:', {
+    business_contact_email: data.business_contact_email,
+    email_signature_text: data.email_signature_text,
+    areEqual: data.business_contact_email === data.email_signature_text
+  });
+  
   
   // Removed instrument and gig type parsing - feature moved to documentation
   
@@ -620,13 +626,40 @@ export default function Settings() {
           <FormField
             control={form.control}
             name="businessContactEmail"
+            key="business-contact-email-field"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-medium">Business Email</FormLabel>
                 <FormControl>
                   <Input 
-                    {...field} 
+                    name={field.name}
+                    ref={field.ref}
                     value={field.value || ""} 
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      console.log('🔍 Business Email onChange:', {
+                        newValue: newValue,
+                        currentSignature: form.getValues('emailSignatureText'),
+                        fieldName: field.name
+                      });
+                      
+                      // Prevent any synchronization
+                      field.onChange(e);
+                      
+                      // Double-check that email signature wasn't changed
+                      setTimeout(() => {
+                        const sigAfterChange = form.getValues('emailSignatureText');
+                        if (sigAfterChange === newValue) {
+                          console.error('🚨 SYNC BUG: Email signature was synchronized with business email!');
+                          // Force email signature back to its original value
+                          const originalSig = form.getValues('emailSignatureText');
+                          if (originalSig !== newValue) {
+                            form.setValue('emailSignatureText', originalSig, { shouldValidate: false });
+                          }
+                        }
+                      }, 0);
+                    }}
+                    onBlur={field.onBlur}
                     placeholder="business@example.com" 
                     type="email" 
                     autoComplete="off"
@@ -875,13 +908,39 @@ export default function Settings() {
           <FormField
             control={form.control}
             name="emailSignatureText"
+            key="email-signature-text-field"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
                 <FormControl>
                   <textarea 
                     value={field.value || ""} 
-                    onChange={field.onChange}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      console.log('🔍 Email Signature onChange:', {
+                        newValue: newValue,
+                        currentEmail: form.getValues('businessContactEmail'),
+                        fieldName: field.name,
+                        eventType: e.type
+                      });
+                      
+                      // Ensure this is truly the email signature field
+                      if (field.name !== 'emailSignatureText') {
+                        console.error('🚨 FIELD NAME MISMATCH: Expected emailSignatureText, got', field.name);
+                        return;
+                      }
+                      
+                      // Update only the email signature field
+                      field.onChange(e);
+                      
+                      // Verify business email wasn't affected
+                      setTimeout(() => {
+                        const emailAfterChange = form.getValues('businessContactEmail');
+                        if (emailAfterChange === newValue && newValue !== '') {
+                          console.error('🚨 SYNC BUG: Business email was synchronized with signature!');
+                        }
+                      }, 0);
+                    }}
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -2802,9 +2861,30 @@ export default function Settings() {
     console.log('📋 Settings useEffect triggered:', { hasSettings: !!settings, isPending: saveSettings.isPending });
     if (settings && !saveSettings.isPending) {
       
+      // Add a watcher to detect any automatic value changes
+      const checkInterval = setInterval(() => {
+        const currentEmail = form.getValues('businessContactEmail');
+        const currentSignature = form.getValues('emailSignatureText');
+        if (currentEmail && currentSignature && currentEmail === currentSignature) {
+          console.error('🚨 FIELD SYNC DETECTED:', {
+            businessContactEmail: currentEmail,
+            emailSignatureText: currentSignature,
+            stack: new Error().stack
+          });
+        }
+      }, 1000);
+      
+      // Clear interval after 10 seconds
+      setTimeout(() => clearInterval(checkInterval), 10000);
+      
       
       
       // Create the form data object with actual values
+      console.log('🔍 FORM INIT - Checking for field synchronization:', {
+        businessContactEmail: settings.businessContactEmail,
+        emailSignatureText: settings.emailSignatureText,
+        areEqual: settings.businessContactEmail === settings.emailSignatureText
+      });
       const formData = {
         businessName: settings.businessName || "",
         businessContactEmail: settings.businessContactEmail || "",
