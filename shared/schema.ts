@@ -571,6 +571,11 @@ export const userSettings = pgTable("user_settings", {
   city: varchar("city"),
   county: varchar("county"),
   postcode: varchar("postcode"),
+  // Home address fields
+  homeAddressLine1: varchar("home_address_line1"),
+  homeAddressLine2: varchar("home_address_line2"),
+  homeCity: varchar("home_city"),
+  homePostcode: varchar("home_postcode"),
   phone: varchar("phone"),
   website: varchar("website"),
   taxNumber: varchar("tax_number"),
@@ -580,14 +585,6 @@ export const userSettings = pgTable("user_settings", {
   emailFromName: varchar("email_from_name"),
   invoicePrefix: varchar("invoice_prefix"), // Custom invoice prefix (e.g., "JS" for Jake Stanley)
   nextInvoiceNumber: integer("next_invoice_number").default(1),
-  // Conflict detection settings
-  defaultSetupTime: integer("default_setup_time").default(60), // minutes
-  defaultBreakdownTime: integer("default_breakdown_time").default(30), // minutes
-  weddingBufferTime: integer("wedding_buffer_time").default(120), // minutes
-  corporateBufferTime: integer("corporate_buffer_time").default(60), // minutes
-  defaultBufferTime: integer("default_buffer_time").default(90), // minutes
-  maxTravelDistance: integer("max_travel_distance").default(100), // miles
-  homePostcode: varchar("home_postcode"), // For distance calculations
   // Performance settings
   bookingDisplayLimit: varchar("booking_display_limit").default("50"), // "50" for last 50 bookings, "all" for no limit
   // Instrument and gig type settings
