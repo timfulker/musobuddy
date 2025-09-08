@@ -328,6 +328,13 @@ export async function registerSettingsRoutes(app: Express) {
       }
       
       
+      // DEBUG: Log what we're actually returning
+      console.log('🔍 [DEBUG] Returning to frontend:', {
+        emailSignature: responseSettings.emailSignature,
+        businessEmail: responseSettings.businessEmail,
+        emailFromName: responseSettings.emailFromName
+      });
+      
       res.json(responseSettings);
       
     } catch (error) {
