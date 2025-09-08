@@ -172,6 +172,8 @@ export default function TrialSuccessPage() {
   useEffect(() => {
     if (user && user.hasPaid && !isRestoringSession && !window.location.search.includes('session_id')) {
       console.log('✅ User has paid, redirecting to app (onboarding wrapper will handle routing)');
+      // Add a flag to sessionStorage to indicate we're coming from payment completion
+      sessionStorage.setItem('payment_just_completed', 'true');
       setLocation('/');
     }
   }, [user, isRestoringSession, setLocation]);

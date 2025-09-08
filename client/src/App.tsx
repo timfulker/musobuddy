@@ -57,7 +57,7 @@ import DuplicateManager from "@/pages/DuplicateManager";
 import { useEffect, lazy } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading, user, error } = useAuth();
+  const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuth();
   const [location, setLocation] = useLocation();
 
   // Use useEffect for navigation to prevent render loops
@@ -108,6 +108,27 @@ function Router() {
     
     // Redirect authenticated user from root to appropriate destination
     if (isAuthenticated && currentPath === '/' && !hasStripeSession && !isPaymentReturn && !isTrialSuccess) {
+      // Check if we just completed payment and may need a moment for data to sync
+      const paymentJustCompleted = sessionStorage.getItem('payment_just_completed');
+      if (paymentJustCompleted) {
+        console.log('⏳ Payment just completed, clearing flag and checking user data...');
+        sessionStorage.removeItem('payment_just_completed');
+        
+        // If user data shows they've paid, redirect to dashboard
+        if (user?.hasPaid || user?.has_paid) {
+          console.log('✅ User data shows payment, redirecting to dashboard');
+          setLocation('/dashboard');
+          return;
+        } else {
+          console.log('⚠️ User data not yet updated after payment, triggering refresh...');
+          // Trigger a refresh of user data
+          refreshUserData().then(() => {
+            console.log('🔄 User data refreshed after payment');
+          });
+          return; // Don't redirect yet, wait for the refresh to complete
+        }
+      }
+      
       if (needsPaymentSetup) {
         console.log('🔄 Redirecting authenticated unpaid user to payment setup');
         setLocation(paymentRedirectUrl);
@@ -119,7 +140,7 @@ function Router() {
     }
 
     // This check is now handled earlier in the useEffect
-  }, [isAuthenticated, isLoading, user, location]);
+  }, [isAuthenticated, isLoading, user, location, refreshUserData]);
 
   // Show loading state while checking authentication
   if (isLoading) {

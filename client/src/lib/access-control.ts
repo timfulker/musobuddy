@@ -55,6 +55,7 @@ export function hasAccess(user: User | null | undefined): boolean {
   const trialEndsAt = user.trialEndsAt || user.trial_ends_at;
   const hasPaid = user.hasPaid || user.has_paid;
   
+  
   // Admins always have access
   if (isAdmin) {
     return true;
