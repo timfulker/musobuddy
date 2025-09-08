@@ -679,6 +679,26 @@ export function setupCommunicationRoutes(app: any) {
           console.log(`ℹ️ Booking ${bookingId} is already in '${booking[0].workflowStage}' stage, no auto-advance needed`);
         }
 
+        // Update booking with travel expenses if provided
+        if (travelExpenses && parseFloat(travelExpenses) > 0) {
+          console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
+          const travelUpdateResult = await db.update(bookings)
+            .set({ 
+              travelExpenses: parseFloat(travelExpenses),
+              travel_expenses: parseFloat(travelExpenses) // Also update snake_case for compatibility
+            })
+            .where(and(
+              eq(bookings.id, bookingId),
+              eq(bookings.userId, userId)
+            ))
+            .returning({ updatedTravelExpenses: bookings.travelExpenses });
+          
+          console.log(`✅ Updated booking ${bookingId} with travel expenses: £${travelExpenses}`);
+          console.log(`💰 Travel expenses update result:`, travelUpdateResult);
+        } else {
+          console.log(`ℹ️ No travel expenses provided or amount is 0, skipping booking update`);
+        }
+
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
         res.json({ success: true, communication, mailgunId: emailResult.messageId });
 
