@@ -277,7 +277,8 @@ export default function Conversation() {
           action: 'respond',
           customPrompt: `Generate a contextually appropriate response for this ongoing conversation with ${booking.clientName} regarding their ${booking.eventType} booking. Consider the conversation history and respond appropriately to their latest message.${customContext ? ` Additional context: ${customContext}` : ''}`,
           tone: 'professional',
-          contextualInfo: conversationContext
+          contextualInfo: conversationContext,
+          travelExpense: travelExpenses || undefined
         }),
       });
       
