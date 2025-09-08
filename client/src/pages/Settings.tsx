@@ -2797,6 +2797,13 @@ export default function Settings() {
       
       
       
+      // DEBUG: Check raw settings values
+      console.log('🔍 [DEBUG] Raw settings values:', {
+        emailSignature: settings.emailSignature,
+        businessEmail: settings.businessEmail,
+        emailFromName: settings.emailFromName
+      });
+      
       // Create the form data object with actual values
       const formData = {
         businessName: settings.businessName || "",
