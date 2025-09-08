@@ -417,7 +417,41 @@ export async function registerSettingsRoutes(app: Express) {
       console.log(`✅ Updated settings for user ${userId}`);
       
       // Get the updated user to include the emailPrefix in response
-      const updatedUser = await storage.getUserById(userId);
+      let updatedUser = await storage.getUserById(userId);
+      
+      // Check if all required settings sections are now complete
+      if (updatedUser && !updatedUser.onboardingCompleted) {
+        const allRequiredComplete = 
+          // Business Information
+          !!(updatedSettings.businessName && updatedSettings.businessEmail && 
+             updatedSettings.phone && updatedSettings.addressLine1 && 
+             updatedSettings.city && updatedSettings.postcode) &&
+          // Email Settings  
+          !!(updatedSettings.emailSignature && updatedUser.emailPrefix) &&
+          // Bank Details
+          !!(updatedSettings.bankDetails && updatedSettings.bankDetails.length > 10) &&
+          // Instrument & AI Context
+          !!(updatedSettings.primaryInstrument) &&
+          // Booking Widget (check if user has widget URL and QR code)
+          !!(updatedUser.widgetUrl && updatedUser.widgetQrCode);
+        
+        if (allRequiredComplete) {
+          console.log(`🎉 All required settings complete for user ${userId}, marking onboarding as complete`);
+          await storage.updateUser(userId, { onboardingCompleted: true });
+          updatedUser = await storage.getUserById(userId); // Refresh user data
+        } else {
+          console.log(`⏳ Settings incomplete for user ${userId}:`, {
+            businessInfo: !!(updatedSettings.businessName && updatedSettings.businessEmail && 
+                           updatedSettings.phone && updatedSettings.addressLine1 && 
+                           updatedSettings.city && updatedSettings.postcode),
+            emailSettings: !!(updatedSettings.emailSignature && updatedUser.emailPrefix),
+            bankDetails: !!(updatedSettings.bankDetails && updatedSettings.bankDetails.length > 10),
+            instrument: !!(updatedSettings.primaryInstrument),
+            widget: !!(updatedUser.widgetUrl && updatedUser.widgetQrCode)
+          });
+        }
+      }
+      
       const responseWithEmailPrefix = {
         ...updatedSettings,
         emailPrefix: updatedUser?.emailPrefix || null
