@@ -624,7 +624,14 @@ export default function Settings() {
               <FormItem>
                 <FormLabel className="text-sm font-medium">Business Email</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ""} placeholder="business@example.com" type="email" />
+                  <Input 
+                    {...field} 
+                    value={field.value || ""} 
+                    placeholder="business@example.com" 
+                    type="email" 
+                    autoComplete="email"
+                    data-form-type="business-email"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -2796,13 +2803,6 @@ export default function Settings() {
     if (settings && !saveSettings.isPending) {
       
       
-      
-      // DEBUG: Check raw settings values
-      console.log('🔍 [DEBUG] Raw settings values:', {
-        emailSignature: settings.emailSignature,
-        businessEmail: settings.businessEmail,
-        emailFromName: settings.emailFromName
-      });
       
       // Create the form data object with actual values
       const formData = {
