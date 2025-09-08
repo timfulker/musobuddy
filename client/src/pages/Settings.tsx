@@ -70,14 +70,17 @@ const CUSTOM_TITLES = [
 
 // Schema for form validation - includes all fields we want to save
 const settingsFormSchema = z.object({
-  businessName: z.string().min(1, "Business name is required"),
-  businessEmail: z.string().min(1, "Business email is required").email("Please enter a valid email address"),
-  addressLine1: z.string().min(1, "Address line 1 is required"),
+  businessName: z.string().optional().or(z.literal("")),
+  businessEmail: z.string().optional().or(z.literal("")).refine(
+    (val) => !val || val.includes("@"),
+    "Please enter a valid email address"
+  ),
+  addressLine1: z.string().optional().or(z.literal("")),
   addressLine2: z.string().optional().or(z.literal("")),
-  city: z.string().min(1, "City is required"),
+  city: z.string().optional().or(z.literal("")),
   county: z.string().optional().or(z.literal("")),
-  postcode: z.string().min(1, "Postcode is required"),
-  phone: z.string().min(1, "Phone number is required"),
+  postcode: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   website: z.string().optional().or(z.literal("")),
   taxNumber: z.string().optional().or(z.literal("")),
   emailFromName: z.string().optional().or(z.literal("")),

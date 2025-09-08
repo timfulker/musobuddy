@@ -405,10 +405,25 @@ export async function registerSettingsRoutes(app: Express) {
       console.log('  📋 Contract Clauses:', JSON.stringify(processedBody.contractClauses, null, 2));
       console.log('  📄 Invoice Clauses:', JSON.stringify(processedBody.invoiceClauses, null, 2));
       
+      // Handle emailPrefix separately - it's stored in the users table, not settings
+      if (processedBody.emailPrefix !== undefined) {
+        console.log(`📧 Updating email prefix to: ${processedBody.emailPrefix}`);
+        await storage.updateUser(userId, { emailPrefix: processedBody.emailPrefix });
+        // Remove from processedBody so it doesn't try to save to settings table
+        delete processedBody.emailPrefix;
+      }
+      
       const updatedSettings = await storage.updateSettings(userId, processedBody);
       console.log(`✅ Updated settings for user ${userId}`);
       
-      res.json(updatedSettings);
+      // Get the updated user to include the emailPrefix in response
+      const updatedUser = await storage.getUserById(userId);
+      const responseWithEmailPrefix = {
+        ...updatedSettings,
+        emailPrefix: updatedUser?.emailPrefix || null
+      };
+      
+      res.json(responseWithEmailPrefix);
       
     } catch (error: any) {
       console.error('❌ Failed to update settings:', error);
