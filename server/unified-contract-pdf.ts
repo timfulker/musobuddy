@@ -14,25 +14,26 @@ const aiOptimizationCache = new LRUCache<string, any>({
   ttl: 1000 * 60 * 60 * 24 * 7, // Cache for 7 days
 });
 
-// Simplified contract totals calculation - TRAVEL ALWAYS INCLUDED IN PERFORMANCE FEE
+// Clear separation of fees for internal tracking, total for client display
 function calculateContractTotals(contract: any, userSettings?: UserSettings) {
   const fee = parseFloat(contract.fee || '0');
   const travelExpenses = parseFloat(contract.travelExpenses || contract.travel_expenses || contract.travelExpense || contract.travel_expense || '0');
 
-  console.log('💰 PDF Calculation Debug (SIMPLIFIED):', {
+  console.log('💰 PDF Calculation Debug (CLEAR SEPARATION):', {
     contractId: contract.id,
-    fee,
-    travelExpenses,
+    performanceFee: fee,
+    travelExpenses: travelExpenses,
     totalAmount: fee + travelExpenses,
-    note: 'Travel always included in performance fee - no separate display'
+    note: 'Internal: separate tracking | Client display: total only'
   });
 
-  // Always include travel in performance fee - no separate display
+  // Keep fees separate for internal tracking
+  // Show only total to client in PDF
   return {
-    performanceFee: fee + travelExpenses,
-    travelExpenses: 0, // Never show separately
-    totalAmount: fee + travelExpenses,
-    showSeparateTravel: false // Never show travel separately
+    performanceFee: fee,           // Base performance fee only
+    travelExpenses: travelExpenses, // Travel expenses separately
+    totalAmount: fee + travelExpenses, // Total for client display
+    showSeparateTravel: false // Don't show breakdown to client
   };
 }
 
