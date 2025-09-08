@@ -362,7 +362,7 @@ async function checkUserSubscription(userId: string): Promise<boolean> {
     
     // Check if user has access using simplified logic - NO TRIAL ACCESS
     // NOTE: Email verification is enforced at the middleware level for security
-    return user.isAdmin || user.isAssigned || user.hasPaid;
+    return (user.isAdmin || user.is_admin) || (user.isAssigned || user.is_assigned) || (user.hasPaid || user.has_paid);
   } catch (error) {
     console.error('Error checking subscription:', error);
     return false;

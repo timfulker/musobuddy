@@ -61,11 +61,11 @@ export function setupAuthRoutes(app: Express) {
           trial_status: user.trial_status
         },
         whatWeShouldReturn: {
-          isAdmin: user.isAdmin || false,
-          isAssigned: user.isAssigned || false,
-          hasPaid: user.hasPaid || false,
-          trialEndsAt: user.trialEndsAt,
-          hasAccess: user.isAdmin || user.isAssigned || user.hasPaid  // NO TRIAL ACCESS
+          isAdmin: user.isAdmin || user.is_admin || false,
+          isAssigned: user.isAssigned || user.is_assigned || false,
+          hasPaid: user.hasPaid || user.has_paid || false,
+          trialEndsAt: user.trialEndsAt || user.trial_ends_at,
+          hasAccess: (user.isAdmin || user.is_admin) || (user.isAssigned || user.is_assigned) || (user.hasPaid || user.has_paid)  // NO TRIAL ACCESS
         }
       });
     } catch (error) {
@@ -733,7 +733,7 @@ export function setupAuthRoutes(app: Express) {
       const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
       // Check access using simplified logic - NO TRIAL ACCESS
-      const hasValidSubscription = user.isAdmin || user.isAssigned || user.hasPaid;
+      const hasValidSubscription = (user.isAdmin || user.is_admin) || (user.isAssigned || user.is_assigned) || (user.hasPaid || user.has_paid);
 
       console.log('🔍 WATCHDOG RESULT:', {
         userId: user.id,
