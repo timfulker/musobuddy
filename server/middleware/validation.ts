@@ -157,18 +157,8 @@ export const schemas = {
     bookingDisplayLimit: z.enum(['50', 'all']).optional(),
     
     // Theme Settings
-    themeTemplate: z.string().max(50, 'Template name too long').optional(),
-    themeTone: z.string().max(50, 'Tone name too long').optional(),
-    themeFont: z.string().max(50, 'Font name too long').optional(),
     themeAccentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
-    themeLogoUrl: z.string().url('Invalid logo URL').optional().or(z.literal('')),
-    themeSignatureUrl: z.string().url('Invalid signature URL').optional().or(z.literal('')),
-    themeBanner: z.string().max(200, 'Banner text too long').optional(),
-    themeShowSetlist: z.boolean().optional(),
-    themeShowRiderNotes: z.boolean().optional(),
-    themeShowQrCode: z.boolean().optional(),
     themeShowTerms: z.boolean().optional(),
-    themeCustomTitle: z.string().max(100, 'Custom title too long').optional(),
   }),
 
   // AI template generation

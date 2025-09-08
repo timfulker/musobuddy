@@ -66,9 +66,7 @@ export function generateContractSigningPage(
   // Get theme color from settings, fallback to purple if not set
   console.log('🎨 [CONTRACT-SIGNING] UserSettings theme data:', {
     themeAccentColor: userSettings?.themeAccentColor,
-    theme_accent_color: userSettings?.theme_accent_color,
-    themeTemplate: userSettings?.themeTemplate,
-    theme_template: userSettings?.theme_template
+    theme_accent_color: userSettings?.theme_accent_color
   });
   
   const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#667eea';
