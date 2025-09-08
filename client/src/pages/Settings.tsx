@@ -873,7 +873,6 @@ export default function Settings() {
                 <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
                 <FormControl>
                   <textarea 
-                    key={`email-signature-${formInitialized}`}
                     value={field.value || ""} 
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -1765,7 +1764,6 @@ export default function Settings() {
                 <FormControl>
                   <textarea 
                     {...field} 
-                    key={`bank-details-${formInitialized}`}
                     value={form.getValues('bankDetails') || ""} 
                     placeholder="Bank Name: Example Bank&#10;Account Name: Your Business Name&#10;Sort Code: 12-34-56&#10;Account Number: 12345678"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1965,8 +1963,7 @@ export default function Settings() {
                         });
                       }
                     }} 
-                    value={form.getValues('primaryInstrument') || ""} 
-                    key={`primary-instrument-${formInitialized}`}
+                    value={form.getValues('primaryInstrument') || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
