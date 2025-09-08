@@ -92,6 +92,7 @@ interface ParsedBookingData {
   venueContactInfo?: string;
   eventType?: string;
   fee?: number;
+  travelExpense?: number;  // Separate travel costs
   deposit?: number;
   message?: string;
   specialRequirements?: string;
@@ -139,7 +140,7 @@ This means if today is August 2025:
 - "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
-{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","venueAddress":"string","eventType":"string","confidence":0.9}
+{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","venueAddress":"string","eventType":"string","fee":number,"travelExpense":number,"deposit":number,"confidence":0.9}
 
 CRITICAL VENUE VS LOCATION RULES:
 - venue: ONLY put actual venue names here (e.g., "City Hall", "The Royal Hotel", "St. Mary's Church", "Riverside Theatre")
@@ -154,7 +155,15 @@ CRITICAL EMAIL EXTRACTION RULES:
 - Look for email addresses in: contact forms, signatures, "reply to:", "email:", "contact:", etc.
 - If email contains "Email: tim@timfulker.com" use tim@timfulker.com, NOT the FROM address
 
-Important: Get the client's actual name AND email from the email signature or body content, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.`;
+Important: Get the client's actual name AND email from the email signature or body content, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.
+
+FEE EXTRACTION RULES:
+- fee: The performance fee amount (base payment for the service, EXCLUDING travel)
+- travelExpense: Any travel or transport costs mentioned separately (e.g., "plus £30 travel", "including £25 for travel")
+- deposit: Any deposit amount mentioned
+- If only one total amount is mentioned (e.g., "£250"), put it all in fee and leave travelExpense as null
+- If travel is mentioned separately (e.g., "£200 plus £30 travel"), extract as fee:200, travelExpense:30
+- Extract numbers only, no currency symbols`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
@@ -397,6 +406,7 @@ JSON:`;
       venueAddress: cleanString(parsed.venueAddress || parsed.address || clientAddress),
       eventType: cleanEventType(parsed.eventType || parsed.type),
       fee: cleanNumber(parsed.fee || parsed.budget || parsed.payment),
+      travelExpense: cleanNumber(parsed.travelExpense || parsed.travel || parsed.travelCost),
       deposit: cleanNumber(parsed.deposit),
       message: messageText,
       specialRequirements: cleanString(parsed.specialRequirements || parsed.requirements || parsed.notes),

@@ -488,6 +488,7 @@ export class EmailProcessingEngine {
       eventTime: parsedData.eventTime || null,
       eventEndTime: parsedData.eventEndTime || null,
       fee: parsedData.fee || null,
+      travelExpense: parsedData.travelExpense || null,  // Separate travel costs
       deposit: parsedData.deposit || null,
       status: 'new',
       notes: emailData.body,
