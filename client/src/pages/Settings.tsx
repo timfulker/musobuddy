@@ -629,7 +629,7 @@ export default function Settings() {
                     value={field.value || ""} 
                     placeholder="business@example.com" 
                     type="email" 
-                    autoComplete="email"
+                    autoComplete="off"
                     data-form-type="business-email"
                   />
                 </FormControl>

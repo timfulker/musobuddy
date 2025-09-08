@@ -476,14 +476,14 @@ export default function Templates() {
       
       // Business signature and individual business details
       .replace(/\[Business Signature\]/g, userSettings ? 
-        (userSettings.emailSignature ? 
-          userSettings.emailSignature.replace(/\n/g, '<br>') : 
-          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}<br>${userSettings.businessEmail || ''}<br>${userSettings.phone || ''}`.trim()) : 
+        (userSettings.emailSignatureText ? 
+          userSettings.emailSignatureText.replace(/\n/g, '<br>') : 
+          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}`) : 
         'Best regards,<br>[Business Name]<br>[Business Email]<br>[Business Phone]')
       .replace(/\[business signature\]/g, userSettings ? 
-        (userSettings.emailSignature ? 
-          userSettings.emailSignature.replace(/\n/g, '<br>') : 
-          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}<br>${userSettings.businessEmail || ''}<br>${userSettings.phone || ''}`.trim()) : 
+        (userSettings.emailSignatureText ? 
+          userSettings.emailSignatureText.replace(/\n/g, '<br>') : 
+          `Best regards,<br>${userSettings.businessName || 'MusoBuddy'}`) : 
         'Best regards,<br>[Business Name]<br>[Business Email]<br>[Business Phone]')
       .replace(/\[Your Name\]/g, userSettings?.businessName || '[Business Name]')
       .replace(/\[Your Business Name\]/g, userSettings?.businessName || '[Business Name]')
@@ -491,7 +491,7 @@ export default function Templates() {
       .replace(/\[Business Email\]/g, userSettings?.businessEmail || '[Business Email]')
       .replace(/\[Business Phone\]/g, userSettings?.phone || '[Business Phone]')
       .replace(/\[Contact Details\]/g, userSettings ? 
-        `${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
+        `${userSettings.businessContactEmail || ''}\n${userSettings.phone || ''}`.trim() : 
         '[Business Email]\n[Business Phone]');
 
     // Clean up any duplicate business names that might appear close together
