@@ -732,9 +732,8 @@ export function setupAuthRoutes(app: Express) {
       const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
       const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
       
-      // Check access using simplified logic
-      const hasValidSubscription = user.isAdmin || user.isAssigned || user.hasPaid || 
-        (user.trialEndsAt && new Date(user.trialEndsAt) > new Date());
+      // Check access using simplified logic - NO TRIAL ACCESS
+      const hasValidSubscription = user.isAdmin || user.isAssigned || user.hasPaid;
 
       console.log('🔍 WATCHDOG RESULT:', {
         userId: user.id,
