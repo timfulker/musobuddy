@@ -71,7 +71,7 @@ const CUSTOM_TITLES = [
 // Schema for form validation - includes all fields we want to save
 const settingsFormSchema = z.object({
   businessName: z.string().optional().or(z.literal("")),
-  businessEmail: z.string().optional().or(z.literal("")).refine(
+  businessContactEmail: z.string().optional().or(z.literal("")).refine(
     (val) => !val || val.includes("@"),
     "Please enter a valid email address"
   ),
@@ -148,7 +148,7 @@ const settingsFormSchema = z.object({
     // Filter out empty clauses to prevent validation issues
     return clauses ? clauses.filter(c => c.text && c.text.trim() !== '') : [];
   }),
-  emailSignature: z.string().optional().or(z.literal("")),
+  emailSignatureText: z.string().optional().or(z.literal("")),
   
   // AI Pricing Guide fields
   aiPricingEnabled: z.boolean().default(true),
@@ -202,7 +202,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   // Transform the data to match the expected form structure - fix snake_case to camelCase mapping
   return {
     businessName: data.business_name || data.businessName || "",
-    businessEmail: data.business_email || data.businessEmail || "",
+    businessContactEmail: data.business_contact_email || data.businessContactEmail || "",
     addressLine1: data.address_line1 || data.addressLine1 || "",
     addressLine2: data.address_line2 || data.addressLine2 || "",
     city: data.city || "",
@@ -212,7 +212,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     website: data.website || "",
     taxNumber: data.tax_number || data.taxNumber || "",
     emailFromName: data.email_from_name || data.emailFromName || "",
-    emailSignature: data.email_signature || data.emailSignature || "",
+    emailSignatureText: data.email_signature_text || data.emailSignatureText || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
     contractClauses: {
@@ -476,7 +476,7 @@ export default function Settings() {
       label: 'Business Information',
       icon: Building,
       checkCompletion: (data: SettingsFormData) => {
-        return !!(data.businessName && data.businessEmail && data.phone && data.addressLine1 && data.city && data.postcode);
+        return !!(data.businessName && data.businessContactEmail && data.phone && data.addressLine1 && data.city && data.postcode);
       }
     },
     {
@@ -484,7 +484,7 @@ export default function Settings() {
       label: 'Email Settings',
       icon: Mail,
       checkCompletion: (data: SettingsFormData) => {
-        return !!(data.emailSignature && data.emailPrefix);
+        return !!(data.emailSignatureText && data.emailPrefix);
       }
     },
     {
@@ -619,7 +619,7 @@ export default function Settings() {
           />
           <FormField
             control={form.control}
-            name="businessEmail"
+            name="businessContactEmail"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-medium">Business Email</FormLabel>
@@ -874,7 +874,7 @@ export default function Settings() {
           
           <FormField
             control={form.control}
-            name="emailSignature"
+            name="emailSignatureText"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
@@ -2807,7 +2807,7 @@ export default function Settings() {
       // Create the form data object with actual values
       const formData = {
         businessName: settings.businessName || "",
-        businessEmail: settings.businessEmail || "",
+        businessContactEmail: settings.businessContactEmail || "",
         addressLine1: settings.addressLine1 || "",
         addressLine2: settings.addressLine2 || "",
         city: settings.city || "",
@@ -2817,7 +2817,7 @@ export default function Settings() {
         website: settings.website || "",
         taxNumber: settings.taxNumber || "",
         emailFromName: settings.emailFromName || "",
-        emailSignature: settings.emailSignature || "",
+        emailSignatureText: settings.emailSignatureText || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
@@ -2950,9 +2950,9 @@ export default function Settings() {
         primaryInstrument: formData.primaryInstrument, 
         bankDetails: formData.bankDetails?.substring(0, 50),
         emailPrefix: formData.emailPrefix,
-        emailSignature: formData.emailSignature?.substring(0, 50),
+        emailSignatureText: formData.emailSignatureText?.substring(0, 50),
         businessName: formData.businessName,
-        businessEmail: formData.businessEmail
+        businessContactEmail: formData.businessContactEmail
       });
       console.log('🔍 Full formData keys:', Object.keys(formData));
       console.log('🔍 Raw settings keys:', Object.keys(settings));
@@ -2988,18 +2988,6 @@ export default function Settings() {
     
     const timeoutId = setTimeout(() => {
       subscription = form.watch((data, { name, type }) => {
-        // DEBUG: Log any field changes to find the synchronization
-        if (type === 'change' && (name === 'businessEmail' || name === 'emailSignature')) {
-          console.log('🔍 FIELD CHANGE DETECTED:', {
-            fieldName: name,
-            newValue: data[name],
-            allEmailFields: {
-              businessEmail: data.businessEmail,
-              emailSignature: data.emailSignature
-            }
-          });
-        }
-        
         // Only trigger on user input, not programmatic changes
         if (type === 'change') {
           setHasChanges(true);

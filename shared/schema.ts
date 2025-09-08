@@ -565,7 +565,7 @@ export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().unique(),
   businessName: varchar("business_name"),
-  businessEmail: varchar("business_email"),
+  businessContactEmail: varchar("business_contact_email"),
   addressLine1: varchar("address_line1"),
   addressLine2: varchar("address_line2"),
   city: varchar("city"),
@@ -597,7 +597,7 @@ export const userSettings = pgTable("user_settings", {
   themeShowTerms: boolean("theme_show_terms").default(true), // Show terms and conditions
   
   // Email signature settings
-  emailSignature: text("email_signature"), // Custom email signature for templates
+  emailSignatureText: text("email_signature_text"), // Custom email signature for templates
   
   // Invoice Settings  
   invoicePaymentTerms: varchar("invoice_payment_terms").default("7_days_after"), // Payment terms: 28_days_before, 14_days_before, 7_days_before, on_performance, 7_days_after, 14_days_after, 28_days_after (legacy: on_receipt, 3_days, 7_days, 14_days, 30_days, cash_as_agreed)
