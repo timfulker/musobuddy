@@ -808,13 +808,12 @@ export default function Settings() {
                 <FormLabel className="text-sm font-medium">Email Signature</FormLabel>
                 <FormControl>
                   <textarea 
-                    {...field} 
                     key={`email-signature-${formInitialized}`}
-                    value={form.getValues('emailSignature') || ""} 
-                    onChange={(e) => {
-                      field.onChange(e.target.value);
-                      setHasChanges(true);
-                    }}
+                    value={field.value || ""} 
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
                     placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     rows={4}
