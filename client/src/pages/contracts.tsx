@@ -352,7 +352,7 @@ export default function Contracts() {
         originalFee,
         originalTravelExpenses, 
         travelExpenses,
-        toggleSetting: settings?.includeTravelInPerformanceFee
+        // Travel always shown separately now
       });
       
       // Always save the ACTUAL separate fee and travel values to database
@@ -379,7 +379,7 @@ export default function Contracts() {
         originalFee,
         originalTravelExpenses,
         travelExpenses,
-        settings: settings?.includeTravelInPerformanceFee
+        // Travel always shown separately now
       });
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
@@ -651,13 +651,8 @@ export default function Contracts() {
     form.setValue('originalTravelExpenses', travelFee);
     form.setValue('travelExpenses', travelFee);
     
-    // Adjust fee display based on toggle setting
-    if (settings?.includeTravelInPerformanceFee === true) {
-      const combinedFee = parseFloat(baseFee) + parseFloat(travelFee || '0');
-      form.setValue('fee', combinedFee.toString());
-    } else {
-      form.setValue('fee', baseFee);
-    }
+    // Always keep fees separate - no longer combine them
+    form.setValue('fee', baseFee);
     
     form.setValue('deposit', contract.deposit || '');
     form.setValue('depositDays', contract.depositDays || 7);
@@ -971,15 +966,9 @@ export default function Contracts() {
                         let feeToSave: number;
                         let travelToSave: number;
                         
-                        if (settings?.includeTravelInPerformanceFee === true) {
-                          // Toggle ON: The fee field contains combined amount, travel shown as 0
-                          feeToSave = parseFloat(data.fee || '0'); // Use the combined amount from form
-                          travelToSave = 0; // Don't show travel separately
-                        } else {
-                          // Toggle OFF: Fee and travel are shown separately
-                          feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
-                          travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
-                        }
+                        // Always save fees separately (no longer combine)
+                        feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
+                        travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
                         
                         const contractData = {
                           ...dataWithoutTravelExpenses,
@@ -1193,8 +1182,8 @@ export default function Contracts() {
                           />
                         </div>
 
-                        {/* Travel Expenses Field - Only show when user setting is to show travel separately */}
-                        {settings?.includeTravelInPerformanceFee === false && (
+                        {/* Travel Expenses Field - Always show separately */}
+                        {(
                           <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                             <FormField
                               control={form.control}

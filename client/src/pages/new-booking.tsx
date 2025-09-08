@@ -1506,7 +1506,7 @@ export default function NewBookingPage({
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="fee"
@@ -1516,6 +1516,9 @@ export default function NewBookingPage({
                         <FormControl>
                           <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
                         </FormControl>
+                        <FormDescription className="text-xs text-gray-500">
+                          Base performance fee (excluding travel)
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1531,12 +1534,28 @@ export default function NewBookingPage({
                           <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-500">
-                          Fixed travel charge for this booking (optional)
+                          Fixed travel charge for this booking
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Total Fee - computed field */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Fee (£)</label>
+                    <div className="h-10 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md flex items-center font-semibold text-gray-900">
+                      {(() => {
+                        const performanceFee = parseFloat(form.watch('fee') || '0');
+                        const travelExpense = parseFloat(form.watch('travelExpense') || '0');
+                        const total = performanceFee + travelExpense;
+                        return total.toFixed(2);
+                      })()}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Total amount client will pay
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

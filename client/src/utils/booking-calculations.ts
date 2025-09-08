@@ -1,12 +1,12 @@
-// Utility functions for calculating booking totals - SIMPLIFIED SYSTEM
-// Travel expenses are always included in the performance fee display
+// Utility functions for calculating booking totals - CLEAR SEPARATION
+// Performance fee and travel expenses are now kept separate for clarity
 
 export interface UserSettings {
-  // Travel integration setting removed - always include travel in performance fee
+  // Travel integration setting removed - fees always shown separately
 }
 
 export interface Booking {
-  fee?: number;
+  fee?: number;           // Performance fee only (no travel)
   travelExpenses?: number; // Contracts field
   travelExpense?: number;  // Bookings field  
   travel_expense?: number; // Database field name (bookings)
@@ -14,8 +14,8 @@ export interface Booking {
 }
 
 /**
- * Calculate the total amount to display for a booking - SIMPLIFIED
- * Travel expenses are always included in the total display
+ * Calculate the total amount to display for a booking - CLEAR SEPARATION
+ * Returns sum of performance fee and travel expenses
  */
 export function calculateBookingDisplayTotal(
   booking: Booking, 
@@ -24,33 +24,37 @@ export function calculateBookingDisplayTotal(
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Always include travel expenses in the total display
+  // Return the sum of performance fee and travel expenses
   return fee + travelExpenses;
 }
 
 /**
- * Get the display text for booking amount - SIMPLIFIED
- * Always show combined total - user decides manually if they want to mention travel breakdown
+ * Get the display text for booking amount - CLEAR SEPARATION
+ * Shows total with optional breakdown
  */
 export function getBookingAmountDisplayText(
   booking: Booking,
-  userSettings?: UserSettings
+  userSettings?: UserSettings,
+  showBreakdown: boolean = false
 ): { main: string; subtitle?: string } {
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Always show combined total - no automatic travel breakdown subtitle
-  // Users can manually explain travel breakdown to clients if they choose
+  // Calculate total
   const total = Number(fee) + Number(travelExpenses);
+  
+  // Option to show breakdown if needed
   return {
     main: `£${total.toFixed(2)}`,
-    subtitle: undefined // Users control travel breakdown communication manually
+    subtitle: showBreakdown && travelExpenses > 0 
+      ? `(Performance: £${fee.toFixed(2)} + Travel: £${travelExpenses.toFixed(2)})`
+      : undefined
   };
 }
 
 /**
- * Calculate contract totals - SIMPLIFIED
- * Travel is always included in performance fee, never shown separately
+ * Calculate contract totals - CLEAR SEPARATION
+ * Returns separate fees and total for contracts
  */
 export function calculateContractTotals(
   booking: Booking,
@@ -64,11 +68,11 @@ export function calculateContractTotals(
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Always include travel in performance fee - no separate display
+  // Keep fees separate for internal tracking, show total to client
   return {
-    performanceFee: fee + travelExpenses,
-    travelExpenses: 0, // Never show separately
-    totalAmount: fee + travelExpenses,
-    showSeparateTravel: false // Never show travel separately
+    performanceFee: fee,           // Base performance fee only
+    travelExpenses: travelExpenses, // Travel expenses separately
+    totalAmount: fee + travelExpenses, // Total for client display
+    showSeparateTravel: true       // Internal tracking shows separation
   };
 }
