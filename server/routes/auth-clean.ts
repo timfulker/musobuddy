@@ -65,8 +65,7 @@ export function setupAuthRoutes(app: Express) {
           isAssigned: user.isAssigned || false,
           hasPaid: user.hasPaid || false,
           trialEndsAt: user.trialEndsAt,
-          hasAccess: user.isAdmin || user.isAssigned || user.hasPaid || 
-                     (user.trialEndsAt && new Date(user.trialEndsAt) > new Date())
+          hasAccess: user.isAdmin || user.isAssigned || user.hasPaid  // NO TRIAL ACCESS
         }
       });
     } catch (error) {
