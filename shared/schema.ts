@@ -593,18 +593,8 @@ export const userSettings = pgTable("user_settings", {
   gigTypes: text("gig_types"), // AI-generated gig types based on selected instruments
   customGigTypes: text("custom_gig_types"), // User's manually added custom gig types
   // Theme preferences for invoices and contracts
-  themeTemplate: varchar("theme_template").default("classic"), // classic, modern, casual, dj, busker
-  themeTone: varchar("theme_tone").default("formal"), // formal, casual
-  themeFont: varchar("theme_font").default("roboto"), // roboto, raleway, pacifico, oswald
-  themeAccentColor: varchar("theme_accent_color").default("#673ab7"), // HEX color
-  themeLogoUrl: varchar("theme_logo_url"), // URL to uploaded logo
-  themeSignatureUrl: varchar("theme_signature_url"), // URL to uploaded signature
-  themeBanner: varchar("theme_banner"), // Custom banner/tagline
-  themeShowSetlist: boolean("theme_show_setlist").default(false), // Show setlist on invoices
-  themeShowRiderNotes: boolean("theme_show_rider_notes").default(false), // Show rider notes
-  themeShowQrCode: boolean("theme_show_qr_code").default(false), // Show QR code for social media
+  themeAccentColor: varchar("theme_accent_color").default("#673ab7"), // HEX color - main theme selector
   themeShowTerms: boolean("theme_show_terms").default(true), // Show terms and conditions
-  themeCustomTitle: varchar("theme_custom_title"), // Custom title instead of "Invoice"
   
   // Email signature settings
   emailSignature: text("email_signature"), // Custom email signature for templates
