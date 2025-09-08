@@ -237,14 +237,9 @@ export default function Contracts() {
                 form.setValue('originalTravelExpenses', travelFee);
                 form.setValue('travelExpenses', travelFee);
                 
-                if (settings?.includeTravelInPerformanceFee === true) {
-                  const combinedFee = parseFloat(baseFee) + parseFloat(travelFee);
-                  console.log('🔛 Toggle ON - Setting combined fee:', combinedFee);
-                  form.setValue('fee', combinedFee.toString());
-                } else {
-                  console.log('🔲 Toggle OFF - Setting base fee:', baseFee);
-                  form.setValue('fee', baseFee);
-                }
+                // Always keep fees separate - no longer combine them
+                console.log('💰 Setting separate fees - base:', baseFee, 'travel:', travelFee);
+                form.setValue('fee', baseFee);
               } else {
                 // Booking has fee only (possibly already combined)
                 form.setValue('originalFee', baseFee);

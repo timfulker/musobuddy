@@ -385,14 +385,8 @@ export default function Templates() {
       const numericFee = typeof fee === 'string' ? parseFloat(fee) : fee;
       const numericTravel = travelExpenses ? (typeof travelExpenses === 'string' ? parseFloat(travelExpenses) : travelExpenses) : 0;
       
-      // Check if travel expenses should be included in performance fee
-      const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false; // Default to true
-      
-      if (includeTravelInPerformanceFee && numericTravel > 0) {
-        return (numericFee + numericTravel).toFixed(2);
-      } else {
-        return numericFee.toFixed(2);
-      }
+      // Always show fee as separate from travel (no longer combine)
+      return numericFee.toFixed(2);
     };
 
     // Format travel expenses for separate display
@@ -400,13 +394,11 @@ export default function Templates() {
       if (!travelExpenses) return '';
       const numericTravel = typeof travelExpenses === 'string' ? parseFloat(travelExpenses) : travelExpenses;
       
-      // Only show as separate line if setting is false
-      const includeTravelInPerformanceFee = userSettings?.includeTravelInPerformanceFee !== false;
-      
-      if (!includeTravelInPerformanceFee && numericTravel > 0) {
+      // Always show travel expenses separately if present
+      if (numericTravel > 0) {
         return numericTravel.toFixed(2);
       } else {
-        return ''; // Don't show separately if included in performance fee
+        return '';
       }
     };
     
