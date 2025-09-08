@@ -881,13 +881,18 @@ export default function Settings() {
                 <FormControl>
                   <textarea 
                     value={field.value || ""} 
-                    onChange={field.onChange}
+                    onChange={(e) => {
+                      console.log('🔍 Email signature field changed to:', e.target.value);
+                      field.onChange(e);
+                      setHasChanges(true);
+                    }}
                     onBlur={field.onBlur}
-                    name={field.name}
+                    name="email-signature-isolated"
                     ref={field.ref}
                     placeholder="Best regards,&#10;Tim Fulker&#10;www.saxdj.co.uk&#10;07764190034"
                     autoComplete="off"
-                    data-form-type="other"
+                    data-form-type="signature"
+                    id="email-signature-field"
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     rows={4}
                   />
