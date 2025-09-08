@@ -17,7 +17,7 @@ export class SettingsStorage {
     userId: string;
     businessName?: string;
     businessPhone?: string;
-    businessEmail?: string;
+    businessContactEmail?: string;
     businessWebsite?: string;
     businessBio?: string;
     logoUrl?: string;

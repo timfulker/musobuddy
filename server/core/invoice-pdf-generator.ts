@@ -13,7 +13,7 @@ import { storage } from './storage';
 import { aiPDFOptimizer } from './ai-pdf-optimizer';
 
 // Helper function to generate configurable invoice terms
-function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: string): string {
+function generateInvoiceTerms(userSettings: UserSettings | null, businessContactEmail: string): string {
   console.log('🔍 GENERATING INVOICE TERMS - UserSettings:', JSON.stringify({
     hasInvoiceClauses: !!userSettings?.invoiceClauses,
     invoiceClauses: userSettings?.invoiceClauses,
@@ -80,7 +80,7 @@ function generateInvoiceTerms(userSettings: UserSettings | null, businessEmail: 
   if (termsList.length === 0) {
     console.log('⚠️ No terms found, using minimal default');
     return `• Payment is due as specified above<br>
-            • For queries about this invoice, please contact ${businessEmail}`;
+            • For queries about this invoice, please contact ${businessContactEmail}`;
   }
 
   return termsList.map(term => `• ${term}`).join('<br>');
@@ -304,7 +304,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'Tim Fulker | SaxDJ';
   const businessPhone = userSettings?.phone || '07764 190034';
-  const businessEmail = userSettings?.businessEmail || 'timfulkermusic@gmail.com';
+  const businessContactEmail = userSettings?.businessContactEmail || 'timfulkermusic@gmail.com';
 
   return `
     <!DOCTYPE html>
@@ -779,7 +779,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                 <span class="contact-icon">📞</span> ${businessPhone}
                             </div>
                             <div class="contact-item">
-                                <span class="contact-icon">✉️</span> ${businessEmail}
+                                <span class="contact-icon">✉️</span> ${businessContactEmail}
                             </div>
                             <div class="contact-item">
                                 <span class="contact-icon">🌐</span> www.saxdj.co.uk
@@ -900,7 +900,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="terms-section">
                     <div class="terms-title">Terms & Conditions</div>
                     <div class="terms-content">
-                        ${generateInvoiceTerms(userSettings, businessEmail)}
+                        ${generateInvoiceTerms(userSettings, businessContactEmail)}
                     </div>
                 </div>
             </div>

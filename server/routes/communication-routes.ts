@@ -493,9 +493,9 @@ export function setupCommunicationRoutes(app: any) {
 
       console.log('📧 [CONVERSATION-REPLY] User settings query result:', userSettingsResults.length > 0 ? 'Found' : 'Not found');
       const userSetting = userSettingsResults[0];
-      console.log('📧 [CONVERSATION-REPLY] Business email:', userSetting?.businessEmail || 'Not configured');
+      console.log('📧 [CONVERSATION-REPLY] Business email:', userSetting?.businessContactEmail || 'Not configured');
       
-      if (!userSetting?.businessEmail) {
+      if (!userSetting?.businessContactEmail) {
         console.log('❌ [CONVERSATION-REPLY] Business email not configured for user:', userId);
         return res.status(400).json({ error: 'Business email not configured in settings' });
       }
@@ -537,7 +537,7 @@ export function setupCommunicationRoutes(app: any) {
       
       const senderName = userSetting?.businessName || 
                         `${userSetting?.fullName || ''}`.trim() || 
-                        userSetting?.businessEmail;
+                        userSetting?.businessContactEmail;
       
       // Function to convert text to properly formatted HTML paragraphs  
       const formatEmailContent = (text: string) => {
@@ -602,7 +602,7 @@ export function setupCommunicationRoutes(app: any) {
                 <div style="width: 60px; height: 3px; background: ${themeColor}; margin: 0 auto 20px auto; border-radius: 2px;"></div>
                 <div style="font-size: 20px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; font-family: Georgia, serif;">${senderName || 'MusoBuddy'}</div>
                 <div style="color: #5f6368; font-size: 14px; margin-bottom: 16px; font-style: italic;">Professional Music Services</div>
-                <div style="color: ${themeColor}; font-weight: 500; font-size: 15px; text-decoration: none;">${userSetting.businessEmail}</div>
+                <div style="color: ${themeColor}; font-weight: 500; font-size: 15px; text-decoration: none;">${userSetting.businessContactEmail}</div>
             </div>
         </div>
         

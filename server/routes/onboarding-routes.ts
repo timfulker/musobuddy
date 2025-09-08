@@ -18,8 +18,8 @@ export function registerOnboardingRoutes(app: Express) {
 
       // Validate required fields for simplified onboarding
       if (!onboardingData.addressLine1 || !onboardingData.city || !onboardingData.postcode || 
-          !onboardingData.emailPrefix || !onboardingData.businessEmail) {
-        return res.status(400).json({ error: 'Missing required fields: address, city, postcode, emailPrefix, businessEmail' });
+          !onboardingData.emailPrefix || !onboardingData.businessContactEmail) {
+        return res.status(400).json({ error: 'Missing required fields: address, city, postcode, emailPrefix, businessContactEmail' });
       }
 
       // Check if email prefix is already taken by another user
@@ -38,7 +38,7 @@ export function registerOnboardingRoutes(app: Express) {
 
       // Update user profile with onboarding data  
       const updatedUser = await storage.updateUser(userId, {
-        email: onboardingData.businessEmail, // Update business email
+        email: onboardingData.businessContactEmail, // Update business email
         emailPrefix: onboardingData.emailPrefix, // CRITICAL for booking emails
         onboardingCompleted: true
       });
@@ -52,7 +52,7 @@ export function registerOnboardingRoutes(app: Express) {
         postcode: onboardingData.postcode,
         
         // Email setup
-        businessEmail: onboardingData.businessEmail,
+        businessContactEmail: onboardingData.businessContactEmail,
         emailFromName: onboardingData.emailPrefix, // For backwards compatibility
         
         // Bank details as JSON

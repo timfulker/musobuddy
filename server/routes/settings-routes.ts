@@ -183,7 +183,7 @@ export async function registerSettingsRoutes(app: Express) {
           businessName: '',
           defaultTheme: 'purple',
           nextInvoiceNumber: 1,
-          emailSignature: '',
+          emailSignatureText: '',
           paymentInstructions: '',
           // Add other default settings as needed
         };
@@ -193,7 +193,7 @@ export async function registerSettingsRoutes(app: Express) {
         // Transform default settings to camelCase for frontend
         const transformedDefaults = {
           businessName: "",
-          businessEmail: "",
+          businessContactEmail: "",
           addressLine1: "",
           addressLine2: "",
           city: "",
@@ -412,11 +412,11 @@ export async function registerSettingsRoutes(app: Express) {
       if (updatedUser && !updatedUser.onboardingCompleted) {
         const allRequiredComplete = 
           // Business Information
-          !!(updatedSettings.businessName && updatedSettings.businessEmail && 
+          !!(updatedSettings.businessName && updatedSettings.businessContactEmail && 
              updatedSettings.phone && updatedSettings.addressLine1 && 
              updatedSettings.city && updatedSettings.postcode) &&
           // Email Settings  
-          !!(updatedSettings.emailSignature && updatedUser.emailPrefix) &&
+          !!(updatedSettings.emailSignatureText && updatedUser.emailPrefix) &&
           // Bank Details
           !!(updatedSettings.bankDetails && updatedSettings.bankDetails.length > 10) &&
           // Instrument & AI Context
@@ -430,10 +430,10 @@ export async function registerSettingsRoutes(app: Express) {
           updatedUser = await storage.getUserById(userId); // Refresh user data
         } else {
           console.log(`⏳ Settings incomplete for user ${userId}:`, {
-            businessInfo: !!(updatedSettings.businessName && updatedSettings.businessEmail && 
+            businessInfo: !!(updatedSettings.businessName && updatedSettings.businessContactEmail && 
                            updatedSettings.phone && updatedSettings.addressLine1 && 
                            updatedSettings.city && updatedSettings.postcode),
-            emailSettings: !!(updatedSettings.emailSignature && updatedUser.emailPrefix),
+            emailSettings: !!(updatedSettings.emailSignatureText && updatedUser.emailPrefix),
             bankDetails: !!(updatedSettings.bankDetails && updatedSettings.bankDetails.length > 10),
             instrument: !!(updatedSettings.primaryInstrument),
             widget: !!(updatedUser.widgetUrl && updatedUser.widgetQrCode)
@@ -899,7 +899,7 @@ export async function registerSettingsRoutes(app: Express) {
       const senderName = userSettings?.businessName || 
                         `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 
                         user?.email;
-      const senderEmail = userSettings?.businessEmail || user?.email;
+      const senderEmail = userSettings?.businessContactEmail || user?.email;
       
       // Get theme color from settings (same logic as invoices/contracts)
       const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#667eea';
@@ -995,8 +995,8 @@ export async function registerSettingsRoutes(app: Express) {
           variableMap['Artist Name'] = userName || '';
           variableMap['Business Name'] = userSettings.businessName || '';
           variableMap['Your Business Name'] = userSettings.businessName || '';
-          variableMap['Contact Details'] = userSettings.businessEmail || '';
-          variableMap['Your Email'] = userSettings.businessEmail || '';
+          variableMap['Contact Details'] = userSettings.businessContactEmail || '';
+          variableMap['Your Email'] = userSettings.businessContactEmail || '';
           variableMap['Your Phone'] = userSettings.businessPhone || '';
         }
         
@@ -1318,7 +1318,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
       const fullSettings = {
         ...userSettings,
         businessName: userSettings?.businessName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || undefined,
-        businessEmail: userSettings?.businessEmail || user?.email || undefined,
+        businessContactEmail: userSettings?.businessContactEmail || user?.email || undefined,
         phone: userSettings?.phone || undefined,
         addressLine1: userSettings?.addressLine1 || undefined,
         addressLine2: userSettings?.addressLine2 || undefined,
@@ -1415,7 +1415,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
           let emailBody = template.emailBody
             .replace(/\[Your Name\]/g, userName)
             .replace(/\[Your Business Name\]/g, settings?.businessName || 'MusoBuddy')
-            .replace(/\[Contact Details\]/g, settings?.businessEmail || user?.email || 'contact@musobuddy.com');
+            .replace(/\[Contact Details\]/g, settings?.businessContactEmail || user?.email || 'contact@musobuddy.com');
 
           // CRITICAL: Add the Glockapps test ID to the email body
           // This ensures Glockapps can match the email to the test

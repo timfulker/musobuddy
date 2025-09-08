@@ -1146,7 +1146,7 @@ function generateUnifiedContractHTML(
                         </div>
                         <div class="party-name">${businessName}</div>
                         <div class="party-details">
-                            ${userSettings?.businessEmail ? `<strong>Email:</strong> ${userSettings.businessEmail}<br>` : ''}
+                            ${userSettings?.businessContactEmail ? `<strong>Email:</strong> ${userSettings.businessContactEmail}<br>` : ''}
                             ${userSettings?.phone ? `<strong>Phone:</strong> ${userSettings.phone}<br>` : ''}
                             ${userSettings ? `<strong>Address:</strong><br>${formatBusinessAddress(userSettings)}` : ''}
                         </div>

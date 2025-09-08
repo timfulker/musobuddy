@@ -630,7 +630,7 @@ export class EmailService {
             <div class="signature">
                 <p><strong>${userSettings?.businessName || 'MusoBuddy'}</strong><br>
                 Professional Music Services<br>
-                ${userSettings?.businessEmail || ''}</p>
+                ${userSettings?.businessContactEmail || ''}</p>
             </div>
         </div>
         <div class="footer">
@@ -662,7 +662,7 @@ Please review and sign the contract at your earliest convenience.
 Best regards,
 ${userSettings?.businessName || 'MusoBuddy'}
 Professional Music Services
-${userSettings?.businessEmail || ''}
+${userSettings?.businessContactEmail || ''}
 
 ---
 This email was sent via MusoBuddy Professional Music Management Platform
@@ -735,12 +735,12 @@ This email was sent via MusoBuddy Professional Music Management Platform
       
       // Email to musician
       const musicianEmailData = {
-        to: userSettings?.businessEmail || 'support@musobuddy.com',
+        to: userSettings?.businessContactEmail || 'support@musobuddy.com',
         subject: `Contract Signed: ${contract.contractNumber} ✓`,
         html: this.generateContractConfirmationEmailHTML(contract, userSettings, 'musician', signedContractUrl)
       };
       
-      console.log('📧 Sending confirmation email to musician:', userSettings?.businessEmail);
+      console.log('📧 Sending confirmation email to musician:', userSettings?.businessContactEmail);
       const musicianResult = await this.sendEmail(musicianEmailData);
       
       if (!musicianResult.success) {
@@ -811,14 +811,14 @@ This email was sent via MusoBuddy Professional Music Management Platform
   // Generate email signature for templates
   generateEmailSignature(userSettings: any): string {
     const businessName = userSettings?.businessName || 'MusoBuddy';
-    const businessEmail = userSettings?.businessEmail || '';
+    const businessContactEmail = userSettings?.businessContactEmail || '';
     const businessPhone = userSettings?.businessPhone || '';
     
     return `
       <br><br>
       <div style="border-top: 1px solid #ddd; margin-top: 20px; padding-top: 20px; color: #666; font-size: 14px;">
         <strong>${businessName}</strong><br>
-        ${businessEmail ? `Email: ${businessEmail}<br>` : ''}
+        ${businessContactEmail ? `Email: ${businessContactEmail}<br>` : ''}
         ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
         <br>
         <em>Powered by MusoBuddy - Music Business Management</em>
@@ -869,8 +869,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
         to: invoice.clientEmail,
         subject: subject,
         html: customMessage ? `<p>${customMessage}</p>${invoiceHtml}` : invoiceHtml,
-        from: userSettings?.businessEmail ? 
-          `${userSettings.businessName || 'MusoBuddy'} <${userSettings.businessEmail}>` : 
+        from: userSettings?.businessContactEmail ? 
+          `${userSettings.businessName || 'MusoBuddy'} <${userSettings.businessContactEmail}>` : 
           undefined
       };
 

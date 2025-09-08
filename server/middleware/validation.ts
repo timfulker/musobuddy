@@ -125,7 +125,7 @@ export const schemas = {
   updateSettings: z.object({
     // Business Details
     businessName: z.string().trim().min(1, 'Business name required').max(100, 'Business name too long').optional(),
-    businessEmail: z.string().email('Invalid email format').optional(),
+    businessContactEmail: z.string().email('Invalid email format').optional(),
     addressLine1: z.string().max(200, 'Address line too long').optional(),
     addressLine2: z.string().max(200, 'Address line too long').optional(),
     city: z.string().max(100, 'City name too long').optional(),
