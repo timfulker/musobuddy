@@ -126,10 +126,6 @@ export class SettingsStorage {
     }
     
     // Handle payment terms field mapping from camelCase frontend to snake_case database
-    if (processedUpdates.defaultInvoiceDueDays !== undefined) {
-      processedUpdates.default_invoice_due_days = processedUpdates.defaultInvoiceDueDays;
-      delete processedUpdates.defaultInvoiceDueDays;
-    }
     if (processedUpdates.invoicePaymentTerms !== undefined) {
       processedUpdates.invoice_payment_terms = processedUpdates.invoicePaymentTerms;
       delete processedUpdates.invoicePaymentTerms;
