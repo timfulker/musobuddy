@@ -107,6 +107,24 @@ export class SettingsStorage {
       delete processedUpdates.contractClauses;
     }
     
+    // Handle home address field mapping from camelCase frontend to snake_case database
+    if (processedUpdates.homeAddressLine1 !== undefined) {
+      processedUpdates.home_address_line1 = processedUpdates.homeAddressLine1;
+      delete processedUpdates.homeAddressLine1;
+    }
+    if (processedUpdates.homeAddressLine2 !== undefined) {
+      processedUpdates.home_address_line2 = processedUpdates.homeAddressLine2;
+      delete processedUpdates.homeAddressLine2;
+    }
+    if (processedUpdates.homeCity !== undefined) {
+      processedUpdates.home_city = processedUpdates.homeCity;
+      delete processedUpdates.homeCity;
+    }
+    if (processedUpdates.homePostcode !== undefined) {
+      processedUpdates.home_postcode = processedUpdates.homePostcode;
+      delete processedUpdates.homePostcode;
+    }
+    
     // Contract clauses and invoice clauses are JSONB fields - no need to stringify
 
     // PHASE 1 LOGGING: Final data being sent to database
