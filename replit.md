@@ -73,3 +73,6 @@ Client portal system architecture: Implemented dual-portal system with clear sep
 # External Dependencies
 - **Cloud Services**: Cloudflare R2, Neon Database (PostgreSQL)
 - **APIs and Services**: Firebase, Google Maps API, Mailgun, OpenAI GPT-5, Puppeteer, Stripe, Twilio, what3words API
+
+# Database Field Cleanup History
+Database optimization - payment terms simplification (Sept 2025): Removed redundant default_invoice_due_days field since payment timing is now relative to performance date (not invoice date) and encoded within invoice_payment_terms field (e.g., "7_days_after", "14_days_before"). This eliminates duplication and potential inconsistency between two fields storing the same information in different formats.

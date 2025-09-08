@@ -139,7 +139,6 @@ export const schemas = {
     // Financial Settings
     nextInvoiceNumber: z.number().int().min(1, 'Invoice number must be at least 1').optional(),
     bankDetails: z.string().max(1000, 'Bank details too long').optional(),
-    defaultInvoiceDueDays: z.number().int().min(1, 'Due days must be at least 1').max(365, 'Due days too large').optional(),
     
     // AI Pricing
     aiPricingEnabled: z.boolean().optional(),

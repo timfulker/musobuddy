@@ -183,7 +183,6 @@ export async function registerSettingsRoutes(app: Express) {
           businessName: '',
           defaultTheme: 'purple',
           nextInvoiceNumber: 1,
-          defaultInvoiceDueDays: 30,
           emailSignature: '',
           paymentInstructions: '',
           // Add other default settings as needed
