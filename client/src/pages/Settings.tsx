@@ -657,6 +657,22 @@ export default function Settings() {
             )}
           />
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="taxNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Tax Number (Optional)</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ""} placeholder="VAT Registration Number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Address Fields */}
         <div className="space-y-4">
