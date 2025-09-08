@@ -619,7 +619,6 @@ export const userSettings = pgTable("user_settings", {
   customPricingPackages: jsonb("custom_pricing_packages").default('[]'), // Array of custom packages {name, hours, price, description}
   pricingNotes: text("pricing_notes"), // Custom notes about pricing for AI to include
   specialOffers: text("special_offers"), // Current special offers for AI to mention
-  seasonalPricing: jsonb("seasonal_pricing").default('{}'), // Seasonal pricing adjustments {summer: 1.1, winter: 0.9}
   
   // Travel Expense Integration removed - always include travel in performance fee for simplified calculations
   
