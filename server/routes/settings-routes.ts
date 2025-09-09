@@ -1352,19 +1352,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
         };
       }
 
-      // ALWAYS include travel expense save status in response
-      const responseWithStatus = {
-        ...response,
-        travelExpenseSaved: travelExpenseSaved,
-        travelExpenseAmount: travelExpenseAmount
-      };
-      
-      console.log('📤 Sending response with travel expense status:', {
-        saved: travelExpenseSaved, 
-        amount: travelExpenseAmount
-      });
-      
-      res.json(responseWithStatus);
+      res.json(response);
       
     } catch (error: any) {
       console.error('❌ AI generation failed:', error);
