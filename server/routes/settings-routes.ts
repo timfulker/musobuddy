@@ -1281,33 +1281,44 @@ This email was sent via MusoBuddy Professional Music Management Platform
           if (booking && booking.userId === userId) {
             
             // SAVE TRAVEL EXPENSE TO DATABASE when provided via AI generation
-            const travelExpenseAmount = Number(travelExpense) || 0;
-            console.log(`🔍 [AI-GENERATION] Travel expense debug: travelExpense="${travelExpense}", type=${typeof travelExpense}, amount=${travelExpenseAmount}, condition=${!!(travelExpense && travelExpenseAmount > 0)}`);
+            console.log(`🔍 [AI-GENERATION] Travel expense received: "${travelExpense}", type: ${typeof travelExpense}`);
             
-            if (travelExpense && travelExpenseAmount > 0) {
-              console.log(`💰 [AI-GENERATION] Saving travel expense ${travelExpenseAmount} to booking ${bookingId}`);
+            let travelExpenseAmount = 0; // Initialize outside the conditional
+            
+            // Handle travel expense if provided (could be string, number, or undefined)
+            if (travelExpense !== undefined && travelExpense !== null && travelExpense !== '') {
+              travelExpenseAmount = Number(travelExpense);
+              console.log(`💰 [AI-GENERATION] Processing travel expense: original="${travelExpense}", parsed=${travelExpenseAmount}, isValid=${!isNaN(travelExpenseAmount) && travelExpenseAmount > 0}`);
               
-              try {
-                // Import necessary database modules
-                const { db } = await import('../core/database');
-                const { bookings } = await import('@shared/schema');
-                const { eq, and } = await import('drizzle-orm');
+              if (!isNaN(travelExpenseAmount) && travelExpenseAmount > 0) {
+                console.log(`💾 [AI-GENERATION] Saving travel expense £${travelExpenseAmount} to booking ${bookingId}`);
                 
-                await db.update(bookings)
-                  .set({ 
-                    travelExpenses: travelExpenseAmount,  // Maps to travel_expenses column
-                    travelExpense: travelExpenseAmount    // Maps to travel_expense column
-                  })
-                  .where(and(
-                    eq(bookings.id, bookingId),
-                    eq(bookings.userId, userId)
-                  ));
-                
-                console.log(`✅ [AI-GENERATION] Travel expense £${travelExpenseAmount} saved to booking ${bookingId}`);
-              } catch (travelSaveError) {
-                console.error(`❌ [AI-GENERATION] Failed to save travel expense:`, travelSaveError);
-                // Continue with AI generation even if save fails
+                try {
+                  // Import necessary database modules
+                  const { db } = await import('../core/database');
+                  const { bookings } = await import('@shared/schema');
+                  const { eq, and } = await import('drizzle-orm');
+                  
+                  // Update the booking with travel expense - using travel_expenses column
+                  const updateResult = await db.update(bookings)
+                    .set({ 
+                      travelExpenses: travelExpenseAmount  // Maps to travel_expenses column in DB
+                    })
+                    .where(and(
+                      eq(bookings.id, bookingId),
+                      eq(bookings.userId, userId)
+                    ));
+                  
+                  console.log(`✅ [AI-GENERATION] Travel expense £${travelExpenseAmount} saved successfully to booking ${bookingId}`);
+                } catch (travelSaveError) {
+                  console.error(`❌ [AI-GENERATION] Failed to save travel expense:`, travelSaveError);
+                  // Continue with AI generation even if save fails
+                }
+              } else {
+                console.log(`⚠️ [AI-GENERATION] Invalid travel expense value: "${travelExpense}" (parsed as ${travelExpenseAmount})`);
               }
+            } else {
+              console.log(`ℹ️ [AI-GENERATION] No travel expense provided in request`);
             }
             
             // SIMPLIFIED: Always combine travel expense with performance fee
