@@ -501,6 +501,8 @@ export function setupCommunicationRoutes(app: any) {
       }
 
       // Update booking with travel expenses BEFORE sending email (so it always saves)
+      console.log(`🔍 [CONVERSATION-REPLY] Travel expense validation: value="${travelExpenses}", type=${typeof travelExpenses}, parsed=${parseFloat(travelExpenses || '0')}`);
+      
       if (travelExpenses && parseFloat(travelExpenses) > 0) {
         console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
         try {
