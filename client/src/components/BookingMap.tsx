@@ -3,19 +3,49 @@ import React, { useEffect, useRef, useState } from 'react';
 interface BookingMapProps {
   venue: string;
   className?: string;
+  mapStaticUrl?: string | null; // Cached static map URL
+  mapLatitude?: number | null;
+  mapLongitude?: number | null;
+  onMapGenerated?: (staticUrl: string, lat: number, lng: number) => void; // Callback when map is generated
 }
 
 // Simple in-memory cache for geocoded locations to reduce API costs
 const locationCache = new Map<string, google.maps.LatLngLiteral>();
 
-const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
+const BookingMap: React.FC<BookingMapProps> = ({ 
+  venue, 
+  className = "", 
+  mapStaticUrl, 
+  mapLatitude, 
+  mapLongitude, 
+  onMapGenerated 
+}) => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
 
   // Debug logging
-  console.log('🗺️ BookingMap render:', { venue, apiKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ? 'SET' : 'NOT SET' });
+  console.log('🗺️ BookingMap render:', { 
+    venue, 
+    hasStaticUrl: !!mapStaticUrl,
+    hasCachedCoords: !!(mapLatitude && mapLongitude),
+    apiKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ? 'SET' : 'NOT SET' 
+  });
+
+  // If we have a cached static map URL, use it instead of the dynamic map
+  if (mapStaticUrl) {
+    return (
+      <div className={className}>
+        <img 
+          src={mapStaticUrl} 
+          alt={`Map of ${venue}`}
+          className="w-full h-full object-cover rounded-lg"
+          style={{ maxHeight: '300px' }}
+        />
+      </div>
+    );
+  }
 
   const loadGoogleMaps = () => {
     if (window.google && window.google.maps) {
@@ -88,6 +118,19 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
         });
 
         mapInstance.current = map;
+        
+        // Generate static map URL for caching (from cached location)
+        if (onMapGenerated) {
+          const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+            `center=${cachedLocation.lat},${cachedLocation.lng}&` +
+            `zoom=15&` +
+            `size=600x300&` +
+            `maptype=roadmap&` +
+            `markers=color:blue%7C${cachedLocation.lat},${cachedLocation.lng}&` +
+            `key=${import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY}`;
+          
+          onMapGenerated(staticMapUrl, cachedLocation.lat, cachedLocation.lng);
+        }
         return;
       }
 
@@ -136,6 +179,19 @@ const BookingMap: React.FC<BookingMapProps> = ({ venue, className = "" }) => {
           });
 
           mapInstance.current = map;
+          
+          // Generate static map URL for caching
+          if (onMapGenerated) {
+            const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+              `center=${location.lat},${location.lng}&` +
+              `zoom=15&` +
+              `size=600x300&` +
+              `maptype=roadmap&` +
+              `markers=color:blue%7C${location.lat},${location.lng}&` +
+              `key=${import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY}`;
+            
+            onMapGenerated(staticMapUrl, location.lat, location.lng);
+          }
         } else {
           console.log('🗺️ First geocoding attempt failed, trying fallback strategies');
           

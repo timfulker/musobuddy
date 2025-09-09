@@ -19,7 +19,7 @@ import { auth } from '@/lib/firebase';
 export default function ActionableEnquiries() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [sortBy, setSortBy] = useState<string>('eventDate');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
   
   // Mutation for rejecting bookings
   const rejectBookingMutation = useMutation({

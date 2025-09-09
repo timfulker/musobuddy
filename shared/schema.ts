@@ -386,6 +386,10 @@ export const bookings = pgTable("bookings", {
   venueAddress: text("venue_address"),
   clientAddress: text("client_address"),
   what3words: varchar("what3words"), // Precise location using what3words
+  // Map caching fields to reduce API costs
+  mapStaticUrl: text("map_static_url"), // Cached Google Static Maps URL
+  mapLatitude: decimal("map_latitude", { precision: 10, scale: 7 }), // Cached latitude
+  mapLongitude: decimal("map_longitude", { precision: 10, scale: 7 }), // Cached longitude
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   eventType: varchar("event_type"), // Type of event: Wedding, Corporate, Birthday, etc.
   fee: decimal("fee", { precision: 10, scale: 2 }),
