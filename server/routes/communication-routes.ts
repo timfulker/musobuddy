@@ -506,8 +506,8 @@ export function setupCommunicationRoutes(app: any) {
         try {
           const travelUpdateResult = await db.update(bookings)
             .set({ 
-              travelExpenses: parseFloat(travelExpenses),
-              travel_expenses: parseFloat(travelExpenses) // Also update snake_case for compatibility
+              travelExpenses: parseFloat(travelExpenses),  // Maps to travel_expenses column
+              travelExpense: parseFloat(travelExpenses)    // Maps to travel_expense column (the one you see in database)
             })
             .where(and(
               eq(bookings.id, bookingId),
