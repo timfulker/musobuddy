@@ -129,6 +129,15 @@ export default function Conversation() {
     },
   });
 
+  // Fetch user settings for template personalization
+  const { data: userSettings } = useQuery({
+    queryKey: ['/api/settings'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/settings');
+      return await response.json();
+    },
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -538,11 +547,46 @@ export default function Conversation() {
       return;
     }
     
-    // Replace template variables with booking data
+    // Replace template variables with booking data - support both {curly} and [square] bracket formats
+    const formatEventDate = (date: string) => {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('en-GB', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    };
+
+    // Get user settings for personalization
+    const userId = booking.userId;
+    
+    // Replace {curly brace} format
     content = content.replace(/\{clientName\}/g, booking.clientName || '');
-    content = content.replace(/\{eventDate\}/g, formatDate(booking.eventDate) || '');
+    content = content.replace(/\{eventDate\}/g, formatEventDate(booking.eventDate) || '');
     content = content.replace(/\{venue\}/g, booking.venue || '');
     content = content.replace(/\{eventType\}/g, booking.eventType || '');
+    
+    // Replace [square bracket] format (more common in templates)
+    content = content.replace(/\[Client Name\]/g, booking.clientName || '[Client Name]');
+    content = content.replace(/\[Date\]/g, formatEventDate(booking.eventDate) || '[Date]');
+    content = content.replace(/\[Venue\]/g, booking.venue || '[Venue]');
+    content = content.replace(/\[Duration\]/g, booking.performanceDuration || '[Duration]');
+    content = content.replace(/\[Style\/Genre\]/g, booking.styles || '[Style/Genre]');
+    content = content.replace(/\[Equipment details\]/g, booking.equipmentProvided || '[Equipment details]');
+    content = content.replace(/\[Amount\]/g, booking.fee ? `${booking.fee}` : '[Amount]');
+    content = content.replace(/\[What's included\]/g, booking.whatsIncluded || '[What\'s included]');
+    
+    // User/business info placeholders from user settings
+    const userName = userSettings?.emailFromName || '[Your Name]';
+    const businessName = userSettings?.businessName || '[Your Business Name]';
+    const contactEmail = userSettings?.businessContactEmail || user?.email || '[Your Email]';
+    const contactPhone = userSettings?.phone || '[Your Phone]';
+    const contactDetails = `${contactEmail}${contactPhone ? '\n' + contactPhone : ''}`;
+    
+    content = content.replace(/\[Your Name\]/g, userName);
+    content = content.replace(/\[Your Business Name\]/g, businessName);
+    content = content.replace(/\[Contact Details\]/g, contactDetails);
     
     console.log('🔍 Processed template content:', content);
     
