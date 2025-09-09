@@ -1541,19 +1541,17 @@ export default function NewBookingPage({
                     )}
                   />
                   
-                  {/* Total Fee - computed field */}
+                  {/* Total Fee - shows finalAmount if available, NO CALCULATIONS */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Total Fee (£)</label>
                     <div className="h-10 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md flex items-center font-semibold text-gray-900">
-                      {(() => {
-                        const performanceFee = parseFloat(form.watch('fee') || '0');
-                        const travelExpense = parseFloat(form.watch('travelExpense') || '0');
-                        const total = performanceFee + travelExpense;
-                        return total.toFixed(2);
-                      })()}
+                      {editBookingId && editingBooking?.finalAmount 
+                        ? editingBooking.finalAmount.toString()
+                        : '0.00'
+                      }
                     </div>
                     <p className="text-xs text-gray-500">
-                      Total amount client will pay
+                      Final amount from client confirmation - no calculations
                     </p>
                   </div>
                 </div>

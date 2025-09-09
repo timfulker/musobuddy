@@ -335,9 +335,23 @@ export function registerContractRoutes(app: Express) {
           year: 'numeric' 
         })} - ${req.body.clientName})`;
       
-      if (!req.body.clientName || !req.body.eventDate || !req.body.fee) {
+      // DEBUG: Log the entire request body to see what we're receiving
+      console.log('🔍 [CONTRACT-CREATE] Full request body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 [CONTRACT-CREATE] Fee field check:', {
+        fee: req.body.fee,
+        feeType: typeof req.body.fee,
+        feeExists: 'fee' in req.body,
+        clientName: req.body.clientName,
+        eventDate: req.body.eventDate
+      });
+      
+      if (!req.body.clientName || !req.body.eventDate) {
+        console.log('❌ [CONTRACT-CREATE] Missing required fields:', {
+          clientNameMissing: !req.body.clientName,
+          eventDateMissing: !req.body.eventDate
+        });
         return res.status(400).json({ 
-          error: 'Missing required fields: clientName, eventDate, and fee are required' 
+          error: 'Missing required fields: clientName and eventDate are required' 
         });
       }
 

@@ -215,6 +215,11 @@ export class BookingStorage {
       
       const sanitized = { ...data };
       numericFields.forEach(field => {
+        // Only process fields that are actually present in the update data
+        if (!(field in data)) {
+          return; // Skip fields not being updated
+        }
+        
         if (sanitized[field] === '' || sanitized[field] === undefined) {
           sanitized[field] = null;
         } else if (sanitized[field] !== null) {
@@ -240,6 +245,12 @@ export class BookingStorage {
       
       return sanitized;
     };
+
+    // LOCK TRAVEL EXPENSE - remove it BEFORE sanitization to prevent nullification
+    if ('travelExpense' in updates) {
+      console.log(`🔒 [BOOKING-UPDATE] TRAVEL EXPENSE LOCK: Removing travelExpense from update to preserve locked value of £${currentBooking.travelExpense}`);
+      delete updates.travelExpense;
+    }
 
     const sanitizedUpdates = sanitizeNumericFields(updates);
 

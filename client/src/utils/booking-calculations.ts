@@ -14,41 +14,66 @@ export interface Booking {
 }
 
 /**
- * Calculate the total amount to display for a booking - CLEAR SEPARATION
- * Returns sum of performance fee and travel expenses
+ * Get the total amount to display for a booking - NO CALCULATIONS
+ * Just returns the stored finalAmount or individual values as-is
  */
 export function calculateBookingDisplayTotal(
   booking: Booking, 
   userSettings?: UserSettings
 ): number {
+  // If we have finalAmount (from client extraction), use that as the total
+  if (booking.finalAmount && booking.finalAmount > 0) {
+    return booking.finalAmount;
+  }
+  
+  // Otherwise just return fee or travel expenses as individual values
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Return the sum of performance fee and travel expenses
-  return fee + travelExpenses;
+  // Return whichever value is available - NO ADDITION
+  if (travelExpenses > 0) {
+    return travelExpenses;
+  }
+  
+  return fee;
 }
 
 /**
- * Get the display text for booking amount - CLEAR SEPARATION
- * Shows total with optional breakdown
+ * Get the display text for booking amount - NO CALCULATIONS
+ * Just shows the values as they are stored
  */
 export function getBookingAmountDisplayText(
   booking: Booking,
   userSettings?: UserSettings,
   showBreakdown: boolean = false
 ): { main: string; subtitle?: string } {
-  const fee = booking.fee || 0;
+  // NO CALCULATIONS - just display what's stored
+  const finalAmount = booking.finalAmount;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Calculate total
-  const total = Number(fee) + Number(travelExpenses);
+  // If we have finalAmount, show that as the main total
+  if (finalAmount && finalAmount > 0) {
+    return {
+      main: `£${finalAmount.toFixed(2)}`,
+      subtitle: showBreakdown && travelExpenses > 0 
+        ? `(Travel: £${travelExpenses.toFixed(2)})`
+        : undefined
+    };
+  }
   
-  // Option to show breakdown if needed
+  // Otherwise just show travel expenses if available
+  if (travelExpenses > 0) {
+    return {
+      main: `£${travelExpenses.toFixed(2)}`,
+      subtitle: showBreakdown ? '(Travel expenses only)' : undefined
+    };
+  }
+  
+  // Fall back to fee if no other amount
+  const fee = booking.fee || 0;
   return {
-    main: `£${total.toFixed(2)}`,
-    subtitle: showBreakdown && travelExpenses > 0 
-      ? `(Performance: £${fee.toFixed(2)} + Travel: £${travelExpenses.toFixed(2)})`
-      : undefined
+    main: `£${fee.toFixed(2)}`,
+    subtitle: undefined
   };
 }
 

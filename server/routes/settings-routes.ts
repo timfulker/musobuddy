@@ -1252,7 +1252,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
       // Import token management utilities
       // AI token management removed - unlimited AI usage for all users
 
-      const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo, clientHistory } = req.body;
+      const { action, bookingId, customPrompt, tone, travelExpense, travelExpenses, contextualInfo, clientHistory } = req.body;
 
       console.log(`🔍 AI response request by user ${userId}`);
 
@@ -1275,50 +1275,54 @@ This email was sent via MusoBuddy Professional Music Management Platform
 
       // Get booking context if bookingId is provided
       let bookingContext: any = null;
+      let travelExpenseSaved = false;
+      let travelExpenseAmount = 0;
+      
       if (bookingId && bookingId !== 'none' && bookingId !== '') {
+        console.log(`🔍 Checking booking ${bookingId} for user ${userId}`);
         try {
           const booking = await storage.getBooking(bookingId);
+          console.log(`📊 Booking found:`, booking ? `Yes, userId=${booking.userId}` : 'No');
           if (booking && booking.userId === userId) {
             
-            // SAVE TRAVEL EXPENSE TO DATABASE when provided via AI generation
-            console.log(`🔍 [AI-GENERATION] Travel expense received: "${travelExpense}", type: ${typeof travelExpense}`);
+            // SAVE TRAVEL EXPENSE - SIMPLIFIED AND DIRECT
+            const travelExpenseValue = travelExpense || travelExpenses;
+            console.log(`🔍 TRAVEL EXPENSE DEBUG:`, {
+              travelExpense,
+              travelExpenses,
+              travelExpenseValue,
+              bookingId,
+              userId
+            });
             
-            let travelExpenseAmount = 0; // Initialize outside the conditional
-            
-            // Handle travel expense if provided (could be string, number, or undefined)
-            if (travelExpense !== undefined && travelExpense !== null && travelExpense !== '') {
-              travelExpenseAmount = Number(travelExpense);
-              console.log(`💰 [AI-GENERATION] Processing travel expense: original="${travelExpense}", parsed=${travelExpenseAmount}, isValid=${!isNaN(travelExpenseAmount) && travelExpenseAmount > 0}`);
+            if (travelExpenseValue) {
+              travelExpenseAmount = Number(travelExpenseValue);
+              console.log(`💰 Parsed amount: ${travelExpenseAmount}`);
               
-              if (!isNaN(travelExpenseAmount) && travelExpenseAmount > 0) {
-                console.log(`💾 [AI-GENERATION] Saving travel expense £${travelExpenseAmount} to booking ${bookingId}`);
-                
+              if (travelExpenseAmount > 0) {
+                console.log(`💾 Attempting to save £${travelExpenseAmount} to booking ${bookingId}...`);
                 try {
-                  // Import necessary database modules
                   const { db } = await import('../core/database');
                   const { bookings } = await import('@shared/schema');
-                  const { eq, and } = await import('drizzle-orm');
+                  const { eq } = await import('drizzle-orm');
                   
-                  // Update the booking with travel expense - using travel_expenses column
-                  const updateResult = await db.update(bookings)
+                  const result = await db.update(bookings)
                     .set({ 
-                      travelExpenses: travelExpenseAmount  // Maps to travel_expenses column in DB
+                      travelExpense: travelExpenseAmount
                     })
-                    .where(and(
-                      eq(bookings.id, bookingId),
-                      eq(bookings.userId, userId)
-                    ));
+                    .where(eq(bookings.id, bookingId));
                   
-                  console.log(`✅ [AI-GENERATION] Travel expense £${travelExpenseAmount} saved successfully to booking ${bookingId}`);
-                } catch (travelSaveError) {
-                  console.error(`❌ [AI-GENERATION] Failed to save travel expense:`, travelSaveError);
-                  // Continue with AI generation even if save fails
+                  travelExpenseSaved = true;
+                  console.log(`✅ Travel expense £${travelExpenseAmount} saved to booking ${bookingId}`);
+                  console.log(`📊 Update result:`, result);
+                } catch (error) {
+                  console.error(`❌ Failed to save travel expense:`, error);
                 }
               } else {
-                console.log(`⚠️ [AI-GENERATION] Invalid travel expense value: "${travelExpense}" (parsed as ${travelExpenseAmount})`);
+                console.log(`⚠️ Amount is zero or invalid: ${travelExpenseAmount}`);
               }
             } else {
-              console.log(`ℹ️ [AI-GENERATION] No travel expense provided in request`);
+              console.log(`⚠️ No travel expense value provided`);
             }
             
             // SIMPLIFIED: Always combine travel expense with performance fee
@@ -1370,21 +1374,42 @@ This email was sent via MusoBuddy Professional Music Management Platform
       } as any; // Use type assertion to resolve the complex type mismatch
 
       // Generate the AI response
-      const response = await generator.generateEmailResponse({
-        action: action || 'respond',
-        bookingContext,
-        userSettings: fullSettings,
-        customPrompt,
-        tone: tone || 'professional',
-        contextualInfo: contextualInfo || null,
-        clientHistory: clientHistory || null,
-        travelExpense: Number(travelExpense) || 0
+      let response;
+      try {
+        response = await generator.generateEmailResponse({
+          action: action || 'respond',
+          bookingContext,
+          userSettings: fullSettings,
+          customPrompt,
+          tone: tone || 'professional',
+          contextualInfo: contextualInfo || null,
+          clientHistory: clientHistory || null,
+          travelExpense: Number(travelExpense) || 0
+        });
+        console.log('✅ AI response generated successfully');
+      } catch (aiError) {
+        console.error('❌ AI generation error:', aiError);
+        // Even if AI fails, we still want to return travel expense status
+        response = {
+          subject: 'Response',
+          emailBody: 'Failed to generate response',
+          smsBody: 'Failed to generate response'
+        };
+      }
+
+      // ALWAYS include travel expense save status in response
+      const responseWithStatus = {
+        ...response,
+        travelExpenseSaved: travelExpenseSaved,
+        travelExpenseAmount: travelExpenseAmount
+      };
+      
+      console.log('📤 Sending response with travel expense status:', {
+        saved: travelExpenseSaved, 
+        amount: travelExpenseAmount
       });
-
-      // AI usage tracking removed - unlimited AI usage for all users
-
-      console.log('✅ AI response generated successfully');
-      res.json(response);
+      
+      res.json(responseWithStatus);
       
     } catch (error: any) {
       console.error('❌ AI generation failed:', error);

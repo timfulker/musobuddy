@@ -222,26 +222,26 @@ export default function Contracts() {
               form.setValue('eventTime', booking.eventTime || '');
               form.setValue('eventEndTime', booking.eventEndTime || '');
               form.setValue('performanceDuration', booking.performanceDuration || '');
-              const baseFee = booking.fee || '';
-              const travelFee = booking.travelExpense || '';
+              // Use the finalAmount (total fee) for contracts - no separate fees
+              const totalFee = booking.finalAmount || booking.fee || '';
               
-              console.log('💰 Using actual booking data - baseFee:', baseFee, 'travel:', travelFee);
+              console.log('💰 Using total fee for contract:', totalFee);
               console.log('🔍 Raw booking object:', booking);
-              console.log('🔍 Booking fee field types:', typeof booking.fee, booking.fee);
-              console.log('🔍 Booking travel field types:', typeof booking.travelExpense, booking.travelExpense);
+              console.log('🔍 Available amounts: finalAmount:', booking.finalAmount, 'fee:', booking.fee, 'travelExpense:', booking.travelExpense);
               
-              // Handle case where booking has combined fee vs separate values
-              if (travelFee && parseFloat(travelFee) > 0) {
-                // Booking has separate travel expense
-                form.setValue('originalFee', baseFee);
-                form.setValue('originalTravelExpenses', travelFee);
-                form.setValue('travelExpenses', travelFee);
-                
-                // Always keep fees separate - no longer combine them
-                console.log('💰 Setting separate fees - base:', baseFee, 'travel:', travelFee);
-                form.setValue('fee', baseFee);
-              } else {
-                // Booking has fee only (possibly already combined)
+              // Set the total fee as the contract fee - no separate performance/travel
+              form.setValue('fee', totalFee.toString());
+              
+              // Remove travel expense fields - not needed for contracts
+              form.setValue('travelExpenses', '0');
+              form.setValue('originalFee', totalFee.toString());
+              form.setValue('originalTravelExpenses', '0');
+              
+              console.log('💰 Contract will show total fee only:', totalFee);
+              
+              // Skip the old separate fee logic
+              if (false) {
+                // This block is now unused
                 form.setValue('originalFee', baseFee);
                 form.setValue('originalTravelExpenses', '0');
                 form.setValue('travelExpenses', '0');
@@ -355,18 +355,15 @@ export default function Contracts() {
         // Travel always shown separately now
       });
       
-      // Always save the ACTUAL separate fee and travel values to database
-      // The toggle only affects display, not storage
-      // Both toggle states should save the same base values
-      const feeToSave = parseFloat(originalFee || data.fee || '0'); // Always use base fee
-      const travelToSave = parseFloat(originalTravelExpenses || travelExpenses || '0'); // Always save actual travel expenses
+      // Use total fee for contracts - no separate performance/travel fees
+      const feeToSave = parseFloat(data.fee || '0'); // Use the total fee from form
+      const travelToSave = 0; // No travel expenses on contracts
       
       const contractData = {
         ...dataWithoutTravelExpenses,
         // Fix date format: backend expects YYYY-MM-DD, not ISO string
         eventDate: data.eventDate || null,
-        // Always save both fee and travel_expenses
-        fee: feeToSave,
+        // No fee field - contracts use booking fee as single source of truth
         travelExpenses: travelToSave,  // camelCase version
         travel_expenses: travelToSave,  // snake_case version for compatibility
         // Fix enquiryId: make truly optional with null
@@ -374,12 +371,11 @@ export default function Contracts() {
       };
       
       console.log('📋 Contract Data being sent:', {
-        fee: feeToSave,
         travel_expenses: travelToSave,
         originalFee,
         originalTravelExpenses,
         travelExpenses,
-        // Travel always shown separately now
+        note: 'No fee field - contracts use booking fee as single source of truth'
       });
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
@@ -961,14 +957,13 @@ export default function Contracts() {
                       if (editingContract) {
                         const { travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
                         
-                        // Always save the separate fee and travel values to database
-                        // The toggle only affects display, not storage
+                        // Use total fee for contracts - no separate performance/travel fees
                         let feeToSave: number;
                         let travelToSave: number;
                         
-                        // Always save fees separately (no longer combine)
-                        feeToSave = parseFloat(originalFee || data.fee || '0'); // Use base fee
-                        travelToSave = parseFloat(originalTravelExpenses || '0'); // Use original travel expenses
+                        // Use total fee only
+                        feeToSave = parseFloat(data.fee || '0'); // Use the total fee from form
+                        travelToSave = 0; // No travel expenses on contracts
                         
                         const contractData = {
                           ...dataWithoutTravelExpenses,
@@ -1134,7 +1129,7 @@ export default function Contracts() {
                             name="fee"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
-                                <FormLabel className="text-red-600 font-medium">Performance Fee (£) *</FormLabel>
+                                <FormLabel className="text-red-600 font-medium">Total Fee (£) *</FormLabel>
                                 <FormControl>
                                   <Input type="number" placeholder="500" {...field} value={field.value || ""} />
                                 </FormControl>
@@ -1182,8 +1177,8 @@ export default function Contracts() {
                           />
                         </div>
 
-                        {/* Travel Expenses Field - Always show separately */}
-                        {(
+                        {/* Travel Expenses Field - HIDDEN (not needed for contracts) */}
+                        {false && (
                           <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                             <FormField
                               control={form.control}

@@ -279,6 +279,10 @@ export default function Conversation() {
       // Use context input field instead of parsing from message
       const customContext = contextInput.trim();
 
+      // Debug log for travel expense
+      console.log('🔍 [AI Generation] Sending travel expense:', travelExpenses, 'Type:', typeof travelExpenses);
+      console.log('📍 [AI Generation] Booking ID:', booking.id, 'Type:', typeof booking.id);
+
       const response = await apiRequest('/api/ai/generate-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,7 +292,7 @@ export default function Conversation() {
           customPrompt: `Generate a contextually appropriate response for this ongoing conversation with ${booking.clientName} regarding their ${booking.eventType} booking. Consider the conversation history and respond appropriately to their latest message.${customContext ? ` Additional context: ${customContext}` : ''}`,
           tone: 'professional',
           contextualInfo: conversationContext,
-          travelExpense: travelExpenses || undefined
+          travelExpense: travelExpenses && travelExpenses.trim() ? travelExpenses.trim() : undefined
         }),
       });
       
@@ -296,6 +300,23 @@ export default function Conversation() {
       
       const aiResponse = await response.json();
       console.log('🤖 AI response data:', aiResponse);
+      
+      // Log travel expense save status if present
+      console.log('🔍 [FRONTEND] Checking for travel expense save status:', {
+        travelExpenseSaved: aiResponse.travelExpenseSaved,
+        travelExpenseAmount: aiResponse.travelExpenseAmount,
+        hasStatus: aiResponse.travelExpenseSaved !== undefined
+      });
+      
+      if (aiResponse.travelExpenseSaved !== undefined) {
+        if (aiResponse.travelExpenseSaved) {
+          console.log(`✅ [FRONTEND] Travel expense £${aiResponse.travelExpenseAmount} saved to database`);
+        } else if (aiResponse.travelExpenseAmount > 0) {
+          console.log(`⚠️ [FRONTEND] Travel expense £${aiResponse.travelExpenseAmount} was provided but not saved`);
+        }
+      } else {
+        console.log('⚠️ [FRONTEND] No travel expense save status in response');
+      }
       
       // Unlimited AI usage - no token limit checks needed
       
@@ -418,18 +439,22 @@ export default function Conversation() {
         }
       });
       
-      // Special handling for totalFee extraction - calculate performance fee
+      // ULTRA SIMPLE: Just save the total fee exactly as extracted
       if (selectedFields.has('totalFee') && extractedDetails.totalFee) {
         const totalFee = parseFloat(extractedDetails.totalFee);
-        const travelExpense = parseFloat(booking.travelExpense || 0);
         
-        console.log(`💰 [EXTRACT-DETAILS] Calculating fees: totalFee=${totalFee}, travelExpense=${travelExpense}`);
+        console.log(`💰 [EXTRACT-DETAILS] Saving total fee exactly as extracted: £${totalFee}`);
         
-        // Set finalAmount (total client pays) and calculate fee (performance fee)
+        // Save the total fee
         updates.finalAmount = totalFee;
-        updates.fee = Math.max(0, totalFee - travelExpense); // Ensure fee is never negative
         
-        console.log(`💰 [EXTRACT-DETAILS] Calculated: finalAmount=${updates.finalAmount}, fee=${updates.fee}`);
+        // AFTER extraction: Calculate performance fee = total fee - travel expenses
+        const travelExpenses = booking.travelExpense || 0;
+        if (travelExpenses > 0) {
+          const performanceFee = totalFee - travelExpenses;
+          console.log(`🧮 [EXTRACT-DETAILS] Calculating performance fee: £${totalFee} - £${travelExpenses} = £${performanceFee}`);
+          updates.fee = performanceFee;
+        }
         
         // Remove totalFee from selectedFields since we've processed it
         selectedFields.delete('totalFee');

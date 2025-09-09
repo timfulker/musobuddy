@@ -265,7 +265,6 @@ export const contracts = pgTable("contracts", {
   // fee: removed - use bookings.fee as single source of truth
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
   depositDays: integer("deposit_days").default(7), // Number of days within which deposit must be paid
-  travelExpenses: decimal("travel_expenses", { precision: 10, scale: 2 }).default("0.00"), // Travel expenses (when shown separately)
   
   // Essential rider/payment information
   paymentInstructions: text("payment_instructions"), // How payment should be made
@@ -425,7 +424,7 @@ export const bookings = pgTable("bookings", {
   
   // Financial tracking
   quotedAmount: decimal("quoted_amount", { precision: 10, scale: 2 }), // Amount quoted to client
-  travelExpense: decimal("travel_expense", { precision: 10, scale: 2 }), // Fixed travel charge for this booking
+  travelExpense: decimal("travel_expense", { precision: 10, scale: 2 }).default("0.00"), // Fixed travel charge for this booking (defaults to 0)
   depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }), // Deposit amount if required
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }), // Final agreed amount
   
