@@ -1282,6 +1282,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
             
             // SAVE TRAVEL EXPENSE TO DATABASE when provided via AI generation
             const travelExpenseAmount = Number(travelExpense) || 0;
+            console.log(`🔍 [AI-GENERATION] Travel expense debug: travelExpense="${travelExpense}", type=${typeof travelExpense}, amount=${travelExpenseAmount}, condition=${!!(travelExpense && travelExpenseAmount > 0)}`);
+            
             if (travelExpense && travelExpenseAmount > 0) {
               console.log(`💰 [AI-GENERATION] Saving travel expense ${travelExpenseAmount} to booking ${bookingId}`);
               
