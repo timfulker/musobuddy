@@ -37,6 +37,7 @@ const fullBookingSchema = z.object({
   venueAddress: z.string().optional(),
   venueContactInfo: z.string().optional(),
   fee: z.string().optional(),
+  finalAmount: z.string().optional(),
   gigType: z.string().optional(),
   eventType: z.string().optional(),
   equipmentRequirements: z.string().optional(),
@@ -483,6 +484,7 @@ export default function NewBookingPage({
         venueAddress: editingBooking.venueAddress || '',
         venueContactInfo: editingBooking.venueContactInfo || '',
         fee: editingBooking.fee !== null && editingBooking.fee !== undefined ? editingBooking.fee.toString() : '',
+        finalAmount: editingBooking.finalAmount !== null && editingBooking.finalAmount !== undefined ? editingBooking.finalAmount.toString() : '',
         gigType: editingBooking.gigType || '',
         eventType: editingBooking.eventType || '',
         equipmentRequirements: editingBooking.equipmentRequirements || '',
@@ -604,6 +606,7 @@ export default function NewBookingPage({
         venueAddress: data.venueAddress || null,
         venueContactInfo: data.venueContactInfo || null,
         fee: data.fee ? parseFloat(data.fee) : null,
+        finalAmount: data.finalAmount ? parseFloat(data.finalAmount) : null,
 
         gigType: data.gigType || null,
         eventType: data.eventType || null,
@@ -667,6 +670,7 @@ export default function NewBookingPage({
         venueAddress: data.venueAddress || null,
         venueContactInfo: data.venueContactInfo || null,
         fee: data.fee ? parseFloat(data.fee) : null,
+        finalAmount: data.finalAmount ? parseFloat(data.finalAmount) : null,
 
         gigType: data.gigType || null,
         eventType: data.eventType || null,
@@ -779,6 +783,33 @@ export default function NewBookingPage({
     } else {
       console.log('➕ Creating new booking with data:', { ...data, mileageData });
       createBookingMutation.mutate(data);
+    }
+  };
+
+  // Handle form validation errors
+  const onInvalidSubmit = (errors: any) => {
+    console.log('❌ Form validation errors:', errors);
+    
+    // Find the first error and show a helpful message
+    const errorFields = Object.keys(errors);
+    if (errorFields.length > 0) {
+      const firstError = errors[errorFields[0]];
+      const fieldName = errorFields[0];
+      
+      // Create user-friendly field names
+      const friendlyNames: { [key: string]: string } = {
+        clientName: "Client Name",
+        eventDate: "Event Date", 
+        venue: "Venue Name"
+      };
+      
+      const friendlyFieldName = friendlyNames[fieldName] || fieldName;
+      
+      toast({
+        title: "Required Field Missing",
+        description: `Please fill in the ${friendlyFieldName} field to continue.`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -988,7 +1019,7 @@ export default function NewBookingPage({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
             {/* Client Mode Header */}
             {clientMode && (
               <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
@@ -1507,17 +1538,32 @@ export default function NewBookingPage({
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Total Fee - Editable primary input */}
                   <FormField
                     control={form.control}
-                    name="fee"
+                    name="finalAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">Performance Fee (£)</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Total Fee (£)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Calculate performance fee when total fee changes
+                              const totalFee = parseFloat(e.target.value) || 0;
+                              const travelExpense = parseFloat(form.getValues("travelExpense") || "0") || 0;
+                              const performanceFee = totalFee - travelExpense;
+                              form.setValue("fee", performanceFee > 0 ? performanceFee.toString() : "0");
+                            }}
+                          />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-500">
-                          Base performance fee (excluding travel)
+                          Total amount agreed with client (including travel)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1531,7 +1577,21 @@ export default function NewBookingPage({
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Travel Expense (£)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20" />
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // Recalculate performance fee when travel expense changes
+                              const totalFee = parseFloat(form.getValues("finalAmount") || "0") || 0;
+                              const travelExpense = parseFloat(e.target.value) || 0;
+                              const performanceFee = totalFee - travelExpense;
+                              form.setValue("fee", performanceFee > 0 ? performanceFee.toString() : "0");
+                            }}
+                          />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-500">
                           Fixed travel charge for this booking
@@ -1541,17 +1601,19 @@ export default function NewBookingPage({
                     )}
                   />
                   
-                  {/* Total Fee - shows finalAmount if available, NO CALCULATIONS */}
+                  {/* Performance Fee - Calculated display field */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Total Fee (£)</label>
+                    <label className="text-sm font-medium text-gray-700">Performance Fee (£)</label>
                     <div className="h-10 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md flex items-center font-semibold text-gray-900">
-                      {editBookingId && editingBooking?.finalAmount 
-                        ? editingBooking.finalAmount.toString()
-                        : '0.00'
-                      }
+                      {(() => {
+                        const totalFee = parseFloat(form.watch("finalAmount") || "0") || 0;
+                        const travelExpense = parseFloat(form.watch("travelExpense") || "0") || 0;
+                        const performanceFee = totalFee - travelExpense;
+                        return performanceFee > 0 ? performanceFee.toFixed(2) : "0.00";
+                      })()}
                     </div>
                     <p className="text-xs text-gray-500">
-                      Final amount from client confirmation - no calculations
+                      Calculated: Total fee minus travel expenses
                     </p>
                   </div>
                 </div>

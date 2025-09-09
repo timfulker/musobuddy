@@ -99,12 +99,26 @@ export const schemas = {
     venue: z.string().optional().nullable(),
     venueAddress: z.string().optional().nullable(),
     fee: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
+    finalAmount: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number for total fee
     deposit: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
     status: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
     gigType: z.string().optional().nullable(),
+    eventType: z.string().optional().nullable(),
     equipmentRequirements: z.string().optional().nullable(),
-    specialRequirements: z.string().optional().nullable()
+    specialRequirements: z.string().optional().nullable(),
+    performanceDuration: z.string().optional().nullable(),
+    travelExpense: z.union([z.string(), z.number()]).optional().nullable(),
+    styles: z.string().optional().nullable(),
+    equipmentProvided: z.string().optional().nullable(),
+    whatsIncluded: z.string().optional().nullable(),
+    dressCode: z.string().optional().nullable(),
+    contactPerson: z.string().optional().nullable(),
+    contactPhone: z.string().optional().nullable(),
+    parkingInfo: z.string().optional().nullable(),
+    venueContactInfo: z.string().optional().nullable(),
+    what3words: z.string().optional().nullable(),
+    clientAddress: z.string().optional().nullable()
   }).refine((data) => {
     // At least some basic info should be provided
     return data.clientName || data.clientEmail || data.clientPhone || data.venue || data.eventDate;

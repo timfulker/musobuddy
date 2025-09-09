@@ -173,6 +173,7 @@ export function registerBookingRoutes(app: Express) {
         eventTime: req.body.eventTime || null,
         eventEndTime: req.body.eventEndTime || null,
         fee: req.body.fee ? String(req.body.fee) : null,
+        finalAmount: req.body.finalAmount ? String(req.body.finalAmount) : null,
         deposit: req.body.deposit ? String(req.body.deposit) : "0.00",
         status: req.body.status || 'new',
         notes: req.body.notes || null,
@@ -222,7 +223,7 @@ export function registerBookingRoutes(app: Express) {
       // ENHANCED DUPLICATE DETECTION for manual entry
       // Prevent users from accidentally creating duplicate bookings when manually entering data
       if (bookingData.eventDate && bookingData.clientName) {
-        const existingBookings = await storage.getBookingsByUser(userId);
+        const existingBookings = await storage.getBookings(userId);
         const isDuplicate = existingBookings.some(booking => {
           const sameDate = booking.eventDate === bookingData.eventDate;
           const sameTime = booking.eventTime === bookingData.eventTime;
@@ -303,6 +304,15 @@ export function registerBookingRoutes(app: Express) {
           });
         }
       }
+      
+      // Debug logging for finalAmount field
+      console.log(`🔍 [BOOKING-UPDATE] Booking #${bookingId} update data:`, {
+        finalAmount: req.body.finalAmount,
+        fee: req.body.fee,
+        travelExpense: req.body.travelExpense,
+        clientName: req.body.clientName,
+        hasKeys: Object.keys(req.body).length
+      });
       
       const updatedBooking = await storage.updateBooking(bookingId, req.body, userId);
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
@@ -1258,7 +1268,7 @@ ${businessName}</p>
         }
 
         // Get ALL bookings (not limited by display settings)
-        const allBookings = await storage.getBookingsByUser(userId);
+        const allBookings = await storage.getBookings(userId);
         
         // Group bookings by date, time, and client name to find duplicates
         const groups: { [key: string]: any[] } = {};

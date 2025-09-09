@@ -819,7 +819,7 @@ class EnhancedEmailQueue {
         
         // Find and return the existing booking instead
         try {
-          const existingBookings = await storage.getBookingsByUser(bookingData.userId);
+          const existingBookings = await storage.getBookings(bookingData.userId);
           const duplicateBooking = existingBookings.find(b => 
             b.emailHash === bookingData.emailHash || 
             (b.clientEmail === bookingData.clientEmail && 

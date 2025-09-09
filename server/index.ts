@@ -449,7 +449,7 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
           
           if (user) {
             // Look for recent Encore bookings for this user
-            const userBookings = await storage.getBookingsByUser(user.id);
+            const userBookings = await storage.getBookings(user.id);
             const encoreBookings = userBookings
               .filter(b => 
                 b.title?.toLowerCase().includes('encore') || 

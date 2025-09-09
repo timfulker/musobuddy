@@ -165,7 +165,7 @@ export class EmailProcessingEngine {
     }
     
     // Check for existing booking with same client and similar event details
-    const userBookings = await storage.getBookingsByUser(userId);
+    const userBookings = await storage.getBookings(userId);
     const recentBookings = userBookings.filter(b => {
       const bookingAge = Date.now() - new Date(b.createdAt || 0).getTime();
       return bookingAge < 24 * 60 * 60 * 1000; // Last 24 hours
