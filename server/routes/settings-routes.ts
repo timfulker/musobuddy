@@ -1267,6 +1267,11 @@ This email was sent via MusoBuddy Professional Music Management Platform
         hasContextualInfo: !!contextualInfo,
         tone
       });
+      
+      // DEBUG: Log the actual contextualInfo content
+      console.log('🔍 [ENDPOINT DEBUG] contextualInfo content:', contextualInfo);
+      console.log('🔍 [ENDPOINT DEBUG] contextualInfo length:', contextualInfo?.length);
+      console.log('🔍 [ENDPOINT DEBUG] travelExpense:', travelExpense);
 
       // Import the AI response generator
       const { AIResponseGenerator } = await import('../core/ai-response-generator');
@@ -1285,9 +1290,19 @@ This email was sent via MusoBuddy Professional Music Management Platform
             if (travelExpense && parseFloat(travelExpense) > 0) {
               travelExpenseAmount = parseFloat(travelExpense);
               try {
-                await storage.updateBooking(bookingId, { travelExpense: travelExpenseAmount }, userId);
+                // Calculate performance fee: finalAmount - travelExpense
+                const finalAmount = Number(booking.finalAmount) || 0;
+                const performanceFee = finalAmount - travelExpenseAmount;
+                
+                console.log(`🔢 Performance fee calculation: finalAmount (£${finalAmount}) - travelExpense (£${travelExpenseAmount}) = £${performanceFee}`);
+                
+                await storage.updateBooking(bookingId, { 
+                  travelExpense: travelExpenseAmount,
+                  fee: performanceFee > 0 ? performanceFee : 0  // Ensure performance fee is not negative
+                }, userId);
                 travelExpenseSaved = true;
                 console.log(`✅ Travel expense saved: £${travelExpenseAmount} for booking ${bookingId}`);
+                console.log(`✅ Performance fee calculated and saved: £${performanceFee} for booking ${bookingId}`);
               } catch (saveError) {
                 console.error(`❌ Failed to save travel expense for booking ${bookingId}:`, saveError);
               }
@@ -1304,6 +1319,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
               eventType: booking.eventType,
               gigType: booking.gigType,
               fee: performanceFee,
+              finalAmount: Number(booking.finalAmount) || 0,
+              travelExpense: Number(booking.travelExpense) || 0,
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
               equipment: (booking as any).equipment || '',
@@ -1348,7 +1365,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
           customPrompt,
           tone: tone || 'professional',
           contextualInfo: contextualInfo || null,
-          clientHistory: clientHistory || null
+          clientHistory: clientHistory || null,
+          travelExpense: Number(travelExpense) || 0
         });
         console.log('✅ AI response generated successfully');
       } catch (aiError) {

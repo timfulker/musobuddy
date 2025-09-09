@@ -196,7 +196,7 @@ export default function Invoices() {
                 ccEmail: "",
                 clientAddress: booking.clientAddress || "",
                 venueAddress: booking.venueAddress || booking.venue || "",
-                amount: booking.fee || "",
+                amount: booking.finalAmount || "",
                 dueDate: dueDate.toISOString().split('T')[0],
                 performanceDate: performanceDate,
                 performanceFee: booking.fee || "",
@@ -469,7 +469,7 @@ export default function Invoices() {
       amount: invoice.amount.toString(),
       dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
       performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
-      performanceFee: invoice.fee ? invoice.fee.toString() : "",
+      performanceFee: invoice.finalAmount ? invoice.finalAmount.toString() : "",
       depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
       performanceDuration: invoice.performanceDuration || "", // Preserve from invoice
       gigType: invoice.gigType || "", // Preserve from invoice

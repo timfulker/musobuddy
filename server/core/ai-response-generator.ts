@@ -162,7 +162,7 @@ export class AIResponseGenerator {
         let threeHoursPrice: number;
         let fourHoursPrice: number;
         
-        if (bookingContext?.fee && bookingContext.performanceDuration) {
+        if (bookingContext?.fee && Number(bookingContext.fee) > 0 && bookingContext.performanceDuration) {
           // Use the actual booking fee which already includes travel
           const bookingFee = Number(bookingContext.fee);
           const duration = bookingContext.performanceDuration;
@@ -187,8 +187,9 @@ export class AIResponseGenerator {
             fourHoursPrice = bookingFee + (AHR * 2);
           }
         } else {
-          // No booking context - use travel expense from form
-          const formTravelExpense = Number(travelExpense) || 0;
+          // No booking context OR booking fee is 0 - use travel expense from form OR booking context
+          const formTravelExpense = Number(travelExpense) || Number(bookingContext?.travelExpense) || 0;
+          console.log('🎵 USING TRAVEL EXPENSE CALCULATION - bookingContext fee:', bookingContext?.fee, 'formTravelExpense:', Number(travelExpense), 'bookingTravelExpense:', Number(bookingContext?.travelExpense), 'finalTravelExpense:', formTravelExpense);
           twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + formTravelExpense;
           threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + formTravelExpense;
           fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + formTravelExpense;
@@ -198,6 +199,11 @@ export class AIResponseGenerator {
           correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
         });
         
+        // DISABLED: Price replacement patterns that override AI's contextual responses
+        // The AI should respect conversation context, not be force-corrected
+        console.log('🔧 POST-PROCESSING: Price replacement DISABLED to preserve AI context awareness');
+        
+        /*
         // Replace any incorrect pricing with correct calculations
         const correctPrices = [
           { pattern: /2\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice}` },
@@ -221,6 +227,7 @@ export class AIResponseGenerator {
             }
           }
         });
+        */
       }
 
       // Validate the response structure
@@ -346,29 +353,35 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     let threeHoursPrice: number;
     let fourHoursPrice: number;
     
-    if (bookingContext?.fee && bookingContext.performanceDuration) {
-      // Use the actual booking fee which already includes travel
-      const bookingFee = Number(bookingContext.fee);
+    if (bookingContext?.finalAmount && bookingContext.performanceDuration) {
+      // Use the stored total fee (final_amount) - this already includes everything
+      const totalFee = Number(bookingContext.finalAmount);
       const duration = bookingContext.performanceDuration;
       
-      // Set prices based on the booking's actual fee
+      console.log('🎵 BOOKING CONTEXT PRICING:', {
+        totalFee,
+        duration,
+        source: 'Using stored final_amount (total fee)'
+      });
+      
+      // Use stored total fee and calculate other durations based on it
       if (duration.includes('2')) {
-        twoHoursPrice = bookingFee;
-        threeHoursPrice = bookingFee + AHR; // Add AHR for extra hour
-        fourHoursPrice = bookingFee + (AHR * 2); // Add AHR for 2 extra hours
+        twoHoursPrice = totalFee;
+        threeHoursPrice = totalFee + AHR; // Add AHR for extra hour
+        fourHoursPrice = totalFee + (AHR * 2); // Add AHR for 2 extra hours
       } else if (duration.includes('3')) {
-        twoHoursPrice = bookingFee - AHR; // Subtract AHR for one less hour
-        threeHoursPrice = bookingFee;
-        fourHoursPrice = bookingFee + AHR; // Add AHR for extra hour
+        twoHoursPrice = totalFee - AHR; // Subtract AHR for one less hour
+        threeHoursPrice = totalFee;
+        fourHoursPrice = totalFee + AHR; // Add AHR for extra hour
       } else if (duration.includes('4')) {
-        twoHoursPrice = bookingFee - (AHR * 2); // Subtract AHR for 2 less hours
-        threeHoursPrice = bookingFee - AHR; // Subtract AHR for one less hour
-        fourHoursPrice = bookingFee;
+        twoHoursPrice = totalFee - (AHR * 2); // Subtract AHR for 2 less hours
+        threeHoursPrice = totalFee - AHR; // Subtract AHR for one less hour
+        fourHoursPrice = totalFee;
       } else {
-        // Default case - use booking fee for 2 hours
-        twoHoursPrice = bookingFee;
-        threeHoursPrice = bookingFee + AHR;
-        fourHoursPrice = bookingFee + (AHR * 2);
+        // Default case - use total fee for 2 hours
+        twoHoursPrice = totalFee;
+        threeHoursPrice = totalFee + AHR;
+        fourHoursPrice = totalFee + (AHR * 2);
       }
     } else {
       // No booking context - use travel expense from form if provided
@@ -579,6 +592,31 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     return details.length > 0 
       ? `BOOKING DETAILS:\n${details.join('\n')}${simplifiedInstruction}`
       : "No specific booking details provided.";
+  }
+
+  private checkForAgreedPricing(contextualInfo?: string): boolean {
+    console.log('🔍 PRICING CHECK - contextualInfo received:', contextualInfo);
+    console.log('🔍 PRICING CHECK - contextualInfo type:', typeof contextualInfo);
+    console.log('🔍 PRICING CHECK - contextualInfo length:', contextualInfo?.length);
+    
+    if (!contextualInfo) {
+      console.log('🔍 PRICING CHECK - No contextualInfo provided, returning false');
+      return false;
+    }
+    
+    // Simple approach: if there's any specific price mentioned in conversation (£XXX), 
+    // assume it's been discussed and agreed upon
+    const pricePattern = /£\d{3}/g; // Match £XXX format (3 digits like £310, £260, etc)
+    const matches = contextualInfo.match(pricePattern);
+    
+    if (matches && matches.length > 0) {
+      console.log('🤝 PRICING DISCUSSION DETECTED - Found price mentions:', matches);
+      console.log('🤝 CONVERSATION CONTEXT contains specific pricing - preserving AI response');
+      return true;
+    }
+    
+    console.log('🔍 PRICING CHECK - No specific prices found in conversation, will apply post-processing');
+    return false;
   }
 
   private getInstrumentDisplayName(instrument: string): string {

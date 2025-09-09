@@ -27,8 +27,8 @@ export function calculateBookingDisplayTotal(
   }
   
   // Otherwise calculate from components
-  const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
+  const fee = Number(booking.fee) || 0;
+  const travelExpenses = Number(booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses) || 0;
   
   // Return the sum of performance fee and travel expenses
   return fee + travelExpenses;
@@ -43,12 +43,12 @@ export function getBookingAmountDisplayText(
   userSettings?: UserSettings,
   showBreakdown: boolean = false
 ): { main: string; subtitle?: string } {
-  const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
-  const finalAmount = booking.finalAmount;
+  const fee = Number(booking.fee) || 0;
+  const travelExpenses = Number(booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses) || 0;
+  const finalAmount = Number(booking.finalAmount) || 0;
   
   // If we have finalAmount (from extraction), use that as main total
-  if (finalAmount && finalAmount > 0) {
+  if (finalAmount > 0) {
     return {
       main: `£${finalAmount.toFixed(2)}`,
       subtitle: showBreakdown && travelExpenses > 0 
@@ -58,12 +58,15 @@ export function getBookingAmountDisplayText(
   }
   
   // Otherwise calculate total from components
-  const total = fee + travelExpenses;
+  // Ensure all values are valid numbers
+  const safeFee = Number(fee) || 0;
+  const safeTravelExpenses = Number(travelExpenses) || 0;
+  const total = safeFee + safeTravelExpenses;
   
   return {
     main: `£${total.toFixed(2)}`,
-    subtitle: showBreakdown && travelExpenses > 0 
-      ? `(Performance: £${fee.toFixed(2)} + Travel: £${travelExpenses.toFixed(2)})`
+    subtitle: showBreakdown && safeTravelExpenses > 0 
+      ? `(Performance: £${safeFee.toFixed(2)} + Travel: £${safeTravelExpenses.toFixed(2)})`
       : undefined
   };
 }
@@ -81,12 +84,12 @@ export function calculateContractTotals(
   totalAmount: number;
   showSeparateTravel: boolean;
 } {
-  const fee = booking.fee || 0;
-  const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
-  const finalAmount = booking.finalAmount;
+  const fee = Number(booking.fee) || 0;
+  const travelExpenses = Number(booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses) || 0;
+  const finalAmount = Number(booking.finalAmount) || 0;
   
   // If we have finalAmount (from extraction), use that as total and calculate performance fee
-  if (finalAmount && finalAmount > 0) {
+  if (finalAmount > 0) {
     return {
       performanceFee: finalAmount - travelExpenses,  // Calculate performance fee from total minus travel
       travelExpenses: travelExpenses,                // Travel expenses as stored
