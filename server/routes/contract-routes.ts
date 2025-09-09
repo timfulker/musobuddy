@@ -780,7 +780,6 @@ export function registerContractRoutes(app: Express) {
       // Step 6: Send confirmation emails with client portal access
       try {
         const userSettings = await storage.getSettings(contract.userId);
-        const contractOwner = await storage.getUser(contract.userId); // Get the user record for email
         const { EmailService } = await import('../core/services');
         const emailService = new EmailService();
         
@@ -808,12 +807,11 @@ export function registerContractRoutes(app: Express) {
         }
         
         // ALSO send to performer/business owner - using the SAME final PDF URL
-        // Get user email from contract owner record or business settings
-        const userEmail = contractOwner?.email || userSettings?.businessContactEmail;
+        // Get user email from business settings
+        const userEmail = userSettings?.businessContactEmail;
         
         console.log(`🔍 [CONTRACT-SIGN] Email debug for contract ${contractId}:`, {
           contractOwnerId: contract.userId,
-          contractOwnerEmail: contractOwner?.email,
           businessContactEmail: userSettings?.businessContactEmail,
           finalUserEmail: userEmail,
           willSendEmail: !!userEmail
