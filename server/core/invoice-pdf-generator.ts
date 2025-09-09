@@ -133,6 +133,68 @@ function getLogoBase64(): string {
 }
 
 
+// Helper function to generate dynamic service description based on booking details
+function generateServiceDescription(invoice: Invoice, booking: Booking | null, userSettings: UserSettings | null): string {
+  // Get gig type from booking - this should indicate what services were actually requested
+  const gigType = booking?.gigType || invoice.gigType || booking?.eventType || '';
+  
+  // Analyze the gig type to determine what services are being provided
+  let services: string[] = [];
+  
+  if (gigType) {
+    const gigTypeLower = gigType.toLowerCase();
+    
+    // Check for specific instrument mentions in the gig type
+    if (gigTypeLower.includes('saxophone') || gigTypeLower.includes('sax')) {
+      services.push('Saxophone');
+    } else if (gigTypeLower.includes('piano')) {
+      services.push('Piano');
+    } else if (gigTypeLower.includes('guitar')) {
+      services.push('Guitar');
+    } else if (gigTypeLower.includes('violin')) {
+      services.push('Violin');
+    } else if (gigTypeLower.includes('trumpet')) {
+      services.push('Trumpet');
+    } else if (gigTypeLower.includes('vocal') || gigTypeLower.includes('singer') || gigTypeLower.includes('singing')) {
+      services.push('Vocal');
+    }
+    
+    // Check for DJ services
+    if (gigTypeLower.includes('dj') || gigTypeLower.includes('disco') || gigTypeLower.includes('dance')) {
+      services.push('DJ');
+    }
+    
+    // If no specific instruments found, try to infer from general gig types
+    if (services.length === 0) {
+      if (gigTypeLower.includes('wedding') || gigTypeLower.includes('ceremony') || gigTypeLower.includes('cocktail') || gigTypeLower.includes('background')) {
+        // For these types, use primary instrument as default
+        const primaryInstrument = userSettings?.primaryInstrument;
+        if (primaryInstrument) {
+          const instrumentName = primaryInstrument.charAt(0).toUpperCase() + primaryInstrument.slice(1);
+          services.push(instrumentName);
+        }
+      }
+    }
+  }
+  
+  // If still no services identified, use primary instrument from settings
+  if (services.length === 0 && userSettings?.primaryInstrument) {
+    const instrumentName = userSettings.primaryInstrument.charAt(0).toUpperCase() + userSettings.primaryInstrument.slice(1);
+    services.push(instrumentName);
+  }
+  
+  // Build the service description
+  if (services.length === 0) {
+    return 'Live Music Performance';
+  } else if (services.length === 1) {
+    return `Live ${services[0]} Performance`;
+  } else {
+    // Multiple services - join with & for the last one
+    const lastService = services.pop();
+    return `Live ${services.join(', ')} & ${lastService} Performance`;
+  }
+}
+
 export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null
