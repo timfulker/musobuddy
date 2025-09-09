@@ -1344,6 +1344,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
         console.log('✅ AI response generated successfully');
       } catch (aiError) {
         console.error('❌ AI generation error:', aiError);
+        // Even if AI fails, we still want to return travel expense status
         response = {
           subject: 'Response',
           emailBody: 'Failed to generate response',
@@ -1351,28 +1352,18 @@ This email was sent via MusoBuddy Professional Music Management Platform
         };
       }
 
-      // Save travel expense to booking if provided
-      let travelExpenseSaved = false;
-      let travelExpenseAmount = 0;
-      
-      if (bookingId && travelExpense && Number(travelExpense) > 0) {
-        try {
-          travelExpenseAmount = Number(travelExpense);
-          await storage.updateBooking(bookingId, { travelExpense: travelExpenseAmount });
-          travelExpenseSaved = true;
-          console.log(`💰 Travel expense £${travelExpenseAmount} saved to booking ${bookingId}`);
-        } catch (saveError) {
-          console.error('❌ Failed to save travel expense:', saveError);
-        }
-      }
-
-      // Include travel expense save status in response
+      // ALWAYS include travel expense save status in response
       const responseWithStatus = {
         ...response,
-        travelExpenseSaved,
-        travelExpenseAmount
+        travelExpenseSaved: travelExpenseSaved,
+        travelExpenseAmount: travelExpenseAmount
       };
-
+      
+      console.log('📤 Sending response with travel expense status:', {
+        saved: travelExpenseSaved, 
+        amount: travelExpenseAmount
+      });
+      
       res.json(responseWithStatus);
       
     } catch (error: any) {

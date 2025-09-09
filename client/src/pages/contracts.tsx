@@ -346,16 +346,12 @@ export default function Contracts() {
 
   const createContractMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
-      console.log('📥 Raw form data received:', data);
-      console.log('📥 Fee value from form:', data.fee);
-      
       const { travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
       
       console.log('🐛 Debug contract creation values:', {
         originalFee,
         originalTravelExpenses, 
         travelExpenses,
-        feeFromData: data.fee,
         // Travel always shown separately now
       });
       
@@ -385,7 +381,6 @@ export default function Contracts() {
       });
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
-      console.log('🚀 Sending to API:', JSON.stringify(contractData, null, 2));
       const response = await apiRequest("/api/contracts", {
         method: "POST",
         body: contractData,
