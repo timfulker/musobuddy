@@ -196,7 +196,7 @@ export default function Invoices() {
                 ccEmail: "",
                 clientAddress: booking.clientAddress || "",
                 venueAddress: booking.venueAddress || booking.venue || "",
-                amount: booking.fee || "",
+                amount: booking.finalAmount || booking.fee || "",
                 dueDate: dueDate.toISOString().split('T')[0],
                 performanceDate: performanceDate,
                 performanceFee: booking.fee || "",
