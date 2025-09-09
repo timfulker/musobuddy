@@ -547,7 +547,7 @@ export function registerBookingRoutes(app: Express) {
       - eventTime: Start time of the event (format as HH:MM)
       - eventEndTime: End time of the event (format as HH:MM)
       - eventType: Type of event (wedding, birthday, corporate, etc.)
-      - fee: Performance fee amount (numeric value only)
+      - totalFee: Total fee amount client agreed to pay (numeric value only) - this is the complete amount including all costs
       - deposit: Deposit amount (numeric value only)
       - notes: Any additional notes or requirements
       - performanceDuration: How long the performance should be (use exact format: "30 minutes", "1 hour", "2 hours", "2 x 45 min sets", etc.)

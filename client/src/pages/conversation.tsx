@@ -408,6 +408,23 @@ export default function Conversation() {
         }
       });
       
+      // Special handling for totalFee extraction - calculate performance fee
+      if (selectedFields.has('totalFee') && extractedDetails.totalFee) {
+        const totalFee = parseFloat(extractedDetails.totalFee);
+        const travelExpense = parseFloat(booking.travelExpense || 0);
+        
+        console.log(`💰 [EXTRACT-DETAILS] Calculating fees: totalFee=${totalFee}, travelExpense=${travelExpense}`);
+        
+        // Set finalAmount (total client pays) and calculate fee (performance fee)
+        updates.finalAmount = totalFee;
+        updates.fee = Math.max(0, totalFee - travelExpense); // Ensure fee is never negative
+        
+        console.log(`💰 [EXTRACT-DETAILS] Calculated: finalAmount=${updates.finalAmount}, fee=${updates.fee}`);
+        
+        // Remove totalFee from selectedFields since we've processed it
+        selectedFields.delete('totalFee');
+      }
+
       // If client confirms booking and current stage is 'negotiating', advance to 'client_confirmed'
       if (hasClientConfirmation && booking.workflowStage === 'negotiating') {
         updates.workflowStage = 'client_confirmed';

@@ -45,27 +45,22 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 - Client portal system architecture: Implemented dual-portal system with clear separation of concerns. React Client Portal handles mandatory contract signing fields (client phone, address, venue address) before signing, while Dynamic Collaborative Form manages post-signing event planning collaboration (venue contacts, music preferences, logistics). Switched from static R2 HTML storage to dynamic server-side rendering, ensuring collaborative forms always display fresh database data without manual regeneration. Fixed critical field mapping inconsistencies between snake_case database columns and camelCase frontend expectations. All collaborative fields now sync bidirectionically in real-time between booking forms and client collaborative forms.
 
 # System Architecture
-## Frontend
-- **Framework**: React 18 (TypeScript, Vite) with Wouter for routing.
-- **Styling**: Tailwind CSS with shadcn/ui and Radix UI, supporting dynamic PDF theming and WCAG 2.0 luminance for text contrast.
-- **State Management**: React Query.
-- **Forms**: React Hook Form with Zod validation.
+## UI/UX Decisions
+- Responsive design adapting to mobile and desktop.
+- Streamlined primary actions for bookings and centralized, tabbed messaging.
+- Consistent navigation with auto-scrolling to relevant bookings.
+- Simplified email branding and enhanced HTML email templates.
+- Dual client portal system for contract signing and collaborative planning with dynamic server-side rendering and real-time bidirectional sync.
+- Luminance-aware PDF branding for optimal text contrast.
 
-## Backend
-- **Runtime**: Node.js with Express.js (TypeScript, ES modules).
-- **Authentication**: Pure Firebase authentication (Google Sign-in, email/password) with Firebase Admin SDK for token verification and subscription-based access control.
-- **File Storage**: Cloudflare R2 for PDF storage.
-- **Email Service**: Mailgun for transactional emails, parsing, and template management.
-- **PDF Generation**: Isolated Puppeteer engines for dynamic PDF generation.
-- **AI Integration**: Dual AI models for unlimited usage.
-
-## System Design Choices
-- **UI/UX Decisions**: Responsive design (mobile/desktop adaptation); streamlined primary actions for bookings; centralized, tabbed messaging; consistent navigation with auto-scrolling to relevant bookings; simplified email branding; enhanced HTML email templates; dual client portal system (contract signing and collaborative planning) with dynamic server-side rendering and real-time bidirectional sync; luminance-aware PDF branding.
-- **Technical Implementations**:
+## Technical Implementations
+- **Frontend**: React 18 (TypeScript, Vite) with Wouter for routing; Tailwind CSS with shadcn/ui and Radix UI for styling; React Query for state management; React Hook Form with Zod validation.
+- **Backend**: Node.js with Express.js (TypeScript, ES modules); Pure Firebase authentication with Firebase Admin SDK for token verification and subscription-based access control; Cloudflare R2 for file storage; Mailgun for transactional emails, parsing, and templates; Isolated Puppeteer engines for dynamic PDF generation; Dual AI models for unlimited usage.
+- **System Design**:
     - **User Management**: Two-tier system (Admin, User).
-    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
+    - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses simplified into a single performance fee display.
     - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-bustings.
+    - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting.
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
     - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
     - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
