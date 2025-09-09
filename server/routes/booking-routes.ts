@@ -315,6 +315,14 @@ export function registerBookingRoutes(app: Express) {
       });
       
       const updatedBooking = await storage.updateBooking(bookingId, req.body, userId);
+      
+      console.log(`🔍 [BOOKING-UPDATE] After database update:`, {
+        finalAmount: updatedBooking?.finalAmount,
+        fee: updatedBooking?.fee,
+        travelExpense: updatedBooking?.travelExpense,
+        id: updatedBooking?.id
+      });
+      
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
       res.json(updatedBooking);
       
