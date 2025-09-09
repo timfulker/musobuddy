@@ -2669,13 +2669,6 @@ export default function Settings() {
       processedData.invoice_clauses = mergedInvoiceClauses;
       processedData.custom_invoice_clauses = data.customInvoiceClauses || [];
       
-      // PHASE 1 LOGGING: Frontend mutation data
-      console.log('🔍 PHASE 1 - Frontend mutation sending data:');
-      console.log('  📋 Contract Clauses (contract_clauses):', JSON.stringify(processedData.contract_clauses, null, 2));
-      console.log('  📝 Custom Clauses (custom_clauses):', JSON.stringify(processedData.custom_clauses, null, 2));
-      console.log('  📄 Invoice Clauses (invoice_clauses):', JSON.stringify(processedData.invoice_clauses, null, 2));
-      console.log('  📝 Custom Invoice Clauses (custom_invoice_clauses):', JSON.stringify(processedData.custom_invoice_clauses, null, 2));
-      console.log('  🔧 Full processed data keys:', Object.keys(processedData));
       
       // Use apiRequest which handles authentication properly
       const response = await apiRequest('/api/settings', {
@@ -2683,7 +2676,6 @@ export default function Settings() {
         body: JSON.stringify(processedData),
       });
       
-      console.log('🔍 PHASE 1 - API Response status:', response.status);
       return response;
     },
     onSuccess: async (response) => {

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye, CreditCard } from "lucide-react";
+import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, AlertCircle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye, CreditCard } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";

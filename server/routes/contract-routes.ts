@@ -807,7 +807,10 @@ export function registerContractRoutes(app: Express) {
         }
         
         // ALSO send to performer/business owner - using the SAME final PDF URL
-        if (userSettings?.businessEmail) {
+        // Get user email from authentication (req.user.email) or business settings
+        const userEmail = req.user?.email || userSettings?.business_contact_email;
+        
+        if (userEmail) {
           const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
           const performerSubject = `✅ Contract Signed by ${contractForEmail.clientName} - ${contractForEmail.contractNumber}`;
           const performerHtml = `
@@ -861,11 +864,11 @@ export function registerContractRoutes(app: Express) {
           `;
           
           await emailService.sendEmail({
-            to: userSettings.businessEmail,
+            to: userEmail,
             subject: performerSubject,
             html: performerHtml
           });
-          console.log(`✉️ [CONTRACT-SIGN] Confirmation email sent to performer: ${userSettings.businessEmail}`);
+          console.log(`✉️ [CONTRACT-SIGN] Confirmation email sent to performer: ${userEmail}`);
         }
       } catch (emailError: any) {
         console.error(`⚠️ [CONTRACT-SIGN] Email send failed (non-critical):`, emailError.message);
