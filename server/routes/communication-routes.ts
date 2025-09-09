@@ -500,32 +500,8 @@ export function setupCommunicationRoutes(app: any) {
         return res.status(400).json({ error: 'Business email not configured in settings' });
       }
 
-      // Update booking with travel expenses BEFORE sending email (so it always saves)
-      console.log(`🔍 [CONVERSATION-REPLY] Travel expense validation: value="${travelExpenses}", type=${typeof travelExpenses}, parsed=${parseFloat(travelExpenses || '0')}`);
-      
-      if (travelExpenses && parseFloat(travelExpenses) > 0) {
-        console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
-        try {
-          const travelUpdateResult = await db.update(bookings)
-            .set({ 
-              travelExpenses: parseFloat(travelExpenses),  // Maps to travel_expenses column
-              travelExpense: parseFloat(travelExpenses)    // Maps to travel_expense column (the one you see in database)
-            })
-            .where(and(
-              eq(bookings.id, bookingId),
-              eq(bookings.userId, userId)
-            ))
-            .returning({ updatedTravelExpenses: bookings.travelExpenses });
-          
-          console.log(`✅ Updated booking ${bookingId} with travel expenses: £${travelExpenses}`);
-          console.log(`💰 Travel expenses update result:`, travelUpdateResult);
-        } catch (travelError) {
-          console.error(`❌ Failed to update travel expenses for booking ${bookingId}:`, travelError);
-          // Continue with email sending even if travel expense update fails
-        }
-      } else {
-        console.log(`ℹ️ No travel expenses provided or amount is 0, skipping booking update`);
-      }
+      // REMOVED: Travel expense saving moved to AI generation step for better UX
+      // Travel expenses are now saved when "Generate AI Response" is clicked, not when email is sent
 
       // Create unique reply-to address with user ID and booking ID for proper routing
       const replyToAddress = `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`;

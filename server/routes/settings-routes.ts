@@ -1279,9 +1279,37 @@ This email was sent via MusoBuddy Professional Music Management Platform
         try {
           const booking = await storage.getBooking(bookingId);
           if (booking && booking.userId === userId) {
+            
+            // SAVE TRAVEL EXPENSE TO DATABASE when provided via AI generation
+            const travelExpenseAmount = Number(travelExpense) || 0;
+            if (travelExpense && travelExpenseAmount > 0) {
+              console.log(`💰 [AI-GENERATION] Saving travel expense ${travelExpenseAmount} to booking ${bookingId}`);
+              
+              try {
+                // Import necessary database modules
+                const { db } = await import('../core/database');
+                const { bookings } = await import('@shared/schema');
+                const { eq, and } = await import('drizzle-orm');
+                
+                await db.update(bookings)
+                  .set({ 
+                    travelExpenses: travelExpenseAmount,  // Maps to travel_expenses column
+                    travelExpense: travelExpenseAmount    // Maps to travel_expense column
+                  })
+                  .where(and(
+                    eq(bookings.id, bookingId),
+                    eq(bookings.userId, userId)
+                  ));
+                
+                console.log(`✅ [AI-GENERATION] Travel expense £${travelExpenseAmount} saved to booking ${bookingId}`);
+              } catch (travelSaveError) {
+                console.error(`❌ [AI-GENERATION] Failed to save travel expense:`, travelSaveError);
+                // Continue with AI generation even if save fails
+              }
+            }
+            
             // SIMPLIFIED: Always combine travel expense with performance fee
             const performanceFee = Number(booking.fee) || 0;
-            const travelExpenseAmount = Number(travelExpense || booking.travelExpense) || 0;
             const totalFee = performanceFee + travelExpenseAmount;
             
             bookingContext = {
