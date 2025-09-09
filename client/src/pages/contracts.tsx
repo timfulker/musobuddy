@@ -363,7 +363,8 @@ export default function Contracts() {
         ...dataWithoutTravelExpenses,
         // Fix date format: backend expects YYYY-MM-DD, not ISO string
         eventDate: data.eventDate || null,
-        // No fee field - contracts use booking fee as single source of truth
+        // Include fee field - required by backend
+        fee: data.fee || "0.00",
         travelExpenses: travelToSave,  // camelCase version
         travel_expenses: travelToSave,  // snake_case version for compatibility
         // Fix enquiryId: make truly optional with null
@@ -371,11 +372,12 @@ export default function Contracts() {
       };
       
       console.log('📋 Contract Data being sent:', {
+        fee: data.fee || "0.00",
         travel_expenses: travelToSave,
         originalFee,
         originalTravelExpenses,
         travelExpenses,
-        note: 'No fee field - contracts use booking fee as single source of truth'
+        note: 'Fee field included for backend requirement'
       });
 
       // Step 1: Create contract in database using apiRequest (includes JWT token)
