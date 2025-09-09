@@ -1275,14 +1275,29 @@ This email was sent via MusoBuddy Professional Music Management Platform
 
       // Get booking context if bookingId is provided
       let bookingContext: any = null;
+      let travelExpenseSaved = false;
+      let travelExpenseAmount = 0;
+      
       if (bookingId && bookingId !== 'none' && bookingId !== '') {
         try {
           const booking = await storage.getBooking(bookingId);
           if (booking && booking.userId === userId) {
+            // Save travel expense if provided
+            if (travelExpense && parseFloat(travelExpense) > 0) {
+              travelExpenseAmount = parseFloat(travelExpense);
+              try {
+                await storage.updateBooking(bookingId, { travelExpense: travelExpenseAmount });
+                travelExpenseSaved = true;
+                console.log(`✅ Travel expense saved: £${travelExpenseAmount} for booking ${bookingId}`);
+              } catch (saveError) {
+                console.error(`❌ Failed to save travel expense for booking ${bookingId}:`, saveError);
+              }
+            }
+            
             // SIMPLIFIED: Always combine travel expense with performance fee
             const performanceFee = Number(booking.fee) || 0;
-            const travelExpenseAmount = Number(travelExpense || booking.travelExpense) || 0;
-            const totalFee = performanceFee + travelExpenseAmount;
+            const currentTravelExpense = travelExpenseAmount || Number(booking.travelExpense) || 0;
+            const totalFee = performanceFee + currentTravelExpense;
             
             bookingContext = {
               clientName: booking.clientName,
