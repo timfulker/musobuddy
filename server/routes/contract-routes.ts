@@ -378,7 +378,7 @@ export function registerContractRoutes(app: Express) {
         eventDate: req.body.eventDate,
         eventTime: req.body.eventTime || "",
         eventEndTime: req.body.eventEndTime || "",
-        // fee: removed - use bookings.fee as single source of truth
+        fee: req.body.fee || "0.00", // Required by database until schema migration
         deposit: req.body.deposit || "0.00",
         depositDays: req.body.depositDays || 7,
         travelExpenses: travelAmount,
@@ -405,7 +405,7 @@ export function registerContractRoutes(app: Express) {
             clientPhone: newContract.clientPhone,
             venue: newContract.venue,
             venueAddress: newContract.venueAddress,
-            fee: req.body.fee, // Save fee to bookings.fee (single source of truth)
+            // fee: preserved in booking - no update needed (single source of truth)
             deposit: newContract.deposit,
             travelExpenses: newContract.travelExpenses,
             equipmentRequirements: newContract.equipmentRequirements,
