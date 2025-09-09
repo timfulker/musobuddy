@@ -500,6 +500,31 @@ export function setupCommunicationRoutes(app: any) {
         return res.status(400).json({ error: 'Business email not configured in settings' });
       }
 
+      // Update booking with travel expenses BEFORE sending email (so it always saves)
+      if (travelExpenses && parseFloat(travelExpenses) > 0) {
+        console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
+        try {
+          const travelUpdateResult = await db.update(bookings)
+            .set({ 
+              travelExpenses: parseFloat(travelExpenses),
+              travel_expenses: parseFloat(travelExpenses) // Also update snake_case for compatibility
+            })
+            .where(and(
+              eq(bookings.id, bookingId),
+              eq(bookings.userId, userId)
+            ))
+            .returning({ updatedTravelExpenses: bookings.travelExpenses });
+          
+          console.log(`✅ Updated booking ${bookingId} with travel expenses: £${travelExpenses}`);
+          console.log(`💰 Travel expenses update result:`, travelUpdateResult);
+        } catch (travelError) {
+          console.error(`❌ Failed to update travel expenses for booking ${bookingId}:`, travelError);
+          // Continue with email sending even if travel expense update fails
+        }
+      } else {
+        console.log(`ℹ️ No travel expenses provided or amount is 0, skipping booking update`);
+      }
+
       // Create unique reply-to address with user ID and booking ID for proper routing
       const replyToAddress = `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`;
       const subject = `Re: ${booking[0].title}`;
@@ -679,25 +704,6 @@ export function setupCommunicationRoutes(app: any) {
           console.log(`ℹ️ Booking ${bookingId} is already in '${booking[0].workflowStage}' stage, no auto-advance needed`);
         }
 
-        // Update booking with travel expenses if provided
-        if (travelExpenses && parseFloat(travelExpenses) > 0) {
-          console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
-          const travelUpdateResult = await db.update(bookings)
-            .set({ 
-              travelExpenses: parseFloat(travelExpenses),
-              travel_expenses: parseFloat(travelExpenses) // Also update snake_case for compatibility
-            })
-            .where(and(
-              eq(bookings.id, bookingId),
-              eq(bookings.userId, userId)
-            ))
-            .returning({ updatedTravelExpenses: bookings.travelExpenses });
-          
-          console.log(`✅ Updated booking ${bookingId} with travel expenses: £${travelExpenses}`);
-          console.log(`💰 Travel expenses update result:`, travelUpdateResult);
-        } else {
-          console.log(`ℹ️ No travel expenses provided or amount is 0, skipping booking update`);
-        }
 
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
         res.json({ success: true, communication, mailgunId: emailResult.messageId });

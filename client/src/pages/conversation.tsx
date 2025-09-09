@@ -865,27 +865,29 @@ export default function Conversation() {
               className="resize-none"
             />
             
-            {/* Travel Expenses Field */}
-            <div className="flex items-center gap-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-yellow-600" />
-                <Label htmlFor="travel-expenses" className="text-sm font-medium text-yellow-800">
-                  Travel Expenses (£)
-                </Label>
+            {/* Travel Expenses Field - Only show if no outgoing messages exist yet */}
+            {messages.filter(msg => msg.messageType === 'outgoing').length === 0 && (
+              <div className="flex items-center gap-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-yellow-600" />
+                  <Label htmlFor="travel-expenses" className="text-sm font-medium text-yellow-800">
+                    Travel Expenses (£)
+                  </Label>
+                </div>
+                <Input
+                  id="travel-expenses"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={travelExpenses}
+                  onChange={(e) => setTravelExpenses(e.target.value)}
+                  className="w-32 bg-white border-yellow-300 focus:border-yellow-500"
+                />
+                <div className="text-xs text-yellow-600">
+                  Optional: Include travel expenses in your reply
+                </div>
               </div>
-              <Input
-                id="travel-expenses"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={travelExpenses}
-                onChange={(e) => setTravelExpenses(e.target.value)}
-                className="w-32 bg-white border-yellow-300 focus:border-yellow-500"
-              />
-              <div className="text-xs text-yellow-600">
-                Optional: Include travel expenses in your reply
-              </div>
-            </div>
+            )}
             
             {/* Template and AI Helper Buttons */}
             <div className="flex flex-wrap gap-2 mb-4">
