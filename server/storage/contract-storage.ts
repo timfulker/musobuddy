@@ -52,7 +52,7 @@ export class ContractStorage {
         eventTime: contractData.eventTime || null,
         eventEndTime: contractData.eventEndTime || null,
         performanceDuration: contractData.performanceDuration || null,
-        // fee: removed - use bookings.fee as single source of truth
+        fee: contractData.fee || "0.00", // Required by database schema
         deposit: contractData.deposit || "0.00",
         depositDays: contractData.depositDays || 7,
         travelExpenses: contractData.travelExpenses || "0.00",
@@ -113,7 +113,7 @@ export class ContractStorage {
     if (updates.eventTime !== undefined) setData.eventTime = updates.eventTime;
     if (updates.eventEndTime !== undefined) setData.eventEndTime = updates.eventEndTime;
     if (updates.performanceDuration !== undefined) setData.performanceDuration = updates.performanceDuration;
-    // fee: removed - use bookings.fee as single source of truth
+    if (updates.fee !== undefined) setData.fee = updates.fee; // Required by database schema
     if (updates.deposit !== undefined) setData.deposit = updates.deposit;
     if (updates.paymentInstructions !== undefined) setData.paymentInstructions = updates.paymentInstructions;
     if (updates.equipmentRequirements !== undefined) setData.equipmentRequirements = updates.equipmentRequirements;
