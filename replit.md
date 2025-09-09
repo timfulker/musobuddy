@@ -46,12 +46,12 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 # System Architecture
 ## UI/UX Decisions
-- Responsive design adapting to mobile and desktop.
-- Streamlined primary actions for bookings and centralized, tabbed messaging.
+- Responsive design adapting to mobile and desktop with essential features prioritized for mobile.
+- Streamlined primary actions for bookings and centralized, tabbed messaging system.
 - Consistent navigation with auto-scrolling to relevant bookings.
 - Simplified email branding and enhanced HTML email templates.
 - Dual client portal system for contract signing and collaborative planning with dynamic server-side rendering and real-time bidirectional sync.
-- Luminance-aware PDF branding for optimal text contrast.
+- Luminance-aware PDF branding for optimal text contrast across themes.
 
 ## Technical Implementations
 - **Frontend**: React 18 (TypeScript, Vite) with Wouter for routing; Tailwind CSS with shadcn/ui and Radix UI for styling; React Query for state management; React Hook Form with Zod validation.

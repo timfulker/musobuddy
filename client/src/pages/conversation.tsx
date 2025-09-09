@@ -242,21 +242,11 @@ export default function Conversation() {
       return;
     }
 
-    // Log what we're sending for debugging
-    console.log('📤 [FRONTEND] Sending conversation reply:', {
-      bookingId,
-      content: replyContent.trim().substring(0, 50) + '...',
-      recipientEmail: booking.clientEmail,
-      travelExpenses: travelExpenses,
-      travelExpensesType: typeof travelExpenses,
-      travelExpensesLength: travelExpenses?.length
-    });
-
     sendReplyMutation.mutate({
       bookingId,
       content: replyContent.trim(),
       recipientEmail: booking.clientEmail,
-      travelExpenses: travelExpenses?.trim() || undefined,
+      travelExpenses: travelExpenses || undefined,
     });
   };
 

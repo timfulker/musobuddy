@@ -1252,7 +1252,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
       // Import token management utilities
       // AI token management removed - unlimited AI usage for all users
 
-      const { action, bookingId, customPrompt, tone, travelExpense, travelExpenses, contextualInfo, clientHistory } = req.body;
+      const { action, bookingId, customPrompt, tone, travelExpense, contextualInfo, clientHistory } = req.body;
 
       console.log(`🔍 AI response request by user ${userId}`);
 
@@ -1275,58 +1275,13 @@ This email was sent via MusoBuddy Professional Music Management Platform
 
       // Get booking context if bookingId is provided
       let bookingContext: any = null;
-      let travelExpenseSaved = false;
-      let travelExpenseAmount = 0;
-      
       if (bookingId && bookingId !== 'none' && bookingId !== '') {
-        console.log(`🔍 Checking booking ${bookingId} for user ${userId}`);
         try {
           const booking = await storage.getBooking(bookingId);
-          console.log(`📊 Booking found:`, booking ? `Yes, userId=${booking.userId}` : 'No');
           if (booking && booking.userId === userId) {
-            
-            // SAVE TRAVEL EXPENSE - SIMPLIFIED AND DIRECT
-            const travelExpenseValue = travelExpense || travelExpenses;
-            console.log(`🔍 TRAVEL EXPENSE DEBUG:`, {
-              travelExpense,
-              travelExpenses,
-              travelExpenseValue,
-              bookingId,
-              userId
-            });
-            
-            if (travelExpenseValue) {
-              travelExpenseAmount = Number(travelExpenseValue);
-              console.log(`💰 Parsed amount: ${travelExpenseAmount}`);
-              
-              if (travelExpenseAmount > 0) {
-                console.log(`💾 Attempting to save £${travelExpenseAmount} to booking ${bookingId}...`);
-                try {
-                  const { db } = await import('../core/database');
-                  const { bookings } = await import('@shared/schema');
-                  const { eq } = await import('drizzle-orm');
-                  
-                  const result = await db.update(bookings)
-                    .set({ 
-                      travelExpense: travelExpenseAmount
-                    })
-                    .where(eq(bookings.id, bookingId));
-                  
-                  travelExpenseSaved = true;
-                  console.log(`✅ Travel expense £${travelExpenseAmount} saved to booking ${bookingId}`);
-                  console.log(`📊 Update result:`, result);
-                } catch (error) {
-                  console.error(`❌ Failed to save travel expense:`, error);
-                }
-              } else {
-                console.log(`⚠️ Amount is zero or invalid: ${travelExpenseAmount}`);
-              }
-            } else {
-              console.log(`⚠️ No travel expense value provided`);
-            }
-            
             // SIMPLIFIED: Always combine travel expense with performance fee
             const performanceFee = Number(booking.fee) || 0;
+            const travelExpenseAmount = Number(travelExpense || booking.travelExpense) || 0;
             const totalFee = performanceFee + travelExpenseAmount;
             
             bookingContext = {
