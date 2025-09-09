@@ -809,12 +809,12 @@ export function registerContractRoutes(app: Express) {
         
         // ALSO send to performer/business owner - using the SAME final PDF URL
         // Get user email from contract owner record or business settings
-        const userEmail = contractOwner?.email || userSettings?.business_contact_email;
+        const userEmail = contractOwner?.email || userSettings?.businessContactEmail;
         
         console.log(`🔍 [CONTRACT-SIGN] Email debug for contract ${contractId}:`, {
           contractOwnerId: contract.userId,
           contractOwnerEmail: contractOwner?.email,
-          businessContactEmail: userSettings?.business_contact_email,
+          businessContactEmail: userSettings?.businessContactEmail,
           finalUserEmail: userEmail,
           willSendEmail: !!userEmail
         });
