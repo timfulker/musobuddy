@@ -14,8 +14,8 @@ export interface Booking {
 }
 
 /**
- * Get the total amount to display for a booking - NO CALCULATIONS
- * Just returns the stored finalAmount or individual values as-is
+ * Calculate the total amount to display for a booking
+ * Uses finalAmount from extraction when available, otherwise calculates from components
  */
 export function calculateBookingDisplayTotal(
   booking: Booking, 
@@ -26,54 +26,45 @@ export function calculateBookingDisplayTotal(
     return booking.finalAmount;
   }
   
-  // Otherwise just return fee or travel expenses as individual values
+  // Otherwise calculate from components
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
   
-  // Return whichever value is available - NO ADDITION
-  if (travelExpenses > 0) {
-    return travelExpenses;
-  }
-  
-  return fee;
+  // Return the sum of performance fee and travel expenses
+  return fee + travelExpenses;
 }
 
 /**
- * Get the display text for booking amount - NO CALCULATIONS
- * Just shows the values as they are stored
+ * Get the display text for booking amount
+ * Shows total with optional breakdown
  */
 export function getBookingAmountDisplayText(
   booking: Booking,
   userSettings?: UserSettings,
   showBreakdown: boolean = false
 ): { main: string; subtitle?: string } {
-  // NO CALCULATIONS - just display what's stored
-  const finalAmount = booking.finalAmount;
+  const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
+  const finalAmount = booking.finalAmount;
   
-  // If we have finalAmount, show that as the main total
+  // If we have finalAmount (from extraction), use that as main total
   if (finalAmount && finalAmount > 0) {
     return {
       main: `£${finalAmount.toFixed(2)}`,
       subtitle: showBreakdown && travelExpenses > 0 
-        ? `(Travel: £${travelExpenses.toFixed(2)})`
+        ? `(Performance: £${(finalAmount - travelExpenses).toFixed(2)} + Travel: £${travelExpenses.toFixed(2)})`
         : undefined
     };
   }
   
-  // Otherwise just show travel expenses if available
-  if (travelExpenses > 0) {
-    return {
-      main: `£${travelExpenses.toFixed(2)}`,
-      subtitle: showBreakdown ? '(Travel expenses only)' : undefined
-    };
-  }
+  // Otherwise calculate total from components
+  const total = fee + travelExpenses;
   
-  // Fall back to fee if no other amount
-  const fee = booking.fee || 0;
   return {
-    main: `£${fee.toFixed(2)}`,
-    subtitle: undefined
+    main: `£${total.toFixed(2)}`,
+    subtitle: showBreakdown && travelExpenses > 0 
+      ? `(Performance: £${fee.toFixed(2)} + Travel: £${travelExpenses.toFixed(2)})`
+      : undefined
   };
 }
 
@@ -92,12 +83,23 @@ export function calculateContractTotals(
 } {
   const fee = booking.fee || 0;
   const travelExpenses = booking.travelExpenses || booking.travelExpense || booking.travel_expense || booking.travel_expenses || 0;
+  const finalAmount = booking.finalAmount;
   
-  // Keep fees separate for internal tracking, show total to client
+  // If we have finalAmount (from extraction), use that as total and calculate performance fee
+  if (finalAmount && finalAmount > 0) {
+    return {
+      performanceFee: finalAmount - travelExpenses,  // Calculate performance fee from total minus travel
+      travelExpenses: travelExpenses,                // Travel expenses as stored
+      totalAmount: finalAmount,                      // Use extracted total
+      showSeparateTravel: true                       // Internal tracking shows separation
+    };
+  }
+  
+  // Otherwise use component calculation
   return {
-    performanceFee: fee,           // Base performance fee only
-    travelExpenses: travelExpenses, // Travel expenses separately
-    totalAmount: fee + travelExpenses, // Total for client display
-    showSeparateTravel: true       // Internal tracking shows separation
+    performanceFee: fee,                    // Base performance fee only
+    travelExpenses: travelExpenses,         // Travel expenses separately
+    totalAmount: fee + travelExpenses,      // Total for client display
+    showSeparateTravel: true                // Internal tracking shows separation
   };
 }

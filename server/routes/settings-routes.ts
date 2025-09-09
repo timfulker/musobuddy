@@ -1265,8 +1265,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
         bookingId,
         hasCustomPrompt: !!customPrompt,
         hasContextualInfo: !!contextualInfo,
-        tone,
-        travelExpense
+        tone
       });
 
       // Import the AI response generator
@@ -1286,7 +1285,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
             if (travelExpense && parseFloat(travelExpense) > 0) {
               travelExpenseAmount = parseFloat(travelExpense);
               try {
-                await storage.updateBooking(bookingId, { travelExpense: travelExpenseAmount });
+                await storage.updateBooking(bookingId, { travelExpense: travelExpenseAmount }, userId);
                 travelExpenseSaved = true;
                 console.log(`✅ Travel expense saved: £${travelExpenseAmount} for booking ${bookingId}`);
               } catch (saveError) {
@@ -1294,10 +1293,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
               }
             }
             
-            // SIMPLIFIED: Always combine travel expense with performance fee
             const performanceFee = Number(booking.fee) || 0;
-            const currentTravelExpense = travelExpenseAmount || Number(booking.travelExpense) || 0;
-            const totalFee = performanceFee + currentTravelExpense;
             
             bookingContext = {
               clientName: booking.clientName,
@@ -1307,8 +1303,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
               venue: booking.venue,
               eventType: booking.eventType,
               gigType: booking.gigType,
-              fee: totalFee, // Always pass combined total to AI
-              travelExpense: 0, // No separate travel expense - included in fee
+              fee: performanceFee,
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
               equipment: (booking as any).equipment || '',
@@ -1353,8 +1348,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
           customPrompt,
           tone: tone || 'professional',
           contextualInfo: contextualInfo || null,
-          clientHistory: clientHistory || null,
-          travelExpense: Number(travelExpense) || 0
+          clientHistory: clientHistory || null
         });
         console.log('✅ AI response generated successfully');
       } catch (aiError) {
@@ -1367,17 +1361,12 @@ This email was sent via MusoBuddy Professional Music Management Platform
         };
       }
 
-      // ALWAYS include travel expense save status in response
+      // Include travel expense save status in response
       const responseWithStatus = {
         ...response,
         travelExpenseSaved: travelExpenseSaved,
         travelExpenseAmount: travelExpenseAmount
       };
-      
-      console.log('📤 Sending response with travel expense status:', {
-        saved: travelExpenseSaved, 
-        amount: travelExpenseAmount
-      });
       
       res.json(responseWithStatus);
       

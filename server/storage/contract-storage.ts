@@ -52,7 +52,7 @@ export class ContractStorage {
         eventTime: contractData.eventTime || null,
         eventEndTime: contractData.eventEndTime || null,
         performanceDuration: contractData.performanceDuration || null,
-        // fee: removed - use bookings.fee as single source of truth
+        fee: contractData.fee || "0.00", // Required by database until schema migration
         deposit: contractData.deposit || "0.00",
         depositDays: contractData.depositDays || 7,
         travelExpenses: contractData.travelExpenses || "0.00",

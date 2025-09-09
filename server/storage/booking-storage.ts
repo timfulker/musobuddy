@@ -246,11 +246,6 @@ export class BookingStorage {
       return sanitized;
     };
 
-    // LOCK TRAVEL EXPENSE - remove it BEFORE sanitization to prevent nullification
-    if ('travelExpense' in updates) {
-      console.log(`🔒 [BOOKING-UPDATE] TRAVEL EXPENSE LOCK: Removing travelExpense from update to preserve locked value of £${currentBooking.travelExpense}`);
-      delete updates.travelExpense;
-    }
 
     const sanitizedUpdates = sanitizeNumericFields(updates);
 
