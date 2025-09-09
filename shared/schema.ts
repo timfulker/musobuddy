@@ -262,7 +262,7 @@ export const contracts = pgTable("contracts", {
   eventTime: varchar("event_time"), // temporarily optional
   eventEndTime: varchar("event_end_time"), // temporarily optional
   performanceDuration: varchar("performance_duration"), // Actual performance time (independent of event timeframe, e.g., "2 hours", "2 x 45 min sets")
-  // fee: removed - use bookings.fee as single source of truth
+  fee: decimal("fee", { precision: 10, scale: 2 }).notNull(), // Total fee for the contract
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
   depositDays: integer("deposit_days").default(7), // Number of days within which deposit must be paid
   
