@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { AIUsageTracker } from '../utils/ai-usage-tracker';
 
 /*
 <important_code_snippet_instructions>

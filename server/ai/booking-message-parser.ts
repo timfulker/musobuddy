@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { AIUsageTracker } from '../utils/ai-usage-tracker';
 // API usage tracking removed - unlimited AI usage for all users
 
 // Helper function to enrich venue data using Google Places API
@@ -207,6 +208,17 @@ JSON:`;
       totalTokens: usage?.total_tokens || 0,
       reasoningTokens: usage?.prompt_tokens_details?.reasoning_tokens || 0
     });
+    
+    // Track AI usage with cost estimation
+    AIUsageTracker.trackUsage(
+      userId || 'unknown',
+      'Email Parsing',
+      'openai',
+      'gpt-5',
+      usage?.prompt_tokens || 0,
+      usage?.completion_tokens || 0,
+      `parse-${Date.now()}`
+    );
     
     if (!rawContent || rawContent.trim().length === 0) {
       console.error('❌ GPT-5 EMPTY RESPONSE - Token Analysis:', {
