@@ -115,12 +115,12 @@ export async function parseBookingMessage(
   subject?: string  // Added subject parameter for Encore area extraction
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 Claude Haiku: Parsing booking message with enhanced AI for better accuracy...');
-    console.log('🤖 Claude Haiku: Message length:', messageText?.length || 0);
-    console.log('🤖 Claude Haiku: First 200 chars:', messageText?.substring(0, 200) || 'No content');
-    console.log('🤖 Claude Haiku: Subject:', subject || 'No subject');
-    console.log('🤖 Claude Haiku: Client Contact:', clientContact || 'None');
-    console.log('🤖 Claude Haiku: Client Address:', clientAddress || 'None');
+    console.log('🤖 GPT-5 mini: Parsing booking message with enhanced AI for better accuracy...');
+    console.log('🤖 GPT-5 mini: Message length:', messageText?.length || 0);
+    console.log('🤖 GPT-5 mini: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 GPT-5 mini: Subject:', subject || 'No subject');
+    console.log('🤖 GPT-5 mini: Client Contact:', clientContact || 'None');
+    console.log('🤖 GPT-5 mini: Client Address:', clientAddress || 'None');
     
     // Get current date for context
     const today = new Date();
@@ -202,28 +202,28 @@ JSON:`;
     const rawContent = response.choices[0]?.message?.content;
     const usage = response.usage;
     
-    console.log('🔍 Claude Haiku TOKEN USAGE:', {
-      inputTokens: usage?.input_tokens || 0,
-      outputTokens: usage?.output_tokens || 0,
-      totalTokens: (usage?.input_tokens || 0) + (usage?.output_tokens || 0)
+    console.log('🔍 GPT-5 mini TOKEN USAGE:', {
+      inputTokens: usage?.prompt_tokens || 0,
+      outputTokens: usage?.completion_tokens || 0,
+      totalTokens: usage?.total_tokens || 0
     });
     
     if (!rawContent || rawContent.trim().length === 0) {
-      console.error('❌ Claude Haiku EMPTY RESPONSE - Token Analysis:', {
+      console.error('❌ GPT-5 mini EMPTY RESPONSE - Token Analysis:', {
         maxAllowed: 4000,
-        inputUsed: usage?.input_tokens || 0,
-        outputUsed: usage?.output_tokens || 0,
+        inputUsed: usage?.prompt_tokens || 0,
+        outputUsed: usage?.completion_tokens || 0,
         hasContent: !!rawContent,
         contentLength: rawContent?.length || 0
       });
-      throw new Error('Claude Haiku returned empty response - likely token exhaustion');
+      throw new Error('GPT-5 mini returned empty response - likely token exhaustion');
     }
 
-    console.log('🤖 Claude Haiku raw response:', rawContent);
-    console.log('🤖 Claude Haiku response time:', `${responseTime}ms`);
+    console.log('🤖 GPT-5 mini raw response:', rawContent);
+    console.log('🤖 GPT-5 mini response time:', `${responseTime}ms`);
     
     // CRITICAL DEBUG: Log exactly what we sent and received
-    console.log('🚨 [CRITICAL DEBUG] Claude Haiku CALL:', {
+    console.log('🚨 [CRITICAL DEBUG] GPT-5 mini CALL:', {
       systemPrompt: systemPrompt.substring(0, 200),
       userPrompt: userPrompt,
       rawResponse: rawContent,
@@ -231,7 +231,7 @@ JSON:`;
     });
     
     // Log input vs output for debugging
-    console.log('🔍 [Claude Haiku DEBUG] Input Analysis:', {
+    console.log('🔍 [GPT-5 mini DEBUG] Input Analysis:', {
       fromField: clientContact,
       bodyPreview: messageText.substring(0, 150) + '...',
       hasSignature: messageText.toLowerCase().includes('regards') || messageText.toLowerCase().includes('sincerely'),
@@ -247,14 +247,14 @@ JSON:`;
     try {
       parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('❌ Claude Haiku JSON parse error:', parseError);
+      console.error('❌ GPT-5 mini JSON parse error:', parseError);
       console.error('❌ Raw response:', rawContent);
       console.error('❌ Cleaned content:', jsonContent);
-      throw new Error('Claude Haiku returned invalid JSON - sending to review queue');
+      throw new Error('GPT-5 mini returned invalid JSON - sending to review queue');
     }
     
-    // Log what Claude Haiku extracted
-    console.log('🔍 [Claude Haiku DEBUG] Extracted Data:', {
+    // Log what GPT-5 mini extracted
+    console.log('🔍 [GPT-5 mini DEBUG] Extracted Data:', {
       clientName: parsed.clientName,
       fromFieldName: clientContact ? clientContact.split('<')[0].trim() : null,
       nameMatch: parsed.clientName === (clientContact ? clientContact.split('<')[0].trim() : null),
@@ -265,12 +265,12 @@ JSON:`;
     
     // CRITICAL: Log if date is missing
     if (!parsed.eventDate) {
-      console.log('❌❌❌ Claude Haiku FAILED TO EXTRACT DATE FROM:', messageText);
-      console.log('❌❌❌ Claude Haiku RETURNED:', JSON.stringify(parsed));
+      console.log('❌❌❌ GPT-5 mini FAILED TO EXTRACT DATE FROM:', messageText);
+      console.log('❌❌❌ GPT-5 mini RETURNED:', JSON.stringify(parsed));
     }
     
-    // POST-PROCESSING VALIDATION: Fix common Claude Haiku mistakes
-    // 1. Check if Claude Haiku incorrectly used the From field as client name
+    // POST-PROCESSING VALIDATION: Fix common GPT-5 mini mistakes
+    // 1. Check if GPT-5 mini incorrectly used the From field as client name
     const fromFieldName = clientContact ? clientContact.split('<')[0].trim() : null;
     if (parsed.clientName === fromFieldName && messageText) {
       // Look for actual signature in email body
@@ -296,7 +296,7 @@ JSON:`;
     
     // 2. Last-chance date extraction before sending to review
     if (!parsed.eventDate && messageText) {
-      console.log('🔧 [POST-PROCESS] Claude Haiku missed date, attempting extraction from:', messageText);
+      console.log('🔧 [POST-PROCESS] GPT-5 mini missed date, attempting extraction from:', messageText);
       
       const months: Record<string, number> = {
         january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
@@ -494,7 +494,7 @@ JSON:`;
       }
     }
 
-    console.log('🎯 Claude Haiku: Parsed booking data:', {
+    console.log('🎯 GPT-5 mini: Parsed booking data:', {
       ...cleanedData,
       message: `${messageText.substring(0, 100)}...`
     });
@@ -502,7 +502,7 @@ JSON:`;
     return cleanedData;
 
   } catch (error: any) {
-    console.error('❌ Claude Haiku booking parse error:', error);
+    console.error('❌ GPT-5 mini booking parse error:', error);
     
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
