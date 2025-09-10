@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 // API usage tracking removed - unlimited AI usage for all users
 
 // Helper function to enrich venue data using Google Places API
@@ -115,12 +115,12 @@ export async function parseBookingMessage(
   subject?: string  // Added subject parameter for Encore area extraction
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 GPT-5: Parsing booking message with enhanced AI for better accuracy...');
-    console.log('🤖 GPT-5: Message length:', messageText?.length || 0);
-    console.log('🤖 GPT-5: First 200 chars:', messageText?.substring(0, 200) || 'No content');
-    console.log('🤖 GPT-5: Subject:', subject || 'No subject');
-    console.log('🤖 GPT-5: Client Contact:', clientContact || 'None');
-    console.log('🤖 GPT-5: Client Address:', clientAddress || 'None');
+    console.log('🤖 Claude Haiku: Parsing booking message with enhanced AI for better accuracy...');
+    console.log('🤖 Claude Haiku: Message length:', messageText?.length || 0);
+    console.log('🤖 Claude Haiku: First 200 chars:', messageText?.substring(0, 200) || 'No content');
+    console.log('🤖 Claude Haiku: Subject:', subject || 'No subject');
+    console.log('🤖 Claude Haiku: Client Contact:', clientContact || 'None');
+    console.log('🤖 Claude Haiku: Client Address:', clientAddress || 'None');
     
     // Get current date for context
     const today = new Date();
@@ -169,62 +169,56 @@ FEE EXTRACTION RULES:
 EMAIL: ${messageText}
 JSON:`;
 
-    console.log('🤖 GPT-5: Current date context provided:', currentDate);
-    console.log('🤖 GPT-5: System prompt length:', systemPrompt.length);
-    console.log('🤖 GPT-5: User prompt:', userPrompt);
+    console.log('🤖 Claude Haiku: Current date context provided:', currentDate);
+    console.log('🤖 Claude Haiku: System prompt length:', systemPrompt.length);
+    console.log('🤖 Claude Haiku: User prompt:', userPrompt);
 
     // AI usage limits removed - unlimited AI usage for all users
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
     const startTime = Date.now();
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5',
-      max_completion_tokens: 4000, // CRITICAL: GPT-5 reasoning model needs substantial tokens
-      temperature: 1, // GPT-5 only supports default temperature
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 4000,
+      temperature: 0.1, // Lower temperature for more consistent JSON parsing
       messages: [
         { 
-          role: 'system', 
-          content: systemPrompt 
-        },
-        { 
           role: 'user', 
-          content: userPrompt 
+          content: `${systemPrompt}\n\n${userPrompt}` 
         }
       ]
     });
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.choices[0]?.message?.content;
+    const rawContent = response.content[0]?.text;
     const usage = response.usage;
     
-    console.log('🔍 GPT-5 TOKEN USAGE:', {
-      promptTokens: usage?.prompt_tokens || 0,
-      completionTokens: usage?.completion_tokens || 0,
-      totalTokens: usage?.total_tokens || 0,
-      reasoningTokens: usage?.prompt_tokens_details?.reasoning_tokens || 0
+    console.log('🔍 Claude Haiku TOKEN USAGE:', {
+      inputTokens: usage?.input_tokens || 0,
+      outputTokens: usage?.output_tokens || 0,
+      totalTokens: (usage?.input_tokens || 0) + (usage?.output_tokens || 0)
     });
     
     if (!rawContent || rawContent.trim().length === 0) {
-      console.error('❌ GPT-5 EMPTY RESPONSE - Token Analysis:', {
+      console.error('❌ Claude Haiku EMPTY RESPONSE - Token Analysis:', {
         maxAllowed: 4000,
-        promptUsed: usage?.prompt_tokens || 0,
-        completionUsed: usage?.completion_tokens || 0,
-        reasoningUsed: usage?.prompt_tokens_details?.reasoning_tokens || 0,
+        inputUsed: usage?.input_tokens || 0,
+        outputUsed: usage?.output_tokens || 0,
         hasContent: !!rawContent,
         contentLength: rawContent?.length || 0
       });
-      throw new Error('GPT-5 returned empty response - likely token exhaustion');
+      throw new Error('Claude Haiku returned empty response - likely token exhaustion');
     }
 
-    console.log('🤖 GPT-5 raw response:', rawContent);
-    console.log('🤖 GPT-5 response time:', `${responseTime}ms`);
+    console.log('🤖 Claude Haiku raw response:', rawContent);
+    console.log('🤖 Claude Haiku response time:', `${responseTime}ms`);
     
     // CRITICAL DEBUG: Log exactly what we sent and received
-    console.log('🚨 [CRITICAL DEBUG] GPT-5 CALL:', {
+    console.log('🚨 [CRITICAL DEBUG] Claude Haiku CALL:', {
       systemPrompt: systemPrompt.substring(0, 200),
       userPrompt: userPrompt,
       rawResponse: rawContent,
@@ -232,7 +226,7 @@ JSON:`;
     });
     
     // Log input vs output for debugging
-    console.log('🔍 [GPT-5 DEBUG] Input Analysis:', {
+    console.log('🔍 [Claude Haiku DEBUG] Input Analysis:', {
       fromField: clientContact,
       bodyPreview: messageText.substring(0, 150) + '...',
       hasSignature: messageText.toLowerCase().includes('regards') || messageText.toLowerCase().includes('sincerely'),
@@ -248,14 +242,14 @@ JSON:`;
     try {
       parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('❌ GPT-5 JSON parse error:', parseError);
+      console.error('❌ Claude Haiku JSON parse error:', parseError);
       console.error('❌ Raw response:', rawContent);
       console.error('❌ Cleaned content:', jsonContent);
-      throw new Error('GPT-5 returned invalid JSON - sending to review queue');
+      throw new Error('Claude Haiku returned invalid JSON - sending to review queue');
     }
     
-    // Log what GPT-5 extracted
-    console.log('🔍 [GPT-5 DEBUG] Extracted Data:', {
+    // Log what Claude Haiku extracted
+    console.log('🔍 [Claude Haiku DEBUG] Extracted Data:', {
       clientName: parsed.clientName,
       fromFieldName: clientContact ? clientContact.split('<')[0].trim() : null,
       nameMatch: parsed.clientName === (clientContact ? clientContact.split('<')[0].trim() : null),
@@ -266,12 +260,12 @@ JSON:`;
     
     // CRITICAL: Log if date is missing
     if (!parsed.eventDate) {
-      console.log('❌❌❌ GPT-5 FAILED TO EXTRACT DATE FROM:', messageText);
-      console.log('❌❌❌ GPT-5 RETURNED:', JSON.stringify(parsed));
+      console.log('❌❌❌ Claude Haiku FAILED TO EXTRACT DATE FROM:', messageText);
+      console.log('❌❌❌ Claude Haiku RETURNED:', JSON.stringify(parsed));
     }
     
-    // POST-PROCESSING VALIDATION: Fix common GPT-5 mistakes
-    // 1. Check if GPT-5 incorrectly used the From field as client name
+    // POST-PROCESSING VALIDATION: Fix common Claude Haiku mistakes
+    // 1. Check if Claude Haiku incorrectly used the From field as client name
     const fromFieldName = clientContact ? clientContact.split('<')[0].trim() : null;
     if (parsed.clientName === fromFieldName && messageText) {
       // Look for actual signature in email body
@@ -297,7 +291,7 @@ JSON:`;
     
     // 2. Last-chance date extraction before sending to review
     if (!parsed.eventDate && messageText) {
-      console.log('🔧 [POST-PROCESS] GPT-5 missed date, attempting extraction from:', messageText);
+      console.log('🔧 [POST-PROCESS] Claude Haiku missed date, attempting extraction from:', messageText);
       
       const months: Record<string, number> = {
         january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
@@ -495,7 +489,7 @@ JSON:`;
       }
     }
 
-    console.log('🎯 OpenAI: Parsed booking data:', {
+    console.log('🎯 Claude Haiku: Parsed booking data:', {
       ...cleanedData,
       message: `${messageText.substring(0, 100)}...`
     });
@@ -503,7 +497,7 @@ JSON:`;
     return cleanedData;
 
   } catch (error: any) {
-    console.error('❌ OpenAI booking parse error:', error);
+    console.error('❌ Claude Haiku booking parse error:', error);
     
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
