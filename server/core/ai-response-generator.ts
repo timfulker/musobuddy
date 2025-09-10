@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { aiOrchestrator, AIRequest, TaskConfig } from '../services/ai-orchestrator';
+import { ValidatorFactory, ScorerFactory } from '../services/ai-validators';
 
 // Initialize OpenAI client with better error handling
 const initializeOpenAI = () => {
@@ -122,35 +124,63 @@ export class AIResponseGenerator {
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
       
-      console.log('🤖 Making GPT-4o mini API call for cost efficiency...');
-      
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Cost-effective OpenAI model for responses - much cheaper than GPT-4
-        max_tokens: 1500,
+      // Prepare AI request for orchestrator
+      const aiRequest: AIRequest = {
+        systemPrompt,
+        userPrompt: `${userPrompt}\n\nPlease respond with valid JSON format only.`,
+        maxTokens: 1500,
         temperature: 0.7,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `${userPrompt}\n\nPlease respond with valid JSON format only.` }
-        ]
-      });
+        responseFormat: 'json_object'
+      };
 
-      console.log('✅ GPT-4o mini API response received');
-      console.log('🤖 Response usage:', response.usage);
+      // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
+      const taskConfig: TaskConfig = {
+        models: ['gpt-4o-mini', 'gpt-5', 'claude-sonnet-4'],
+        confidenceThreshold: 0.70, // Escalate if confidence < 70% for responses
+        maxBudgetCents: 30, // Max 30 cents per response generation
+        validators: [
+          ValidatorFactory.createResponseGenerator() // Validates JSON and required fields
+        ],
+        scorer: ScorerFactory.createResponseGeneratorScorer() // Confidence scoring
+      };
+
+      console.log('🤖 [AI ORCHESTRATOR] Starting response generation with escalation system...');
       
-      const content = response.choices[0]?.message?.content;
+      // Use AI orchestrator for intelligent escalation
+      const orchestrationResult = await aiOrchestrator.runTask('ai-response-generation', aiRequest, taskConfig);
+
+      if (!orchestrationResult.success || !orchestrationResult.response) {
+        console.error('❌ [AI ORCHESTRATOR] All models failed for response generation:', orchestrationResult.error);
+        console.error('❌ Escalation path:', orchestrationResult.escalationPath);
+        console.error('❌ Total cost:', `${orchestrationResult.totalCostCents}¢`);
+        throw new Error(`AI orchestrator failed: ${orchestrationResult.error}`);
+      }
+
+      const aiResponse = orchestrationResult.response;
+      const content = aiResponse.content;
+
+      console.log('✅ [AI ORCHESTRATOR] Response generation success with', aiResponse.model, 'in', orchestrationResult.attempts, 'attempts');
+      console.log('🤖 [AI ORCHESTRATOR] TOKEN USAGE:', {
+        model: aiResponse.model,
+        inputTokens: aiResponse.inputTokens,
+        outputTokens: aiResponse.outputTokens,
+        confidence: aiResponse.confidence,
+        costCents: orchestrationResult.totalCostCents,
+        escalationPath: orchestrationResult.escalationPath
+      });
+      
       if (!content) {
-        throw new Error('No content received from GPT-5 mini API');
+        throw new Error(`No content received from ${aiResponse.model} via AI orchestrator`);
       }
       
-      console.log('🤖 Raw response content length:', content.length);
+      console.log('🤖 [AI ORCHESTRATOR] Response content length:', content.length);
       
       let result;
       try {
         result = JSON.parse(content);
       } catch (parseError) {
-        console.error('❌ Failed to parse GPT-5 mini response as JSON:', content);
-        throw new Error('Invalid JSON response from AI service');
+        console.error('❌ [AI ORCHESTRATOR] Failed to parse response as JSON from', aiResponse.model, ':', content);
+        throw new Error(`Invalid JSON response from ${aiResponse.model} via AI orchestrator`);
       }
       
       // POST-PROCESSING: Force correct pricing if AI ignores instructions
@@ -243,8 +273,12 @@ export class AIResponseGenerator {
         smsBody: result.smsBody || "Thank you for your booking inquiry!"
       };
       
-      console.log('✅ AI response generated successfully');
-      console.log('🤖 Response preview:', {
+      console.log('✅ [AI ORCHESTRATOR] Response generated successfully via', aiResponse.model);
+      console.log('🤖 [AI ORCHESTRATOR] Response preview:', {
+        finalModel: aiResponse.model,
+        escalationPath: orchestrationResult.escalationPath,
+        confidence: aiResponse.confidence,
+        totalCost: `${orchestrationResult.totalCostCents}¢`,
         subjectLength: finalResponse.subject.length,
         emailBodyLength: finalResponse.emailBody.length,
         smsBodyLength: finalResponse.smsBody.length

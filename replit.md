@@ -46,12 +46,12 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 # System Architecture
 ## UI/UX Decisions
-- Responsive design adapting to mobile and desktop with essential features prioritized for mobile.
+- Responsive design prioritizing essential features for mobile, adapting to desktop.
 - Streamlined primary actions for bookings and a centralized, tabbed messaging system.
 - Consistent navigation with auto-scrolling to relevant bookings and persistent sorting.
 - Simplified email branding and enhanced HTML email templates with professional styling.
 - Dual client portal system for contract signing and collaborative planning, featuring dynamic server-side rendering and real-time bidirectional data synchronization.
-- Luminance-aware PDF branding ensures optimal text contrast across various themes.
+- Luminance-aware PDF branding for optimal text contrast across various themes.
 - Booking card actions are consolidated into "Conversation" as a primary button, with secondary actions in a dropdown.
 - Automated theme saving to database for consistency across PDF generation.
 - Invoice PDFs regenerate automatically on edit to ensure data accuracy for clients.
