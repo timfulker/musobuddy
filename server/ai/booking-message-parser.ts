@@ -115,7 +115,7 @@ export async function parseBookingMessage(
   subject?: string  // Added subject parameter for Encore area extraction
 ): Promise<ParsedBookingData> {
   try {
-    console.log('🤖 GPT-5 mini: Parsing booking message with enhanced AI for better accuracy...');
+    console.log('🤖 GPT-4o mini: Parsing booking message with enhanced AI for better accuracy...');
     console.log('🤖 GPT-5 mini: Message length:', messageText?.length || 0);
     console.log('🤖 GPT-5 mini: First 200 chars:', messageText?.substring(0, 200) || 'No content');
     console.log('🤖 GPT-5 mini: Subject:', subject || 'No subject');
@@ -181,7 +181,7 @@ JSON:`;
 
     const startTime = Date.now();
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: 'gpt-4o-mini', // Cost-effective OpenAI model for parsing - much cheaper than GPT-4
       max_tokens: 4000,
       temperature: 0.1, // Lower temperature for more consistent JSON parsing
       response_format: { type: "json_object" },

@@ -14,7 +14,7 @@ const initializeOpenAI = () => {
     throw new Error('OpenAI API key appears to be invalid');
   }
   
-  console.log('✅ OpenAI API key found and appears valid - using GPT-5 mini for cost efficiency [FORCE RELOAD]');
+  console.log('✅ OpenAI API key found and appears valid - using GPT-4o mini for cost efficiency [FORCE RELOAD]');
   return new OpenAI({ 
     apiKey,
     timeout: 30000, // 30 second timeout at client level
@@ -122,10 +122,10 @@ export class AIResponseGenerator {
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
       
-      console.log('🤖 Making GPT-5 mini API call for cost efficiency...');
+      console.log('🤖 Making GPT-4o mini API call for cost efficiency...');
       
       const response = await openai.chat.completions.create({
-        model: "gpt-5-mini", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-4o-mini", // Cost-effective OpenAI model for responses - much cheaper than GPT-4
         max_tokens: 1500,
         temperature: 0.7,
         response_format: { type: "json_object" },
@@ -135,7 +135,7 @@ export class AIResponseGenerator {
         ]
       });
 
-      console.log('✅ GPT-5 mini API response received');
+      console.log('✅ GPT-4o mini API response received');
       console.log('🤖 Response usage:', response.usage);
       
       const content = response.choices[0]?.message?.content;
@@ -682,7 +682,7 @@ Generate variations with different approaches while keeping the essential messag
 Please respond with valid JSON format only.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5-mini", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-4o-mini", // Cost-effective OpenAI model for responses - much cheaper than GPT-4
         max_tokens: 1500,
         temperature: 0.8,
         response_format: { type: "json_object" },
