@@ -186,7 +186,7 @@ JSON:`;
 
     // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
     const taskConfig: TaskConfig = {
-      models: ['gpt-4o-mini', 'gpt-5', 'claude-sonnet-4'],
+      models: ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4'],
       confidenceThreshold: 0.75, // Escalate if confidence < 75%
       maxBudgetCents: 50, // Max 50 cents per email parsing (generous budget)
       validators: [

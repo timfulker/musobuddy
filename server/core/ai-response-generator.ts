@@ -135,7 +135,7 @@ export class AIResponseGenerator {
 
       // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
       const taskConfig: TaskConfig = {
-        models: ['gpt-4o-mini', 'gpt-5', 'claude-sonnet-4'],
+        models: ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4'],
         confidenceThreshold: 0.70, // Escalate if confidence < 70% for responses
         maxBudgetCents: 30, // Max 30 cents per response generation
         validators: [

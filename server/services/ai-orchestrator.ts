@@ -1,12 +1,34 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
-// Initialize AI clients
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Initialize AI clients lazily with error handling
+let openaiClient: OpenAI | null = null;
+let anthropicClient: Anthropic | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY environment variable is not set');
+    }
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
+}
+
+function getAnthropicClient(): Anthropic | null {
+  if (!anthropicClient && process.env.ANTHROPIC_API_KEY) {
+    try {
+      anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    } catch (error) {
+      console.warn('⚠️ Failed to initialize Anthropic client:', error.message);
+      return null;
+    }
+  }
+  return anthropicClient;
+}
 
 // AI Models Configuration
-export type AIModel = 'gpt-4o-mini' | 'gpt-5' | 'claude-sonnet-4';
+export type AIModel = 'gpt-4o-mini' | 'gpt-4o' | 'claude-sonnet-4';
 export type AIProvider = 'openai' | 'anthropic';
 
 interface ModelConfig {
@@ -23,10 +45,10 @@ const MODEL_CONFIGS: Record<AIModel, ModelConfig> = {
     inputCostPer1M: 0.15,
     outputCostPer1M: 0.20
   },
-  'gpt-5': {
+  'gpt-4o': {
     provider: 'openai', 
-    model: 'gpt-5',
-    inputCostPer1M: 1.25,
+    model: 'gpt-4o',
+    inputCostPer1M: 2.50,
     outputCostPer1M: 10.00
   },
   'claude-sonnet-4': {
@@ -201,16 +223,41 @@ export class AIOrchestrator {
     this.requestCount++;
     const requestId = `${taskId}-${this.requestCount}`;
     
-    console.log(`🤖 [${requestId}] Starting AI orchestration with ${config.models.length} model ladder`);
+    // Filter available models based on API keys
+    const availableModels = config.models.filter(model => {
+      const modelConfig = MODEL_CONFIGS[model];
+      if (modelConfig.provider === 'openai') {
+        return !!process.env.OPENAI_API_KEY;
+      } else if (modelConfig.provider === 'anthropic') {
+        return !!process.env.ANTHROPIC_API_KEY;
+      }
+      return false;
+    });
+    
+    if (availableModels.length === 0) {
+      return {
+        success: false,
+        totalCostCents: 0,
+        attempts: 0,
+        escalationPath: [],
+        error: 'No models available - missing API keys'
+      };
+    }
+    
+    console.log(`🤖 [${requestId}] Starting AI orchestration with ${availableModels.length}/${config.models.length} available models`);
     console.log(`🎯 [${requestId}] Budget: $${config.maxBudgetCents / 100}, Confidence threshold: ${config.confidenceThreshold}`);
+    if (availableModels.length < config.models.length) {
+      const unavailableModels = config.models.filter(m => !availableModels.includes(m));
+      console.log(`⚠️ [${requestId}] Skipping models due to missing API keys: ${unavailableModels.join(', ')}`);
+    }
 
     let totalCostCents = 0;
     let attempts = 0;
     const escalationPath: AIModel[] = [];
-    const maxAttempts = config.maxAttempts || config.models.length;
+    const maxAttempts = config.maxAttempts || availableModels.length;
 
-    for (let i = 0; i < Math.min(config.models.length, maxAttempts); i++) {
-      const model = config.models[i];
+    for (let i = 0; i < Math.min(availableModels.length, maxAttempts); i++) {
+      const model = availableModels[i];
       attempts++;
       escalationPath.push(model);
 
@@ -220,10 +267,16 @@ export class AIOrchestrator {
         const response = await this.callModel(model, request, requestId);
         totalCostCents += response.costCents;
 
-        // Check budget constraint
+        // Check budget constraint BEFORE processing
         if (totalCostCents > config.maxBudgetCents) {
           console.log(`💰 [${requestId}] Budget exceeded (${totalCostCents}¢ > ${config.maxBudgetCents}¢), stopping`);
-          break;
+          return {
+            success: false,
+            totalCostCents,
+            attempts,
+            escalationPath,
+            error: `Budget exceeded: $${totalCostCents / 100} > $${config.maxBudgetCents / 100}`
+          };
         }
 
         // Run validation
@@ -273,7 +326,7 @@ export class AIOrchestrator {
         console.error(`❌ [${requestId}] ${model} failed:`, error.message);
         
         // If this is the last attempt, return the error
-        if (i === config.models.length - 1 || attempts >= maxAttempts) {
+        if (i === availableModels.length - 1 || attempts >= maxAttempts) {
           this.trackCost(taskId, totalCostCents);
           return {
             success: false,
@@ -303,6 +356,7 @@ export class AIOrchestrator {
     const startTime = Date.now();
 
     if (config.provider === 'openai') {
+      const openai = getOpenAIClient();
       const completion = await openai.chat.completions.create({
         model: config.model,
         messages: [
@@ -330,6 +384,10 @@ export class AIOrchestrator {
       };
 
     } else if (config.provider === 'anthropic') {
+      const anthropic = getAnthropicClient();
+      if (!anthropic) {
+        throw new Error('Anthropic client not available - missing API key');
+      }
       const completion = await anthropic.messages.create({
         model: config.model,
         max_tokens: request.maxTokens || 2000,
