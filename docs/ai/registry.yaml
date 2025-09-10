@@ -1,0 +1,210 @@
+# MusoBuddy AI Services Registry
+# This file tracks all AI API usage across the platform
+# Update this file whenever adding, removing, or modifying AI services
+
+version: "1.0"
+last_updated: "2025-09-10"
+
+# AI Services Configuration
+services:
+  email_parsing:
+    id: "email-parsing"
+    feature: "Email Parsing & Booking Extraction"
+    file_path: "server/ai/booking-message-parser.ts"
+    runtime: "server"
+    provider: "openai"
+    model: "gpt-4o-mini"
+    endpoint: "chat/completions"
+    parameters:
+      max_tokens: 4000
+      temperature: 0.1
+      response_format: "json_object"
+    triggers:
+      - "Mailgun webhook email processing"
+      - "Widget form submissions"
+      - "Manual reprocessing of unparseable messages"
+    volume_estimate: "50-100 calls/day"
+    env_keys: ["OPENAI_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "$0.15"
+      output_cost_per_1M: "$0.20"
+      typical_input_tokens: 1500
+      typical_output_tokens: 200
+      est_cost_per_call: "$0.0003"
+    owner: "core-backend"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Recently migrated from gpt-5-mini (invalid model) to gpt-4o-mini"
+
+  ai_response_generation:
+    id: "ai-response-generation"
+    feature: "AI Email Response Generation"
+    file_path: "server/core/ai-response-generator.ts"
+    runtime: "server"
+    provider: "openai"
+    model: "gpt-4o-mini"
+    endpoint: "chat/completions"
+    parameters:
+      max_tokens: 1500
+      temperature: 0.7
+      response_format: "json_object"
+    triggers:
+      - "AI Reply button in conversations"
+      - "Generate response from booking forms"
+    volume_estimate: "20-50 calls/day"
+    env_keys: ["OPENAI_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "$0.15"
+      output_cost_per_1M: "$0.20"
+      typical_input_tokens: 2000
+      typical_output_tokens: 500
+      est_cost_per_call: "$0.0004"
+    owner: "core-backend"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Recently migrated from gpt-5-mini to gpt-4o-mini"
+
+  pdf_contract_optimization:
+    id: "pdf-contract-optimization"
+    feature: "Contract PDF Layout Optimization"
+    file_path: "server/core/ai-pdf-optimizer.ts"
+    runtime: "server"
+    provider: "anthropic"
+    model: "claude-sonnet-4-20250514"
+    endpoint: "messages"
+    parameters:
+      max_tokens: 1000
+      temperature: 0.1
+    triggers:
+      - "Contract PDF generation"
+    volume_estimate: "5-15 calls/day"
+    env_keys: ["ANTHROPIC_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "TBD"
+      output_cost_per_1M: "TBD"
+      typical_input_tokens: 3000
+      typical_output_tokens: 300
+      est_cost_per_call: "TBD"
+    owner: "contract-system"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Uses claude-sonnet-4 for contracts, claude-3-5-haiku for invoices - needs consolidation"
+
+  pdf_invoice_optimization:
+    id: "pdf-invoice-optimization"
+    feature: "Invoice PDF Layout Optimization"
+    file_path: "server/core/ai-pdf-optimizer.ts"
+    runtime: "server"
+    provider: "anthropic"
+    model: "claude-3-5-haiku-20241022"
+    endpoint: "messages"
+    parameters:
+      max_tokens: 1000
+      temperature: 0.1
+    triggers:
+      - "Invoice PDF generation"
+    volume_estimate: "10-30 calls/day"
+    env_keys: ["ANTHROPIC_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "TBD"
+      output_cost_per_1M: "TBD"
+      typical_input_tokens: 2000
+      typical_output_tokens: 300
+      est_cost_per_call: "TBD"
+    owner: "invoice-system"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Different model than contract optimization - consolidation opportunity"
+
+  gig_type_generation:
+    id: "gig-type-generation"
+    feature: "AI Gig Type Suggestions"
+    file_path: "server/services/gig-type-generator.ts"
+    runtime: "server"
+    provider: "anthropic"
+    model: "claude-3-5-haiku-20241022"
+    endpoint: "messages"
+    parameters:
+      max_tokens: 500
+      temperature: 0.8
+    triggers:
+      - "Settings page gig type generation"
+    volume_estimate: "1-5 calls/day"
+    env_keys: ["ANTHROPIC_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "TBD"
+      output_cost_per_1M: "TBD"
+      typical_input_tokens: 200
+      typical_output_tokens: 150
+      est_cost_per_call: "TBD"
+    owner: "settings-system"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Low usage creative task - good candidate for optimization"
+
+  event_matching:
+    id: "event-matching"
+    feature: "AI Event/Calendar Matching"
+    file_path: "server/services/ai-event-matcher.ts"
+    runtime: "server"
+    provider: "openai"
+    model: "gpt-4o"
+    endpoint: "chat/completions"
+    parameters:
+      max_tokens: 1000
+      temperature: 0.3
+    triggers:
+      - "Google Calendar sync fallback"
+      - "Uncertain event matching"
+    volume_estimate: "2-10 calls/day"
+    env_keys: ["OPENAI_API_KEY"]
+    cost_profile:
+      input_cost_per_1M: "$5.00"
+      output_cost_per_1M: "$15.00"
+      typical_input_tokens: 1000
+      typical_output_tokens: 200
+      est_cost_per_call: "$0.008"
+    owner: "calendar-integration"
+    last_reviewed: "2025-09-10"
+    status: "active"
+    notes: "Using expensive GPT-4o model - optimization candidate"
+
+# Cost Optimization Targets
+optimization_opportunities:
+  high_priority:
+    - id: "event-matching-model-downgrade"
+      description: "Switch ai-event-matcher from gpt-4o to gpt-4o-mini"
+      potential_savings: "90% cost reduction"
+      complexity: "low"
+    
+    - id: "parsing-tasks-to-nano"
+      description: "Switch email/widget parsing to gpt-5-nano"
+      potential_savings: "70% input cost reduction"
+      complexity: "medium"
+      
+  medium_priority:
+    - id: "pdf-model-consolidation"
+      description: "Standardize PDF optimization to single model"
+      potential_savings: "Operational efficiency"
+      complexity: "low"
+      
+    - id: "anthropic-cost-analysis"
+      description: "Get Anthropic pricing and compare with OpenAI alternatives"
+      potential_savings: "TBD"
+      complexity: "low"
+
+# Current Cost Status
+cost_summary:
+  total_daily_calls_estimate: "88-213"
+  highest_cost_services: ["event_matching", "ai_response_generation", "email_parsing"]
+  optimization_status: "in_progress"
+  last_cost_review: "2025-09-10"
+
+# Change Log
+changelog:
+  - date: "2025-09-10"
+    changes:
+      - "Initial registry creation"
+      - "Migrated email parsing from gpt-5-mini to gpt-4o-mini"
+      - "Migrated AI response generation from gpt-5-mini to gpt-4o-mini"
+    author: "system-optimization"
