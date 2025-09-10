@@ -1,5 +1,5 @@
 # Overview
-MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burden, improve communication, and provide comprehensive financial and logistical management tools tailored for the music industry. The project aims to become a global standard for independent musicians and small-to-medium music enterprises, reducing administrative burden and improving financial and logistical management for musicians.
+MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burden, improve communication, and provide comprehensive financial and logistical management tools tailored for the music industry. The project aims to become a global standard for independent musicians and small-to-medium music enterprises.
 
 # User Preferences
 - Preferred communication style: Simple, everyday language.
@@ -46,12 +46,15 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 # System Architecture
 ## UI/UX Decisions
-- Responsive design adapts to mobile and desktop, prioritizing essential mobile features.
+- Responsive design adapting to mobile and desktop with essential features prioritized for mobile.
 - Streamlined primary actions for bookings and a centralized, tabbed messaging system.
-- Consistent navigation with auto-scrolling to relevant bookings.
-- Simplified email branding and enhanced HTML email templates.
-- Dual client portal system for contract signing and collaborative planning with dynamic server-side rendering and real-time bidirectional sync.
-- Luminance-aware PDF branding for optimal text contrast across themes.
+- Consistent navigation with auto-scrolling to relevant bookings and persistent sorting.
+- Simplified email branding and enhanced HTML email templates with professional styling.
+- Dual client portal system for contract signing and collaborative planning, featuring dynamic server-side rendering and real-time bidirectional data synchronization.
+- Luminance-aware PDF branding ensures optimal text contrast across various themes.
+- Booking card actions are consolidated into "Conversation" as a primary button, with secondary actions in a dropdown.
+- Automated theme saving to database for consistency across PDF generation.
+- Invoice PDFs regenerate automatically on edit to ensure data accuracy for clients.
 
 ## Technical Implementations
 - **Frontend**: React 18 (TypeScript, Vite) with Wouter for routing; Tailwind CSS with shadcn/ui and Radix UI for styling; React Query for state management; React Hook Form with Zod validation.
@@ -59,9 +62,9 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 ## System Design
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display within the total fee.
 - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-bustings.
+- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting. PDF branding adjusts dynamically based on theme luminance.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
