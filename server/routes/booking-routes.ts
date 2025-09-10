@@ -546,6 +546,7 @@ export function registerBookingRoutes(app: Express) {
       
       // Fetch conversation history to get previous message as context
       console.log(`📜 [EXTRACT-DETAILS] Fetching conversation history for booking ${bookingId}...`);
+      console.log(`📜 [EXTRACT-DETAILS] Current message content: ${messageContent.substring(0, 200)}...`);
       
       try {
         // Import storage and cloud storage
@@ -671,10 +672,14 @@ export function registerBookingRoutes(app: Express) {
         if (previousMessageContent) {
           enhancedMessageContent = `PREVIOUS MESSAGE:\n${previousMessageContent}\n\nCURRENT MESSAGE:\n${messageContent}`;
           console.log(`🔗 [EXTRACT-DETAILS] Using enhanced context with previous message`);
+          console.log(`🔗 [EXTRACT-DETAILS] Enhanced content (first 300 chars): ${enhancedMessageContent.substring(0, 300)}...`);
+        } else {
+          console.log(`📜 [EXTRACT-DETAILS] No previous message found, using current message only`);
         }
         
         // Use Claude Haiku to extract booking details from the message with context
         console.log('🤖 Using Claude Haiku for detail extraction with conversation context...');
+        console.log(`🔗 [EXTRACT-DETAILS] Final content length: ${enhancedMessageContent.length} characters`);
         
         const { parseBookingMessage } = await import('../ai/booking-message-parser');
         var parsedData = await parseBookingMessage(
@@ -684,6 +689,8 @@ export function registerBookingRoutes(app: Express) {
           userId,
           null // No subject
         );
+        
+        console.log(`🔍 [EXTRACT-DETAILS] Parsed data fee: ${parsedData.fee}, totalFee: ${parsedData.totalFee}`);
         
       } catch (contextError) {
         console.error(`⚠️ [EXTRACT-DETAILS] Error fetching conversation context:`, contextError);
@@ -698,6 +705,8 @@ export function registerBookingRoutes(app: Express) {
           userId,
           null // No subject
         );
+        
+        console.log(`🔍 [EXTRACT-DETAILS] Fallback parsed data fee: ${parsedData.fee}, totalFee: ${parsedData.totalFee}`);
       }
       
       console.log('✅ Claude Haiku extraction complete:', {
