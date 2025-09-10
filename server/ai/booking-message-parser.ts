@@ -1,4 +1,6 @@
 import OpenAI from 'openai';
+import { aiOrchestrator, AIRequest, TaskConfig } from '../services/ai-orchestrator';
+import { ValidatorFactory, ScorerFactory } from '../services/ai-validators';
 // API usage tracking removed - unlimited AI usage for all users
 
 // Helper function to enrich venue data using Google Places API
@@ -173,65 +175,69 @@ JSON:`;
     console.log('🤖 GPT-5 mini: System prompt length:', systemPrompt.length);
     console.log('🤖 GPT-5 mini: User prompt:', userPrompt);
 
-    // AI usage limits removed - unlimited AI usage for all users
+    // Prepare AI request for orchestrator
+    const aiRequest: AIRequest = {
+      systemPrompt,
+      userPrompt,
+      maxTokens: 4000,
+      temperature: 0.1,
+      responseFormat: 'json_object'
+    };
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
+    const taskConfig: TaskConfig = {
+      models: ['gpt-4o-mini', 'gpt-5', 'claude-sonnet-4'],
+      confidenceThreshold: 0.75, // Escalate if confidence < 75%
+      maxBudgetCents: 50, // Max 50 cents per email parsing (generous budget)
+      validators: [
+        ValidatorFactory.createBookingParser() // Validates JSON structure and required fields
+      ],
+      scorer: ScorerFactory.createBookingParserScorer() // Confidence scoring based on extracted fields
+    };
 
+    console.log('🤖 [AI ORCHESTRATOR] Starting email parsing with escalation system...');
     const startTime = Date.now();
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Cost-effective OpenAI model for parsing - much cheaper than GPT-4
-      max_tokens: 4000,
-      temperature: 0.1, // Lower temperature for more consistent JSON parsing
-      response_format: { type: "json_object" },
-      messages: [
-        { 
-          role: 'system', 
-          content: systemPrompt 
-        },
-        { 
-          role: 'user', 
-          content: userPrompt 
-        }
-      ]
-    });
     
+    // Use AI orchestrator for intelligent escalation
+    const orchestrationResult = await aiOrchestrator.runTask('email-parsing', aiRequest, taskConfig);
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.choices[0]?.message?.content;
-    const usage = response.usage;
-    
-    console.log('🔍 GPT-5 mini TOKEN USAGE:', {
-      inputTokens: usage?.prompt_tokens || 0,
-      outputTokens: usage?.completion_tokens || 0,
-      totalTokens: usage?.total_tokens || 0
-    });
-    
-    if (!rawContent || rawContent.trim().length === 0) {
-      console.error('❌ GPT-5 mini EMPTY RESPONSE - Token Analysis:', {
-        maxAllowed: 4000,
-        inputUsed: usage?.prompt_tokens || 0,
-        outputUsed: usage?.completion_tokens || 0,
-        hasContent: !!rawContent,
-        contentLength: rawContent?.length || 0
-      });
-      throw new Error('GPT-5 mini returned empty response - likely token exhaustion');
+    if (!orchestrationResult.success || !orchestrationResult.response) {
+      console.error('❌ [AI ORCHESTRATOR] All models failed for email parsing:', orchestrationResult.error);
+      console.error('❌ Escalation path:', orchestrationResult.escalationPath);
+      console.error('❌ Total cost:', `${orchestrationResult.totalCostCents}¢`);
+      throw new Error(`AI orchestrator failed: ${orchestrationResult.error}`);
     }
 
-    console.log('🤖 GPT-5 mini raw response:', rawContent);
-    console.log('🤖 GPT-5 mini response time:', `${responseTime}ms`);
+    const aiResponse = orchestrationResult.response;
+    const rawContent = aiResponse.content;
+
+    console.log('🎯 [AI ORCHESTRATOR] Success with', aiResponse.model, 'in', orchestrationResult.attempts, 'attempts');
+    console.log('🔍 [AI ORCHESTRATOR] TOKEN USAGE:', {
+      model: aiResponse.model,
+      inputTokens: aiResponse.inputTokens,
+      outputTokens: aiResponse.outputTokens,
+      confidence: aiResponse.confidence,
+      costCents: orchestrationResult.totalCostCents
+    });
+    console.log('🤖 [AI ORCHESTRATOR] Response time:', `${responseTime}ms`);
     
+    if (!rawContent || rawContent.trim().length === 0) {
+      console.error('❌ [AI ORCHESTRATOR] EMPTY RESPONSE from', aiResponse.model);
+      throw new Error(`AI orchestrator returned empty response from ${aiResponse.model}`);
+    }
+
     // CRITICAL DEBUG: Log exactly what we sent and received
-    console.log('🚨 [CRITICAL DEBUG] GPT-5 mini CALL:', {
-      systemPrompt: systemPrompt.substring(0, 200),
-      userPrompt: userPrompt,
+    console.log('🚨 [CRITICAL DEBUG] AI ORCHESTRATOR RESULT:', {
+      finalModel: aiResponse.model,
+      escalationPath: orchestrationResult.escalationPath,
+      confidence: aiResponse.confidence,
       rawResponse: rawContent,
       responseLength: rawContent.length
     });
     
     // Log input vs output for debugging
-    console.log('🔍 [GPT-5 mini DEBUG] Input Analysis:', {
+    console.log('🔍 [AI ORCHESTRATOR DEBUG] Input Analysis:', {
       fromField: clientContact,
       bodyPreview: messageText.substring(0, 150) + '...',
       hasSignature: messageText.toLowerCase().includes('regards') || messageText.toLowerCase().includes('sincerely'),
@@ -247,30 +253,34 @@ JSON:`;
     try {
       parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('❌ GPT-5 mini JSON parse error:', parseError);
+      console.error('❌ [AI ORCHESTRATOR] JSON parse error from', aiResponse.model, ':', parseError);
       console.error('❌ Raw response:', rawContent);
       console.error('❌ Cleaned content:', jsonContent);
-      throw new Error('GPT-5 mini returned invalid JSON - sending to review queue');
+      throw new Error(`AI orchestrator returned invalid JSON from ${aiResponse.model} - sending to review queue`);
     }
     
-    // Log what GPT-5 mini extracted
-    console.log('🔍 [GPT-5 mini DEBUG] Extracted Data:', {
+    // Log what the AI extracted
+    console.log('🔍 [AI ORCHESTRATOR DEBUG] Extracted Data:', {
+      finalModel: aiResponse.model,
       clientName: parsed.clientName,
       fromFieldName: clientContact ? clientContact.split('<')[0].trim() : null,
       nameMatch: parsed.clientName === (clientContact ? clientContact.split('<')[0].trim() : null),
       eventDate: parsed.eventDate,
-      confidence: parsed.confidence,
+      confidence: aiResponse.confidence,
+      escalationPath: orchestrationResult.escalationPath,
+      totalCost: `${orchestrationResult.totalCostCents}¢`,
       fullParsedObject: parsed
     });
     
     // CRITICAL: Log if date is missing
     if (!parsed.eventDate) {
-      console.log('❌❌❌ GPT-5 mini FAILED TO EXTRACT DATE FROM:', messageText);
-      console.log('❌❌❌ GPT-5 mini RETURNED:', JSON.stringify(parsed));
+      console.log('❌❌❌ [AI ORCHESTRATOR] FAILED TO EXTRACT DATE FROM:', messageText);
+      console.log('❌❌❌ [AI ORCHESTRATOR] FINAL MODEL:', aiResponse.model);
+      console.log('❌❌❌ [AI ORCHESTRATOR] RETURNED:', JSON.stringify(parsed));
     }
     
-    // POST-PROCESSING VALIDATION: Fix common GPT-5 mini mistakes
-    // 1. Check if GPT-5 mini incorrectly used the From field as client name
+    // POST-PROCESSING VALIDATION: Fix common AI mistakes
+    // 1. Check if AI incorrectly used the From field as client name
     const fromFieldName = clientContact ? clientContact.split('<')[0].trim() : null;
     if (parsed.clientName === fromFieldName && messageText) {
       // Look for actual signature in email body
@@ -286,7 +296,7 @@ JSON:`;
           const extractedName = match[1].trim();
           // Make sure it's not "Dear X" or "Hi X"
           if (!messageText.includes(`Dear ${extractedName}`) && !messageText.includes(`Hi ${extractedName}`)) {
-            console.log('🔧 [POST-PROCESS] Correcting client name from signature:', extractedName);
+            console.log('🔧 [POST-PROCESS] Correcting client name from signature:', extractedName, '(via', aiResponse.model + ')');
             parsed.clientName = extractedName;
             break;
           }
@@ -296,7 +306,7 @@ JSON:`;
     
     // 2. Last-chance date extraction before sending to review
     if (!parsed.eventDate && messageText) {
-      console.log('🔧 [POST-PROCESS] GPT-5 mini missed date, attempting extraction from:', messageText);
+      console.log('🔧 [POST-PROCESS]', aiResponse.model, 'missed date, attempting extraction from:', messageText);
       
       const months: Record<string, number> = {
         january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
@@ -494,7 +504,7 @@ JSON:`;
       }
     }
 
-    console.log('🎯 GPT-5 mini: Parsed booking data:', {
+    console.log('🎯 [AI ORCHESTRATOR] Final parsed booking data (via', aiResponse.model + '):', {
       ...cleanedData,
       message: `${messageText.substring(0, 100)}...`
     });
@@ -502,7 +512,7 @@ JSON:`;
     return cleanedData;
 
   } catch (error: any) {
-    console.error('❌ GPT-5 mini booking parse error:', error);
+    console.error('❌ [AI ORCHESTRATOR] Booking parse error:', error);
     
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
