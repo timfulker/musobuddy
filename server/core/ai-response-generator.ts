@@ -1,21 +1,21 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-// Initialize Anthropic client with better error handling
-const initializeAnthropic = () => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+// Initialize OpenAI client with better error handling
+const initializeOpenAI = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.error('❌ ANTHROPIC_API_KEY environment variable is not set');
-    throw new Error('Anthropic API key is not configured');
+    console.error('❌ OPENAI_API_KEY environment variable is not set');
+    throw new Error('OpenAI API key is not configured');
   }
   
   if (apiKey.length < 10) {
-    console.error('❌ ANTHROPIC_API_KEY appears to be invalid (too short)');
-    throw new Error('Anthropic API key appears to be invalid');
+    console.error('❌ OPENAI_API_KEY appears to be invalid (too short)');
+    throw new Error('OpenAI API key appears to be invalid');
   }
   
-  console.log('✅ Anthropic API key found and appears valid - using Claude for cost efficiency');
-  return new Anthropic({ 
+  console.log('✅ OpenAI API key found and appears valid - using GPT-5 mini for cost efficiency');
+  return new OpenAI({ 
     apiKey,
     timeout: 30000, // 30 second timeout at client level
     maxRetries: 1 // Reduced from 2 to limit cost exposure
@@ -87,13 +87,13 @@ interface AIResponseRequest {
 }
 
 export class AIResponseGenerator {
-  private anthropic: Anthropic | null = null;
+  private openai: OpenAI | null = null;
   
-  private getAnthropicClient(): Anthropic {
-    if (!this.anthropic) {
-      this.anthropic = initializeAnthropic();
+  private getOpenAIClient(): OpenAI {
+    if (!this.openai) {
+      this.openai = initializeOpenAI();
     }
-    return this.anthropic;
+    return this.openai;
   }
   
   async generateEmailResponse(request: AIResponseRequest): Promise<{
@@ -114,7 +114,7 @@ export class AIResponseGenerator {
     });
     
     try {
-      const anthropic = this.getAnthropicClient();
+      const openai = this.getOpenAIClient();
       
       const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo, clientHistory);
@@ -122,24 +122,25 @@ export class AIResponseGenerator {
       console.log('🤖 System prompt length:', systemPrompt.length);
       console.log('🤖 User prompt length:', userPrompt.length);
       
-      console.log('🤖 Making Claude API call with Sonnet 4 for superior quality...');
+      console.log('🤖 Making GPT-5 mini API call for cost efficiency...');
       
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
+      const response = await openai.chat.completions.create({
+        model: "gpt-5-mini", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
         max_tokens: 1500,
         temperature: 0.7,
-        system: systemPrompt,
+        response_format: { type: "json_object" },
         messages: [
+          { role: "system", content: systemPrompt },
           { role: "user", content: `${userPrompt}\n\nPlease respond with valid JSON format only.` }
         ]
       });
 
-      console.log('✅ Claude API response received');
+      console.log('✅ GPT-5 mini API response received');
       console.log('🤖 Response usage:', response.usage);
       
-      const content = response.content[0]?.text;
+      const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error('No content received from Claude API');
+        throw new Error('No content received from GPT-5 mini API');
       }
       
       console.log('🤖 Raw response content length:', content.length);
@@ -148,7 +149,7 @@ export class AIResponseGenerator {
       try {
         result = JSON.parse(content);
       } catch (parseError) {
-        console.error('❌ Failed to parse Claude response as JSON:', content);
+        console.error('❌ Failed to parse GPT-5 mini response as JSON:', content);
         throw new Error('Invalid JSON response from AI service');
       }
       
@@ -649,7 +650,7 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     body: string;
   }>> {
     try {
-      const anthropic = this.getAnthropicClient();
+      const openai = this.getOpenAIClient();
       
       const systemPrompt = `You are an expert at creating professional email template variations. Create ${count} variations of the provided template with different tones and approaches while maintaining the core message.
 
@@ -680,19 +681,20 @@ Generate variations with different approaches while keeping the essential messag
 
 Please respond with valid JSON format only.`;
 
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022", 
+      const response = await openai.chat.completions.create({
+        model: "gpt-5-mini", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
         max_tokens: 1500,
         temperature: 0.8,
-        system: systemPrompt,
+        response_format: { type: "json_object" },
         messages: [
+          { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ]
       });
 
-      const content = response.content[0]?.text;
+      const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error('No content received from Claude API');
+        throw new Error('No content received from GPT-5 mini API');
       }
 
       const result = JSON.parse(content);
