@@ -14,7 +14,7 @@ const initializeOpenAI = () => {
     throw new Error('OpenAI API key appears to be invalid');
   }
   
-  console.log('✅ OpenAI API key found and appears valid - using GPT-5 mini for cost efficiency');
+  console.log('✅ OpenAI API key found and appears valid - using GPT-5 mini for cost efficiency [FORCE RELOAD]');
   return new OpenAI({ 
     apiKey,
     timeout: 30000, // 30 second timeout at client level
