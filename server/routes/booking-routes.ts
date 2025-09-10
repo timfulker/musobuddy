@@ -544,59 +544,57 @@ export function registerBookingRoutes(app: Express) {
         return res.status(400).json({ error: 'Message content is required' });
       }
       
-      // Use OpenAI to extract booking details from the message
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        console.error('❌ OPENAI_API_KEY is missing from environment variables');
-        return res.status(500).json({ error: 'OpenAI API key not configured' });
-      }
+      // Use Claude Haiku to extract booking details from the message
+      console.log('🤖 Using Claude Haiku for detail extraction...');
       
-      console.log('🔑 Using OpenAI API key:', apiKey.substring(0, 10) + '...');
-      const openai = new OpenAI({ apiKey });
+      const { parseBookingMessage } = await import('../ai/booking-message-parser');
+      const parsedData = await parseBookingMessage(
+        messageContent,
+        null, // No clientContact for extract details
+        null, // No clientAddress
+        userId,
+        null // No subject
+      );
       
-      const prompt = `Extract booking details from the following client message. Return a JSON object with any of these fields that can be found in the message:
-      - clientName: Full name of the client
-      - clientEmail: Email address 
-      - clientPhone: Phone number
-      - clientAddress: Client's address
-      - venue: Name of the venue
-      - venueAddress: Full address of the venue
-      - eventDate: Date of the event (format as YYYY-MM-DD)
-      - eventTime: Start time of the event (format as HH:MM)
-      - eventEndTime: End time of the event (format as HH:MM)
-      - eventType: Type of event (wedding, birthday, corporate, etc.)
-      - totalFee: Total fee amount client agreed to pay (numeric value only) - this is the complete amount including all costs
-      - deposit: Deposit amount (numeric value only)
-      - notes: Any additional notes or requirements
-      - performanceDuration: How long the performance should be (use exact format: "30 minutes", "1 hour", "2 hours", "2 x 45 min sets", etc.)
-      - guestCount: Number of guests expected
-      - clientConfirmsBooking: boolean - Set to true if the message contains phrases like "we'd like to confirm", "we confirm", "we accept", "we'd like to book", "please go ahead", "sounds perfect", "that works for us", "we're happy to proceed", "we agree", "let's proceed", "we'd like to move forward", etc. indicating the client is confirming the booking
-      
-      Only include fields where information is clearly stated. Return null for fields not mentioned.
-      
-      Message:
-      ${messageContent}`;
-      
-      const response = await openai.chat.completions.create({
-        model: "gpt-5", // As you originally had it
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        temperature: 1, // GPT-5 only supports default temperature
+      console.log('✅ Claude Haiku extraction complete:', {
+        hasEventDate: !!parsedData.eventDate,
+        hasClientName: !!parsedData.clientName,
+        hasVenue: !!parsedData.venue,
+        confidence: parsedData.confidence
       });
       
-      // Safer extraction with proper error handling
-      const content = response?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('OpenAI returned empty or invalid response');
-      }
-      
-      let extractedDetails;
-      try {
-        extractedDetails = JSON.parse(content);
-      } catch (parseError) {
-        console.error('❌ Failed to parse OpenAI JSON response:', content);
-        throw new Error(`Invalid JSON response from OpenAI: ${parseError.message}`);
-      }
+      // Convert parsed data to the format expected by the frontend
+      let extractedDetails = {
+        clientName: parsedData.clientName,
+        clientEmail: parsedData.clientEmail,
+        clientPhone: parsedData.clientPhone,
+        clientAddress: parsedData.clientAddress,
+        venue: parsedData.venue,
+        venueAddress: parsedData.venueAddress,
+        eventDate: parsedData.eventDate,
+        eventTime: parsedData.eventTime,
+        eventEndTime: parsedData.eventEndTime,
+        eventType: parsedData.eventType,
+        totalFee: parsedData.fee, // Map 'fee' to 'totalFee'
+        deposit: parsedData.deposit,
+        notes: parsedData.specialRequirements,
+        performanceDuration: parsedData.performanceDuration,
+        guestCount: parsedData.guestCount,
+        // Add clientConfirmsBooking logic
+        clientConfirmsBooking: messageContent && (
+          messageContent.toLowerCase().includes("we'd like to confirm") ||
+          messageContent.toLowerCase().includes("we confirm") ||
+          messageContent.toLowerCase().includes("we accept") ||
+          messageContent.toLowerCase().includes("we'd like to book") ||
+          messageContent.toLowerCase().includes("please go ahead") ||
+          messageContent.toLowerCase().includes("sounds perfect") ||
+          messageContent.toLowerCase().includes("that works for us") ||
+          messageContent.toLowerCase().includes("we're happy to proceed") ||
+          messageContent.toLowerCase().includes("we agree") ||
+          messageContent.toLowerCase().includes("let's proceed") ||
+          messageContent.toLowerCase().includes("we'd like to move forward")
+        )
+      };
       
       // Clean up the extracted data
       const cleanedDetails: any = {};
@@ -703,11 +701,11 @@ export function registerBookingRoutes(app: Express) {
       
       // More specific error messages
       if (error.response?.status === 401) {
-        res.status(500).json({ error: 'OpenAI authentication failed - API key may be invalid' });
+        res.status(500).json({ error: 'Claude Haiku authentication failed - API key may be invalid' });
       } else if (error.response?.status === 429) {
-        res.status(500).json({ error: 'OpenAI rate limit exceeded - please try again later' });
+        res.status(500).json({ error: 'Claude Haiku rate limit exceeded - please try again later' });
       } else if (error.message?.includes('API key')) {
-        res.status(500).json({ error: 'OpenAI API key issue - please check configuration' });
+        res.status(500).json({ error: 'Claude Haiku API key issue - please check configuration' });
       } else {
         res.status(500).json({ 
           error: 'Failed to extract details from message',
