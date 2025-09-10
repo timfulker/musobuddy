@@ -83,7 +83,7 @@ class AIPDFOptimizer {
       
       const response = await this.anthropic.messages.create({
         // Using Haiku for cost efficiency on layout optimization
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 800,
         temperature: 0.1,
         system: `You are a PDF layout optimizer. Analyze contract content and suggest CSS adjustments to prevent awkward page breaks and optimize layout. 
