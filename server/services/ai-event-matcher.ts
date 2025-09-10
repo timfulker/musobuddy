@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { aiOrchestrator, AIRequest, TaskConfig } from './ai-orchestrator';
+import { ValidatorFactory, ScorerFactory } from './ai-validators';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -80,7 +82,7 @@ export class AIEventMatcher {
     };
   }
 
-  // Get AI analysis of event match
+  // Get AI analysis of event match with orchestrator escalation
   private async getAIMatchAnalysis(comparisonData: any): Promise<EventMatchResult> {
     const prompt = `You are an expert at matching calendar events. Compare these two events and determine if they represent the same booking:
 
@@ -117,28 +119,59 @@ Respond with JSON in this exact format:
   "matchScore": number (0.0 to 1.0)
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Cost-optimized model for event matching
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert calendar event matching system. Analyze events carefully and return accurate match assessments in JSON format."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+    const systemPrompt = "You are an expert calendar event matching system. Analyze events carefully and return accurate match assessments in JSON format.";
+    
+    // Prepare AI request for orchestrator
+    const aiRequest: AIRequest = {
+      systemPrompt,
+      userPrompt: prompt,
+      maxTokens: 500,
+      temperature: 0.1,
+      responseFormat: 'json_object'
+    };
+
+    // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
+    const taskConfig: TaskConfig = {
+      models: ['gpt-4o-mini', 'gpt-5', 'claude-sonnet-4'],
+      confidenceThreshold: 0.80, // Escalate if confidence < 80% for event matching
+      maxBudgetCents: 10, // Max 10 cents per event matching (conservative budget)
+      validators: [
+        ValidatorFactory.createEventMatcher() // Validates JSON and required fields
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.1 // Low temperature for consistent results
+      scorer: ScorerFactory.createEventMatcherScorer() // Confidence scoring
+    };
+
+    console.log('🎯 [AI ORCHESTRATOR] Starting event matching with escalation system...');
+    
+    // Use AI orchestrator for intelligent escalation
+    const orchestrationResult = await aiOrchestrator.runTask('event-matching', aiRequest, taskConfig);
+
+    if (!orchestrationResult.success || !orchestrationResult.response) {
+      console.error('❌ [AI ORCHESTRATOR] All models failed for event matching:', orchestrationResult.error);
+      console.error('❌ Escalation path:', orchestrationResult.escalationPath);
+      console.error('❌ Total cost:', `${orchestrationResult.totalCostCents}¢`);
+      throw new Error(`AI orchestrator failed: ${orchestrationResult.error}`);
+    }
+
+    const aiResponse = orchestrationResult.response;
+    const content = aiResponse.content;
+
+    console.log('✅ [AI ORCHESTRATOR] Event matching success with', aiResponse.model, 'in', orchestrationResult.attempts, 'attempts');
+    console.log('🎯 [AI ORCHESTRATOR] EVENT MATCHING STATS:', {
+      model: aiResponse.model,
+      inputTokens: aiResponse.inputTokens,
+      outputTokens: aiResponse.outputTokens,
+      confidence: aiResponse.confidence,
+      costCents: orchestrationResult.totalCostCents,
+      escalationPath: orchestrationResult.escalationPath
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(content);
     
     return {
       isMatch: result.isMatch,
       confidence: Math.max(0, Math.min(1, result.confidence)),
-      reasoning: result.reasoning,
+      reasoning: `${result.reasoning} (via ${aiResponse.model})`,
       matchScore: Math.max(0, Math.min(1, result.matchScore))
     };
   }
@@ -218,15 +251,15 @@ Respond with JSON in this exact format:
     return summary.toLowerCase().includes(clientName.toLowerCase());
   }
 
-  // Cost estimation for AI usage
+  // Cost estimation for AI usage (updated for orchestrator)
   estimateAICost(uncertainMatches: number): { estimatedCost: number; maxCost: number } {
-    // GPT-4o mini pricing: $0.15 per 1M input tokens, $0.20 per 1M output tokens
-    // Each comparison: ~800 input tokens, ~150 output tokens = ~$0.00015 per call
-    const costPerComparison = 0.00015;
+    // With orchestrator: 90%+ requests stay on GPT-4o mini (~$0.00015), 5-10% escalate
+    // Conservative estimate assuming 20% escalation rate
+    const avgCostPerComparison = 0.0003; // Slightly higher due to potential escalation
     
     return {
-      estimatedCost: uncertainMatches * costPerComparison,
-      maxCost: uncertainMatches * costPerComparison * 1.2 // 20% buffer
+      estimatedCost: uncertainMatches * avgCostPerComparison,
+      maxCost: uncertainMatches * 0.10 // 10 cents max per comparison (orchestrator budget limit)
     };
   }
 

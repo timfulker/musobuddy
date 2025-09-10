@@ -108,7 +108,7 @@ export class AIValidators {
   static minimumLength(minLength: number) {
     return (result: any): { valid: boolean; errors?: string[] } => {
       if (!result.content || result.content.length < minLength) {
-        return { valid: false, errors: [`Response too short (${result.content?.length || 0} < ${minLength})`) };
+        return { valid: false, errors: [`Response too short (${result.content?.length || 0} < ${minLength})`] };
       }
       return { valid: true };
     };
