@@ -118,7 +118,7 @@ Respond with JSON in this exact format:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini", // Cost-optimized model for event matching
       messages: [
         {
           role: "system",
@@ -220,9 +220,9 @@ Respond with JSON in this exact format:
 
   // Cost estimation for AI usage
   estimateAICost(uncertainMatches: number): { estimatedCost: number; maxCost: number } {
-    // GPT-4o pricing: ~$0.03 per 1K input tokens, ~$0.06 per 1K output tokens
-    // Each comparison: ~800 input tokens, ~150 output tokens = ~$0.033 per call
-    const costPerComparison = 0.035;
+    // GPT-4o mini pricing: $0.15 per 1M input tokens, $0.20 per 1M output tokens
+    // Each comparison: ~800 input tokens, ~150 output tokens = ~$0.00015 per call
+    const costPerComparison = 0.00015;
     
     return {
       estimatedCost: uncertainMatches * costPerComparison,

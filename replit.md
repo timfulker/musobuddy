@@ -1,5 +1,5 @@
 # Overview
-MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, such as bookings, contracts, and invoicing. Its primary goal is to reduce administrative burden, enhance communication, and provide comprehensive financial and logistical management tools tailored for the music industry. The project aims to become a global standard for independent musicians and small-to-medium music enterprises, addressing logistical and financial challenges with significant market potential.
+MusoBuddy is a platform designed to centralize and automate administrative tasks for musicians, including bookings, contracts, and invoicing. Its primary purpose is to reduce administrative burden, improve communication, and provide comprehensive financial and logistical management tools tailored for the music industry. The project aims to become a global standard for independent musicians and small-to-medium music enterprises.
 
 # User Preferences
 - Preferred communication style: Simple, everyday language.
@@ -46,7 +46,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 # System Architecture
 ## UI/UX Decisions
-- Responsive design adapting to mobile and desktop, prioritizing essential features for mobile.
+- Responsive design adapts to mobile and desktop, prioritizing essential mobile features.
 - Streamlined primary actions for bookings and a centralized, tabbed messaging system.
 - Consistent navigation with auto-scrolling to relevant bookings.
 - Simplified email branding and enhanced HTML email templates.
@@ -59,7 +59,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 ## System Design
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses simplified into a single performance fee display.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, sort persistence, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee display.
 - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
 - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms with cache-busting.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
