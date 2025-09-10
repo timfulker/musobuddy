@@ -544,17 +544,161 @@ export function registerBookingRoutes(app: Express) {
         return res.status(400).json({ error: 'Message content is required' });
       }
       
-      // Use Claude Haiku to extract booking details from the message
-      console.log('🤖 Using Claude Haiku for detail extraction...');
+      // Fetch conversation history to get previous message as context
+      console.log(`📜 [EXTRACT-DETAILS] Fetching conversation history for booking ${bookingId}...`);
       
-      const { parseBookingMessage } = await import('../ai/booking-message-parser');
-      const parsedData = await parseBookingMessage(
-        messageContent,
-        null, // No clientContact for extract details
-        null, // No clientAddress
-        userId,
-        null // No subject
-      );
+      try {
+        // Import storage and cloud storage
+        const { storage } = await import('../core/storage');
+        const { downloadFile } = await import('../core/cloud-storage');
+        
+        // Get ALL message notifications for this booking
+        const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
+        
+        // Also get communications from clientCommunications table (outbound messages)  
+        const { db, clientCommunications, and, eq } = await import('../core/storage');
+        const communications = await db
+          .select()
+          .from(clientCommunications)
+          .where(and(
+            eq(clientCommunications.userId, userId),
+            eq(clientCommunications.bookingId, bookingId)
+          ))
+          .orderBy(clientCommunications.sentAt);
+
+        const allMessages: any[] = [];
+        
+        // Process incoming messages
+        for (const msg of bookingMessages) {
+          try {
+            const downloadResult = await downloadFile(msg.messageUrl);
+            let content = 'Message content unavailable';
+            
+            if (downloadResult.success && downloadResult.content) {
+              // Extract text content from HTML (simplified version)
+              let rawText = downloadResult.content
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/\s+/g, ' ')
+                .trim();
+              
+              // Basic content extraction - just get first meaningful paragraph
+              const lines = rawText.split(/\n+/);
+              const meaningfulLines = [];
+              
+              for (const line of lines) {
+                const cleanLine = line.trim();
+                if (cleanLine && 
+                    !cleanLine.startsWith('>') && 
+                    !cleanLine.startsWith('From:') &&
+                    !cleanLine.startsWith('Subject:') &&
+                    !cleanLine.startsWith('Date:') &&
+                    !cleanLine.startsWith('On ') &&
+                    !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
+                    cleanLine.length > 3) {
+                  meaningfulLines.push(cleanLine);
+                }
+                if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
+                  break;
+                }
+              }
+              
+              content = meaningfulLines.length > 0 ? meaningfulLines.join('\n\n') : rawText.substring(0, 500);
+            }
+            
+            allMessages.push({
+              content,
+              timestamp: new Date(msg.receivedAt),
+              type: 'incoming',
+              fromEmail: msg.senderEmail
+            });
+          } catch (error) {
+            console.error(`❌ Error processing message ${msg.id}:`, error);
+          }
+        }
+        
+        // Process outbound messages
+        for (const comm of communications) {
+          let content = comm.messageContent || 'Message content unavailable';
+          
+          // If content is stored in R2, download it
+          if (comm.messageContentUrl) {
+            try {
+              const downloadResult = await downloadFile(comm.messageContentUrl);
+              if (downloadResult.success && downloadResult.content) {
+                content = downloadResult.content;
+              }
+            } catch (error) {
+              console.error(`❌ Error downloading communication content:`, error);
+            }
+          }
+          
+          allMessages.push({
+            content,
+            timestamp: new Date(comm.sentAt),
+            type: 'outgoing',
+            fromEmail: 'performer'
+          });
+        }
+        
+        // Sort all messages by timestamp
+        allMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        
+        // Find the previous message by looking for the message before the current one
+        let previousMessageContent = null;
+        const currentMessageIndex = allMessages.findIndex(msg => 
+          msg.content.includes(messageContent.substring(0, Math.min(50, messageContent.length)))
+        );
+        
+        if (currentMessageIndex > 0) {
+          previousMessageContent = allMessages[currentMessageIndex - 1].content;
+          console.log(`📜 [EXTRACT-DETAILS] Found previous message: ${previousMessageContent.substring(0, 100)}...`);
+        } else {
+          console.log(`📜 [EXTRACT-DETAILS] No previous message found in conversation`);
+        }
+        
+        // Prepare enhanced context for AI
+        let enhancedMessageContent = messageContent;
+        if (previousMessageContent) {
+          enhancedMessageContent = `PREVIOUS MESSAGE:\n${previousMessageContent}\n\nCURRENT MESSAGE:\n${messageContent}`;
+          console.log(`🔗 [EXTRACT-DETAILS] Using enhanced context with previous message`);
+        }
+        
+        // Use Claude Haiku to extract booking details from the message with context
+        console.log('🤖 Using Claude Haiku for detail extraction with conversation context...');
+        
+        const { parseBookingMessage } = await import('../ai/booking-message-parser');
+        var parsedData = await parseBookingMessage(
+          enhancedMessageContent,
+          null, // No clientContact for extract details
+          null, // No clientAddress
+          userId,
+          null // No subject
+        );
+        
+      } catch (contextError) {
+        console.error(`⚠️ [EXTRACT-DETAILS] Error fetching conversation context:`, contextError);
+        console.log(`🤖 [EXTRACT-DETAILS] Falling back to single message parsing...`);
+        
+        // Fallback to original single-message parsing
+        const { parseBookingMessage } = await import('../ai/booking-message-parser');
+        var parsedData = await parseBookingMessage(
+          messageContent,
+          null, // No clientContact for extract details
+          null, // No clientAddress
+          userId,
+          null // No subject
+        );
+      }
       
       console.log('✅ Claude Haiku extraction complete:', {
         hasEventDate: !!parsedData.eventDate,
