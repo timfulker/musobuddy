@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 // API usage tracking removed - unlimited AI usage for all users
 
 // Helper function to enrich venue data using Google Places API
@@ -169,32 +169,37 @@ FEE EXTRACTION RULES:
 EMAIL: ${messageText}
 JSON:`;
 
-    console.log('🤖 Claude Haiku: Current date context provided:', currentDate);
-    console.log('🤖 Claude Haiku: System prompt length:', systemPrompt.length);
-    console.log('🤖 Claude Haiku: User prompt:', userPrompt);
+    console.log('🤖 GPT-5 mini: Current date context provided:', currentDate);
+    console.log('🤖 GPT-5 mini: System prompt length:', systemPrompt.length);
+    console.log('🤖 GPT-5 mini: User prompt:', userPrompt);
 
     // AI usage limits removed - unlimited AI usage for all users
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const startTime = Date.now();
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-mini', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       max_tokens: 4000,
       temperature: 0.1, // Lower temperature for more consistent JSON parsing
+      response_format: { type: "json_object" },
       messages: [
         { 
+          role: 'system', 
+          content: systemPrompt 
+        },
+        { 
           role: 'user', 
-          content: `${systemPrompt}\n\n${userPrompt}` 
+          content: userPrompt 
         }
       ]
     });
     
     const responseTime = Date.now() - startTime;
 
-    const rawContent = response.content[0]?.text;
+    const rawContent = response.choices[0]?.message?.content;
     const usage = response.usage;
     
     console.log('🔍 Claude Haiku TOKEN USAGE:', {
