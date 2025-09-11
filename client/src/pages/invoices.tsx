@@ -40,6 +40,8 @@ const invoiceFormSchema = z.object({
   depositPaid: z.string().optional(),
   performanceDuration: z.string().optional(), // Performance duration from booking
   gigType: z.string().optional(), // Gig type from booking
+  invoiceType: z.string().default("performance"), // performance | ad_hoc
+  description: z.string().optional(), // Description for ad-hoc invoices
 });
 
 export default function Invoices() {
@@ -94,6 +96,8 @@ export default function Invoices() {
       depositPaid: "",
       performanceDuration: "", // Performance duration from booking
       gigType: "", // Gig type from booking
+      invoiceType: "performance", // Default to performance invoice
+      description: "", // Empty description initially
     },
   });
 
@@ -543,6 +547,8 @@ export default function Invoices() {
       depositPaid: data.depositPaid?.trim() || null,
       performanceDuration: data.performanceDuration?.trim() || null, // Include performance duration
       gigType: data.gigType?.trim() || null, // Include gig type
+      invoiceType: data.invoiceType || "performance", // Include invoice type
+      description: data.description?.trim() || null, // Include description for ad-hoc invoices
     };
     
     
@@ -1110,6 +1116,51 @@ export default function Invoices() {
                           </FormItem>
                         )}
                       />
+                    </div>
+
+                    {/* Invoice Type Toggle */}
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <FormField
+                        control={form.control}
+                        name="invoiceType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Invoice Type</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select invoice type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="performance">Performance Invoice</SelectItem>
+                                <SelectItem value="ad_hoc">Ad-hoc Invoice</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {form.watch("invoiceType") === "ad_hoc" && (
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem className="mt-4">
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="e.g., Administrative costs for band members, Equipment rental, Travel expenses..." 
+                                  {...field} 
+                                  rows={3}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
 
                     <FormField

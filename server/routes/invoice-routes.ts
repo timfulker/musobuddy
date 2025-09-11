@@ -183,7 +183,9 @@ export function registerInvoiceRoutes(app: Express) {
         dueDate: new Date(req.body.dueDate),
         status: req.body.status || 'draft',
         performanceDuration: req.body.performanceDuration || null,
-        gigType: req.body.gigType || null
+        gigType: req.body.gigType || null,
+        invoiceType: req.body.invoiceType || 'performance',
+        description: req.body.description || null
       };
       
       const newInvoice = await storage.createInvoice(invoiceData);
