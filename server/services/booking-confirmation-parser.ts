@@ -86,7 +86,7 @@ JSON:`;
       
       const result: any = {
         clientConfirmsBooking: parsed.clientConfirmsBooking || false,
-        serviceSelection: parsed.serviceSelection,
+        performanceDuration: parsed.serviceSelection, // Map to field expected by UI
         requestsContract: parsed.requestsContract || false,
         specialRequirements: parsed.notes,
         confidence: parsed.confidence || 0.7

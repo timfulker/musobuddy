@@ -461,45 +461,15 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     
     const packages = [...basePackages, ...djPackages];
 
-    const pricingSection = pricingEnabled ? `
-CRITICAL PRICING RULES:
-- IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
-- For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
-- Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- NEVER MENTION TRAVEL COSTS, TRAVEL EXPENSES, OR TRAVEL CHARGES TO CLIENTS
-- All quoted prices must include travel costs but present as clean totals only
-- Do NOT use phrases like "inclusive of all expenses" or "including travel" - just show clean package prices
-- ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
-- Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NEVER use **asterisks**)
-- ABSOLUTELY CRITICAL: Do NOT perform any mathematical calculations - use the exact prices provided above
-- WARNING: If you modify these prices in any way, the response will be rejected
-- INSTRUCTION: These prices already include ALL costs - do not add anything to them
-- CRITICAL: Use EXACTLY these prices - DO NOT CALCULATE OR MODIFY:
-    - 2 hours saxophone: £${twoHoursPrice}
-    - 3 hours saxophone: £${threeHoursPrice}
-    - 4 hours saxophone: £${fourHoursPrice}
-- FORBIDDEN: DO NOT add travel costs, setup fees, or any other charges to these prices
-- FORBIDDEN: DO NOT perform any mathematical operations on these prices
-- MANDATORY: Copy these exact price figures into your response without changes
-- EXAMPLE: "2 hours Saxophone: £${twoHoursPrice}" (use this exact format and number)
-- Present 3-4 package options starting from 2 hours, showing total inclusive pricing${hasDJServices ? `
-- Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
-- Mention equipment details, setup capabilities, and venue requirements when relevant
-- Include professional details about insurance, equipment quality, and venue requirements
-- Always mention that packages can be customized to client requirements
-- Include payment terms and booking process information
-- Present pricing confidently as the professional standard for the services offered
-- CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
-- Use simple text formatting for pricing: "2 hours saxophone: £290" without asterisks, bold markup, or excessive punctuation
-- PAYMENT TERMS: Standard payment terms are full payment on completion of performance (NOT deposits or advance payments)
-- DO NOT mention deposits, advance payments, or percentages (e.g., "25% deposit") unless specifically requested by client
-- Standard business practice: payment in full on day of performance via cash or bank transfer
-${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
-${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
+    const pricingSection = `
 PRICING POLICY:
-- Pricing information is handled separately - focus on availability and service details
-- Do not include specific pricing in your response unless specifically requested
-- Mention that detailed pricing can be provided separately`;
+- DO NOT mention any fees, prices, or financial amounts in your response
+- Users handle pricing communication manually to maintain full control
+- Focus ONLY on availability, service details, and booking logistics
+- If the client specifically asks about pricing, simply mention that "detailed pricing information will be provided separately"
+- ABSOLUTELY FORBIDDEN: Do not include any currency amounts, fee structures, or pricing tiers
+- MANDATORY: Omit all references to money, costs, travel expenses, or payment terms
+- Exception: Only mention pricing if the client's message explicitly asks for a price quote or fee information`;
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
