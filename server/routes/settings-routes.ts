@@ -357,36 +357,49 @@ export async function registerSettingsRoutes(app: Express) {
       // Process the request body to combine instrument-based gig types
       const processedBody = { ...req.body };
       
-      // If instruments are being updated, automatically generate gig types and store them
+      // Only generate AI gig types when instruments actually CHANGE (not just when present in request)
       if (processedBody.primaryInstrument !== undefined || processedBody.secondaryInstruments !== undefined) {
-        // Get current settings to preserve existing data
+        // Get current settings to compare changes
         const currentSettings = await storage.getSettings(userId);
         
-        const primaryInstrument = processedBody.primaryInstrument ?? currentSettings?.primaryInstrument ?? "";
-        const secondaryInstruments = processedBody.secondaryInstruments ?? currentSettings?.secondaryInstruments ?? [];
+        const newPrimaryInstrument = processedBody.primaryInstrument ?? currentSettings?.primaryInstrument ?? "";
+        const newSecondaryInstruments = processedBody.secondaryInstruments ?? currentSettings?.secondaryInstruments ?? [];
+        const currentPrimaryInstrument = currentSettings?.primaryInstrument ?? "";
+        const currentSecondaryInstruments = currentSettings?.secondaryInstruments ?? [];
         
-        const allInstruments = [
-          primaryInstrument, 
-          ...(Array.isArray(secondaryInstruments) ? secondaryInstruments : [])
-        ].filter(Boolean);
+        // Check if instruments actually changed
+        const primaryChanged = newPrimaryInstrument !== currentPrimaryInstrument;
+        const secondaryChanged = JSON.stringify(newSecondaryInstruments.sort()) !== JSON.stringify(currentSecondaryInstruments.sort());
         
-        // Get gig types for all selected instruments only (AI-generated)
-        const instrumentGigTypes = [];
-        for (const instrument of allInstruments) {
-          const gigTypes = await getGigTypeNamesForInstrument(instrument);
-          instrumentGigTypes.push(...gigTypes);
+        if (primaryChanged || secondaryChanged) {
+          console.log(`🎵 Instruments changed, regenerating AI gig types for user ${userId}`);
+          console.log(`🎵 Primary: ${currentPrimaryInstrument} → ${newPrimaryInstrument}`);
+          console.log(`🎵 Secondary: [${currentSecondaryInstruments.join(', ')}] → [${newSecondaryInstruments.join(', ')}]`);
+          
+          const allInstruments = [
+            newPrimaryInstrument, 
+            ...(Array.isArray(newSecondaryInstruments) ? newSecondaryInstruments : [])
+          ].filter(Boolean);
+          
+          // Get gig types for all selected instruments only (AI-generated)
+          const instrumentGigTypes = [];
+          for (const instrument of allInstruments) {
+            const gigTypes = await getGigTypeNamesForInstrument(instrument);
+            instrumentGigTypes.push(...gigTypes);
+          }
+          
+          // Remove duplicates and sort the AI-generated gig types
+          const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)].sort();
+          
+          // Store ONLY the AI-generated gig types in the gigTypes field
+          processedBody.gigTypes = uniqueInstrumentGigTypes;
+          
+          console.log(`🎵 Generated ${uniqueInstrumentGigTypes.length} AI gig types from ${allInstruments.length} instruments for user ${userId}`);
+          console.log(`🎵 Instruments:`, allInstruments);
+          console.log(`🎵 AI Gig types:`, uniqueInstrumentGigTypes.slice(0, 10), uniqueInstrumentGigTypes.length > 10 ? `...and ${uniqueInstrumentGigTypes.length - 10} more` : '');
+        } else {
+          console.log(`🎵 Instruments unchanged for user ${userId}, skipping AI generation`);
         }
-        
-        // Remove duplicates and sort the AI-generated gig types
-        const uniqueInstrumentGigTypes = [...new Set(instrumentGigTypes)].sort();
-        
-        // Store ONLY the AI-generated gig types in the gigTypes field
-        // Custom gig types remain separate in their own field
-        processedBody.gigTypes = uniqueInstrumentGigTypes;
-        
-        console.log(`🎵 Generated ${uniqueInstrumentGigTypes.length} AI gig types from ${allInstruments.length} instruments for user ${userId}`);
-        console.log(`🎵 Instruments:`, allInstruments);
-        console.log(`🎵 AI Gig types:`, uniqueInstrumentGigTypes.slice(0, 10), uniqueInstrumentGigTypes.length > 10 ? `...and ${uniqueInstrumentGigTypes.length - 10} more` : '');
       }
       
       // PHASE 1 LOGGING: Data being sent to storage layer
