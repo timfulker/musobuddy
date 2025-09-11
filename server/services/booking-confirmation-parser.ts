@@ -1,4 +1,4 @@
-import { AIOrchestrator } from './ai-orchestrator';
+import { aiOrchestrator } from './ai-orchestrator';
 
 /**
  * Specialized function to parse booking confirmations (not new bookings)
@@ -8,7 +8,7 @@ export async function parseBookingConfirmation(messageContent: string, existingB
   try {
     console.log('🎯 [CONFIRMATION-PARSER] Parsing booking confirmation message...');
     
-    const orchestrator = AIOrchestrator.getInstance();
+    // Use the singleton instance directly
     
     const systemPrompt = `You are extracting details from a BOOKING CONFIRMATION message (not a new booking inquiry).
 The booking already exists with these details:
@@ -71,10 +71,10 @@ JSON:`;
       }
     };
 
-    const orchestrationResult = await orchestrator.runTask('confirmation-parsing', request, config);
+    const orchestrationResult = await aiOrchestrator.runTask('confirmation-parsing', request, config);
 
     if (orchestrationResult.success) {
-      const parsed = JSON.parse(orchestrationResult.result.content);
+      const parsed = JSON.parse(orchestrationResult.response.content);
       console.log('✅ [CONFIRMATION-PARSER] Successfully parsed confirmation:', parsed);
       
       // Convert to format expected by extraction UI

@@ -556,10 +556,7 @@ export function registerBookingRoutes(app: Express) {
         // Get ALL message notifications for this booking
         const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
         
-        // Also get communications from clientCommunications table (outbound messages)  
-        const { storage: storageInstance } = await import('../core/storage');
-        const { and, eq } = await import('drizzle-orm');
-        const communications = await storageInstance.getAllCommunications(userId, bookingId);
+        // Communications will be handled separately if needed
         
 
         const allMessages: any[] = [];
