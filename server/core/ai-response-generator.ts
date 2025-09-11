@@ -265,16 +265,17 @@ export class AIResponseGenerator {
           correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
         });
         
-        // DISABLED: Price replacement patterns that override AI's contextual responses
-        // The AI should respect conversation context, not be force-corrected
-        console.log('🔧 POST-PROCESSING: Price replacement DISABLED to preserve AI context awareness');
+        // ENABLED: Price replacement patterns to force correct pricing when AI gets it wrong
+        console.log('🔧 POST-PROCESSING: Price replacement ENABLED to force correct total fee amounts');
         
-        /*
-        // Replace any incorrect pricing with correct calculations
+        // CRITICAL: For confirmations, also replace any mention of wrong total fee amounts
         const correctPrices = [
           { pattern: /2\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice}` },
           { pattern: /3\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice}` },
-          { pattern: /4\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice}` }
+          { pattern: /4\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice}` },
+          // CRITICAL: Also replace mentions of total fees like "£675" when should be "£725"
+          { pattern: /£675/gi, replacement: `£${bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : twoHoursPrice}` },
+          { pattern: /total.*fee.*will.*be.*£\d+/gi, replacement: `total fee for this performance will be £${bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : threeHoursPrice}` }
         ];
         
         correctPrices.forEach(({ pattern, replacement }) => {
@@ -293,7 +294,6 @@ export class AIResponseGenerator {
             }
           }
         });
-        */
       }
 
       // Validate the response structure
