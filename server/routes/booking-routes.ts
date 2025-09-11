@@ -557,7 +557,10 @@ export function registerBookingRoutes(app: Express) {
         const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
         
         // Also get communications from clientCommunications table (outbound messages)  
-        const { db, clientCommunications, and, eq } = await import('../core/storage');
+        const storageModule = await import('../core/storage');
+        const { db, clientCommunications } = storageModule;
+        const { and, eq } = await import('drizzle-orm');
+        
         const communications = await db
           .select()
           .from(clientCommunications)
@@ -681,13 +684,11 @@ export function registerBookingRoutes(app: Express) {
         console.log('🤖 Using Claude Haiku for detail extraction with conversation context...');
         console.log(`🔗 [EXTRACT-DETAILS] Final content length: ${enhancedMessageContent.length} characters`);
         
-        const { parseBookingMessage } = await import('../ai/booking-message-parser');
-        var parsedData = await parseBookingMessage(
+        // Use specialized confirmation parser instead of full booking parser
+        const { parseBookingConfirmation } = await import('../services/booking-confirmation-parser');
+        var parsedData = await parseBookingConfirmation(
           enhancedMessageContent,
-          null, // No clientContact for extract details
-          null, // No clientAddress
-          userId,
-          null // No subject
+          booking // Pass existing booking context
         );
         
         console.log(`🔍 [EXTRACT-DETAILS] Parsed data fee: ${parsedData.fee}, totalFee: ${parsedData.totalFee}`);
@@ -696,14 +697,11 @@ export function registerBookingRoutes(app: Express) {
         console.error(`⚠️ [EXTRACT-DETAILS] Error fetching conversation context:`, contextError);
         console.log(`🤖 [EXTRACT-DETAILS] Falling back to single message parsing...`);
         
-        // Fallback to original single-message parsing
-        const { parseBookingMessage } = await import('../ai/booking-message-parser');
-        var parsedData = await parseBookingMessage(
+        // Fallback to single-message confirmation parsing
+        const { parseBookingConfirmation } = await import('../services/booking-confirmation-parser');
+        var parsedData = await parseBookingConfirmation(
           messageContent,
-          null, // No clientContact for extract details
-          null, // No clientAddress
-          userId,
-          null // No subject
+          booking // Pass existing booking context
         );
         
         console.log(`🔍 [EXTRACT-DETAILS] Fallback parsed data fee: ${parsedData.fee}, totalFee: ${parsedData.totalFee}`);
