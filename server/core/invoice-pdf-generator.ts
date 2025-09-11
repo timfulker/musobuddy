@@ -136,7 +136,7 @@ function getLogoBase64(): string {
 // Helper function to generate dynamic service description based on booking details
 function generateServiceDescription(invoice: Invoice, booking: Booking | null, userSettings: UserSettings | null): string {
   // For ad-hoc invoices, use the description directly if available
-  if (invoice.invoiceType === 'ad_hoc' && invoice.description) {
+  if ((invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') && invoice.description) {
     return invoice.description;
   }
   
@@ -872,14 +872,14 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                         <thead>
                             <tr>
                                 <th>Description</th>
-                                ${invoice.invoiceType === 'ad_hoc' ? '<th style="text-align: right">Amount</th>' : '<th>Date</th><th style="text-align: right">Amount</th>'}
+                                ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? '<th style="text-align: right">Amount</th>' : '<th>Date</th><th style="text-align: right">Amount</th>'}
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>
                                     <div class="service-description">${generateServiceDescription(invoice, booking, userSettings)}</div>
-                                    ${invoice.invoiceType === 'ad_hoc' ? 
+                                    ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? 
                                         (invoice.notes ? `<div class="service-details">${invoice.notes}</div>` : '') :
                                         `<div class="service-details">
                                             Venue: ${invoice.venueAddress || 'TBD'}<br>
@@ -888,7 +888,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                         </div>`
                                     }
                                 </td>
-                                ${invoice.invoiceType === 'ad_hoc' ? 
+                                ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? 
                                     `<td class="amount">£${invoice.amount}</td>` : 
                                     `<td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
                                      <td class="amount">£${invoice.amount}</td>`
@@ -900,7 +900,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 
                 <!-- Thank You Note -->
                 <div class="thank-you-note">
-                    ${invoice.invoiceType === 'ad_hoc' ? 
+                    ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? 
                         `Thank you for choosing ${businessName.split('|')[0]?.trim() || 'Tim Fulker'} Services. We appreciate your business!` :
                         `Thank you for choosing ${businessName.split('|')[0]?.trim() || 'Tim Fulker'} Music Services. It was a pleasure performing at your event!`
                     }
@@ -923,7 +923,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <!-- Totals Section -->
                 <div class="totals-section">
                     <div class="total-row">
-                        <span class="total-label">${invoice.invoiceType === 'ad_hoc' ? 'Service Fee' : 'Performance Fee'}</span>
+                        <span class="total-label">${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? 'Service Fee' : 'Performance Fee'}</span>
                         <span>£${invoice.fee || invoice.amount}</span>
                     </div>
                     <div class="total-row">
