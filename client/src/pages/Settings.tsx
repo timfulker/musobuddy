@@ -566,6 +566,14 @@ export default function Settings() {
       checkCompletion: (data: SettingsFormData) => {
         return true; // Compliance is always considered complete
       }
+    },
+    {
+      id: 'legal',
+      label: 'Legal',
+      icon: FileText,
+      checkCompletion: () => {
+        return true; // Legal documents are always accessible
+      }
     }
   ];
 
@@ -594,6 +602,8 @@ export default function Settings() {
         return renderTemplatesSection();
       case 'compliance':
         return renderComplianceSection();
+      case 'legal':
+        return renderLegalSection();
       default:
         return renderBusinessSection();
     }
@@ -2773,6 +2783,96 @@ export default function Settings() {
               </>
             )}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderLegalSection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <FileText className="w-5 h-5 text-primary" />
+          <span>Legal Documents</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Access all platform legal documents including terms, privacy policy, and compliance information.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Link href="/terms-and-conditions">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium">Terms of Service</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Platform usage terms and conditions</p>
+              </div>
+            </Link>
+            
+            <Link href="/privacy-policy">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium">Privacy Policy</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">How we protect and use your data</p>
+              </div>
+            </Link>
+            
+            <Link href="/cookie-policy">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <SettingsIcon className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-medium">Cookie Policy</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Cookie usage and preferences</p>
+              </div>
+            </Link>
+            
+            <Link href="/refund-policy">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <CreditCard className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium">Refund Policy</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Cancellation and refund terms</p>
+              </div>
+            </Link>
+            
+            <Link href="/acceptable-use-policy">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium">Acceptable Use</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Platform usage guidelines</p>
+              </div>
+            </Link>
+            
+            <Link href="/data-processing-agreement">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <Globe className="w-4 h-4 text-teal-600" />
+                  <span className="text-sm font-medium">Data Processing</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">GDPR-compliant data handling</p>
+              </div>
+            </Link>
+            
+            <Link href="/disclaimer">
+              <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  <span className="text-sm font-medium">Disclaimer</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Service limitations and liability</p>
+              </div>
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>

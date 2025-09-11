@@ -27,7 +27,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 - Edit booking page sidebar: Added sidebar navigation to the edit booking page (new-booking.tsx) for consistent navigation experience. Sidebar appears on desktop devices, matching the dashboard layout and providing quick access to all system sections while editing bookings.
 - Email footer branding: User prefers simple "Sent via MusoBuddy" instead of "Music Management" which sounds too much like an general agency.
 - Email template display: Enhanced HTML email templates work correctly in Gmail and and Apple Mail. Spark email client displays plain text version due to its security restrictions (normal behavior). Professional gradient headers, signature cards, and styling display properly in major email clients.
-- Mobile strategy: Implementing enhanced responsive design (Option 1) - single app that adapts intelligently to mobile vs desktop. Essential mobile features: invoice sending, booking list view, client lookup, basic booking entry. Complex features hidden on mobile: contract creation, detailed settings, complex forms. Future roadmap includes native mobile apps (Android/iOS) and PC desktop applications (Mac/PC) in coming months.
+- Mobile strategy: Implementing enhanced responsive design (Option 1) - single app that adapts intelligently to mobile vs desktop. Essential mobile features: invoice sending, booking list view, client lookup, basic booking entry. Complex features hidden on mobile: contract creation, detailed settings, complex forms. Future roadmap includes native mobile apps (Android/iOS) in coming months.
 - Unparseable message workflow: Streamlined approach where "Reply" button automatically converts unparseable messages to "dateless bookings" with proper booking IDs for conversation continuity. Removed manual "Convert to Booking" button. Added "Date TBC" filter on bookings page to manage inquiry-stage bookings without dates.
 - Booking re-processing: Manual "select and fix" approach where user selects specific bookings to re-process using checkboxes, then clicks "Re-process Selected" in bulk actions toolbar. User prefers manual control over which bookings gets AI re-processing rather than automatic detection of problematic bookings.
 - Extract details from messages: Manual "Extract Details" button on client replies in conversations. Shows review dialog with append/replace options for each field. Notes default to append mode while other fields default to replace. Shows preview of final value for append operations. User values safety with full review before applying changes.
@@ -52,7 +52,6 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 - Simplified email branding and enhanced HTML email templates with professional styling.
 - Dual client portal system for contract signing and collaborative planning, featuring dynamic server-side rendering and real-time bidirectional data synchronization.
 - Luminance-aware PDF branding for optimal text contrast across various themes.
-- Booking card actions are consolidated into "Conversation" as a primary button, with secondary actions in a dropdown.
 - Automated theme saving to database for consistency across PDF generation.
 - Invoice PDFs regenerate automatically on edit to ensure data accuracy for clients.
 
