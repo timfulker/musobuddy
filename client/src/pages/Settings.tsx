@@ -853,6 +853,29 @@ export default function Settings() {
             />
           </div>
         </div>
+        
+        {/* Save Button for Business Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveBusinessInfo.mutate(form.getValues())}
+            disabled={saveBusinessInfo.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-business"
+          >
+            {saveBusinessInfo.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Business Info
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -1808,6 +1831,29 @@ export default function Settings() {
               />
             </div>
         </div>
+        
+        {/* Save Button for Contract & Invoice Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveContractInvoice.mutate(form.getValues())}
+            disabled={saveContractInvoice.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-contract"
+          >
+            {saveContractInvoice.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Contract & Invoice
+              </>
+            )}
+          </Button>
+        </div>
 
       </CardContent>
     </Card>
@@ -2095,6 +2141,28 @@ export default function Settings() {
               )}
             />
           </div>
+        {/* Save Button for Instruments Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveInstruments.mutate(form.getValues())}
+            disabled={saveInstruments.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-instruments"
+          >
+            {saveInstruments.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving & Updating AI...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Instruments
+              </>
+            )}
+          </Button>
+        </div>
         </CardContent>
       </Card>
     );
@@ -2266,6 +2334,29 @@ export default function Settings() {
             </div>
           )}
         </div>
+        
+        {/* Save Button for Performance Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => savePerformanceSettings.mutate(form.getValues())}
+            disabled={savePerformanceSettings.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-performance"
+          >
+            {savePerformanceSettings.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Performance Settings
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -2403,6 +2494,29 @@ export default function Settings() {
               AI Generate
             </Button>
           </div>
+        </div>
+        
+        {/* Save Button for Themes Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveThemes.mutate(form.getValues())}
+            disabled={saveThemes.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-themes"
+          >
+            {saveThemes.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Themes
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -2624,59 +2738,275 @@ export default function Settings() {
 
   // Removed global gig types query - feature moved to documentation
 
-  // Save settings function - simplified version
-  const saveSettings = useMutation({
+  // Section-specific save functions for better performance
+  const saveBusinessInfo = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      // Get current settings to merge with form data
+      const businessData = {
+        businessName: data.businessName,
+        businessContactEmail: data.businessContactEmail,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        city: data.city,
+        county: data.county,
+        postcode: data.postcode,
+        homeAddressLine1: data.homeAddressLine1,
+        homeAddressLine2: data.homeAddressLine2,
+        homeCity: data.homeCity,
+        homePostcode: data.homePostcode,
+        phone: data.phone,
+        website: data.website,
+        taxNumber: data.taxNumber,
+        emailFromName: data.emailFromName,
+        nextInvoiceNumber: data.nextInvoiceNumber,
+        invoicePrefix: data.invoicePrefix,
+        emailSignatureText: data.emailSignatureText,
+        emailPrefix: data.emailPrefix,
+        bankDetails: data.bankDetails
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(businessData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success", 
+        description: "Business information saved!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save business information.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const saveContractInvoice = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
       const currentSettings = settings || {};
       
-      // Merge contract clauses with existing ones
       const mergedContractClauses = {
         ...currentSettings.contractClauses,
         ...data.contractClauses
       };
       
-      // Merge invoice clauses with existing ones
+      const mergedInvoiceClauses = {
+        ...currentSettings.invoiceClauses,
+        ...data.invoiceClauses
+      };
+
+      const contractData = {
+        contractClauses: mergedContractClauses,
+        customClauses: data.customClauses || [],
+        invoiceClauses: mergedInvoiceClauses,
+        customInvoiceClauses: data.customInvoiceClauses || [],
+        // Map to snake_case for backend compatibility
+        contract_clauses: mergedContractClauses,
+        custom_clauses: data.customClauses || [],
+        invoice_clauses: mergedInvoiceClauses,
+        custom_invoice_clauses: data.customInvoiceClauses || []
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(contractData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: "Contract & invoice settings saved!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to save contract settings.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const saveInstruments = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const instrumentData = {
+        primaryInstrument: data.primaryInstrument,
+        secondaryInstruments: Array.isArray(data.secondaryInstruments) ? 
+          data.secondaryInstruments : [],
+        customGigTypes: Array.isArray(data.customGigTypes) ? 
+          data.customGigTypes : []
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(instrumentData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: "Instrument settings saved! AI gig types updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save instrument settings.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const savePricing = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const pricingData = {
+        aiPricingEnabled: data.aiPricingEnabled,
+        baseHourlyRate: data.baseHourlyRate,
+        minimumBookingHours: data.minimumBookingHours,
+        additionalHourRate: data.additionalHourRate,
+        djServiceRate: data.djServiceRate,
+        pricingNotes: data.pricingNotes,
+        specialOffers: data.specialOffers
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(pricingData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: "Pricing settings saved!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to save pricing settings.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const saveTheme = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const themeData = {
+        themeTemplate: data.themeTemplate,
+        themeTone: data.themeTone,
+        themeFont: data.themeFont,
+        themeAccentColor: data.themeAccentColor,
+        themeLogoUrl: data.themeLogoUrl,
+        themeSignatureUrl: data.themeSignatureUrl,
+        themeBanner: data.themeBanner,
+        themeShowSetlist: data.themeShowSetlist,
+        themeShowRiderNotes: data.themeShowRiderNotes,
+        themeShowQrCode: data.themeShowQrCode,
+        themeShowTerms: data.themeShowTerms,
+        themeCustomTitle: data.themeCustomTitle
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(themeData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: "Theme settings saved!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save theme settings.",
+        variant: "destructive", 
+      });
+    }
+  });
+
+  const savePerformance = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const performanceData = {
+        bookingDisplayLimit: data.bookingDisplayLimit,
+        distanceUnits: data.distanceUnits
+      };
+
+      return await apiRequest('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(performanceData),
+      });
+    },
+    onSuccess: async (response) => {
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: "Performance settings saved!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save performance settings.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Legacy save all function for compatibility
+  const saveSettings = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      // This will rarely be used now, but kept for compatibility
+      const currentSettings = settings || {};
+      
+      const mergedContractClauses = {
+        ...currentSettings.contractClauses,
+        ...data.contractClauses
+      };
+      
       const mergedInvoiceClauses = {
         ...currentSettings.invoiceClauses,
         ...data.invoiceClauses
       };
       
-      
-      
-      
-      // Ensure arrays are properly formatted for JSON transmission
       const processedData = {
         ...data,
         secondaryInstruments: Array.isArray(data.secondaryInstruments) ? 
           data.secondaryInstruments : [],
         customGigTypes: Array.isArray(data.customGigTypes) ? 
           data.customGigTypes : [],
-        // Use merged contract clauses
         contractClauses: mergedContractClauses,
         customClauses: Array.isArray(data.customClauses) ? 
           data.customClauses : [],
-        // Use merged invoice clauses
         invoiceClauses: mergedInvoiceClauses,
         customInvoiceClauses: Array.isArray(data.customInvoiceClauses) ? 
           data.customInvoiceClauses : []
       };
       
-      
-      // Map camelCase form data to snake_case database fields
       processedData.contract_clauses = mergedContractClauses;
       processedData.custom_clauses = data.customClauses || [];
       processedData.invoice_clauses = mergedInvoiceClauses;
       processedData.custom_invoice_clauses = data.customInvoiceClauses || [];
       
-      
-      // Use apiRequest which handles authentication properly
-      const response = await apiRequest('/api/settings', {
+      return await apiRequest('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify(processedData),
       });
-      
-      return response;
     },
     onSuccess: async (response) => {
       const data = await response.json();
@@ -2685,13 +3015,7 @@ export default function Settings() {
         title: "Success",
         description: "Settings saved successfully!",
       });
-      
-      // Don't reset the form immediately - let it keep the user's changes
-      
-      // Store the new data as initial data for comparison
       setInitialData(data);
-      
-      // Invalidate settings cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
