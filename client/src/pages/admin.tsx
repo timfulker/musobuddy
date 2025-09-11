@@ -99,7 +99,8 @@ export default function AdminPanel() {
     isAdmin: false,
     isAssigned: false,
     isBetaTester: false,
-    phoneVerified: false
+    phoneVerified: false,
+    bypassPayment: false
   });
   const [editUserForm, setEditUserForm] = useState({
     email: '',
@@ -183,7 +184,8 @@ export default function AdminPanel() {
         tier: 'free',
         isAdmin: false,
         isBetaTester: false,
-        phoneVerified: false
+        phoneVerified: false,
+        bypassPayment: false
       });
       toast({
         title: "User created successfully", 
@@ -920,6 +922,16 @@ export default function AdminPanel() {
                                     className="rounded"
                                   />
                                   <Label htmlFor="phoneVerified">Skip phone verification (bypass SMS requirement)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="bypassPayment"
+                                    checked={newUserForm.bypassPayment}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, bypassPayment: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="bypassPayment">Bypass Payment (grant full access without Stripe subscription)</Label>
                                 </div>
                               </div>
                             </div>
