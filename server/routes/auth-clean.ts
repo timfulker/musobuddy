@@ -175,14 +175,14 @@ export function setupAuthRoutes(app: Express) {
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
         
-        // User Type (new simplified fields)
-        isAdmin: user.isAdmin || false,
-        isAssigned: user.isAssigned || false,
-        isBetaTester: user.isBetaTester || false,
-        createdByAdmin: user.createdByAdmin || false, // IMPORTANT: Include for access control
+        // User Type (new simplified fields) - handle both camelCase and snake_case
+        isAdmin: user.isAdmin || user.is_admin || false,
+        isAssigned: user.isAssigned || user.is_assigned || false,
+        isBetaTester: user.isBetaTester || user.is_beta_tester || false,
+        createdByAdmin: user.createdByAdmin || user.created_by_admin || false, // IMPORTANT: Include for access control
         
-        // Access Control (new simplified fields)
-        hasPaid: user.hasPaid || false,
+        // Access Control (new simplified fields) - handle both camelCase and snake_case  
+        hasPaid: user.hasPaid || user.has_paid || false,
         trialEndsAt: user.trialEndsAt || null,
         accountNotes: user.accountNotes || null,
         
@@ -221,14 +221,14 @@ export function setupAuthRoutes(app: Express) {
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
         
-        // User Type (new simplified fields)
-        isAdmin: user.isAdmin || false,
-        isAssigned: user.isAssigned || false,
-        isBetaTester: user.isBetaTester || false,
-        createdByAdmin: user.createdByAdmin || false, // IMPORTANT: Include for access control
+        // User Type (new simplified fields) - handle both camelCase and snake_case
+        isAdmin: user.isAdmin || user.is_admin || false,
+        isAssigned: user.isAssigned || user.is_assigned || false,
+        isBetaTester: user.isBetaTester || user.is_beta_tester || false,
+        createdByAdmin: user.createdByAdmin || user.created_by_admin || false, // IMPORTANT: Include for access control
         
-        // Access Control (new simplified fields)
-        hasPaid: user.hasPaid || false,
+        // Access Control (new simplified fields) - handle both camelCase and snake_case  
+        hasPaid: user.hasPaid || user.has_paid || false,
         trialEndsAt: user.trialEndsAt || null,
         accountNotes: user.accountNotes || null,
         
