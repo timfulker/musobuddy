@@ -230,27 +230,29 @@ export class AIResponseGenerator {
         
         if (bookingContext?.finalAmount && Number(bookingContext.finalAmount) > 0 && bookingContext.performanceDuration) {
           // Use the actual total fee the client agreed to (includes travel and all costs)
-          const bookingFee = Number(bookingContext.finalAmount);
+          const confirmedTotalFee = Number(bookingContext.finalAmount);
           const duration = bookingContext.performanceDuration;
           
-          // Set prices based on the booking's actual fee
+          console.log('🎵 POST-PROCESSING: Using confirmed total fee:', confirmedTotalFee, 'duration:', duration);
+          
+          // Set prices based on the booking's confirmed total fee
           if (duration.includes('2')) {
-            twoHoursPrice = bookingFee;
-            threeHoursPrice = bookingFee + AHR;
-            fourHoursPrice = bookingFee + (AHR * 2);
+            twoHoursPrice = confirmedTotalFee;
+            threeHoursPrice = confirmedTotalFee + AHR;
+            fourHoursPrice = confirmedTotalFee + (AHR * 2);
           } else if (duration.includes('3')) {
-            twoHoursPrice = bookingFee - AHR;
-            threeHoursPrice = bookingFee;
-            fourHoursPrice = bookingFee + AHR;
+            twoHoursPrice = confirmedTotalFee - AHR;
+            threeHoursPrice = confirmedTotalFee;
+            fourHoursPrice = confirmedTotalFee + AHR;
           } else if (duration.includes('4')) {
-            twoHoursPrice = bookingFee - (AHR * 2);
-            threeHoursPrice = bookingFee - AHR;
-            fourHoursPrice = bookingFee;
+            twoHoursPrice = confirmedTotalFee - (AHR * 2);
+            threeHoursPrice = confirmedTotalFee - AHR;
+            fourHoursPrice = confirmedTotalFee;
           } else {
-            // Default case - use booking fee for 2 hours
-            twoHoursPrice = bookingFee;
-            threeHoursPrice = bookingFee + AHR;
-            fourHoursPrice = bookingFee + (AHR * 2);
+            // Default case - use confirmed total fee for 2 hours
+            twoHoursPrice = confirmedTotalFee;
+            threeHoursPrice = confirmedTotalFee + AHR;
+            fourHoursPrice = confirmedTotalFee + (AHR * 2);
           }
         } else {
           // No booking context OR booking fee is 0 - use travel expense from form OR booking context
@@ -459,34 +461,34 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     let fourHoursPrice: number;
     
     if (bookingContext?.finalAmount && bookingContext.performanceDuration) {
-      // Use the stored total fee (final_amount) - this already includes everything
-      const totalFee = Number(bookingContext.finalAmount);
+      // Use the confirmed total fee that client agreed to
+      const confirmedTotalFee = Number(bookingContext.finalAmount);
       const duration = bookingContext.performanceDuration;
       
       console.log('🎵 BOOKING CONTEXT PRICING:', {
-        totalFee,
+        confirmedTotalFee,
         duration,
-        source: 'Using stored final_amount (total fee)'
+        source: 'Using confirmed total fee client agreed to'
       });
       
-      // Use stored total fee and calculate other durations based on it
+      // Use confirmed total fee and calculate other durations based on it
       if (duration.includes('2')) {
-        twoHoursPrice = totalFee;
-        threeHoursPrice = totalFee + AHR; // Add AHR for extra hour
-        fourHoursPrice = totalFee + (AHR * 2); // Add AHR for 2 extra hours
+        twoHoursPrice = confirmedTotalFee;
+        threeHoursPrice = confirmedTotalFee + AHR; // Add AHR for extra hour
+        fourHoursPrice = confirmedTotalFee + (AHR * 2); // Add AHR for 2 extra hours
       } else if (duration.includes('3')) {
-        twoHoursPrice = totalFee - AHR; // Subtract AHR for one less hour
-        threeHoursPrice = totalFee;
-        fourHoursPrice = totalFee + AHR; // Add AHR for extra hour
+        twoHoursPrice = confirmedTotalFee - AHR; // Subtract AHR for one less hour
+        threeHoursPrice = confirmedTotalFee;
+        fourHoursPrice = confirmedTotalFee + AHR; // Add AHR for extra hour
       } else if (duration.includes('4')) {
-        twoHoursPrice = totalFee - (AHR * 2); // Subtract AHR for 2 less hours
-        threeHoursPrice = totalFee - AHR; // Subtract AHR for one less hour
-        fourHoursPrice = totalFee;
+        twoHoursPrice = confirmedTotalFee - (AHR * 2); // Subtract AHR for 2 less hours
+        threeHoursPrice = confirmedTotalFee - AHR; // Subtract AHR for one less hour
+        fourHoursPrice = confirmedTotalFee;
       } else {
-        // Default case - use total fee for 2 hours
-        twoHoursPrice = totalFee;
-        threeHoursPrice = totalFee + AHR;
-        fourHoursPrice = totalFee + (AHR * 2);
+        // Default case - use confirmed total fee for 2 hours
+        twoHoursPrice = confirmedTotalFee;
+        threeHoursPrice = confirmedTotalFee + AHR;
+        fourHoursPrice = confirmedTotalFee + (AHR * 2);
       }
     } else {
       // No booking context - use travel expense from form if provided
