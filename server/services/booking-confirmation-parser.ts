@@ -78,15 +78,30 @@ JSON:`;
       console.log('✅ [CONFIRMATION-PARSER] Successfully parsed confirmation:', parsed);
       
       // Convert to format expected by extraction UI
-      return {
+      // Based on message content, determine if this is performance fee or total fee
+      const messageText = messageContent.toLowerCase();
+      const isTotalFeeContext = messageText.includes('total') || messageText.includes('including') || 
+                                messageText.includes('overall') || messageText.includes('all in') || 
+                                messageText.includes('inc travel');
+      
+      const result: any = {
         clientConfirmsBooking: parsed.clientConfirmsBooking || false,
         serviceSelection: parsed.serviceSelection,
-        totalFee: parsed.feeAccepted,
-        fee: parsed.feeAccepted, // Also map to fee field
         requestsContract: parsed.requestsContract || false,
         specialRequirements: parsed.notes,
         confidence: parsed.confidence || 0.7
       };
+      
+      // Map fee to appropriate field based on context
+      if (parsed.feeAccepted) {
+        if (isTotalFeeContext) {
+          result.totalFee = parsed.feeAccepted;
+        } else {
+          result.fee = parsed.feeAccepted; // Performance fee
+        }
+      }
+      
+      return result;
     } else {
       console.log('❌ [CONFIRMATION-PARSER] AI orchestrator failed, using fallback');
       return basicConfirmationParse(messageContent);
@@ -115,11 +130,25 @@ function basicConfirmationParse(messageContent: string): any {
   // Check for contract/agreement requests
   const requestsContract = lowerMessage.includes('agreement') || lowerMessage.includes('contract') || lowerMessage.includes('paperwork');
   
-  return {
+  const messageText = messageContent.toLowerCase();
+  const isTotalFeeContext = messageText.includes('total') || messageText.includes('including') || 
+                            messageText.includes('overall') || messageText.includes('all in') || 
+                            messageText.includes('inc travel');
+  
+  const result: any = {
     clientConfirmsBooking: clientConfirms,
-    totalFee: fee,
-    fee: fee,
     requestsContract,
-    confidence: 0.6 // Higher confidence for simple patterns
+    confidence: 0.6
   };
+  
+  // Map fee to appropriate field based on context
+  if (fee) {
+    if (isTotalFeeContext) {
+      result.totalFee = fee;
+    } else {
+      result.fee = fee; // Performance fee
+    }
+  }
+  
+  return result;
 }

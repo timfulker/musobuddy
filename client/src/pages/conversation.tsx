@@ -1158,7 +1158,9 @@ export default function Conversation() {
           {extractedDetails && (
             <div className="space-y-4 py-4">
               {Object.entries(extractedDetails).map(([field, value]) => {
-                if (value === null || value === '') return null;
+                // Skip fields with no meaningful value (but allow boolean false)
+                if (value === null || value === undefined || value === '') return null;
+                if (typeof value === 'boolean' && value === false && field !== 'clientConfirmsBooking' && field !== 'requestsContract') return null;
                 
                 const fieldLabels: Record<string, string> = {
                   clientName: 'Client Name',
@@ -1172,11 +1174,15 @@ export default function Conversation() {
                   eventEndTime: 'End Time',
                   eventType: 'Event Type',
                   fee: 'Performance Fee',
+                  totalFee: 'Total Fee',
                   deposit: 'Deposit Amount',
                   notes: 'Additional Notes',
                   performanceDuration: 'Performance Duration',
                   guestCount: 'Guest Count',
                   clientConfirmsBooking: '✨ Client Confirms Booking',
+                  serviceSelection: '🎵 Service Selection',
+                  requestsContract: '📋 Requests Contract',
+                  specialRequirements: '📝 Special Requirements',
                 };
                 
                 const mode = fieldModes[field] || 'replace';
@@ -1228,8 +1234,40 @@ export default function Conversation() {
                   );
                 }
                 
-                // Skip clientConfirmsBooking if false
-                if (field === 'clientConfirmsBooking') return null;
+                // Handle requestsContract boolean field
+                if (field === 'requestsContract' && value === true) {
+                  return (
+                    <div key={field} className="flex items-start space-x-3 p-3 border-2 border-blue-300 bg-blue-50 rounded-lg">
+                      <Checkbox
+                        id={field}
+                        checked={selectedFields.has(field)}
+                        onCheckedChange={(checked) => {
+                          const newFields = new Set(selectedFields);
+                          if (checked) {
+                            newFields.add(field);
+                          } else {
+                            newFields.delete(field);
+                          }
+                          setSelectedFields(newFields);
+                        }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">📋</span>
+                          <div>
+                            <p className="font-semibold text-blue-800">Contract Request Detected!</p>
+                            <p className="text-sm text-blue-600">
+                              The client is requesting a booking agreement or contract.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Skip boolean fields that are false (except special cases handled above)
+                if ((field === 'clientConfirmsBooking' || field === 'requestsContract') && value === false) return null;
                 
                 return (
                   <div key={field} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
