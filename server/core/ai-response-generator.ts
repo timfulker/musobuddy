@@ -270,16 +270,16 @@ export class AIResponseGenerator {
         
         // CRITICAL: For confirmations, also replace any mention of wrong total fee amounts
         const correctPrices = [
-          { pattern: /2\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone: £${Math.round(twoHoursPrice)}` },
-          { pattern: /3\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone: £${Math.round(threeHoursPrice)}` },
-          { pattern: /4\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone: £${Math.round(fourHoursPrice)}` },
+          { pattern: /2\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice.toFixed(2)}` },
+          { pattern: /3\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice.toFixed(2)}` },
+          { pattern: /4\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice.toFixed(2)}` },
           // DJ services pricing patterns
-          { pattern: /2\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone + DJ: £${Math.round(twoHoursPrice + (userSettings?.djServiceRate || 75))}` },
-          { pattern: /3\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone + DJ: £${Math.round(threeHoursPrice + (userSettings?.djServiceRate || 75))}` },
-          { pattern: /4\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone + DJ: £${Math.round(fourHoursPrice + (userSettings?.djServiceRate || 75))}` },
+          { pattern: /2\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone + DJ: £${(twoHoursPrice + (userSettings?.djServiceRate || 75)).toFixed(2)}` },
+          { pattern: /3\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone + DJ: £${(threeHoursPrice + (userSettings?.djServiceRate || 75)).toFixed(2)}` },
+          { pattern: /4\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone + DJ: £${(fourHoursPrice + (userSettings?.djServiceRate || 75)).toFixed(2)}` },
           // CRITICAL: Also replace mentions of total fees like "£675" when should be "£725"
-          { pattern: /£675/gi, replacement: `£${Math.round(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : twoHoursPrice)}` },
-          { pattern: /total.*fee.*will.*be.*£[\d.]+/gi, replacement: `total fee for this performance will be £${Math.round(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : threeHoursPrice)}` }
+          { pattern: /£675/gi, replacement: `£${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : twoHoursPrice).toFixed(2)}` },
+          { pattern: /total.*fee.*will.*be.*£[\d.]+/gi, replacement: `total fee for this performance will be £${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : threeHoursPrice).toFixed(2)}` }
         ];
         
         correctPrices.forEach(({ pattern, replacement }) => {
