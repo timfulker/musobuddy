@@ -1,4 +1,4 @@
-import { aiOrchestrator, AIOrchestrator } from './ai-orchestrator';
+import { AIOrchestrator } from './ai-orchestrator';
 
 /**
  * Specialized function to parse booking confirmations (not new bookings)

@@ -557,18 +557,10 @@ export function registerBookingRoutes(app: Express) {
         const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
         
         // Also get communications from clientCommunications table (outbound messages)  
-        const storageModule = await import('../core/storage');
-        const { db, clientCommunications } = storageModule;
+        const { storage: storageInstance } = await import('../core/storage');
         const { and, eq } = await import('drizzle-orm');
+        const communications = await storageInstance.getAllCommunications(userId, bookingId);
         
-        const communications = await db
-          .select()
-          .from(clientCommunications)
-          .where(and(
-            eq(clientCommunications.userId, userId),
-            eq(clientCommunications.bookingId, bookingId)
-          ))
-          .orderBy(clientCommunications.sentAt);
 
         const allMessages: any[] = [];
         
