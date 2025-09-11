@@ -223,6 +223,14 @@ export class AIOrchestrator {
     this.requestCount++;
     const requestId = `${taskId}-${this.requestCount}`;
     
+    console.log('🎯 [AI-ORCHESTRATOR] Starting task execution...');
+    console.log('🎯 [AI-ORCHESTRATOR] Task ID:', taskId);
+    console.log('🎯 [AI-ORCHESTRATOR] Configuration:', {
+      models: config.models,
+      confidenceThreshold: config.confidenceThreshold,
+      maxBudgetCents: config.maxBudgetCents
+    });
+    
     // Filter available models based on API keys
     const availableModels = config.models.filter(model => {
       const modelConfig = MODEL_CONFIGS[model];
