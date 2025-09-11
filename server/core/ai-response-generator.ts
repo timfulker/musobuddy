@@ -269,18 +269,37 @@ export class AIResponseGenerator {
         console.log('🔧 POST-PROCESSING: Price replacement ENABLED to force correct total fee amounts');
         
         // CRITICAL: For confirmations, also replace any mention of wrong total fee amounts
-        const correctPrices = [
-          { pattern: /2\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice.toFixed(2)}` },
-          { pattern: /3\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice.toFixed(2)}` },
-          { pattern: /4\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice.toFixed(2)}` },
-          // DJ services pricing patterns
-          { pattern: /2\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone + DJ: £${(Number(twoHoursPrice) + Number(userSettings?.djServiceRate || 75)).toFixed(2)}` },
-          { pattern: /3\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone + DJ: £${(Number(threeHoursPrice) + Number(userSettings?.djServiceRate || 75)).toFixed(2)}` },
-          { pattern: /4\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone + DJ: £${(Number(fourHoursPrice) + Number(userSettings?.djServiceRate || 75)).toFixed(2)}` },
-          // CRITICAL: Also replace mentions of total fees like "£675" when should be "£725"
+        // Respect minimum booking hours when replacing pricing patterns
+        const minimumHours = Number(userSettings?.minimumBookingHours) || 2;
+        const djRate = Number(userSettings?.djServiceRate) || 300;
+        
+        const correctPrices = [];
+        
+        // Only include pricing patterns that meet the minimum hours requirement
+        if (minimumHours <= 2) {
+          correctPrices.push(
+            { pattern: /2\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice.toFixed(2)}` },
+            { pattern: /2\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `2 hours Saxophone + DJ: £${(Number(twoHoursPrice) + djRate).toFixed(2)}` }
+          );
+        }
+        if (minimumHours <= 3) {
+          correctPrices.push(
+            { pattern: /3\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice.toFixed(2)}` },
+            { pattern: /3\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `3 hours Saxophone + DJ: £${(Number(threeHoursPrice) + djRate).toFixed(2)}` }
+          );
+        }
+        if (minimumHours <= 4) {
+          correctPrices.push(
+            { pattern: /4\s*hours?\s*saxophone:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice.toFixed(2)}` },
+            { pattern: /4\s*hours?\s*saxophone\s*\+\s*dj:?\s*£[\d.]+/gi, replacement: `4 hours Saxophone + DJ: £${(Number(fourHoursPrice) + djRate).toFixed(2)}` }
+          );
+        }
+        
+        // CRITICAL: Also replace mentions of total fees like "£675" when should be "£725"
+        correctPrices.push(
           { pattern: /£675/gi, replacement: `£${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : twoHoursPrice).toFixed(2)}` },
           { pattern: /total.*fee.*will.*be.*£[\d.]+/gi, replacement: `total fee for this performance will be £${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : threeHoursPrice).toFixed(2)}` }
-        ];
+        );
         
         correctPrices.forEach(({ pattern, replacement }) => {
           if (result.emailBody) {
@@ -486,20 +505,38 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${AHR} per hour beyond the 2-hour minimum`;
     const djServiceStr = `£300 additional charge when combined with ${primaryInstrument}`;
     
-    // FIXED: Use hard-coded pricing formula results
-    const basePackages = [
-      `2 hours ${primaryInstrument}: £${twoHoursPrice}`,
-      `3 hours ${primaryInstrument}: £${threeHoursPrice}`,
-      `4 hours ${primaryInstrument}: £${fourHoursPrice}`
+    // FIXED: Use hard-coded pricing formula results - respect minimum booking hours
+    const minimumHours = Number(userSettings?.minimumBookingHours) || 2;
+    const djRate = Number(userSettings?.djServiceRate) || 300;
+    
+    const allBasePackages = [
+      { hours: 2, label: `2 hours ${primaryInstrument}: £${twoHoursPrice}` },
+      { hours: 3, label: `3 hours ${primaryInstrument}: £${threeHoursPrice}` },
+      { hours: 4, label: `4 hours ${primaryInstrument}: £${fourHoursPrice}` }
     ];
     
-    const djPackages = hasDJServices ? [
-      `2 hours ${primaryInstrument} + DJ: £${twoHoursPrice + 300}`,
-      `3 hours ${primaryInstrument} + DJ: £${threeHoursPrice + 300}`,
-      `4 hours ${primaryInstrument} + DJ: £${fourHoursPrice + 300}`
+    const allDjPackages = hasDJServices ? [
+      { hours: 2, label: `2 hours ${primaryInstrument} + DJ: £${twoHoursPrice + djRate}` },
+      { hours: 3, label: `3 hours ${primaryInstrument} + DJ: £${threeHoursPrice + djRate}` },
+      { hours: 4, label: `4 hours ${primaryInstrument} + DJ: £${fourHoursPrice + djRate}` }
     ] : [];
     
+    // Filter packages based on minimum booking hours
+    const basePackages = allBasePackages
+      .filter(pkg => pkg.hours >= minimumHours)
+      .map(pkg => pkg.label);
+    
+    const djPackages = allDjPackages
+      .filter(pkg => pkg.hours >= minimumHours)
+      .map(pkg => pkg.label);
+    
     const packages = [...basePackages, ...djPackages];
+    
+    console.log('🎵 PRICING PACKAGES:', {
+      minimumHours,
+      filteredPackages: packages.length,
+      originalPackages: allBasePackages.length + allDjPackages.length
+    });
 
     const pricingSection = `
 PRICING POLICY - ALWAYS INCLUDE CORRECT PRICING:
