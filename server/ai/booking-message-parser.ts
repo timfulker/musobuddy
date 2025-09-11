@@ -142,7 +142,14 @@ This means if today is August 2025:
 - "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
-{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","venue":"string","venueAddress":"string","eventType":"string","fee":number,"travelExpense":number,"deposit":number,"confidence":0.9}
+{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","eventEndTime":"HH:MM","venue":"string","venueAddress":"string","eventType":"string","fee":number,"travelExpense":number,"deposit":number,"confidence":0.9}
+
+TIME EXTRACTION RULES:
+- eventTime: Start time in 24-hour format (HH:MM). Extract from phrases like "7pm" → "19:00", "at 2:30" → "14:30"
+- eventEndTime: End time in 24-hour format (HH:MM). Extract from phrases like "until 11pm" → "23:00", "Between 7pm and 11pm" → eventTime:"19:00", eventEndTime:"23:00"
+- Common time formats to recognize: "7pm", "7:30pm", "19:00", "7.30", "between 7pm and 11pm", "from 2pm to 6pm"
+- If only one time mentioned, put it in eventTime and leave eventEndTime null
+- If no times mentioned, leave both null
 
 CRITICAL VENUE VS LOCATION RULES:
 - venue: ONLY put actual venue names here (e.g., "City Hall", "The Royal Hotel", "St. Mary's Church", "Riverside Theatre")
@@ -665,12 +672,23 @@ function cleanTime(value: any): string | undefined {
   if (!value) return undefined;
   
   const timeStr = String(value).trim();
-  // Match HH:MM format (24-hour or 12-hour with AM/PM)
-  const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})(?:\s?(AM|PM))?/i);
+  
+  // Match various time formats: HH:MM, H:MM, 7pm, 7:30pm, etc.
+  let timeMatch = timeStr.match(/(\d{1,2}):(\d{2})(?:\s?(AM|PM))?/i);
+  
+  // If no colon found, try matching formats like "7pm", "11am"
+  if (!timeMatch) {
+    timeMatch = timeStr.match(/(\d{1,2})(?:\s?(AM|PM))/i);
+    if (timeMatch) {
+      // Add :00 for minutes if not specified
+      timeMatch[2] = '00';
+      timeMatch[3] = timeMatch[2]; // Shift AM/PM to correct position
+    }
+  }
   
   if (timeMatch) {
     let hours = parseInt(timeMatch[1]);
-    const minutes = timeMatch[2];
+    const minutes = timeMatch[2] || '00';
     const ampm = timeMatch[3]?.toUpperCase();
     
     if (ampm === 'PM' && hours < 12) hours += 12;

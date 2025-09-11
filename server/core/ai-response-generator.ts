@@ -309,11 +309,26 @@ export class AIResponseGenerator {
           );
         }
         
-        // CRITICAL: Also replace mentions of total fees like "£675" when should be "£725"
-        correctPrices.push(
-          { pattern: /£675/gi, replacement: `£${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : twoHoursPrice).toFixed(2)}` },
-          { pattern: /total.*fee.*will.*be.*£[\d.]+/gi, replacement: `total fee for this performance will be £${(bookingContext?.finalAmount ? Number(bookingContext.finalAmount) : threeHoursPrice).toFixed(2)}` }
-        );
+        // CRITICAL: Aggressively replace ANY wrong total fee amounts with confirmed total fee
+        if (bookingContext?.finalAmount) {
+          const confirmedAmount = Number(bookingContext.finalAmount).toFixed(2);
+          console.log(`🔧 POST-PROCESSING: Will replace any wrong amounts with confirmed fee: £${confirmedAmount}`);
+          
+          // Replace any mention of wrong total fees with the confirmed amount
+          correctPrices.push(
+            // Match various fee mention patterns and replace with confirmed amount
+            { pattern: /total.*fee.*(?:is|will be|for this booking).*£[\d.]+/gi, replacement: `total fee for this booking is £${confirmedAmount}` },
+            { pattern: /confirmed.*total.*fee.*£[\d.]+/gi, replacement: `confirmed total fee £${confirmedAmount}` },
+            { pattern: /fee.*for.*this.*booking.*£[\d.]+/gi, replacement: `fee for this booking is £${confirmedAmount}` },
+            { pattern: /booking.*(?:is|costs?).*£[\d.]+/gi, replacement: `booking is £${confirmedAmount}` },
+            // Catch specific wrong amounts that might appear (like £1299.34 instead of £899.34)
+            { pattern: /£1[0-9]{3}\.[0-9]{2}/gi, replacement: `£${confirmedAmount}` }, // Catch £1000+ amounts that are clearly wrong
+            { pattern: /£[5-9][0-9]{2}\.[0-9]{2}/gi, replacement: `£${confirmedAmount}` }, // Catch £500-999 amounts if they don't match confirmed
+            // More specific saxophone + DJ pattern fixes
+            { pattern: /saxophone.*\+.*dj.*£[\d.]+/gi, replacement: `Saxophone + DJ: £${confirmedAmount}` },
+            { pattern: /3.*hours?.*saxophone.*\+.*dj.*£[\d.]+/gi, replacement: `3 hours Saxophone + DJ: £${confirmedAmount}` }
+          );
+        }
         
         correctPrices.forEach(({ pattern, replacement }) => {
           if (result.emailBody) {
