@@ -101,8 +101,10 @@ function Router() {
     
     // Redirect authenticated users who need payment setup from protected routes
     // BUT: Don't redirect if user is on trial-success page (they're in payment verification flow)
-    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl && currentPath !== '/trial-success') {
-      console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
+    // OR if payment was just completed (during transition handoff)
+    const paymentJustCompleted = sessionStorage.getItem('payment_just_completed');
+    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl && currentPath !== '/trial-success' && !paymentJustCompleted) {
+      console.log('🔒 Redirecting user to payment setup (paid:', user?.hasPaid, 'emailVerified:', user?.emailVerified, '):', user.email);
       setLocation(paymentRedirectUrl);
       return;
     }
@@ -115,19 +117,11 @@ function Router() {
         console.log('⏳ Payment just completed, clearing flag and checking user data...');
         sessionStorage.removeItem('payment_just_completed');
         
-        // If user data shows they've paid, redirect to dashboard
-        if (user?.hasPaid || user?.has_paid) {
-          console.log('✅ User data shows payment, redirecting to dashboard');
-          setLocation('/dashboard');
-          return;
-        } else {
-          console.log('⚠️ User data not yet updated after payment, triggering refresh...');
-          // Trigger a refresh of user data
-          refreshUserData().then(() => {
-            console.log('🔄 User data refreshed after payment');
-          });
-          return; // Don't redirect yet, wait for the refresh to complete
-        }
+        // CRITICAL: Always redirect to dashboard when payment_just_completed flag is set
+        // The flag is only set after successful payment verification
+        console.log('✅ Payment verification completed, redirecting to dashboard');
+        setLocation('/dashboard');
+        return;
       }
       
       if (needsPaymentSetup) {

@@ -66,15 +66,15 @@ export function hasAccess(user: User | null | undefined): boolean {
     return true;
   }
   
-  // SECURITY: Email verification required for payment access
-  if (!hasVerifiedEmail(user)) {
-    return false;
-  }
-  
-  // HARD RULE: No dashboard access without payment setup (has_paid = true)
-  // This includes trial users - they must complete payment setup to access dashboard
+  // HARD RULE: Paid users get access regardless of email verification
+  // Payment completion (especially via Stripe) is sufficient verification of ownership
   if (hasPaid) {
     return true;
+  }
+  
+  // SECURITY: Email verification required for trial/unpaid access
+  if (!hasVerifiedEmail(user)) {
+    return false;
   }
   
   return false;
