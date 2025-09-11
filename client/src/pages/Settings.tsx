@@ -979,6 +979,29 @@ export default function Settings() {
             )}
           />
         </div>
+        
+        {/* Save Button for Email Settings Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveEmailSettings.mutate(form.getValues())}
+            disabled={saveEmailSettings.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-email"
+          >
+            {saveEmailSettings.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Email Settings
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -1892,6 +1915,29 @@ export default function Settings() {
             )}
           />
         </div>
+        
+        {/* Save Button for Bank Details Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveBankDetails.mutate(form.getValues())}
+            disabled={saveBankDetails.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-bank"
+          >
+            {saveBankDetails.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Bank Details
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -2032,6 +2078,29 @@ export default function Settings() {
               )}
             />
           </div>
+        </div>
+        
+        {/* Save Button for AI Pricing Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => savePricingGuide.mutate(form.getValues())}
+            disabled={savePricingGuide.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-pricing"
+          >
+            {savePricingGuide.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save AI Pricing Guide
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -2357,6 +2426,29 @@ export default function Settings() {
             )}
           </Button>
         </div>
+        
+        {/* Save Button for Booking Widget Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveWidgetSettings.mutate(form.getValues())}
+            disabled={saveWidgetSettings.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-widget"
+          >
+            {saveWidgetSettings.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Widget Settings
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -2494,6 +2586,29 @@ export default function Settings() {
               AI Generate
             </Button>
           </div>
+          
+          {/* Save Button for Templates Section */}
+          <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+            <Button
+              type="button"
+              onClick={() => saveTemplates.mutate(form.getValues())}
+              disabled={saveTemplates.isPending}
+              className="bg-primary hover:bg-primary/90"
+              data-testid="button-save-templates"
+            >
+              {saveTemplates.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Template Settings
+                </>
+              )}
+            </Button>
+          </div>
         </div>
         
         {/* Save Button for Themes Section */}
@@ -2628,6 +2743,29 @@ export default function Settings() {
               Upload Files
             </Button>
           </div>
+        </div>
+        
+        {/* Save Button for Compliance Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => saveCompliance.mutate(form.getValues())}
+            disabled={saveCompliance.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-compliance"
+          >
+            {saveCompliance.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Compliance Settings
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
