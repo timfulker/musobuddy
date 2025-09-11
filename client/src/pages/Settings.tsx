@@ -3670,44 +3670,10 @@ export default function Settings() {
           {/* Settings Content */}
           <div className="flex-1 p-6 overflow-y-auto">
             <Form {...form}>
-              <form onSubmit={(e) => {
-                console.log('Form onSubmit triggered');
-                e.preventDefault();
-                // Prevent submission if save is already in progress
-                if (saveSettings.isPending) {
-                  console.log('Save already in progress, skipping submission');
-                  return;
-                }
-                form.handleSubmit(onSubmit, (errors) => {
-                  console.log('Form validation errors:', errors);
-                  console.log('Validation error details:', JSON.stringify(errors, null, 2));
-                })(e);
-              }} className="space-y-6">
+              <div className="space-y-6">
                 {/* Render active section */}
                 {renderActiveSection()}
-                
-                {/* Save Button */}
-                <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-slate-700 mt-8">
-                  <Button
-                    type="submit"
-                    disabled={saveSettings.isPending || !hasChanges}
-                    onClick={() => console.log('Save button clicked, hasChanges:', hasChanges, 'isPending:', saveSettings.isPending)}
-                    className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium px-8 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    {saveSettings.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        {hasChanges ? 'Save Settings' : 'No Changes'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+              </div>
             </Form>
           </div>
         </div>
