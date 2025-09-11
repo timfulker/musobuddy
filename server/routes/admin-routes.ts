@@ -6,6 +6,7 @@ import { type Express } from 'express';
 import { storage } from '../core/storage';
 import { userStorage } from '../storage/user-storage';
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { adminAuth } from '../core/firebase-admin';
 
 // Export the registration function for the routes/index.ts file
 export async function registerAdminRoutes(app: Express) {
@@ -380,8 +381,19 @@ app.post('/api/admin/users', async (req, res) => {
     const newUser = await storage.createUser(userData);
     
     console.log(`✅ [ADMIN] Successfully created user ${email} (ID: ${userId})`);
+    
+    // Set email verification to true in Firebase if UID is provided
     if (firebaseUid) {
-      console.log(`🔗 [ADMIN] Firebase UID ${firebaseUid} linked during creation`);
+      try {
+        await adminAuth.updateUser(firebaseUid, {
+          emailVerified: true
+        });
+        console.log(`✅ [ADMIN] Email verification set to true for Firebase user ${firebaseUid}`);
+        console.log(`🔗 [ADMIN] Firebase UID ${firebaseUid} linked during creation`);
+      } catch (firebaseError: any) {
+        console.warn(`⚠️ [ADMIN] Failed to set email verification for Firebase user ${firebaseUid}:`, firebaseError.message);
+        // Don't fail the entire operation if Firebase update fails
+      }
     }
     
     res.json({
