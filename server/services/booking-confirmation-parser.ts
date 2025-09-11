@@ -25,14 +25,23 @@ Return JSON with these fields (only include if found in message):
   "serviceSelection": string, // specific service they chose (e.g., "2-hour saxophone")
   "feeAccepted": number, // fee amount they agreed to
   "requestsContract": boolean, // true if they request booking agreement/contract
+  "eventTime": string, // start time in HH:MM format (24-hour)
+  "eventEndTime": string, // end time in HH:MM format (24-hour)
   "notes": string, // any additional requests or notes
   "confidence": number // 0.0-1.0 confidence in extraction
 }
 
+TIME EXTRACTION RULES:
+- eventTime: Extract start time and convert to 24-hour format (e.g., "7pm" → "19:00")
+- eventEndTime: Extract end time and convert to 24-hour format (e.g., "11pm" → "23:00")
+- Handle phrases like "Between 7pm and 11pm", "from 2pm to 6pm", "starts at 7:30pm"
+- If only one time mentioned, put it in eventTime and leave eventEndTime null
+
 Examples:
 - "We would like to go with the 2-hour saxophone at £310" → {"clientConfirmsBooking": true, "serviceSelection": "2-hour saxophone", "feeAccepted": 310, "confidence": 0.9}
 - "Please send the contract" → {"requestsContract": true, "confidence": 0.8}
-- "Can we change to 3 hours instead?" → {"serviceSelection": "3 hours", "confidence": 0.8}`;
+- "Can we change to 3 hours instead?" → {"serviceSelection": "3 hours", "confidence": 0.8}
+- "We would like you to play Between 7pm and 11 pm" → {"eventTime": "19:00", "eventEndTime": "23:00", "confidence": 0.9}`;
 
     const userPrompt = `MESSAGE: ${messageContent}
 
