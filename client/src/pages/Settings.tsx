@@ -984,8 +984,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => saveEmailSettings.mutate(form.getValues())}
-            disabled={saveEmailSettings.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-email"
           >
@@ -1920,8 +1920,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => saveBankDetails.mutate(form.getValues())}
-            disabled={saveBankDetails.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-bank"
           >
@@ -2084,8 +2084,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => savePricingGuide.mutate(form.getValues())}
-            disabled={savePricingGuide.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-pricing"
           >
@@ -2408,8 +2408,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => savePerformanceSettings.mutate(form.getValues())}
-            disabled={savePerformanceSettings.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-performance"
           >
@@ -2431,8 +2431,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => saveWidgetSettings.mutate(form.getValues())}
-            disabled={saveWidgetSettings.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-widget"
           >
@@ -2591,8 +2591,8 @@ export default function Settings() {
           <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
             <Button
               type="button"
-              onClick={() => saveTemplates.mutate(form.getValues())}
-              disabled={saveTemplates.isPending}
+              onClick={() => saveSettings.mutate(form.getValues())}
+              disabled={saveSettings.isPending}
               className="bg-primary hover:bg-primary/90"
               data-testid="button-save-templates"
             >
@@ -2615,8 +2615,8 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => saveThemes.mutate(form.getValues())}
-            disabled={saveThemes.isPending}
+            onClick={() => saveSettings.mutate(form.getValues())}
+            disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-themes"
           >
