@@ -255,10 +255,22 @@ export class AIResponseGenerator {
         } else {
           // No booking context OR booking fee is 0 - use travel expense from form OR booking context
           const formTravelExpense = Number(travelExpense) || Number(bookingContext?.travelExpense) || 0;
-          console.log('🎵 USING TRAVEL EXPENSE CALCULATION - bookingContext fee:', bookingContext?.fee, 'formTravelExpense:', Number(travelExpense), 'bookingTravelExpense:', Number(bookingContext?.travelExpense), 'finalTravelExpense:', formTravelExpense);
-          twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + formTravelExpense;
-          threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + formTravelExpense;
-          fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + formTravelExpense;
+          const M = Number(userSettings?.minimumBookingHours) || 2; // Minimum booking hours
+          
+          console.log('🎵 USING TRAVEL EXPENSE CALCULATION - bookingContext fee:', bookingContext?.fee, 'formTravelExpense:', Number(travelExpense), 'bookingTravelExpense:', Number(bookingContext?.travelExpense), 'finalTravelExpense:', formTravelExpense, 'minimumHours:', M);
+          
+          // Use same anchored calculation as system prompt
+          function calculatePostProcessingPrice(N: number): number {
+            if (N >= M) {
+              return (BHR * M) + ((N - M) * AHR) + formTravelExpense;
+            } else {
+              return (BHR * N) + formTravelExpense;
+            }
+          }
+          
+          twoHoursPrice = calculatePostProcessingPrice(2);   // If M=3: (150*2) + T
+          threeHoursPrice = calculatePostProcessingPrice(3); // If M=3: (150*3) + T = 450 + T
+          fourHoursPrice = calculatePostProcessingPrice(4);  // If M=3: (150*3) + 75 + T = 525 + T
         }
         
         console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
@@ -479,12 +491,21 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     } else {
       // No booking context - use travel expense from form if provided
       const T = Number(formTravelExpense) || 0;
+      const M = Number(userSettings?.minimumBookingHours) || 2; // Minimum booking hours
+      
       function calculatePrice(N: number): number {
-        return (BHR * 2) + ((N - 2) * AHR) + T;
+        // Anchor at minimum booking hours: price(N) = (BHR × M) + (N − M) × AHR + T
+        if (N >= M) {
+          return (BHR * M) + ((N - M) * AHR) + T;
+        } else {
+          // For hours below minimum (internal calculation only)
+          return (BHR * N) + T;
+        }
       }
-      twoHoursPrice = calculatePrice(2);   // (125*2) + ((2-2)*60) + T = 250 + 0 + T
-      threeHoursPrice = calculatePrice(3); // (125*2) + ((3-2)*60) + T = 250 + 60 + T  
-      fourHoursPrice = calculatePrice(4);  // (125*2) + ((4-2)*60) + T = 250 + 120 + T
+      
+      twoHoursPrice = calculatePrice(2);   // If M=3: (150*2) + T = 300 + T (not displayed)
+      threeHoursPrice = calculatePrice(3); // If M=3: (150*3) + ((3-3)*75) + T = 450 + T
+      fourHoursPrice = calculatePrice(4);  // If M=3: (150*3) + ((4-3)*75) + T = 525 + T
     }
     
     console.log('🎵 PRICING CALCULATION:', {
@@ -501,12 +522,12 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       }
     });
     
-    const basePriceStr = `£${BHR * 2}`;
-    const additionalHourStr = `£${AHR} per hour beyond the 2-hour minimum`;
-    const djServiceStr = `£300 additional charge when combined with ${primaryInstrument}`;
+    const minimumHours = Number(userSettings?.minimumBookingHours) || 2;
+    const basePriceStr = `£${BHR * minimumHours}`;
+    const additionalHourStr = `£${AHR} per hour beyond the ${minimumHours}-hour minimum`;
+    const djServiceStr = `£${Number(userSettings?.djServiceRate) || 300} additional charge when combined with ${primaryInstrument}`;
     
     // FIXED: Use hard-coded pricing formula results - respect minimum booking hours
-    const minimumHours = Number(userSettings?.minimumBookingHours) || 2;
     const djRate = Number(userSettings?.djServiceRate) || 300;
     
     const allBasePackages = [
