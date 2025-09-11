@@ -100,7 +100,8 @@ function Router() {
     
     
     // Redirect authenticated users who need payment setup from protected routes
-    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl) {
+    // BUT: Don't redirect if user is on trial-success page (they're in payment verification flow)
+    if (isAuthenticated && needsPaymentSetup && isProtected && currentPath !== paymentRedirectUrl && currentPath !== '/trial-success') {
       console.log('🔒 Redirecting unpaid user to payment setup:', user.email);
       setLocation(paymentRedirectUrl);
       return;
