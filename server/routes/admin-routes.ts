@@ -364,7 +364,8 @@ app.post('/api/admin/users', async (req, res) => {
       isBetaTester: isBetaTester || false,
       phoneVerified: phoneVerified || false,
       isActive: true,
-      onboardingCompleted: false
+      onboardingCompleted: false,
+      createdByAdmin: true  // IMPORTANT: Mark admin-created users
     };
     
     // Create user in database

@@ -198,6 +198,7 @@ export class UserStorage {
     lastLoginIP?: string;
     fraudScore?: number;
     createdAt?: Date;
+    createdByAdmin?: boolean;
   }) {
     // Password should already be hashed by caller
     const result = await db.insert(users).values({
@@ -223,6 +224,7 @@ export class UserStorage {
       lastLoginAt: data.lastLoginAt,
       lastLoginIP: data.lastLoginIP,
       fraudScore: data.fraudScore || 0,
+      createdByAdmin: data.createdByAdmin || false,
       createdAt: data.createdAt || new Date(),
       updatedAt: new Date(),
     }).returning();

@@ -12,12 +12,14 @@ interface User {
   isBetaTester?: boolean;
   trialEndsAt?: Date | string | null;
   hasPaid?: boolean;
+  createdByAdmin?: boolean;
   // Support both camelCase and snake_case from API
   is_admin?: boolean;
   is_assigned?: boolean;
   is_beta_tester?: boolean;
   trial_ends_at?: Date | string | null;
   has_paid?: boolean;
+  created_by_admin?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export function hasAccess(user: User | null | undefined): boolean {
   const isAssigned = user.isAssigned || user.is_assigned;
   const trialEndsAt = user.trialEndsAt || user.trial_ends_at;
   const hasPaid = user.hasPaid || user.has_paid;
+  const createdByAdmin = user.createdByAdmin || user.created_by_admin;
   
   
   // Admins always have access
@@ -66,15 +69,21 @@ export function hasAccess(user: User | null | undefined): boolean {
     return true;
   }
   
-  // HARD RULE: Paid users get access regardless of email verification
-  // Payment completion (especially via Stripe) is sufficient verification of ownership
-  if (hasPaid) {
+  // SECURITY: Admin-created paid users bypass email verification
+  // Admin creation is sufficient verification of ownership for these accounts
+  if (hasPaid && createdByAdmin) {
     return true;
   }
   
-  // SECURITY: Email verification required for trial/unpaid access
+  // SECURITY: Regular users need email verification even if they've paid
+  // This prevents someone from registering with another person's email and paying to bypass verification
   if (!hasVerifiedEmail(user)) {
     return false;
+  }
+  
+  // Regular paid users (with verified email) get access
+  if (hasPaid) {
+    return true;
   }
   
   return false;
