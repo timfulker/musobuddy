@@ -191,11 +191,11 @@ JSON:`;
       responseFormat: 'json_object'
     };
 
-    // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
+    // Configure for quality: Use premium models for accurate email parsing
     const taskConfig: TaskConfig = {
-      models: ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4'],
-      confidenceThreshold: 0.75, // Escalate if confidence < 75%
-      maxBudgetCents: 50, // Max 50 cents per email parsing (generous budget)
+      models: ['gpt-4o', 'claude-sonnet-4'], // Start with quality models
+      confidenceThreshold: 0.8, // Higher threshold for accuracy
+      maxBudgetCents: 50, // Budget allows quality models
       validators: [
         ValidatorFactory.createBookingParser() // Validates JSON structure and required fields
       ],

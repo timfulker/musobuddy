@@ -168,11 +168,11 @@ export class AIResponseGenerator {
         responseFormat: 'json_object'
       };
 
-      // Configure escalation: GPT-4o mini → GPT-5 → Claude Sonnet 4
+      // Configure for quality: Start with premium models for better responses
       const taskConfig: TaskConfig = {
-        models: ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4'],
-        confidenceThreshold: 0.70, // Escalate if confidence < 70% for responses
-        maxBudgetCents: 30, // Max 30 cents per response generation
+        models: ['gpt-4o', 'claude-sonnet-4'], // Skip cheap model, prioritize quality
+        confidenceThreshold: 0.8, // Higher threshold for quality responses  
+        maxBudgetCents: 50, // Higher budget for quality responses
         validators: [
           ValidatorFactory.createResponseGenerator() // Validates JSON and required fields
         ],

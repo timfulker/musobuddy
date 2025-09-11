@@ -56,9 +56,9 @@ JSON:`;
     };
 
     const config = {
-      models: ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4'] as const,
-      confidenceThreshold: 0.6, // Lower threshold for confirmations
-      maxBudgetCents: 30,
+      models: ['gpt-4o', 'claude-sonnet-4'] as const, // Start with quality models
+      confidenceThreshold: 0.8, // Higher threshold for accuracy
+      maxBudgetCents: 50, // Higher budget for quality
       validators: [
         (result: any) => {
           try {
