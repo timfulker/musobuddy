@@ -325,6 +325,9 @@ app.post('/api/admin/users', async (req, res) => {
     }
     
     console.log(`🔧 [ADMIN] Creating new user: ${email}`);
+    if (bypassPayment) {
+      console.log(`💰 [ADMIN] Payment bypass enabled for user: ${email}`);
+    }
     
     // Check if user already exists
     const existingUser = await storage.getUserByEmail(email);
@@ -366,7 +369,11 @@ app.post('/api/admin/users', async (req, res) => {
       phoneVerified: phoneVerified || false,
       isActive: true,
       onboardingCompleted: false,
-      createdByAdmin: true  // IMPORTANT: Mark admin-created users
+      createdByAdmin: true,  // IMPORTANT: Mark admin-created users
+      // Payment bypass flags - set both for complete bypass
+      isAssigned: bypassPayment || false,  // Admin granted free access
+      hasPaid: bypassPayment || false,     // Mark as paid to bypass all payment checks
+      trialEndsAt: bypassPayment ? null : undefined  // No trial expiration if payment bypassed
     };
     
     // Create user in database
@@ -387,7 +394,10 @@ app.post('/api/admin/users', async (req, res) => {
         tier: newUser.tier,
         isAdmin: newUser.isAdmin,
         isBetaTester: newUser.isBetaTester,
-        firebaseUid: newUser.firebaseUid
+        firebaseUid: newUser.firebaseUid,
+        isAssigned: newUser.isAssigned,
+        hasPaid: newUser.hasPaid,
+        paymentBypassed: bypassPayment || false
       }
     });
     
