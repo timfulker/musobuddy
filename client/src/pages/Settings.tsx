@@ -475,6 +475,9 @@ export default function Settings() {
   // Active section for sidebar navigation
   const [activeSection, setActiveSection] = useState('business');
   
+  // Handle URL parameters for direct navigation to sections
+  const [currentLocation] = useLocation();
+  
   // Define all settings sections with completion logic
   const settingsSections = [
     {
@@ -576,6 +579,15 @@ export default function Settings() {
       }
     }
   ];
+
+  // Handle URL parameters for direct navigation to sections
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    if (sectionParam && settingsSections.some(section => section.id === sectionParam)) {
+      setActiveSection(sectionParam);
+    }
+  }, [currentLocation]);
 
   // Function to render the active section content
   const renderActiveSection = () => {

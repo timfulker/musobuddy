@@ -7,7 +7,7 @@ export default function AcceptableUsePolicy() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
           <div className="mb-6">
-            <Link href="/settings" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4" data-testid="back-to-legal">
+            <Link href="/settings?section=legal" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4" data-testid="back-to-legal">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Legal
             </Link>
