@@ -7,9 +7,9 @@ export default function TermsAndConditions() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
           <div className="mb-6">
-            <Link href="/dashboard" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4" data-testid="back-to-dashboard">
+            <Link href="/settings" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4" data-testid="back-to-legal">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              Back to Legal
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">Last updated: September 11, 2025</p>
