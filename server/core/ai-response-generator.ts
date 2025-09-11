@@ -228,9 +228,9 @@ export class AIResponseGenerator {
         let threeHoursPrice: number;
         let fourHoursPrice: number;
         
-        if (bookingContext?.fee && Number(bookingContext.fee) > 0 && bookingContext.performanceDuration) {
-          // Use the actual booking fee which already includes travel
-          const bookingFee = Number(bookingContext.fee);
+        if (bookingContext?.finalAmount && Number(bookingContext.finalAmount) > 0 && bookingContext.performanceDuration) {
+          // Use the actual total fee the client agreed to (includes travel and all costs)
+          const bookingFee = Number(bookingContext.finalAmount);
           const duration = bookingContext.performanceDuration;
           
           // Set prices based on the booking's actual fee
@@ -465,11 +465,12 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     }
     
     console.log('🎵 PRICING CALCULATION:', {
-      source: bookingContext?.fee ? 'Using booking fee (includes travel)' : 'Calculated from base rates',
+      source: bookingContext?.finalAmount ? 'Using confirmed total fee' : 'Calculated from base rates',
       BHR: `${BHR} (type: ${typeof BHR})`,
       AHR: `${AHR} (type: ${typeof AHR})`,
-      bookingFee: bookingContext?.fee || 'N/A',
-      travelExpense: bookingContext?.fee ? 'Included in fee' : (formTravelExpense || 0),
+      confirmedTotalFee: bookingContext?.finalAmount || 'N/A',
+      performanceFee: bookingContext?.fee || 'N/A',
+      travelExpense: bookingContext?.finalAmount ? 'Included in total' : (formTravelExpense || 0),
       calculations: {
         '2hrs': `£${twoHoursPrice}`,
         '3hrs': `£${threeHoursPrice}`,
