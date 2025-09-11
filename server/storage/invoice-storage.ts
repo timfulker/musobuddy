@@ -60,6 +60,8 @@ export class InvoiceStorage {
         paidAt: invoiceData.paidAt ? new Date(invoiceData.paidAt) : null, // FIXED: Use paidAt not paidDate
         performanceDuration: invoiceData.performanceDuration || null,
         gigType: invoiceData.gigType || null,
+        invoiceType: invoiceData.invoiceType || 'performance',
+        description: invoiceData.description || null,
         cloudStorageUrl: invoiceData.cloudStorageUrl || null,
         cloudStorageKey: invoiceData.cloudStorageKey || null,
         shareToken: shareToken, // Secure token for public access
@@ -96,6 +98,8 @@ export class InvoiceStorage {
           paidAt: uniqueInvoiceData.paidAt ? new Date(uniqueInvoiceData.paidAt) : null,
           performanceDuration: uniqueInvoiceData.performanceDuration || null,
           gigType: uniqueInvoiceData.gigType || null,
+          invoiceType: uniqueInvoiceData.invoiceType || 'performance',
+          description: uniqueInvoiceData.description || null,
           cloudStorageUrl: uniqueInvoiceData.cloudStorageUrl || null,
           cloudStorageKey: uniqueInvoiceData.cloudStorageKey || null,
           shareToken: shareToken,
