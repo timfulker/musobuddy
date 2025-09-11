@@ -26,6 +26,7 @@ interface DatabaseUser {
   stripeSubscriptionId: string | null;
   onboardingCompleted: boolean;
   emailPrefix: string | null;
+  createdByAdmin: boolean;
 }
 
 interface AuthState {

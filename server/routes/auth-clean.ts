@@ -179,6 +179,7 @@ export function setupAuthRoutes(app: Express) {
         isAdmin: user.isAdmin || false,
         isAssigned: user.isAssigned || false,
         isBetaTester: user.isBetaTester || false,
+        createdByAdmin: user.createdByAdmin || false, // IMPORTANT: Include for access control
         
         // Access Control (new simplified fields)
         hasPaid: user.hasPaid || false,
@@ -224,6 +225,7 @@ export function setupAuthRoutes(app: Express) {
         isAdmin: user.isAdmin || false,
         isAssigned: user.isAssigned || false,
         isBetaTester: user.isBetaTester || false,
+        createdByAdmin: user.createdByAdmin || false, // IMPORTANT: Include for access control
         
         // Access Control (new simplified fields)
         hasPaid: user.hasPaid || false,
