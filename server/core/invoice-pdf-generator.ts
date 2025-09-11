@@ -135,8 +135,16 @@ function getLogoBase64(): string {
 
 // Helper function to generate dynamic service description based on booking details
 function generateServiceDescription(invoice: Invoice, booking: Booking | null, userSettings: UserSettings | null): string {
+  // DEBUG: Log invoice properties to understand what we're receiving
+  console.log('🔍 [PDF-GENERATOR-DEBUG] Invoice properties:');
+  console.log('📋 invoiceType (camelCase):', invoice.invoiceType);
+  console.log('📋 invoice_type (snake_case):', invoice['invoice_type']);
+  console.log('📋 description:', invoice.description);
+  console.log('📋 All invoice keys:', Object.keys(invoice));
+  
   // For ad-hoc invoices, use the description directly if available
   if ((invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') && invoice.description) {
+    console.log('✅ [PDF-GENERATOR-DEBUG] Using ad-hoc description:', invoice.description);
     return invoice.description;
   }
   
