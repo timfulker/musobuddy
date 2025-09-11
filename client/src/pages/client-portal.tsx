@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, Music, Calendar, MapPin, Users, Clock, Camera, Upload, Save, Sparkles, Heart, Volume2, Mic2, Settings } from 'lucide-react';
+import { AlertCircle, Music, Calendar, MapPin, Users, Clock, Camera, Upload, Save, Sparkles, Heart, Volume2, Mic2, Settings, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -51,6 +51,7 @@ export default function ClientPortal() {
   });
 
   const handleInputChange = (field: string, value: any) => {
+    console.log(`Setting ${field} to:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -94,6 +95,7 @@ export default function ClientPortal() {
 
   const contract = portalData.contract;
   const clientData = portalData.clientData || {};
+  console.log('Client data received:', clientData);
 
   const themeColor = '#191970'; // MusoBuddy midnight blue
 
