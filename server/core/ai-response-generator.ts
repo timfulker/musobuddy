@@ -140,11 +140,6 @@ export class AIResponseGenerator {
   }> {
     const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo, clientHistory, travelExpense } = request;
     
-    // Detect intent from contextual info (latest incoming message) 
-    const lastMessage = contextualInfo || customPrompt || '';
-    const intent = this.detectIntent(lastMessage, bookingContext?.status);
-    const includePricing = intent === 'inquiry';
-    
     console.log('🤖 Starting AI response generation...');
     console.log('🤖 Request details:', {
       action,
@@ -152,16 +147,13 @@ export class AIResponseGenerator {
       hasUserSettings: !!userSettings,
       hasCustomPrompt: !!customPrompt,
       hasContextualInfo: !!contextualInfo,
-      tone,
-      intent,
-      includePricing,
-      lastMessage: lastMessage.substring(0, 100) + '...'
+      tone
     });
     
     try {
       const openai = this.getOpenAIClient();
       
-      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense, includePricing);
+      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo, clientHistory);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
@@ -360,7 +352,7 @@ export class AIResponseGenerator {
     }
   }
 
-  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext, formTravelExpense?: number, includePricing: boolean = true): string {
+  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext, formTravelExpense?: number): string {
     const businessName = userSettings?.businessName || "the performer";
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
@@ -504,27 +496,20 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     
     const packages = [...basePackages, ...djPackages];
 
-    const pricingSection = includePricing ? `
-PRICING POLICY - INCLUDE PRICING:
-- This is an initial inquiry - provide clear, attractive pricing packages
-- Include the following pricing options in your response:
+    const pricingSection = `
+PRICING POLICY - ALWAYS INCLUDE CORRECT PRICING:
+- ALWAYS provide clear, accurate pricing in your response
+- For initial inquiries: Include attractive pricing packages showing options:
 ${packages.map(pkg => `  • ${pkg}`).join('\n')}
-- Present pricing naturally within your professional response
+- For confirmations: Reference the TOTAL FEE from booking context (includes travel expenses)
+- Present pricing naturally within your professional response  
 - Mention that prices include travel costs and all equipment
 - Add value by highlighting the quality and professionalism included
 - Use the exact pricing amounts calculated above - do not modify them
 - Format prices clearly: "2 hours saxophone: £${twoHoursPrice}" etc.
-- Pricing should feel welcoming and competitive, not intimidating
-` : `
-PRICING POLICY - EXCLUDE PRICING:
-- This appears to be a confirmation or follow-up message - do NOT mention any fees or prices
-- Focus ONLY on availability, service details, and booking logistics  
-- The client has already received pricing information previously
-- If they ask about pricing again, simply say "as previously discussed" or "as quoted"
-- ABSOLUTELY FORBIDDEN: Do not include any currency amounts, fee structures, or pricing tiers
-- MANDATORY: Omit all references to money, costs, travel expenses, or payment terms
-- Keep response focused on next steps, logistics, and confirmation details
-`;
+- CRITICAL: For confirmations, always use the booking's final total fee, not base calculations
+- If booking has finalAmount/fee set, use that exact amount as the confirmed price
+- Pricing should feel welcoming and competitive, not intimidating`;
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
