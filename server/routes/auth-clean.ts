@@ -165,7 +165,7 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Return simplified user data with new access control fields
-      res.json({
+      const responseData = {
         // Identity
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
