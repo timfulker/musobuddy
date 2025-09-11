@@ -989,7 +989,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-email"
           >
-            {saveEmailSettings.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
@@ -1925,7 +1925,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-bank"
           >
-            {saveBankDetails.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
@@ -2089,7 +2089,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-pricing"
           >
-            {savePricingGuide.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
@@ -2413,7 +2413,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-performance"
           >
-            {savePerformanceSettings.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
@@ -2436,7 +2436,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-widget"
           >
-            {saveWidgetSettings.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
@@ -2596,7 +2596,7 @@ export default function Settings() {
               className="bg-primary hover:bg-primary/90"
               data-testid="button-save-templates"
             >
-              {saveTemplates.isPending ? (
+              {saveSettings.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
@@ -2620,7 +2620,7 @@ export default function Settings() {
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-themes"
           >
-            {saveThemes.isPending ? (
+            {saveSettings.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
