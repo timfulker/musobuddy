@@ -687,16 +687,17 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.venue) details.push(`Venue: ${context.venue}`);
     if (context.eventType) details.push(`Event Type: ${context.eventType}`);
     if (context.gigType) details.push(`Gig Type: ${context.gigType}`);
-    if (context.fee) details.push(`Performance Fee: £${context.fee}`);
+    // Use finalAmount (confirmed total fee) if available, otherwise fall back to performance fee
+    const confirmedFee = context.finalAmount || context.fee;
+    if (confirmedFee) details.push(`Confirmed Total Fee: £${confirmedFee}`);
     if (context.performanceDuration) details.push(`Duration: ${context.performanceDuration}`);
     if (context.styles) details.push(`Music Styles: ${context.styles}`);
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
-    // SIMPLIFIED: No travel expense instructions needed - fee already includes everything
-    // Travel expenses are now always included in the performance fee display
-    const simplifiedInstruction = context.fee 
-      ? `\n\nPRICING INSTRUCTION: Use £${context.fee} as the base fee for this booking. This amount already includes all costs. Present as clean total prices without breakdown.`
+    // CRITICAL: Use the confirmed total fee that client agreed to (finalAmount), not just performance fee
+    const simplifiedInstruction = confirmedFee 
+      ? `\n\nPRICING INSTRUCTION: Use £${confirmedFee} as the confirmed total fee for this booking. This is the exact amount the client agreed to pay. Present this amount in your response without modification.`
       : '';
 
     return details.length > 0 
