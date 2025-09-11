@@ -99,7 +99,6 @@ export default function AdminPanel() {
     isAdmin: false,
     isAssigned: false,
     isBetaTester: false,
-    phoneVerified: false,
     bypassPayment: false
   });
   const [editUserForm, setEditUserForm] = useState({
@@ -184,7 +183,6 @@ export default function AdminPanel() {
         tier: 'free',
         isAdmin: false,
         isBetaTester: false,
-        phoneVerified: false,
         bypassPayment: false
       });
       toast({
@@ -912,16 +910,6 @@ export default function AdminPanel() {
                                     className="rounded"
                                   />
                                   <Label htmlFor="forceTestMode">Force Test Mode (use test Stripe even in production)</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id="phoneVerified"
-                                    checked={newUserForm.phoneVerified}
-                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, phoneVerified: e.target.checked }))}
-                                    className="rounded"
-                                  />
-                                  <Label htmlFor="phoneVerified">Skip phone verification (bypass SMS requirement)</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <input
