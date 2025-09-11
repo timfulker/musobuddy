@@ -3,7 +3,6 @@ import { neon, neonConfig } from "@neondatabase/serverless";
 import * as schema from "../../shared/schema";
 
 // Configure Neon for better stability
-neonConfig.fetchConnectionCache = true;
 neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
   const protocol = options.ssl !== false ? 'https' : 'http';
   return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
