@@ -1,4 +1,4 @@
-import { aiOrchestrator } from './ai-orchestrator';
+import { aiOrchestrator, AIOrchestrator } from './ai-orchestrator';
 
 /**
  * Specialized function to parse booking confirmations (not new bookings)
@@ -8,7 +8,7 @@ export async function parseBookingConfirmation(messageContent: string, existingB
   try {
     console.log('🎯 [CONFIRMATION-PARSER] Parsing booking confirmation message...');
     
-    const orchestrator = aiOrchestrator.getInstance();
+    const orchestrator = AIOrchestrator.getInstance();
     
     const systemPrompt = `You are extracting details from a BOOKING CONFIRMATION message (not a new booking inquiry).
 The booking already exists with these details:
