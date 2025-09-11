@@ -314,7 +314,8 @@ app.post('/api/admin/users', async (req, res) => {
       tier, 
       isAdmin, 
       isBetaTester, 
-      phoneVerified 
+      phoneVerified,
+      bypassPayment  // New: Clean flag to bypass all payment verification
     } = req.body;
     
     if (!email || !firstName || !lastName || !password) {
