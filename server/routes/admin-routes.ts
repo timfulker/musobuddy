@@ -338,12 +338,32 @@ app.post('/api/admin/users', async (req, res) => {
       });
     }
     
-    // If firebaseUid provided, check if it's already linked
-    if (firebaseUid) {
-      const existingFirebaseUser = await storage.getUserByFirebaseUid(firebaseUid);
+    let finalFirebaseUid = firebaseUid;
+    
+    // If no Firebase UID provided, create Firebase user automatically
+    if (!finalFirebaseUid) {
+      try {
+        console.log(`🔥 [ADMIN] Creating Firebase user for ${email}`);
+        const firebaseUser = await adminAuth.createUser({
+          email: email,
+          password: password,
+          emailVerified: true,  // Set to verified immediately
+          displayName: `${firstName} ${lastName}`
+        });
+        finalFirebaseUid = firebaseUser.uid;
+        console.log(`✅ [ADMIN] Created Firebase user ${finalFirebaseUid} for ${email}`);
+      } catch (firebaseError: any) {
+        console.error(`❌ [ADMIN] Failed to create Firebase user for ${email}:`, firebaseError.message);
+        return res.status(500).json({ 
+          error: `Failed to create Firebase user: ${firebaseError.message}` 
+        });
+      }
+    } else {
+      // If firebaseUid provided, check if it's already linked
+      const existingFirebaseUser = await storage.getUserByFirebaseUid(finalFirebaseUid);
       if (existingFirebaseUser) {
         return res.status(409).json({ 
-          error: `Firebase UID ${firebaseUid} is already linked to another user: ${existingFirebaseUser.email}` 
+          error: `Firebase UID ${finalFirebaseUid} is already linked to another user: ${existingFirebaseUser.email}` 
         });
       }
     }
@@ -363,7 +383,7 @@ app.post('/api/admin/users', async (req, res) => {
       firstName,
       lastName,
       password: hashedPassword,
-      firebaseUid: firebaseUid || null,
+      firebaseUid: finalFirebaseUid || null,
       tier: tier || 'free',
       isAdmin: isAdmin || false,
       isBetaTester: isBetaTester || false,
@@ -382,18 +402,21 @@ app.post('/api/admin/users', async (req, res) => {
     
     console.log(`✅ [ADMIN] Successfully created user ${email} (ID: ${userId})`);
     
-    // Set email verification to true in Firebase if UID is provided
-    if (firebaseUid) {
+    // Set email verification to true in Firebase if UID is provided (only needed for existing users)
+    if (finalFirebaseUid && firebaseUid) {
+      // Only update if we linked to an existing Firebase user (not auto-created)
       try {
-        await adminAuth.updateUser(firebaseUid, {
+        await adminAuth.updateUser(finalFirebaseUid, {
           emailVerified: true
         });
-        console.log(`✅ [ADMIN] Email verification set to true for Firebase user ${firebaseUid}`);
-        console.log(`🔗 [ADMIN] Firebase UID ${firebaseUid} linked during creation`);
+        console.log(`✅ [ADMIN] Email verification set to true for existing Firebase user ${finalFirebaseUid}`);
+        console.log(`🔗 [ADMIN] Firebase UID ${finalFirebaseUid} linked during creation`);
       } catch (firebaseError: any) {
-        console.warn(`⚠️ [ADMIN] Failed to set email verification for Firebase user ${firebaseUid}:`, firebaseError.message);
+        console.warn(`⚠️ [ADMIN] Failed to set email verification for Firebase user ${finalFirebaseUid}:`, firebaseError.message);
         // Don't fail the entire operation if Firebase update fails
       }
+    } else if (finalFirebaseUid && !firebaseUid) {
+      console.log(`🔗 [ADMIN] Auto-created Firebase user ${finalFirebaseUid} with email verification already enabled`);
     }
     
     res.json({
