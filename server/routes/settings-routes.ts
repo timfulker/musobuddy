@@ -363,23 +363,36 @@ export async function registerSettingsRoutes(app: Express) {
         const currentSettings = await storage.getSettings(userId);
         
         const newPrimaryInstrument = processedBody.primaryInstrument ?? currentSettings?.primaryInstrument ?? "";
-        const newSecondaryInstruments = processedBody.secondaryInstruments ?? currentSettings?.secondaryInstruments ?? [];
+        const newSecondaryInstruments = Array.isArray(processedBody.secondaryInstruments) 
+          ? processedBody.secondaryInstruments 
+          : (processedBody.secondaryInstruments ? [processedBody.secondaryInstruments] : []);
         const currentPrimaryInstrument = currentSettings?.primaryInstrument ?? "";
-        const currentSecondaryInstruments = currentSettings?.secondaryInstruments ?? [];
+        const currentSecondaryInstruments = Array.isArray(currentSettings?.secondaryInstruments) 
+          ? currentSettings.secondaryInstruments 
+          : (currentSettings?.secondaryInstruments ? [currentSettings.secondaryInstruments] : []);
+        
+        // Normalize arrays for comparison (filter empty strings, sort)
+        const normalizeArray = (arr: any[]) => 
+          arr.filter(item => item && typeof item === 'string' && item.trim().length > 0).sort();
+        
+        const normalizedNewSecondary = normalizeArray(newSecondaryInstruments);
+        const normalizedCurrentSecondary = normalizeArray(currentSecondaryInstruments);
         
         // Check if instruments actually changed
         const primaryChanged = newPrimaryInstrument !== currentPrimaryInstrument;
-        const secondaryChanged = JSON.stringify(newSecondaryInstruments.sort()) !== JSON.stringify(currentSecondaryInstruments.sort());
+        const secondaryChanged = JSON.stringify(normalizedNewSecondary) !== JSON.stringify(normalizedCurrentSecondary);
+        
+        console.log(`🎵 INSTRUMENT COMPARISON for user ${userId}:`);
+        console.log(`🎵   Primary: "${currentPrimaryInstrument}" → "${newPrimaryInstrument}" (changed: ${primaryChanged})`);
+        console.log(`🎵   Secondary: [${normalizedCurrentSecondary.join(', ')}] → [${normalizedNewSecondary.join(', ')}] (changed: ${secondaryChanged})`);
         
         if (primaryChanged || secondaryChanged) {
-          console.log(`🎵 Instruments changed, regenerating AI gig types for user ${userId}`);
-          console.log(`🎵 Primary: ${currentPrimaryInstrument} → ${newPrimaryInstrument}`);
-          console.log(`🎵 Secondary: [${currentSecondaryInstruments.join(', ')}] → [${newSecondaryInstruments.join(', ')}]`);
+          console.log(`🎵 INSTRUMENTS CHANGED - regenerating AI gig types for user ${userId}`);
           
           const allInstruments = [
             newPrimaryInstrument, 
-            ...(Array.isArray(newSecondaryInstruments) ? newSecondaryInstruments : [])
-          ].filter(Boolean);
+            ...normalizedNewSecondary
+          ].filter(item => item && item.length > 0);
           
           // Get gig types for all selected instruments only (AI-generated)
           const instrumentGigTypes = [];
@@ -398,7 +411,7 @@ export async function registerSettingsRoutes(app: Express) {
           console.log(`🎵 Instruments:`, allInstruments);
           console.log(`🎵 AI Gig types:`, uniqueInstrumentGigTypes.slice(0, 10), uniqueInstrumentGigTypes.length > 10 ? `...and ${uniqueInstrumentGigTypes.length - 10} more` : '');
         } else {
-          console.log(`🎵 Instruments unchanged for user ${userId}, skipping AI generation`);
+          console.log(`🎵 INSTRUMENTS UNCHANGED for user ${userId} - SKIPPING AI generation ✅`);
         }
       }
       
