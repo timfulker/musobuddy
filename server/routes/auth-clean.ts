@@ -192,7 +192,9 @@ export function setupAuthRoutes(app: Express) {
         
         // No legacy fields - clean response only
         hasCompletedPayment: user.hasPaid || false
-      });
+      };
+
+      res.json(responseData);
 
     } catch (error) {
       console.error('Get user error:', error);
