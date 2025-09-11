@@ -355,6 +355,8 @@ export const invoices = pgTable("invoices", {
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount due (fee minus deposit)
   performanceDuration: text("performance_duration"), // Duration details (e.g., "2 x 45 min sets")
   gigType: text("gig_type"), // Event type (e.g., "Wedding", "Corporate Event")
+  invoiceType: varchar("invoice_type").notNull().default("performance"), // performance, ad_hoc
+  description: text("description"), // Description for ad-hoc invoices (e.g., "Administrative costs for band")
   dueDate: timestamp("due_date").notNull(),
   status: varchar("status").notNull().default("draft"), // draft, sent, paid, overdue
   paidAt: timestamp("paid_at"),
