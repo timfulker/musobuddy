@@ -43,6 +43,12 @@ import { EmailVerification } from "@/pages/auth/email-verification";
 import StartTrial from "@/pages/start-trial";
 import TrialSuccessPage from "@/pages/trial-success";
 import TermsAndConditions from "@/pages/terms-and-conditions";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import CookiePolicy from "@/pages/cookie-policy";
+import RefundPolicy from "@/pages/refund-policy";
+import AcceptableUsePolicy from "@/pages/acceptable-use-policy";
+import DataProcessingAgreement from "@/pages/data-processing-agreement";
+import Disclaimer from "@/pages/disclaimer";
 import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
@@ -160,6 +166,12 @@ function Router() {
       <Route path="/auth/verify-email" component={EmailVerification} />
       <Route path="/start-trial" component={StartTrial} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/cookie-policy" component={CookiePolicy} />
+      <Route path="/refund-policy" component={RefundPolicy} />
+      <Route path="/acceptable-use-policy" component={AcceptableUsePolicy} />
+      <Route path="/data-processing-agreement" component={DataProcessingAgreement} />
+      <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/success" component={SuccessPage} />
 

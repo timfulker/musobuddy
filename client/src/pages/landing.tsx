@@ -429,22 +429,53 @@ export default function LandingPage() {
 
           {/* Legal Links */}
           <div className="text-center mb-12">
-            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <h4 className="text-xl font-semibold mb-6 text-gray-200">Legal Documents</h4>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
               <div>
-                <h5 className="font-semibold mb-2 text-gray-200">Privacy Policy</h5>
-                <p className="text-base text-gray-300">How we protect your data (spoiler: very seriously)</p>
+                <Link href="/terms-and-conditions">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Terms of Service</h5>
+                </Link>
+                <p className="text-sm text-gray-300">Fair, straightforward terms written in plain English</p>
               </div>
               <div>
-                <h5 className="font-semibold mb-2 text-gray-200">Terms of Service</h5>
-                <p className="text-base text-gray-300">Fair, straightforward terms written in plain English</p>
+                <Link href="/privacy-policy">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Privacy Policy</h5>
+                </Link>
+                <p className="text-sm text-gray-300">How we protect your data (spoiler: very seriously)</p>
               </div>
               <div>
-                <h5 className="font-semibold mb-2 text-gray-200">Security</h5>
-                <p className="text-base text-gray-300">Bank-level protection for your business information</p>
+                <Link href="/cookie-policy">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Cookie Policy</h5>
+                </Link>
+                <p className="text-sm text-gray-300">How we use cookies and tracking</p>
+              </div>
+              <div>
+                <Link href="/refund-policy">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Refund Policy</h5>
+                </Link>
+                <p className="text-sm text-gray-300">Clear cancellation and refund terms</p>
+              </div>
+              <div>
+                <Link href="/acceptable-use-policy">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Acceptable Use</h5>
+                </Link>
+                <p className="text-sm text-gray-300">Platform usage guidelines and restrictions</p>
+              </div>
+              <div>
+                <Link href="/data-processing-agreement">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Data Processing</h5>
+                </Link>
+                <p className="text-sm text-gray-300">GDPR-compliant data processing terms</p>
+              </div>
+              <div>
+                <Link href="/disclaimer">
+                  <h5 className="font-semibold mb-2 text-yellow-400 hover:text-yellow-300 cursor-pointer">Disclaimer</h5>
+                </Link>
+                <p className="text-sm text-gray-300">Service limitations and liability information</p>
               </div>
               <div>
                 <h5 className="font-semibold mb-2 text-gray-200">GDPR Compliance</h5>
-                <p className="text-base text-gray-300">Your data rights respected and protected</p>
+                <p className="text-sm text-gray-300">Your data rights respected and protected</p>
               </div>
             </div>
           </div>

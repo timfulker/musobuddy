@@ -7,115 +7,95 @@ export default function TermsAndConditions() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
           <div className="mb-6">
-            <Link href="/login" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4">
+            <Link href="/dashboard" className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-4" data-testid="back-to-dashboard">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Login
+              Back to Dashboard
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Terms & Conditions</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Last updated: August 4, 2025</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">Last updated: September 11, 2025</p>
           </div>
 
           <div className="prose prose-gray dark:prose-invert max-w-none">
-            <h2>1. Service Overview</h2>
-            <p>MusoBuddy provides music business management services including contract creation, invoice generation, booking management, and document storage through our cloud-based platform.</p>
+            <h2>1. Introduction</h2>
+            <p>Welcome to MusoBuddy ("we", "our", "us"). By creating an account or using our platform (the "Service"), you agree to these Terms of Service. Please read them carefully. If you do not agree, do not use the Service.</p>
 
-            <h2>2. Data Collection and Processing</h2>
-            <h3>2.1 Information We Collect</h3>
-            <p>We collect and process the following types of information:</p>
+            <h2>2. Definitions</h2>
             <ul>
-              <li><strong>Account Information:</strong> Email address, business name, contact details</li>
-              <li><strong>Business Data:</strong> Client information, booking details, financial records</li>
-              <li><strong>Document Content:</strong> Contracts, invoices, and related business documents</li>
-              <li><strong>Usage Data:</strong> Platform interactions, feature usage, and system logs</li>
+              <li><strong>Service:</strong> The MusoBuddy app, website, and related tools (bookings, contracts, invoices, email integrations, client portal).</li>
+              <li><strong>User:</strong> Any individual or business registering for and using the Service (musicians, DJs, bands, event clients).</li>
+              <li><strong>Subscription:</strong> Paid plans offered by MusoBuddy (Standard £9.99/month, Premium £13.99/month).</li>
+              <li><strong>Beta Tester:</strong> A user invited by MusoBuddy to use the Service for free during a testing period.</li>
             </ul>
 
-            <h3>2.2 How We Use Your Information</h3>
-            <p>Your information is used to:</p>
+            <h2>3. Eligibility</h2>
             <ul>
-              <li>Provide core platform services (document generation, storage, management)</li>
-              <li>Facilitate communication between you and your clients</li>
-              <li>Generate professional contracts and invoices</li>
-              <li>Maintain platform security and functionality</li>
-              <li>Provide customer support and platform improvements</li>
+              <li>You must be at least 18 years old to use MusoBuddy.</li>
+              <li>If you are using the Service on behalf of a business, you confirm you have authority to bind that business.</li>
             </ul>
 
-            <h2>3. Document Storage and Access</h2>
-            <h3>3.1 Cloud Storage</h3>
-            <p>Documents generated through our platform (contracts, invoices) are stored using Cloudflare R2 cloud storage services. This ensures:</p>
+            <h2>4. Accounts & Security</h2>
             <ul>
-              <li>Reliable document preservation and access</li>
-              <li>Global availability and fast loading times</li>
-              <li>Professional document delivery to your clients</li>
+              <li>You agree to provide accurate, complete, and updated information.</li>
+              <li>You are responsible for maintaining the confidentiality of your account login details.</li>
+              <li>You must notify us immediately if you suspect unauthorised use of your account.</li>
             </ul>
 
-            <h3>3.2 Document Access</h3>
-            <p>Generated documents are accessible through direct cloud storage URLs to ensure:</p>
+            <h2>5. Subscriptions & Payments</h2>
             <ul>
-              <li>Permanent availability for legal and business purposes</li>
-              <li>Client access independent of platform availability</li>
-              <li>Compliance with business document retention requirements</li>
+              <li><strong>Pricing:</strong> Standard plan £9.99/month, Premium plan £13.99/month.</li>
+              <li><strong>Billing:</strong> Subscriptions renew automatically each month until cancelled.</li>
+              <li><strong>Trials:</strong> We may offer a 30-day free trial. If payment fails after 48 hours at renewal, your account will be suspended.</li>
+              <li>Payments are processed via Stripe. We do not store your full payment card details.</li>
             </ul>
 
-            <h3>3.3 Client Data in Documents</h3>
-            <p>When you create contracts or invoices containing client information (names, addresses, contact details), this information becomes part of the generated document. By using our service, you confirm that:</p>
+            <h2>6. Cancellations & Refunds</h2>
             <ul>
-              <li>You have appropriate consent to include client data in business documents</li>
-              <li>You understand that documents may be shared with relevant parties as part of normal business operations</li>
-              <li>Client data in documents is necessary for legitimate business purposes</li>
+              <li>You can cancel anytime via your account settings.</li>
+              <li>No refunds for partially used billing periods unless required by law (e.g. UK Consumer Rights Act).</li>
             </ul>
 
-            <h2>4. Data Protection and Privacy Rights</h2>
-            <h3>4.1 Your Rights</h3>
-            <p>Under data protection regulations, you have the right to:</p>
+            <h2>7. Acceptable Use</h2>
+            <p>You agree not to:</p>
             <ul>
-              <li><strong>Access:</strong> Request copies of your data</li>
-              <li><strong>Rectification:</strong> Request correction of inaccurate data</li>
-              <li><strong>Erasure:</strong> Request deletion of your data (subject to business retention requirements)</li>
-              <li><strong>Portability:</strong> Receive your data in a structured format</li>
-              <li><strong>Restriction:</strong> Request limitation of data processing</li>
-              <li><strong>Objection:</strong> Object to certain types of data processing</li>
+              <li>Use the Service for spam or unsolicited marketing emails.</li>
+              <li>Upload unlawful, defamatory, or infringing content.</li>
+              <li>Misuse or attempt to hack, reverse engineer, or disrupt the Service.</li>
+              <li>Circumvent billing or attempt to use the Service without payment (except during an authorised trial or beta period).</li>
             </ul>
 
-            <h3>4.2 Data Retention</h3>
-            <p>We retain your data for as long as necessary to provide services and comply with legal obligations. Business documents (contracts, invoices) may be retained permanently for legal and regulatory compliance.</p>
-
-            <h2>5. Security Measures</h2>
-            <p>We implement appropriate technical and organizational measures to protect your data, including:</p>
+            <h2>8. Intellectual Property</h2>
             <ul>
-              <li>Encrypted data transmission and storage</li>
-              <li>Access controls and authentication systems</li>
-              <li>Regular security monitoring and updates</li>
-              <li>Secure cloud infrastructure with enterprise-grade providers</li>
+              <li>MusoBuddy owns all intellectual property in the platform, brand, and software.</li>
+              <li>You retain ownership of your own content (e.g., contracts, invoices, media files), but grant us a licence to host and display it within the Service.</li>
             </ul>
 
-            <h2>6. Third-Party Services</h2>
-            <p>Our platform integrates with trusted third-party services:</p>
+            <h2>9. Service Availability</h2>
             <ul>
-              <li><strong>Cloudflare R2:</strong> Document storage and delivery</li>
-              <li><strong>Mailgun:</strong> Email delivery services</li>
-              <li><strong>Neon Database:</strong> Secure data storage</li>
-              <li><strong>Replit:</strong> Platform hosting and authentication</li>
+              <li>We aim for high uptime but do not guarantee uninterrupted access.</li>
+              <li>We are not liable for downtime caused by third-party providers (e.g., Mailgun, Stripe, Google).</li>
             </ul>
-            <p>These services are selected for their security standards and compliance with data protection regulations.</p>
 
-            <h2>7. International Data Transfers</h2>
-            <p>Your data may be processed in countries outside your jurisdiction. We ensure appropriate safeguards are in place for any international data transfers, including adequate protection measures and compliance with applicable data protection laws.</p>
+            <h2>10. Termination</h2>
+            <p>We may suspend or terminate your account if you breach these Terms or misuse the Service.</p>
 
-            <h2>8. Changes to Terms</h2>
-            <p>We may update these terms periodically. Significant changes will be communicated through the platform or via email. Continued use of the service constitutes acceptance of updated terms.</p>
+            <h2>11. Limitation of Liability</h2>
+            <ul>
+              <li>The Service is provided "as is" without warranties.</li>
+              <li>We are not liable for loss of income, business, or data except where required by law.</li>
+              <li>Nothing in these Terms limits liability for fraud, death, or personal injury caused by negligence.</li>
+            </ul>
 
-            <h2>9. Contact Information</h2>
-            <p>For questions about these terms, data protection matters, or to exercise your rights, please contact us through the platform's support system or email support.</p>
+            <h2>12. Governing Law</h2>
+            <p>These Terms are governed by the laws of England and Wales, and disputes will be resolved exclusively in the courts of England and Wales.</p>
 
-            <h2>10. Governing Law</h2>
-            <p>These terms are governed by applicable data protection laws including GDPR where applicable, and the laws of the jurisdiction where the service is provided.</p>
+            <h2>13. Contact</h2>
+            <p>For questions, please email: <a href="mailto:timfulkermusic@gmail.com" className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300">timfulkermusic@gmail.com</a></p>
 
             <div className="mt-8 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
               <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-200 mb-2">Important Notice</h3>
               <p className="text-purple-700 dark:text-purple-300">
-                By using MusoBuddy, you acknowledge that you understand how your data is processed and stored. 
-                You confirm that you have appropriate consent for any client data included in generated documents, 
-                and you accept the cloud-based nature of document storage for business continuity and accessibility.
+                By using MusoBuddy, you acknowledge and agree to these Terms of Service. 
+                Please read them carefully and contact us if you have any questions.
               </p>
             </div>
           </div>
