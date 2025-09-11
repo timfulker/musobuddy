@@ -98,12 +98,52 @@ export class AIResponseGenerator {
     return this.openai;
   }
   
+  // Intent detection to determine if pricing should be included
+  private detectIntent(messageText?: string, bookingStatus?: string): 'inquiry' | 'confirmation' {
+    if (!messageText) return 'inquiry'; // Default to inquiry
+    
+    const confirmationKeywords = [
+      'go ahead', 'book', 'we accept', 'please send contract', 'confirmed', 
+      'yes please', 'sounds good', 'perfect', 'we would like to', 'booking confirmed',
+      'accept', 'agree', 'looking forward', 'contract please', 'proceed'
+    ];
+    
+    const inquiryKeywords = [
+      'price', 'cost', 'quote', 'availability', 'available', 'rates', 'fee',
+      'how much', 'interested in', 'considering', 'wedding', 'event', 'party'
+    ];
+    
+    const text = messageText.toLowerCase();
+    
+    // Check for strong confirmation signals
+    const hasConfirmationKeywords = confirmationKeywords.some(keyword => text.includes(keyword));
+    const hasInquiryKeywords = inquiryKeywords.some(keyword => text.includes(keyword));
+    
+    // If booking status suggests confirmation, prioritize that
+    if (bookingStatus && ['contract-sent', 'confirmed'].includes(bookingStatus)) {
+      return 'confirmation';
+    }
+    
+    // If we have confirmation keywords but no inquiry keywords, it's likely a confirmation
+    if (hasConfirmationKeywords && !hasInquiryKeywords) {
+      return 'confirmation';
+    }
+    
+    // Default to inquiry (safer for pricing inclusion)
+    return 'inquiry';
+  }
+
   async generateEmailResponse(request: AIResponseRequest): Promise<{
     subject: string;
     emailBody: string;
     smsBody?: string;
   }> {
     const { action, bookingContext, userSettings, customPrompt, tone = 'professional', contextualInfo, clientHistory, travelExpense } = request;
+    
+    // Detect intent from contextual info (latest incoming message) 
+    const lastMessage = contextualInfo || customPrompt || '';
+    const intent = this.detectIntent(lastMessage, bookingContext?.status);
+    const includePricing = intent === 'inquiry';
     
     console.log('🤖 Starting AI response generation...');
     console.log('🤖 Request details:', {
@@ -112,13 +152,16 @@ export class AIResponseGenerator {
       hasUserSettings: !!userSettings,
       hasCustomPrompt: !!customPrompt,
       hasContextualInfo: !!contextualInfo,
-      tone
+      tone,
+      intent,
+      includePricing,
+      lastMessage: lastMessage.substring(0, 100) + '...'
     });
     
     try {
       const openai = this.getOpenAIClient();
       
-      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense);
+      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext, travelExpense, includePricing);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt, contextualInfo, clientHistory);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
@@ -317,7 +360,7 @@ export class AIResponseGenerator {
     }
   }
 
-  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext, formTravelExpense?: number): string {
+  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext, formTravelExpense?: number, includePricing: boolean = true): string {
     const businessName = userSettings?.businessName || "the performer";
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
@@ -461,15 +504,27 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     
     const packages = [...basePackages, ...djPackages];
 
-    const pricingSection = `
-PRICING POLICY:
-- DO NOT mention any fees, prices, or financial amounts in your response
-- Users handle pricing communication manually to maintain full control
-- Focus ONLY on availability, service details, and booking logistics
-- If the client specifically asks about pricing, simply mention that "detailed pricing information will be provided separately"
+    const pricingSection = includePricing ? `
+PRICING POLICY - INCLUDE PRICING:
+- This is an initial inquiry - provide clear, attractive pricing packages
+- Include the following pricing options in your response:
+${packages.map(pkg => `  • ${pkg}`).join('\n')}
+- Present pricing naturally within your professional response
+- Mention that prices include travel costs and all equipment
+- Add value by highlighting the quality and professionalism included
+- Use the exact pricing amounts calculated above - do not modify them
+- Format prices clearly: "2 hours saxophone: £${twoHoursPrice}" etc.
+- Pricing should feel welcoming and competitive, not intimidating
+` : `
+PRICING POLICY - EXCLUDE PRICING:
+- This appears to be a confirmation or follow-up message - do NOT mention any fees or prices
+- Focus ONLY on availability, service details, and booking logistics  
+- The client has already received pricing information previously
+- If they ask about pricing again, simply say "as previously discussed" or "as quoted"
 - ABSOLUTELY FORBIDDEN: Do not include any currency amounts, fee structures, or pricing tiers
 - MANDATORY: Omit all references to money, costs, travel expenses, or payment terms
-- Exception: Only mention pricing if the client's message explicitly asks for a price quote or fee information`;
+- Keep response focused on next steps, logistics, and confirmation details
+`;
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
