@@ -97,6 +97,8 @@ JSON:`;
         clientConfirmsBooking: parsed.clientConfirmsBooking || false,
         performanceDuration: parsed.serviceSelection, // Map to field expected by UI
         requestsContract: parsed.requestsContract || false,
+        eventTime: parsed.eventTime || null, // ADD MISSING TIME FIELDS
+        eventEndTime: parsed.eventEndTime || null, // ADD MISSING TIME FIELDS
         specialRequirements: parsed.notes,
         confidence: parsed.confidence || 0.7
       };
