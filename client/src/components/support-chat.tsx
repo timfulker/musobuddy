@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Send, X, Minimize2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { MessageCircle, Send, X, Minimize2, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/queryClient';
@@ -45,6 +48,10 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
   });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [position, setPosition] = useState(() => {
     const saved = localStorage.getItem('musobuddy-chat-position');
     return saved ? JSON.parse(saved) : { x: 0, y: 0 };
@@ -175,6 +182,55 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
     setIsDragging(false);
   };
 
+  const sendSupportEmail = async () => {
+    if (!emailSubject.trim() || !emailMessage.trim()) return;
+    
+    // Check authentication
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to send support emails.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+
+    try {
+      const response = await apiRequest('/api/support/email', {
+        method: 'POST',
+        body: JSON.stringify({
+          subject: emailSubject.trim(),
+          message: emailMessage.trim(),
+        }),
+      });
+
+      if (response.success) {
+        toast({
+          title: "Email Sent Successfully",
+          description: "Your message has been sent to our support team. We'll get back to you soon!",
+        });
+        
+        // Clear the form and close dialog
+        setEmailSubject('');
+        setEmailMessage('');
+        setEmailDialogOpen(false);
+      } else {
+        throw new Error(response.error || 'Failed to send email');
+      }
+    } catch (error: any) {
+      console.error('Failed to send support email:', error);
+      toast({
+        title: "Failed to Send Email",
+        description: error.message || "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   if (!isOpen) {
     return (
       <Button
@@ -269,25 +325,92 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
             )}
           </div>
           
-          <div className="flex gap-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={isAuthenticated ? "Type your message..." : "Please log in to chat..."}
-              disabled={isLoading || !isAuthenticated}
-              className="flex-1"
-              data-testid="input-chat-message"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={isLoading || !inputMessage.trim() || !isAuthenticated}
-              size="icon"
-              className="bg-primary hover:bg-primary/90"
-              data-testid="button-send-message"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={isAuthenticated ? "Type your message..." : "Please log in to chat..."}
+                disabled={isLoading || !isAuthenticated}
+                className="flex-1"
+                data-testid="input-chat-message"
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={isLoading || !inputMessage.trim() || !isAuthenticated}
+                size="icon"
+                className="bg-primary hover:bg-primary/90"
+                data-testid="button-send-message"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="flex justify-center pt-2 border-t">
+              <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    disabled={!isAuthenticated}
+                    data-testid="button-email-support"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email Support
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Email Support Team</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email-subject">Subject</Label>
+                      <Input
+                        id="email-subject"
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        placeholder="Brief description of your issue..."
+                        data-testid="input-email-subject"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email-message">Message</Label>
+                      <Textarea
+                        id="email-message"
+                        value={emailMessage}
+                        onChange={(e) => setEmailMessage(e.target.value)}
+                        placeholder="Describe your issue or question in detail..."
+                        rows={6}
+                        data-testid="textarea-email-message"
+                      />
+                    </div>
+                    <div className="flex justify-between">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setEmailDialogOpen(false);
+                          setEmailSubject('');
+                          setEmailMessage('');
+                        }}
+                        data-testid="button-cancel-email"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={sendSupportEmail}
+                        disabled={isSendingEmail || !emailSubject.trim() || !emailMessage.trim()}
+                        data-testid="button-send-email"
+                      >
+                        {isSendingEmail ? 'Sending...' : 'Send Email'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardContent>
       )}

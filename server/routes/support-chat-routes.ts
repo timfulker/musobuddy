@@ -214,6 +214,111 @@ export function registerSupportChatRoutes(app: Express) {
     }
   });
 
+  // Support email endpoint
+  app.post('/api/support/email', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { subject, message } = req.body;
+      const userId = req.user?.uid;
+      const userEmail = req.user?.email;
+
+      if (!userId || !userEmail) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (!subject || !message || typeof subject !== 'string' || typeof message !== 'string') {
+        return res.status(400).json({ error: 'Subject and message are required' });
+      }
+
+      if (subject.trim().length === 0 || message.trim().length === 0) {
+        return res.status(400).json({ error: 'Subject and message cannot be empty' });
+      }
+
+      if (subject.length > 200 || message.length > 5000) {
+        return res.status(400).json({ error: 'Subject or message too long' });
+      }
+
+      console.log(`📧 [SUPPORT-EMAIL] Processing support email from user ${userId} (${userEmail})`);
+
+      // Get user settings for business name if available
+      let userSettings;
+      try {
+        userSettings = await storage.getSettings(userId);
+      } catch (error) {
+        console.warn('⚠️ [SUPPORT-EMAIL] Could not fetch user settings:', error.message);
+        userSettings = null;
+      }
+
+      const businessName = userSettings?.businessName || userEmail;
+
+      // Import EmailService dynamically to avoid import issues
+      const { EmailService } = await import('../core/services');
+      const emailService = new EmailService();
+
+      // Send email to support@musobuddy.com
+      const emailResult = await emailService.sendEmail({
+        from: `${businessName} via MusoBuddy <noreply@enquiries.musobuddy.com>`,
+        to: 'support@musobuddy.com',
+        subject: `[MusoBuddy Support] ${subject.trim()}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <h3 style="margin: 0 0 10px 0; color: #2c3e50;">Support Request from MusoBuddy Platform</h3>
+              <p style="margin: 5px 0; color: #666;"><strong>From:</strong> ${businessName} (${userEmail})</p>
+              <p style="margin: 5px 0; color: #666;"><strong>User ID:</strong> ${userId}</p>
+              <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${new Date().toLocaleString('en-GB')}</p>
+            </div>
+            
+            <div style="background: white; padding: 20px; border: 1px solid #e1e5e9; border-radius: 8px;">
+              <h4 style="margin: 0 0 15px 0; color: #2c3e50;">Subject: ${subject.trim()}</h4>
+              <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">${message.trim()}</div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center; color: #666; font-size: 14px;">
+              This email was sent via the MusoBuddy Platform Support System
+            </div>
+          </div>
+        `,
+        text: `
+Support Request from MusoBuddy Platform
+
+From: ${businessName} (${userEmail})
+User ID: ${userId}
+Date: ${new Date().toLocaleString('en-GB')}
+
+Subject: ${subject.trim()}
+
+Message:
+${message.trim()}
+
+---
+This email was sent via the MusoBuddy Platform Support System
+        `
+      });
+
+      if (emailResult.success) {
+        console.log(`✅ [SUPPORT-EMAIL] Email sent successfully for user ${userId}`);
+        res.json({
+          success: true,
+          message: 'Your support email has been sent successfully. We\'ll get back to you soon!'
+        });
+      } else {
+        console.error(`❌ [SUPPORT-EMAIL] Failed to send email for user ${userId}:`, emailResult.error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to send support email. Please try again later.'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ [SUPPORT-EMAIL] Error processing support email request:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process your support email. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Support chat health check
   app.get('/api/support-chat/health', (req, res) => {
     res.json({
