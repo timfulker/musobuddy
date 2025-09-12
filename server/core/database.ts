@@ -14,15 +14,16 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let connectionString: string;
 
-// Development: use proper development database
-if (isDevelopment && process.env.DATABASE_URL_DEV) {
-  connectionString = process.env.DATABASE_URL_DEV;
-  console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV (empty database)');
-} else if (process.env.DATABASE_URL_PROD && isProduction) {
+// Use DATABASE_URL for development (so Database pane works)
+// Use DATABASE_URL_PROD for production deployments
+if (isDevelopment && process.env.DATABASE_URL) {
+  connectionString = process.env.DATABASE_URL;
+  console.log('🔧 DEVELOPMENT: Using DATABASE_URL');
+} else if (isProduction && process.env.DATABASE_URL_PROD) {
   connectionString = process.env.DATABASE_URL_PROD;
   console.log('🏭 PRODUCTION: Using DATABASE_URL_PROD');
 } else if (isDevelopment) {
-  throw new Error('DATABASE_URL_DEV is required for development environment');
+  throw new Error('DATABASE_URL is required for development environment');
 } else if (isProduction) {
   throw new Error('DATABASE_URL_PROD is required for production environment');
 } else {
