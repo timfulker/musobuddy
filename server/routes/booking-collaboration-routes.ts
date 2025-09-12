@@ -180,6 +180,7 @@ export function setupBookingCollaborationRoutes(app: Express) {
         'specialGuests',
         // Music Preferences
         'musicPreferences',
+        'styleMood',
         'setOrder',
         'mustPlaySongs',
         'avoidSongs',
