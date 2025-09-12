@@ -27,7 +27,8 @@ import {
   Lock,
   AlertTriangle,
   Cog,
-  CheckCircle2
+  CheckCircle2,
+  MessageCircle
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
