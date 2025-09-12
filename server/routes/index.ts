@@ -27,6 +27,7 @@ import { setupCommunicationRoutes } from "./communication-routes";
 import { setupBookingCollaborationRoutes } from "./booking-collaboration-routes";
 import blockedDatesRoutes from "./blocked-dates-routes";
 import documentRoutes from "./document-routes";
+import { registerSupportChatRoutes } from "./support-chat-routes";
 // AI token routes removed - unlimited AI usage for all users
 
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
@@ -100,6 +101,9 @@ export async function registerRoutes(app: Express) {
   
   // Register blocked dates routes
   app.use('/api/blocked-dates', blockedDatesRoutes);
+  
+  // Register support chat routes
+  registerSupportChatRoutes(app);
   
   // Register AI token management routes
   // AI token routes removed - unlimited AI usage for all users
