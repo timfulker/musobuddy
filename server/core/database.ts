@@ -14,14 +14,25 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let connectionString: string;
 
-// Development: prefer DATABASE_URL_DEV, fallback to DATABASE_URL
+// Development: use proper development database
 if (isDevelopment && process.env.DATABASE_URL_DEV) {
   connectionString = process.env.DATABASE_URL_DEV;
   console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV');
+} else if (isDevelopment && process.env.PGHOST) {
+  // Build development URL from PG environment variables
+  const user = process.env.PGUSER || 'neondb_owner';
+  const password = process.env.PGPASSWORD;
+  const host = process.env.PGHOST;
+  const database = process.env.PGDATABASE || 'neondb';
+  connectionString = `postgresql://${user}:${password}@${host}/${database}?sslmode=require`;
+  console.log('🔧 DEVELOPMENT: Using new development database (PG variables)');
+} else if (process.env.DATABASE_URL_PROD && isProduction) {
+  connectionString = process.env.DATABASE_URL_PROD;
+  console.log('🏭 PRODUCTION: Using DATABASE_URL_PROD');
 } else if (process.env.DATABASE_URL) {
   connectionString = process.env.DATABASE_URL;
   if (isDevelopment) {
-    console.log('🔧 DEVELOPMENT: Using DATABASE_URL (DATABASE_URL_DEV not set)');
+    console.log('🔧 DEVELOPMENT: Using DATABASE_URL (fallback - CAUTION: may be production!)');
   } else if (isProduction) {
     console.log('🏭 PRODUCTION: Using DATABASE_URL');
   } else {
