@@ -11,7 +11,7 @@ export class ContractSigningEmailService {
   async sendSigningConfirmation(
     contract: any, 
     userSettings: any, 
-    services: any
+    emailService: any
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Generate collaborative form access (more secure than old system)
@@ -98,7 +98,7 @@ export class ContractSigningEmailService {
       };
 
       // Send email using existing email service
-      const emailResult = await services.sendEmail(emailData);
+      const emailResult = await emailService.sendEmail(emailData);
       
       if (emailResult.success) {
         console.log(`✅ Contract signing confirmation sent to ${contract.clientEmail} with client portal access`);
