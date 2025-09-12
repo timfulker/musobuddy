@@ -14,20 +14,12 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let connectionString: string;
 
-// Use DATABASE_URL for development (so Database pane works)
-// Use DATABASE_URL_PROD for production deployments
-if (isDevelopment && process.env.DATABASE_URL) {
+// Use DATABASE_URL for both development and production (simple setup)
+if (process.env.DATABASE_URL) {
   connectionString = process.env.DATABASE_URL;
-  console.log('🔧 DEVELOPMENT: Using DATABASE_URL');
-} else if (isProduction && process.env.DATABASE_URL_PROD) {
-  connectionString = process.env.DATABASE_URL_PROD;
-  console.log('🏭 PRODUCTION: Using DATABASE_URL_PROD');
-} else if (isDevelopment) {
-  throw new Error('DATABASE_URL is required for development environment');
-} else if (isProduction) {
-  throw new Error('DATABASE_URL_PROD is required for production environment');
+  console.log(`🔧 ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}: Using DATABASE_URL (shared database)`);
 } else {
-  throw new Error('NODE_ENV must be set to either development or production');
+  throw new Error('DATABASE_URL is required');
 }
 
 // Log database connection details (without exposing credentials)
