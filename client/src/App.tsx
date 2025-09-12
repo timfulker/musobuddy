@@ -42,6 +42,15 @@ import ResetPasswordPage from "@/pages/auth/reset-password";
 import { EmailVerification } from "@/pages/auth/email-verification";
 import StartTrial from "@/pages/start-trial";
 import TrialSuccessPage from "@/pages/trial-success";
+// Public versions of legal pages (no navigation)
+import PublicTermsAndConditions from "@/pages/public/terms-and-conditions";
+import PublicPrivacyPolicy from "@/pages/public/privacy-policy";
+import PublicCookiePolicy from "@/pages/public/cookie-policy";
+import PublicRefundPolicy from "@/pages/public/refund-policy";
+import PublicAcceptableUsePolicy from "@/pages/public/acceptable-use-policy";
+import PublicDataProcessingAgreement from "@/pages/public/data-processing-agreement";
+import PublicDisclaimer from "@/pages/public/disclaimer";
+// Internal versions of legal pages (with navigation)
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import CookiePolicy from "@/pages/cookie-policy";
@@ -49,6 +58,8 @@ import RefundPolicy from "@/pages/refund-policy";
 import AcceptableUsePolicy from "@/pages/acceptable-use-policy";
 import DataProcessingAgreement from "@/pages/data-processing-agreement";
 import Disclaimer from "@/pages/disclaimer";
+import CookiePreferences from "@/pages/cookie-preferences";
+import CookieConsentBanner from "@/components/cookie-consent-banner";
 import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
@@ -165,13 +176,14 @@ function Router() {
       <Route path="/auth/reset-password" component={ResetPasswordPage} />
       <Route path="/auth/verify-email" component={EmailVerification} />
       <Route path="/start-trial" component={StartTrial} />
-      <Route path="/terms-and-conditions" component={TermsAndConditions} />
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/cookie-policy" component={CookiePolicy} />
-      <Route path="/refund-policy" component={RefundPolicy} />
-      <Route path="/acceptable-use-policy" component={AcceptableUsePolicy} />
-      <Route path="/data-processing-agreement" component={DataProcessingAgreement} />
-      <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/terms-and-conditions" component={PublicTermsAndConditions} />
+      <Route path="/privacy-policy" component={PublicPrivacyPolicy} />
+      <Route path="/cookie-policy" component={PublicCookiePolicy} />
+      <Route path="/refund-policy" component={PublicRefundPolicy} />
+      <Route path="/acceptable-use-policy" component={PublicAcceptableUsePolicy} />
+      <Route path="/data-processing-agreement" component={PublicDataProcessingAgreement} />
+      <Route path="/disclaimer" component={PublicDisclaimer} />
+      <Route path="/cookie-preferences" component={CookiePreferences} />
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/success" component={SuccessPage} />
 
@@ -213,6 +225,15 @@ function Router() {
       <Route path="/google-calendar-callback" component={GoogleCalendarCallback} />
       {/* <Route path="/maps-test" component={GoogleMapsTest} /> */}
 
+      {/* Internal legal pages for authenticated users - accessible from Settings */}
+      <Route path="/legal/terms-and-conditions" component={TermsAndConditions} />
+      <Route path="/legal/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/legal/cookie-policy" component={CookiePolicy} />
+      <Route path="/legal/refund-policy" component={RefundPolicy} />
+      <Route path="/legal/acceptable-use-policy" component={AcceptableUsePolicy} />
+      <Route path="/legal/data-processing-agreement" component={DataProcessingAgreement} />
+      <Route path="/legal/disclaimer" component={Disclaimer} />
+
       <Route path="/admin" component={Admin} />
       
       {/* Client Portal - handled by backend HTML route, removed from frontend to prevent conflicts */}
@@ -234,6 +255,7 @@ function App() {
               {/* OnboardingWrapper temporarily removed */}
               <Toaster />
               <Router />
+              <CookieConsentBanner />
               <SupportChat />
             </TooltipProvider>
           </ThemeProvider>

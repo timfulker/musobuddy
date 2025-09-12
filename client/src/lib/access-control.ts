@@ -184,7 +184,8 @@ export function isProtectedRoute(path: string): boolean {
     '/conversation',
     '/email-setup',
     '/system-health',
-    '/mobile-invoice-sender'
+    '/mobile-invoice-sender',
+    '/legal'  // Internal legal pages for authenticated users
   ];
   
   return protectedRoutes.some(route => path.startsWith(route));
@@ -205,6 +206,13 @@ export function isPublicRoute(path: string): boolean {
     '/auth/verify-email',
     '/start-trial',
     '/terms-and-conditions',
+    '/privacy-policy',
+    '/cookie-policy',
+    '/refund-policy',
+    '/acceptable-use-policy',
+    '/data-processing-agreement',
+    '/disclaimer',
+    '/cookie-preferences',
     '/trial-success',
     '/success',
     '/logout',

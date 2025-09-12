@@ -27,7 +27,8 @@
       "Bash(git show:*)",
       "Bash(git log:*)",
       "Bash(npx tsc:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": [],
