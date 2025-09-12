@@ -2964,8 +2964,8 @@ export default function Settings() {
               onClick={() => exportUserData.mutate(exportFormat)}
               disabled={exportUserData.isPending}
               style={{
-                backgroundColor: theme.colors.primary,
-                color: getContrastTextColor(theme.colors.primary),
+                backgroundColor: currentTheme.colors.primary,
+                color: getContrastTextColor(currentTheme.colors.primary),
                 border: 'none'
               }}
               className="hover:opacity-90 transition-opacity"
