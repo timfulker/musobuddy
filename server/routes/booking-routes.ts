@@ -197,7 +197,7 @@ export function registerBookingRoutes(app: Express) {
         soundTechContact: req.body.soundTechContact || null,
         stageSize: req.body.stageSize || null,
         powerEquipment: req.body.powerEquipment || null,
-        ...(req.body.styleMood !== undefined ? { styleMood: req.body.styleMood } : {}),
+        styleMood: req.body.styleMood || null,
         mustPlaySongs: req.body.mustPlaySongs || null,
         avoidSongs: req.body.avoidSongs || null,
         setOrder: req.body.setOrder || null,
