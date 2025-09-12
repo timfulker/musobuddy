@@ -262,7 +262,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{ 
               color: isActive("/beta-checklist") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
               backgroundColor: isActive("/beta-checklist") ? 'var(--theme-primary)' : 'transparent',
-              display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
+              display: stableIsBeta ? 'flex' : 'none'
             }}
           >
             <CheckCircle2 className="w-5 h-5" style={{ color: 'inherit' }} />
@@ -276,7 +276,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{ 
               color: isActive("/feedback") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
               backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent',
-              display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
+              display: stableIsBeta ? 'flex' : 'none'
             }}
           >
             <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
