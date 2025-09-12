@@ -62,7 +62,7 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
-  const { themeAccentColor } = useTheme();
+  const { theme } = useTheme();
 
   // Save state to localStorage (only for internal state)
   useEffect(() => {
@@ -303,8 +303,8 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
                       : 'bg-gray-100 text-gray-900'
                   }`}
                   style={message.sender === 'user' ? {
-                    backgroundColor: themeAccentColor || '#6366f1',
-                    color: getContrastTextColor(themeAccentColor || '#6366f1')
+                    backgroundColor: theme.colors.primary,
+                    color: getContrastTextColor(theme.colors.primary)
                   } : {}}
                   data-testid={`text-message-content-${message.id}`}
                 >
