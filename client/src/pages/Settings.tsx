@@ -449,7 +449,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
-  const { currentTheme, setTheme, customColor, setCustomColor } = useTheme();
+  const { currentTheme, setTheme, theme, customColor, setCustomColor } = useTheme();
   const [location, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -2964,8 +2964,8 @@ export default function Settings() {
               onClick={() => exportUserData.mutate(exportFormat)}
               disabled={exportUserData.isPending}
               style={{
-                backgroundColor: currentTheme.colors.primary,
-                color: getContrastTextColor(currentTheme.colors.primary),
+                backgroundColor: theme.colors.primary,
+                color: getContrastTextColor(theme.colors.primary),
                 border: 'none'
               }}
               className="hover:opacity-90 transition-opacity"
