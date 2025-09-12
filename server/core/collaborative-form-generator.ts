@@ -50,7 +50,9 @@ class CollaborativeFormGenerator {
   generateDynamicForm(
     contractId: number,
     portalToken: string,
-    apiEndpoint: string
+    apiEndpoint: string,
+    bookingData: BookingData,
+    fieldLocks: FieldLockSettings = {}
   ): string {
     const formHtml = `
 <!DOCTYPE html>

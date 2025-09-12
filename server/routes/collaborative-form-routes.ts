@@ -7,6 +7,118 @@ import { eq, and } from "drizzle-orm";
 import crypto from 'crypto';
 
 export function setupCollaborativeFormRoutes(app: Express) {
+  // Serve dynamic collaborative form to clients
+  app.get('/api/collaborative-form/:token', async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      console.log(`🌐 [COLLABORATIVE-FORM] Serving form for token ${token?.substring(0, 8)}...`);
+
+      if (!token) {
+        return res.status(400).json({ error: 'Portal token required' });
+      }
+
+      // Find contract with this token
+      const contract = await db.select().from(contracts)
+        .where(eq(contracts.clientPortalToken, token))
+        .then(results => results[0]);
+
+      if (!contract) {
+        console.log(`❌ [COLLABORATIVE-FORM] No contract found with token ${token?.substring(0, 8)}...`);
+        return res.status(403).send('<h1>Invalid access link</h1><p>This collaboration link is not valid or has expired.</p>');
+      }
+
+      console.log(`✅ [COLLABORATIVE-FORM] Found contract ${contract.id} for token`);
+
+      // Get associated booking for collaboration data
+      let booking = await db.select().from(bookings)
+        .where(eq(bookings.contractId, contract.id))
+        .then(results => results[0]);
+
+      if (!booking) {
+        console.log(`📝 [COLLABORATIVE-FORM] No booking found for contract ${contract.id}, creating minimal one`);
+        // Create minimal booking record for collaboration if none exists
+        const [newBooking] = await db.insert(bookings).values({
+          userId: contract.userId,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail || '',
+          venue: contract.venue,
+          eventDate: contract.eventDate,
+          eventType: contract.eventType || 'Performance',
+          status: 'draft',
+          contractId: contract.id
+        }).returning();
+        
+        booking = newBooking;
+      }
+
+      // Prepare booking data for form generation
+      const bookingData = {
+        id: booking.id,
+        contractId: contract.id,
+        clientName: contract.clientName || 'Client',
+        venue: booking.venue || contract.venue || 'TBC',
+        eventDate: booking.eventDate?.toISOString() || contract.eventDate?.toISOString() || new Date().toISOString(),
+        eventTime: booking.event_time || contract.eventTime,
+        eventEndTime: booking.event_end_time || contract.eventEndTime,
+        performanceDuration: booking.performance_duration || contract.performanceDuration,
+        // Include all collaborative fields from booking - using snake_case from database
+        venueContact: booking.venue_contact,
+        soundTechContact: booking.sound_tech_contact,
+        stageSize: booking.stage_size,
+        powerEquipment: booking.power_equipment,
+        styleMood: booking.style_mood,
+        mustPlaySongs: booking.must_play_songs,
+        avoidSongs: booking.avoid_songs,
+        setOrder: booking.set_order,
+        firstDanceSong: booking.first_dance_song,
+        processionalSong: booking.processional_song,
+        signingRegisterSong: booking.signing_register_song,
+        recessionalSong: booking.recessional_song,
+        specialDedications: booking.special_dedications,
+        guestAnnouncements: booking.guest_announcements,
+        loadInInfo: booking.load_in_info,
+        soundCheckTime: booking.sound_check_time,
+        weatherContingency: booking.weather_contingency,
+        parkingPermitRequired: booking.parking_permit_required,
+        mealProvided: booking.meal_provided,
+        dietaryRequirements: booking.dietary_requirements,
+        sharedNotes: booking.shared_notes,
+        referenceTracks: booking.reference_tracks,
+        photoPermission: booking.photo_permission,
+        encoreAllowed: booking.encore_allowed,
+        encoreSuggestions: booking.encore_suggestions
+      };
+
+      // API endpoint for the form to communicate with
+      const apiEndpoint = process.env.REPLIT_DEPLOYMENT 
+        ? 'https://www.musobuddy.com'
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
+
+      // Get field locks from booking
+      const fieldLocks = booking.fieldLocks || {};
+
+      // Generate the dynamic collaborative form HTML
+      const formHtml = collaborativeFormGenerator.generateDynamicForm(
+        contract.id,
+        token,
+        apiEndpoint,
+        bookingData,
+        fieldLocks
+      );
+
+      console.log(`✅ [COLLABORATIVE-FORM] Served dynamic form for contract ${contract.id}`);
+
+      // Serve the HTML directly
+      res.setHeader('Content-Type', 'text/html');
+      res.send(formHtml);
+
+    } catch (error: any) {
+      console.error('❌ [COLLABORATIVE-FORM] Error serving form:', error);
+      res.status(500).send('<h1>Error</h1><p>There was an error loading your collaboration form. Please try again later.</p>');
+    }
+  });
+
   // Generate collaborative form after contract signing
   app.post('/api/contracts/:contractId/generate-collaborative-form', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -274,6 +386,151 @@ export function setupCollaborativeFormRoutes(app: Express) {
         error: 'Failed to update collaborative form',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Handle collaborative form submissions from clients (using portal token authentication)
+  app.post('/api/collaborative-form/:bookingId/update', async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.params;
+      const { token, ...formData } = req.body;
+
+      console.log(`📝 [COLLABORATIVE-FORM-UPDATE] Received form submission for booking ${bookingId} with token ${token?.substring(0, 8)}...`);
+
+      if (!token) {
+        return res.status(400).json({ error: 'Portal token required' });
+      }
+
+      // Find contract with this portal token
+      const contract = await db.select().from(contracts)
+        .where(eq(contracts.clientPortalToken, token))
+        .then(results => results[0]);
+
+      if (!contract) {
+        console.log(`❌ [COLLABORATIVE-FORM-UPDATE] Invalid portal token: ${token?.substring(0, 8)}...`);
+        return res.status(403).json({ error: 'Invalid portal token' });
+      }
+
+      // Get the associated booking
+      let booking = await db.select().from(bookings)
+        .where(eq(bookings.contractId, contract.id))
+        .then(results => results[0]);
+
+      if (!booking) {
+        console.log(`❌ [COLLABORATIVE-FORM-UPDATE] No booking found for contract ${contract.id}`);
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      if (booking.id !== parseInt(bookingId)) {
+        console.log(`❌ [COLLABORATIVE-FORM-UPDATE] Booking ID mismatch: expected ${booking.id}, got ${bookingId}`);
+        return res.status(403).json({ error: 'Booking ID mismatch' });
+      }
+
+      // Prepare database updates (convert camelCase to snake_case for database)
+      const dbUpdates: any = {
+        updatedAt: new Date()
+      };
+
+      // Map form fields to database columns (camelCase to snake_case)
+      const fieldMapping = {
+        venueContact: 'venue_contact',
+        soundTechContact: 'sound_tech_contact',
+        stageSize: 'stage_size',
+        powerEquipment: 'power_equipment',
+        styleMood: 'style_mood',
+        mustPlaySongs: 'must_play_songs',
+        avoidSongs: 'avoid_songs',
+        setOrder: 'set_order',
+        firstDanceSong: 'first_dance_song',
+        processionalSong: 'processional_song',
+        signingRegisterSong: 'signing_register_song',
+        recessionalSong: 'recessional_song',
+        specialDedications: 'special_dedications',
+        guestAnnouncements: 'guest_announcements',
+        loadInInfo: 'load_in_info',
+        soundCheckTime: 'sound_check_time',
+        weatherContingency: 'weather_contingency',
+        parkingPermitRequired: 'parking_permit_required',
+        mealProvided: 'meal_provided',
+        dietaryRequirements: 'dietary_requirements',
+        sharedNotes: 'shared_notes',
+        referenceTracks: 'reference_tracks',
+        photoPermission: 'photo_permission',
+        encoreAllowed: 'encore_allowed',
+        encoreSuggestions: 'encore_suggestions'
+      };
+
+      // Update fields that have values
+      for (const [camelField, snakeField] of Object.entries(fieldMapping)) {
+        if (formData.hasOwnProperty(camelField)) {
+          const value = formData[camelField];
+          // Convert boolean strings to actual booleans
+          if (value === 'true') {
+            dbUpdates[snakeField] = true;
+          } else if (value === 'false') {
+            dbUpdates[snakeField] = false;
+          } else if (value === '' || value === null) {
+            dbUpdates[snakeField] = null;
+          } else {
+            dbUpdates[snakeField] = value;
+          }
+        }
+      }
+
+      // Update field locks if provided
+      if (formData.fieldLocks) {
+        try {
+          dbUpdates.fieldLocks = typeof formData.fieldLocks === 'string' 
+            ? JSON.parse(formData.fieldLocks) 
+            : formData.fieldLocks;
+        } catch (e) {
+          console.warn('❌ Invalid fieldLocks JSON:', formData.fieldLocks);
+        }
+      }
+
+      console.log(`📝 [COLLABORATIVE-FORM-UPDATE] Updating booking ${bookingId} with fields:`, Object.keys(dbUpdates));
+
+      // Update the booking in the database
+      await db.update(bookings)
+        .set(dbUpdates)
+        .where(eq(bookings.id, parseInt(bookingId)));
+
+      console.log(`✅ [COLLABORATIVE-FORM-UPDATE] Successfully updated booking ${bookingId} for client ${contract.clientName}`);
+
+      // Return success response (compatible with iframe form submission)
+      res.setHeader('Content-Type', 'text/html');
+      res.send(`
+        <html>
+          <body>
+            <script>
+              parent.postMessage({
+                type: 'formSubmissionSuccess',
+                message: 'Changes saved successfully!'
+              }, '*');
+            </script>
+            <p>Changes saved successfully!</p>
+          </body>
+        </html>
+      `);
+
+    } catch (error: any) {
+      console.error('❌ [COLLABORATIVE-FORM-UPDATE] Error updating booking:', error);
+      
+      // Return error response (compatible with iframe form submission)
+      res.status(500).setHeader('Content-Type', 'text/html');
+      res.send(`
+        <html>
+          <body>
+            <script>
+              parent.postMessage({
+                type: 'formSubmissionError',
+                message: 'Failed to save changes: ${error.message}'
+              }, '*');
+            </script>
+            <p>Error: Failed to save changes</p>
+          </body>
+        </html>
+      `);
     }
   });
 
