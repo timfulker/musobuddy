@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { apiRequest } from '@/lib/queryClient';
-import { getContrastTextColor } from '@/lib/colorUtils';
 
 interface Message {
   id: string;
@@ -303,8 +302,8 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
                       : 'bg-gray-100 text-gray-900'
                   }`}
                   style={message.sender === 'user' ? {
-                    backgroundColor: theme.colors.primary,
-                    color: getContrastTextColor(theme.colors.primary)
+                    backgroundColor: 'var(--theme-primary)',
+                    color: 'var(--theme-primary-text)'
                   } : {}}
                   data-testid={`text-message-content-${message.id}`}
                 >
