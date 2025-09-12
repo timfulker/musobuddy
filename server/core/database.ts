@@ -17,29 +17,16 @@ let connectionString: string;
 // Development: use proper development database
 if (isDevelopment && process.env.DATABASE_URL_DEV) {
   connectionString = process.env.DATABASE_URL_DEV;
-  console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV');
-} else if (isDevelopment && process.env.PGHOST) {
-  // Build development URL from PG environment variables
-  const user = process.env.PGUSER || 'neondb_owner';
-  const password = process.env.PGPASSWORD;
-  const host = process.env.PGHOST;
-  const database = process.env.PGDATABASE || 'neondb';
-  connectionString = `postgresql://${user}:${password}@${host}/${database}?sslmode=require`;
-  console.log('🔧 DEVELOPMENT: Using new development database (PG variables)');
+  console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV (empty database)');
 } else if (process.env.DATABASE_URL_PROD && isProduction) {
   connectionString = process.env.DATABASE_URL_PROD;
   console.log('🏭 PRODUCTION: Using DATABASE_URL_PROD');
-} else if (process.env.DATABASE_URL) {
-  connectionString = process.env.DATABASE_URL;
-  if (isDevelopment) {
-    console.log('🔧 DEVELOPMENT: Using DATABASE_URL (fallback - CAUTION: may be production!)');
-  } else if (isProduction) {
-    console.log('🏭 PRODUCTION: Using DATABASE_URL');
-  } else {
-    console.log(`🔍 UNKNOWN ENV: Using DATABASE_URL for ${process.env.NODE_ENV || 'unknown'}`);
-  }
+} else if (isDevelopment) {
+  throw new Error('DATABASE_URL_DEV is required for development environment');
+} else if (isProduction) {
+  throw new Error('DATABASE_URL_PROD is required for production environment');
 } else {
-  throw new Error('DATABASE_URL environment variable is required');
+  throw new Error('NODE_ENV must be set to either development or production');
 }
 
 // Log database connection details (without exposing credentials)
