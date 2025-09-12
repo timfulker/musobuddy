@@ -1312,8 +1312,8 @@ This email was sent via MusoBuddy Professional Music Management Platform
         try {
           const booking = await storage.getBooking(bookingId);
           if (booking && booking.userId === userId) {
-            // Save travel expense if provided
-            if (travelExpense && parseFloat(travelExpense) > 0) {
+            // Save travel expense if provided (including when set to 0)
+            if (travelExpense !== undefined && travelExpense !== null && travelExpense !== '') {
               travelExpenseAmount = parseFloat(travelExpense);
               try {
                 // Calculate performance fee: finalAmount - travelExpense
