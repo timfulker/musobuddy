@@ -1,13 +1,7 @@
 export function getDatabaseUrl(): string {
   const env = process.env.NODE_ENV || 'development';
   
-  // Check for explicit DATABASE_URL first (for backward compatibility)
-  if (process.env.DATABASE_URL) {
-    console.log('📊 Using DATABASE_URL environment variable');
-    return process.env.DATABASE_URL;
-  }
-  
-  // Environment-specific database selection
+  // Environment-specific database selection (no DATABASE_URL fallback)
   if (env === 'production') {
     if (!process.env.DATABASE_URL_PROD) {
       throw new Error('DATABASE_URL_PROD is not set for production environment');
