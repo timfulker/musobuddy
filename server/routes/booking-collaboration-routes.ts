@@ -213,12 +213,34 @@ export function setupBookingCollaborationRoutes(app: Express) {
 
       console.log('📝 [COLLABORATION] Filtered updates:', filteredUpdates);
 
+      // Convert camelCase to snake_case for database fields
+      const dbUpdates: any = {
+        updatedAt: new Date()
+      };
+      
+      // Map camelCase frontend fields to snake_case database fields
+      if ('styleMood' in filteredUpdates) {
+        dbUpdates.style_mood = filteredUpdates.styleMood;
+      }
+      
+      // Add other fields that don't need conversion
+      const directFields = [
+        'venueContact', 'soundTechContact', 'soundCheckTime', 'powerEquipment', 'stageSize', 'specialGuests',
+        'musicPreferences', 'setOrder', 'mustPlaySongs', 'avoidSongs', 'firstDanceSong', 'processionalSong',
+        'signingRegisterSong', 'recessionalSong', 'loadInInfo', 'weatherContingency', 'dietaryRequirements',
+        'referenceTracks', 'sharedNotes', 'equipmentRequirements', 'equipmentProvided', 'whatsIncluded',
+        'contactPerson', 'referenceTracksExamples'
+      ];
+      
+      for (const field of directFields) {
+        if (field in filteredUpdates) {
+          dbUpdates[field] = filteredUpdates[field];
+        }
+      }
+
       // Update the booking with collaborative fields only
       const updatedBooking = await db.update(bookings)
-        .set({
-          ...filteredUpdates,
-          updatedAt: new Date()
-        })
+        .set(dbUpdates)
         .where(eq(bookings.id, parseInt(bookingId)))
         .returning()
         .then(results => results[0]);
