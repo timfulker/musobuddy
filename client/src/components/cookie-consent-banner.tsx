@@ -82,8 +82,8 @@ export default function CookieConsentBanner({ className = '' }: CookieConsentBan
   };
 
   const handleClose = () => {
-    // If they close without deciding, treat as reject all
-    rejectNonEssentialCookies();
+    // Just hide the banner temporarily without saving any consent decision
+    // Banner will reappear on next page load/refresh
     setIsVisible(false);
   };
 
