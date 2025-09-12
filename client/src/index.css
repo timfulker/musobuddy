@@ -1201,6 +1201,28 @@ body {
   color: var(--optimal-text-color, var(--light-text-primary)) !important;
 }
 
+/* Define optimal text colors for common Tailwind background colors */
+.bg-indigo-600 { --optimal-text-color: #ffffff; }
+.bg-indigo-700 { --optimal-text-color: #ffffff; }
+.bg-indigo-500 { --optimal-text-color: #ffffff; }
+.bg-blue-600 { --optimal-text-color: #ffffff; }
+.bg-blue-700 { --optimal-text-color: #ffffff; }
+.bg-blue-500 { --optimal-text-color: #ffffff; }
+.bg-purple-600 { --optimal-text-color: #ffffff; }
+.bg-purple-700 { --optimal-text-color: #ffffff; }
+.bg-purple-500 { --optimal-text-color: #ffffff; }
+.bg-red-600 { --optimal-text-color: #ffffff; }
+.bg-red-700 { --optimal-text-color: #ffffff; }
+.bg-red-500 { --optimal-text-color: #ffffff; }
+.bg-green-600 { --optimal-text-color: #ffffff; }
+.bg-green-700 { --optimal-text-color: #ffffff; }
+.bg-green-500 { --optimal-text-color: #ffffff; }
+
+/* Special case for buttons with explicit background colors - they should use luminance-aware text */
+button[class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-inherit"]):not([class*="bg-background"]):not([class*="bg-accent"]):not([class*="bg-muted"]) {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
 /* Force calendar text to be luminance-aware - target all possible calendar text elements */
 .rdp-caption_label,
 .rdp-head_cell,
