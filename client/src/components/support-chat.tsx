@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { apiRequest } from '@/lib/queryClient';
+import { getComputedThemeTextColor } from '@/lib/colorUtils';
 
 interface Message {
   id: string;
@@ -62,6 +63,13 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const { theme } = useTheme();
+  const [themeTextColor, setThemeTextColor] = useState<'white' | 'black'>('white');
+
+  // Update text color when theme changes
+  useEffect(() => {
+    const textColor = getComputedThemeTextColor();
+    setThemeTextColor(textColor);
+  }, [theme]);
 
   // Save state to localStorage (only for internal state)
   useEffect(() => {
@@ -298,12 +306,12 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
                 <div
                   className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
                     message.sender === 'user'
-                      ? ''
+                      ? '!text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
                   style={message.sender === 'user' ? {
                     backgroundColor: 'var(--theme-primary)',
-                    color: 'var(--theme-primary-text)'
+                    color: 'white !important'
                   } : {}}
                   data-testid={`text-message-content-${message.id}`}
                 >

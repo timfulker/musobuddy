@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
+import { getContrastTextColor, getThemeTextColor } from "@/lib/colorUtils";
 
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
@@ -2491,27 +2492,40 @@ export default function Settings() {
               Choose Theme Color
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {THEME_OPTIONS.map((theme) => (
-                <button
-                  key={theme.id}
-                  type="button"
-                  onClick={() => {
-                    // Save color to form
-                    form.setValue('themeAccentColor', theme.color);
-                    
-                    // Immediately apply theme
-                    setTheme(theme.id as ThemeName);
-                  }}
-                  className={`p-4 rounded-lg border-2 text-white font-medium text-sm transition-all ${
-                    form.watch('themeAccentColor') === theme.color
-                      ? 'border-white shadow-lg scale-105'
-                      : 'border-transparent hover:border-gray-300'
-                  }`}
-                  style={{ backgroundColor: theme.color, color: '#ffffff' }}
-                >
-                  {theme.name}
-                </button>
-              ))}
+              {THEME_OPTIONS.map((theme) => {
+                const textColor = getContrastTextColor(theme.color);
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => {
+                      // Save color to form
+                      form.setValue('themeAccentColor', theme.color);
+                      
+                      // Immediately apply theme
+                      setTheme(theme.id as ThemeName);
+                    }}
+                    className={`p-4 rounded-lg border-2 font-medium text-sm transition-all ${
+                      form.watch('themeAccentColor') === theme.color
+                        ? 'border-white shadow-lg scale-105'
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                    style={{ 
+                      backgroundColor: theme.color
+                    }}
+                    data-theme-button="true"
+                    data-theme-id={theme.id}
+                    ref={(el) => {
+                      if (el) {
+                        // Force inject the text color
+                        el.style.setProperty('color', textColor, 'important');
+                      }
+                    }}
+                  >
+                    {theme.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -3791,13 +3805,18 @@ export default function Settings() {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-all ${
                       isActive 
-                        ? 'bg-primary/10 border-l-4 border-primary text-primary' 
-                        : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300'
+                        ? '' 
+                        : 'hover:bg-gray-50 dark:hover:bg-slate-800'
                     }`}
+                    style={{
+                      color: isActive ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
+                      backgroundColor: isActive ? 'var(--theme-primary)' : 'transparent'
+                    }}
+                    data-settings-nav-button="true"
                   >
-                    <div className="flex items-center space-x-3">
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{section.label}</span>
+                    <div className="flex items-center space-x-3" style={{ color: 'inherit' }}>
+                      <Icon className="w-5 h-5" style={{ color: 'inherit' }} />
+                      <span className="font-medium" style={{ color: 'inherit' }}>{section.label}</span>
                     </div>
                     {isCompleted && (
                       <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
