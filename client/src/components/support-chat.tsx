@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { MessageCircle, Send, X, Minimize2, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { apiRequest } from '@/lib/queryClient';
+import { getOptimalTextColor } from '@/lib/luminance';
 
 interface Message {
   id: string;
@@ -60,6 +62,7 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
+  const { themeAccentColor } = useTheme();
 
   // Save state to localStorage (only for internal state)
   useEffect(() => {
@@ -296,9 +299,13 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
                 <div
                   className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
                     message.sender === 'user'
-                      ? 'bg-primary text-white'
+                      ? ''
                       : 'bg-gray-100 text-gray-900'
                   }`}
+                  style={message.sender === 'user' ? {
+                    backgroundColor: themeAccentColor || '#6366f1',
+                    color: getOptimalTextColor(themeAccentColor || '#6366f1')
+                  } : {}}
                   data-testid={`text-message-content-${message.id}`}
                 >
                   {message.text}
