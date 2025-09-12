@@ -478,6 +478,7 @@ export default function Settings() {
   
   // Data & Privacy state
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'xls'>('json');
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   
@@ -2962,7 +2963,7 @@ export default function Settings() {
             <Button
               onClick={() => exportUserData.mutate(exportFormat)}
               disabled={exportUserData.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/90 text-[var(--theme-primary-text)] hover:text-[var(--theme-primary-text)]"
               data-testid="button-export-data"
             >
               {exportUserData.isPending ? (
@@ -3033,9 +3034,9 @@ export default function Settings() {
             
             <Button
               variant="destructive"
-              onClick={() => setShowDeleteConfirmation(true)}
+              onClick={() => setShowDeleteWarning(true)}
               className="w-full"
-              data-testid="button-show-delete-confirmation"
+              data-testid="button-show-delete-warning"
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
               Delete My Account Permanently
@@ -4103,7 +4104,53 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
 
-      {/* Account Delete Confirmation Dialog */}
+      {/* Delete Account Warning Dialog (First Step) */}
+      <Dialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-red-600 dark:text-red-400">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              Are You Absolutely Sure?
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-3">
+              <p>You are about to permanently delete your MusoBuddy account.</p>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">This will immediately:</p>
+                <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                  <li>Delete all account data and settings</li>
+                  <li>Remove all bookings and contracts</li>
+                  <li>Delete all PDF documents permanently</li>
+                  <li>Cancel any active subscriptions</li>
+                </ul>
+              </div>
+              <p className="text-sm font-medium">Consider exporting your data first. This action cannot be undone.</p>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteWarning(false)}
+              data-testid="button-cancel-delete-warning"
+            >
+              Cancel - Keep My Account
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowDeleteWarning(false);
+                setShowDeleteConfirmation(true);
+              }}
+              data-testid="button-proceed-to-delete"
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              I Understand - Proceed to Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account Delete Confirmation Dialog (Second Step) */}
       <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -4162,7 +4209,7 @@ export default function Settings() {
               }}
               data-testid="button-cancel-delete"
             >
-              Cancel
+              Cancel - Keep My Account
             </Button>
             <Button
               variant="destructive"
@@ -4179,12 +4226,12 @@ export default function Settings() {
               {deleteUserAccount.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
+                  Deleting Account...
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-4 h-4 mr-2" />
-                  Delete Account Permanently
+                  Yes - Delete Forever
                 </>
               )}
             </Button>
