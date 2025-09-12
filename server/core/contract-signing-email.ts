@@ -1,21 +1,26 @@
-import { db } from '../core/database';
-import { contracts, bookings } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
-import crypto from 'crypto';
+import { clientPortalService } from './client-portal';
+import { contractStorage } from '../storage/contract-storage';
 
 export class ContractSigningEmailService {
   
   /**
-   * Send contract signing confirmation email with collaborative form access
+   * Send contract signing confirmation email with client portal access
    */
   async sendSigningConfirmation(
     contract: any, 
     userSettings: any, 
-    emailService: any
+    services: any
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Generate collaborative form access (more secure than old system)
-      const portalAccess = await this.setupCollaborativeForm(contract.id);
+      // Generate client portal access
+      const portalAccess = await clientPortalService.setupClientPortal(contract.id);
+      
+      // Update contract with portal information
+      await contractStorage.updateContract(contract.id, {
+        clientPortalUrl: portalAccess.portalUrl,
+        clientPortalToken: portalAccess.portalToken,
+        clientPortalQrCode: portalAccess.qrCode
+      });
 
       // Get theme color from settings
       const themeColor = userSettings?.themeAccentColor || userSettings?.theme_accent_color || '#1e3a8a';
@@ -98,7 +103,7 @@ export class ContractSigningEmailService {
       };
 
       // Send email using existing email service
-      const emailResult = await emailService.sendEmail(emailData);
+      const emailResult = await services.sendEmail(emailData);
       
       if (emailResult.success) {
         console.log(`✅ Contract signing confirmation sent to ${contract.clientEmail} with client portal access`);
@@ -112,86 +117,6 @@ export class ContractSigningEmailService {
       console.error('❌ Error sending contract signing confirmation:', error);
       return { success: false, error: error.message };
     }
-  }
-
-  /**
-   * Generate collaborative form for signed contract
-   * This is the more secure system with field locking and proper camelCase conversion
-   */
-  private async setupCollaborativeForm(contractId: number): Promise<{
-    portalUrl: string;
-    portalToken: string;
-    qrCode: string;
-  }> {
-    // Get contract with associated booking
-    const contract = await db.select().from(contracts)
-      .where(eq(contracts.id, contractId))
-      .then(results => results[0]);
-
-    if (!contract) {
-      throw new Error(`Contract ${contractId} not found`);
-    }
-
-    // Get or create associated booking for collaboration
-    let booking = await db.select().from(bookings)
-      .where(eq(bookings.contractId, contractId))
-      .then(results => results[0]);
-
-    if (!booking) {
-      // Create minimal booking record for collaboration if none exists
-      console.log(`📝 [COLLABORATIVE-FORM] Creating booking for contract ${contractId}`);
-      const [newBooking] = await db.insert(bookings).values({
-        userId: contract.userId,
-        clientName: contract.clientName,
-        clientEmail: contract.clientEmail || '',
-        venue: contract.venue,
-        eventDate: contract.eventDate,
-        eventType: contract.eventType || 'Performance',
-        status: 'draft',
-        contractId: contract.id
-      }).returning();
-      
-      booking = newBooking;
-      console.log(`✅ [COLLABORATIVE-FORM] Created booking ${booking.id} for contract ${contractId}`);
-    }
-
-    // Generate secure portal token
-    const portalToken = crypto.randomBytes(32).toString('hex');
-    
-    // Build the dynamic collaborative form URL
-    const baseUrl = process.env.REPLIT_DEPLOYMENT 
-      ? 'https://www.musobuddy.com'
-      : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev`;
-      
-    const dynamicFormUrl = `${baseUrl}/api/collaborative-form/${portalToken}`;
-
-    // Update contract with collaborative form details
-    await db.update(contracts)
-      .set({
-        clientPortalUrl: dynamicFormUrl,
-        clientPortalToken: portalToken,
-        updatedAt: new Date()
-      })
-      .where(eq(contracts.id, contractId));
-
-    // Generate QR code for the collaboration URL
-    const QRCode = await import('qrcode');
-    const qrCodeDataUrl = await (QRCode.default || QRCode).toDataURL(dynamicFormUrl, {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      }
-    });
-
-    console.log(`✅ [COLLABORATIVE-FORM] Generated secure form URL for contract ${contractId}: ${dynamicFormUrl}`);
-    
-    return {
-      portalToken,
-      portalUrl: dynamicFormUrl,
-      qrCode: qrCodeDataUrl
-    };
   }
 }
 
