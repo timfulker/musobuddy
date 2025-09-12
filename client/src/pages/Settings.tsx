@@ -2963,7 +2963,12 @@ export default function Settings() {
             <Button
               onClick={() => exportUserData.mutate(exportFormat)}
               disabled={exportUserData.isPending}
-              className="bg-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/90 text-[var(--theme-primary-text)] hover:text-[var(--theme-primary-text)]"
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: getContrastTextColor(theme.colors.primary),
+                border: 'none'
+              }}
+              className="hover:opacity-90 transition-opacity"
               data-testid="button-export-data"
             >
               {exportUserData.isPending ? (
