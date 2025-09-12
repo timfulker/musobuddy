@@ -3,18 +3,20 @@ export function getDatabaseUrl(): string {
   
   // Environment-specific database selection
   if (env === 'production') {
-    if (!process.env.DATABASE_URL_PROD) {
-      throw new Error('DATABASE_URL_PROD is not set for production environment');
+    // Use MUSOBUDDY_PROD_DB to avoid conflicts with Replit's read-only DATABASE_URL management
+    if (!process.env.MUSOBUDDY_PROD_DB) {
+      throw new Error('MUSOBUDDY_PROD_DB is not set for production environment');
     }
-    console.log('🚀 PRODUCTION: Using DATABASE_URL_PROD');
-    console.log(`📊 Database: PROD environment → ${process.env.DATABASE_URL_PROD.split('@')[1]?.split('/')[0]}`);
-    return process.env.DATABASE_URL_PROD;
+    console.log('🚀 PRODUCTION: Using MUSOBUDDY_PROD_DB');
+    console.log(`📊 Database: PROD environment → ${process.env.MUSOBUDDY_PROD_DB.split('@')[1]?.split('/')[0]}`);
+    return process.env.MUSOBUDDY_PROD_DB;
   } else {
-    if (!process.env.DATABASE_URL_DEV) {
-      throw new Error('DATABASE_URL_DEV is not set for development environment');
+    // Development: Use the original DATABASE_URL (Replit's automatic database)
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL is not set for development environment');
     }
-    console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV');
-    console.log(`📊 Database: DEV environment → ${process.env.DATABASE_URL_DEV.split('@')[1]?.split('/')[0]}`);
-    return process.env.DATABASE_URL_DEV;
+    console.log('🔧 DEVELOPMENT: Using DATABASE_URL (Replit managed)');
+    console.log(`📊 Database: DEV environment → ${process.env.DATABASE_URL.split('@')[1]?.split('/')[0]}`);
+    return process.env.DATABASE_URL;
   }
 }
