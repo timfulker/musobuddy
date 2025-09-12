@@ -476,6 +476,11 @@ export default function Settings() {
   // Active section for sidebar navigation
   const [activeSection, setActiveSection] = useState('business');
   
+  // Data & Privacy state
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'xls'>('json');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+  
   // Handle URL parameters for direct navigation to sections
   const [currentLocation] = useLocation();
   
@@ -578,6 +583,14 @@ export default function Settings() {
       checkCompletion: () => {
         return true; // Legal documents are always accessible
       }
+    },
+    {
+      id: 'data-privacy',
+      label: 'Data & Privacy',
+      icon: Shield,
+      checkCompletion: () => {
+        return true; // Data & Privacy is always accessible
+      }
     }
   ];
 
@@ -617,6 +630,8 @@ export default function Settings() {
         return renderComplianceSection();
       case 'legal':
         return renderLegalSection();
+      case 'data-privacy':
+        return renderDataPrivacySection();
       default:
         return renderBusinessSection();
     }
@@ -2904,6 +2919,133 @@ export default function Settings() {
     </Card>
   );
 
+  // Add missing renderDataPrivacySection function
+  const renderDataPrivacySection = () => (
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Shield className="w-5 h-5 text-primary" />
+          <span>Data & Privacy</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        {/* Data Export Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">
+            Export Your Data
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Download all your personal data in compliance with GDPR. This includes your profile information, 
+            bookings, contracts, invoices, and associated documents.
+          </p>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <Label htmlFor="export-format" className="text-sm font-medium">Export Format</Label>
+              <Select value={exportFormat} onValueChange={(value) => setExportFormat(value as 'json' | 'csv' | 'xls')}>
+                <SelectTrigger id="export-format" data-testid="select-export-format">
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON (Structured Data)</SelectItem>
+                  <SelectItem value="csv">CSV (Spreadsheet Compatible)</SelectItem>
+                  <SelectItem value="xls">Excel (Microsoft Excel)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {exportFormat === 'json' && 'Complete structured data with all fields and relationships'}
+                {exportFormat === 'csv' && 'Simplified tabular format, each table as separate CSV file'}
+                {exportFormat === 'xls' && 'Excel workbook with multiple sheets for each data type'}
+              </p>
+            </div>
+            
+            <Button
+              onClick={() => exportUserData.mutate(exportFormat)}
+              disabled={exportUserData.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-export-data"
+            >
+              {exportUserData.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Data
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex">
+              <Shield className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">What's Included</h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Your export will include: Profile information, Business settings, All bookings and enquiries, 
+                  Contracts and invoices, Client information, Communication history, PDF documents, and System activity logs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Deletion Section */}
+        <div className="space-y-4 border-t border-gray-200 dark:border-gray-600 pt-6">
+          <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 border-b border-red-200 dark:border-red-700 pb-2">
+            Delete Your Account
+          </h3>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex">
+              <AlertTriangle className="w-5 h-5 text-red-600 mr-3 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800 dark:text-red-200">Permanent Account Deletion</h4>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                  This action is <strong>irreversible</strong>. All your data, including bookings, contracts, 
+                  invoices, and documents will be permanently deleted from our servers.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Before deleting your account, we recommend exporting your data. 
+              Once deleted, this data cannot be recovered.
+            </p>
+            
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>What happens when you delete your account:</strong>
+              </p>
+              <ul className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1 list-disc list-inside">
+                <li>All personal data and business information permanently deleted</li>
+                <li>All bookings, contracts, and invoices removed</li>
+                <li>PDF documents and attachments deleted from storage</li>
+                <li>Email integration and booking widget disabled</li>
+                <li>Subscription cancelled (if applicable)</li>
+                <li>This action cannot be undone</li>
+              </ul>
+            </div>
+            
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteConfirmation(true)}
+              className="w-full"
+              data-testid="button-show-delete-confirmation"
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Delete My Account Permanently
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   // Get or create permanent widget URL and QR code
   const getOrCreateWidgetUrl = async () => {
     setIsGeneratingToken(true);
@@ -3239,6 +3381,93 @@ export default function Settings() {
     }
   });
 
+  // GDPR Export Data Mutation
+  const exportUserData = useMutation({
+    mutationFn: async (format: 'json' | 'csv' | 'xls') => {
+      const response = await apiRequest(`/api/user/export-data?format=${format}`, {
+        method: 'GET',
+      });
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Export failed: ${errorData}`);
+      }
+      
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('content-disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch?.[1] || `data-export-${new Date().toISOString().slice(0, 10)}.zip`;
+      
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      return { filename, size: blob.size };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Export Complete",
+        description: `Your data has been exported successfully as ${data.filename} (${Math.round(data.size / 1024)}KB)`,
+      });
+    },
+    onError: (error: any) => {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export your data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // GDPR Delete Account Mutation
+  const deleteUserAccount = useMutation({
+    mutationFn: async (confirmationCode: string) => {
+      if (confirmationCode !== 'DELETE_MY_ACCOUNT_PERMANENTLY') {
+        throw new Error('Invalid confirmation code');
+      }
+      
+      const response = await apiRequest('/api/user/delete-account', {
+        method: 'DELETE',
+        body: JSON.stringify({ confirmationCode }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account and all associated data have been permanently deleted.",
+      });
+      
+      // Redirect to home page after a short delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+    },
+    onError: (error: any) => {
+      console.error('Delete account error:', error);
+      toast({
+        title: "Deletion Failed",
+        description: error.message || "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const saveCompliance = useMutation({
     mutationFn: async (data: SettingsFormData) => {
       // Compliance section doesn't have specific fields to save
@@ -3264,6 +3493,7 @@ export default function Settings() {
       });
     }
   });
+
 
   // Legacy save all function for compatibility
   const saveSettings = useMutation({
@@ -3869,6 +4099,95 @@ export default function Settings() {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              Delete Your Account
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. All your data will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                What will be deleted:
+              </h4>
+              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                <li>All bookings, contracts, and invoices</li>
+                <li>Client information and communication history</li>
+                <li>PDF documents and attachments</li>
+                <li>Account settings and preferences</li>
+                <li>Email integration and booking widget</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirmation" className="text-sm font-medium">
+                To confirm deletion, type{' '}
+                <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-xs">
+                  DELETE_MY_ACCOUNT_PERMANENTLY
+                </code>
+              </Label>
+              <Input
+                id="delete-confirmation"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                placeholder="Type the confirmation text here"
+                className="font-mono"
+                data-testid="input-delete-confirmation"
+              />
+              {deleteConfirmationText && deleteConfirmationText !== 'DELETE_MY_ACCOUNT_PERMANENTLY' && (
+                <p className="text-sm text-red-600">
+                  Text does not match. Please type exactly: DELETE_MY_ACCOUNT_PERMANENTLY
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteConfirmation(false);
+                setDeleteConfirmationText('');
+              }}
+              data-testid="button-cancel-delete"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteConfirmationText === 'DELETE_MY_ACCOUNT_PERMANENTLY') {
+                  deleteUserAccount.mutate(deleteConfirmationText);
+                  setShowDeleteConfirmation(false);
+                  setDeleteConfirmationText('');
+                }
+              }}
+              disabled={deleteConfirmationText !== 'DELETE_MY_ACCOUNT_PERMANENTLY' || deleteUserAccount.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteUserAccount.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Delete Account Permanently
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

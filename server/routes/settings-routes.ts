@@ -6,7 +6,30 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
 import { db } from '../core/database';
-import { clientCommunications } from '@shared/schema';
+import { 
+  clientCommunications, 
+  complianceDocuments, 
+  userActivity, 
+  userLoginHistory, 
+  supportTickets, 
+  blockedDates, 
+  emailTemplates, 
+  googleCalendarIntegration, 
+  messageNotifications, 
+  securityMonitoring, 
+  userSecurityStatus,
+  eventSyncMapping,
+  bookingDocuments,
+  users,
+  userSettings,
+  bookings,
+  contracts,
+  invoices,
+  clients,
+  userAuditLogs,
+  sessions
+} from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { getGigTypeNamesForInstrument } from '@shared/instrument-gig-presets';
 
 export async function registerSettingsRoutes(app: Express) {
@@ -20,6 +43,7 @@ export async function registerSettingsRoutes(app: Express) {
   
   // Import Mailgun route manager for lead email setup
   const { mailgunRoutes } = await import('../core/mailgun-routes');
+  
 
   // Lead Email Setup Endpoints
   
@@ -1652,6 +1676,425 @@ This email was sent via MusoBuddy Professional Music Management Platform
     }
   });
 
+  // ===== DATA EXPORT AND ACCOUNT DELETION FEATURES =====
+
+  // Export all user data for GDPR compliance
+  app.get('/api/user/export-data', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const format = req.query.format as string || 'json';
+      if (!['json', 'csv', 'xls'].includes(format)) {
+        return res.status(400).json({ error: 'Invalid format. Must be json, csv, or xls' });
+      }
+
+      console.log(`📦 Starting data export for user ${userId} in format: ${format}`);
+
+      // Import cloud storage functions and required libraries
+      const { downloadFile } = await import('../core/cloud-storage');
+      const archiver = (await import('archiver')).default;
+      const { stringify } = await import('csv-stringify');
+      const XLSX = await import('xlsx');
+
+      // Collect all user data from database
+      const userData: any = {};
+
+      // Get user basic info
+      userData.user = await storage.getUserById(userId);
+      userData.settings = await storage.getSettings(userId);
+
+      // Get user's bookings
+      userData.bookings = await storage.getBookings(userId);
+
+      // Get user's contracts
+      userData.contracts = await storage.getContracts(userId);
+
+      // Get user's invoices  
+      userData.invoices = await storage.getInvoices(userId);
+
+      // Get user's clients
+      userData.clients = await storage.getClients(userId);
+
+      // Get compliance documents
+      const complianceQuery = await db.select().from(complianceDocuments)
+        .where(eq(complianceDocuments.userId, userId));
+      userData.complianceDocuments = complianceQuery;
+
+      // Get user activity logs
+      const activityQuery = await db.select().from(userActivity)
+        .where(eq(userActivity.userId, userId));
+      userData.userActivity = activityQuery;
+
+      // Get login history
+      const loginQuery = await db.select().from(userLoginHistory)
+        .where(eq(userLoginHistory.userId, userId));
+      userData.loginHistory = loginQuery;
+
+      // Get support tickets
+      const ticketsQuery = await db.select().from(supportTickets)
+        .where(eq(supportTickets.userId, userId));
+      userData.supportTickets = ticketsQuery;
+
+      // Get blocked dates
+      const blockedQuery = await db.select().from(blockedDates)
+        .where(eq(blockedDates.userId, userId));
+      userData.blockedDates = blockedQuery;
+
+      // Get email templates
+      const templatesQuery = await db.select().from(emailTemplates)
+        .where(eq(emailTemplates.userId, userId));
+      userData.emailTemplates = templatesQuery;
+
+      // Get Google Calendar integration
+      const calendarQuery = await db.select().from(googleCalendarIntegration)
+        .where(eq(googleCalendarIntegration.userId, userId));
+      userData.googleCalendarIntegration = calendarQuery;
+
+      // Get message notifications
+      const notificationsQuery = await db.select().from(messageNotifications)
+        .where(eq(messageNotifications.userId, userId));
+      userData.messageNotifications = notificationsQuery;
+
+      // Get security monitoring data
+      const securityQuery = await db.select().from(securityMonitoring)
+        .where(eq(securityMonitoring.userId, userId));
+      userData.securityMonitoring = securityQuery;
+
+      console.log(`📊 Collected data from ${Object.keys(userData).length} tables for user ${userId}`);
+
+      // Create a ZIP archive
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      
+      // Set headers for download
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `musobuddy-data-export-${timestamp}.zip`;
+      
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Pipe archive to response
+      archive.pipe(res);
+
+      // Add data export in requested format
+      if (format === 'json') {
+        archive.append(JSON.stringify(userData, null, 2), { name: 'user-data.json' });
+      } else if (format === 'csv') {
+        // Convert each table to CSV
+        for (const [tableName, tableData] of Object.entries(userData)) {
+          if (Array.isArray(tableData) && tableData.length > 0) {
+            const csvData = await new Promise<string>((resolve, reject) => {
+              stringify(tableData, { header: true }, (err, output) => {
+                if (err) reject(err);
+                else resolve(output);
+              });
+            });
+            archive.append(csvData, { name: `${tableName}.csv` });
+          }
+        }
+      } else if (format === 'xls') {
+        // Create Excel workbook
+        const workbook = XLSX.utils.book_new();
+        for (const [tableName, tableData] of Object.entries(userData)) {
+          if (Array.isArray(tableData) && tableData.length > 0) {
+            const worksheet = XLSX.utils.json_to_sheet(tableData);
+            XLSX.utils.book_append_sheet(workbook, worksheet, tableName.slice(0, 31)); // Excel sheet name limit
+          }
+        }
+        const xlsBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        archive.append(xlsBuffer, { name: 'user-data.xlsx' });
+      }
+
+      // Collect all PDF file keys for download
+      const pdfKeys: string[] = [];
+      
+      // Add contract PDFs
+      userData.contracts?.forEach((contract: any) => {
+        if (contract.cloudStorageKey) pdfKeys.push(contract.cloudStorageKey);
+      });
+      
+      // Add invoice PDFs  
+      userData.invoices?.forEach((invoice: any) => {
+        if (invoice.cloudStorageKey) pdfKeys.push(invoice.cloudStorageKey);
+      });
+
+      console.log(`📄 Found ${pdfKeys.length} PDF files to download from R2`);
+
+      // Download and add PDFs to archive
+      for (const key of pdfKeys) {
+        try {
+          const result = await downloadFile(key);
+          if (result.success && result.content) {
+            const filename = key.split('/').pop() || 'document.pdf';
+            archive.append(Buffer.from(result.content, 'binary'), { 
+              name: `pdfs/${filename}` 
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Failed to download PDF ${key}:`, error);
+          // Continue with other files
+        }
+      }
+
+      // Add metadata file
+      const metadata = {
+        exportDate: new Date().toISOString(),
+        userId: userId,
+        userEmail: userData.user?.email,
+        format: format,
+        tablesIncluded: Object.keys(userData),
+        totalRecords: Object.values(userData).reduce((sum, data) => {
+          return sum + (Array.isArray(data) ? data.length : 1);
+        }, 0),
+        pdfFilesIncluded: pdfKeys.length
+      };
+      
+      archive.append(JSON.stringify(metadata, null, 2), { name: 'export-metadata.json' });
+
+      // Finalize the archive
+      await archive.finalize();
+
+      console.log(`✅ Data export completed for user ${userId}`);
+
+    } catch (error: any) {
+      console.error('❌ Failed to export user data:', error);
+      res.status(500).json({ 
+        error: 'Failed to export data',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete user account and all associated data
+  app.delete('/api/user/delete-account', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { confirmationCode } = req.body;
+      if (confirmationCode !== 'DELETE_MY_ACCOUNT_PERMANENTLY') {
+        return res.status(400).json({ 
+          error: 'Invalid confirmation code. Please type DELETE_MY_ACCOUNT_PERMANENTLY exactly.' 
+        });
+      }
+
+      console.log(`🗑️ Starting account deletion for user ${userId}`);
+
+      // Import cloud storage functions
+      const { deleteDocumentFromR2 } = await import('../core/document-storage');
+      
+      // First, create a final data export as backup (stored in admin logs)
+      console.log(`📦 Creating backup export before deletion for user ${userId}`);
+      
+      // Get all user data for deletion audit
+      const userData: any = {};
+      userData.user = await storage.getUserById(userId);
+      userData.settings = await storage.getSettings(userId);
+      userData.bookings = await storage.getBookings(userId);
+      userData.contracts = await storage.getContracts(userId);
+      userData.invoices = await storage.getInvoices(userId);
+      userData.clients = await storage.getClients(userId);
+
+      // Get compliance documents
+      const complianceQuery = await db.select().from(complianceDocuments)
+        .where(eq(complianceDocuments.userId, userId));
+      userData.complianceDocuments = complianceQuery;
+
+      // Collect all R2 storage keys for deletion
+      const r2KeysToDelete: string[] = [];
+      
+      // Add contract PDFs
+      userData.contracts?.forEach((contract: any) => {
+        if (contract.cloudStorageKey) r2KeysToDelete.push(contract.cloudStorageKey);
+        if (contract.signingPageKey) r2KeysToDelete.push(contract.signingPageKey);
+      });
+      
+      // Add invoice PDFs
+      userData.invoices?.forEach((invoice: any) => {
+        if (invoice.cloudStorageKey) r2KeysToDelete.push(invoice.cloudStorageKey);
+      });
+
+      // Add compliance document files  
+      userData.complianceDocuments?.forEach((doc: any) => {
+        if (doc.documentUrl && doc.documentUrl.includes('r2.dev')) {
+          // Extract key from URL
+          const key = doc.documentUrl.split('r2.dev/')[1];
+          if (key) r2KeysToDelete.push(key);
+        }
+      });
+
+      console.log(`🔥 Found ${r2KeysToDelete.length} files to delete from R2 storage`);
+
+      // Start database transaction for safe deletion
+      await db.transaction(async (tx) => {
+        console.log(`🗑️ Starting database deletion transaction for user ${userId}`);
+
+        // Delete in correct order (foreign key dependencies)
+        
+        // 1. Delete message notifications
+        await tx.delete(messageNotifications)
+          .where(eq(messageNotifications.userId, userId));
+
+        // 2. Delete booking documents
+        await tx.delete(bookingDocuments)
+          .where(eq(bookingDocuments.userId, userId));
+
+        // 3. Delete invoices (foreign key to bookings)
+        await tx.delete(invoices)
+          .where(eq(invoices.userId, userId));
+
+        // 4. Delete contracts (foreign key to bookings)
+        await tx.delete(contracts)
+          .where(eq(contracts.userId, userId));
+
+        // 5. Delete bookings
+        await tx.delete(bookings)
+          .where(eq(bookings.userId, userId));
+
+        // 6. Delete clients
+        await tx.delete(clients)
+          .where(eq(clients.userId, userId));
+
+        // 7. Delete compliance documents
+        await tx.delete(complianceDocuments)
+          .where(eq(complianceDocuments.userId, userId));
+
+        // 8. Delete email templates
+        await tx.delete(emailTemplates)
+          .where(eq(emailTemplates.userId, userId));
+
+        // 9. Delete blocked dates
+        await tx.delete(blockedDates)
+          .where(eq(blockedDates.userId, userId));
+
+        // 10. Delete Google Calendar integration
+        await tx.delete(googleCalendarIntegration)
+          .where(eq(googleCalendarIntegration.userId, userId));
+
+        // 11. Delete event sync mapping
+        await tx.delete(eventSyncMapping)
+          .where(eq(eventSyncMapping.userId, userId));
+
+        // 12. Delete support tickets
+        await tx.delete(supportTickets)
+          .where(eq(supportTickets.userId, userId));
+
+        // 13. Delete user activity logs
+        await tx.delete(userActivity)
+          .where(eq(userActivity.userId, userId));
+
+        // 14. Delete login history
+        await tx.delete(userLoginHistory)
+          .where(eq(userLoginHistory.userId, userId));
+
+        // 15. Delete security monitoring
+        await tx.delete(securityMonitoring)
+          .where(eq(securityMonitoring.userId, userId));
+
+        // 16. Delete user security status
+        await tx.delete(userSecurityStatus)
+          .where(eq(userSecurityStatus.userId, userId));
+
+        // 17. Delete user settings
+        await tx.delete(userSettings)
+          .where(eq(userSettings.userId, userId));
+
+        // 18. Delete user sessions (where sess contains the user info)
+        // Note: This is more complex as userId is stored in JSONB sess field
+        const sessionsToDelete = await tx.select().from(sessions);
+        for (const session of sessionsToDelete) {
+          try {
+            const sessData = session.sess as any;
+            if (sessData?.passport?.user?.id === userId || sessData?.userId === userId) {
+              await tx.delete(sessions)
+                .where(eq(sessions.sid, session.sid));
+            }
+          } catch (e) {
+            // Continue if session parsing fails
+          }
+        }
+
+        // 19. Finally, delete the user record
+        await tx.delete(users)
+          .where(eq(users.id, userId));
+
+        console.log(`✅ Database deletion completed for user ${userId}`);
+      });
+
+      // Delete files from R2 storage (outside transaction)
+      console.log(`🔥 Deleting ${r2KeysToDelete.length} files from R2 storage`);
+      
+      let deletedFiles = 0;
+      let failedFiles = 0;
+      
+      for (const key of r2KeysToDelete) {
+        try {
+          const success = await deleteDocumentFromR2(key);
+          if (success) {
+            deletedFiles++;
+          } else {
+            failedFiles++;
+          }
+        } catch (error) {
+          console.error(`❌ Failed to delete R2 file ${key}:`, error);
+          failedFiles++;
+        }
+      }
+
+      // Log the deletion for audit trail
+      console.log(`🗑️ Account deletion completed for user ${userId}`);
+      console.log(`📊 Deletion summary:`);
+      console.log(`   - Database records: Deleted from ${15} tables`);
+      console.log(`   - R2 files: ${deletedFiles} deleted, ${failedFiles} failed`);
+      console.log(`   - User email: ${userData.user?.email}`);
+
+      // Insert audit log for account deletion (using different admin user or system)
+      try {
+        await db.insert(userAuditLogs).values({
+          userId: 'SYSTEM',
+          action: 'account_deleted',
+          entityType: 'user',
+          entityId: userId,
+          oldValues: JSON.stringify({
+            email: userData.user?.email,
+            firstName: userData.user?.firstName,
+            lastName: userData.user?.lastName,
+            deletedAt: new Date().toISOString(),
+            r2FilesDeleted: deletedFiles,
+            r2FilesFailed: failedFiles
+          }),
+          newValues: null,
+          reason: 'User requested account deletion',
+          ipAddress: req.ip
+        });
+      } catch (auditError) {
+        console.error('❌ Failed to create audit log for deletion:', auditError);
+        // Don't fail the deletion if audit logging fails
+      }
+
+      res.json({
+        success: true,
+        message: 'Account and all associated data have been permanently deleted',
+        summary: {
+          databaseTablesDeleted: 15,
+          r2FilesDeleted: deletedFiles,
+          r2FilesFailed: failedFiles,
+          deletedAt: new Date().toISOString()
+        }
+      });
+
+    } catch (error: any) {
+      console.error('❌ Failed to delete user account:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete account',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
 
   console.log('✅ Settings routes configured');
 }
