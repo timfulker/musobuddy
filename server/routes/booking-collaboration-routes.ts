@@ -213,20 +213,14 @@ export function setupBookingCollaborationRoutes(app: Express) {
 
       console.log('📝 [COLLABORATION] Filtered updates:', filteredUpdates);
 
-      // Convert camelCase to snake_case for database fields
+      // Add all fields that can be updated directly
       const dbUpdates: any = {
         updatedAt: new Date()
       };
       
-      // Map camelCase frontend fields to snake_case database fields
-      if ('styleMood' in filteredUpdates) {
-        dbUpdates.style_mood = filteredUpdates.styleMood;
-      }
-      
-      // Add other fields that don't need conversion
       const directFields = [
         'venueContact', 'soundTechContact', 'soundCheckTime', 'powerEquipment', 'stageSize', 'specialGuests',
-        'musicPreferences', 'setOrder', 'mustPlaySongs', 'avoidSongs', 'firstDanceSong', 'processionalSong',
+        'musicPreferences', 'styleMood', 'setOrder', 'mustPlaySongs', 'avoidSongs', 'firstDanceSong', 'processionalSong',
         'signingRegisterSong', 'recessionalSong', 'loadInInfo', 'weatherContingency', 'dietaryRequirements',
         'referenceTracks', 'sharedNotes', 'equipmentRequirements', 'equipmentProvided', 'whatsIncluded',
         'contactPerson', 'referenceTracksExamples'
