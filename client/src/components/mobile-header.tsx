@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Music, Menu, Settings } from "lucide-react";
+import { Music, Menu, Settings, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useState } from "react";
@@ -10,12 +10,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Link } from "wouter";
+import SupportChat from "@/components/support-chat";
 
 export default function MobileHeader() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
   const [isOpen, setIsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Don't render on desktop
   if (isDesktop) {
@@ -103,7 +105,20 @@ export default function MobileHeader() {
             </div>
 
             {/* Footer */}
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t space-y-3">
+              <Button 
+                onClick={() => {
+                  setIsChatOpen(true);
+                  setIsOpen(false);
+                }} 
+                variant="outline" 
+                size="sm" 
+                className="w-full flex items-center gap-2"
+                data-testid="mobile-support-chat-button"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Support Chat
+              </Button>
               <Button 
                 onClick={() => {
                   logout();
@@ -112,6 +127,7 @@ export default function MobileHeader() {
                 variant="destructive" 
                 size="sm" 
                 className="w-full"
+                data-testid="mobile-logout-button"
               >
                 Sign Out
               </Button>
@@ -119,6 +135,14 @@ export default function MobileHeader() {
           </div>
         </SheetContent>
       </Sheet>
+      
+      {/* Support Chat - controlled by mobile menu button */}
+      {isChatOpen && (
+        <SupportChat 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </header>
   );
 }

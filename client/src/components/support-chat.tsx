@@ -14,6 +14,11 @@ interface Message {
   timestamp: Date;
 }
 
+interface SupportChatProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
 const defaultMessages: Message[] = [
   {
     id: '1',
@@ -23,11 +28,13 @@ const defaultMessages: Message[] = [
   }
 ];
 
-export default function SupportChat() {
-  const [isOpen, setIsOpen] = useState(() => {
+export default function SupportChat({ isOpen: externalIsOpen, onClose }: SupportChatProps = {}) {
+  // Use external control if provided, otherwise fall back to internal state
+  const [internalIsOpen, setInternalIsOpen] = useState(() => {
     const saved = localStorage.getItem('musobuddy-chat-open');
     return saved ? JSON.parse(saved) : false;
   });
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const [isMinimized, setIsMinimized] = useState(() => {
     const saved = localStorage.getItem('musobuddy-chat-minimized');
     return saved ? JSON.parse(saved) : false;
@@ -47,10 +54,12 @@ export default function SupportChat() {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
-  // Save state to localStorage
+  // Save state to localStorage (only for internal state)
   useEffect(() => {
-    localStorage.setItem('musobuddy-chat-open', JSON.stringify(isOpen));
-  }, [isOpen]);
+    if (externalIsOpen === undefined) {
+      localStorage.setItem('musobuddy-chat-open', JSON.stringify(internalIsOpen));
+    }
+  }, [internalIsOpen, externalIsOpen]);
 
   useEffect(() => {
     localStorage.setItem('musobuddy-chat-minimized', JSON.stringify(isMinimized));
@@ -169,7 +178,7 @@ export default function SupportChat() {
   if (!isOpen) {
     return (
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => externalIsOpen !== undefined ? {} : setInternalIsOpen(true)}
         className="fixed bottom-20 right-6 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-2xl hover:shadow-primary/25 z-50 transition-all duration-300 hover:scale-105"
         size="icon"
         data-testid="button-open-support-chat"
@@ -210,7 +219,7 @@ export default function SupportChat() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsOpen(false)}
+            onClick={() => externalIsOpen !== undefined ? onClose?.() : setInternalIsOpen(false)}
             className="h-6 w-6"
             data-testid="button-close-support-chat"
           >

@@ -60,7 +60,6 @@ import DataProcessingAgreement from "@/pages/data-processing-agreement";
 import Disclaimer from "@/pages/disclaimer";
 import CookiePreferences from "@/pages/cookie-preferences";
 import CookieConsentBanner from "@/components/cookie-consent-banner";
-import SupportChat from "@/components/support-chat";
 import SystemHealth from "@/pages/system-health";
 import MobileInvoiceSender from "@/pages/mobile-invoice-sender";
 import GoogleCalendarCallback from "@/pages/google-calendar-callback";
@@ -256,7 +255,6 @@ function App() {
               <Toaster />
               <Router />
               <CookieConsentBanner />
-              <SupportChat />
             </TooltipProvider>
           </ThemeProvider>
       </QueryClientProvider>

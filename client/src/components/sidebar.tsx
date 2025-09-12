@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
+import SupportChat from "@/components/support-chat";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isDesktop } = useResponsive();
   const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
   const { counts } = useNotifications();
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   // Persist admin status in localStorage to prevent flickering during auth churn
   const [stableIsAdmin, setStableIsAdmin] = useState<boolean>(() => {
@@ -286,12 +288,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 z-10">
-          {/* Logout Row */}
-          <div className="flex items-center justify-end mb-3">
+          {/* Chat and Logout Row */}
+          <div className="flex items-center justify-between mb-3">
+            <button 
+              onClick={() => setIsChatOpen(true)}
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100"
+              title="Support Chat"
+              data-testid="sidebar-support-chat-button"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Support</span>
+            </button>
             <button 
               onClick={handleLogout}
               className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100"
               title="Logout"
+              data-testid="sidebar-logout-button"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm font-medium">Logout</span>
@@ -322,6 +334,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </div>
+      
+      {/* Support Chat - controlled by sidebar button */}
+      {isChatOpen && (
+        <SupportChat 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </>
   );
 }
