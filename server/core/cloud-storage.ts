@@ -290,7 +290,7 @@ export async function uploadToCloudflareR2(
 }
 
 // Download file from R2 storage
-export async function downloadFile(key: string): Promise<{ success: boolean; content?: string; error?: string }> {
+export async function downloadFile(key: string): Promise<{ success: boolean; content?: Buffer; error?: string }> {
   try {
     console.log(`📥 Downloading file from R2: ${key}`);
     
@@ -305,10 +305,10 @@ export async function downloadFile(key: string): Promise<{ success: boolean; con
       throw new Error('No content received from R2');
     }
     
-    // Convert the ReadableStream to string
-    const content = await response.Body.transformToString();
+    // Convert the ReadableStream to Buffer (preserves binary data)
+    const content = Buffer.from(await response.Body.transformToByteArray());
     
-    console.log(`✅ File downloaded successfully, size: ${content.length} characters`);
+    console.log(`✅ File downloaded successfully, size: ${content.length} bytes`);
     
     return {
       success: true,

@@ -1828,7 +1828,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
           const result = await downloadFile(key);
           if (result.success && result.content) {
             const filename = key.split('/').pop() || 'document.pdf';
-            archive.append(Buffer.from(result.content, 'binary'), { 
+            archive.append(result.content, { 
               name: `pdfs/${filename}` 
             });
           }
