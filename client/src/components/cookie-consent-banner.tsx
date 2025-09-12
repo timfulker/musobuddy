@@ -193,6 +193,7 @@ export default function CookieConsentBanner({ className = '' }: CookieConsentBan
                 <Button
                   onClick={handleAcceptAll}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white hover:text-white"
+                  style={{ color: 'white' }}
                 >
                   Accept All
                 </Button>
