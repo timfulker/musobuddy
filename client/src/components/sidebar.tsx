@@ -276,7 +276,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{ 
               color: isActive("/feedback") ? getThemeTextColor(currentTheme) : 'var(--theme-text)',
               backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent',
-              display: stableIsBeta ? 'flex' : 'none'
+              display: (stableIsBeta || stableIsAdmin) ? 'flex' : 'none'
             }}
           >
             <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
