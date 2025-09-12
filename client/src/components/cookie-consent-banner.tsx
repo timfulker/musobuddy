@@ -192,7 +192,7 @@ export default function CookieConsentBanner({ className = '' }: CookieConsentBan
               <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={handleAcceptAll}
-                  className="bg-indigo-600 hover:bg-indigo-700"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white hover:text-white"
                 >
                   Accept All
                 </Button>
