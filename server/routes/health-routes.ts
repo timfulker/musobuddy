@@ -7,7 +7,7 @@ import { EmailService } from "../core/services";
 // Authentication handled by Firebase
 
 // Get the raw SQL connection for health checks
-const sql = neon(process.env.DATABASE_URL_DEV || process.env.DATABASE_URL!);
+const sql = neon(process.env.DATABASE_URL!);
 
 export function registerHealthRoutes(app: Express) {
   console.log('🏥 Setting up health check routes...');
