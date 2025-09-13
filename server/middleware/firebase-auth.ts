@@ -91,13 +91,20 @@ export const authenticateWithFirebase = async (
     }
     
     // Get user from database using Firebase UID
+    console.log(`🔍 [FIREBASE-AUTH-DEBUG] Looking for user with Firebase UID: ${firebaseUser.uid} for email: ${firebaseUser.email}`);
     const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
     
     if (!user) {
       const duration = Date.now() - startTime;
-      if (AUTH_DEBUG) {
-        console.log(`❌ [FIREBASE-AUTH] User not found for Firebase UID: ${firebaseUser.uid} (${duration}ms)`);
+      console.log(`❌ [FIREBASE-AUTH] User not found for Firebase UID: ${firebaseUser.uid} (${duration}ms)`);
+      console.log(`🔍 [FIREBASE-AUTH-DEBUG] Will try to find user by email: ${firebaseUser.email}`);
+      
+      // Try to find user by email as fallback
+      const userByEmail = await storage.getUserByEmail(firebaseUser.email);
+      if (userByEmail) {
+        console.log(`🔧 [FIREBASE-AUTH-DEBUG] Found user by email but Firebase UID mismatch! DB UID: ${userByEmail.firebaseUid}, Token UID: ${firebaseUser.uid}`);
       }
+      
       return res.status(404).json({ 
         error: 'User not found',
         details: 'Please complete your account setup'

@@ -30,7 +30,12 @@ export class UserStorage {
   }
 
   async getUserByFirebaseUid(firebaseUid: string) {
+    console.log(`🔍 [USER-STORAGE] Searching for user with Firebase UID: ${firebaseUid}`);
     const result = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    console.log(`🔍 [USER-STORAGE] Query result:`, result.length > 0 ? `Found ${result.length} user(s)` : 'No users found');
+    if (result.length > 0) {
+      console.log(`🔍 [USER-STORAGE] First user:`, { id: result[0].id, email: result[0].email, firebaseUid: result[0].firebaseUid });
+    }
     return result[0] || null;
   }
 

@@ -44,8 +44,10 @@ if (isDevelopment && process.env.DATABASE_URL_DEV) {
 
 // Log database connection details (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
+const dbName = connectionString.match(/\/([^?]+)/)?.[1] || 'unknown';
 const envLabel = isDevelopment ? 'DEV' : isProduction ? 'PROD' : 'UNKNOWN';
-console.log(`📊 Database: ${envLabel} environment → ${dbHost}`);
+console.log(`📊 Database: ${envLabel} environment → ${dbHost}/${dbName}`);
+console.log(`🔍 [DATABASE-DEBUG] Full connection string pattern: postgresql://[user]:[pass]@${dbHost}/${dbName}?[options]`);
 
 const sql = neon(connectionString, {
   fetchOptions: {

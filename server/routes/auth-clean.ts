@@ -157,9 +157,18 @@ export function setupAuthRoutes(app: Express) {
   app.get('/api/auth/user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
+      console.log(`🔍 [DEBUG] /api/auth/user - userId: ${userId}, req.user:`, req.user);
+      
+      if (!userId) {
+        console.error('❌ [DEBUG] No userId found in req.user');
+        return res.status(400).json({ error: 'No user ID found' });
+      }
       
       // Handle admin user from database
+      console.log(`🔍 [DEBUG] Calling storage.getUserById(${userId})`);
       const user = await storage.getUserById(userId);
+      console.log(`🔍 [DEBUG] Database result:`, user ? 'User found' : 'User not found');
+      
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
