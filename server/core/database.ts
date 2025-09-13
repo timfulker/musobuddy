@@ -8,24 +8,15 @@ neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
   return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
 };
 
-// Environment-aware database URL selection with backwards compatibility
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+// Use single DATABASE_URL for all environments
+const connectionString = process.env.DATABASE_URL || process.env.MUSOBUDDY_PROD_DB;
 
-let connectionString: string;
-
-// Use DATABASE_URL for both development and production (simple setup)
-if (process.env.DATABASE_URL) {
-  connectionString = process.env.DATABASE_URL;
-  console.log(`🔧 ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}: Using DATABASE_URL (shared database)`);
-} else {
-  throw new Error('DATABASE_URL is required');
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not set. Please configure your database connection.');
 }
 
-// Log database connection details (without exposing credentials)
-const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
-const envLabel = isDevelopment ? 'DEV' : isProduction ? 'PROD' : 'UNKNOWN';
-console.log(`📊 Database: ${envLabel} environment → ${dbHost}`);
+console.log('🔧 Using single DATABASE_URL for all environments');
+console.log(`📊 Database: ${connectionString.split('@')[1]?.split('/')[0]}`);
 
 const sql = neon(connectionString, {
   fetchOptions: {
