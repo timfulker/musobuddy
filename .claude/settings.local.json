@@ -29,7 +29,14 @@
       "Bash(npx tsc:*)",
       "Bash(psql:*)",
       "Bash(awk:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(./complete-automated-migration.sh)",
+      "Bash(pg_dump:*)",
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(source .env)",
+      "Bash(set -a)",
+      "Bash(set +a)",
+      "Bash(./import-missing-data.sh:*)"
     ],
     "deny": [],
     "ask": [],
