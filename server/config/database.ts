@@ -1,5 +1,6 @@
 export function getDatabaseUrl(): string {
-  const env = process.env.NODE_ENV || 'development';
+  // Check for Replit deployment or explicit NODE_ENV
+  const env = process.env.REPLIT_DEPLOYMENT === '1' ? 'production' : (process.env.NODE_ENV || 'development');
   
   // Environment-specific database selection
   if (env === 'production') {
