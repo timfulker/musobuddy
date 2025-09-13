@@ -8,46 +8,16 @@ neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
   return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
 };
 
-// Environment-aware database URL selection with backwards compatibility
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+// Simplified database connection - single DATABASE_URL for all environments
+const connectionString = process.env.DATABASE_URL;
 
-let connectionString: string;
-
-// Development: use proper development database
-if (isDevelopment && process.env.DATABASE_URL_DEV) {
-  connectionString = process.env.DATABASE_URL_DEV;
-  console.log('🔧 DEVELOPMENT: Using DATABASE_URL_DEV');
-} else if (isDevelopment && process.env.PGHOST) {
-  // Build development URL from PG environment variables
-  const user = process.env.PGUSER || 'neondb_owner';
-  const password = process.env.PGPASSWORD;
-  const host = process.env.PGHOST;
-  const database = process.env.PGDATABASE || 'neondb';
-  connectionString = `postgresql://${user}:${password}@${host}/${database}?sslmode=require`;
-  console.log('🔧 DEVELOPMENT: Using new development database (PG variables)');
-} else if (process.env.DATABASE_URL_PROD && isProduction) {
-  connectionString = process.env.DATABASE_URL_PROD;
-  console.log('🏭 PRODUCTION: Using DATABASE_URL_PROD');
-} else if (process.env.DATABASE_URL) {
-  connectionString = process.env.DATABASE_URL;
-  if (isDevelopment) {
-    console.log('🔧 DEVELOPMENT: Using DATABASE_URL (fallback - CAUTION: may be production!)');
-  } else if (isProduction) {
-    console.log('🏭 PRODUCTION: Using DATABASE_URL');
-  } else {
-    console.log(`🔍 UNKNOWN ENV: Using DATABASE_URL for ${process.env.NODE_ENV || 'unknown'}`);
-  }
-} else {
+if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-// Log database connection details (without exposing credentials)
+// Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
-const dbName = connectionString.match(/\/([^?]+)/)?.[1] || 'unknown';
-const envLabel = isDevelopment ? 'DEV' : isProduction ? 'PROD' : 'UNKNOWN';
-console.log(`📊 Database: ${envLabel} environment → ${dbHost}/${dbName}`);
-console.log(`🔍 [DATABASE-DEBUG] Full connection string pattern: postgresql://[user]:[pass]@${dbHost}/${dbName}?[options]`);
+console.log(`📊 Connected to database: ${dbHost}`);
 
 const sql = neon(connectionString, {
   fetchOptions: {
