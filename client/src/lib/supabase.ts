@@ -6,8 +6,10 @@ import { createClient } from '@supabase/supabase-js'
  */
 
 // Determine environment - Vite uses import.meta.env.MODE
-const isDevelopment = import.meta.env.MODE === 'development'
-const isProduction = import.meta.env.MODE === 'production'
+// For built-in preview, treat as development unless explicitly configured for production
+const isDevelopment = import.meta.env.MODE === 'development' ||
+  (import.meta.env.MODE === 'production' && !import.meta.env.VITE_SUPABASE_URL_PROD)
+const isProduction = import.meta.env.MODE === 'production' && import.meta.env.VITE_SUPABASE_URL_PROD
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
@@ -21,9 +23,10 @@ const supabaseAnonKey = isDevelopment
 // Validate required environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   const env = isDevelopment ? 'development' : 'production'
+  const envSuffix = isDevelopment ? 'DEV' : 'PROD'
   throw new Error(
     `Missing Supabase ${env} credentials. ` +
-    `Please set VITE_SUPABASE_URL_${env.toUpperCase()} and VITE_SUPABASE_ANON_KEY_${env.toUpperCase()}`
+    `Please set VITE_SUPABASE_URL_${envSuffix} and VITE_SUPABASE_ANON_KEY_${envSuffix}`
   )
 }
 
