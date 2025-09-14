@@ -58,7 +58,7 @@ export class SupabaseBookingStorage {
       event_end_time: bookingData.eventEndTime,
       fee: bookingData.fee,
       final_amount: bookingData.finalAmount,
-      deposit: bookingData.deposit,
+      deposit_amount: bookingData.deposit, // Supabase uses deposit_amount, not deposit
       status: bookingData.status,
       notes: bookingData.notes,
       gig_type: bookingData.gigType,
@@ -103,11 +103,11 @@ export class SupabaseBookingStorage {
       photo_permission: bookingData.photoPermission,
       encore_allowed: bookingData.encoreAllowed,
       encore_suggestions: bookingData.encoreSuggestions,
-      // Add mileage and location data if present
-      mileage: bookingData.mileage || null,
-      google_place_id: bookingData.googlePlaceId || null,
-      latitude: bookingData.latitude || null,
-      longitude: bookingData.longitude || null,
+      // Map location fields to Supabase column names
+      // mileage: bookingData.mileage || null, // Column doesn't exist in Supabase
+      // google_place_id: bookingData.googlePlaceId || null, // Column doesn't exist
+      map_latitude: bookingData.latitude || null, // Supabase uses map_latitude
+      map_longitude: bookingData.longitude || null, // Supabase uses map_longitude
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -220,7 +220,7 @@ export class SupabaseBookingStorage {
       eventEndTime: booking.event_end_time,
       fee: booking.fee,
       finalAmount: booking.final_amount,
-      deposit: booking.deposit,
+      deposit: booking.deposit_amount, // Supabase uses deposit_amount
       status: booking.status,
       notes: booking.notes,
       gigType: booking.gig_type,
@@ -265,10 +265,10 @@ export class SupabaseBookingStorage {
       encoreSuggestions: booking.encore_suggestions,
       createdAt: booking.created_at,
       updatedAt: booking.updated_at,
-      mileage: booking.mileage,
-      googlePlaceId: booking.google_place_id,
-      latitude: booking.latitude,
-      longitude: booking.longitude
+      // mileage: booking.mileage, // Column doesn't exist
+      // googlePlaceId: booking.google_place_id, // Column doesn't exist
+      latitude: booking.map_latitude, // Supabase uses map_latitude
+      longitude: booking.map_longitude // Supabase uses map_longitude
     };
   }
 
