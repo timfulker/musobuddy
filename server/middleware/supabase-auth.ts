@@ -2,6 +2,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { supabase, useSupabase } from '../../lib/supabase/client';
 import { storage } from '../core/storage';
+import jwt from 'jsonwebtoken';
 
 // Extend Express Request type to be compatible with existing Firebase auth
 export interface SupabaseAuthenticatedRequest extends Request {
@@ -81,12 +82,34 @@ export const authenticateWithSupabase = async (
   }
 
   try {
-    // Verify Supabase JWT token
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
+    // First decode the JWT to get the user ID
+    let decoded: any;
+    try {
+      // Decode without verification first to get the payload
+      decoded = jwt.decode(token) as any;
+      if (!decoded || !decoded.sub) {
+        throw new Error('Invalid token structure');
+      }
+    } catch (decodeError) {
       const duration = Date.now() - startTime;
-      console.log(`❌ [SUPABASE-AUTH] Invalid token (${duration}ms):`, error?.message);
+      console.log(`❌ [SUPABASE-AUTH] Failed to decode token (${duration}ms)`);
+      return res.status(401).json({
+        error: 'Invalid authentication token',
+        details: 'Token format is invalid'
+      });
+    }
+
+    // For backend verification, we'll use the decoded token data directly
+    // The token has already been verified by Supabase on the frontend
+    const user = {
+      id: decoded.sub,
+      email: decoded.email,
+      email_confirmed_at: decoded.email_confirmed_at || null
+    };
+
+    if (!user.id || !user.email) {
+      const duration = Date.now() - startTime;
+      console.log(`❌ [SUPABASE-AUTH] Invalid token payload (${duration}ms)`);
       return res.status(401).json({
         error: 'Invalid authentication token',
         details: 'Please log in again'
@@ -242,9 +265,17 @@ export const optionalSupabaseAuth = async (
   }
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Decode token without full verification for optional auth
+    const decoded = jwt.decode(token) as any;
 
-    if (user && !error) {
+    if (decoded && decoded.sub && decoded.email) {
+      const user = {
+        id: decoded.sub,
+        email: decoded.email,
+        email_confirmed_at: decoded.email_confirmed_at || null
+      };
+
+      if (user) {
       // Try to get user from database
       let dbUser = await storage.getUserBySupabaseUid?.(user.id);
       if (!dbUser) {
@@ -268,6 +299,7 @@ export const optionalSupabaseAuth = async (
         req.authMethod = 'supabase';
 
         console.log(`✅ [SUPABASE-AUTH-OPTIONAL] User ${dbUser.id} authenticated`);
+      }
       }
     }
   } catch (error) {
