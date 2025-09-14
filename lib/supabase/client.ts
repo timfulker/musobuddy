@@ -6,22 +6,23 @@ import type { Database } from './database.types'; // We'll generate this from Su
  * Automatically switches between dev/prod based on NODE_ENV
  */
 
-// Determine environment
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+// Determine environment based on DATABASE_URL for proper database/auth alignment
+const isUsingProdDatabase = process.env.DATABASE_URL?.includes('cpzawhjfrgqrdxpyuwkt');
+const isDevelopment = process.env.NODE_ENV === 'development' && !isUsingProdDatabase;
+const isProduction = process.env.NODE_ENV === 'production' || isUsingProdDatabase;
 
-// Select appropriate credentials
-const SUPABASE_URL = isDevelopment 
-  ? process.env.SUPABASE_URL_DEV 
-  : process.env.SUPABASE_URL_PROD;
+// Select appropriate credentials based on database environment
+const SUPABASE_URL = isUsingProdDatabase
+  ? process.env.SUPABASE_URL_PROD
+  : process.env.SUPABASE_URL_DEV;
 
-const SUPABASE_ANON_KEY = isDevelopment
-  ? process.env.SUPABASE_ANON_KEY_DEV
-  : process.env.SUPABASE_ANON_KEY_PROD;
+const SUPABASE_ANON_KEY = isUsingProdDatabase
+  ? process.env.SUPABASE_ANON_KEY_PROD
+  : process.env.SUPABASE_ANON_KEY_DEV;
 
-const SUPABASE_SERVICE_KEY = isDevelopment
-  ? process.env.SUPABASE_SERVICE_KEY_DEV
-  : process.env.SUPABASE_SERVICE_KEY_PROD;
+const SUPABASE_SERVICE_KEY = isUsingProdDatabase
+  ? process.env.SUPABASE_SERVICE_KEY_PROD
+  : process.env.SUPABASE_SERVICE_KEY_DEV;
 
 // Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -33,7 +34,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Log which environment we're using (but never log keys!)
-console.log(`🚀 Supabase Client initialized for ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+const envLabel = isUsingProdDatabase ? 'PRODUCTION' : 'DEVELOPMENT';
+console.log(`🚀 Supabase Client initialized for ${envLabel}`);
 console.log(`📊 Project: ${SUPABASE_URL.split('.')[0].split('//')[1]}`);
 
 /**
