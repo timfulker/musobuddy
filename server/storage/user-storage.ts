@@ -39,6 +39,16 @@ export class UserStorage {
     return result[0] || null;
   }
 
+  async getUserBySupabaseUid(supabaseUid: string) {
+    console.log(`🔍 [USER-STORAGE] Searching for user with Supabase UID: ${supabaseUid}`);
+    const result = await db.select().from(users).where(eq(users.supabaseUid, supabaseUid));
+    console.log(`🔍 [USER-STORAGE] Query result:`, result.length > 0 ? `Found ${result.length} user(s)` : 'No users found');
+    if (result.length > 0) {
+      console.log(`🔍 [USER-STORAGE] First user:`, { id: result[0].id, email: result[0].email, supabaseUid: result[0].supabaseUid });
+    }
+    return result[0] || null;
+  }
+
   async getUserByPhone(phoneNumber: string) {
     const result = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
     return result[0] || null;

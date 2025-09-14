@@ -52,6 +52,8 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number", { length: 20 }),  // Keep for contact info
   // Firebase Auth Integration
   firebaseUid: text("firebase_uid").unique(), // Firebase user UID for authentication
+  // Supabase Auth Integration (for migration)
+  supabaseUid: text("supabase_uid").unique(), // Supabase user UID for authentication
   // Existing fields
   isActive: boolean("is_active").default(true), // Account active/suspended
   lastLoginAt: timestamp("last_login_at"),
