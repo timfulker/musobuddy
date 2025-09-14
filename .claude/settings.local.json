@@ -50,7 +50,11 @@
       "Bash(do echo \"=== Checking $file ===\")",
       "Bash(do echo \"Fixing $file...\")",
       "Bash(echo \"✅ $file updated\")",
-      "Bash(do echo \"Fixing $file import path...\")"
+      "Bash(do echo \"Fixing $file import path...\")",
+      "Read(//home/runner/.claude/**)",
+      "Bash(cat:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npm run dev)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npx tsx test-supabase-prod-user.js)"
     ],
     "deny": [],
     "ask": [],

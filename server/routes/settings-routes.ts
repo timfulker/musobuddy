@@ -4,7 +4,7 @@ import { services } from "../core/services";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { db } from '../core/database';
 import { 
   clientCommunications, 
@@ -48,7 +48,7 @@ export async function registerSettingsRoutes(app: Express) {
   // Lead Email Setup Endpoints
   
   // Get user's lead email address
-  app.get('/api/email/my-address', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/email/my-address', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -80,7 +80,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Check if email prefix is available
-  app.post('/api/email/check-availability', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/email/check-availability', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -125,7 +125,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Assign email prefix to user
-  app.post('/api/email/assign-prefix', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/email/assign-prefix', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -186,7 +186,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
   
   // Get user settings
-  app.get('/api/settings', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/settings', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -362,7 +362,7 @@ export async function registerSettingsRoutes(app: Express) {
 
   // Update user settings
   app.patch('/api/settings',
-    authenticateWithSupabase,
+    authenticate,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
@@ -509,7 +509,7 @@ export async function registerSettingsRoutes(app: Express) {
 
   // Add instrument to settings
   app.post('/api/settings/instrument', 
-    authenticateWithSupabase,
+    authenticate,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
@@ -575,7 +575,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // User-specific gig types aggregated from bookings
-  app.get('/api/user-gig-types', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/user-gig-types', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -599,7 +599,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Generate widget token
-  app.post('/api/generate-widget-token', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/generate-widget-token', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -658,7 +658,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Get existing widget token
-  app.get('/api/get-widget-token', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/get-widget-token', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -692,7 +692,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Get widget info (permanent widget URL and QR code)
-  app.get('/api/get-widget-info', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/get-widget-info', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -721,7 +721,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Templates endpoint - fetch user's email templates
-  app.get('/api/templates', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/templates', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -737,7 +737,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Create new email template
-  app.post('/api/templates', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/templates', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -768,7 +768,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Update email template
-  app.patch('/api/templates/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.patch('/api/templates/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
@@ -803,7 +803,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Delete email template
-  app.delete('/api/templates/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.delete('/api/templates/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
@@ -830,7 +830,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Set template as default
-  app.post('/api/templates/:id/set-default', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/templates/:id/set-default', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const templateId = parseInt(req.params.id);
@@ -857,7 +857,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Seed default templates for existing users
-  app.post('/api/templates/seed-defaults', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/templates/seed-defaults', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -894,7 +894,7 @@ export async function registerSettingsRoutes(app: Express) {
   });
 
   // Send email using template
-  app.post('/api/templates/send-email', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/templates/send-email', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -1291,7 +1291,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
   });
 
   // AI Response Generation endpoint
-  app.post('/api/ai/generate-response', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/ai/generate-response', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -1462,7 +1462,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
   });
 
   // Glockapps deliverability test endpoint
-  app.post('/api/test/glockapp-delivery', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/test/glockapp-delivery', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { testId, templateId, seedEmails } = req.body;
       const userId = req.user?.id;
@@ -1574,7 +1574,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
 
   // Add a custom gig type
   app.post('/api/gig-types/custom', 
-    authenticateWithSupabase,
+    authenticate,
     generalApiRateLimit,
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
@@ -1626,7 +1626,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
   }));
 
   // Get gig types for booking form - combine stored AI-generated and custom gig types
-  app.get('/api/gig-types', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/gig-types', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -1679,7 +1679,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
   // ===== DATA EXPORT AND ACCOUNT DELETION FEATURES =====
 
   // Export all user data for GDPR compliance
-  app.get('/api/user/export-data', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/user/export-data', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -1868,7 +1868,7 @@ This email was sent via MusoBuddy Professional Music Management Platform
   });
 
   // Delete user account and all associated data
-  app.delete('/api/user/delete-account', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.delete('/api/user/delete-account', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
