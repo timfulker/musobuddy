@@ -8,22 +8,22 @@ import { createClient } from '@supabase/supabase-js'
 // Determine environment - Vite uses import.meta.env.MODE
 // For built-in preview, treat as development unless explicitly configured for production
 const isDevelopment = import.meta.env.MODE === 'development' ||
-  (import.meta.env.MODE === 'production' && !import.meta.env.VITE_SUPABASE_URL_PROD)
-const isProduction = import.meta.env.MODE === 'production' && import.meta.env.VITE_SUPABASE_URL_PROD
+  (import.meta.env.MODE === 'production' && !import.meta.env.VITE_SUPABASE_URL_PRODUCTION)
+const isProduction = import.meta.env.MODE === 'production' && import.meta.env.VITE_SUPABASE_URL_PRODUCTION
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
   ? (import.meta.env.VITE_SUPABASE_URL_DEV || 'https://wkhrzcpvghdlhnxzhrde.supabase.co')
-  : (import.meta.env.VITE_SUPABASE_URL_PROD || import.meta.env.VITE_SUPABASE_URL)
+  : (import.meta.env.VITE_SUPABASE_URL_PRODUCTION || import.meta.env.VITE_SUPABASE_URL)
 
 const supabaseAnonKey = isDevelopment
   ? (import.meta.env.VITE_SUPABASE_ANON_KEY_DEV || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHJ6Y3B2Z2hkbGhueHpocmRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NjEzNjMsImV4cCI6MjA3MzMzNzM2M30.Li_pGOBIHGPHV-hrEG6Lf7SrHRj1D4tzJ_xM9KAMaBc')
-  : (import.meta.env.VITE_SUPABASE_ANON_KEY_PROD || import.meta.env.VITE_SUPABASE_ANON_KEY)
+  : (import.meta.env.VITE_SUPABASE_ANON_KEY_PRODUCTION || import.meta.env.VITE_SUPABASE_ANON_KEY)
 
 // Validate required environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   const env = isDevelopment ? 'development' : 'production'
-  const envSuffix = isDevelopment ? 'DEV' : 'PROD'
+  const envSuffix = isDevelopment ? 'DEV' : 'PRODUCTION'
   throw new Error(
     `Missing Supabase ${env} credentials. ` +
     `Please set VITE_SUPABASE_URL_${envSuffix} and VITE_SUPABASE_ANON_KEY_${envSuffix}`
