@@ -1,7 +1,7 @@
 import { type Express, type Response } from "express";
 import multer from "multer";
 import { storage } from "../core/storage";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { asyncHandler } from '../middleware/errorHandler';
 
@@ -26,7 +26,7 @@ export function registerComplianceRoutes(app: Express) {
   console.log('📋 Setting up compliance routes...');
 
   // Get all compliance documents for authenticated user
-  app.get('/api/compliance', authenticateWithFirebase, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/compliance', authenticateWithSupabase, asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -44,10 +44,10 @@ export function registerComplianceRoutes(app: Express) {
 
   // Upload compliance document
   app.post('/api/compliance/upload', 
-    authenticateWithFirebase,
+    authenticateWithSupabase,
     generalApiRateLimit,
     upload.single('documentFile'),
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
       try {
         const userId = req.user?.id;
         if (!userId) {
@@ -108,9 +108,9 @@ export function registerComplianceRoutes(app: Express) {
 
   // Update compliance document
   app.patch('/api/compliance/:id', 
-    authenticateWithFirebase,
+    authenticateWithSupabase,
     generalApiRateLimit,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
       try {
         const userId = req.user?.id;
         if (!userId) {
@@ -139,9 +139,9 @@ export function registerComplianceRoutes(app: Express) {
 
   // Delete compliance document
   app.delete('/api/compliance/:id', 
-    authenticateWithFirebase,
+    authenticateWithSupabase,
     generalApiRateLimit,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
       try {
         const userId = req.user?.id;
         if (!userId) {

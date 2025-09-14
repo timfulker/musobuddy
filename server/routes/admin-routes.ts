@@ -5,7 +5,7 @@
 import { type Express } from 'express';
 import { storage } from '../core/storage';
 import { userStorage } from '../storage/user-storage';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { adminAuth } from '../core/firebase-admin';
 
 // Export the registration function for the routes/index.ts file
@@ -551,7 +551,7 @@ app.patch('/api/admin/users/:userId', async (req, res) => {
 });
 
 // Get all locked users
-app.get('/api/admin/locked-users', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.get('/api/admin/locked-users', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -576,7 +576,7 @@ app.get('/api/admin/locked-users', authenticateWithFirebase, async (req: Authent
 });
 
 // Lock user account
-app.post('/api/admin/lock-user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.post('/api/admin/lock-user', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -614,7 +614,7 @@ app.post('/api/admin/lock-user', authenticateWithFirebase, async (req: Authentic
 });
 
 // Unlock user account
-app.post('/api/admin/unlock-user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.post('/api/admin/unlock-user', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -647,7 +647,7 @@ app.post('/api/admin/unlock-user', authenticateWithFirebase, async (req: Authent
 });
 
 // Retrieve specific Mailgun stored message
-app.post('/api/admin/mailgun-message', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.post('/api/admin/mailgun-message', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -700,7 +700,7 @@ app.post('/api/admin/mailgun-message', authenticateWithFirebase, async (req: Aut
 // ===== BETA INVITE CODE MANAGEMENT =====
 
 // Get all beta invite codes
-app.get('/api/admin/beta-codes', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.get('/api/admin/beta-codes', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -726,7 +726,7 @@ app.get('/api/admin/beta-codes', authenticateWithFirebase, async (req: Authentic
 });
 
 // Create a new beta invite code
-app.post('/api/admin/beta-codes', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.post('/api/admin/beta-codes', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -782,7 +782,7 @@ app.post('/api/admin/beta-codes', authenticateWithFirebase, async (req: Authenti
 });
 
 // Update a beta invite code
-app.put('/api/admin/beta-codes/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.put('/api/admin/beta-codes/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {
@@ -826,7 +826,7 @@ app.put('/api/admin/beta-codes/:id', authenticateWithFirebase, async (req: Authe
 });
 
 // Delete a beta invite code
-app.delete('/api/admin/beta-codes/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+app.delete('/api/admin/beta-codes/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     // Check admin permissions
     if (!req.user?.isAdmin) {

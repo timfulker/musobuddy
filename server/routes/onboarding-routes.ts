@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { storage } from "../core/storage";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 
 export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding
-  app.post('/api/onboarding/complete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/onboarding/complete', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const onboardingData = req.body;
@@ -85,7 +85,7 @@ export function registerOnboardingRoutes(app: Express) {
   });
 
   // Get onboarding status
-  app.get('/api/onboarding/status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/onboarding/status', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       

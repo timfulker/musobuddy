@@ -30,7 +30,7 @@ import documentRoutes from "./document-routes";
 import { registerSupportChatRoutes } from "./support-chat-routes";
 // AI token routes removed - unlimited AI usage for all users
 
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { storage } from "../core/storage";
 
 export async function registerRoutes(app: Express) {
@@ -109,7 +109,7 @@ export async function registerRoutes(app: Express) {
   // AI token routes removed - unlimited AI usage for all users
   
   // Conflict management endpoints
-  app.get('/api/conflicts', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/conflicts', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express) {
     }
   });
   
-  app.get('/api/conflicts/resolutions', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/conflicts/resolutions', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express) {
   });
   
   // Conflict resolution endpoint
-  app.post('/api/conflicts/resolve', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/conflicts/resolve', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const { bookingIds, resolution, notes } = req.body;
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express) {
   // Compliance routes now handled by registerComplianceRoutes
 
   // Dashboard stats endpoint
-  app.get('/api/dashboard/stats', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/dashboard/stats', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

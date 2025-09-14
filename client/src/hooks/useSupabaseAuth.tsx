@@ -34,7 +34,7 @@ interface AuthState {
   error: string | null;
 }
 
-export function useAuth() {
+export function useSupabaseAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,

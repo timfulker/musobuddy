@@ -6,7 +6,7 @@ import { contractSigningEmailService } from "../core/contract-signing-email";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import { authenticateWithFirebase, authenticateWithFirebasePaid, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseSupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 
 export function registerContractRoutes(app: Express) {
@@ -60,7 +60,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Fix all signing pages with JavaScript errors
-  app.post('/api/contracts/fix-all-signing-pages', async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/fix-all-signing-pages', async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       console.log('🔧 Starting to fix all signing pages with JavaScript errors...');
       
@@ -113,7 +113,7 @@ export function registerContractRoutes(app: Express) {
   });
   
   // Regenerate signing page endpoint - fixes JavaScript errors
-  app.post('/api/contracts/:id/regenerate-signing-page', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/:id/regenerate-signing-page', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -157,7 +157,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // CRITICAL: Direct contract signing page endpoint (GET)
-  app.get('/api/contracts/sign/:id', async (req: AuthenticatedRequest, res) => {
+  app.get('/api/contracts/sign/:id', async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
@@ -188,7 +188,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Get all contracts for authenticated user
-  app.get('/api/contracts', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/contracts', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       const contracts = await storage.getContracts(userId);
@@ -201,7 +201,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // FIXED: Add missing R2 URL endpoint that was causing 404 errors
-  app.get('/api/contracts/:id/r2-url', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/contracts/:id/r2-url', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -269,7 +269,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Add download endpoint for fallback when isolated endpoints fail
-  app.get('/api/contracts/:id/download', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/contracts/:id/download', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -324,9 +324,9 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Create new contract
-  app.post('/api/contracts', 
-    authenticateWithFirebase, 
-    asyncHandler(async (req: any, res: any) => {
+  app.post('/api/contracts',
+    authenticateWithSupabase,
+    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: any) => {
     try {
       const contractNumber = req.body.contractNumber || 
         `(${new Date(req.body.eventDate).toLocaleDateString('en-GB', { 
@@ -450,7 +450,7 @@ export function registerContractRoutes(app: Express) {
   }));
 
   // Send contract via email
-  app.post('/api/contracts/send-email', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/send-email', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const { contractId, customMessage } = req.body;
       const parsedContractId = parseInt(contractId);
@@ -597,7 +597,7 @@ export function registerContractRoutes(app: Express) {
   });
   
   // CRITICAL: Enhanced contract signing endpoint with retry logic and better error handling
-  app.post('/api/contracts/sign/:id', async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/sign/:id', async (req: SupabaseAuthenticatedRequest, res) => {
     // Set CORS headers for all responses
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -929,7 +929,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Get individual contract - FIXED: Use standard auth middleware
-  app.get('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/contracts/:id', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
@@ -960,7 +960,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Update contract (only allowed for draft contracts)
-  app.patch('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.patch('/api/contracts/:id', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -1034,7 +1034,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Amend contract - creates a new contract with "Amended" suffix
-  app.post('/api/contracts/:id/amend', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/:id/amend', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -1114,7 +1114,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Delete contract
-  app.delete('/api/contracts/:id', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.delete('/api/contracts/:id', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const contractId = parseInt(req.params.id);
       await storage.deleteContract(contractId, req.user.id);
@@ -1127,7 +1127,7 @@ export function registerContractRoutes(app: Express) {
   });
 
   // Bulk delete contracts
-  app.post('/api/contracts/bulk-delete', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/contracts/bulk-delete', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const { contractIds } = req.body;
       const userId = req.user.id;

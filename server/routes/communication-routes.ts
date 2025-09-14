@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
 import { clientCommunications, bookings, userSettings } from '@shared/schema';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { eq, desc, and } from 'drizzle-orm';
 import { services } from '../core/services';
 
 export function setupCommunicationRoutes(app: any) {
   // Save a communication record when an email/SMS is sent
-  app.post('/api/communications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/communications', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -59,7 +59,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get communication history for a client
-  app.get('/api/communications/client/:email', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/communications/client/:email', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -86,7 +86,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get communication history for a booking
-  app.get('/api/communications/booking/:bookingId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/communications/booking/:bookingId', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -116,7 +116,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // Get all communications for the authenticated user
-  app.get('/api/communications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/communications', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -143,7 +143,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for conversation page - get messages formatted for UI
-  app.get('/api/conversations/:bookingId', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/conversations/:bookingId', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -441,7 +441,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for sending replies in conversation
-  app.post('/api/conversations/reply', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/conversations/reply', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       console.log('📧 [CONVERSATION-REPLY] Starting conversation reply process...');
       
@@ -719,7 +719,7 @@ export function setupCommunicationRoutes(app: any) {
   });
 
   // New endpoint for ignoring messages (marks them as read without responding)
-  app.post('/api/conversations/ignore', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/conversations/ignore', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

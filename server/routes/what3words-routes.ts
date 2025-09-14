@@ -1,12 +1,12 @@
 import type { Express, Request, Response } from 'express';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 
 const WHAT3WORDS_API_KEY = process.env.WHAT3WORDS_API_KEY;
 const W3W_BASE_URL = 'https://api.what3words.com/v3';
 
 export function setupWhat3WordsRoutes(app: Express) {
   // Auto-suggest endpoint for what3words
-  app.get('/api/what3words/autosuggest', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/what3words/autosuggest', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { input, focus } = req.query;
       
@@ -59,7 +59,7 @@ export function setupWhat3WordsRoutes(app: Express) {
   });
 
   // Convert what3words to coordinates
-  app.get('/api/what3words/convert-to-coordinates', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/what3words/convert-to-coordinates', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { words } = req.query;
       
@@ -103,7 +103,7 @@ export function setupWhat3WordsRoutes(app: Express) {
   });
 
   // Convert coordinates to what3words
-  app.get('/api/what3words/convert-to-3wa', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/what3words/convert-to-3wa', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { lat, lng } = req.query;
       

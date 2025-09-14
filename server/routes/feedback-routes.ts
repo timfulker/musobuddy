@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { feedbackStorage } from '../storage/feedback-storage';
 import { UserStorage } from '../storage/user-storage';
 import type { InsertFeedback } from '../../shared/schema';
@@ -10,7 +10,7 @@ export function registerFeedbackRoutes(app: Express) {
   console.log('💬 Setting up feedback routes...');
 
   // Get all feedback
-  app.get('/api/feedback', authenticateWithFirebase, async (req, res) => {
+  app.get('/api/feedback', authenticateWithSupabase, async (req, res) => {
     try {
       const userId = req.user?.id;
       
@@ -33,7 +33,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Create new feedback
-  app.post('/api/feedback', authenticateWithFirebase, async (req, res) => {
+  app.post('/api/feedback', authenticateWithSupabase, async (req, res) => {
     try {
       console.log('🔄 Feedback submission started');
       const userId = req.user?.id;
@@ -92,7 +92,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Update feedback status (admin only)
-  app.patch('/api/feedback/:id/status', authenticateWithFirebase, async (req, res) => {
+  app.patch('/api/feedback/:id/status', authenticateWithSupabase, async (req, res) => {
     try {
       const userId = req.user?.id;
       const feedbackId = req.params.id;
@@ -150,7 +150,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Delete feedback (admin only)
-  app.delete('/api/feedback/:id', authenticateWithFirebase, async (req, res) => {
+  app.delete('/api/feedback/:id', authenticateWithSupabase, async (req, res) => {
     try {
       console.log('🗑️ Delete feedback request started');
       console.log('🔐 Auth header:', req.headers.authorization ? 'Present' : 'Missing');

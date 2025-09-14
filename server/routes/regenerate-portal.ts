@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { collaborativeFormGenerator } from "../core/collaborative-form-generator.js";
 import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";
@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 
 export function setupRegeneratePortalRoutes(app: Express) {
   // Regenerate collaborative form with latest data
-  app.post('/api/contracts/:contractId/regenerate-portal', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/contracts/:contractId/regenerate-portal', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { contractId } = req.params;
       const userId = req.user?.id;

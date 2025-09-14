@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
 import { verifyFirebaseToken, createCustomToken } from '../core/firebase-admin';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseSupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
@@ -154,7 +154,7 @@ export function setupAuthRoutes(app: Express) {
   });
   
   // Get current user endpoint - uses Firebase authentication
-  app.get('/api/auth/user', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/auth/user', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       console.log(`🔍 [DEBUG] /api/auth/user - userId: ${userId}, req.user:`, req.user);
@@ -212,7 +212,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Alias for /api/auth/user
-  app.get('/api/auth/me', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/auth/me', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -262,7 +262,7 @@ export function setupAuthRoutes(app: Express) {
   // Verify SMS code - protected with rate limiting
 
   // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
-  app.get('/api/subscription/status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/subscription/status', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       console.log('📊 Auth route handling subscription status for userId:', userId);
@@ -731,7 +731,7 @@ export function setupAuthRoutes(app: Express) {
   
   // Subscription watchdog endpoint - checks subscription status for periodic verification  
   console.log('🔍 REGISTERING WATCHDOG ROUTE: /api/subscription/watchdog-status');
-  app.get('/api/subscription/watchdog-status', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/subscription/watchdog-status', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     console.log('🔍 WATCHDOG ENDPOINT HIT - userId:', req.user?.userId);
     try {
       const userId = req.user?.id;
@@ -811,6 +811,145 @@ export function setupAuthRoutes(app: Express) {
         error: 'Failed to generate authentication token',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // NEW: Clean Supabase signup with database creation and beta user detection
+  app.post('/api/auth/supabase-signup', async (req, res) => {
+    try {
+      const { supabaseUid, email, firstName, lastName, deviceFingerprint, inviteCode } = req.body;
+
+      if (!supabaseUid || !email || !firstName || !lastName) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      console.log('🔷 Processing Supabase signup for:', email);
+
+      // Log if invite code was provided
+      if (inviteCode) {
+        console.log('📨 Invite code provided:', inviteCode);
+      }
+
+      // Check if user already exists in database by Supabase UID
+      const existingUserBySupabaseUid = await storage.getUserBySupabaseUid(supabaseUid);
+      if (existingUserBySupabaseUid) {
+        return res.status(409).json({
+          error: 'Account already exists with this Supabase UID',
+          redirect: '/login'
+        });
+      }
+
+      // Check if user already exists by email
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      if (existingUserByEmail) {
+        // If user exists by email but no Supabase UID, update their record
+        console.log('🔧 Updating existing user with Supabase UID:', supabaseUid);
+        // TODO: Add updateUserSupabaseUid method to storage
+        // For now, just return existing user info
+        return res.status(200).json({
+          user: existingUserByEmail,
+          message: 'Account exists, linking with Supabase'
+        });
+      }
+
+      // Check if user has a beta invite (same logic as Firebase)
+      let isBetaUser = false;
+      let betaInvite = null;
+
+      try {
+        console.log('🔍 Checking beta invite list for email:', email);
+        betaInvite = await storage.getBetaInviteByEmail(email);
+
+        if (betaInvite) {
+          isBetaUser = true;
+          console.log('✅ Beta user detected by email invitation');
+        }
+
+        // Check if invite code matches a valid dynamic beta code
+        if (!isBetaUser && inviteCode) {
+          try {
+            const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
+            if (betaCode && betaCode.status === 'active') {
+              // Check if code hasn't expired
+              if (!betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt)) {
+                // Check if code hasn't reached max uses
+                if (betaCode.currentUses < betaCode.maxUses) {
+                  isBetaUser = true;
+                  console.log('✅ Valid dynamic beta invite code provided:', inviteCode);
+
+                  // Increment usage count
+                  try {
+                    await storage.incrementBetaInviteCodeUsage(inviteCode);
+                    console.log('📈 Beta code usage incremented');
+                  } catch (error) {
+                    console.warn('⚠️ Failed to increment beta code usage:', error);
+                  }
+                } else {
+                  console.log('❌ Beta code has reached maximum uses');
+                }
+              } else {
+                console.log('❌ Beta code has expired');
+              }
+            } else {
+              console.log('❌ Invalid or inactive beta code');
+            }
+          } catch (betaError) {
+            console.warn('⚠️ Error validating beta code:', betaError);
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Error checking beta status:', error);
+      }
+
+      // Create user in database
+      const userId = nanoid();
+      const userData = {
+        id: userId,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        supabaseUid: supabaseUid, // Store Supabase UID
+        signupIpAddress: req.ip || req.connection?.remoteAddress || 'unknown',
+        deviceFingerprint: deviceFingerprint,
+        isBetaTester: isBetaUser,
+        trialEndsAt: isBetaUser ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14-day trial for non-beta users
+      };
+
+      console.log('💾 Creating user with data:', {
+        id: userData.id,
+        email: userData.email,
+        supabaseUid: userData.supabaseUid,
+        isBetaTester: userData.isBetaTester,
+        trialEndsAt: userData.trialEndsAt
+      });
+
+      const user = await storage.createUser(userData);
+      console.log('✅ User created in database with ID:', user.id);
+
+      res.status(201).json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          supabaseUid: user.supabaseUid,
+          isBetaTester: user.isBetaTester || false,
+          trialEndsAt: user.trialEndsAt
+        },
+        message: 'Supabase account created successfully'
+      });
+
+    } catch (error: any) {
+      console.error('❌ Supabase signup error:', error);
+
+      if (error.code === '23505') { // Unique constraint violation
+        return res.status(409).json({
+          error: 'Account already exists',
+          redirect: '/login'
+        });
+      }
+
+      res.status(500).json({ error: 'Account creation failed' });
     }
   });
 

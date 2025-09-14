@@ -37,6 +37,10 @@ export class Storage {
     return userStorage.getUserByFirebaseUid(firebaseUid);
   }
 
+  async getUserBySupabaseUid(supabaseUid: string) {
+    return userStorage.getUserBySupabaseUid(supabaseUid);
+  }
+
   async getUserByPhone(phoneNumber: string) {
     return userStorage.getUserByPhone(phoneNumber);
   }

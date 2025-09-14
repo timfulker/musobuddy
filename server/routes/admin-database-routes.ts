@@ -13,7 +13,7 @@ import {
   unparseableMessages,
   emailTemplates
 } from '../../shared/schema.js';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 
 // Define available tables and their schemas
 const AVAILABLE_TABLES = {
@@ -43,7 +43,7 @@ type TableName = keyof typeof AVAILABLE_TABLES;
 
 export function setupAdminDatabaseRoutes(app: Express) {
   // Get list of available tables with metadata
-  app.get('/api/admin/database/tables', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.get('/api/admin/database/tables', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const tables = [];
       
@@ -89,7 +89,7 @@ export function setupAdminDatabaseRoutes(app: Express) {
   });
 
   // Get table data with pagination, search, and filtering
-  app.get('/api/admin/database/data', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.get('/api/admin/database/data', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { table, page = '1', limit = '50', search, filterColumn } = req.query;
       console.log(`📊 Backend: Request received for table: ${table}, page: ${page}, search: ${search}`);
@@ -293,7 +293,7 @@ export function setupAdminDatabaseRoutes(app: Express) {
   });
 
   // Export table data as JSON (for CSV conversion on frontend)
-  app.get('/api/admin/database/export/:table', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.get('/api/admin/database/export/:table', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { table } = req.params;
       

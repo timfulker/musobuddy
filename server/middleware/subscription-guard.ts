@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = new Set([
   '/api/auth/verify-token',
   '/api/auth/password-reset',
   '/api/auth/firebase-signup', // Allow Firebase signup flow
+  '/api/auth/supabase-signup', // Allow Supabase signup flow
   '/api/health',
   '/api/feedback/test-table', // Development testing endpoint
   '/api/health/feedback-schema', // Development schema check

@@ -1,12 +1,12 @@
 import type { Express, Request, Response } from "express";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { storage } from "../core/storage";
 
 export function registerNotificationRoutes(app: Express) {
   console.log('🔔 Setting up notification routes...');
 
   // Get notification counts for badges
-  app.get('/api/notifications/counts', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/notifications/counts', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -64,7 +64,7 @@ export function registerNotificationRoutes(app: Express) {
   });
 
   // Get detailed notifications (for dropdown/list view)
-  app.get('/api/notifications', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/notifications', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -128,7 +128,7 @@ export function registerNotificationRoutes(app: Express) {
   });
 
   // Get client messages specifically for the Messages page
-  app.get('/api/notifications/messages', authenticateWithFirebase, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/notifications/messages', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

@@ -3,7 +3,7 @@ import multer from 'multer';
 import { storage } from '../core/storage';
 import { uploadDocumentToR2, deleteDocumentFromR2, generateDocumentDownloadUrl } from '../core/document-storage';
 import { insertBookingDocumentSchema, uploadDocumentSchema } from '../../shared/document-schemas';
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 
 const router = Router();
 
@@ -34,7 +34,7 @@ const upload = multer({
 });
 
 // Get documents for a booking
-router.get('/bookings/:bookingId/documents', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+router.get('/bookings/:bookingId/documents', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -63,7 +63,7 @@ router.get('/bookings/:bookingId/documents', authenticateWithFirebase, async (re
 });
 
 // Upload document for a booking
-router.post('/bookings/:bookingId/documents/upload', authenticateWithFirebase, upload.single('document'), async (req: AuthenticatedRequest, res) => {
+router.post('/bookings/:bookingId/documents/upload', authenticateWithSupabase, upload.single('document'), async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -136,7 +136,7 @@ router.post('/bookings/:bookingId/documents/upload', authenticateWithFirebase, u
 });
 
 // Delete a document
-router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);
@@ -189,7 +189,7 @@ router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithFire
 });
 
 // Download/view a document
-router.get('/bookings/:bookingId/documents/:documentId/download', authenticateWithFirebase, async (req: AuthenticatedRequest, res) => {
+router.get('/bookings/:bookingId/documents/:documentId/download', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);

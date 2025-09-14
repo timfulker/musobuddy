@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticateWithFirebase, type AuthenticatedRequest } from '../middleware/firebase-auth';
+import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
 import { storage } from '../core/storage';
 
 export function registerMapsRoutes(app: Express) {
@@ -16,7 +16,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Places search endpoint using new Places API Text Search
-  app.post('/api/maps/places-search', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.post('/api/maps/places-search', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { query } = req.body;
       
@@ -91,7 +91,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Place Details endpoint using new Places API
-  app.post('/api/maps/place-details', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.post('/api/maps/place-details', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { placeId } = req.body;
       
@@ -166,7 +166,7 @@ export function registerMapsRoutes(app: Express) {
   });
   
   // Simple geocoding endpoint
-  app.post('/api/maps/geocode', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.post('/api/maps/geocode', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { address } = req.body;
       
@@ -218,7 +218,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Travel time endpoint
-  app.post('/api/maps/travel-time', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.post('/api/maps/travel-time', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { origin, destination, departureTime } = req.body;
       
@@ -296,7 +296,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Distance calculation endpoint (legacy compatibility)
-  app.post('/api/maps/distance', authenticateWithFirebase, async (req: Request, res: Response) => {
+  app.post('/api/maps/distance', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
     try {
       const { origin, destination } = req.body;
       
