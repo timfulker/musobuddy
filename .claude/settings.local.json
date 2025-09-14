@@ -16,7 +16,8 @@
       "Bash(pg_restore:*)",
       "Bash(pg_dump:*)",
       "Bash(PGPASSWORD='dbp8vugbuk9PKBbjn' pg_dump -Fc --no-owner --no-privileges --exclude-schema=information_schema --exclude-schema=pg_catalog --exclude-schema=pg_toast \"postgres://postgres@db.wkhrzcpvghdlhnxzhrde.supabase.co:5432/postgres?sslmode=require\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": [],
