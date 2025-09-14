@@ -376,8 +376,8 @@ export function registerBookingRoutes(app: Express) {
           if (booking.eventType?.toLowerCase().includes(search)) return true;
           // Search in gig type
           if (booking.gigType?.toLowerCase().includes(search)) return true;
-          // Search by fee amount
-          if (booking.fee?.includes(search)) return true;
+          // Search by fee amount (handle both string and number types)
+          if (booking.fee && String(booking.fee).includes(search)) return true;
           // Search by client phone
           if (booking.clientPhone?.includes(search)) return true;
           // Search by client email
