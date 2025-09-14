@@ -37,7 +37,9 @@
       "Bash(set -a)",
       "Bash(set +a)",
       "Bash(./import-missing-data.sh:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": [],

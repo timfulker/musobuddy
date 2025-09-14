@@ -2,9 +2,15 @@ import { db } from "../core/database";
 import { bookings, bookingConflicts, bookingDocuments, invoices } from "../../shared/schema";
 import type { InsertBookingDocument, BookingDocument } from "../../shared/document-schemas";
 import { eq, and, desc, or, sql, gte, lte, notInArray, inArray } from "drizzle-orm";
+import { SupabaseBookingStorage } from "./supabase-booking-storage";
 
 export class BookingStorage {
   private db = db;
+  private supabaseStorage: SupabaseBookingStorage;
+
+  constructor() {
+    this.supabaseStorage = new SupabaseBookingStorage();
+  }
 
   // ===== BOOKING METHODS =====
   
@@ -101,6 +107,14 @@ export class BookingStorage {
   }
 
   async getBookingsByUser(userId: string) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for fetching bookings');
+      return await this.supabaseStorage.getBookings(userId);
+    }
+
+    // Otherwise use Firebase/Drizzle
     const results = await db.select().from(bookings)
       .where(eq(bookings.userId, userId))
       .orderBy(desc(bookings.createdAt));
@@ -148,6 +162,16 @@ export class BookingStorage {
   }
 
   async createBooking(data: any) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for booking creation');
+      return await this.supabaseStorage.createBooking(data);
+    }
+
+    // Otherwise use Firebase/Drizzle
+    console.log('📦 Using Firebase for booking creation');
+
     // Remove undefined values to prevent database errors, but ensure title is always present
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined)
@@ -199,6 +223,14 @@ export class BookingStorage {
   }
 
   async updateBooking(id: number, updates: any, userId: string) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for updating booking');
+      return await this.supabaseStorage.updateBooking(id, updates, userId);
+    }
+
+    // Otherwise use Firebase/Drizzle
     // Get current booking to access existing documents
     const currentBooking = await this.getBooking(id);
     if (!currentBooking) {
@@ -276,6 +308,14 @@ export class BookingStorage {
   }
 
   async deleteBooking(id: number, userId: string) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for deleting booking');
+      return await this.supabaseStorage.deleteBooking(id, userId);
+    }
+
+    // Otherwise use Firebase/Drizzle
     // First, set bookingId to null for any related invoices to avoid foreign key constraint error
     await db.update(invoices)
       .set({ bookingId: null })
