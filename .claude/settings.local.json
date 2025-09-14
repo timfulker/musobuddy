@@ -55,7 +55,8 @@
       "Bash(cat:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npm run dev)",
       "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npx tsx test-supabase-prod-user.js)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npx tsx -e \"\nimport { db } from ''./server/core/database.ts'';\nimport { users } from ''./shared/schema.ts'';\nimport { eq } from ''drizzle-orm'';\n\nasync function checkUser() {\n  try {\n    const user = await db.select().from(users).where(eq(users.email, ''timfulkermusic@gmail.com'')).limit(1);\n    console.log(''User record:'', JSON.stringify(user[0], null, 2));\n  } catch (error) {\n    console.error(''Error:'', error);\n  }\n  process.exit(0);\n}\n\ncheckUser();\n\")"
     ],
     "deny": [],
     "ask": [],

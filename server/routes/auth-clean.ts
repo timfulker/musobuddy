@@ -153,12 +153,29 @@ export function setupAuthRoutes(app: Express) {
     }
   });
   
-  // Get current user endpoint - uses Firebase authentication
+  // Get current user endpoint - uses Supabase authentication
   app.get('/api/auth/user', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       console.log(`🔍 [DEBUG] /api/auth/user - userId: ${userId}, req.user:`, req.user);
-      
+
+      // HOTFIX: If userId is undefined but we have email, lookup by email directly
+      if (!userId && req.user?.email) {
+        console.log(`🔧 [HOTFIX] No userId but have email ${req.user.email}, looking up by email`);
+        const userByEmail = await storage.getUserByEmail(req.user.email);
+        if (userByEmail) {
+          console.log(`✅ [HOTFIX] Found user by email: ${userByEmail.id}`);
+          return res.json({
+            id: userByEmail.id,
+            email: userByEmail.email,
+            firstName: userByEmail.firstName || '',
+            lastName: userByEmail.lastName || '',
+            isAdmin: userByEmail.isAdmin || false,
+            tier: userByEmail.tier || 'free'
+          });
+        }
+      }
+
       if (!userId) {
         console.error('❌ [DEBUG] No userId found in req.user');
         return res.status(400).json({ error: 'No user ID found' });
