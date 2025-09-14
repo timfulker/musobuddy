@@ -135,6 +135,35 @@ export class SupabaseBookingStorage {
     return this.mapToCamelCase(data);
   }
 
+  async getBooking(id: number, userId?: string) {
+    if (!this.isEnabled || !supabase) {
+      throw new Error('Supabase is not enabled');
+    }
+
+    let query = supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', id);
+
+    // Add user filter if provided
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      console.error('❌ Failed to fetch booking from Supabase:', error);
+      throw error;
+    }
+
+    return this.mapToCamelCase(data);
+  }
+
   async getBookings(userId: string) {
     if (!this.isEnabled || !supabase) {
       throw new Error('Supabase is not enabled');

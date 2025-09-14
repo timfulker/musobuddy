@@ -15,11 +15,19 @@ export class BookingStorage {
   // ===== BOOKING METHODS =====
   
   async getBooking(id: number) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for fetching individual booking');
+      return await this.supabaseStorage.getBooking(id);
+    }
+
+    // Otherwise use Firebase/Drizzle
     const result = await db.select().from(bookings).where(eq(bookings.id, id));
     const booking = result[0] || null;
-    
+
     if (!booking) return null;
-    
+
 
     // Convert date strings to Date objects and apply field mapping (same as getBookingsByUser)
     return {
@@ -61,12 +69,20 @@ export class BookingStorage {
   }
 
   async getBookingByIdAndUser(id: number, userId: string) {
+    // Check if we should use Supabase
+    if (this.supabaseStorage.isSupabaseEnabled() &&
+        this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
+      console.log('🚀 Using Supabase for fetching booking by ID and user');
+      return await this.supabaseStorage.getBooking(id, userId);
+    }
+
+    // Otherwise use Firebase/Drizzle
     const result = await db.select().from(bookings)
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     const booking = result[0] || null;
-    
+
     if (!booking) return null;
-    
+
     // Apply the same field mapping as getBooking for consistency
     return {
       ...booking,
@@ -107,11 +123,6 @@ export class BookingStorage {
   }
 
   async getBookingsByUser(userId: string) {
-    // Debug logging to see what's happening
-    console.log('🔍 DEBUG: getBookingsByUser called for user:', userId);
-    console.log('🔍 DEBUG: Supabase enabled?', this.supabaseStorage.isSupabaseEnabled());
-    console.log('🔍 DEBUG: Migration mode:', this.supabaseStorage.getMigrationMode());
-
     // Check if we should use Supabase
     if (this.supabaseStorage.isSupabaseEnabled() &&
         this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
@@ -120,7 +131,6 @@ export class BookingStorage {
     }
 
     // Otherwise use Firebase/Drizzle
-    console.log('📦 Using Firebase for fetching bookings (fallback)');
     const results = await db.select().from(bookings)
       .where(eq(bookings.userId, userId))
       .orderBy(desc(bookings.createdAt));
