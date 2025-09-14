@@ -70,7 +70,8 @@ export class SupabaseBookingStorage {
       equipment_provided: bookingData.equipmentProvided,
       whats_included: bookingData.whatsIncluded,
       dress_code: bookingData.dressCode,
-      contact_person: bookingData.contactPerson,
+      // Note: Supabase doesn't have contact_person column, skip it
+      // contact_person: bookingData.contactPerson,
       contact_phone: bookingData.contactPhone,
       parking_info: bookingData.parkingInfo,
       venue_contact_info: bookingData.venueContactInfo,
@@ -102,6 +103,11 @@ export class SupabaseBookingStorage {
       photo_permission: bookingData.photoPermission,
       encore_allowed: bookingData.encoreAllowed,
       encore_suggestions: bookingData.encoreSuggestions,
+      // Add mileage and location data if present
+      mileage: bookingData.mileage || null,
+      google_place_id: bookingData.googlePlaceId || null,
+      latitude: bookingData.latitude || null,
+      longitude: bookingData.longitude || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -226,7 +232,7 @@ export class SupabaseBookingStorage {
       equipmentProvided: booking.equipment_provided,
       whatsIncluded: booking.whats_included,
       dressCode: booking.dress_code,
-      contactPerson: booking.contact_person,
+      // contactPerson: booking.contact_person, // Column doesn't exist in Supabase
       contactPhone: booking.contact_phone,
       parkingInfo: booking.parking_info,
       venueContactInfo: booking.venue_contact_info,
