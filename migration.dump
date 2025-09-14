@@ -1,0 +1,2 @@
+pg_dump: error: connection to server at "db.wkhrzcpvghdlhnxzhrde.supabase.co" (2a05:d01c:30c:9d04:e321:76f6:47bd:2299), port 5432 failed: Cannot assign requested address
+	Is the server running on that host and accepting TCP/IP connections?
