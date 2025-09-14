@@ -36,7 +36,8 @@
       "Bash(source .env)",
       "Bash(set -a)",
       "Bash(set +a)",
-      "Bash(./import-missing-data.sh:*)"
+      "Bash(./import-missing-data.sh:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": [],
