@@ -197,7 +197,14 @@ export const authenticateWithSupabase = async (
     next();
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('Supabase authentication error:', error);
+    console.error(`❌ [SUPABASE-AUTH] Authentication error after ${duration}ms:`, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      path: req.path,
+      hasToken: !!extractSupabaseToken(req),
+      useSupabase: useSupabase()
+    });
 
     return res.status(500).json({
       error: 'Authentication failed',

@@ -54,7 +54,8 @@
       "Read(//home/runner/.claude/**)",
       "Bash(cat:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npm run dev)",
-      "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npx tsx test-supabase-prod-user.js)"
+      "Bash(DATABASE_URL=\"postgresql://postgres.cpzawhjfrgqrdxpyuwkt:uhy2XUC@kmc-nqg0jtx@aws-0-us-east-1.pooler.supabase.com:5432/postgres\" npx tsx test-supabase-prod-user.js)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": [],
