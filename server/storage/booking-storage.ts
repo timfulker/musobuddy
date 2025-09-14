@@ -107,6 +107,11 @@ export class BookingStorage {
   }
 
   async getBookingsByUser(userId: string) {
+    // Debug logging to see what's happening
+    console.log('🔍 DEBUG: getBookingsByUser called for user:', userId);
+    console.log('🔍 DEBUG: Supabase enabled?', this.supabaseStorage.isSupabaseEnabled());
+    console.log('🔍 DEBUG: Migration mode:', this.supabaseStorage.getMigrationMode());
+
     // Check if we should use Supabase
     if (this.supabaseStorage.isSupabaseEnabled() &&
         this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
@@ -115,6 +120,7 @@ export class BookingStorage {
     }
 
     // Otherwise use Firebase/Drizzle
+    console.log('📦 Using Firebase for fetching bookings (fallback)');
     const results = await db.select().from(bookings)
       .where(eq(bookings.userId, userId))
       .orderBy(desc(bookings.createdAt));
