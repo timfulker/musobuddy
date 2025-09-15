@@ -218,10 +218,31 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'No user ID found' });
       }
       
-      // Handle admin user from database
-      console.log(`🔍 [DEBUG] Calling storage.getUserById(${userId})`);
-      const user = await storage.getUserById(userId);
-      console.log(`🔍 [DEBUG] Database result:`, user ? 'User found' : 'User not found');
+      // Handle admin user from database or fallback from middleware
+      console.log(`🔍 [DEBUG] Attempting storage.getUserById(${userId})`);
+      let user;
+      try {
+        user = await storage.getUserById(userId);
+        console.log(`🔍 [DEBUG] Database result:`, user ? 'User found' : 'User not found');
+      } catch (error: any) {
+        console.log(`⚠️ [DEBUG] Database lookup failed, using middleware data:`, error.message);
+        // Use data from req.user (which includes fallback data)
+        user = {
+          id: req.user?.id,
+          email: req.user?.email,
+          firstName: req.user?.firstName,
+          lastName: req.user?.lastName,
+          isAdmin: req.user?.isAdmin,
+          tier: req.user?.tier,
+          emailPrefix: null,
+          hasPaid: false,
+          trialEndsAt: null,
+          accountNotes: null,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+        };
+        console.log(`✅ [DEBUG] Using fallback user data for endpoint`);
+      }
       
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
