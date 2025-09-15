@@ -1,12 +1,6 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "../../shared/schema";
-
-// Configure Neon for better stability
-neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
-  const protocol = options.ssl !== false ? 'https' : 'http';
-  return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
-};
 
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -24,21 +18,29 @@ if (!connectionString) {
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
 
-const sql = neon(connectionString, {
-  fetchOptions: {
-    cache: 'no-cache',
-  },
+// Create PostgreSQL connection pool
+const pool = new Pool({
+  connectionString,
+  ssl: isDevelopment ? false : { rejectUnauthorized: false },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
-export const db = drizzle(sql, { schema });
+export const db = drizzle(pool, { schema });
 
 export async function testDatabaseConnection(): Promise<boolean> {
   let retries = 3;
   while (retries > 0) {
     try {
-      await sql`SELECT 1 as test`;
-      console.log('✅ Database connection successful');
-      return true;
+      const client = await pool.connect();
+      try {
+        await client.query('SELECT 1 as test');
+        console.log('✅ Database connection successful');
+        return true;
+      } finally {
+        client.release();
+      }
     } catch (error: any) {
       console.error(`❌ Database connection attempt ${4 - retries} failed:`, error.message);
       retries--;

@@ -1,13 +1,9 @@
 // Health Check Routes for System Monitoring
 import { type Express } from "express";
 import { db } from "../core/database";
-import { neon } from "@neondatabase/serverless";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 // Authentication handled by Firebase
-
-// Get the raw SQL connection for health checks
-const sql = neon(process.env.DATABASE_URL!);
 
 export function registerHealthRoutes(app: Express) {
   console.log('🏥 Setting up health check routes...');
@@ -16,7 +12,7 @@ export function registerHealthRoutes(app: Express) {
   app.get('/api/health/database', async (req, res) => {
     try {
       // Test database connectivity
-      const healthResult = await sql`SELECT 1 as test`;
+      const healthResult = await db.execute('SELECT 1 as test');
       
       // Check for delete feedback request (if deleteid query param)
       if (req.query.deleteid) {
@@ -50,11 +46,11 @@ export function registerHealthRoutes(app: Express) {
         console.log('🛠️ Fixing feedback table schema...');
         
         // Drop existing table (since id column is TEXT instead of SERIAL)
-        await sql`DROP TABLE IF EXISTS feedback`;
+        await db.execute('DROP TABLE IF EXISTS feedback');
         console.log('✅ Dropped old feedback table');
         
         // Create table with correct schema
-        await sql`
+        await db.execute(`
           CREATE TABLE feedback (
             id SERIAL PRIMARY KEY,
             user_id VARCHAR NOT NULL,
@@ -69,24 +65,24 @@ export function registerHealthRoutes(app: Express) {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
           )
-        `;
+        `);
         console.log('✅ Created feedback table with correct schema');
         
         // Create indexes
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)`;
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)');
         console.log('✅ Created indexes');
       }
       
       // Check feedback table structure
-      const schemaResult = await sql`
+      const schemaResult = await db.execute(`
         SELECT column_name, data_type, column_default, is_nullable 
         FROM information_schema.columns 
         WHERE table_name = 'feedback' AND column_name = 'id'
-      `;
+      `);
       
-      const rowCountResult = await sql`SELECT COUNT(*) as count FROM feedback`;
+      const rowCountResult = await db.execute('SELECT COUNT(*) as count FROM feedback');
       const rowCount = rowCountResult[0]?.count || 0;
       
       if (healthResult && healthResult.length > 0) {
@@ -338,11 +334,11 @@ export function registerHealthRoutes(app: Express) {
         console.log('🛠️ Fixing feedback table schema...');
         
         // Drop existing table (since id column is TEXT instead of SERIAL)
-        await sql`DROP TABLE IF EXISTS feedback`;
+        await db.execute('DROP TABLE IF EXISTS feedback');
         console.log('✅ Dropped old feedback table');
         
         // Create table with correct schema
-        await sql`
+        await db.execute(`
           CREATE TABLE feedback (
             id SERIAL PRIMARY KEY,
             user_id VARCHAR NOT NULL,
@@ -357,21 +353,21 @@ export function registerHealthRoutes(app: Express) {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
           )
-        `;
+        `);
         console.log('✅ Created feedback table with correct schema');
         
         // Create indexes
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)`;
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)');
         console.log('✅ Created indexes');
         
         // Verify the fix
-        const result = await sql`
+        const result = await db.execute(`
           SELECT column_name, data_type, column_default, is_nullable 
           FROM information_schema.columns 
           WHERE table_name = 'feedback' AND column_name = 'id'
-        `;
+        `);
         
         res.json({
           message: 'Feedback table fixed successfully',
