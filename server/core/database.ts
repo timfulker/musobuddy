@@ -17,6 +17,12 @@ function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string):
 }
 
 let connectionString: string;
+
+// TEMPORARY FIX: Use working DATABASE_URL directly since Supabase connection is failing
+connectionString = process.env.DATABASE_URL;
+
+// Original code kept for reference - restored once connection issues resolved
+/*
 if (isDevelopment) {
   // Development: Use Supabase dev credentials
   const supabaseUrl = process.env.SUPABASE_URL_DEV;
@@ -40,6 +46,7 @@ if (isDevelopment) {
     connectionString = process.env.DATABASE_URL_PROD || process.env.DATABASE_URL;
   }
 }
+*/
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
