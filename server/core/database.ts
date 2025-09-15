@@ -17,6 +17,22 @@ if (!connectionString) {
 // Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
+console.log(`🔍 Using connection from: ${isDevelopment ? 'DATABASE_URL_DEV' : 'DATABASE_URL_PROD'}`);
+// Debug: Show connection string structure to verify format
+const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);
+if (parts) {
+  const [, username, , host, database, options] = parts;
+  console.log(`🔍 Connection structure:`);
+  console.log(`   Username: ${username}`);
+  console.log(`   Host: ${host}`);
+  console.log(`   Database: ${database}`);
+  console.log(`   Has options: ${options ? 'Yes' : 'No'}`);
+  if (options) {
+    console.log(`   Options: ${options.substring(0, 50)}...`);
+  }
+} else {
+  console.log(`⚠️ Connection string doesn't match expected format`);
+}
 
 // Create PostgreSQL connection pool
 const pool = new Pool({

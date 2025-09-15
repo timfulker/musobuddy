@@ -1,7 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 // Determine which Supabase instance to use based on NODE_ENV
 const supabaseUrl = process.env.NODE_ENV === 'production'
