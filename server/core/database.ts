@@ -11,12 +11,12 @@ neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
 const connectionString = isDevelopment
-  ? process.env.DATABASE_URL_DEV
-  : process.env.DATABASE_URL_PROD;
+  ? (process.env.DATABASE_URL_DEV || process.env.DATABASE_URL)
+  : (process.env.DATABASE_URL_PROD || process.env.DATABASE_URL);
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
-  const envVar = isDevelopment ? 'DATABASE_URL_DEV' : 'DATABASE_URL_PROD';
+  const envVar = isDevelopment ? 'DATABASE_URL_DEV or DATABASE_URL' : 'DATABASE_URL_PROD or DATABASE_URL';
   throw new Error(`${envVar} environment variable is required for ${envType} mode`);
 }
 
