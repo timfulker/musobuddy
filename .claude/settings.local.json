@@ -19,7 +19,10 @@
       "Bash(find:*)",
       "Bash(git push:*)",
       "Bash(chmod:*)",
-      "Bash(./restore-complete-backup.sh:*)"
+      "Bash(./restore-complete-backup.sh:*)",
+      "Bash(npx tsx:*)",
+      "Bash(export PGPASSWORD='trv-MQG8xjr_tcw0jdt')",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": [],

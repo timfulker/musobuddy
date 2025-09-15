@@ -12,8 +12,8 @@ function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string):
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  // Use Supabase Connection Pooling (port 5432) for DNS stability and connection reuse
-  return `postgresql://postgres.${projectId}:${serviceKey}@${projectId}-pooler.supabase.co:5432/postgres?sslmode=require&keepAlive=true`;
+  // Use Supabase Connection Pooling with the correct AWS pooler endpoint
+  return `postgresql://postgres:${serviceKey}@aws-0-us-east-1.pooler.supabase.com:5432/postgres?options=project%3D${projectId}`;
 }
 
 let connectionString: string;
