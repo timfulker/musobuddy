@@ -4,7 +4,7 @@ hidden = [".config", ".git", "node_modules", "backup"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["chromium", "glib", "nss", "gtk3", "alsa-lib"]
+packages = ["chromium", "glib", "nss", "gtk3", "alsa-lib", "postgresql"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -26,6 +26,10 @@ externalPort = 3001
 [[ports]]
 localPort = 34409
 externalPort = 3000
+
+[[ports]]
+localPort = 44499
+externalPort = 3003
 
 [workflows]
 runButton = "Project"
