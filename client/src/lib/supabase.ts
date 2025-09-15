@@ -6,10 +6,8 @@ import { createClient } from '@supabase/supabase-js'
  */
 
 // Determine environment - Vite uses import.meta.env.MODE
-// For built-in preview, treat as development unless explicitly configured for production
-const isDevelopment = import.meta.env.MODE === 'development' ||
-  (import.meta.env.MODE === 'production' && !import.meta.env.VITE_SUPABASE_URL_PRODUCTION)
-const isProduction = import.meta.env.MODE === 'production' && import.meta.env.VITE_SUPABASE_URL_PRODUCTION
+const isDevelopment = import.meta.env.MODE === 'development'
+const isProduction = import.meta.env.MODE === 'production'
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
