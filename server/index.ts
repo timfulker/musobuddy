@@ -1092,6 +1092,14 @@ app.get('/api/email-queue/status', async (req, res) => {
     return handleStripeWebhook(req, res);
   });
 
+  // Add development fallback middleware for database failures
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🚧 Setting up development database fallback middleware...');
+    const { createDevelopmentFallback } = await import('./middleware/development-fallback');
+    app.use('/api', createDevelopmentFallback());
+    console.log('✅ Development fallback middleware active for /api/* routes');
+  }
+
   // Register all API routes
   console.log('🔄 Registering all modular routes...');
   const { registerRoutes } = await import('./routes');
