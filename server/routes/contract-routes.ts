@@ -1,6 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { db } from "../core/database";
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 import { EmailService } from "../core/services";
 import { contractSigningEmailService } from "../core/contract-signing-email";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
@@ -191,7 +192,11 @@ export function registerContractRoutes(app: Express) {
   app.get('/api/contracts', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
-      const contracts = await storage.getContracts(userId);
+      const contracts = await safeDbCall(
+        () => storage.getContracts(userId), 
+        [], 
+        'getContracts'
+      );
       console.log(`✅ Retrieved ${contracts.length} contracts for user ${userId}`);
       res.json(contracts);
     } catch (error) {
