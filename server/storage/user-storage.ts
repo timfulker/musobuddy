@@ -303,20 +303,6 @@ export class UserStorage {
     return result[0];
   }
 
-  async updateUserSupabaseUid(userId: string, supabaseUid: string) {
-    console.log(`🔧 [USER-STORAGE] Updating Supabase UID for user ${userId}: ${supabaseUid}`);
-    const result = await db.update(users)
-      .set({ supabaseUid: supabaseUid, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-    if (result.length > 0) {
-      console.log(`✅ [USER-STORAGE] Successfully updated Supabase UID for user ${userId}`);
-    } else {
-      console.log(`❌ [USER-STORAGE] Failed to update Supabase UID for user ${userId}`);
-    }
-    return result[0];
-  }
-
   async getAllUsers() {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }

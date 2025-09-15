@@ -130,7 +130,8 @@ export const authenticateWithSupabase = async (
       // If found by email, update the user record with Supabase UID
       if (dbUser) {
         console.log(`🔧 [SUPABASE-AUTH-DEBUG] Found user by email, updating Supabase UID`);
-        await storage.updateUserSupabaseUid(dbUser.id, user.id);
+        // TODO: Update user record with supabase_uid
+        // await storage.updateUserSupabaseUid(dbUser.id, user.id);
       }
     }
 
