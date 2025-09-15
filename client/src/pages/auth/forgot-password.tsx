@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { supabase } from "@/lib/supabase";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -33,14 +34,11 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     
     try {
-      // Use Supabase's built-in password reset
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      // Use Firebase's built-in password reset
+      await sendPasswordResetEmail(auth, data.email, {
+        url: `${window.location.origin}/login`, // Where users return after reset
+        handleCodeInApp: false
       });
-
-      if (error) {
-        throw error;
-      }
 
       setIsSubmitted(true);
       toast({
@@ -53,16 +51,15 @@ export default function ForgotPasswordPage() {
       
       let errorMessage = "Failed to send reset email";
       
-      // Handle specific Supabase error codes
-      switch (error.message || error.code) {
-        case 'User not found':
+      // Handle specific Firebase error codes
+      switch (error.code) {
+        case 'auth/user-not-found':
           errorMessage = "No account found with this email address";
           break;
-        case 'Invalid email':
+        case 'auth/invalid-email':
           errorMessage = "Please enter a valid email address";
           break;
-        case 'Too many requests':
-        case 'email_rate_limit_exceeded':
+        case 'auth/too-many-requests':
           errorMessage = "Too many requests. Please try again later";
           break;
         default:
