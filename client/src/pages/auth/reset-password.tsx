@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -38,11 +39,13 @@ export default function ResetPasswordPage() {
   });
 
   useEffect(() => {
-    // Extract token from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const resetToken = urlParams.get('token');
+    // Extract tokens from URL fragments (Supabase style)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    const tokenType = hashParams.get('token_type');
     
-    if (!resetToken) {
+    if (!accessToken || tokenType !== 'bearer') {
       toast({
         title: "Invalid reset link",
         description: "This password reset link is invalid or has expired.",
@@ -50,7 +53,12 @@ export default function ResetPasswordPage() {
       });
       setTimeout(() => setLocation('/login'), 3000);
     } else {
-      setToken(resetToken);
+      // Set the session with the tokens from URL
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      });
+      setToken(accessToken);
     }
   }, [toast, setLocation]);
 
@@ -67,21 +75,13 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          newPassword: data.newPassword,
-        }),
+      // Use Supabase's updateUser to change password
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to reset password');
+      if (error) {
+        throw error;
       }
 
       setIsSuccess(true);
@@ -90,13 +90,16 @@ export default function ResetPasswordPage() {
         description: "You can now login with your new password.",
       });
 
-      // Redirect to login after 3 seconds
-      setTimeout(() => setLocation('/login'), 3000);
+      // Sign out and redirect to login after 3 seconds
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        setLocation('/login');
+      }, 3000);
       
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to reset password",
         variant: "destructive",
       });
     } finally {
