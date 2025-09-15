@@ -72,6 +72,42 @@ export function setupAuthRoutes(app: Express) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // FIX ENDPOINT - Update Supabase UID for user
+  app.post('/api/auth/fix-supabase-uid', async (req, res) => {
+    try {
+      const { email, supabaseUid } = req.body;
+      
+      if (!email || !supabaseUid) {
+        return res.status(400).json({ error: 'Email and supabaseUid are required' });
+      }
+      
+      // Get user by email first
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found with that email' });
+      }
+      
+      // Update the user with the Supabase UID
+      await storage.updateUser(user.id, { supabaseUid: supabaseUid });
+      
+      // Verify the update
+      const updatedUser = await storage.getUserByEmail(email);
+      
+      res.json({
+        success: true,
+        message: 'Supabase UID updated successfully',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          supabaseUid: updatedUser.supabaseUid
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error fixing Supabase UID:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
   
   // DATABASE INSPECTION ENDPOINT - Check user records
   app.get('/api/auth/inspect-users', async (req, res) => {
