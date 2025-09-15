@@ -21,7 +21,7 @@ console.log(`📊 Connected to database: ${dbHost}`);
 // Create PostgreSQL connection pool
 const pool = new Pool({
   connectionString,
-  ssl: isDevelopment ? false : { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false },
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
