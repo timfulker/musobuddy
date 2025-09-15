@@ -91,7 +91,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Place Details endpoint using new Places API
-  app.post('/api/maps/place-details', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/maps/place-details', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { placeId } = req.body;
       
@@ -166,7 +166,7 @@ export function registerMapsRoutes(app: Express) {
   });
   
   // Simple geocoding endpoint
-  app.post('/api/maps/geocode', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/maps/geocode', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { address } = req.body;
       
@@ -218,7 +218,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Travel time endpoint
-  app.post('/api/maps/travel-time', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/maps/travel-time', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { origin, destination, departureTime } = req.body;
       
@@ -296,7 +296,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Distance calculation endpoint (legacy compatibility)
-  app.post('/api/maps/distance', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/maps/distance', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { origin, destination } = req.body;
       

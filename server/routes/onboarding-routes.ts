@@ -85,7 +85,7 @@ export function registerOnboardingRoutes(app: Express) {
   });
 
   // Get onboarding status
-  app.get('/api/onboarding/status', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/onboarding/status', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       

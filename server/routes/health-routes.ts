@@ -14,15 +14,44 @@ export function registerHealthRoutes(app: Express) {
       // Test database connectivity using the existing function
       const isConnected = await testDatabaseConnection();
       
-      if (isConnected) {
-        res.json({
-          status: 'healthy',
-          message: 'Database connected',
-          timestamp: new Date().toISOString()
-        });
-      } else {
+      if (!isConnected) {
         throw new Error('Database connection test failed');
       }
+
+      // Additional Drizzle-based health checks for comprehensive database status
+      const { sql } = await import('drizzle-orm');
+      
+      // Test Drizzle query execution with raw SQL
+      const drizzleTestResult = await db.execute(sql`SELECT 1 as test, NOW() as timestamp`);
+      const drizzleRows = drizzleTestResult.rows; // Use .rows property for raw SQL results
+      
+      if (!drizzleRows || drizzleRows.length === 0) {
+        throw new Error('Drizzle query test failed');
+      }
+
+      // Test schema connectivity by checking if core tables exist
+      const tableCheckResult = await db.execute(sql`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('users', 'bookings', 'clients')
+        ORDER BY table_name
+      `);
+      const tables = tableCheckResult.rows; // Use .rows property for raw SQL results
+      
+      res.json({
+        status: 'healthy',
+        message: 'Database connected and operational',
+        details: {
+          basicConnection: true,
+          drizzleQuery: true,
+          testResult: drizzleRows[0]?.test === 1,
+          timestamp: drizzleRows[0]?.timestamp,
+          coreTablesFound: tables.length,
+          tables: tables.map((row: any) => row.table_name)
+        },
+        timestamp: new Date().toISOString()
+      });
     } catch (error: any) {
       console.error('❌ Database health check failed:', error);
       res.status(503).json({
@@ -144,14 +173,36 @@ export function registerHealthRoutes(app: Express) {
       authentication: { status: 'checking' }
     };
     
-    // Check database
+    // Check database with comprehensive Drizzle testing
     try {
       const isConnected = await testDatabaseConnection();
-      healthChecks.database = isConnected 
-        ? { status: 'healthy' } 
-        : { status: 'unhealthy', error: 'Connection failed' };
-    } catch (error) {
-      healthChecks.database = { status: 'unhealthy', error: 'Connection failed' };
+      
+      if (isConnected) {
+        // Additional Drizzle-based checks
+        const { sql } = await import('drizzle-orm');
+        
+        // Test Drizzle raw SQL execution
+        const drizzleTestResult = await db.execute(sql`SELECT COUNT(*) as user_count FROM users LIMIT 1`);
+        const drizzleRows = drizzleTestResult.rows; // Use .rows property for raw SQL results
+        
+        if (drizzleRows && drizzleRows.length > 0) {
+          healthChecks.database = { 
+            status: 'healthy', 
+            details: {
+              basicConnection: true,
+              drizzleExecution: true,
+              userCount: drizzleRows[0]?.user_count || 0
+            }
+          };
+        } else {
+          healthChecks.database = { status: 'unhealthy', error: 'Drizzle query failed' };
+        }
+      } else {
+        healthChecks.database = { status: 'unhealthy', error: 'Connection failed' };
+      }
+    } catch (error: any) {
+      console.error('❌ System health database check failed:', error);
+      healthChecks.database = { status: 'unhealthy', error: error.message || 'Connection failed' };
     }
     
     // Check email

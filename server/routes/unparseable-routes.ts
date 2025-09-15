@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { storage } from '../core/storage';
 import { parseBookingMessage } from '../ai/booking-message-parser';
 
@@ -7,7 +7,7 @@ export function registerUnparseableRoutes(app: Express) {
   console.log('📧 Setting up unparseable message routes...');
 
   // Get all unparseable messages
-  app.get('/api/unparseable-messages', authenticateWithSupabase, async (req, res) => {
+  app.get('/api/unparseable-messages', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       
@@ -37,7 +37,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Mark message as reviewed
-  app.patch('/api/unparseable-messages/:id', authenticateWithSupabase, async (req, res) => {
+  app.patch('/api/unparseable-messages/:id', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
@@ -68,7 +68,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Convert message to booking (manual)
-  app.post('/api/unparseable-messages/:id/convert', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/convert', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
@@ -143,7 +143,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Reprocess message through AI
-  app.post('/api/unparseable-messages/:id/reprocess', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/reprocess', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
@@ -239,7 +239,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Link message to existing booking
-  app.post('/api/unparseable-messages/:id/link', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/unparseable-messages/:id/link', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const messageId = parseInt(req.params.id);
@@ -298,7 +298,7 @@ export function registerUnparseableRoutes(app: Express) {
   });
 
   // Delete message
-  app.delete('/api/unparseable-messages/:id', authenticateWithSupabase, async (req, res) => {
+  app.delete('/api/unparseable-messages/:id', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const messageId = parseInt(req.params.id);

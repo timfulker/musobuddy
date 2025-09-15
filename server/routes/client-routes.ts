@@ -213,7 +213,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Create a new client
-  app.post('/api/clients', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/clients', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       
@@ -237,7 +237,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Update a client
-  app.put('/api/clients/:id', authenticateWithSupabase, async (req, res) => {
+  app.put('/api/clients/:id', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const clientId = req.params.id;
@@ -262,7 +262,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Delete a client
-  app.delete('/api/clients/:id', authenticateWithSupabase, async (req, res) => {
+  app.delete('/api/clients/:id', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const clientId = req.params.id;

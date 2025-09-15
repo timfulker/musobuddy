@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import multer from "multer";
 import ical from "ical";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { storage } from "../core/storage";
 
 // Configure multer for file uploads
@@ -91,7 +91,7 @@ export function registerCalendarImportRoutes(app: Express) {
       }
       next();
     },
-    authenticateWithSupabase,
+    authenticate,
     async (req: AuthenticatedRequest, res) => {
       try {
         console.log('🚨🚨🚨 CALENDAR IMPORT ROUTE HIT! 🚨🚨🚨');

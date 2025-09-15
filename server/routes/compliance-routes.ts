@@ -108,9 +108,9 @@ export function registerComplianceRoutes(app: Express) {
 
   // Update compliance document
   app.patch('/api/compliance/:id', 
-    authenticateWithSupabase,
+    authenticate,
     generalApiRateLimit,
-    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
         const userId = req.user?.id;
         if (!userId) {
@@ -139,9 +139,9 @@ export function registerComplianceRoutes(app: Express) {
 
   // Delete compliance document
   app.delete('/api/compliance/:id', 
-    authenticateWithSupabase,
+    authenticate,
     generalApiRateLimit,
-    asyncHandler(async (req: SupabaseAuthenticatedRequest, res: Response) => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       try {
         const userId = req.user?.id;
         if (!userId) {

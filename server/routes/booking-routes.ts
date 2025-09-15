@@ -519,7 +519,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Extract details from message content using AI
-  app.post('/api/bookings/:id/extract-details', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/bookings/:id/extract-details', authenticate, async (req: AuthenticatedRequest, res) => {
     const bookingId = parseInt(req.params.id);
     console.log(`📝 [EXTRACT-DETAILS] Starting for booking ${bookingId}`);
     console.log(`📝 [EXTRACT-DETAILS] Request received at ${new Date().toISOString()}`);
@@ -856,7 +856,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Bulk delete bookings
-  app.post('/api/bookings/bulk-delete', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/bookings/bulk-delete', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { bookingIds } = req.body;
       const userId = req.user?.id;
@@ -1181,7 +1181,7 @@ ${messageText.replace(/\n/g, '<br>')}
   });
 
   // Add missing QR code generation endpoint for production compatibility
-  app.post('/api/generate-qr-code', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/generate-qr-code', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

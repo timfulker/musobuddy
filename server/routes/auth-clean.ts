@@ -3,6 +3,7 @@ import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
 import { verifyFirebaseToken, createCustomToken } from '../core/firebase-admin';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+// Removed - using centralized auth middleware
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
@@ -315,7 +316,7 @@ export function setupAuthRoutes(app: Express) {
   // Verify SMS code - protected with rate limiting
 
   // CRITICAL FIX: Add subscription status directly in auth routes to avoid conflicts
-  app.get('/api/subscription/status', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/subscription/status', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       console.log('📊 Auth route handling subscription status for userId:', userId);
@@ -784,7 +785,7 @@ export function setupAuthRoutes(app: Express) {
   
   // Subscription watchdog endpoint - checks subscription status for periodic verification  
   console.log('🔍 REGISTERING WATCHDOG ROUTE: /api/subscription/watchdog-status');
-  app.get('/api/subscription/watchdog-status', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/subscription/watchdog-status', authenticate, async (req: AuthenticatedRequest, res) => {
     console.log('🔍 WATCHDOG ENDPOINT HIT - userId:', req.user?.userId);
     try {
       const userId = req.user?.id;

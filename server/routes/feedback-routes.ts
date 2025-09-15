@@ -92,7 +92,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Update feedback status (admin only)
-  app.patch('/api/feedback/:id/status', authenticateWithSupabase, async (req, res) => {
+  app.patch('/api/feedback/:id/status', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
       const feedbackId = req.params.id;
@@ -150,7 +150,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Delete feedback (admin only)
-  app.delete('/api/feedback/:id', authenticateWithSupabase, async (req, res) => {
+  app.delete('/api/feedback/:id', authenticate, async (req, res) => {
     try {
       console.log('🗑️ Delete feedback request started');
       console.log('🔐 Auth header:', req.headers.authorization ? 'Present' : 'Missing');

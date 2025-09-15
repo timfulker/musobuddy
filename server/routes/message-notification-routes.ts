@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+// Removed - using centralized auth middleware
 import { storage } from '../core/storage';
 
 const router = Router();
@@ -83,7 +84,7 @@ router.patch('/notifications/messages/:id/dismiss', authenticate, async (req: Au
 });
 
 // Delete notification
-router.delete('/notifications/messages/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.delete('/notifications/messages/:id', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const notificationId = parseInt(req.params.id);
     
