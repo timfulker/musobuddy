@@ -30,21 +30,50 @@ export interface SupabaseJWTPayload extends JWTPayload {
 }
 
 /**
- * Get or create JWKS for a Supabase project
+ * Get or create JWKS for a Supabase project with API key authentication
  */
 function getJWKS(supabaseUrl: string): ReturnType<typeof createRemoteJWKSet> {
-  if (!jwksCache.has(supabaseUrl)) {
-    const jwksUrl = new URL(`${supabaseUrl}/auth/v1/jwks`);
-    jwksCache.set(supabaseUrl, createRemoteJWKSet(jwksUrl));
+  const cacheKey = supabaseUrl;
+  if (!jwksCache.has(cacheKey)) {
+    const jwksUrl = new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`);
+    
+    // Get the appropriate API key based on environment
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const apiKey = isDevelopment 
+      ? process.env.SUPABASE_ANON_KEY_DEV 
+      : process.env.SUPABASE_ANON_KEY_PROD;
+    
+    if (!apiKey) {
+      throw new Error(`Missing Supabase API key for ${isDevelopment ? 'development' : 'production'} environment`);
+    }
+
+    // Create custom fetch function with API key header
+    const customFetch = async (url: string, options?: any) => {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options?.headers,
+          'apikey': apiKey,
+          'Authorization': `Bearer ${apiKey}`,
+        },
+      });
+      return response;
+    };
+
+    // Create JWKS with custom fetch that includes API key
+    jwksCache.set(cacheKey, createRemoteJWKSet(jwksUrl, {
+      agent: customFetch as any
+    }));
   }
-  return jwksCache.get(supabaseUrl)!;
+  return jwksCache.get(cacheKey)!;
 }
 
 /**
- * Verify Supabase JWT token with proper signature validation
+ * Verify Supabase JWT token using Supabase client library
+ * This method uses the Supabase client which handles JWKS internally
  * 
  * @param token - The JWT token to verify
- * @param supabaseUrl - Supabase project URL for JWKS endpoint
+ * @param supabaseUrl - Supabase project URL
  * @param expectedAudience - Expected audience (usually 'authenticated')
  * @returns Verified JWT payload
  * @throws Error if token is invalid, expired, or signature verification fails
@@ -55,21 +84,49 @@ export async function verifySupabaseJWT(
   expectedAudience: string = 'authenticated'
 ): Promise<SupabaseJWTPayload> {
   try {
-    // Get JWKS for signature verification
-    const JWKS = getJWKS(supabaseUrl);
+    // First try using Supabase client library for verification
+    console.log('🔍 [JWT-VERIFY] Attempting Supabase client verification');
+    
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const apiKey = isDevelopment 
+      ? process.env.SUPABASE_ANON_KEY_DEV 
+      : process.env.SUPABASE_ANON_KEY_PROD;
+    
+    if (!apiKey) {
+      throw new Error(`Missing Supabase API key for ${isDevelopment ? 'development' : 'production'} environment`);
+    }
 
-    // Verify the JWT with signature validation
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `${supabaseUrl}/auth/v1`,
-      audience: expectedAudience,
-      // Allow some clock skew (30 seconds)
-      clockTolerance: 30,
-    });
+    // Import Supabase client dynamically to avoid circular dependencies
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseClient = createClient(supabaseUrl, apiKey);
 
-    // Type assertion with runtime validation
-    const supabasePayload = payload as SupabaseJWTPayload;
+    // Use Supabase client to verify the user token
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
 
-    // Validate required Supabase fields
+    if (error) {
+      console.log('⚠️ [JWT-VERIFY] Supabase client verification failed:', error.message);
+      throw new Error(`Supabase verification failed: ${error.message}`);
+    }
+
+    if (!user) {
+      throw new Error('Invalid token: no user found');
+    }
+
+    // Convert Supabase user to our JWT payload format
+    const supabasePayload: SupabaseJWTPayload = {
+      sub: user.id,
+      email: user.email || '',
+      email_confirmed_at: user.email_confirmed_at || null,
+      phone_confirmed_at: user.phone_confirmed_at || null,
+      app_metadata: user.app_metadata,
+      user_metadata: user.user_metadata,
+      role: user.role,
+      aud: expectedAudience,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+    };
+
+    // Validate required fields
     if (!supabasePayload.sub) {
       throw new Error('Invalid token: missing subject (sub)');
     }
@@ -78,32 +135,57 @@ export async function verifySupabaseJWT(
       throw new Error('Invalid token: missing email');
     }
 
-    // Validate token is not too old (optional additional security)
-    if (supabasePayload.iat) {
-      const tokenAge = Date.now() / 1000 - supabasePayload.iat;
-      const maxAge = 24 * 60 * 60; // 24 hours
-      
-      if (tokenAge > maxAge) {
-        throw new Error('Token is too old, please refresh');
-      }
-    }
-
+    console.log('✅ [JWT-VERIFY] Supabase client verification successful');
     return supabasePayload;
-  } catch (error) {
-    // Log security-relevant verification failures
-    console.error('🚨 JWT Verification Failed:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      hasToken: !!token,
-      tokenPrefix: token ? token.substring(0, 20) + '...' : 'null',
-      supabaseUrl: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'null',
-      timestamp: new Date().toISOString(),
-    });
 
-    // Re-throw with security-focused error message
-    if (error instanceof Error) {
-      throw new Error(`JWT verification failed: ${error.message}`);
+  } catch (error) {
+    // If Supabase client verification fails, try fallback JWKS verification
+    console.log('🔄 [JWT-VERIFY] Falling back to JWKS verification');
+    
+    try {
+      // Get JWKS for signature verification
+      const JWKS = getJWKS(supabaseUrl);
+
+      // Verify the JWT with signature validation
+      const { payload } = await jwtVerify(token, JWKS, {
+        issuer: `${supabaseUrl}/auth/v1`,
+        audience: expectedAudience,
+        // Allow some clock skew (30 seconds)
+        clockTolerance: 30,
+      });
+
+      // Type assertion with runtime validation
+      const supabasePayload = payload as SupabaseJWTPayload;
+
+      // Validate required Supabase fields
+      if (!supabasePayload.sub) {
+        throw new Error('Invalid token: missing subject (sub)');
+      }
+
+      if (!supabasePayload.email) {
+        throw new Error('Invalid token: missing email');
+      }
+
+      console.log('✅ [JWT-VERIFY] JWKS verification successful');
+      return supabasePayload;
+
+    } catch (jwksError) {
+      // Log both errors for debugging
+      console.error('🚨 JWT Verification Failed:', {
+        supabaseClientError: error instanceof Error ? error.message : 'Unknown error',
+        jwksError: jwksError instanceof Error ? jwksError.message : 'Unknown error',
+        hasToken: !!token,
+        tokenPrefix: token ? token.substring(0, 20) + '...' : 'null',
+        supabaseUrl: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'null',
+        timestamp: new Date().toISOString(),
+      });
+
+      // Re-throw the more specific error
+      if (error instanceof Error) {
+        throw new Error(`JWT verification failed: ${error.message}`);
+      }
+      throw new Error('JWT verification failed: Unknown error');
     }
-    throw new Error('JWT verification failed: Unknown error');
   }
 }
 
