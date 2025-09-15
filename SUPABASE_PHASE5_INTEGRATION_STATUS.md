@@ -66,7 +66,7 @@ Neon DB   Supabase DB
 ### Immediate Actions:
 1. **Generate TypeScript types from Supabase schema**
    ```bash
-   npx supabase gen types typescript --project-id wkhrzcpvghdlhnxzhrde > lib/supabase/database.types.ts
+   npx supabase gen types typescript --project-id [DEV_PROJECT_ID] > lib/supabase/database.types.ts
    ```
 
 2. **Update route handlers for dual operation**

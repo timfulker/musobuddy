@@ -5,8 +5,8 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 
 // Connection strings (you'll need to get these from Supabase)
-const devConnection = "postgresql://postgres.wkhrzcpvghdlhnxzhrde:[DEV_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres";
-const prodConnection = "postgresql://postgres.cpzawhjfrgqrdxpyuwkt:[PROD_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres";
+const devConnection = "postgresql://postgres.[DEV_PROJECT_ID]:[DEV_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres";
+const prodConnection = "postgresql://postgres.[PROD_PROJECT_ID]:[PROD_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres";
 
 console.log('🚀 Starting direct PostgreSQL migration...');
 

@@ -7,9 +7,9 @@ echo "=========================================="
 # Production connection details
 PROD_HOST="aws-0-us-east-1.pooler.supabase.com"
 PROD_PORT="5432"
-PROD_USER="postgres.cpzawhjfrgqrdxpyuwkt"
+PROD_USER="postgres.[PROD_PROJECT_ID]"
 PROD_DB="postgres"
-PROD_PASSWORD="uhy2XUC@kmc-nqg0jtx"
+PROD_PASSWORD="[PROD_PASSWORD]"
 
 # Backup file
 BACKUP_FILE="db_cluster-14-09-2025@00-49-58.backup 2"

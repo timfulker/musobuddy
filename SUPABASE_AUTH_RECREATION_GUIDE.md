@@ -8,11 +8,11 @@ This document contains everything needed to recreate the WORKING authentication 
 ### Backend (Node.js)
 ```bash
 # Development Environment  
-SUPABASE_URL_DEV=https://wkhrzcpvghdlhnxzhrde.supabase.co
-SUPABASE_ANON_KEY_DEV=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHJ6Y3B2Z2hkbGhueHpocmRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NjEzNjMsImV4cCI6MjA3MzMzNzM2M30.Li_pGOBIHGPHV-hrEG6Lf7SrHRj1D4tzJ_xM9KAMaBc
+SUPABASE_URL_DEV=https://[DEV_PROJECT_ID].supabase.co
+SUPABASE_ANON_KEY_DEV=[DEV_ANON_KEY]
 
 # Production Environment
-SUPABASE_URL_PROD=https://cpzawhjfrgqrdxpyuwkt.supabase.co  
+SUPABASE_URL_PROD=https://[PROD_PROJECT_ID].supabase.co  
 SUPABASE_ANON_KEY_PROD=[PRODUCTION KEY]
 
 # Database Environment Selection
@@ -24,11 +24,11 @@ DATABASE_URL_PROD=[PROD DATABASE URL]
 ### Frontend (Vite)
 ```bash
 # Development
-VITE_SUPABASE_URL_DEV=https://wkhrzcpvghdlhnxzhrde.supabase.co
-VITE_SUPABASE_ANON_KEY_DEV=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHJ6Y3B2Z2hkbGhueHpocmRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NjEzNjMsImV4cCI6MjA3MzMzNzM2M30.Li_pGOBIHGPHV-hrEG6Lf7SrHRj1D4tzJ_xM9KAMaBc
+VITE_SUPABASE_URL_DEV=https://[DEV_PROJECT_ID].supabase.co
+VITE_SUPABASE_ANON_KEY_DEV=[DEV_ANON_KEY]
 
 # Production  
-VITE_SUPABASE_URL_PRODUCTION=https://cpzawhjfrgqrdxpyuwkt.supabase.co
+VITE_SUPABASE_URL_PRODUCTION=https://[PROD_PROJECT_ID].supabase.co
 VITE_SUPABASE_ANON_KEY_PRODUCTION=[PRODUCTION KEY]
 ```
 
@@ -134,7 +134,7 @@ const isDevelopment = import.meta.env.MODE === 'development'
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
-  ? (import.meta.env.VITE_SUPABASE_URL_DEV || 'https://wkhrzcpvghdlhnxzhrde.supabase.co')
+  ? import.meta.env.VITE_SUPABASE_URL_DEV
   : (import.meta.env.VITE_SUPABASE_URL_PRODUCTION || import.meta.env.VITE_SUPABASE_URL)
 
 const supabaseAnonKey = isDevelopment
@@ -184,9 +184,9 @@ getUserByEmail(email: string): Promise<User | null>
 ```
 
 Current working example in development:
-- Email: `timfulkermusic@gmail.com`
-- Supabase UID: `b3b3787c-b54d-4a98-828e-ee12666fa615` (development)
-- Database ID: `1754488522516`
+- Email: `[TEST_USER_EMAIL]`
+- Supabase UID: `[TEST_USER_SUPABASE_UID]` (development)
+- Database ID: `[TEST_USER_DATABASE_ID]`
 
 ## Authentication Flow
 
@@ -211,10 +211,10 @@ Current working example in development:
 
 **Logs to Verify Success**:
 ```
-🔍 [SIMPLE-AUTH] Token iss: https://wkhrzcpvghdlhnxzhrde.supabase.co
-✅ [SIMPLE-AUTH] Using project: https://wkhrzcpvghdlhnxzhrde.supabase.co
-🔍 [SIMPLE-AUTH] Supabase user verified: timfulkermusic@gmail.com
-✅ [SIMPLE-AUTH] Authentication successful for: timfulkermusic@gmail.com
+🔍 [SIMPLE-AUTH] Token iss: https://[DEV_PROJECT_ID].supabase.co
+✅ [SIMPLE-AUTH] Using project: https://[DEV_PROJECT_ID].supabase.co
+🔍 [SIMPLE-AUTH] Supabase user verified: [TEST_USER_EMAIL]
+✅ [SIMPLE-AUTH] Authentication successful for: [TEST_USER_EMAIL]
 ```
 
 ## Recreation Steps
@@ -230,12 +230,12 @@ Current working example in development:
 ## Current Environment Status
 
 **Development Environment**:
-- Project: `wkhrzcpvghdlhnxzhrde.supabase.co`
+- Project: `[DEV_PROJECT_ID].supabase.co`
 - Database: Uses `DATABASE_URL_DEV`
-- Working user: `timfulkermusic@gmail.com` with UID `b3b3787c-b54d-4a98-828e-ee12666fa615`
+- Working user: `[TEST_USER_EMAIL]` with UID `[TEST_USER_SUPABASE_UID]`
 
 **Production Environment**:
-- Project: `cpzawhjfrgqrdxpyuwkt.supabase.co`  
+- Project: `[PROD_PROJECT_ID].supabase.co`  
 - Database: Uses `DATABASE_URL_PROD`
 - Schema mismatch issues exist
 

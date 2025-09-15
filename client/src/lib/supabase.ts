@@ -11,12 +11,12 @@ const isProduction = import.meta.env.MODE === 'production'
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
-  ? (import.meta.env.VITE_SUPABASE_URL_DEV || 'https://wkhrzcpvghdlhnxzhrde.supabase.co')
-  : (import.meta.env.VITE_SUPABASE_URL_PRODUCTION || import.meta.env.VITE_SUPABASE_URL)
+  ? import.meta.env.VITE_SUPABASE_URL_DEV
+  : import.meta.env.VITE_SUPABASE_URL_PRODUCTION
 
 const supabaseAnonKey = isDevelopment
-  ? (import.meta.env.VITE_SUPABASE_ANON_KEY_DEV || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHJ6Y3B2Z2hkbGhueHpocmRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NjEzNjMsImV4cCI6MjA3MzMzNzM2M30.Li_pGOBIHGPHV-hrEG6Lf7SrHRj1D4tzJ_xM9KAMaBc')
-  : (import.meta.env.VITE_SUPABASE_ANON_KEY_PRODUCTION || import.meta.env.VITE_SUPABASE_ANON_KEY)
+  ? import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
+  : import.meta.env.VITE_SUPABASE_ANON_KEY_PRODUCTION
 
 // Validate required environment variables
 if (!supabaseUrl || !supabaseAnonKey) {

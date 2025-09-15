@@ -1,9 +1,9 @@
-// Deep scan for ALL tables in wkhrzcpvghdlhnxzhrde development database
+// Deep scan for ALL tables in development database
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Development database - wkhrzcpvghdlhnxzhrde
+// Development database
 const supabaseDev = createClient(
   process.env.SUPABASE_URL_DEV,
   process.env.SUPABASE_SERVICE_KEY_DEV
@@ -11,7 +11,7 @@ const supabaseDev = createClient(
 
 async function deepTableScan() {
   console.log('🔍 DEEP SCAN FOR ALL TABLES IN DEVELOPMENT DATABASE');
-  console.log('Project ID: wkhrzcpvghdlhnxzhrde');
+  console.log('Project ID: [DEV_PROJECT_ID]');
   console.log('URL:', process.env.SUPABASE_URL_DEV);
   console.log('='.repeat(70));
 

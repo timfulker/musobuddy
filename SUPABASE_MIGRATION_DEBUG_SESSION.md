@@ -53,11 +53,11 @@ This is **NOT a Supabase database** - it's a regular PostgreSQL instance without
 ## Environment Configuration
 ```bash
 # Current connection (WRONG):
-SUPABASE_DB_URL_DEV=postgresql://postgres.wkhrzcpvghdlhnxzhrde:dbp8vug*buk9PKB*bjn@aws-0-us-east-1.pooler.supabase.com:5432/postgres
+SUPABASE_DB_URL_DEV=postgresql://postgres.[DEV_PROJECT_ID]:[DEV_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres
 
 # API endpoints (appear valid):
-SUPABASE_URL_DEV=https://wkhrzcpvghdlhnxzhrde.supabase.co
-SUPABASE_SERVICE_KEY_DEV=eyJhbGciOiJIUzI1NiIs...
+SUPABASE_URL_DEV=https://[DEV_PROJECT_ID].supabase.co
+SUPABASE_SERVICE_KEY_DEV=[DEV_SERVICE_KEY]...
 ```
 
 ## Data Verification

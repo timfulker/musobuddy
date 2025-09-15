@@ -6,8 +6,8 @@
 echo "🚀 Starting Supabase database migration..."
 
 # Set your connection URLs here (replace [PASSWORD] with actual passwords)
-export SOURCE_DB_URL='postgresql://postgres.wkhrzcpvghdlhnxzhrde:[DEV_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres'
-export TARGET_DB_URL='postgresql://postgres.cpzawhjfrgqrdxpyuwkt:[PROD_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres'
+export SOURCE_DB_URL='postgresql://postgres.[DEV_PROJECT_ID]:[DEV_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres'
+export TARGET_DB_URL='postgresql://postgres.[PROD_PROJECT_ID]:[PROD_PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres'
 
 echo "📤 Step 1: Creating dump from development database..."
 pg_dump "$SOURCE_DB_URL" \
