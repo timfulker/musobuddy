@@ -22,7 +22,8 @@
       "Bash(./restore-complete-backup.sh:*)",
       "Bash(npx tsx:*)",
       "Bash(export PGPASSWORD='trv-MQG8xjr_tcw0jdt')",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": [],
