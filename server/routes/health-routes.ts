@@ -1,6 +1,6 @@
 // Health Check Routes for System Monitoring
 import { type Express } from "express";
-import { db } from "../core/database";
+import { db, testDatabaseConnection } from "../core/database";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
 // Authentication handled by Firebase
@@ -11,17 +11,17 @@ export function registerHealthRoutes(app: Express) {
   // Database health check
   app.get('/api/health/database', async (req, res) => {
     try {
-      // Test database connectivity
-      const healthResult = await db.query('SELECT 1 as test');
+      // Test database connectivity using the existing function
+      const isConnected = await testDatabaseConnection();
       
-      if (healthResult && healthResult.length > 0) {
+      if (isConnected) {
         res.json({
           status: 'healthy',
           message: 'Database connected',
           timestamp: new Date().toISOString()
         });
       } else {
-        throw new Error('Database query returned no results');
+        throw new Error('Database connection test failed');
       }
     } catch (error: any) {
       console.error('❌ Database health check failed:', error);
@@ -146,8 +146,10 @@ export function registerHealthRoutes(app: Express) {
     
     // Check database
     try {
-      await db.query('SELECT 1');
-      healthChecks.database = { status: 'healthy' };
+      const isConnected = await testDatabaseConnection();
+      healthChecks.database = isConnected 
+        ? { status: 'healthy' } 
+        : { status: 'unhealthy', error: 'Connection failed' };
     } catch (error) {
       healthChecks.database = { status: 'unhealthy', error: 'Connection failed' };
     }
