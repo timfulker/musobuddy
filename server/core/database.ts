@@ -4,14 +4,46 @@ import * as schema from "../../shared/schema";
 
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
-const connectionString = isDevelopment
-  ? (process.env.DATABASE_URL_DEV || process.env.DATABASE_URL)
-  : (process.env.DATABASE_URL_PROD || process.env.DATABASE_URL);
+
+// Construct PostgreSQL connection string from Supabase credentials
+function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
+  const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
+  if (!projectMatch) {
+    throw new Error('Invalid Supabase URL format');
+  }
+  const projectId = projectMatch[1];
+  return `postgresql://postgres.${projectId}:${serviceKey}@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require`;
+}
+
+let connectionString: string;
+if (isDevelopment) {
+  // Development: Use Supabase dev credentials
+  const supabaseUrl = process.env.SUPABASE_URL_DEV;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY_DEV;
+  
+  if (supabaseUrl && serviceKey) {
+    connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+  } else {
+    // Fallback to DATABASE_URL if Supabase creds not available
+    connectionString = process.env.DATABASE_URL;
+  }
+} else {
+  // Production: Use Supabase prod credentials
+  const supabaseUrl = process.env.SUPABASE_URL_PROD;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+  
+  if (supabaseUrl && serviceKey) {
+    connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+  } else {
+    // Fallback to DATABASE_URL_PROD if Supabase creds not available
+    connectionString = process.env.DATABASE_URL_PROD || process.env.DATABASE_URL;
+  }
+}
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
-  const envVar = isDevelopment ? 'DATABASE_URL_DEV or DATABASE_URL' : 'DATABASE_URL_PROD or DATABASE_URL';
-  throw new Error(`${envVar} environment variable is required for ${envType} mode`);
+  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_SERVICE_KEY_DEV' : 'SUPABASE_URL_PROD + SUPABASE_SERVICE_KEY_PROD';
+  throw new Error(`${envVar} environment variables are required for ${envType} mode`);
 }
 
 // Log database connection (without exposing credentials)

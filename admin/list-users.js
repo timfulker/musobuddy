@@ -3,8 +3,25 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Use the main DATABASE_URL (development for now to test)
-const sql = neon(process.env.DATABASE_URL);
+// Build Supabase connection string for production
+const supabaseUrl = process.env.SUPABASE_URL_PROD;
+const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+
+if (!supabaseUrl || !serviceKey) {
+  console.error('❌ Missing Supabase prod credentials');
+  process.exit(1);
+}
+
+const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
+if (!projectMatch) {
+  console.error('❌ Could not extract project ID from Supabase URL');
+  process.exit(1);
+}
+
+const projectId = projectMatch[1];
+const connectionString = `postgresql://postgres.${projectId}:${serviceKey}@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require`;
+
+const sql = neon(connectionString);
 
 async function listUsers() {
   try {
