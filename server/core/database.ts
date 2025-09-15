@@ -5,14 +5,14 @@ import * as schema from "../../shared/schema";
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Construct PostgreSQL connection string from Supabase credentials using POOLED format for reliability
+// Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
 function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
   const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
   if (!projectMatch) {
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  // Use Supabase Transaction Pooler (dedicated pooler) format
+  // Use Supabase Transaction Pooler format as shown in Supabase dashboard
   return `postgresql://postgres:${serviceKey}@db.${projectId}.supabase.co:6543/postgres?sslmode=require`;
 }
 
