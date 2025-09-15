@@ -26,6 +26,13 @@ const PROJECT_CONFIGS = {
   [process.env.SUPABASE_URL_PROD!]: process.env.SUPABASE_ANON_KEY_PROD!,
 };
 
+// Debug environment config on startup
+console.log('🔧 [SIMPLE-AUTH] Environment Config:');
+console.log(`   DEV URL: ${process.env.SUPABASE_URL_DEV}`);
+console.log(`   PROD URL: ${process.env.SUPABASE_URL_PROD}`);
+console.log(`   Available projects: ${Object.keys(PROJECT_CONFIGS).join(', ')}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
+
 /**
  * Parse JWT payload without verification to get iss claim
  */
