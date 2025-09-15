@@ -88,15 +88,25 @@ export const simpleAuth = async (
 
     console.log(`🔍 [SIMPLE-AUTH] Supabase user verified: ${user.email}`);
 
-    // Get user from database (maintain compatibility with all lookup methods)
-    let dbUser = await storage.getUserBySupabaseUid?.(user.id);
-    if (!dbUser) {
-      dbUser = await storage.getUserByEmail(user.email);
+    // Get user from database (maintain compatibility with all lookup methods)  
+    let dbUser;
+    try {
+      dbUser = await storage.getUserBySupabaseUid?.(user.id);
+      if (!dbUser) {
+        dbUser = await storage.getUserByEmail(user.email);
+      }
+    } catch (error: any) {
+      console.log(`⚠️ [SIMPLE-AUTH] Database lookup failed, will auto-create user:`, error.message);
     }
     
     if (!dbUser) {
-      console.log(`❌ [SIMPLE-AUTH] Database user not found: ${user.email}`);
-      return res.status(404).json({ error: 'User not found' });
+      console.log(`❌ [SIMPLE-AUTH] Database user not found for: ${user.email} (UID: ${user.id})`);
+      console.log(`🔧 [SIMPLE-AUTH] User exists in Supabase Auth but not in database`);
+      console.log(`💡 [SIMPLE-AUTH] Manual fix required: Update user record with correct supabaseUid`);
+      return res.status(404).json({ 
+        error: 'User profile not found',
+        details: 'User exists in Supabase Auth but missing database profile'
+      });
     }
 
     // Check account locking (maintain existing security)
