@@ -24,7 +24,7 @@ echo ""
 echo "Step 2: Copying data table by table (bypassing pg_dump version issues)..."
 
 # Get all tables from development database
-PGPASSWORD="$DEV_PASSWORD" psql $DEV_FLAGS -Atc "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename" > table_list.txt
+PGPASSWORD="$DEV_PASSWORD" psql $DEV_FLAGS -Atc "SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name" > table_list.txt
 
 total_tables=$(wc -l < table_list.txt)
 current=0
@@ -76,11 +76,11 @@ echo "===================="
 PGPASSWORD="$PROD_PASSWORD" psql $PROD_FLAGS -c "
 SELECT 
     schemaname, 
-    tablename, 
+    relname as table_name, 
     n_tup_ins as row_count 
 FROM pg_stat_user_tables 
 WHERE schemaname = 'public' 
-ORDER BY tablename;" 
+ORDER BY relname;" 
 
 echo ""
 echo "Migration successful! All data transferred using manual psql approach. 🎉"
