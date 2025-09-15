@@ -13,7 +13,7 @@ import {
   unparseableMessages,
   emailTemplates
 } from '../../shared/schema.js';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 
 // Define available tables and their schemas
 const AVAILABLE_TABLES = {

@@ -4,7 +4,7 @@ import { services } from "../core/services";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { db } from '../core/database';
 import { 
   clientCommunications, 

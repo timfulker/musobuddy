@@ -30,7 +30,7 @@ import documentRoutes from "./document-routes";
 import { registerSupportChatRoutes } from "./support-chat-routes";
 // AI token routes removed - unlimited AI usage for all users
 
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
 
 export async function registerRoutes(app: Express) {

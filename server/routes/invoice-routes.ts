@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { generateInvoicePDF } from '../core/invoice-pdf-generator';
 import { uploadInvoiceToCloud } from '../core/cloud-storage';

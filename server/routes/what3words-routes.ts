@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from 'express';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 
 const WHAT3WORDS_API_KEY = process.env.WHAT3WORDS_API_KEY;
 const W3W_BASE_URL = 'https://api.what3words.com/v3';

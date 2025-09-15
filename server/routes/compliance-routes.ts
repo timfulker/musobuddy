@@ -1,7 +1,7 @@
 import { type Express, type Response } from "express";
 import multer from "multer";
 import { storage } from "../core/storage";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { asyncHandler } from '../middleware/errorHandler';
 

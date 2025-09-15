@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import multer from "multer";
 import ical from "ical";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
 
 // Configure multer for file uploads

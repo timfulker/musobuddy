@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
 import { clientCommunications, bookings, userSettings } from '@shared/schema';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { eq, desc, and } from 'drizzle-orm';
 import { services } from '../core/services';
 

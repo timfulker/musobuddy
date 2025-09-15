@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
 
 export function registerNotificationRoutes(app: Express) {

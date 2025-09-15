@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../core/storage";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 
 export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding

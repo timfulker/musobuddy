@@ -1,7 +1,7 @@
 import type { Express, Response } from "express";
 import { GoogleCalendarService } from "../services/google-calendar";
 import { AIEventMatcher } from "../services/ai-event-matcher";
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
 
 export function registerGoogleCalendarRoutes(app: Express) {

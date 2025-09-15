@@ -5,7 +5,7 @@
 import { type Express } from 'express';
 import { storage } from '../core/storage';
 import { userStorage } from '../storage/user-storage';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { adminAuth } from '../core/firebase-admin';
 
 // Export the registration function for the routes/index.ts file

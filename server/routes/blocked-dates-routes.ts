@@ -4,7 +4,7 @@ import { db } from '../core/database.js';
 import { blockedDates, type BlockedDate } from '@shared/schema.js';
 import { z } from 'zod';
 import { insertBlockedDateSchema } from '@shared/schema.js';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 
 const router = Router();
 
