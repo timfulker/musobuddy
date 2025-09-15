@@ -6,8 +6,9 @@ import { createClient } from '@supabase/supabase-js'
  */
 
 // Determine environment - Vite uses import.meta.env.MODE
-const isDevelopment = import.meta.env.MODE === 'development'
-const isProduction = import.meta.env.MODE === 'production'
+// TEMP FIX: Force development mode when on localhost
+const isDevelopment = window.location.hostname === 'localhost' || import.meta.env.MODE === 'development'
+const isProduction = window.location.hostname !== 'localhost' && import.meta.env.MODE === 'production'
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
