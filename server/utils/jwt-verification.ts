@@ -174,9 +174,7 @@ function getEnvironmentConfig() {
   
   return {
     isDevelopment,
-    jwtSecret: isDevelopment 
-      ? process.env.SUPABASE_JWT_SECRET_DEV 
-      : process.env.SUPABASE_JWT_SECRET_PROD,
+    jwtSecret: process.env.SUPABASE_JWT_SECRET,
     supabaseUrl: isDevelopment
       ? process.env.SUPABASE_URL_DEV
       : process.env.SUPABASE_URL_PROD
