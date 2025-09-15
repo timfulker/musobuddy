@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
 import { verifyFirebaseToken, createCustomToken } from '../core/firebase-admin';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 // Removed - using centralized auth middleware
 
 // Check if user is exempt from subscription requirements
