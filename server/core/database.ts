@@ -8,11 +8,16 @@ neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
   return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
 };
 
-// Simplified database connection - single DATABASE_URL for all environments
-const connectionString = process.env.DATABASE_URL;
+// Environment-aware database connection
+const isDevelopment = process.env.NODE_ENV === 'development';
+const connectionString = isDevelopment
+  ? process.env.DATABASE_URL_DEV
+  : process.env.DATABASE_URL_PROD;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is required');
+  const envType = isDevelopment ? 'development' : 'production';
+  const envVar = isDevelopment ? 'DATABASE_URL_DEV' : 'DATABASE_URL_PROD';
+  throw new Error(`${envVar} environment variable is required for ${envType} mode`);
 }
 
 // Log database connection (without exposing credentials)
