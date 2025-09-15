@@ -251,6 +251,7 @@ export function setupAuthRoutes(app: Express) {
       // Return simplified user data with new access control fields
       const responseData = {
         // Identity
+        id: user.id, // Frontend expects this field
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
