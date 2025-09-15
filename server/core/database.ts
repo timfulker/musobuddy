@@ -5,14 +5,15 @@ import * as schema from "../../shared/schema";
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Construct PostgreSQL connection string from Supabase credentials
+// Construct PostgreSQL connection string from Supabase credentials using official format
 function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
   const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
   if (!projectMatch) {
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  return `postgresql://postgres.${projectId}:${serviceKey}@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require`;
+  // Use official Supabase database URL format (not pooler)
+  return `postgresql://postgres.${projectId}:${serviceKey}@db.${projectId}.supabase.co:5432/postgres?sslmode=require`;
 }
 
 let connectionString: string;
