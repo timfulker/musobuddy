@@ -100,38 +100,27 @@ export function useAuth() {
             error: null
           });
         } else {
-          console.warn('⚠️ [SUPABASE-AUTH] Failed to fetch database user, using Supabase user only');
-          const compatibleUser: CompatibleUser = {
-            uid: session.user.id,
-            email: session.user.email || '',
-            emailVerified: !!session.user.email_confirmed_at,
-            displayName: session.user.user_metadata?.full_name ||
-                        (session.user.user_metadata?.first_name && session.user.user_metadata?.last_name
-                          ? `${session.user.user_metadata.first_name} ${session.user.user_metadata.last_name}`
-                          : undefined)
-          };
-
+          console.warn('⚠️ [SUPABASE-AUTH] Database user not found');
+          // Clear session when user doesn't exist in database
+          await supabase.auth.signOut();
+          
           setAuthState({
-            user: compatibleUser,
+            user: null,
             isLoading: false,
-            isAuthenticated: true,
-            error: null
+            isAuthenticated: false,
+            error: 'Account not found in this environment. Please sign up or switch environments.'
           });
         }
       } catch (error: any) {
         console.error('❌ [SUPABASE-AUTH] Error fetching user data:', error);
-        // Fall back to Supabase user only
-        const compatibleUser: CompatibleUser = {
-          uid: session.user.id,
-          email: session.user.email || '',
-          emailVerified: !!session.user.email_confirmed_at
-        };
-
+        // Clear session when database connection fails
+        await supabase.auth.signOut();
+        
         setAuthState({
-          user: compatibleUser,
+          user: null,
           isLoading: false,
-          isAuthenticated: true,
-          error: null
+          isAuthenticated: false,
+          error: 'Unable to verify account. Please try again or contact support.'
         });
       }
     } else {
