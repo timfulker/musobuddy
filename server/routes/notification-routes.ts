@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 
 export function registerNotificationRoutes(app: Express) {
   console.log('🔔 Setting up notification routes...');
@@ -15,17 +16,17 @@ export function registerNotificationRoutes(app: Express) {
       
       console.log(`🔍 [NOTIFICATION-COUNTS] User ID from token: ${userId}, Email: ${req.user?.email}, Environment: ${process.env.NODE_ENV}`);
 
-      // Get all notification counts in parallel for efficiency
+      // Get all notification counts in parallel for efficiency with development fallbacks
       const [
         newBookings,
         reviewMessages,  // Changed to count review messages only once
         overdueInvoices,
         unreadClientMessages
       ] = await Promise.all([
-        storage.getNewBookingsCount(userId),
-        storage.getUnparseableMessagesCount(userId), // These are the review messages
-        storage.getOverdueInvoicesCount(userId),
-        storage.getUnreadMessageNotificationsCount(userId)
+        safeDbCall(() => storage.getNewBookingsCount(userId), 0, 'getNewBookingsCount'),
+        safeDbCall(() => storage.getUnparseableMessagesCount(userId), 0, 'getUnparseableMessagesCount'), // These are the review messages
+        safeDbCall(() => storage.getOverdueInvoicesCount(userId), 0, 'getOverdueInvoicesCount'),
+        safeDbCall(() => storage.getUnreadMessageNotificationsCount(userId), 0, 'getUnreadMessageNotificationsCount')
       ]);
 
       // Ensure all values are numbers to prevent string concatenation
@@ -137,8 +138,12 @@ export function registerNotificationRoutes(app: Express) {
 
       console.log(`🔍 [MESSAGES] User ID from token: ${userId}, Email: ${req.user?.email}, Environment: ${process.env.NODE_ENV}`);
 
-      // Get all message notifications for this user
-      const messages = await storage.getMessageNotifications(userId);
+      // Get all message notifications for this user with development fallback
+      const messages = await safeDbCall(
+        () => storage.getMessageNotifications(userId), 
+        [], 
+        'getMessageNotifications'
+      );
       console.log(`🔍 [MESSAGES] Found ${messages.length} messages for user ${userId}`);
       
       if (messages.length > 0) {

@@ -32,6 +32,7 @@ import { registerSupportChatRoutes } from "./support-chat-routes";
 
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { storage } from "../core/storage";
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 
 export async function registerRoutes(app: Express) {
   console.log('🔄 Registering all modular routes...');
@@ -118,8 +119,12 @@ export async function registerRoutes(app: Express) {
       
       console.log(`🔍 Fetching conflicts for user ${userId}`);
       
-      // Get real conflicts from booking storage
-      const conflicts = await storage.getAllUserConflicts(userId);
+      // Get real conflicts from booking storage with development fallback
+      const conflicts = await safeDbCall(
+        () => storage.getAllUserConflicts(userId), 
+        [], 
+        'getAllUserConflicts'
+      );
       console.log(`✅ Found ${conflicts.length} conflicts for user ${userId}`);
       res.json(conflicts);
     } catch (error) {
@@ -137,15 +142,14 @@ export async function registerRoutes(app: Express) {
       
       console.log(`🔍 Fetching conflict resolutions for user ${userId}`);
       
-      try {
-        const resolutions = await storage.getConflictResolutions(userId);
-        console.log(`✅ Found ${resolutions?.length || 0} resolutions for user ${userId}`);
-        res.json(resolutions || []);
-      } catch (storageError) {
-        console.error('Storage error:', storageError);
-        // Return empty array if storage fails
-        res.json([]);
-      }
+      // Get conflict resolutions with development fallback
+      const resolutions = await safeDbCall(
+        () => storage.getConflictResolutions(userId), 
+        [], 
+        'getConflictResolutions'
+      );
+      console.log(`✅ Found ${resolutions?.length || 0} resolutions for user ${userId}`);
+      res.json(resolutions || []);
     } catch (error) {
       console.error('Error fetching conflict resolutions:', error);
       res.status(500).json({ error: 'Failed to fetch conflict resolutions' });
