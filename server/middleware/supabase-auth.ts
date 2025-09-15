@@ -2,7 +2,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { supabase, useSupabase } from '../../lib/supabase/client';
 import { storage } from '../core/storage';
-import jwt from 'jsonwebtoken';
+import { verifySupabaseJWT, verifySupabaseJWTOptional, getSupabaseUrl, type SupabaseJWTPayload } from '../utils/jwt-verification';
 
 // Extend Express Request type to be compatible with existing Firebase auth
 export interface SupabaseAuthenticatedRequest extends Request {
@@ -82,25 +82,12 @@ export const authenticateWithSupabase = async (
   }
 
   try {
-    // First decode the JWT to get the user ID
-    let decoded: any;
-    try {
-      // Decode without verification first to get the payload
-      decoded = jwt.decode(token) as any;
-      if (!decoded || !decoded.sub) {
-        throw new Error('Invalid token structure');
-      }
-    } catch (decodeError) {
-      const duration = Date.now() - startTime;
-      console.log(`❌ [SUPABASE-AUTH] Failed to decode token (${duration}ms)`);
-      return res.status(401).json({
-        error: 'Invalid authentication token',
-        details: 'Token format is invalid'
-      });
-    }
+    // Verify JWT signature and claims using Supabase JWKS
+    // CRITICAL: Server-side verification is REQUIRED for security!
+    const supabaseUrl = getSupabaseUrl();
+    const decoded = await verifySupabaseJWT(token, supabaseUrl);
 
-    // For backend verification, we'll use the decoded token data directly
-    // The token has already been verified by Supabase on the frontend
+    // Extract user information from verified token
     const user = {
       id: decoded.sub,
       email: decoded.email,
@@ -272,8 +259,9 @@ export const optionalSupabaseAuth = async (
   }
 
   try {
-    // Decode token without full verification for optional auth
-    const decoded = jwt.decode(token) as any;
+    // Verify JWT signature for optional auth (graceful failure)
+    const supabaseUrl = getSupabaseUrl();
+    const decoded = await verifySupabaseJWTOptional(token, supabaseUrl);
 
     if (decoded && decoded.sub && decoded.email) {
       const user = {
@@ -310,7 +298,7 @@ export const optionalSupabaseAuth = async (
       }
     }
   } catch (error) {
-    // Silent fail for optional auth
+    // Silent fail for optional auth - verification errors already logged
     console.log(`⚠️ [SUPABASE-AUTH-OPTIONAL] Token verification failed (continuing anyway)`);
   }
 

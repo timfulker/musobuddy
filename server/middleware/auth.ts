@@ -1,7 +1,7 @@
 // Unified Supabase Authentication Middleware
 import { type Request, type Response, type NextFunction } from 'express';
 import { storage } from '../core/storage';
-import jwt from 'jsonwebtoken';
+import { verifySupabaseJWT, verifySupabaseJWTOptional, getSupabaseUrl, type SupabaseJWTPayload } from '../utils/jwt-verification';
 
 // Extend Express Request type
 export interface AuthenticatedRequest extends Request {
@@ -69,16 +69,17 @@ export const authenticate = async (
   }
 
   try {
-    // Decode the JWT to get user information
-    // The token has already been verified by Supabase on the frontend
-    const decoded = jwt.decode(token) as any;
+    // Verify JWT signature and claims using Supabase JWKS
+    // CRITICAL: Never trust tokens without proper signature verification!
+    const supabaseUrl = getSupabaseUrl();
+    const decoded = await verifySupabaseJWT(token, supabaseUrl);
 
     if (!decoded || !decoded.sub || !decoded.email) {
       const duration = Date.now() - startTime;
-      console.log(`❌ [AUTH] Invalid token structure (${duration}ms)`);
+      console.log(`❌ [AUTH] Invalid verified token structure (${duration}ms)`);
       return res.status(401).json({
         error: 'Invalid authentication token',
-        details: 'Token format is invalid'
+        details: 'Token verification failed'
       });
     }
 
@@ -167,8 +168,9 @@ export const optionalAuth = async (
   }
 
   try {
-    // Decode token
-    const decoded = jwt.decode(token) as any;
+    // Verify JWT signature for optional auth (graceful failure)
+    const supabaseUrl = getSupabaseUrl();
+    const decoded = await verifySupabaseJWTOptional(token, supabaseUrl);
 
     if (decoded && decoded.sub && decoded.email) {
       // Try to get user from database
@@ -195,7 +197,7 @@ export const optionalAuth = async (
       }
     }
   } catch (error) {
-    // Silent fail for optional auth
+    // Silent fail for optional auth - token verification already logged in JWT utility
     console.log(`⚠️ [AUTH-OPTIONAL] Token verification failed (continuing anyway)`);
   }
 

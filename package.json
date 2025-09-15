@@ -99,6 +99,7 @@
     "helmet": "^8.1.0",
     "ical": "^0.8.0",
     "input-otp": "^1.4.2",
+    "jose": "^6.1.0",
     "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
     "lru-cache": "^11.1.0",
