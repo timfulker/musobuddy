@@ -1,6 +1,6 @@
 // Supabase Authentication Middleware (for parallel testing with Firebase)
 import { type Request, type Response, type NextFunction } from 'express';
-import { supabase, useSupabase } from '../../lib/supabase/client';
+import { supabase } from '../../lib/supabase/client';
 import { storage } from '../core/storage';
 import { verifySupabaseJWT, verifySupabaseJWTOptional, getSupabaseUrl, type SupabaseJWTPayload } from '../utils/jwt-verification';
 
@@ -58,12 +58,12 @@ export const authenticateWithSupabase = async (
 ) => {
   const startTime = Date.now();
 
-  // Check if Supabase auth is enabled
-  if (!useSupabase()) {
-    console.log('🔄 [SUPABASE-AUTH] Supabase auth disabled, skipping');
+  // Check if Supabase is configured
+  if (!supabase) {
+    console.log('🔄 [SUPABASE-AUTH] Supabase not configured, skipping');
     return res.status(501).json({
-      error: 'Supabase authentication not enabled',
-      details: 'Set USE_SUPABASE=true to enable Supabase auth'
+      error: 'Supabase authentication not configured',
+      details: 'Supabase credentials missing'
     });
   }
 

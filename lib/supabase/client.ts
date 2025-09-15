@@ -78,19 +78,6 @@ export const supabaseAdmin: SupabaseClient<Database> | null =
       })
     : null;
 
-/**
- * Helper to check if we're using Supabase or legacy system
- */
-export const useSupabase = (): boolean => {
-  return process.env.USE_SUPABASE === 'true';
-};
-
-/**
- * Migration mode helper
- */
-export const getMigrationMode = (): 'parallel' | 'supabase-only' | 'legacy-only' => {
-  return (process.env.SUPABASE_MIGRATION_MODE as any) || 'legacy-only';
-};
 
 /**
  * Health check for Supabase connection

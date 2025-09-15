@@ -18,11 +18,10 @@ export class SupabaseBookingStorage {
   private isEnabled: boolean;
 
   constructor() {
-    this.isEnabled = process.env.USE_SUPABASE === 'true' && supabase !== null;
+    this.isEnabled = supabase !== null;
 
     if (this.isEnabled) {
       console.log('✅ Supabase booking storage initialized');
-      console.log(`   Mode: ${process.env.SUPABASE_MIGRATION_MODE}`);
       console.log(`   Environment: ${process.env.NODE_ENV}`);
     }
   }
@@ -31,9 +30,6 @@ export class SupabaseBookingStorage {
     return this.isEnabled;
   }
 
-  getMigrationMode(): string {
-    return process.env.SUPABASE_MIGRATION_MODE || 'parallel';
-  }
 
   async createBooking(bookingData: any) {
     if (!this.isEnabled || !supabase) {
