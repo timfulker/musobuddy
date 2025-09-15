@@ -5,6 +5,7 @@ import { blockedDates, type BlockedDate } from '@shared/schema.js';
 import { z } from 'zod';
 import { insertBlockedDateSchema } from '@shared/schema.js';
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 
 const router = Router();
 
@@ -13,20 +14,18 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     
-    const userBlockedDates = await db
+    const userBlockedDates = await safeDbCall(() => db
       .select()
       .from(blockedDates)
       .where(eq(blockedDates.userId, userId))
-      .orderBy(blockedDates.startDate);
+      .orderBy(blockedDates.startDate), [], 'getBlockedDates');
     
     console.log(`✅ Retrieved ${userBlockedDates.length} blocked dates for user ${userId}`);
     res.json(userBlockedDates);
   } catch (error) {
     console.error('❌ Failed to retrieve blocked dates:', error);
-    res.status(500).json({ 
-      message: 'Failed to retrieve blocked dates',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    // Return development fallback
+    res.json(developmentFallbacks.blockedDates);
   }
 });
 

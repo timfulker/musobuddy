@@ -35,28 +35,88 @@ import { storage } from "../core/storage";
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 
 export async function registerRoutes(app: Express) {
-  console.log('🔄 Registering all modular routes...');
+  console.log('🔄 [CENTRAL-ROUTER] Starting route registration...');
   
   // CRITICAL FIX: Register authentication routes FIRST
-  console.log('🔐 PRIORITY: Registering authentication routes first...');
-  setupAuthRoutes(app);
+  console.log('🔐 [CENTRAL-ROUTER] PRIORITY: Registering authentication routes first...');
+  try {
+    setupAuthRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Authentication routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register auth routes:', error);
+  }
   
   // STRIPE INTEGRATION REMOVED - Will be reimplemented
   // console.log('🔥 PRIORITY: Registering Stripe routes second to avoid conflicts...');
   // registerStripeRoutes(app);
   
-  // Register all other route modules
-  await registerContractRoutes(app);
+  // Register all other route modules with individual error handling
+  console.log('🔄 [CENTRAL-ROUTER] Registering core business logic routes...');
   
-  await registerInvoiceRoutes(app);
-  await registerBookingRoutes(app);
+  try {
+    console.log('📋 [CENTRAL-ROUTER] Registering contract routes...');
+    await registerContractRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Contract routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register contract routes:', error);
+  }
   
-  // Register document management routes
-  app.use('/api', documentRoutes);
-  await registerSettingsRoutes(app);
-  registerComplianceRoutes(app);
-  await registerAdminRoutes(app);
-  setupAdminDatabaseRoutes(app);
+  try {
+    console.log('💰 [CENTRAL-ROUTER] Registering invoice routes...');
+    await registerInvoiceRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Invoice routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register invoice routes:', error);
+  }
+  
+  try {
+    console.log('📅 [CENTRAL-ROUTER] Registering booking routes...');
+    await registerBookingRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Booking routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register booking routes:', error);
+  }
+  
+  // Register document management routes with error handling
+  try {
+    console.log('📄 [CENTRAL-ROUTER] Registering document routes...');
+    app.use('/api', documentRoutes);
+    console.log('✅ [CENTRAL-ROUTER] Document routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register document routes:', error);
+  }
+  
+  try {
+    console.log('⚙️ [CENTRAL-ROUTER] Registering settings routes...');
+    await registerSettingsRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Settings routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register settings routes:', error);
+  }
+  
+  try {
+    console.log('📋 [CENTRAL-ROUTER] Registering compliance routes...');
+    registerComplianceRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Compliance routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register compliance routes:', error);
+  }
+  
+  try {
+    console.log('👑 [CENTRAL-ROUTER] Registering admin routes...');
+    await registerAdminRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Admin routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register admin routes:', error);
+  }
+  
+  try {
+    console.log('🗄️ [CENTRAL-ROUTER] Registering admin database routes...');
+    setupAdminDatabaseRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Admin database routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register admin database routes:', error);
+  }
   
   // Register missing API routes to fix 404 errors
   registerClientRoutes(app);

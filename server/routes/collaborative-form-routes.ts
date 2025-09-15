@@ -5,6 +5,7 @@ import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";
 import { eq, and } from "drizzle-orm";
 import crypto from 'crypto';
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 
 export function setupCollaborativeFormRoutes(app: Express) {
   // Generate collaborative form after contract signing
@@ -18,9 +19,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // Get contract and associated booking
-      const contract = await db.select().from(contracts)
-        .where(and(eq(contracts.id, parseInt(contractId)), eq(contracts.userId, userId)))
-        .then(results => results[0]);
+      const contract = await safeDbCall(
+        () => db.select().from(contracts)
+          .where(and(eq(contracts.id, parseInt(contractId)), eq(contracts.userId, userId)))
+          .then(results => results[0]),
+        null,
+        'getContract'
+      );
 
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
@@ -31,9 +36,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // Get associated booking
-      const booking = await db.select().from(bookings)
-        .where(eq(bookings.contractId, parseInt(contractId)))
-        .then(results => results[0]);
+      const booking = await safeDbCall(
+        () => db.select().from(bookings)
+          .where(eq(bookings.contractId, parseInt(contractId)))
+          .then(results => results[0]),
+        null,
+        'getBookingByContract'
+      );
 
       if (!booking) {
         return res.status(404).json({ error: 'No booking found for this contract' });
@@ -95,13 +104,17 @@ export function setupCollaborativeFormRoutes(app: Express) {
         : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.dev/api/collaborative-form/${portalToken}`;
 
       // Update contract with collaborative form details (dynamic URL, not static R2)
-      await db.update(contracts)
-        .set({
-          clientPortalUrl: dynamicFormUrl,
-          clientPortalToken: portalToken,
-          updatedAt: new Date()
-        })
-        .where(eq(contracts.id, contract.id));
+      await safeDbCall(
+        () => db.update(contracts)
+          .set({
+            clientPortalUrl: dynamicFormUrl,
+            clientPortalToken: portalToken,
+            updatedAt: new Date()
+          })
+          .where(eq(contracts.id, contract.id)),
+        null,
+        'updateContractPortal'
+      );
 
       res.json({
         success: true,
@@ -132,9 +145,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // First, try to find contract with this token
-      const contract = await db.select().from(contracts)
-        .where(eq(contracts.clientPortalToken, token))
-        .then(results => results[0]);
+      const contract = await safeDbCall(
+        () => db.select().from(contracts)
+          .where(eq(contracts.clientPortalToken, token))
+          .then(results => results[0]),
+        null,
+        'getContractByToken'
+      );
 
       if (!contract) {
         console.log(`❌ [COLLABORATIVE-FORM] No contract found with token ${token?.substring(0, 8)}...`);
@@ -148,9 +165,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       const targetBookingId = contract.enquiryId || parseInt(bookingId);
       
       // Verify the booking exists
-      const booking = await db.select().from(bookings)
-        .where(eq(bookings.id, targetBookingId))
-        .then(results => results[0]);
+      const booking = await safeDbCall(
+        () => db.select().from(bookings)
+          .where(eq(bookings.id, targetBookingId))
+          .then(results => results[0]),
+        null,
+        'getBookingById'
+      );
 
       if (!booking) {
         console.log(`❌ [COLLABORATIVE-FORM] No booking found with ID ${targetBookingId}`);
@@ -204,9 +225,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       if (fieldsToUpdate.length === 0) {
         console.log(`⚠️ [COLLABORATIVE-FORM] No fields to update, only updating timestamp`);
         // At least update the timestamp
-        await db.update(bookings)
-          .set({ updatedAt: new Date() })
-          .where(eq(bookings.id, targetBookingId));
+        await safeDbCall(
+          () => db.update(bookings)
+            .set({ updatedAt: new Date() })
+            .where(eq(bookings.id, targetBookingId)),
+          null,
+          'updateBookingTimestamp'
+        );
         
         console.log(`✅ [COLLABORATIVE-FORM] Updated timestamp for booking ${targetBookingId}`);
         return res.json({ success: true, message: 'No data to update, timestamp updated' });
@@ -234,7 +259,11 @@ export function setupCollaborativeFormRoutes(app: Express) {
       console.log(`🔧 [COLLABORATIVE-FORM] Executing parameterized query:`, updateQuery);
       
       try {
-        const result = await db.execute(updateQuery, values);
+        const result = await safeDbCall(
+          () => db.execute(updateQuery, values),
+          null,
+          'updateBookingParameterized'
+        );
         console.log(`✅ [COLLABORATIVE-FORM] Parameterized update successful`);
       } catch (updateError: any) {
         console.error(`❌ [COLLABORATIVE-FORM] Parameterized update failed:`, updateError.message);
@@ -252,7 +281,11 @@ export function setupCollaborativeFormRoutes(app: Express) {
         const simpleQuery = `UPDATE bookings SET ${simpleFields.join(', ')} WHERE id = ${targetBookingId}`;
         console.log(`🔧 [COLLABORATIVE-FORM] Fallback to simple query`);
         
-        await db.execute(simpleQuery);
+        await safeDbCall(
+          () => db.execute(simpleQuery),
+          null,
+          'updateBookingFallback'
+        );
         console.log(`✅ [COLLABORATIVE-FORM] Fallback update successful`);
       }
 
@@ -289,21 +322,29 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // Verify user owns this booking
-      const booking = await db.select().from(bookings)
-        .where(eq(bookings.id, parseInt(bookingId)))
-        .then(results => results[0]);
+      const booking = await safeDbCall(
+        () => db.select().from(bookings)
+          .where(eq(bookings.id, parseInt(bookingId)))
+          .then(results => results[0]),
+        null,
+        'getBookingForLocks'
+      );
 
       if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
 
       // Store field locks in the booking's fieldLocks column
-      await db.update(bookings)
-        .set({
-          fieldLocks: fieldLocks,
-          updatedAt: new Date()
-        })
-        .where(eq(bookings.id, parseInt(bookingId)));
+      await safeDbCall(
+        () => db.update(bookings)
+          .set({
+            fieldLocks: fieldLocks,
+            updatedAt: new Date()
+          })
+          .where(eq(bookings.id, parseInt(bookingId))),
+        null,
+        'updateFieldLocks'
+      );
 
       console.log(`🔒 [FIELD-LOCKS] Updated field locks for booking ${bookingId}:`, fieldLocks);
 
@@ -331,9 +372,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
       }
 
       // Find contract with this token
-      const contract = await db.select().from(contracts)
-        .where(eq(contracts.clientPortalToken, token))
-        .then(results => results[0]);
+      const contract = await safeDbCall(
+        () => db.select().from(contracts)
+          .where(eq(contracts.clientPortalToken, token))
+          .then(results => results[0]),
+        null,
+        'getContractByTokenForForm'
+      );
 
       if (!contract) {
         return res.status(404).send('<h1>Error: Invalid portal token</h1>');
@@ -341,9 +386,13 @@ export function setupCollaborativeFormRoutes(app: Express) {
 
       // Get the associated booking with current data
       const targetBookingId = contract.enquiryId;
-      const booking = await db.select().from(bookings)
-        .where(eq(bookings.id, targetBookingId))
-        .then(results => results[0]);
+      const booking = await safeDbCall(
+        () => db.select().from(bookings)
+          .where(eq(bookings.id, targetBookingId))
+          .then(results => results[0]),
+        null,
+        'getBookingForForm'
+      );
 
       if (!booking) {
         return res.status(404).send('<h1>Error: No booking found for this contract</h1>');

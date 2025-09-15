@@ -66,12 +66,16 @@ export function registerContractRoutes(app: Express) {
       console.log('🔧 Starting to fix all signing pages with JavaScript errors...');
       
       // Get all contracts that might have buggy signing pages
-      const result = await db.execute(`
-        SELECT * FROM contracts 
-        WHERE status IN ('sent', 'draft') 
-        AND signing_page_url IS NOT NULL
-        ORDER BY created_at DESC
-      `);
+      const result = await safeDbCall(
+        () => db.execute(`
+          SELECT * FROM contracts 
+          WHERE status IN ('sent', 'draft') 
+          AND signing_page_url IS NOT NULL
+          ORDER BY created_at DESC
+        `),
+        { rows: [] },
+        'getUnsignedContracts'
+      );
       const unsignedContracts = result.rows;
       
       console.log(`📋 Found ${unsignedContracts.length} contracts to fix`);

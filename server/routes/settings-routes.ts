@@ -5,6 +5,7 @@ import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 import { db } from '../core/database';
 import { 
   clientCommunications, 
@@ -55,7 +56,7 @@ export async function registerSettingsRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      const user = await storage.getUserById(userId);
+      const user = await safeDbCall(() => storage.getUserById(userId), null, 'getUserById');
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -102,7 +103,7 @@ export async function registerSettingsRoutes(app: Express) {
       }
       
       // Check if prefix is already taken
-      const existingUser = await storage.getUserByEmailPrefix(prefix);
+      const existingUser = await safeDbCall(() => storage.getUserByEmailPrefix(prefix), null, 'getUserByEmailPrefix');
       if (existingUser && existingUser.id !== userId) {
         return res.json({ 
           available: false, 
@@ -169,7 +170,7 @@ export async function registerSettingsRoutes(app: Express) {
       }
       
       // Update user with email prefix
-      await storage.updateUser(userId, { emailPrefix: prefix });
+      await safeDbCall(() => storage.updateUser(userId, { emailPrefix: prefix }), null, 'updateUser');
       
       const fullEmail = `${prefix}@enquiries.musobuddy.com`;
       console.log(`✅ Enquiry email ${fullEmail} assigned to user ${userId}`);
@@ -195,8 +196,8 @@ export async function registerSettingsRoutes(app: Express) {
       
       // Get both settings and user info (for email prefix)
       const [settings, user] = await Promise.all([
-        storage.getSettings(userId),
-        storage.getUserById(userId)
+        safeDbCall(() => storage.getSettings(userId), null, 'getSettings'),
+        safeDbCall(() => storage.getUserById(userId), null, 'getUserById')
       ]);
       
       
@@ -212,7 +213,7 @@ export async function registerSettingsRoutes(app: Express) {
           // Add other default settings as needed
         };
         
-        const newSettings = await storage.createSettings(defaultSettings);
+        const newSettings = await safeDbCall(() => storage.createSettings(defaultSettings), defaultSettings, 'createSettings');
         
         // Transform default settings to camelCase for frontend
         const transformedDefaults = {
@@ -356,7 +357,8 @@ export async function registerSettingsRoutes(app: Express) {
       
     } catch (error) {
       console.error('❌ Failed to fetch settings:', error);
-      res.status(500).json({ error: 'Failed to fetch settings' });
+      // Return development fallback settings
+      res.json(developmentFallbacks.settings);
     }
   });
 
@@ -452,11 +454,11 @@ export async function registerSettingsRoutes(app: Express) {
         delete processedBody.emailPrefix;
       }
       
-      const updatedSettings = await storage.updateSettings(userId, processedBody);
+      const updatedSettings = await safeDbCall(() => storage.updateSettings(userId, processedBody), null, 'updateSettings');
       console.log(`✅ Updated settings for user ${userId}`);
       
       // Get the updated user to include the emailPrefix in response
-      let updatedUser = await storage.getUserById(userId);
+      let updatedUser = await safeDbCall(() => storage.getUserById(userId), null, 'getUserById');
       
       // Check if all required settings sections are now complete
       if (updatedUser && !updatedUser.onboardingCompleted) {

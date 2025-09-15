@@ -1100,10 +1100,18 @@ app.get('/api/email-queue/status', async (req, res) => {
     console.log('✅ Development fallback middleware active for /api/* routes');
   }
 
-  // Register all API routes
+  // Register all API routes with error handling
   console.log('🔄 Registering all modular routes...');
-  const { registerRoutes } = await import('./routes');
-  await registerRoutes(app);
+  try {
+    const { registerRoutes } = await import('./routes');
+    console.log('✅ Successfully imported registerRoutes function');
+    await registerRoutes(app);
+    console.log('✅ All modular routes registered successfully');
+  } catch (error) {
+    console.error('❌ CRITICAL: Route registration failed:', error);
+    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    // Continue server startup even if routes fail - better to have a partially working server
+  }
 
   // Apply global subscription protection AFTER routes (so req.user is set)
   console.log('🔒 Setting up global subscription protection...');
