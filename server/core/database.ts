@@ -5,15 +5,15 @@ import * as schema from "../../shared/schema";
 // Environment-aware database connection
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Construct PostgreSQL connection string from Supabase credentials using official format
+// Construct PostgreSQL connection string from Supabase credentials using POOLED format for reliability
 function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
   const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
   if (!projectMatch) {
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  // Use official Supabase database URL format (not pooler)
-  return `postgresql://postgres.${projectId}:${serviceKey}@db.${projectId}.supabase.co:5432/postgres?sslmode=require`;
+  // Use Supabase Connection Pooling (port 5432) for DNS stability and connection reuse
+  return `postgresql://postgres.${projectId}:${serviceKey}@${projectId}-pooler.supabase.co:5432/postgres?sslmode=require&keepAlive=true`;
 }
 
 let connectionString: string;
@@ -67,12 +67,14 @@ if (parts) {
   console.log(`⚠️ Connection string doesn't match expected format`);
 }
 
-// Create PostgreSQL connection pool
+// Create PostgreSQL connection pool with optimized settings for Supabase pooler
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
-  max: 20,
-  idleTimeoutMillis: 30000,
+  max: 5, // Smaller pool for pooled connections
+  min: 1, // Keep connections alive  
+  idleTimeoutMillis: 60000, // Longer idle timeout
+  acquireTimeoutMillis: 10000,
   connectionTimeoutMillis: 5000,
 });
 
