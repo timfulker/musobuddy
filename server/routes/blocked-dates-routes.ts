@@ -4,12 +4,12 @@ import { db } from '../core/database.js';
 import { blockedDates, type BlockedDate } from '@shared/schema.js';
 import { z } from 'zod';
 import { insertBlockedDateSchema } from '@shared/schema.js';
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
 // Get all blocked dates for a user
-router.get('/', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     
@@ -31,7 +31,7 @@ router.get('/', authenticateWithSupabase, async (req: SupabaseAuthenticatedReque
 });
 
 // Get blocked dates for a specific date range
-router.get('/range', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/range', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     const { startDate, endDate } = req.query;
@@ -68,7 +68,7 @@ router.get('/range', authenticateWithSupabase, async (req: SupabaseAuthenticated
 });
 
 // Create a new blocked date
-router.post('/', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.post('/', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     
@@ -111,7 +111,7 @@ router.post('/', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequ
 });
 
 // Update a blocked date
-router.put('/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.put('/:id', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     const blockedDateId = parseInt(req.params.id);
@@ -168,7 +168,7 @@ router.put('/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRe
 });
 
 // Delete a blocked date
-router.delete('/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     const blockedDateId = parseInt(req.params.id);

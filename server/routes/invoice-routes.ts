@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { authenticateWithSupabase, type SupabaseSupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { generateInvoicePDF } from '../core/invoice-pdf-generator';
 import { uploadInvoiceToCloud } from '../core/cloud-storage';
@@ -10,7 +10,7 @@ export function registerInvoiceRoutes(app: Express) {
   console.log('💰 Setting up invoice routes...');
 
   // Public invoice viewing endpoint - no authentication required
-  app.get('/api/public/invoice/:token', async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/public/invoice/:token', async (req: AuthenticatedRequest, res) => {
     try {
       const { token } = req.params;
       console.log(`🔍 Looking up public invoice with token: ${token}`);
@@ -46,7 +46,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Manual payment status update endpoint (for bank transfer payments)
-  app.post('/api/invoice/:id/mark-paid', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.post('/api/invoice/:id/mark-paid', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -94,7 +94,7 @@ export function registerInvoiceRoutes(app: Express) {
   // Security is handled through random tokens in the R2 URL paths
 
   // Get all invoices for authenticated user
-  app.get('/api/invoices', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/invoices', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       if (!userId) {
@@ -111,7 +111,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Create new invoice
-  app.post('/api/invoices', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.post('/api/invoices', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       if (!userId) {
@@ -222,7 +222,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Update invoice
-  app.patch('/api/invoices/:id', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.patch('/api/invoices/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
       if (!userId) {
@@ -280,7 +280,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Delete invoice
-  app.delete('/api/invoices/:id', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.delete('/api/invoices/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -328,7 +328,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get invoice PDF
-  app.get('/api/invoices/:id/pdf', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/invoices/:id/pdf', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -366,7 +366,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Download invoice PDF
-  app.get('/api/invoices/:id/download', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/invoices/:id/download', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -399,7 +399,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Bulk delete invoices
-  app.post('/api/invoices/bulk-delete', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.post('/api/invoices/bulk-delete', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { invoiceIds } = req.body;
       const userId = req.user.id;
@@ -628,7 +628,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Mark invoice as paid
-  app.post('/api/invoices/:id/mark-paid', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.post('/api/invoices/:id/mark-paid', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -664,7 +664,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Get individual invoice for viewing
-  app.get('/api/invoices/:id/view', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/invoices/:id/view', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;
@@ -698,7 +698,7 @@ export function registerInvoiceRoutes(app: Express) {
   });
 
   // Regenerate invoice PDF with current theme settings
-  app.post('/api/invoices/:id/regenerate', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.post('/api/invoices/:id/regenerate', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       const userId = req.user.id;

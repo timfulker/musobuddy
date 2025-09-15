@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { storage } from "../core/storage";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 
 export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding
-  app.post('/api/onboarding/complete', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/onboarding/complete', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const onboardingData = req.body;

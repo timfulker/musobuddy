@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { feedbackStorage } from '../storage/feedback-storage';
 import { UserStorage } from '../storage/user-storage';
 import type { InsertFeedback } from '../../shared/schema';
@@ -10,7 +10,7 @@ export function registerFeedbackRoutes(app: Express) {
   console.log('💬 Setting up feedback routes...');
 
   // Get all feedback
-  app.get('/api/feedback', authenticateWithSupabase, async (req, res) => {
+  app.get('/api/feedback', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -33,7 +33,7 @@ export function registerFeedbackRoutes(app: Express) {
   });
 
   // Create new feedback
-  app.post('/api/feedback', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/feedback', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       console.log('🔄 Feedback submission started');
       const userId = req.user?.id;

@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { storage } from "../core/storage";
 
 export function registerClientRoutes(app: Express) {
@@ -54,7 +54,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Get all clients for the authenticated user
-  app.get('/api/clients', authenticateWithSupabase, async (req, res) => {
+  app.get('/api/clients', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -74,7 +74,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Create a new client
-  app.post('/api/clients', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/clients', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       
@@ -93,7 +93,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Update a client
-  app.patch('/api/clients/:id', authenticateWithSupabase, async (req, res) => {
+  app.patch('/api/clients/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const clientId = parseInt(req.params.id);
@@ -113,7 +113,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Delete a client
-  app.delete('/api/clients/:id', authenticateWithSupabase, async (req, res) => {
+  app.delete('/api/clients/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const clientId = parseInt(req.params.id);
@@ -133,7 +133,7 @@ export function registerClientRoutes(app: Express) {
   });
 
   // Populate address book from existing bookings
-  app.post('/api/clients/populate-from-bookings', authenticateWithSupabase, async (req, res) => {
+  app.post('/api/clients/populate-from-bookings', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       

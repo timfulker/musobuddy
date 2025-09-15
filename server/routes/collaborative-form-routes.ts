@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { collaborativeFormGenerator } from "../core/collaborative-form-generator.js";
 import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";
@@ -8,7 +8,7 @@ import crypto from 'crypto';
 
 export function setupCollaborativeFormRoutes(app: Express) {
   // Generate collaborative form after contract signing
-  app.post('/api/contracts/:contractId/generate-collaborative-form', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/contracts/:contractId/generate-collaborative-form', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { contractId } = req.params;
       const userId = req.user?.id;
@@ -278,7 +278,7 @@ export function setupCollaborativeFormRoutes(app: Express) {
   });
 
   // Update field lock settings
-  app.post('/api/collaborative-form/:bookingId/locks', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/collaborative-form/:bookingId/locks', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { bookingId } = req.params;
       const { fieldLocks } = req.body;

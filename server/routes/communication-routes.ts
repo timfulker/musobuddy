@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../core/database';
 import { clientCommunications, bookings, userSettings } from '@shared/schema';
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { eq, desc, and } from 'drizzle-orm';
 import { services } from '../core/services';
 
 export function setupCommunicationRoutes(app: any) {
   // Save a communication record when an email/SMS is sent
-  app.post('/api/communications', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/communications', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

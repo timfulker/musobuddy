@@ -3,7 +3,7 @@ import multer from 'multer';
 import { storage } from '../core/storage';
 import { uploadDocumentToR2, deleteDocumentFromR2, generateDocumentDownloadUrl } from '../core/document-storage';
 import { insertBookingDocumentSchema, uploadDocumentSchema } from '../../shared/document-schemas';
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -34,7 +34,7 @@ const upload = multer({
 });
 
 // Get documents for a booking
-router.get('/bookings/:bookingId/documents', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/bookings/:bookingId/documents', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -63,7 +63,7 @@ router.get('/bookings/:bookingId/documents', authenticateWithSupabase, async (re
 });
 
 // Upload document for a booking
-router.post('/bookings/:bookingId/documents/upload', authenticateWithSupabase, upload.single('document'), async (req: SupabaseAuthenticatedRequest, res) => {
+router.post('/bookings/:bookingId/documents/upload', authenticate, upload.single('document'), async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const userId = req.user?.id;
@@ -136,7 +136,7 @@ router.post('/bookings/:bookingId/documents/upload', authenticateWithSupabase, u
 });
 
 // Delete a document
-router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.delete('/bookings/:bookingId/documents/:documentId', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);
@@ -189,7 +189,7 @@ router.delete('/bookings/:bookingId/documents/:documentId', authenticateWithSupa
 });
 
 // Download/view a document
-router.get('/bookings/:bookingId/documents/:documentId/download', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/bookings/:bookingId/documents/:documentId/download', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const bookingId = parseInt(req.params.bookingId);
     const documentId = parseInt(req.params.documentId);

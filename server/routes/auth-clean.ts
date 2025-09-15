@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
 import { verifyFirebaseToken, createCustomToken } from '../core/firebase-admin';
-import { authenticateWithSupabase, type SupabaseSupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 
 // Check if user is exempt from subscription requirements
 function isExemptUser(email: string): boolean {
@@ -190,7 +190,7 @@ export function setupAuthRoutes(app: Express) {
   });
   
   // Get current user endpoint - uses Supabase authentication
-  app.get('/api/auth/user', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/auth/user', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       console.log(`🔍 [DEBUG] /api/auth/user - userId: ${userId}, req.user:`, req.user);
@@ -265,7 +265,7 @@ export function setupAuthRoutes(app: Express) {
   });
 
   // Alias for /api/auth/user
-  app.get('/api/auth/me', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/auth/me', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       

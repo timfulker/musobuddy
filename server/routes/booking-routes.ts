@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { authenticateWithSupabase, type SupabaseSupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { cleanEncoreTitle } from '../core/booking-formatter';
 import OpenAI from 'openai';
@@ -24,7 +24,7 @@ export function registerBookingRoutes(app: Express) {
   
 
   // Get bookings for authenticated user with display settings applied
-  app.get('/api/bookings', authenticateWithSupabase, async (req: SupabaseSupabaseAuthenticatedRequest, res) => {
+  app.get('/api/bookings', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -110,7 +110,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Batch fetch multiple bookings by IDs - optimized single database query
-  app.post('/api/bookings/batch', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/bookings/batch', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -138,7 +138,7 @@ export function registerBookingRoutes(app: Express) {
 
   // Create new booking (requires subscription)
   app.post('/api/bookings', 
-    authenticateWithSupabase,
+    authenticate,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     sanitizeInput,
@@ -273,7 +273,7 @@ export function registerBookingRoutes(app: Express) {
   }));
 
   // Update booking
-  app.patch('/api/bookings/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.patch('/api/bookings/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -335,7 +335,7 @@ export function registerBookingRoutes(app: Express) {
   // Delete booking
   // Advanced search/filter endpoint - MUST come before :id routes
   app.get('/api/bookings/all', 
-    authenticateWithSupabase,
+    authenticate,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
     try {
@@ -472,7 +472,7 @@ export function registerBookingRoutes(app: Express) {
     }
   }));
 
-  app.delete('/api/bookings/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.delete('/api/bookings/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -497,7 +497,7 @@ export function registerBookingRoutes(app: Express) {
   });
 
   // Get individual booking
-  app.get('/api/bookings/:id', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.get('/api/bookings/:id', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
@@ -1228,7 +1228,7 @@ ${messageText.replace(/\n/g, '<br>')}
 
   // Send compliance documents for a booking
   app.post('/api/bookings/:id/send-compliance', 
-    authenticateWithSupabase,
+    authenticate,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     asyncHandler(async (req: any, res: any) => {
@@ -1370,7 +1370,7 @@ ${businessName}</p>
 
   // Check if compliance documents have been sent for a specific booking
   app.get('/api/bookings/:id/compliance-sent', 
-    authenticateWithSupabase,
+    authenticate,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: any, res: any) => {
       try {
@@ -1405,7 +1405,7 @@ ${businessName}</p>
 
   // Find duplicate bookings
   app.get('/api/bookings/duplicates', 
-    authenticateWithSupabase,
+    authenticate,
     asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
       try {
         const userId = req.user?.id;
@@ -1462,7 +1462,7 @@ ${businessName}</p>
 
   // Remove duplicate bookings
   app.post('/api/bookings/remove-duplicates', 
-    authenticateWithSupabase,
+    authenticate,
     asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
       try {
         const userId = req.user?.id;

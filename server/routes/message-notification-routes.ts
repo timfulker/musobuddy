@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { storage } from '../core/storage';
 
 const router = Router();
 
 // Get all message notifications for user
-router.get('/notifications/messages', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/notifications/messages', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
     const isRead = req.query.isRead !== undefined ? req.query.isRead === 'true' : undefined;
@@ -23,7 +23,7 @@ router.get('/notifications/messages', authenticateWithSupabase, async (req: Supa
 });
 
 // Get unread count for badge display
-router.get('/notifications/messages/count', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.get('/notifications/messages/count', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
     
@@ -41,7 +41,7 @@ router.get('/notifications/messages/count', authenticateWithSupabase, async (req
 });
 
 // Mark notification as read
-router.patch('/notifications/messages/:id/read', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.patch('/notifications/messages/:id/read', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const notificationId = parseInt(req.params.id);
     
@@ -62,7 +62,7 @@ router.patch('/notifications/messages/:id/read', authenticateWithSupabase, async
 });
 
 // Dismiss notification (hide from messages view but keep data for conversation)
-router.patch('/notifications/messages/:id/dismiss', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+router.patch('/notifications/messages/:id/dismiss', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const notificationId = parseInt(req.params.id);
     

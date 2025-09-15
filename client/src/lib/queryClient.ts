@@ -1,35 +1,61 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 
-// Token cache with 55 minute expiry (Firebase tokens expire after 1 hour)
+// Token cache with 55 minute expiry (Supabase tokens expire after 1 hour)
 let tokenCache: { token: string; expiry: number } | null = null;
 
-async function getIdToken(forceRefresh = false): Promise<string | null> {
-  const currentUser = auth.currentUser;
-  if (!currentUser) return null;
-
-  // Check if we have a valid cached token
-  if (!forceRefresh && tokenCache && tokenCache.expiry > Date.now()) {
-    return tokenCache.token;
-  }
-
+async function getAccessToken(forceRefresh = false): Promise<string | null> {
   try {
-    // Get a fresh token from Firebase (only when needed)
-    const token = await currentUser.getIdToken(forceRefresh);
+    // Check if we have a valid cached token
+    if (!forceRefresh && tokenCache && tokenCache.expiry > Date.now()) {
+      return tokenCache.token;
+    }
+
+    // Get current session from Supabase
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.warn('Failed to get Supabase session:', error.message);
+      return null;
+    }
+    
+    if (!session?.access_token) {
+      console.log('No valid Supabase session found');
+      return null;
+    }
+
+    // Refresh token if needed and requested
+    if (forceRefresh) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn('Failed to refresh Supabase session:', refreshError.message);
+        return session.access_token; // Return original token if refresh fails
+      }
+      if (refreshData.session?.access_token) {
+        // Cache the refreshed token for 55 minutes
+        tokenCache = {
+          token: refreshData.session.access_token,
+          expiry: Date.now() + 55 * 60 * 1000
+        };
+        return refreshData.session.access_token;
+      }
+    }
+
     // Cache the token for 55 minutes
     tokenCache = {
-      token,
+      token: session.access_token,
       expiry: Date.now() + 55 * 60 * 1000
     };
-    return token;
+    
+    return session.access_token;
   } catch (error) {
-    console.warn('Failed to get Firebase ID token:', error);
+    console.warn('Failed to get Supabase access token:', error);
     return null;
   }
 }
 
 // Clear token cache on auth state change
-auth.onAuthStateChanged(() => {
+supabase.auth.onAuthStateChange(() => {
   tokenCache = null;
 });
 
@@ -58,10 +84,10 @@ export async function apiRequest(
   let body = options?.body;
   const headers = options?.headers || {};
   
-  // Get Firebase ID token for authentication (now cached)
-  let idToken = await getIdToken();
-  if (idToken) {
-    headers['Authorization'] = `Bearer ${idToken}`;
+  // Get Supabase access token for authentication (now cached)
+  let accessToken = await getAccessToken();
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
   }
   
   if (body) {
@@ -83,10 +109,10 @@ export async function apiRequest(
   });
 
   // If we get a 401, try once more with a fresh token
-  if (res.status === 401 && auth.currentUser) {
-    idToken = await getIdToken(true); // Force refresh
-    if (idToken) {
-      headers['Authorization'] = `Bearer ${idToken}`;
+  if (res.status === 401) {
+    accessToken = await getAccessToken(true); // Force refresh
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
       const retryRes = await fetch(url, {
         method,
         headers,
@@ -119,11 +145,11 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Query request to: ${queryKey[0]}
     
-    // Get Firebase ID token for authentication (now cached)
+    // Get Supabase access token for authentication (now cached)
     const headers: HeadersInit = {};
-    let idToken = await getIdToken();
-    if (idToken) {
-      headers['Authorization'] = `Bearer ${idToken}`;
+    let accessToken = await getAccessToken();
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
     }
     
     let res = await fetch(queryKey[0] as string, {
@@ -131,10 +157,10 @@ export const getQueryFn: <T>(options: {
     });
     
     // If we get a 401, try once more with a fresh token
-    if (res.status === 401 && auth.currentUser) {
-      idToken = await getIdToken(true); // Force refresh
-      if (idToken) {
-        headers['Authorization'] = `Bearer ${idToken}`;
+    if (res.status === 401) {
+      accessToken = await getAccessToken(true); // Force refresh
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
         res = await fetch(queryKey[0] as string, {
           headers,
         });

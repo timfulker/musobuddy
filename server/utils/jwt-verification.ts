@@ -1,14 +1,13 @@
 /**
- * Secure JWT Verification for Supabase Authentication
+ * Robust Supabase-First JWT Verification with Firebase Fallback
  * 
- * This module implements proper JWT verification with signature validation
- * using Supabase's JWKS endpoint. NEVER trust tokens without verification!
+ * Algorithm-based authentication routing:
+ * - HS256 tokens → Supabase authentication (primary)
+ * - RS256 tokens → Firebase authentication (fallback)
+ * - Explicit anon key detection and rejection for security
  */
 
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
-
-// Cache for JWKS to avoid repeated requests
-const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
+import { jwtVerify, type JWTPayload, createRemoteJWKSet } from 'jose';
 
 /**
  * Supabase JWT payload interface
@@ -16,6 +15,7 @@ const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 export interface SupabaseJWTPayload extends JWTPayload {
   sub: string;
   email: string;
+  email_verified?: boolean;
   email_confirmed_at?: string;
   phone_confirmed_at?: string;
   app_metadata?: {
@@ -30,208 +30,455 @@ export interface SupabaseJWTPayload extends JWTPayload {
 }
 
 /**
- * Get or create JWKS for a Supabase project with API key authentication
+ * Firebase JWT payload interface
  */
-function getJWKS(supabaseUrl: string): ReturnType<typeof createRemoteJWKSet> {
-  const cacheKey = supabaseUrl;
-  if (!jwksCache.has(cacheKey)) {
-    const jwksUrl = new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`);
-    
-    // Get the appropriate API key based on environment
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const apiKey = isDevelopment 
-      ? process.env.SUPABASE_ANON_KEY_DEV 
-      : process.env.SUPABASE_ANON_KEY_PROD;
-    
-    if (!apiKey) {
-      throw new Error(`Missing Supabase API key for ${isDevelopment ? 'development' : 'production'} environment`);
-    }
-
-    // Create custom fetch function with API key header
-    const customFetch = async (url: string, options?: any) => {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...options?.headers,
-          'apikey': apiKey,
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      });
-      return response;
-    };
-
-    // Create JWKS with custom fetch that includes API key
-    jwksCache.set(cacheKey, createRemoteJWKSet(jwksUrl, {
-      agent: customFetch as any
-    }));
-  }
-  return jwksCache.get(cacheKey)!;
+export interface FirebaseJWTPayload extends JWTPayload {
+  sub: string;
+  email: string;
+  email_verified?: boolean;
+  firebase?: {
+    sign_in_provider?: string;
+    identities?: Record<string, any>;
+  };
+  uid: string;
 }
 
 /**
- * Verify Supabase JWT token using Supabase client library
- * This method uses the Supabase client which handles JWKS internally
- * 
- * @param token - The JWT token to verify
- * @param supabaseUrl - Supabase project URL
- * @param expectedAudience - Expected audience (usually 'authenticated')
- * @returns Verified JWT payload
- * @throws Error if token is invalid, expired, or signature verification fails
+ * Unified JWT payload interface for backward compatibility
  */
-export async function verifySupabaseJWT(
-  token: string,
-  supabaseUrl: string,
-  expectedAudience: string = 'authenticated'
-): Promise<SupabaseJWTPayload> {
-  try {
-    // First try using Supabase client library for verification
-    console.log('🔍 [JWT-VERIFY] Attempting Supabase client verification');
-    
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const apiKey = isDevelopment 
-      ? process.env.SUPABASE_ANON_KEY_DEV 
-      : process.env.SUPABASE_ANON_KEY_PROD;
-    
-    if (!apiKey) {
-      throw new Error(`Missing Supabase API key for ${isDevelopment ? 'development' : 'production'} environment`);
-    }
+export type UnifiedJWTPayload = SupabaseJWTPayload | FirebaseJWTPayload;
 
-    // Import Supabase client dynamically to avoid circular dependencies
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseClient = createClient(supabaseUrl, apiKey);
+/**
+ * JWT algorithm detection result
+ */
+interface AlgorithmDetection {
+  algorithm: 'HS256' | 'RS256' | 'unknown';
+  provider: 'supabase' | 'firebase' | 'unknown';
+  isAnonKey: boolean;
+}
 
-    // Use Supabase client to verify the user token
-    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
-
-    if (error) {
-      console.log('⚠️ [JWT-VERIFY] Supabase client verification failed:', error.message);
-      throw new Error(`Supabase verification failed: ${error.message}`);
-    }
-
-    if (!user) {
-      throw new Error('Invalid token: no user found');
-    }
-
-    // Convert Supabase user to our JWT payload format
-    const supabasePayload: SupabaseJWTPayload = {
-      sub: user.id,
-      email: user.email || '',
-      email_confirmed_at: user.email_confirmed_at || null,
-      phone_confirmed_at: user.phone_confirmed_at || null,
-      app_metadata: user.app_metadata,
-      user_metadata: user.user_metadata,
-      role: user.role,
-      aud: expectedAudience,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-    };
-
-    // Validate required fields
-    if (!supabasePayload.sub) {
-      throw new Error('Invalid token: missing subject (sub)');
-    }
-
-    if (!supabasePayload.email) {
-      throw new Error('Invalid token: missing email');
-    }
-
-    console.log('✅ [JWT-VERIFY] Supabase client verification successful');
-    return supabasePayload;
-
-  } catch (error) {
-    // If Supabase client verification fails, try fallback JWKS verification
-    console.log('🔄 [JWT-VERIFY] Falling back to JWKS verification');
-    
-    try {
-      // Get JWKS for signature verification
-      const JWKS = getJWKS(supabaseUrl);
-
-      // Verify the JWT with signature validation
-      const { payload } = await jwtVerify(token, JWKS, {
-        issuer: `${supabaseUrl}/auth/v1`,
-        audience: expectedAudience,
-        // Allow some clock skew (30 seconds)
-        clockTolerance: 30,
-      });
-
-      // Type assertion with runtime validation
-      const supabasePayload = payload as SupabaseJWTPayload;
-
-      // Validate required Supabase fields
-      if (!supabasePayload.sub) {
-        throw new Error('Invalid token: missing subject (sub)');
-      }
-
-      if (!supabasePayload.email) {
-        throw new Error('Invalid token: missing email');
-      }
-
-      console.log('✅ [JWT-VERIFY] JWKS verification successful');
-      return supabasePayload;
-
-    } catch (jwksError) {
-      // Log both errors for debugging
-      console.error('🚨 JWT Verification Failed:', {
-        supabaseClientError: error instanceof Error ? error.message : 'Unknown error',
-        jwksError: jwksError instanceof Error ? jwksError.message : 'Unknown error',
-        hasToken: !!token,
-        tokenPrefix: token ? token.substring(0, 20) + '...' : 'null',
-        supabaseUrl: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'null',
-        timestamp: new Date().toISOString(),
-      });
-
-      // Re-throw the more specific error
-      if (error instanceof Error) {
-        throw new Error(`JWT verification failed: ${error.message}`);
-      }
-      throw new Error('JWT verification failed: Unknown error');
-    }
+/**
+ * Structured logging for debugging authentication flows
+ */
+function logAuthEvent(level: 'info' | 'warn' | 'error', message: string, context: Record<string, any> = {}) {
+  const timestamp = new Date().toISOString();
+  const logData = {
+    timestamp,
+    level: level.toUpperCase(),
+    message,
+    ...context
+  };
+  
+  if (level === 'error') {
+    console.error(`🚨 [AUTH-JWT] ${message}`, logData);
+  } else if (level === 'warn') {
+    console.warn(`⚠️ [AUTH-JWT] ${message}`, logData);
+  } else {
+    console.log(`🔍 [AUTH-JWT] ${message}`, logData);
   }
 }
 
 /**
- * Verify JWT with graceful handling for optional authentication
- * Returns null if token is invalid rather than throwing
+ * Comprehensive anon key detection (SECURITY CRITICAL)
  */
-export async function verifySupabaseJWTOptional(
-  token: string,
-  supabaseUrl: string,
-  expectedAudience: string = 'authenticated'
-): Promise<SupabaseJWTPayload | null> {
+function isAnonKey(token: string): boolean {
+  // Check against all known anon keys
+  const anonKeys = [
+    process.env.SUPABASE_ANON_KEY_DEV,
+    process.env.SUPABASE_ANON_KEY_PROD,
+    process.env.SUPABASE_ANON_KEY_PRODUCTION,
+    process.env.SUPABASE_ANON_KEY,
+    process.env.VITE_SUPABASE_ANON_KEY_DEV,
+    process.env.VITE_SUPABASE_ANON_KEY_PROD,
+    process.env.VITE_SUPABASE_ANON_KEY_PRODUCTION,
+    process.env.VITE_SUPABASE_ANON_KEY
+  ].filter(Boolean);
+  
+  if (anonKeys.includes(token)) {
+    return true;
+  }
+  
+  // Additional security: Check JWT payload for anon role without verification
   try {
-    return await verifySupabaseJWT(token, supabaseUrl, expectedAudience);
+    const payload = parseJWTPayloadUnsafe(token);
+    if (payload?.role === 'anon') {
+      return true;
+    }
   } catch (error) {
-    // Log for monitoring but don't throw for optional auth
-    console.warn('⚠️ Optional JWT verification failed:', error instanceof Error ? error.message : 'Unknown error');
+    // If we can't parse it, it's suspicious but not necessarily an anon key
+  }
+  
+  return false;
+}
+
+/**
+ * Parse JWT payload without verification (for quick anon role check)
+ */
+function parseJWTPayloadUnsafe(token: string): any | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    
+    // Decode payload (without verification)
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+  } catch (error) {
+    logAuthEvent('warn', 'Failed to parse JWT payload', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      tokenPrefix: token.substring(0, 20) + '...'
+    });
     return null;
   }
 }
 
 /**
- * Environment-aware Supabase URL getter
+ * Detect JWT algorithm and provider from token header
  */
-export function getSupabaseUrl(): string {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  const supabaseUrl = isDevelopment
-    ? process.env.SUPABASE_URL_DEV
-    : process.env.SUPABASE_URL_PROD;
-
-  if (!supabaseUrl) {
-    const env = isDevelopment ? 'development' : 'production';
-    throw new Error(
-      `Missing Supabase URL for ${env} environment. ` +
-      `Please set SUPABASE_URL_${env.toUpperCase()}`
-    );
+function detectTokenType(token: string): AlgorithmDetection {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return { algorithm: 'unknown', provider: 'unknown', isAnonKey: false };
+    }
+    
+    // Decode header
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
+    const algorithm = header.alg;
+    
+    // Check if it's an anon key first
+    const isAnon = isAnonKey(token);
+    
+    // Route based on algorithm
+    if (algorithm === 'HS256') {
+      return { algorithm: 'HS256', provider: 'supabase', isAnonKey: isAnon };
+    } else if (algorithm === 'RS256') {
+      return { algorithm: 'RS256', provider: 'firebase', isAnonKey: isAnon };
+    }
+    
+    return { algorithm: 'unknown', provider: 'unknown', isAnonKey: isAnon };
+  } catch (error) {
+    logAuthEvent('warn', 'Failed to detect token type', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      tokenPrefix: token.substring(0, 20) + '...'
+    });
+    return { algorithm: 'unknown', provider: 'unknown', isAnonKey: false };
   }
-
-  return supabaseUrl;
 }
 
 /**
- * Clear JWKS cache (useful for testing or key rotation)
+ * Get environment configuration
  */
-export function clearJWKSCache(): void {
-  jwksCache.clear();
-  console.log('🔄 JWKS cache cleared');
+function getEnvironmentConfig() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  return {
+    isDevelopment,
+    jwtSecret: isDevelopment 
+      ? process.env.SUPABASE_JWT_SECRET_DEV 
+      : process.env.SUPABASE_JWT_SECRET_PROD,
+    supabaseUrl: isDevelopment
+      ? process.env.SUPABASE_URL_DEV
+      : process.env.SUPABASE_URL_PROD
+  };
 }
+
+/**
+ * Unified JWT verification with algorithm-based routing
+ * 
+ * @param token - The JWT token to verify
+ * @param expectedAudience - Expected audience (default: 'authenticated')
+ * @returns Verified JWT payload (Supabase or Firebase)
+ * @throws Error if token is invalid, expired, or signature verification fails
+ */
+export async function verifyUnifiedJWT(
+  token: string,
+  expectedAudience: string = 'authenticated'
+): Promise<UnifiedJWTPayload> {
+  const startTime = Date.now();
+  
+  // Detect token type and route appropriately
+  const detection = detectTokenType(token);
+  
+  logAuthEvent('info', 'Token detection completed', {
+    algorithm: detection.algorithm,
+    provider: detection.provider,
+    isAnonKey: detection.isAnonKey,
+    tokenPrefix: token.substring(0, 20) + '...'
+  });
+  
+  // SECURITY: Explicit anon key rejection
+  if (detection.isAnonKey) {
+    logAuthEvent('error', 'Anon key detected and rejected', {
+      provider: detection.provider,
+      algorithm: detection.algorithm,
+      tokenPrefix: token.substring(0, 20) + '...',
+      environment: process.env.NODE_ENV
+    });
+    throw new Error('SECURITY: Anon key cannot be used for user authentication');
+  }
+  
+  // Route to appropriate verification method
+  if (detection.algorithm === 'HS256' && detection.provider === 'supabase') {
+    return await verifySupabaseHS256(token, expectedAudience);
+  } else if (detection.algorithm === 'RS256' && detection.provider === 'firebase') {
+    return await verifyFirebaseRS256(token);
+  } else {
+    throw new Error(`Unsupported token type: ${detection.algorithm} from ${detection.provider}`);
+  }
+}
+
+/**
+ * Supabase HS256 JWT verification (primary method)
+ * 
+ * @param token - The JWT token to verify
+ * @param expectedAudience - Expected audience (default: 'authenticated')
+ * @returns Verified Supabase JWT payload
+ * @throws Error if token is invalid, expired, or signature verification fails
+ */
+export async function verifySupabaseHS256(
+  token: string,
+  expectedAudience: string = 'authenticated'
+): Promise<SupabaseJWTPayload> {
+  const startTime = Date.now();
+  
+  logAuthEvent('info', 'Starting Supabase HS256 JWT verification', {
+    audience: expectedAudience,
+    tokenPrefix: token.substring(0, 20) + '...'
+  });
+  
+  // Get environment configuration
+  const config = getEnvironmentConfig();
+  
+  if (!config.jwtSecret) {
+    const env = config.isDevelopment ? 'development' : 'production';
+    throw new Error(`Missing Supabase JWT secret for ${env} environment`);
+  }
+  
+  if (!config.supabaseUrl) {
+    const env = config.isDevelopment ? 'development' : 'production';
+    throw new Error(`Missing Supabase URL for ${env} environment`);
+  }
+  
+  try {
+    // Create secret key for HS256 verification
+    const secret = new TextEncoder().encode(config.jwtSecret);
+    
+    // Verify JWT with proper claims validation
+    const { payload } = await jwtVerify(token, secret, {
+      issuer: `${config.supabaseUrl}/auth/v1`,
+      audience: expectedAudience,
+      algorithms: ['HS256'],
+      clockTolerance: 30 // 30 seconds clock skew tolerance
+    });
+    
+    logAuthEvent('info', 'Supabase HS256 token verified successfully', {
+      sub: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      aud: payload.aud
+    });
+    
+    // Convert to typed payload
+    const supabasePayload: SupabaseJWTPayload = {
+      ...payload,
+      sub: payload.sub!,
+      email: payload.email as string || '',
+      email_verified: !!payload.email_confirmed_at
+    };
+    
+    // Final validation of required fields
+    if (!supabasePayload.sub) {
+      throw new Error('Invalid Supabase token: missing subject (sub)');
+    }
+    
+    if (!supabasePayload.email) {
+      throw new Error('Invalid Supabase token: missing email');
+    }
+    
+    // Final security check - ensure role is authenticated
+    if (supabasePayload.role !== 'authenticated') {
+      throw new Error(`Invalid authentication: expected 'authenticated' role, got '${supabasePayload.role}'`);
+    }
+    
+    const duration = Date.now() - startTime;
+    logAuthEvent('info', 'Supabase HS256 JWT verification completed successfully', {
+      sub: supabasePayload.sub,
+      email: supabasePayload.email,
+      role: supabasePayload.role,
+      duration: `${duration}ms`
+    });
+    
+    return supabasePayload;
+    
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logAuthEvent('error', 'Supabase HS256 JWT verification failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: `${duration}ms`,
+      tokenPrefix: token.substring(0, 20) + '...'
+    });
+    throw error;
+  }
+}
+
+/**
+ * Firebase RS256 JWT verification (fallback method)
+ * 
+ * @param token - The Firebase JWT token to verify
+ * @returns Verified Firebase JWT payload
+ * @throws Error if token is invalid, expired, or signature verification fails
+ */
+export async function verifyFirebaseRS256(token: string): Promise<FirebaseJWTPayload> {
+  const startTime = Date.now();
+  
+  logAuthEvent('info', 'Starting Firebase RS256 JWT verification', {
+    tokenPrefix: token.substring(0, 20) + '...'
+  });
+  
+  try {
+    // Firebase uses RS256 with JWKS (public key cryptography)
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    if (!projectId) {
+      throw new Error('Missing Firebase project ID for RS256 verification');
+    }
+    
+    // Create JWKS client for Firebase
+    const JWKS = createRemoteJWKSet(new URL(`https://www.googleapis.com/oauth2/v3/certs`));
+    
+    // Verify JWT with Firebase JWKS
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: `https://securetoken.google.com/${projectId}`,
+      audience: projectId,
+      algorithms: ['RS256'],
+      clockTolerance: 30
+    });
+    
+    logAuthEvent('info', 'Firebase RS256 token verified successfully', {
+      sub: payload.sub,
+      email: payload.email,
+      email_verified: payload.email_verified,
+      aud: payload.aud
+    });
+    
+    // Convert to typed Firebase payload
+    const firebasePayload: FirebaseJWTPayload = {
+      ...payload,
+      sub: payload.sub!,
+      email: payload.email as string || '',
+      email_verified: !!payload.email_verified,
+      uid: payload.sub!
+    };
+    
+    // Validate required Firebase fields
+    if (!firebasePayload.sub || !firebasePayload.uid) {
+      throw new Error('Invalid Firebase token: missing subject (sub/uid)');
+    }
+    
+    const duration = Date.now() - startTime;
+    logAuthEvent('info', 'Firebase RS256 JWT verification completed successfully', {
+      sub: firebasePayload.sub,
+      email: firebasePayload.email,
+      email_verified: firebasePayload.email_verified,
+      duration: `${duration}ms`
+    });
+    
+    return firebasePayload;
+    
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logAuthEvent('error', 'Firebase RS256 JWT verification failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: `${duration}ms`,
+      tokenPrefix: token.substring(0, 20) + '...'
+    });
+    throw error;
+  }
+}
+
+/**
+ * Optional unified JWT verification - returns null instead of throwing
+ */
+export async function verifyUnifiedJWTOptional(
+  token: string,
+  expectedAudience: string = 'authenticated'
+): Promise<UnifiedJWTPayload | null> {
+  try {
+    return await verifyUnifiedJWT(token, expectedAudience);
+  } catch (error) {
+    logAuthEvent('warn', 'Optional unified JWT verification failed (continuing anyway)', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return null;
+  }
+}
+
+/**
+ * Legacy Supabase-only verification (for backward compatibility)
+ */
+export async function verifySupabaseJWT(
+  token: string,
+  expectedAudience: string = 'authenticated'
+): Promise<SupabaseJWTPayload> {
+  return await verifySupabaseHS256(token, expectedAudience);
+}
+
+/**
+ * Optional Supabase JWT verification - returns null instead of throwing
+ */
+export async function verifySupabaseJWTOptional(
+  token: string,
+  expectedAudience: string = 'authenticated'
+): Promise<SupabaseJWTPayload | null> {
+  try {
+    return await verifySupabaseJWT(token, expectedAudience);
+  } catch (error) {
+    logAuthEvent('warn', 'Optional Supabase JWT verification failed (continuing anyway)', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return null;
+  }
+}
+
+/**
+ * Get Supabase URL for the current environment
+ */
+export function getSupabaseUrl(): string {
+  const config = getEnvironmentConfig();
+  if (!config.supabaseUrl) {
+    const env = config.isDevelopment ? 'development' : 'production';
+    throw new Error(`Missing Supabase URL for ${env} environment`);
+  }
+  return config.supabaseUrl;
+}
+
+// Enhanced compatibility exports
+export const verifyJWT = verifyUnifiedJWT; // Primary export now uses unified verification
+export const verifyJWTOptional = verifyUnifiedJWTOptional;
+
+// Legacy compatibility for existing code
+export const verifySupabaseJWTLegacy = verifySupabaseJWT;
+export const verifySupabaseJWTOptionalLegacy = verifySupabaseJWTOptional;
+
+/**
+ * Get authentication provider from token (helper function)
+ */
+export function getTokenProvider(token: string): 'supabase' | 'firebase' | 'unknown' {
+  const detection = detectTokenType(token);
+  return detection.provider;
+}
+
+/**
+ * Check if token is valid without full verification (helper function)
+ */
+export function isValidTokenFormat(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    return parts.length === 3 && !isAnonKey(token);
+  } catch {
+    return false;
+  }
+}
+
+// Legacy compatibility export (keeping for backward compatibility)
+export type { UnifiedJWTPayload };

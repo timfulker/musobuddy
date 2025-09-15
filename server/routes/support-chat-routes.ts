@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { aiOrchestrator, AIRequest, TaskConfig } from '../services/ai-orchestrator';
 import { ValidatorFactory, ScorerFactory } from '../services/ai-validators';
 import { storage } from '../core/storage';
@@ -167,7 +167,7 @@ export function registerSupportChatRoutes(app: Express) {
   console.log('💬 Setting up support chat routes...');
 
   // Main support chat endpoint
-  app.post('/api/support-chat', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/support-chat', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       const { message } = req.body;
@@ -215,7 +215,7 @@ export function registerSupportChatRoutes(app: Express) {
   });
 
   // Support email endpoint
-  app.post('/api/support/email', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res) => {
+  app.post('/api/support/email', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { subject, message } = req.body;
       const userId = req.user?.uid;

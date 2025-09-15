@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticateWithSupabase, type SupabaseAuthenticatedRequest } from '../middleware/supabase-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth';
 import { storage } from '../core/storage';
 
 export function registerMapsRoutes(app: Express) {
@@ -16,7 +16,7 @@ export function registerMapsRoutes(app: Express) {
   });
 
   // Places search endpoint using new Places API Text Search
-  app.post('/api/maps/places-search', authenticateWithSupabase, async (req: SupabaseAuthenticatedRequest, res: Response) => {
+  app.post('/api/maps/places-search', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { query } = req.body;
       
