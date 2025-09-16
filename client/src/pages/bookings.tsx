@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign, Mail, CreditCard } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock, MapPin, Filter, X, ChevronDown, Settings, Paperclip, MessageCircle, Edit, Eye, Reply, ThumbsUp, Shield, XCircle, MessageSquare, DollarSign, Mail, CreditCard, Users } from "lucide-react";
 import { useLocation, Link, useRoute } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -34,6 +34,7 @@ import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
 import WorkflowStageMeter from "@/components/workflow-stage-meter";
+import { BandContextMenu } from "@/components/BandContextMenu";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -126,6 +127,29 @@ export default function UnifiedBookings() {
     return {};
   };
 
+  // Handler for right-click context menu
+  const handleBookingRightClick = (e: React.MouseEvent, booking: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setBandContextMenu({
+      isVisible: true,
+      bookingId: booking.id,
+      currentBandId: booking.bandId || null,
+      position: { x: e.clientX, y: e.clientY }
+    });
+  };
+
+  // Close band context menu
+  const closeBandContextMenu = () => {
+    setBandContextMenu({
+      isVisible: false,
+      bookingId: null,
+      currentBandId: null,
+      position: { x: 0, y: 0 }
+    });
+  };
+
   // View mode state - Default to list view for better UX
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('bookingViewMode') as ViewMode) || 'list';
@@ -181,6 +205,19 @@ export default function UnifiedBookings() {
   // Individual booking deletion states
   const [selectedBookingForDeletion, setSelectedBookingForDeletion] = useState<any>(null);
   const [singleDeleteDialogOpen, setSingleDeleteDialogOpen] = useState(false);
+
+  // Band context menu state
+  const [bandContextMenu, setBandContextMenu] = useState<{
+    isVisible: boolean;
+    bookingId: number | null;
+    currentBandId: number | null;
+    position: { x: number; y: number };
+  }>({
+    isVisible: false,
+    bookingId: null,
+    currentBandId: null,
+    position: { x: 0, y: 0 }
+  });
 
   // Hover card portal states
   const [hoveredBooking, setHoveredBooking] = useState<any>(null);
@@ -843,8 +880,8 @@ export default function UnifiedBookings() {
   // Bulk status change mutation
   const statusChangeMutation = useMutation({
     mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
-      const promises = bookingIds.map(id => 
-        apiRequest(`/api/bookings/${id}`, { 
+      const promises = bookingIds.map(id =>
+        apiRequest(`/api/bookings/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status })
@@ -866,6 +903,35 @@ export default function UnifiedBookings() {
       toast({
         title: "Error",
         description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk band assignment mutation
+  const bandAssignMutation = useMutation({
+    mutationFn: async ({ bookingIds, bandId }: { bookingIds: number[], bandId: number | null }) => {
+      const promises = bookingIds.map(id =>
+        apiRequest(`/api/bookings/${id}/band`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bandId })
+        })
+      );
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings([]);
+      toast({
+        title: "Success",
+        description: `${selectedBookings.length} booking(s) assigned to band successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to assign band to bookings",
         variant: "destructive",
       });
     },
@@ -1066,7 +1132,17 @@ export default function UnifiedBookings() {
   };
 
   // Get status color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, bandId?: number | null, showBandColors = true) => {
+    // Check if band colors are enabled and event has a band
+    if (showBandColors && bandId && settings?.showBandColors !== false) {
+      const band = getBandById(bandId);
+      if (band) {
+        // Use band color for calendar events with increased opacity
+        return ''; // Return empty string so we can use inline style
+      }
+    }
+
+    // Fall back to status colors
     switch (status) {
       case 'new': return 'bg-blue-100 text-blue-800';
       case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
@@ -1076,6 +1152,34 @@ export default function UnifiedBookings() {
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-blue-100 text-blue-800';
     }
+  };
+
+  // Helper to get calendar event style for band colors
+  const getCalendarEventStyle = (bandId: number | null, showBandColors = true) => {
+    if (showBandColors && bandId && settings?.showBandColors !== false) {
+      const band = getBandById(bandId);
+      if (band) {
+        // Create lighter version for background and darker for text
+        const hexToRgb = (hex: string) => {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+          } : null;
+        };
+
+        const rgb = hexToRgb(band.color);
+        if (rgb) {
+          return {
+            backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`,
+            color: band.color,
+            borderLeft: `3px solid ${band.color}`
+          };
+        }
+      }
+    }
+    return {};
   };
 
   // Check if a date is blocked
@@ -1706,8 +1810,8 @@ export default function UnifiedBookings() {
                         <span className="text-sm font-medium text-blue-700">
                           {selectedBookings.length} booking(s) selected
                         </span>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setSelectedBookings([])}
                         >
@@ -1715,11 +1819,55 @@ export default function UnifiedBookings() {
                         </Button>
                       </div>
                       <div className="flex items-center gap-2">
+                        {/* Band Assignment Dropdown */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Users className="w-4 h-4 mr-2" />
+                              Assign Band
+                              <ChevronDown className="w-4 h-4 ml-2" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => bandAssignMutation.mutate({
+                                bookingIds: selectedBookings,
+                                bandId: null
+                              })}
+                              disabled={bandAssignMutation.isPending}
+                            >
+                              <span className="text-gray-600">No Band</span>
+                            </DropdownMenuItem>
+                            {bands.map((band: any) => (
+                              <DropdownMenuItem
+                                key={band.id}
+                                onClick={() => bandAssignMutation.mutate({
+                                  bookingIds: selectedBookings,
+                                  bandId: band.id
+                                })}
+                                disabled={bandAssignMutation.isPending}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-sm"
+                                    style={{ backgroundColor: band.color }}
+                                  />
+                                  <span>{band.name}</span>
+                                  {band.isDefault && (
+                                    <span className="text-xs text-gray-500">(Default)</span>
+                                  )}
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Change Status Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm">
                               Change Status
-                              <MoreHorizontal className="w-4 h-4 ml-2" />
+                              <ChevronDown className="w-4 h-4 ml-2" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
@@ -1916,13 +2064,14 @@ export default function UnifiedBookings() {
                                   {visibleGroupBookings.map((groupBooking: any, index: number) => {
                                     renderedBookings.add(groupBooking.id);
                                     return (
-                                      <Card 
-                                        key={groupBooking.id} 
+                                      <Card
+                                        key={groupBooking.id}
                                         data-booking-id={groupBooking.id}
                                         className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status, groupBooking.bandId, settings?.showBandColors)} ${
                                           selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                                         } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
                                         style={settings?.showBandColors && groupBooking.bandId ? getBandBorderStyle(groupBooking.bandId) : {}}
+                                        onContextMenu={(e) => handleBookingRightClick(e, groupBooking)}
                                       >
                                         <CardContent className="p-6">
                                           <div className="flex items-start justify-between">
@@ -3366,12 +3515,13 @@ export default function UnifiedBookings() {
                             <div
                               key={eventIndex}
                               className={`text-xs p-1 rounded truncate font-medium cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-sm ${
-                                day.isCurrentMonth 
-                                  ? getStatusColor(event.status || 'new')
+                                day.isCurrentMonth
+                                  ? getStatusColor(event.status || 'new', booking?.bandId, settings?.showBandColors)
                                   : 'bg-gray-300 text-gray-600'
                               } ${
                                 highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
                               }`}
+                              style={day.isCurrentMonth ? getCalendarEventStyle(booking?.bandId, settings?.showBandColors) : {}}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (booking) {
@@ -3626,6 +3776,15 @@ export default function UnifiedBookings() {
         </div>,
         document.body
       )}
+
+      {/* Band Context Menu */}
+      <BandContextMenu
+        bookingId={bandContextMenu.bookingId!}
+        currentBandId={bandContextMenu.currentBandId}
+        position={bandContextMenu.position}
+        isVisible={bandContextMenu.isVisible}
+        onClose={closeBandContextMenu}
+      />
 
       {/* Mobile Navigation */}
       {!isDesktop && <MobileNav />}
