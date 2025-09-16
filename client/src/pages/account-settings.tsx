@@ -12,7 +12,7 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Lock, Eye, EyeOff, Loader2, Menu, User, Shield, CheckCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { apiRequest } from "@/lib/queryClient";
 
 // Password change form validation schema
 const passwordChangeSchema = z.object({
@@ -48,47 +48,43 @@ export default function AccountSettings() {
 
   const updatePassword = async (data: PasswordChangeForm) => {
     try {
-      // Guard clause: Ensure user email exists
-      if (!user?.email) {
-        throw new Error("User email not available. Please refresh the page or sign in again.");
-      }
+      console.log('🔐 [PASSWORD-UPDATE] Starting password update process via backend API');
 
-      console.log('🔐 [PASSWORD-UPDATE] Starting password update process');
-
-      // Step 1: Verify current password by attempting to sign in
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: data.currentPassword,
+      // Call backend API endpoint for password change
+      const response = await apiRequest('/api/auth/change-password', {
+        method: 'POST',
+        body: {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        }
       });
 
-      if (verifyError) {
-        console.error('❌ [PASSWORD-UPDATE] Current password verification failed:', verifyError);
-        if (verifyError.message.includes('Invalid login credentials')) {
-          throw new Error("Current password is incorrect. Please check your password and try again.");
-        }
-        throw new Error("Unable to verify current password. Please try again or contact support.");
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Password update failed');
       }
 
-      console.log('✅ [PASSWORD-UPDATE] Current password verified');
-
-      // Step 2: Update password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-
-      if (updateError) {
-        console.error('❌ [PASSWORD-UPDATE] Password update failed:', updateError);
-        if (updateError.message.includes('Password')) {
-          throw new Error("New password doesn't meet requirements. Please ensure it's at least 6 characters long.");
-        }
-        throw new Error("Unable to update password. Please try again or contact support.");
-      }
-
-      console.log('✅ [PASSWORD-UPDATE] Password updated successfully');
+      console.log('✅ [PASSWORD-UPDATE] Password updated successfully via backend');
       return true;
     } catch (error: any) {
       console.error("❌ [PASSWORD-UPDATE] Error:", error);
-      throw error;
+      
+      // Extract meaningful error message from backend response
+      if (error.message.includes('Current password is incorrect')) {
+        throw new Error("Current password is incorrect. Please check your password and try again.");
+      }
+      
+      if (error.message.includes('Password must be at least')) {
+        throw new Error("New password doesn't meet requirements. Please ensure it's at least 6 characters long.");
+      }
+      
+      if (error.message.includes('session has expired')) {
+        throw new Error("Your session has expired. Please sign in again.");
+      }
+      
+      // Return the backend error message or a generic fallback
+      throw new Error(error.message || "Unable to update password. Please try again or contact support.");
     }
   };
 
@@ -113,7 +109,7 @@ export default function AccountSettings() {
         return;
       }
 
-      console.log('🔐 [PASSWORD-FORM] Starting password update for:', user.email);
+      console.log('🔐 [PASSWORD-FORM] Starting password update via backend API');
       await updatePassword(data);
       
       toast({

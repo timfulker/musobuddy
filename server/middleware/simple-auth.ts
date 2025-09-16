@@ -17,14 +17,27 @@ export interface AuthenticatedRequest extends Request {
     isAdmin: boolean;
     tier: string;
     phoneVerified: boolean;
+    supabaseUid: string; // Add Supabase user ID for admin operations
+  };
+  supabaseProject?: {
+    url: string;
+    anonKey: string;
   };
 }
 
-// Project mapping
+// Project mapping - using proper server-side env vars
 const PROJECT_CONFIGS = {
   [process.env.SUPABASE_URL_DEV!]: process.env.SUPABASE_ANON_KEY_DEV!,
   [process.env.SUPABASE_URL_PROD!]: process.env.SUPABASE_ANON_KEY_PROD!,
 };
+
+// Validate env vars at startup
+if (!process.env.SUPABASE_URL_DEV || !process.env.SUPABASE_ANON_KEY_DEV) {
+  throw new Error('Missing required DEV environment variables: SUPABASE_URL_DEV, SUPABASE_ANON_KEY_DEV');
+}
+if (!process.env.SUPABASE_URL_PROD || !process.env.SUPABASE_ANON_KEY_PROD) {
+  throw new Error('Missing required PROD environment variables: SUPABASE_URL_PROD, SUPABASE_ANON_KEY_PROD');
+}
 
 // Debug environment config on startup
 console.log('🔧 [SIMPLE-AUTH] Environment Config:');
@@ -66,27 +79,67 @@ export const simpleAuth = async (
   try {
     // Parse token to get project URL from iss claim
     const issUrl = parseTokenIss(token);
-    console.log(`🔍 [SIMPLE-AUTH] Token iss: ${issUrl}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 [SIMPLE-AUTH] Token iss: ${issUrl}`);
+    }
     
     // Select correct Supabase client based on token's project
     const anonKey = issUrl ? PROJECT_CONFIGS[issUrl] : null;
     if (!anonKey) {
-      console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
+      }
       return res.status(401).json({ error: 'Invalid project' });
     }
 
     const supabase = createClient(issUrl!, anonKey);
-    console.log(`✅ [SIMPLE-AUTH] Using project: ${issUrl}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ [SIMPLE-AUTH] Using project: ${issUrl}`);
+    }
 
     // Use Supabase's built-in user verification
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user?.email) {
-      console.log(`❌ [SIMPLE-AUTH] Supabase getUser failed:`, error?.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`❌ [SIMPLE-AUTH] Supabase getUser failed:`, error?.message);
+      }
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    console.log(`🔍 [SIMPLE-AUTH] Supabase user verified: ${user.email}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 [SIMPLE-AUTH] Supabase user verified: ${user.email}`);
+    }
+
+    // SECURITY: Check if session was revoked after password change
+    if (user.user_metadata?.session_revoked_at) {
+      try {
+        // Parse JWT to get issued at timestamp
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+          const tokenIssuedAt = new Date(payload.iat * 1000); // JWT iat is in seconds
+          const sessionRevokedAt = new Date(user.user_metadata.session_revoked_at);
+          
+          if (tokenIssuedAt < sessionRevokedAt) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`🔒 [SIMPLE-AUTH] Session revoked - token issued at ${tokenIssuedAt.toISOString()}, revoked at ${sessionRevokedAt.toISOString()}`);
+            }
+            return res.status(401).json({ 
+              error: 'Session expired due to security update',
+              code: 'SESSION_REVOKED'
+            });
+          } else if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ [SIMPLE-AUTH] Token is newer than revocation timestamp - allowing request`);
+          }
+        }
+      } catch (parseError) {
+        // If we can't parse the token timestamp, allow the request but log warning
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`⚠️ [SIMPLE-AUTH] Failed to parse token timestamp for revocation check:`, parseError);
+        }
+      }
+    }
 
     // Get user from database (maintain compatibility with all lookup methods)  
     let dbUser;
@@ -140,10 +193,19 @@ export const simpleAuth = async (
       lastName: dbUser.lastName || '',
       isAdmin: dbUser.isAdmin || false,
       tier: dbUser.tier || 'free',
-      phoneVerified: dbUser.phoneVerified || false
+      phoneVerified: dbUser.phoneVerified || false,
+      supabaseUid: user.id // Include Supabase UID for admin operations
+    };
+    
+    // Include project info for admin operations
+    req.supabaseProject = {
+      url: issUrl!,
+      anonKey: anonKey
     };
 
-    console.log(`✅ [SIMPLE-AUTH] Authentication successful for: ${dbUser.email}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ [SIMPLE-AUTH] Authentication successful for: ${dbUser.email}`);
+    }
     next();
   } catch (error) {
     console.error('❌ [SIMPLE-AUTH] Authentication error:', error);

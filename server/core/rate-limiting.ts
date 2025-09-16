@@ -96,4 +96,25 @@ export const passwordResetRateLimit = rateLimit({
   legacyHeaders: false
 });
 
-console.log('🛡️ Rate limiting configured - Login: 5/min, SMS: 3/hour, Signup: 10/hour, API: 100/min');
+// Password change protection - prevents credential stuffing attacks
+export const passwordChangeRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 password change attempts per hour per IP
+  message: {
+    error: 'Too many password change attempts. Please wait an hour before trying again.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Rate limit by IP + user ID for better security
+    const userId = (req as any).user?.id || 'anonymous';
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    return `${ip}:${userId}`;
+  },
+  skip: (req) => {
+    // Skip rate limiting for admin in development
+    return process.env.NODE_ENV === 'development' && (req as any).user?.isAdmin;
+  }
+});
+
+console.log('🛡️ Rate limiting configured - Login: 5/min, SMS: 3/hour, Signup: 10/hour, API: 100/min, Password Change: 10/hour');

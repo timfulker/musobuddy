@@ -21,6 +21,7 @@ import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
 import { registerCalendarImportRoutes } from "./calendar-import-routes";
 import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
+import { registerPasswordRoutes } from "./password-routes";
 import { registerNotificationRoutes } from "./notification-routes";
 import { messageNotificationRoutes } from "./message-notification-routes";
 import { setupCommunicationRoutes } from "./communication-routes";
@@ -44,6 +45,15 @@ export async function registerRoutes(app: Express) {
     console.log('✅ [CENTRAL-ROUTER] Authentication routes registered successfully');
   } catch (error) {
     console.error('❌ [CENTRAL-ROUTER] Failed to register auth routes:', error);
+  }
+  
+  // Register password management routes (after auth routes)
+  try {
+    console.log('🔐 [CENTRAL-ROUTER] Registering password management routes...');
+    registerPasswordRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Password routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register password routes:', error);
   }
   
   // STRIPE INTEGRATION REMOVED - Will be reimplemented
