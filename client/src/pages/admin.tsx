@@ -95,11 +95,11 @@ export default function AdminPanel() {
     firstName: '',
     lastName: '',
     password: '',
-    firebaseUid: '',
     isAdmin: false,
     isAssigned: false,
     isBetaTester: false,
-    bypassPayment: false
+    bypassPayment: false,
+    forceTestMode: false
   });
   const [editUserForm, setEditUserForm] = useState({
     email: '',
@@ -179,11 +179,10 @@ export default function AdminPanel() {
         firstName: '',
         lastName: '',
         password: '',
-        firebaseUid: '',
-        tier: 'free',
         isAdmin: false,
         isBetaTester: false,
-        bypassPayment: false
+        bypassPayment: false,
+        forceTestMode: false
       });
       toast({
         title: "User created successfully", 
@@ -869,15 +868,6 @@ export default function AdminPanel() {
                                   placeholder="Enter temporary password for user"
                                   value={newUserForm.password}
                                   onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
-                                />
-                              </div>
-                              <div className="grid gap-2">
-                                <Label htmlFor="firebaseUid">Firebase UID (Optional)</Label>
-                                <Input
-                                  id="firebaseUid"
-                                  placeholder="Firebase User ID - leave empty if creating Firebase account later"
-                                  value={newUserForm.firebaseUid}
-                                  onChange={(e) => setNewUserForm(prev => ({ ...prev, firebaseUid: e.target.value }))}
                                 />
                               </div>
                               <div className="space-y-3">

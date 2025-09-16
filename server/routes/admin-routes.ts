@@ -6,13 +6,17 @@ import { type Express } from 'express';
 import { storage } from '../core/storage';
 import { userStorage } from '../storage/user-storage';
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
-import { adminAuth } from '../core/firebase-admin';
+import { adminCreateUser } from '../core/supabase-admin';
 
 // Export the registration function for the routes/index.ts file
 export async function registerAdminRoutes(app: Express) {
   
 // Manual re-process selected bookings endpoint  
-app.post('/api/admin/reprocess-bookings', async (req, res) => {
+app.post('/api/admin/reprocess-bookings', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     const { bookingIds } = req.body;
     
@@ -195,7 +199,11 @@ app.post('/api/admin/reprocess-bookings', async (req, res) => {
 });
 
 // Get list of problematic bookings for review
-app.get('/api/admin/problematic-bookings', async (req, res) => {
+app.get('/api/admin/problematic-bookings', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     const allBookings = await storage.getAllBookings();
     
@@ -251,7 +259,11 @@ app.get('/api/admin/problematic-bookings', async (req, res) => {
 });
 
 // Link Firebase UID to existing database user
-app.post('/api/admin/link-firebase-user', async (req, res) => {
+app.post('/api/admin/link-firebase-user', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     const { email, firebaseUid } = req.body;
     
@@ -303,8 +315,13 @@ app.post('/api/admin/link-firebase-user', async (req, res) => {
   }
 });
 
-// Create new user endpoint for admin panel
-app.post('/api/admin/users', async (req, res) => {
+// Create new user endpoint for admin panel - CRITICAL SECURITY ENDPOINT
+app.post('/api/admin/users', authenticate, async (req: AuthenticatedRequest, res) => {
+  // SECURITY: Check admin permissions - CRITICAL to prevent privilege escalation
+  if (!req.user?.isAdmin) {
+    console.log(`🚫 [ADMIN] Non-admin user ${req.user?.email} attempted to create user - BLOCKED`);
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     const { 
       email, 
@@ -338,32 +355,33 @@ app.post('/api/admin/users', async (req, res) => {
       });
     }
     
-    let finalFirebaseUid = firebaseUid;
+    let supabaseUid = null;
     
-    // If no Firebase UID provided, create Firebase user automatically
-    if (!finalFirebaseUid) {
-      try {
-        console.log(`🔥 [ADMIN] Creating Firebase user for ${email}`);
-        const firebaseUser = await adminAuth.createUser({
-          email: email,
-          password: password,
-          emailVerified: true,  // Set to verified immediately
-          displayName: `${firstName} ${lastName}`
-        });
-        finalFirebaseUid = firebaseUser.uid;
-        console.log(`✅ [ADMIN] Created Firebase user ${finalFirebaseUid} for ${email}`);
-      } catch (firebaseError: any) {
-        console.error(`❌ [ADMIN] Failed to create Firebase user for ${email}:`, firebaseError.message);
-        return res.status(500).json({ 
-          error: `Failed to create Firebase user: ${firebaseError.message}` 
-        });
-      }
-    } else {
-      // If firebaseUid provided, check if it's already linked
-      const existingFirebaseUser = await storage.getUserByFirebaseUid(finalFirebaseUid);
-      if (existingFirebaseUser) {
+    // Create user in Supabase authentication
+    try {
+      console.log(`🏠 [ADMIN] Creating Supabase user for ${email}`);
+      const supabaseResult = await adminCreateUser(
+        email, 
+        password, 
+        firstName, 
+        lastName, 
+        isAdmin || false
+      );
+      supabaseUid = supabaseResult.supabaseUid;
+      console.log(`✅ [ADMIN] Created Supabase user ${supabaseUid} for ${email}`);
+    } catch (supabaseError: any) {
+      console.error(`❌ [ADMIN] Failed to create Supabase user for ${email}:`, supabaseError.message);
+      return res.status(500).json({ 
+        error: `Failed to create Supabase user: ${supabaseError.message}` 
+      });
+    }
+    
+    // Check if Supabase UID is already linked (safety check)
+    if (supabaseUid) {
+      const existingSupabaseUser = await storage.getUserBySupabaseUid(supabaseUid);
+      if (existingSupabaseUser) {
         return res.status(409).json({ 
-          error: `Firebase UID ${finalFirebaseUid} is already linked to another user: ${existingFirebaseUser.email}` 
+          error: `Supabase UID ${supabaseUid} is already linked to another user: ${existingSupabaseUser.email}` 
         });
       }
     }
@@ -383,7 +401,7 @@ app.post('/api/admin/users', async (req, res) => {
       firstName,
       lastName,
       password: hashedPassword,
-      firebaseUid: finalFirebaseUid || null,
+      supabaseUid: supabaseUid || null,
       tier: tier || 'free',
       isAdmin: isAdmin || false,
       isBetaTester: isBetaTester || false,
@@ -402,22 +420,8 @@ app.post('/api/admin/users', async (req, res) => {
     
     console.log(`✅ [ADMIN] Successfully created user ${email} (ID: ${userId})`);
     
-    // Set email verification to true in Firebase if UID is provided (only needed for existing users)
-    if (finalFirebaseUid && firebaseUid) {
-      // Only update if we linked to an existing Firebase user (not auto-created)
-      try {
-        await adminAuth.updateUser(finalFirebaseUid, {
-          emailVerified: true
-        });
-        console.log(`✅ [ADMIN] Email verification set to true for existing Firebase user ${finalFirebaseUid}`);
-        console.log(`🔗 [ADMIN] Firebase UID ${finalFirebaseUid} linked during creation`);
-      } catch (firebaseError: any) {
-        console.warn(`⚠️ [ADMIN] Failed to set email verification for Firebase user ${finalFirebaseUid}:`, firebaseError.message);
-        // Don't fail the entire operation if Firebase update fails
-      }
-    } else if (finalFirebaseUid && !firebaseUid) {
-      console.log(`🔗 [ADMIN] Auto-created Firebase user ${finalFirebaseUid} with email verification already enabled`);
-    }
+    // User was already created in Supabase with email verification enabled
+    console.log(`🔗 [ADMIN] Supabase user ${supabaseUid} created with email verification enabled`);
     
     res.json({
       success: true,
@@ -429,7 +433,7 @@ app.post('/api/admin/users', async (req, res) => {
         tier: newUser.tier,
         isAdmin: newUser.isAdmin,
         isBetaTester: newUser.isBetaTester,
-        firebaseUid: newUser.firebaseUid,
+        supabaseUid: newUser.supabaseUid,
         isAssigned: newUser.isAssigned,
         hasPaid: newUser.hasPaid,
         paymentBypassed: bypassPayment || false
@@ -446,7 +450,11 @@ app.post('/api/admin/users', async (req, res) => {
 });
 
 // Get all users endpoint for admin panel
-app.get('/api/admin/users', async (req, res) => {
+app.get('/api/admin/users', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     console.log('📋 [ADMIN] Fetching all users for admin panel');
     
@@ -480,7 +488,11 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 // Get admin overview endpoint
-app.get('/api/admin/overview', async (req, res) => {
+app.get('/api/admin/overview', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   try {
     console.log('📊 [ADMIN] Fetching admin overview');
     
@@ -509,25 +521,18 @@ app.get('/api/admin/overview', async (req, res) => {
 });
 
 // Update user endpoint
-app.patch('/api/admin/users/:userId', async (req, res) => {
+app.patch('/api/admin/users/:userId', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
-    // Extract authentication data from request (added by Firebase middleware)
-    const firebaseUser = (req as any).firebaseUser;
-    if (!firebaseUser) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    // Get the admin user making the request
-    const adminUser = await storage.getUserByFirebaseUid(firebaseUser.uid);
-    if (!adminUser || !adminUser.isAdmin) {
-      console.log(`❌ [ADMIN] Non-admin user ${firebaseUser.uid} attempted to update user`);
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      console.log(`❌ [ADMIN] Non-admin user ${req.user?.email} attempted to update user`);
       return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { userId } = req.params;
     const userData = req.body;
 
-    console.log(`📝 [ADMIN] Admin ${adminUser.email} updating user ${userId}:`, userData);
+    console.log(`📝 [ADMIN] Admin ${req.user.email} updating user ${userId}:`, userData);
 
     // Update the user
     await storage.updateUser(userId, userData);
