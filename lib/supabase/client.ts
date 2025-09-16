@@ -13,15 +13,15 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Frontend environment variables (VITE_ prefix required for browser access)
 const SUPABASE_URL = isDevelopment
   ? import.meta.env.VITE_SUPABASE_URL_DEV
-  : import.meta.env.VITE_SUPABASE_URL_PRODUCTION;
+  : import.meta.env.VITE_SUPABASE_URL_PROD;
 
 const SUPABASE_ANON_KEY = isDevelopment
   ? import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
-  : import.meta.env.VITE_SUPABASE_ANON_KEY_PRODUCTION;
+  : import.meta.env.VITE_SUPABASE_ANON_KEY_PROD;
 
 const SUPABASE_SERVICE_KEY = isDevelopment
   ? process.env.SUPABASE_SERVICE_KEY_DEV
-  : process.env.SUPABASE_SERVICE_KEY_PRODUCTION;
+  : process.env.SUPABASE_SERVICE_KEY_PROD;
 
 // Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
