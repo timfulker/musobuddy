@@ -2372,6 +2372,28 @@ export default function Settings() {
             </p>
           </div>
         </div>
+        {/* Save Button for Performance Settings Section */}
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
+          <Button
+            type="button"
+            onClick={() => savePerformance.mutate(form.getValues())}
+            disabled={savePerformance.isPending}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="button-save-performance"
+          >
+            {savePerformance.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Performance Settings
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
