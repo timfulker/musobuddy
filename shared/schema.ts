@@ -379,7 +379,7 @@ export const bookings = pgTable("bookings", {
 export const contracts = pgTable("contracts", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  bookingId: integer("booking_id").references(() => bookings.id), // Proper FK to booking
+  enquiryId: integer("enquiry_id").references(() => bookings.id), // FK to booking (enquiry)
   contractNumber: varchar("contract_number").notNull().unique(),
   
   // Client Information
@@ -896,7 +896,7 @@ export const contractsRelations = relations(contracts, ({ one, many }) => ({
     references: [users.id],
   }),
   booking: one(bookings, {
-    fields: [contracts.bookingId],
+    fields: [contracts.enquiryId],
     references: [bookings.id],
   }),
   invoices: many(invoices),
@@ -1034,7 +1034,7 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   signingUrlCreatedAt: true,
   signedAt: true,
 }).partial({
-  bookingId: true,
+  enquiryId: true,
   clientAddress: true,
   clientPhone: true,
   clientEmail: true,
