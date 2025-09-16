@@ -1249,6 +1249,8 @@ export type BookingWithRelations = Booking & {
   contracts: Contract[];
   invoices: Invoice[];
 };
+export type InsertBand = z.infer<typeof insertBandSchema>;
+export type Band = typeof bands.$inferSelect;
 export type InsertComplianceDocument = z.infer<typeof insertComplianceDocumentSchema>;
 export type ComplianceDocument = typeof complianceDocuments.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;

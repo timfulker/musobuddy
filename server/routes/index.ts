@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { registerContractRoutes } from "./contract-routes";
 import { registerInvoiceRoutes } from "./invoice-routes";
 import { registerBookingRoutes } from "./booking-routes";
+import { registerBandsRoutes } from "./bands-routes";
 import { registerSettingsRoutes } from "./settings-routes";
 import { registerAdminRoutes } from "./admin-routes";
 import { setupAdminDatabaseRoutes } from "./admin-database-routes";
@@ -86,7 +87,15 @@ export async function registerRoutes(app: Express) {
   } catch (error) {
     console.error('❌ [CENTRAL-ROUTER] Failed to register booking routes:', error);
   }
-  
+
+  try {
+    console.log('🎸 [CENTRAL-ROUTER] Registering bands routes...');
+    registerBandsRoutes(app);
+    console.log('✅ [CENTRAL-ROUTER] Bands routes registered successfully');
+  } catch (error) {
+    console.error('❌ [CENTRAL-ROUTER] Failed to register bands routes:', error);
+  }
+
   // Register document management routes with error handling
   try {
     console.log('📄 [CENTRAL-ROUTER] Registering document routes...');

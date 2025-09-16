@@ -14,6 +14,7 @@ import { ContractStorage } from '../storage/contract-storage';
 import { InvoiceStorage } from '../storage/invoice-storage';
 import { SettingsStorage } from '../storage/settings-storage';
 import { MiscStorage } from '../storage/misc-storage';
+import { BandsStorage } from '../storage/bands-storage';
 
 // Initialize storage modules
 const userStorage = new UserStorage();
@@ -22,6 +23,7 @@ const contractStorage = new ContractStorage();
 const invoiceStorage = new InvoiceStorage();
 const settingsStorage = new SettingsStorage();
 const miscStorage = new MiscStorage();
+const bandsStorage = new BandsStorage();
 
 export class Storage {
   // ===== USER METHODS =====
@@ -745,6 +747,35 @@ export class Storage {
 
   async getBookingDocument(documentId: number, userId: string) {
     return bookingStorage.getBookingDocument(documentId, userId);
+  }
+
+  // ===== BANDS METHODS =====
+  async getBandsByUserId(userId: string) {
+    return bandsStorage.getBandsByUserId(userId);
+  }
+
+  async getBandById(bandId: number, userId: string) {
+    return bandsStorage.getBandById(bandId, userId);
+  }
+
+  async createBand(band: any) {
+    return bandsStorage.createBand(band);
+  }
+
+  async updateBand(bandId: number, userId: string, updates: any) {
+    return bandsStorage.updateBand(bandId, userId, updates);
+  }
+
+  async deleteBand(bandId: number, userId: string) {
+    return bandsStorage.deleteBand(bandId, userId);
+  }
+
+  async getDefaultBand(userId: string) {
+    return bandsStorage.getDefaultBand(userId);
+  }
+
+  async updateBandOrder(userId: string, bandOrders: { id: number; displayOrder: number }[]) {
+    return bandsStorage.updateBandOrder(userId, bandOrders);
   }
 }
 
