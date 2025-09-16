@@ -21,17 +21,40 @@ function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string):
 let connectionString: string;
 
 if (isDevelopment) {
-  // Development: Use reliable DATABASE_URL (Neon) instead of problematic DEV Supabase
-  connectionString = process.env.DATABASE_URL;
-} else {
-  // Production: Use Supabase prod credentials (includes Replit deployment)
-  const supabaseUrl = process.env.SUPABASE_URL_PROD;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+  // Development: Use direct database connection string (no hostname construction)
+  // Priority: 1) SUPABASE_DB_URL_DEV (exact string from dashboard), 2) Constructed, 3) DATABASE_URL fallback
+  const directDbUrl = process.env.SUPABASE_DB_URL_DEV;
   
-  if (supabaseUrl && serviceKey) {
-    connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+  if (directDbUrl) {
+    connectionString = directDbUrl;
   } else {
-    throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production/deployment mode');
+    // Fallback: try to construct from Supabase credentials
+    const supabaseUrl = process.env.SUPABASE_URL_DEV;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY_DEV;
+    
+    if (supabaseUrl && serviceKey) {
+      connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+    } else {
+      // Final fallback to DATABASE_URL
+      connectionString = process.env.DATABASE_URL;
+    }
+  }
+} else {
+  // Production: Use direct database connection string (no hostname construction)
+  const directDbUrl = process.env.SUPABASE_DB_URL_PROD;
+  
+  if (directDbUrl) {
+    connectionString = directDbUrl;
+  } else {
+    // Fallback: try to construct from Supabase credentials
+    const supabaseUrl = process.env.SUPABASE_URL_PROD;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+    
+    if (supabaseUrl && serviceKey) {
+      connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+    } else {
+      throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production/deployment mode');
+    }
   }
 }
 
@@ -46,7 +69,19 @@ const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
 console.log(`🔍 Environment detection: REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}`);
 console.log(`🔍 Resolved mode: ${isDevelopment ? 'DEVELOPMENT' : 'DEPLOYMENT'}`);
-console.log(`🔍 Using connection from: ${isDevelopment ? 'SUPABASE_URL_DEV' : 'SUPABASE_URL_PROD'}`);
+
+// Report connection source for debugging
+const envPrefix = isDevelopment ? 'DEV' : 'PROD';
+const directDbVar = isDevelopment ? 'SUPABASE_DB_URL_DEV' : 'SUPABASE_DB_URL_PROD';
+const hasDirectUrl = isDevelopment ? process.env.SUPABASE_DB_URL_DEV : process.env.SUPABASE_DB_URL_PROD;
+
+if (hasDirectUrl) {
+  console.log(`🔍 Using direct connection: ${directDbVar}`);
+} else if (connectionString === process.env.DATABASE_URL) {
+  console.log(`🔍 Using fallback: DATABASE_URL`);
+} else {
+  console.log(`🔍 Using constructed connection: SUPABASE_URL_${envPrefix}`);
+}
 // Debug: Show connection string structure to verify format
 const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);
 if (parts) {
