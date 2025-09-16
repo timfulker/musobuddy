@@ -14,9 +14,9 @@ const isDevelopmentDomain = window.location.hostname === 'localhost' ||
                            window.location.hostname.includes('vercel.app') ||
                            window.location.hostname.includes('netlify.app')
 
-// In development mode, prioritize dev environment unless explicitly on production domain
-const isDevelopment = import.meta.env.DEV || (isDevelopmentDomain && !isProductionDomain)
-const isProduction = isProductionDomain || (!isDevelopment && import.meta.env.PROD)
+// Environment detection based on hostname only (ignore Vite build flags)
+const isDevelopment = isDevelopmentDomain && !isProductionDomain
+const isProduction = isProductionDomain || !isDevelopment
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
