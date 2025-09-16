@@ -5,12 +5,18 @@ import { createClient } from '@supabase/supabase-js'
  * Automatically switches between dev/prod based on environment variables
  */
 
-// Determine environment based on hostname (prioritize domain over build flags)
+// Determine environment based on hostname and build flags
 const isProductionDomain = window.location.hostname === 'www.musobuddy.com' || window.location.hostname === 'musobuddy.com'
-const isDevelopmentDomain = window.location.hostname === 'localhost' || window.location.hostname.includes('replit.dev')
+const isDevelopmentDomain = window.location.hostname === 'localhost' ||
+                           window.location.hostname.includes('replit.dev') ||
+                           window.location.hostname.includes('repl.co') ||
+                           window.location.hostname.includes('csb.app') ||
+                           window.location.hostname.includes('vercel.app') ||
+                           window.location.hostname.includes('netlify.app')
 
-const isDevelopment = isDevelopmentDomain || (!isProductionDomain && import.meta.env.DEV)
-const isProduction = isProductionDomain || (!isDevelopmentDomain && import.meta.env.PROD)
+// In development mode, prioritize dev environment unless explicitly on production domain
+const isDevelopment = import.meta.env.DEV || (isDevelopmentDomain && !isProductionDomain)
+const isProduction = isProductionDomain || (!isDevelopment && import.meta.env.PROD)
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
