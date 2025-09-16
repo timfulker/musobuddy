@@ -234,6 +234,20 @@ export const trialUsageTracking = pgTable("trial_usage_tracking", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Bands table for organizing bookings by band/project with custom colors
+export const bands = pgTable("bands", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 255 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull(), // Hex color code
+  isDefault: boolean("is_default").default(false),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_bands_user_id").on(table.userId),
+]);
+
 // Bookings table with snake_case columns, camelCase TypeScript properties via Drizzle mapping
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
@@ -260,7 +274,8 @@ export const bookings = pgTable("bookings", {
   // Event Classification
   gigType: varchar("gig_type"),
   eventType: varchar("event_type"),
-  
+  bandId: integer("band_id").references(() => bands.id, { onDelete: 'set null' }),
+
   // Financial Information
   fee: decimal("fee", { precision: 10, scale: 2 }),
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }),
