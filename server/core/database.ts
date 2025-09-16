@@ -8,14 +8,14 @@ const isDeployment = process.env.REPLIT_DEPLOYMENT === '1';
 const isDevelopment = !isDeployment;
 
 // Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
-function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
+function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string): string {
   const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
   if (!projectMatch) {
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  // Use Supabase Transaction Pooler format as shown in Supabase dashboard
-  return `postgresql://postgres:${serviceKey}@db.${projectId}.supabase.co:6543/postgres?sslmode=require`;
+  // Use Supabase Transaction Pooler format with correct database password
+  return `postgresql://postgres:${dbPassword}@db.${projectId}.supabase.co:6543/postgres?sslmode=require`;
 }
 
 let connectionString: string;
@@ -30,10 +30,10 @@ if (isDevelopment) {
   } else {
     // Fallback: try to construct from Supabase credentials
     const supabaseUrl = process.env.SUPABASE_URL_DEV;
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY_DEV;
+    const dbPassword = process.env.SUPABASE_DB_PASSWORD_DEV;
     
-    if (supabaseUrl && serviceKey) {
-      connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+    if (supabaseUrl && dbPassword) {
+      connectionString = buildSupabaseConnectionString(supabaseUrl, dbPassword);
     } else {
       // Final fallback to DATABASE_URL
       connectionString = process.env.DATABASE_URL;
@@ -48,19 +48,19 @@ if (isDevelopment) {
   } else {
     // Fallback: try to construct from Supabase credentials
     const supabaseUrl = process.env.SUPABASE_URL_PROD;
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+    const dbPassword = process.env.SUPABASE_DB_PASSWORD_PROD;
     
-    if (supabaseUrl && serviceKey) {
-      connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
+    if (supabaseUrl && dbPassword) {
+      connectionString = buildSupabaseConnectionString(supabaseUrl, dbPassword);
     } else {
-      throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production/deployment mode');
+      throw new Error('SUPABASE_URL_PROD and SUPABASE_DB_PASSWORD_PROD are required for production/deployment mode');
     }
   }
 }
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
-  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_SERVICE_KEY_DEV' : 'SUPABASE_URL_PROD + SUPABASE_SERVICE_KEY_PROD';
+  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_DB_PASSWORD_DEV' : 'SUPABASE_URL_PROD + SUPABASE_DB_PASSWORD_PROD';
   throw new Error(`${envVar} environment variables are required for ${envType} mode`);
 }
 
