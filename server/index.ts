@@ -1132,6 +1132,18 @@ app.get('/api/email-queue/status', async (req, res) => {
 
     await setupVite(app, server);
     
+    // Check if port is available before listening
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${port} is already in use. Attempting to use port ${port + 1}...`);
+        server.listen(port + 1, '0.0.0.0', () => {
+          console.log(`🚀 Development server running on http://0.0.0.0:${port + 1}`);
+        });
+      } else {
+        throw err;
+      }
+    });
+    
     server.listen(port, '0.0.0.0', () => {
       console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
     });
@@ -1141,8 +1153,18 @@ app.get('/api/email-queue/status', async (req, res) => {
     const { serveStaticFixed } = await import('./core/serve-static');
     serveStaticFixed(app);
     
-    app.listen(port, '0.0.0.0', () => {
+    // Check if port is available before listening
+    const server = app.listen(port, '0.0.0.0', () => {
       console.log(`🚀 Production server running on port ${port}`);
+    });
+    
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${port} is already in use in production. This requires manual intervention.`);
+        process.exit(1);
+      } else {
+        throw err;
+      }
     });
   }
 }
