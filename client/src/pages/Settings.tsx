@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Palette, Receipt, FileText, Plus, X, Shield, Sparkles, Upload, Download, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Palette, Receipt, FileText, Plus, X, Shield, Sparkles, Upload, Download, AlertTriangle, CheckCircle, Clock, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ import { getContrastTextColor, getThemeTextColor } from "@/lib/colorUtils";
 
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
+import { BandManager } from '@/components/BandManager';
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
@@ -562,6 +563,12 @@ export default function Settings() {
       }
     },
     {
+      id: 'bands',
+      label: 'Bands & Projects',
+      icon: Users,
+      checkCompletion: () => true // Always considered complete
+    },
+    {
       id: 'templates',
       label: 'Templates',
       icon: FileText,
@@ -625,6 +632,8 @@ export default function Settings() {
         return renderWidgetSection();
       case 'themes':
         return renderThemesSection();
+      case 'bands':
+        return renderBandsSection();
       case 'templates':
         return renderTemplatesSection();
       case 'compliance':
@@ -2603,6 +2612,8 @@ export default function Settings() {
       </CardContent>
     </Card>
   );
+
+  const renderBandsSection = () => <BandManager />;
 
   const renderTemplatesSection = () => (
     <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">

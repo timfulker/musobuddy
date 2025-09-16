@@ -79,6 +79,7 @@ const fullBookingSchema = z.object({
   encoreAllowed: z.boolean().optional(),
   encoreSuggestions: z.string().optional(),
   what3words: z.string().optional(),
+  bandId: z.number().optional(),
 });
 
 type FullBookingFormData = z.infer<typeof fullBookingSchema>;
@@ -137,6 +138,12 @@ export default function NewBookingPage({
   // Get existing bookings for enquiry auto-fill (only for musicians, not clients)
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
+    enabled: !clientMode, // Skip for client mode
+  });
+
+  // Get user's bands (only for musicians, not clients)
+  const { data: bands = [] } = useQuery({
+    queryKey: ['/api/bands'],
     enabled: !clientMode, // Skip for client mode
   });
   
@@ -1255,8 +1262,57 @@ export default function NewBookingPage({
                       )}
                     />
                   </div>
+
+                  {/* Band Selection - Only for musicians, not clients */}
+                  {!clientMode && (
+                    <div className="mt-4">
+                      <FormField
+                        control={form.control}
+                        name="bandId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                              <Users className="w-4 h-4" />
+                              Band / Project
+                            </FormLabel>
+                            <Select
+                              value={field.value?.toString() || ""}
+                              onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20">
+                                  <SelectValue placeholder="Select band or project" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {bands.map((band: any) => (
+                                  <SelectItem key={band.id} value={band.id.toString()}>
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className="w-3 h-3 rounded-sm"
+                                        style={{ backgroundColor: band.color }}
+                                      />
+                                      {band.name}
+                                      {band.isDefault && (
+                                        <span className="text-xs text-muted-foreground">(Default)</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription className="text-xs">
+                              Organize your bookings by band or project for better tracking
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
-                
+
                 {/* Venue Information */}
                 <div>
                   <h3 className="text-md font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-1">

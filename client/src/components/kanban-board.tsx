@@ -101,6 +101,11 @@ export default function ActionableEnquiries() {
     staleTime: 30000, // Consider data stale after 30 seconds
   });
 
+  // Get user's bands for color coding
+  const { data: bands = [] } = useQuery({
+    queryKey: ['/api/bands'],
+  });
+
   // Fetch conflicts data for conflict indicators
   const { data: conflicts = [] } = useQuery({
     queryKey: ['/api/conflicts'],
@@ -229,9 +234,24 @@ export default function ActionableEnquiries() {
 
   const renderEnquiryCard = (enquiry: any, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate?.toString() || '');
-    
-    // Clean card styling - no color overlays, just left border (matching booking page)
+
+    // Helper to get band by ID
+    const getBandById = (bandId: number | null) => {
+      if (!bandId) return null;
+      return bands.find((band: any) => band.id === bandId);
+    };
+
+    // Clean card styling - band colors take priority over status colors
     const getCardStyling = () => {
+      // If enquiry has a band, use band color for the border
+      if (enquiry.bandId) {
+        const band = getBandById(enquiry.bandId);
+        if (band) {
+          return 'border-l-4'; // Use 4px border for band colors
+        }
+      }
+
+      // Fall back to status colors
       switch(enquiry.status?.toLowerCase()) {
         case 'new':
         case 'enquiry':
@@ -254,14 +274,26 @@ export default function ActionableEnquiries() {
           return 'border-l-gray-300';
       }
     };
+
+    // Get band border style
+    const getBandBorderStyle = () => {
+      if (enquiry.bandId) {
+        const band = getBandById(enquiry.bandId);
+        if (band) {
+          return { borderLeftColor: band.color };
+        }
+      }
+      return {};
+    };
     
     // Get conflicts for this enquiry
     const enquiryConflicts = conflictsByBookingId[enquiry.id] || [];
 
     return (
-      <Card 
-        key={enquiry.id} 
+      <Card
+        key={enquiry.id}
         className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer relative`}
+        style={getBandBorderStyle()}
         onClick={() => setLocation(`/bookings?view=calendar&highlight=${enquiry.id}`)}
         onDoubleClick={() => setLocation(`/new-booking?edit=${enquiry.id}`)}
       >
@@ -295,6 +327,18 @@ export default function ActionableEnquiries() {
                       <div className="flex items-center">
                         <User className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">{enquiry.clientName}</span>
+                        {enquiry.bandId && (() => {
+                          const band = getBandById(enquiry.bandId);
+                          return band ? (
+                            <span className="ml-2 inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: band.color }}
+                              />
+                              {band.name}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     )}
                     

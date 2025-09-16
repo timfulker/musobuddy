@@ -66,6 +66,11 @@ export default function UnifiedBookings() {
     queryKey: ['/api/settings'],
     retry: false,
   });
+
+  // Fetch user's bands for color coding
+  const { data: bands = [] } = useQuery({
+    queryKey: ['/api/bands'],
+  });
   // Month names for display
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -73,9 +78,24 @@ export default function UnifiedBookings() {
   ];
   
 
-  
-  // Status color helper function
-  const getStatusBorderColor = (status: string) => {
+
+  // Helper function to get band color by ID
+  const getBandById = (bandId: number | null) => {
+    if (!bandId) return null;
+    return bands.find((band: any) => band.id === bandId);
+  };
+
+  // Status color helper function - now with band color override option
+  const getStatusBorderColor = (status: string, bandId?: number | null, showBandColors = true) => {
+    // If band colors are enabled and booking has a band, use band color
+    if (showBandColors && bandId) {
+      const band = getBandById(bandId);
+      if (band) {
+        return `border-l-4`;
+      }
+    }
+
+    // Fall back to status colors
     switch (status) {
       case "new":
       case "enquiry":
@@ -95,6 +115,15 @@ export default function UnifiedBookings() {
       default:
         return "border-l-gray-300"; // Default light grey
     }
+  };
+
+  // Helper function to get band color style for left border
+  const getBandBorderStyle = (bandId: number | null) => {
+    const band = getBandById(bandId);
+    if (band) {
+      return { borderLeftColor: band.color };
+    }
+    return {};
   };
 
   // View mode state - Default to list view for better UX
@@ -1890,9 +1919,10 @@ export default function UnifiedBookings() {
                                       <Card 
                                         key={groupBooking.id} 
                                         data-booking-id={groupBooking.id}
-                                        className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status)} ${
+                                        className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status, groupBooking.bandId, settings?.showBandColors)} ${
                                           selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                                         } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
+                                        style={settings?.showBandColors && groupBooking.bandId ? getBandBorderStyle(groupBooking.bandId) : {}}
                                       >
                                         <CardContent className="p-6">
                                           <div className="flex items-start justify-between">
@@ -2171,9 +2201,10 @@ export default function UnifiedBookings() {
                         <Card 
                           key={booking.id} 
                           data-booking-id={booking.id}
-                          className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
+                          className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status, booking.bandId, settings?.showBandColors)} ${
                             selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                           }`}
+                          style={settings?.showBandColors && booking.bandId ? getBandBorderStyle(booking.bandId) : {}}
                         >
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
