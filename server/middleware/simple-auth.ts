@@ -90,13 +90,19 @@ export const simpleAuth = async (
 
   try {
     // Parse token to get project URL from iss claim
-    const issUrl = parseTokenIss(token);
+    const tokenIssUrl = parseTokenIss(token);
     
     // Enhanced debug logging for URL matching
-    console.log(`🔍 [SIMPLE-AUTH] Token iss (normalized): ${issUrl}`);
+    console.log(`🔍 [SIMPLE-AUTH] Token iss (normalized): ${tokenIssUrl}`);
     console.log(`🔍 [SIMPLE-AUTH] Available configs: ${Object.keys(PROJECT_CONFIGS).join(', ')}`);
     
-    // Select correct Supabase client based on token's project
+    // Force production project when in production mode (override token iss claim)
+    const isProductionMode = process.env.REPLIT_ENVIRONMENT === 'production' || 
+                             (req.get('host')?.includes('musobuddy.com'));
+                             
+    const issUrl = isProductionMode ? process.env.SUPABASE_URL_PROD : tokenIssUrl;
+    
+    // Select correct Supabase client based on environment, not just token's project  
     const anonKey = issUrl ? PROJECT_CONFIGS[issUrl] : null;
     if (!anonKey) {
       console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
