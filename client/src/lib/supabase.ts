@@ -5,9 +5,12 @@ import { createClient } from '@supabase/supabase-js'
  * Automatically switches between dev/prod based on environment variables
  */
 
-// Determine environment based on NODE_ENV or fallback to hostname
-const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname.includes('replit.dev')
-const isProduction = import.meta.env.PROD && window.location.hostname !== 'localhost' && !window.location.hostname.includes('replit.dev')
+// Determine environment based on hostname (prioritize domain over build flags)
+const isProductionDomain = window.location.hostname === 'www.musobuddy.com' || window.location.hostname === 'musobuddy.com'
+const isDevelopmentDomain = window.location.hostname === 'localhost' || window.location.hostname.includes('replit.dev')
+
+const isDevelopment = isDevelopmentDomain || (!isProductionDomain && import.meta.env.DEV)
+const isProduction = isProductionDomain || (!isDevelopmentDomain && import.meta.env.PROD)
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
