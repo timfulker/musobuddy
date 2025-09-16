@@ -520,7 +520,7 @@ app.get('/api/admin/overview', authenticate, async (req: AuthenticatedRequest, r
   }
 });
 
-// Update user endpoint
+// Update user endpoint - UPDATED for Supabase password support
 app.patch('/api/admin/users/:userId', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     // Check admin permissions
@@ -532,19 +532,79 @@ app.patch('/api/admin/users/:userId', authenticate, async (req: AuthenticatedReq
     const { userId } = req.params;
     const userData = req.body;
 
-    console.log(`📝 [ADMIN] Admin ${req.user.email} updating user ${userId}:`, userData);
+    console.log(`📝 [ADMIN] Admin ${req.user.email} updating user ${userId}:`, {
+      ...userData,
+      password: userData.password ? '[PROVIDED]' : '[NOT PROVIDED]'
+    });
 
-    // Update the user
+    // Get existing user to check for Supabase UID
+    const existingUser = await storage.getUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Handle password change with Supabase if password is provided and user has Supabase UID
+    if (userData.password && userData.password.trim()) {
+      if (existingUser.supabaseUid) {
+        try {
+          console.log(`🔐 [ADMIN] Updating Supabase password for user ${userId} (${existingUser.email})`);
+          
+          // Import the admin password change and session revocation functions
+          const { adminChangeUserPassword, adminRevokeUserSessions } = await import('../core/supabase-admin');
+          
+          // Get project URL from environment (this should match current auth setup)
+          const projectUrl = process.env.NODE_ENV === 'development' 
+            ? process.env.SUPABASE_URL_DEV 
+            : process.env.SUPABASE_URL_PROD;
+          
+          // Change password in Supabase auth
+          await adminChangeUserPassword(existingUser.supabaseUid, userData.password, projectUrl);
+          
+          console.log(`✅ [ADMIN] Successfully updated Supabase password for user ${userId}`);
+          
+          // SECURITY: Revoke all existing sessions after password change
+          try {
+            console.log(`🔒 [ADMIN] Revoking all sessions for user ${userId} after password change`);
+            await adminRevokeUserSessions(existingUser.supabaseUid, projectUrl);
+            console.log(`✅ [ADMIN] Successfully revoked sessions for user ${userId}`);
+          } catch (sessionError: any) {
+            console.warn(`⚠️ [ADMIN] Session revocation failed for user ${userId} (non-critical): ${sessionError.message}`);
+            // Continue - session revocation failure shouldn't block password change
+          }
+          
+        } catch (supabaseError: any) {
+          console.error(`❌ [ADMIN] Failed to update Supabase password for user ${userId}:`, supabaseError.message);
+          return res.status(500).json({ 
+            error: `Failed to update password in authentication system: ${supabaseError.message}` 
+          });
+        }
+      } else {
+        console.log(`⚠️ [ADMIN] User ${userId} has no Supabase UID - only updating local database password`);
+      }
+    } else {
+      // Remove password from userData if empty to avoid overwriting with empty string
+      if (userData.password === '') {
+        delete userData.password;
+      }
+    }
+
+    // Update the user in local database (this will hash password if provided)
     await storage.updateUser(userId, userData);
 
     // Get the updated user to return
     const updatedUser = await storage.getUserById(userId);
     if (!updatedUser) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found after update' });
     }
 
+    // Remove sensitive data from response
+    const userResponse = {
+      ...updatedUser,
+      password: undefined // Don't send password hash back
+    };
+
     console.log(`✅ [ADMIN] Successfully updated user ${userId}`);
-    res.json(updatedUser);
+    res.json(userResponse);
 
   } catch (error: any) {
     console.error(`❌ [ADMIN] Failed to update user:`, error);

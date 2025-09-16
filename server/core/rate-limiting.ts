@@ -105,12 +105,8 @@ export const passwordChangeRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Rate limit by IP + user ID for better security
-    const userId = (req as any).user?.id || 'anonymous';
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    return `${ip}:${userId}`;
-  },
+  // SECURITY: Removed custom keyGenerator to prevent IPv6 bypass vulnerability
+  // express-rate-limit handles IPv6 safely by default
   skip: (req) => {
     // Skip rate limiting for admin in development
     return process.env.NODE_ENV === 'development' && (req as any).user?.isAdmin;
