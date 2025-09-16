@@ -629,7 +629,12 @@ export const userSettings = pgTable("user_settings", {
   // Theme Settings
   themeAccentColor: varchar("theme_accent_color").default("#673ab7"),
   themeShowTerms: boolean("theme_show_terms").default(true),
-  
+
+  // Band Settings
+  bandsConfig: jsonb("bands_config").default('[]'),
+  defaultBandId: integer("default_band_id").references(() => bands.id, { onDelete: 'set null' }),
+  showBandColors: boolean("show_band_colors").default(true),
+
   // Email Settings
   emailSignatureText: text("email_signature_text"),
   
@@ -881,6 +886,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   contracts: many(contracts),
   invoices: many(invoices),
   bookings: many(bookings),
+  bands: many(bands),
   complianceDocuments: many(complianceDocuments),
   settings: one(userSettings, {
     fields: [users.id],
@@ -934,6 +940,10 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     fields: [bookings.userId],
     references: [users.id],
   }),
+  band: one(bands, {
+    fields: [bookings.bandId],
+    references: [bands.id],
+  }),
   contracts: many(contracts),
   invoices: many(invoices),
   documents: many(bookingDocuments),
@@ -941,6 +951,14 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   messageNotifications: many(messageNotifications),
   conflicts: many(bookingConflicts, { relationName: "bookingConflicts" }),
   conflictingWith: many(bookingConflicts, { relationName: "conflictingBookings" }),
+}));
+
+export const bandsRelations = relations(bands, ({ one, many }) => ({
+  user: one(users, {
+    fields: [bands.userId],
+    references: [users.id],
+  }),
+  bookings: many(bookings),
 }));
 
 export const complianceDocumentsRelations = relations(complianceDocuments, ({ one }) => ({
@@ -954,6 +972,10 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, {
     fields: [userSettings.userId],
     references: [users.id],
+  }),
+  defaultBand: one(bands, {
+    fields: [userSettings.defaultBandId],
+    references: [bands.id],
   }),
 }));
 
@@ -1032,6 +1054,12 @@ export const contractExtractionsRelations = relations(contractExtractions, ({ on
 
 // Insert schemas
 export const insertBookingSchema = createInsertSchema(bookings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBandSchema = createInsertSchema(bands).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
