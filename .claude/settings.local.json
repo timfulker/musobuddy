@@ -24,7 +24,9 @@
       "Bash(export PGPASSWORD='trv-MQG8xjr_tcw0jdt')",
       "Bash(psql:*)",
       "Bash(git restore:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(netstat:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": [],
