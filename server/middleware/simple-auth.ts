@@ -101,7 +101,15 @@ export const simpleAuth = async (
     if (!anonKey) {
       console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
       console.log(`❌ [SIMPLE-AUTH] Available projects: ${Object.keys(PROJECT_CONFIGS)}`);
-      return res.status(401).json({ error: 'Invalid project' });
+      return res.status(401).json({ 
+        error: 'Invalid project',
+        ...(process.env.ALLOW_AUTH_DEBUG === '1' ? { 
+          debug: { 
+            iss: issUrl, 
+            configs: Object.keys(PROJECT_CONFIGS) 
+          } 
+        } : {})
+      });
     }
 
     const supabase = createClient(issUrl!, anonKey);
