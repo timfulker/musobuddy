@@ -7,8 +7,9 @@ import { createClient } from '@supabase/supabase-js';
 
 // Project configurations will be populated below after validation
 
-// Validate environment variables at startup - relaxed to only require active environment
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+// Standard Replit environment detection
+const isDeployment = process.env.REPLIT_DEPLOYMENT === '1';
+const isDevelopment = !isDeployment;
 
 if (isDevelopment) {
   if (!process.env.SUPABASE_URL_DEV || !process.env.SUPABASE_SERVICE_KEY_DEV) {

@@ -3,9 +3,9 @@ import { Pool } from "pg";
 import * as schema from "../../shared/schema";
 
 // Environment-aware database connection
-// Replit deployment detection: use REPLIT_ENVIRONMENT=production as deployment indicator
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
-const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_ENVIRONMENT === 'production';
+// Standard Replit approach: REPLIT_DEPLOYMENT=1 indicates production deployment
+const isDeployment = process.env.REPLIT_DEPLOYMENT === '1';
+const isDevelopment = !isDeployment;
 
 // Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
 function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
@@ -52,8 +52,8 @@ if (!connectionString) {
 // Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
-console.log(`🔍 Environment detection: NODE_ENV=${process.env.NODE_ENV}, REPLIT_ENVIRONMENT=${process.env.REPLIT_ENVIRONMENT}`);
-console.log(`🔍 Resolved mode: ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
+console.log(`🔍 Environment detection: REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}`);
+console.log(`🔍 Resolved mode: ${isDevelopment ? 'DEVELOPMENT' : 'DEPLOYMENT'}`);
 console.log(`🔍 Using connection from: ${isDevelopment ? 'SUPABASE_URL_DEV' : 'SUPABASE_URL_PROD'}`);
 // Debug: Show connection string structure to verify format
 const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);
