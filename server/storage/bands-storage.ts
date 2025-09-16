@@ -5,12 +5,27 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Band, InsertBand } from '@shared/schema';
-import { getActiveSupabaseClient } from '../core/active-project-client';
+
+// Determine which Supabase instance to use based on NODE_ENV
+const supabaseUrl = process.env.NODE_ENV === 'production'
+  ? process.env.SUPABASE_URL_PROD
+  : process.env.SUPABASE_URL_DEV;
+
+const supabaseKey = process.env.NODE_ENV === 'production'
+  ? process.env.SUPABASE_SERVICE_KEY_PROD
+  : process.env.SUPABASE_SERVICE_KEY_DEV;
+
+// Create Supabase client with service key (bypasses RLS)
+const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export class BandsStorage {
   // Get all bands for a user
   async getBandsByUserId(userId: string): Promise<Band[]> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     const { data, error } = await supabase
       .from('bands')
@@ -41,7 +56,9 @@ export class BandsStorage {
 
   // Get a single band by ID with ownership check
   async getBandById(bandId: number, userId: string): Promise<Band | null> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     const { data, error } = await supabase
       .from('bands')
@@ -63,7 +80,9 @@ export class BandsStorage {
 
   // Create a new band
   async createBand(band: Omit<InsertBand, 'id' | 'createdAt' | 'updatedAt'>): Promise<Band> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     // If this is set as default, unset other defaults for this user
     if (band.isDefault) {
@@ -99,7 +118,9 @@ export class BandsStorage {
     userId: string,
     updates: Partial<Omit<Band, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<Band> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     // If setting as default, unset other defaults for this user
     if (updates.isDefault) {
@@ -133,7 +154,9 @@ export class BandsStorage {
 
   // Delete a band
   async deleteBand(bandId: number, userId: string): Promise<void> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     const { error } = await supabase
       .from('bands')
@@ -149,7 +172,9 @@ export class BandsStorage {
 
   // Get the default band for a user
   async getDefaultBand(userId: string): Promise<Band | null> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     const { data, error } = await supabase
       .from('bands')
@@ -178,7 +203,9 @@ export class BandsStorage {
 
   // Update band order for drag-and-drop reordering
   async updateBandOrder(userId: string, bandOrders: { id: number; displayOrder: number }[]): Promise<void> {
-    const supabase = getActiveSupabaseClient();
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
 
     // Update each band's display order
     for (const { id, displayOrder } of bandOrders) {
