@@ -18,22 +18,9 @@ function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string):
 
 let connectionString: string;
 
-// TEMPORARY FIX: Use working DATABASE_URL directly since Supabase connection is failing
-connectionString = process.env.DATABASE_URL;
-
-// Original code kept for reference - restored once connection issues resolved
-/*
 if (isDevelopment) {
-  // Development: Use Supabase dev credentials
-  const supabaseUrl = process.env.SUPABASE_URL_DEV;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY_DEV;
-  
-  if (supabaseUrl && serviceKey) {
-    connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
-  } else {
-    // Fallback to DATABASE_URL if Supabase creds not available
-    connectionString = process.env.DATABASE_URL;
-  }
+  // Development: Use working DATABASE_URL (Neon) for now
+  connectionString = process.env.DATABASE_URL;
 } else {
   // Production: Use Supabase prod credentials
   const supabaseUrl = process.env.SUPABASE_URL_PROD;
@@ -42,11 +29,9 @@ if (isDevelopment) {
   if (supabaseUrl && serviceKey) {
     connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
   } else {
-    // Fallback to DATABASE_URL_PROD if Supabase creds not available
-    connectionString = process.env.DATABASE_URL_PROD || process.env.DATABASE_URL;
+    throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production mode');
   }
 }
-*/
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
