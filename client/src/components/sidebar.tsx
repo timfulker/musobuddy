@@ -255,6 +255,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span>Settings</span>
           </Link>
           
+          <Link 
+            href="/account-settings" 
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/account-settings"),
+              isActive("/account-settings") ? 'bg-primary text-primary-foreground' : ''
+            )}
+          >
+            <User className="w-5 h-5" />
+            <span>Account</span>
+          </Link>
+          
 
           
           {/* Beta Testing section - always render but hide for non-beta users to prevent layout shift */}

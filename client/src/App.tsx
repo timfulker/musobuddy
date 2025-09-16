@@ -16,6 +16,7 @@ import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/Settings";
+import AccountSettings from "@/pages/account-settings";
 import Templates from "@/pages/templates";
 import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
@@ -210,6 +211,7 @@ function Router() {
       <Route path="/invoices/new/bookings/:bookingId" component={Invoices} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/settings" component={Settings} />
+      <Route path="/account-settings" component={AccountSettings} />
       <Route path="/templates" component={Templates} />
       <Route path="/messages" component={Messages} />
       <Route path="/conversation/:bookingId" component={Conversation} />
