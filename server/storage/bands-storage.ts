@@ -6,16 +6,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Band, InsertBand } from '@shared/schema';
 
-// Determine which Supabase instance to use based on NODE_ENV and REPLIT_ENVIRONMENT
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+// Use the same environment detection as the rest of the system
+// Production mode when on www.musobuddy.com domain or when REPLIT_ENVIRONMENT is production
+const isProduction = process.env.REPLIT_ENVIRONMENT === 'production' || 
+                     (typeof window !== 'undefined' && window.location?.hostname === 'www.musobuddy.com');
 
-const supabaseUrl = isDevelopment
-  ? process.env.SUPABASE_URL_DEV
-  : process.env.SUPABASE_URL_PROD;
+const supabaseUrl = isProduction
+  ? process.env.SUPABASE_URL_PROD
+  : process.env.SUPABASE_URL_DEV;
 
-const supabaseKey = isDevelopment
-  ? process.env.SUPABASE_SERVICE_KEY_DEV
-  : process.env.SUPABASE_SERVICE_KEY_PROD;
+const supabaseKey = isProduction
+  ? process.env.SUPABASE_SERVICE_KEY_PROD
+  : process.env.SUPABASE_SERVICE_KEY_DEV;
 
 // Create Supabase client with service key (bypasses RLS)
 const supabase = supabaseUrl && supabaseKey
