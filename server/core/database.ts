@@ -21,16 +21,8 @@ function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string):
 let connectionString: string;
 
 if (isDevelopment) {
-  // Development: Use Supabase dev credentials first, fallback to DATABASE_URL
-  const supabaseUrl = process.env.SUPABASE_URL_DEV;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY_DEV;
-  
-  if (supabaseUrl && serviceKey) {
-    connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
-  } else {
-    // Fallback to DATABASE_URL if Supabase creds not available
-    connectionString = process.env.DATABASE_URL;
-  }
+  // Development: Use reliable DATABASE_URL (Neon) instead of problematic DEV Supabase
+  connectionString = process.env.DATABASE_URL;
 } else {
   // Production: Use Supabase prod credentials (includes Replit deployment)
   const supabaseUrl = process.env.SUPABASE_URL_PROD;
