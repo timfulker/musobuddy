@@ -21,7 +21,7 @@ const SUPABASE_ANON_KEY = isDevelopment
 
 const SUPABASE_SERVICE_KEY = isDevelopment
   ? process.env.SUPABASE_SERVICE_KEY_DEV
-  : process.env.SUPABASE_SERVICE_KEY_PROD;
+  : process.env.SUPABASE_SERVICE_KEY_PRODUCTION;
 
 // Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
