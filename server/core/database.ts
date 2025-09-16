@@ -31,26 +31,26 @@ if (isDevelopment) {
   }
 } else {
   // Production: Use Supabase prod credentials
-  const supabaseUrl = process.env.SUPABASE_URL_PROD;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
+  const supabaseUrl = process.env.SUPABASE_URL_PRODUCTION;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY_PRODUCTION;
   
   if (supabaseUrl && serviceKey) {
     connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
   } else {
-    throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production mode');
+    throw new Error('SUPABASE_URL_PRODUCTION and SUPABASE_SERVICE_KEY_PRODUCTION are required for production mode');
   }
 }
 
 if (!connectionString) {
   const envType = isDevelopment ? 'development' : 'production';
-  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_SERVICE_KEY_DEV' : 'SUPABASE_URL_PROD + SUPABASE_SERVICE_KEY_PROD';
+  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_SERVICE_KEY_DEV' : 'SUPABASE_URL_PRODUCTION + SUPABASE_SERVICE_KEY_PRODUCTION';
   throw new Error(`${envVar} environment variables are required for ${envType} mode`);
 }
 
 // Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
-console.log(`🔍 Using connection from: ${isDevelopment ? 'DATABASE_URL_DEV' : 'DATABASE_URL_PROD'}`);
+console.log(`🔍 Using connection from: ${isDevelopment ? 'SUPABASE_URL_DEV' : 'SUPABASE_URL_PRODUCTION'}`);
 // Debug: Show connection string structure to verify format
 const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);
 if (parts) {
