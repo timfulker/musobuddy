@@ -3,7 +3,9 @@ import { Pool } from "pg";
 import * as schema from "../../shared/schema";
 
 // Environment-aware database connection
-const isDevelopment = process.env.NODE_ENV === 'development';
+// Replit deployment detection: use REPLIT_ENVIRONMENT=production as deployment indicator
+const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_ENVIRONMENT === 'production';
 
 // Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
 function buildSupabaseConnectionString(supabaseUrl: string, serviceKey: string): string {
@@ -30,14 +32,14 @@ if (isDevelopment) {
     connectionString = process.env.DATABASE_URL;
   }
 } else {
-  // Production: Use Supabase prod credentials
+  // Production: Use Supabase prod credentials (includes Replit deployment)
   const supabaseUrl = process.env.SUPABASE_URL_PROD;
   const serviceKey = process.env.SUPABASE_SERVICE_KEY_PROD;
   
   if (supabaseUrl && serviceKey) {
     connectionString = buildSupabaseConnectionString(supabaseUrl, serviceKey);
   } else {
-    throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production mode');
+    throw new Error('SUPABASE_URL_PROD and SUPABASE_SERVICE_KEY_PROD are required for production/deployment mode');
   }
 }
 
@@ -50,6 +52,8 @@ if (!connectionString) {
 // Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
+console.log(`🔍 Environment detection: NODE_ENV=${process.env.NODE_ENV}, REPLIT_ENVIRONMENT=${process.env.REPLIT_ENVIRONMENT}`);
+console.log(`🔍 Resolved mode: ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
 console.log(`🔍 Using connection from: ${isDevelopment ? 'SUPABASE_URL_DEV' : 'SUPABASE_URL_PROD'}`);
 // Debug: Show connection string structure to verify format
 const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);

@@ -6,9 +6,9 @@ import type { Database } from './database.types'; // We'll generate this from Su
  * Automatically switches between dev/prod based on NODE_ENV
  */
 
-// Use centralized environment detection - no overrides based on DATABASE_URL
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+// Use centralized environment detection - Replit deployment detection
+const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_ENVIRONMENT === 'production';
 
 // Frontend environment variables (VITE_ prefix required for browser access)
 const SUPABASE_URL = isDevelopment

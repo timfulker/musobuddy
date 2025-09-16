@@ -6,14 +6,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Band, InsertBand } from '@shared/schema';
 
-// Determine which Supabase instance to use based on NODE_ENV
-const supabaseUrl = process.env.NODE_ENV === 'production'
-  ? process.env.SUPABASE_URL_PROD
-  : process.env.SUPABASE_URL_DEV;
+// Determine which Supabase instance to use based on NODE_ENV and REPLIT_ENVIRONMENT
+const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
 
-const supabaseKey = process.env.NODE_ENV === 'production'
-  ? process.env.SUPABASE_SERVICE_KEY_PROD
-  : process.env.SUPABASE_SERVICE_KEY_DEV;
+const supabaseUrl = isDevelopment
+  ? process.env.SUPABASE_URL_DEV
+  : process.env.SUPABASE_URL_PROD;
+
+const supabaseKey = isDevelopment
+  ? process.env.SUPABASE_SERVICE_KEY_DEV
+  : process.env.SUPABASE_SERVICE_KEY_PROD;
 
 // Create Supabase client with service key (bypasses RLS)
 const supabase = supabaseUrl && supabaseKey
