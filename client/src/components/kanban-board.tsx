@@ -14,8 +14,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ConflictIndicator from "@/components/ConflictIndicator";
 
-import { auth } from '@/lib/firebase';
-
 export default function ActionableEnquiries() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
@@ -101,41 +99,6 @@ export default function ActionableEnquiries() {
     queryKey: ["/api/bookings"],
     refetchInterval: 60000, // Auto-refresh every 60 seconds for dashboard responsiveness
     staleTime: 30000, // Consider data stale after 30 seconds
-    queryFn: async () => {
-      const currentUser = auth.currentUser;
-      
-      if (!currentUser) {
-        console.error('❌ No authenticated user found for kanban board');
-        throw new Error('You must be logged in to view bookings');
-      }
-      
-      const idToken = await currentUser.getIdToken();
-      console.log('🔍 Kanban board - Firebase user authenticated:', !!currentUser);
-      
-      const response = await fetch('/api/bookings', {
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.error('❌ Bookings API error:', response.status, response.statusText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('✅ Kanban board bookings loaded:', data.length);
-      
-      // Debug: Check what venue data we have for Encore bookings
-      const encoreBookings = data.filter((booking: any) => booking.applyNowLink);
-      if (encoreBookings.length > 0) {
-        console.log(`🎵 Found ${encoreBookings.length} Encore bookings. First one:`, encoreBookings[0]);
-        console.log(`🎵 Venue fields: venue="${encoreBookings[0].venue}", venueAddress="${encoreBookings[0].venueAddress}", venue_address="${encoreBookings[0].venue_address}"`);
-      }
-      
-      return data;
-    }
   });
 
   // Fetch conflicts data for conflict indicators
