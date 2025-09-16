@@ -3,9 +3,13 @@ import { Pool } from "pg";
 import * as schema from "../../shared/schema";
 
 // Environment-aware database connection
+// TEMPORARY: Force development mode
+const isDeployment = false;
+const isDevelopment = true;
+
 // Check both REPLIT_DEPLOYMENT and REPLIT_ENVIRONMENT for production detection
-const isDeployment = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPLIT_ENVIRONMENT === 'production';
-const isDevelopment = !isDeployment;
+// const isDeployment = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPLIT_ENVIRONMENT === 'production';
+// const isDevelopment = !isDeployment;
 
 // Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
 function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string): string {

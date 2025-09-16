@@ -16,11 +16,14 @@ interface EnvironmentConfig {
  * Clear, simple production detection based on REPLIT_DEPLOYMENT only
  */
 function createEnvironmentConfig(): EnvironmentConfig {
+  // TEMPORARY: Force development mode
+  const isProduction = false;
+  
   // Production: Handle both string 'true' and numeric '1' values from Replit
-  const isProduction = Boolean(process.env.REPLIT_DEPLOYMENT) || 
-                      process.env.REPLIT_DEPLOYMENT === 'true' || 
-                      process.env.REPLIT_DEPLOYMENT === '1' ||
-                      process.env.REPLIT_ENVIRONMENT === 'production';
+  // const isProduction = Boolean(process.env.REPLIT_DEPLOYMENT) || 
+  //                     process.env.REPLIT_DEPLOYMENT === 'true' || 
+  //                     process.env.REPLIT_DEPLOYMENT === '1' ||
+  //                     process.env.REPLIT_ENVIRONMENT === 'production';
   
   // Development: Everything else
   const isDevelopment = !isProduction;
