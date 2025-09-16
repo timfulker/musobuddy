@@ -178,7 +178,7 @@ export function registerInvoiceRoutes(app: Express) {
         ccEmail: req.body.ccEmail || null,
         clientAddress: req.body.clientAddress || null,
         venueAddress: req.body.venueAddress || null,
-        eventDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
+        eventDate: req.body.eventDate ? new Date(req.body.eventDate) : null,
         fee: req.body.performanceFee || req.body.fee || null,
         depositPaid: req.body.depositPaid || "0",
         amount: req.body.amount,

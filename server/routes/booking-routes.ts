@@ -188,7 +188,6 @@ export function registerBookingRoutes(app: Express) {
         equipmentProvided: req.body.equipmentProvided || null,
         whatsIncluded: req.body.whatsIncluded || null,
         dressCode: req.body.dressCode || null,
-        contactPerson: req.body.contactPerson || null,
         contactPhone: req.body.contactPhone || null,
         parkingInfo: req.body.parkingInfo || null,
         venueContactInfo: req.body.venueContactInfo || null,

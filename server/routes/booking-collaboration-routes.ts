@@ -199,7 +199,6 @@ export function setupBookingCollaborationRoutes(app: Express) {
         'equipmentRequirements',
         'equipmentProvided',
         'whatsIncluded',
-        'contactPerson',
         'referenceTracksExamples'
       ];
 
@@ -223,7 +222,7 @@ export function setupBookingCollaborationRoutes(app: Express) {
         'musicPreferences', 'styleMood', 'setOrder', 'mustPlaySongs', 'avoidSongs', 'firstDanceSong', 'processionalSong',
         'signingRegisterSong', 'recessionalSong', 'loadInInfo', 'weatherContingency', 'dietaryRequirements',
         'referenceTracks', 'sharedNotes', 'equipmentRequirements', 'equipmentProvided', 'whatsIncluded',
-        'contactPerson', 'referenceTracksExamples'
+        'referenceTracksExamples'
       ];
       
       for (const field of directFields) {

@@ -113,7 +113,6 @@ export const schemas = {
     equipmentProvided: z.string().optional().nullable(),
     whatsIncluded: z.string().optional().nullable(),
     dressCode: z.string().optional().nullable(),
-    contactPerson: z.string().optional().nullable(),
     contactPhone: z.string().optional().nullable(),
     parkingInfo: z.string().optional().nullable(),
     venueContactInfo: z.string().optional().nullable(),

@@ -290,7 +290,6 @@ export const bookings = pgTable("bookings", {
   encoreSuggestions: text("encore_suggestions"),
   
   // Contact Information
-  contactPerson: varchar("contact_person"),
   contactPhone: varchar("contact_phone"),
   venueContact: text("venue_contact"),
   soundTechContact: text("sound_tech_contact"),
@@ -401,8 +400,6 @@ export const contracts = pgTable("contracts", {
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"),
   depositDays: integer("deposit_days").default(7),
   travelExpenses: varchar("travel_expenses"),
-  originalFee: varchar("original_fee"),
-  originalTravelExpenses: varchar("original_travel_expenses"),
   
   // Essential rider/payment information
   paymentInstructions: text("payment_instructions"), // How payment should be made
@@ -485,8 +482,8 @@ export const invoices = pgTable("invoices", {
   venueAddress: text("venue_address"),
   
   // Event Information
-  performanceDate: timestamp("performance_date"),
-  performanceFee: varchar("performance_fee"),
+  eventDate: timestamp("event_date"),
+  fee: varchar("fee"),
   performanceDuration: text("performance_duration"),
   gigType: text("gig_type"),
   
@@ -580,15 +577,15 @@ export const userSettings = pgTable("user_settings", {
   // Business Information
   businessName: varchar("business_name"),
   businessContactEmail: varchar("business_contact_email"),
-  addressLine1: varchar("address_line_1"),
-  addressLine2: varchar("address_line_2"),
+  addressLine1: varchar("address_line1"),
+  addressLine2: varchar("address_line2"),
   city: varchar("city"),
   county: varchar("county"),
   postcode: varchar("postcode"),
   
   // Home Address
-  homeAddressLine1: varchar("home_address_line_1"),
-  homeAddressLine2: varchar("home_address_line_2"),
+  homeAddressLine1: varchar("home_address_line1"),
+  homeAddressLine2: varchar("home_address_line2"),
   homeCity: varchar("home_city"),
   homePostcode: varchar("home_postcode"),
   
