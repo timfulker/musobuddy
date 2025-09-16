@@ -23,7 +23,8 @@
       "Bash(npx tsx:*)",
       "Bash(export PGPASSWORD='trv-MQG8xjr_tcw0jdt')",
       "Bash(psql:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": [],
