@@ -8,7 +8,8 @@ import { createClient } from '@supabase/supabase-js';
 // Project configurations will be populated below after validation
 
 // Standard Replit environment detection
-const isDeployment = process.env.REPLIT_DEPLOYMENT === '1';
+// Check both REPLIT_DEPLOYMENT and REPLIT_ENVIRONMENT for production detection
+const isDeployment = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPLIT_ENVIRONMENT === 'production';
 const isDevelopment = !isDeployment;
 
 if (isDevelopment) {

@@ -25,11 +25,19 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-// Project mapping - using proper server-side env vars
-const PROJECT_CONFIGS = {
-  [process.env.SUPABASE_URL_DEV!]: process.env.SUPABASE_ANON_KEY_DEV!,
-  [process.env.SUPABASE_URL_PROD!]: process.env.SUPABASE_ANON_KEY_PROD!,
-};
+// Project mapping - using proper server-side env vars with normalized URLs
+const PROJECT_CONFIGS: Record<string, string> = {};
+
+// Normalize URLs to origin for consistent matching
+if (process.env.SUPABASE_URL_DEV && process.env.SUPABASE_ANON_KEY_DEV) {
+  const normalizedDevUrl = new URL(process.env.SUPABASE_URL_DEV).origin;
+  PROJECT_CONFIGS[normalizedDevUrl] = process.env.SUPABASE_ANON_KEY_DEV;
+}
+
+if (process.env.SUPABASE_URL_PROD && process.env.SUPABASE_ANON_KEY_PROD) {
+  const normalizedProdUrl = new URL(process.env.SUPABASE_URL_PROD).origin;
+  PROJECT_CONFIGS[normalizedProdUrl] = process.env.SUPABASE_ANON_KEY_PROD;
+}
 
 // Validate env vars at startup
 if (!process.env.SUPABASE_URL_DEV || !process.env.SUPABASE_ANON_KEY_DEV) {
@@ -47,14 +55,18 @@ console.log(`   Available projects: ${Object.keys(PROJECT_CONFIGS).join(', ')}`)
 console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
 
 /**
- * Parse JWT payload without verification to get iss claim
+ * Parse JWT payload without verification to get normalized iss claim
  */
 function parseTokenIss(token: string): string | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-    return payload.iss?.replace('/auth/v1', '') || null;
+    const rawIss = payload.iss?.replace('/auth/v1', '');
+    if (!rawIss) return null;
+    
+    // Normalize the issuer URL to origin for consistent matching
+    return new URL(rawIss).origin;
   } catch {
     return null;
   }
@@ -79,16 +91,16 @@ export const simpleAuth = async (
   try {
     // Parse token to get project URL from iss claim
     const issUrl = parseTokenIss(token);
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 [SIMPLE-AUTH] Token iss: ${issUrl}`);
-    }
+    
+    // Enhanced debug logging for URL matching
+    console.log(`🔍 [SIMPLE-AUTH] Token iss (normalized): ${issUrl}`);
+    console.log(`🔍 [SIMPLE-AUTH] Available configs: ${Object.keys(PROJECT_CONFIGS).join(', ')}`);
     
     // Select correct Supabase client based on token's project
     const anonKey = issUrl ? PROJECT_CONFIGS[issUrl] : null;
     if (!anonKey) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
-      }
+      console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
+      console.log(`❌ [SIMPLE-AUTH] Available projects: ${Object.keys(PROJECT_CONFIGS)}`);
       return res.status(401).json({ error: 'Invalid project' });
     }
 
