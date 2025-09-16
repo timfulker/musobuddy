@@ -6,18 +6,19 @@ import type { Database } from './database.types'; // We'll generate this from Su
  * Automatically switches between dev/prod based on NODE_ENV
  */
 
-// Use centralized environment detection - Replit deployment detection
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
-const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_ENVIRONMENT === 'production';
+// Frontend environment detection - try PROD first, fallback to DEV
+const PROD_URL = import.meta.env.VITE_SUPABASE_URL_PROD;
+const PROD_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY_PROD;
+const DEV_URL = import.meta.env.VITE_SUPABASE_URL_DEV;
+const DEV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY_DEV;
+
+// Use PROD if available, otherwise DEV (for development)
+const isProduction = PROD_URL && PROD_KEY;
+const isDevelopment = !isProduction;
 
 // Frontend environment variables (VITE_ prefix required for browser access)
-const SUPABASE_URL = isDevelopment
-  ? import.meta.env.VITE_SUPABASE_URL_DEV
-  : import.meta.env.VITE_SUPABASE_URL_PROD;
-
-const SUPABASE_ANON_KEY = isDevelopment
-  ? import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
-  : import.meta.env.VITE_SUPABASE_ANON_KEY_PROD;
+const SUPABASE_URL = isProduction ? PROD_URL : DEV_URL;
+const SUPABASE_ANON_KEY = isProduction ? PROD_KEY : DEV_KEY;
 
 const SUPABASE_SERVICE_KEY = isDevelopment
   ? process.env.SUPABASE_SERVICE_KEY_DEV
