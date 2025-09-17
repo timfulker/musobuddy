@@ -65,8 +65,11 @@ function isPendingPaymentAllowed(path: string): boolean {
 
 export const subscriptionGuard = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log(`🔍 [SUBSCRIPTION-GUARD] Processing ${req.method} ${req.path}`);
+
     // Skip if not an API route
     if (!req.path.startsWith('/api/')) {
+      console.log(`⏭️ [SUBSCRIPTION-GUARD] Skipping non-API route: ${req.path}`);
       return next();
     }
 
