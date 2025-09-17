@@ -1276,8 +1276,8 @@ export default function NewBookingPage({
                               Band / Project
                             </FormLabel>
                             <Select
-                              value={field.value?.toString() || ""}
-                              onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                              value={field.value?.toString() || "none"}
+                              onValueChange={(value) => field.onChange(value && value !== "none" ? parseInt(value) : undefined)}
                             >
                               <FormControl>
                                 <SelectTrigger className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20">
@@ -1285,7 +1285,7 @@ export default function NewBookingPage({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="none">None</SelectItem>
                                 {bands.map((band: any) => (
                                   <SelectItem key={band.id} value={band.id.toString()}>
                                     <div className="flex items-center gap-2">
