@@ -1,7 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
-import { verifyFirebaseToken, createCustomToken } from '../core/firebase-admin';
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 // Removed - using centralized auth middleware
 
@@ -32,10 +31,8 @@ export function setupAuthRoutes(app: Express) {
   app.get('/api/auth/diagnostic', async (req, res) => {
     const diagnostics = {
       storageExists: !!storage,
-      getUserByFirebaseUidExists: typeof storage.getUserByFirebaseUid === 'function',
       createUserExists: typeof storage.createUser === 'function',
-      verifyFirebaseTokenExists: typeof verifyFirebaseToken === 'function',
-      firebaseAdminConfigured: true
+      supabaseConfigured: !!(process.env.SUPABASE_URL_DEV || process.env.SUPABASE_URL_PROD)
     };
     
     console.log('🚑 Diagnostics check:', diagnostics);
@@ -123,7 +120,7 @@ export function setupAuthRoutes(app: Express) {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        firebaseUid: user.firebaseUid,
+        supabaseUid: user.supabaseUid,
         isActive: user.isActive,
         tier: user.tier,
         plan: user.plan,
@@ -148,14 +145,6 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // DISABLED: Firebase auth is now handled client-side only
-  // app.post('/api/auth/firebase-login', async (req, res) => {
-  //   console.log('🔥 Firebase login endpoint called (deprecated - auth handled client-side)');
-  //   res.json({
-  //     success: true,
-  //     message: 'Authentication now handled entirely client-side with Firebase'
-  //   });
-  // });
 
 
 
@@ -170,19 +159,7 @@ export function setupAuthRoutes(app: Express) {
       
       const token = authHeader.split(' ')[1];
       
-      try {
-        const firebaseUser = await verifyFirebaseToken(token);
-        if (firebaseUser) {
-          const user = await storage.getUserByFirebaseUid(firebaseUser.uid);
-          return res.json({ 
-            authenticated: true,
-            hasPaid: user?.hasPaid || false,
-            email: user?.email
-          });
-        }
-      } catch (error) {
-        // Token invalid
-      }
+      // Note: Token verification now handled by authenticate middleware
       
       return res.json({ authenticated: false });
     } catch (error) {
@@ -428,174 +405,6 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // NEW: Clean Firebase signup with database creation and beta user detection
-  app.post('/api/auth/firebase-signup', async (req, res) => {
-    try {
-      const { idToken, firstName, lastName, deviceFingerprint, inviteCode } = req.body;
-      
-      if (!idToken || !firstName || !lastName) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-      
-      console.log('🔥 Processing Firebase signup...');
-      
-      // Log if invite code was provided
-      if (inviteCode) {
-        console.log('📨 Invite code provided:', inviteCode);
-      }
-      
-      // Verify Firebase token
-      const firebaseUser = await verifyFirebaseToken(idToken);
-      if (!firebaseUser) {
-        return res.status(401).json({ error: 'Invalid Firebase token' });
-      }
-      
-      console.log('✅ Firebase token verified for:', firebaseUser.email);
-      
-      // Check if user already exists in database by Firebase UID
-      const existingUser = await storage.getUserByFirebaseUid(firebaseUser.uid);
-      if (existingUser) {
-        return res.status(409).json({ 
-          error: 'Account already exists',
-          redirect: '/login' 
-        });
-      }
-      
-      // Check if user has a beta invite (either by email match or invite code)
-      let isBetaUser = false;
-      let betaInvite = null;
-      
-      try {
-        console.log('🔍 Checking beta invite list for email:', firebaseUser.email);
-        betaInvite = await storage.getBetaInviteByEmail(firebaseUser.email || '');
-        
-        // Check if invite code matches a valid dynamic beta code
-        if (!isBetaUser && inviteCode) {
-          const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
-          if (betaCode && betaCode.status === 'active') {
-            // Check if code hasn't expired
-            if (!betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt)) {
-              // Check if code hasn't reached max uses
-              if (betaCode.currentUses < betaCode.maxUses) {
-                isBetaUser = true;
-                console.log('✅ Valid dynamic beta invite code provided:', inviteCode);
-                console.log('📋 Code details:', {
-                  id: betaCode.id,
-                  maxUses: betaCode.maxUses,
-                  currentUses: betaCode.currentUses,
-                  trialDays: betaCode.trialDays,
-                  description: betaCode.description
-                });
-              } else {
-                console.log('⚠️ Beta code has reached maximum uses:', inviteCode);
-              }
-            } else {
-              console.log('⚠️ Beta code has expired:', inviteCode);
-            }
-          } else {
-            console.log('❌ Invalid or inactive beta code:', inviteCode);
-          }
-        }
-        
-        if (betaInvite && betaInvite.status === 'pending') {
-          isBetaUser = true;
-          console.log('✅ Beta invite found - user eligible for beta access');
-          console.log('📋 Beta invite details:', {
-            cohort: betaInvite.cohort,
-            invitedBy: betaInvite.invitedBy,
-            invitedAt: betaInvite.invitedAt
-          });
-        } else if (betaInvite && betaInvite.status === 'used') {
-          console.log('⚠️ Beta invite already used - treating as regular user');
-        } else if (!isBetaUser) {
-          console.log('❌ No beta invite found for this email - regular signup');
-        }
-      } catch (betaError) {
-        console.error('⚠️ Beta invite check failed, continuing as regular user:', betaError);
-        // Continue without beta status if beta check fails
-      }
-      
-      // Capture security and tracking data
-      const signupIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] as string || 'unknown';
-      const userAgent = req.headers['user-agent'] || 'unknown';
-      
-      console.log('🔒 Security data captured:', { signupIP, userAgent, deviceFingerprint });
-      
-      // Determine trial duration based on user type
-      const trialDays = isBetaUser ? 90 : 30; // Beta testers get 90 days, regular users get 30 days
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
-      
-      // Create user in database with trial period
-      const userId = nanoid();
-      const newUser = await storage.createUser({
-        id: userId,
-        email: firebaseUser.email || '',
-        firstName,
-        lastName,
-        firebaseUid: firebaseUser.uid,
-        isAdmin: false,
-        isBetaTester: isBetaUser,
-        isAssigned: false, // Not an assigned account
-        trialEndsAt: trialEndsAt, // Set trial expiration
-        hasPaid: false, // Hasn't paid yet
-        // No tier field - using simplified access control
-        stripeCustomerId: null, // Will be set during subscription creation
-        signupIpAddress: signupIP,
-        deviceFingerprint: deviceFingerprint || `${userAgent}-${Date.now()}`,
-        lastLoginAt: new Date(),
-        lastLoginIP: signupIP,
-        fraudScore: 0,
-        createdAt: new Date()
-      });
-      
-      console.log(`✅ User created in database: ${userId} (${isBetaUser ? 'BETA' : 'REGULAR'})`);
-      
-      // Mark beta invite as used if applicable
-      if (isBetaUser) {
-        try {
-          // Mark email-based beta invite as used
-          if (betaInvite) {
-            await storage.markBetaInviteAsUsed(firebaseUser.email || '', userId);
-            console.log('✅ Beta invite marked as used');
-          }
-          
-          // Mark beta invite code as used if one was provided
-          if (inviteCode) {
-            await storage.markBetaInviteCodeAsUsed(inviteCode, userId);
-            console.log('✅ Beta invite code marked as used:', inviteCode);
-          }
-        } catch (error) {
-          console.error('⚠️ Failed to mark beta invite/code as used:', error);
-          // Don't fail the whole signup for this
-        }
-      }
-      
-      res.json({
-        success: true,
-        user: {
-          userId: newUser.id,
-          email: newUser.email,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          isBeta: isBetaUser,
-          trialEndsAt: trialEndsAt,
-          hasPaid: false
-        },
-        message: isBetaUser 
-          ? 'Welcome! Complete setup to start your 1-year free beta access.' 
-          : 'Welcome! Complete setup to start your 30-day trial.',
-        redirect: '/payment' // Everyone goes to payment (Stripe handles trial)
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Firebase signup error:', error);
-      res.status(500).json({ 
-        error: 'Account creation failed',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
 
   // Create Stripe checkout session for regular users
   app.post('/api/create-checkout-session', async (req, res) => {
