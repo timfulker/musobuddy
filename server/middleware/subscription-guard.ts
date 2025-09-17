@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = new Set([
   '/api/auth/password-reset',
   '/api/auth/firebase-signup', // Allow Firebase signup flow
   '/api/auth/supabase-signup', // Allow Supabase signup flow
+  '/api/auth/user', // CRITICAL: Allow user data fetch for authentication flow
   '/api/health',
   '/api/feedback/test-table', // Development testing endpoint
   '/api/health/feedback-schema', // Development schema check
@@ -32,7 +33,6 @@ const PUBLIC_ROUTES = new Set([
 
 // Routes allowed for pending_payment users (payment management only)
 const PENDING_PAYMENT_ALLOWED = new Set([
-  '/api/auth/user', // Allow authenticated users to check their status
   '/api/onboarding/status', // Allow onboarding flow for authenticated users
   '/api/user/profile',
   '/api/subscription/status',
