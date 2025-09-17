@@ -1094,6 +1094,7 @@ app.get('/api/email-queue/status', async (req, res) => {
 
   // Add development fallback middleware for database failures
   // TEMPORARILY DISABLED for production testing - NODE_ENV issue
+  console.log(`🔍 [ENV-DEBUG] NODE_ENV: "${process.env.NODE_ENV}", REPLIT_DEPLOYMENT: "${process.env.REPLIT_DEPLOYMENT}"`);
   if (false && process.env.NODE_ENV === 'development') {
     console.log('🚧 Setting up development database fallback middleware...');
     const { createDevelopmentFallback } = await import('./middleware/development-fallback');
