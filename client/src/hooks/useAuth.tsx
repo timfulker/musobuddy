@@ -52,24 +52,17 @@ export function useAuth() {
       handleAuthChange(session);
     });
 
-    // Listen to auth changes
+    // SIMPLIFIED: Only listen to meaningful auth changes, ignore TOKEN_REFRESHED entirely
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 [SUPABASE-AUTH] Auth state changed:', event, session ? 'with session' : 'no session');
-      
-      // Handle TOKEN_REFRESHED events with throttling to avoid infinite loops
-      // Allow processing but prevent rapid-fire calls
-      if (event === 'TOKEN_REFRESHED') {
-        const now = Date.now();
-        const lastRefresh = localStorage.getItem('last_token_refresh');
-        if (lastRefresh && now - parseInt(lastRefresh) < 5000) { // 5 second throttle
-          console.log('⏭️ [SUPABASE-AUTH] Throttling TOKEN_REFRESHED event (too recent)');
-          return;
-        }
-        localStorage.setItem('last_token_refresh', now.toString());
-        console.log('✅ [SUPABASE-AUTH] Processing TOKEN_REFRESHED event');
+
+      // SIMPLE FIX: Only process these events, ignore all TOKEN_REFRESHED noise
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+        console.log('✅ [SUPABASE-AUTH] Processing meaningful auth event:', event);
+        handleAuthChange(session);
+      } else {
+        console.log('⏭️ [SUPABASE-AUTH] Ignoring event:', event);
       }
-      
-      handleAuthChange(session);
     });
 
     return () => subscription.unsubscribe();
