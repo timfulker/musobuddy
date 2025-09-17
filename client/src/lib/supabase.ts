@@ -5,18 +5,14 @@ import { createClient } from '@supabase/supabase-js'
  * Automatically switches between dev/prod based on environment variables
  */
 
-// Determine environment based on hostname and build flags
-const isProductionDomain = window.location.hostname === 'www.musobuddy.com' || window.location.hostname === 'musobuddy.com'
-const isDevelopmentDomain = window.location.hostname === 'localhost' ||
-                           window.location.hostname.includes('replit.dev') ||
-                           window.location.hostname.includes('repl.co') ||
-                           window.location.hostname.includes('csb.app') ||
-                           window.location.hostname.includes('vercel.app') ||
-                           window.location.hostname.includes('netlify.app')
+// Force production environment to match database UIDs
+// The database contains production environment user data, so frontend must use production Supabase
+const isProduction = true
+const isDevelopment = false
 
-// Production domain takes priority over Vite build flags
-const isProduction = isProductionDomain
-const isDevelopment = !isProduction
+// Log environment override reason
+console.log('🔧 SUPABASE CONFIG: Forced to PRODUCTION to match database environment')
+console.log('🔧 Current hostname:', window.location.hostname)
 
 // Select appropriate credentials based on environment
 const supabaseUrl = isDevelopment
