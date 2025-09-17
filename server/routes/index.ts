@@ -32,7 +32,7 @@ import documentRoutes from "./document-routes";
 import { registerSupportChatRoutes } from "./support-chat-routes";
 // AI token routes removed - unlimited AI usage for all users
 
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { storage } from "../core/storage";
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 

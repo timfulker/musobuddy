@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 // Removed - using centralized auth middleware
 import { storage } from '../core/storage';
 

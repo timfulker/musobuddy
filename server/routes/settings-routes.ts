@@ -4,7 +4,7 @@ import { services } from "../core/services";
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 import { db } from '../core/database';
 import { 

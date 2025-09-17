@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 
 export function registerIsolatedRoutes(app: Express) {
   console.log('🔗 Setting up isolated routes for cloud compatibility...');

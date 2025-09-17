@@ -1,6 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';

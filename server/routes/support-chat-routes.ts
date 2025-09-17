@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { aiOrchestrator, AIRequest, TaskConfig } from '../services/ai-orchestrator';
 import { ValidatorFactory, ScorerFactory } from '../services/ai-validators';
 import { storage } from '../core/storage';

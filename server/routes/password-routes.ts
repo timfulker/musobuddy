@@ -4,7 +4,7 @@
  */
 import { type Express } from 'express';
 import { z } from 'zod';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { adminChangeUserPassword, verifyUserCredentials, adminRevokeUserSessions } from '../core/supabase-admin';
 import { passwordChangeRateLimit } from '../core/rate-limiting';
 import { storage } from '../core/storage';

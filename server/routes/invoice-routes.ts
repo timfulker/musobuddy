@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { EmailService } from "../core/services";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { generateInvoicePDF } from '../core/invoice-pdf-generator';

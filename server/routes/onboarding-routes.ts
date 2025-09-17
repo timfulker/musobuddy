@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../core/storage";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 
 export function registerOnboardingRoutes(app: Express) {
   // Complete onboarding

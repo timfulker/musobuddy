@@ -7,7 +7,7 @@ import { contractSigningEmailService } from "../core/contract-signing-email";
 import { contractSigningRateLimit } from '../middleware/rateLimiting';
 import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { insertContractSchema } from '../../shared/schema';
 import { z } from 'zod';

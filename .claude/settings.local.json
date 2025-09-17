@@ -28,7 +28,14 @@
       "Bash(netstat:*)",
       "Bash(pkill:*)",
       "Bash(printenv)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(for file in server/routes/*.ts)",
+      "Bash(do)",
+      "Bash(if grep -q \"from.*middleware/simple-auth\" \"$file\")",
+      "Bash(then)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": [],

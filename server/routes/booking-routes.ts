@@ -3,7 +3,7 @@ import { storage } from "../core/storage";
 import { validateBody, validateQuery, schemas, sanitizeInput } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
 import { cleanEncoreTitle } from '../core/booking-formatter';

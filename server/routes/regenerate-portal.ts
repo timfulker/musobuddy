@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { collaborativeFormGenerator } from "../core/collaborative-form-generator.js";
 import { db } from "../core/database.js";
 import { bookings, contracts } from "../../shared/schema.js";

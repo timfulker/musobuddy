@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { feedbackStorage } from '../storage/feedback-storage';
 import { UserStorage } from '../storage/user-storage';
 import type { InsertFeedback } from '../../shared/schema';

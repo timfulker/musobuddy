@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { storage } from '../core/storage';
 
 export function registerMapsRoutes(app: Express) {

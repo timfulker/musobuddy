@@ -3,7 +3,7 @@ import multer from 'multer';
 import { storage } from '../core/storage';
 import { uploadDocumentToR2, deleteDocumentFromR2, generateDocumentDownloadUrl } from '../core/document-storage';
 import { insertBookingDocumentSchema, uploadDocumentSchema } from '../../shared/document-schemas';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 
 const router = Router();
 

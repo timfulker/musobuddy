@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
 import { nanoid } from 'nanoid';
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 // Removed - using centralized auth middleware
 
 // Check if user is exempt from subscription requirements
