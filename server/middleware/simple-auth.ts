@@ -5,6 +5,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { storage } from '../core/storage';
+import { ENV } from '../core/environment';
 
 // Simple request interface
 export interface AuthenticatedRequest extends Request {
@@ -95,14 +96,12 @@ export const simpleAuth = async (
     // Enhanced debug logging for URL matching
     console.log(`🔍 [SIMPLE-AUTH] Token iss (normalized): ${tokenIssUrl}`);
     console.log(`🔍 [SIMPLE-AUTH] Available configs: ${Object.keys(PROJECT_CONFIGS).join(', ')}`);
+    console.log(`🔍 [SIMPLE-AUTH] Environment: ${ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
     
-    // Force production project when in production mode (override token iss claim)
-    const isProductionMode = process.env.REPLIT_ENVIRONMENT === 'production' || 
-                             (req.get('host')?.includes('musobuddy.com'));
-                             
-    const issUrl = isProductionMode ? process.env.SUPABASE_URL_PROD : tokenIssUrl;
+    // Use the actual token issuer for project selection (no overrides)
+    const issUrl = tokenIssUrl;
     
-    // Select correct Supabase client based on environment, not just token's project  
+    // Select correct Supabase client based on token's actual project  
     const anonKey = issUrl ? PROJECT_CONFIGS[issUrl] : null;
     if (!anonKey) {
       console.log(`❌ [SIMPLE-AUTH] No config found for project: ${issUrl}`);
@@ -180,23 +179,32 @@ export const simpleAuth = async (
     
     if (!dbUser) {
       console.log(`❌ [SIMPLE-AUTH] Database user not found for: ${user.email} (UID: ${user.id})`);
-      console.log(`🚧 [SIMPLE-AUTH] DEVELOPMENT MODE: Using JWT data instead of database lookup`);
       
-      // For development: Create user object from JWT when database fails
-      dbUser = {
-        id: '1754488522516', // Your known user ID 
-        email: user.email!,
-        firstName: user.user_metadata?.first_name || 'Tim',
-        lastName: user.user_metadata?.last_name || 'Fulker',
-        isAdmin: user.email === 'timfulkermusic@gmail.com',
-        tier: 'free',
-        phoneVerified: false,
-        isActive: true,
-        lockedUntil: null,
-        createdAt: new Date('2025-08-06T13:55:22.517Z'),
-        updatedAt: new Date()
-      };
-      console.log(`✅ [SIMPLE-AUTH] Using fallback user data for development`);
+      if (ENV.isDevelopment) {
+        console.log(`🚧 [SIMPLE-AUTH] DEVELOPMENT MODE: Using JWT data instead of database lookup`);
+        
+        // For development: Create user object from JWT when database fails
+        dbUser = {
+          id: '1754488522516', // Your known user ID 
+          email: user.email!,
+          firstName: user.user_metadata?.first_name || 'Tim',
+          lastName: user.user_metadata?.last_name || 'Fulker',
+          isAdmin: user.email === 'timfulkermusic@gmail.com',
+          tier: 'free',
+          phoneVerified: false,
+          isActive: true,
+          lockedUntil: null,
+          createdAt: new Date('2025-08-06T13:55:22.517Z'),
+          updatedAt: new Date()
+        };
+        console.log(`✅ [SIMPLE-AUTH] Using fallback user data for development`);
+      } else {
+        console.log(`❌ [SIMPLE-AUTH] PRODUCTION MODE: User must exist in database`);
+        return res.status(401).json({ 
+          error: 'User not found',
+          details: 'Please contact support if this issue persists'
+        });
+      }
     }
 
     // Check account locking (maintain existing security)

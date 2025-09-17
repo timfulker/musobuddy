@@ -19,8 +19,15 @@ function createEnvironmentConfig(): EnvironmentConfig {
   // Production: Handle both string 'true' and numeric '1' values from Replit
   const isProduction = Boolean(process.env.REPLIT_DEPLOYMENT) || 
                       process.env.REPLIT_DEPLOYMENT === 'true' || 
-                      process.env.REPLIT_DEPLOYMENT === '1' ||
-                      process.env.REPLIT_ENVIRONMENT === 'production';
+                      process.env.REPLIT_DEPLOYMENT === '1';
+  
+  // Log environment variables for debugging
+  console.log('🔍 Environment Variables:', {
+    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+    REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+    REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN,
+    NODE_ENV: process.env.NODE_ENV
+  });
   
   // Development: Everything else
   const isDevelopment = !isProduction;
@@ -71,5 +78,6 @@ console.log('🌍 ENVIRONMENT CONFIG:', {
   isDevelopment: ENV.isDevelopment,
   isReplit: ENV.isReplit,
   appServerUrl: ENV.appServerUrl,
-  sessionSecure: ENV.sessionSecure
+  sessionSecure: ENV.sessionSecure,
+  detectionBasis: 'REPLIT_DEPLOYMENT only'
 });

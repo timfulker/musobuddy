@@ -1,11 +1,11 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../../shared/schema";
+import { ENV } from "./environment";
 
-// Environment-aware database connection
-// Check both REPLIT_DEPLOYMENT and REPLIT_ENVIRONMENT for production detection
-const isDeployment = process.env.REPLIT_DEPLOYMENT === '1' || process.env.REPLIT_ENVIRONMENT === 'production';
-const isDevelopment = !isDeployment;
+// Environment-aware database connection using centralized ENV detection
+const isDeployment = ENV.isProduction;
+const isDevelopment = ENV.isDevelopment;
 
 // Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
 function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string): string {
@@ -20,7 +20,7 @@ function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string):
 
 let connectionString: string;
 
-if (isDevelopment) {
+if (ENV.isDevelopment) {
   // Development: Use direct database connection string (no hostname construction)
   // Priority: 1) SUPABASE_DB_URL_DEV (exact string from dashboard), 2) Constructed, 3) DATABASE_URL fallback
   const directDbUrl = process.env.SUPABASE_DB_URL_DEV;
@@ -59,21 +59,21 @@ if (isDevelopment) {
 }
 
 if (!connectionString) {
-  const envType = isDevelopment ? 'development' : 'production';
-  const envVar = isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_DB_PASSWORD_DEV' : 'SUPABASE_URL_PROD + SUPABASE_DB_PASSWORD_PROD';
+  const envType = ENV.isDevelopment ? 'development' : 'production';
+  const envVar = ENV.isDevelopment ? 'SUPABASE_URL_DEV + SUPABASE_DB_PASSWORD_DEV' : 'SUPABASE_URL_PROD + SUPABASE_DB_PASSWORD_PROD';
   throw new Error(`${envVar} environment variables are required for ${envType} mode`);
 }
 
 // Log database connection (without exposing credentials)
 const dbHost = connectionString.match(/@([^:/]+)/)?.[1] || 'unknown';
 console.log(`📊 Connected to database: ${dbHost}`);
-console.log(`🔍 Environment detection: REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}`);
-console.log(`🔍 Resolved mode: ${isDevelopment ? 'DEVELOPMENT' : 'DEPLOYMENT'}`);
+console.log(`🔍 Environment detection via ENV: isProduction=${ENV.isProduction}, isDevelopment=${ENV.isDevelopment}`);
+console.log(`🔍 Resolved mode: ${ENV.isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
 
 // Report connection source for debugging
-const envPrefix = isDevelopment ? 'DEV' : 'PROD';
-const directDbVar = isDevelopment ? 'SUPABASE_DB_URL_DEV' : 'SUPABASE_DB_URL_PROD';
-const hasDirectUrl = isDevelopment ? process.env.SUPABASE_DB_URL_DEV : process.env.SUPABASE_DB_URL_PROD;
+const envPrefix = ENV.isDevelopment ? 'DEV' : 'PROD';
+const directDbVar = ENV.isDevelopment ? 'SUPABASE_DB_URL_DEV' : 'SUPABASE_DB_URL_PROD';
+const hasDirectUrl = ENV.isDevelopment ? process.env.SUPABASE_DB_URL_DEV : process.env.SUPABASE_DB_URL_PROD;
 
 if (hasDirectUrl) {
   console.log(`🔍 Using direct connection: ${directDbVar}`);
