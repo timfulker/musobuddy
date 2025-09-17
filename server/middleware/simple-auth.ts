@@ -168,13 +168,60 @@ export const simpleAuth = async (
 
     // Get user from database (maintain compatibility with all lookup methods)  
     let dbUser;
+    let shouldAutoLink = false;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 [SIMPLE-AUTH-DEBUG] Starting database lookup for Supabase UID: ${user.id}, Email: ${user.email}`);
+    }
+    
     try {
+      // First try by Supabase UID
       dbUser = await storage.getUserBySupabaseUid?.(user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔍 [SIMPLE-AUTH-DEBUG] getUserBySupabaseUid result: ${dbUser ? 'FOUND' : 'NULL'}`);
+      }
+      
       if (!dbUser) {
+        // Fallback to email lookup
         dbUser = await storage.getUserByEmail(user.email);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🔍 [SIMPLE-AUTH-DEBUG] getUserByEmail result: ${dbUser ? 'FOUND' : 'NULL'}`);
+        }
+        
+        // AUTO-LINKING: If user found by email but missing supabaseUid, link them
+        if (dbUser && !dbUser.supabaseUid) {
+          shouldAutoLink = true;
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔗 [SIMPLE-AUTH-DEBUG] Auto-linking detected for ${user.email} - will link Supabase UID ${user.id} to database user ${dbUser.id}`);
+            console.log(`🔍 [SIMPLE-AUTH-DEBUG] Current dbUser.supabaseUid: ${dbUser.supabaseUid}`);
+          }
+        } else if (dbUser && dbUser.supabaseUid) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`⚠️ [SIMPLE-AUTH-MISMATCH] User ${user.email} has Supabase UID mismatch:`);
+            console.log(`   Database UID: ${dbUser.supabaseUid}`);
+            console.log(`   JWT Token UID: ${user.id}`);
+            console.log(`   This typically indicates the user has tokens from different Supabase projects (dev/prod)`);
+            console.log(`   or the user was migrated between instances. Authentication will continue normally.`);
+          }
+        }
       }
     } catch (error: any) {
       console.log(`⚠️ [SIMPLE-AUTH] Database lookup failed, will auto-create user:`, error.message);
+    }
+    
+    // Perform auto-linking if needed (one-time operation per user)
+    if (shouldAutoLink && dbUser) {
+      try {
+        const linkSuccess = await storage.updateUserSupabaseUid?.(dbUser.id, user.id);
+        if (linkSuccess && process.env.NODE_ENV === 'development') {
+          console.log(`✅ [SIMPLE-AUTH] Successfully auto-linked Supabase UID for ${user.email} - future requests will use fast lookup path`);
+        } else if (!linkSuccess) {
+          console.warn(`⚠️ [SIMPLE-AUTH] Auto-linking failed for ${user.email} - will continue with email lookup`);
+        }
+      } catch (linkError: any) {
+        console.warn(`⚠️ [SIMPLE-AUTH] Auto-linking error for ${user.email}:`, linkError.message);
+        // Continue with authentication even if linking fails
+      }
     }
     
     if (!dbUser) {

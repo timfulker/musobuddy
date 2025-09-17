@@ -445,6 +445,38 @@ export class UserStorage {
       throw error;
     }
   }
+
+  /**
+   * Auto-link Supabase UID to existing user account
+   * Used by simple-auth middleware to eliminate repeated lookup overhead
+   */
+  async updateUserSupabaseUid(userId: string, supabaseUid: string): Promise<boolean> {
+    try {
+      const result = await db.update(users)
+        .set({
+          supabaseUid: supabaseUid,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning({ id: users.id, email: users.email, supabaseUid: users.supabaseUid });
+      
+      if (result.length === 0) {
+        console.error(`❌ [USER-STORAGE] Failed to update supabaseUid: User ${userId} not found`);
+        return false;
+      }
+      
+      const updated = result[0];
+      console.log(`🔗 [USER-STORAGE] Auto-linked Supabase UID for user ${userId} (${updated.email}): ${updated.supabaseUid}`);
+      return true;
+    } catch (error: any) {
+      console.error(`❌ [USER-STORAGE] Failed to update supabaseUid for user ${userId}:`, {
+        message: error.message,
+        code: error.code,
+        detail: error.detail
+      });
+      return false;
+    }
+  }
 }
 
 export const userStorage = new UserStorage();
