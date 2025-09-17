@@ -55,6 +55,14 @@ export function useAuth() {
     // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 [SUPABASE-AUTH] Auth state changed:', event, session ? 'with session' : 'no session');
+      
+      // Skip TOKEN_REFRESHED events to avoid infinite loops
+      // These events fire frequently and don't require re-fetching user data
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('⏭️ [SUPABASE-AUTH] Skipping TOKEN_REFRESHED event to prevent loops');
+        return;
+      }
+      
       handleAuthChange(session);
     });
 
