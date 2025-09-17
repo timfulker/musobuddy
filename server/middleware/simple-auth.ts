@@ -232,7 +232,7 @@ export const simpleAuth = async (
         
         // For development: Create user object from JWT when database fails
         dbUser = {
-          id: '1754488522516', // Your known user ID 
+          id: user.id, // Use actual Supabase UID as database ID
           email: user.email!,
           firstName: user.user_metadata?.first_name || 'Tim',
           lastName: user.user_metadata?.last_name || 'Fulker',

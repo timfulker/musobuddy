@@ -231,9 +231,9 @@ export function setupAuthRoutes(app: Express) {
         
         try {
           const newUserData = {
-            id: req.user.id,
+            id: req.user.supabaseUid,
             email: req.user.email,
-            supabaseUid: req.user.id,
+            supabaseUid: req.user.supabaseUid,
             firstName: req.user.firstName || '',
             lastName: req.user.lastName || '',
             tier: 'free',
