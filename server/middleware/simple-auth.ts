@@ -236,7 +236,7 @@ export const simpleAuth = async (
           email: user.email!,
           firstName: user.user_metadata?.first_name || 'Tim',
           lastName: user.user_metadata?.last_name || 'Fulker',
-          isAdmin: user.email === 'timfulkermusic@gmail.com',
+          isAdmin: user.email === 'timfulker@gmail.com' || user.email === 'timfulkermusic@gmail.com',
           tier: 'free',
           phoneVerified: false,
           isActive: true,
