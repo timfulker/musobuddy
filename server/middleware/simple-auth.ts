@@ -81,11 +81,14 @@ export const simpleAuth = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(`🚀 [SIMPLE-AUTH] Middleware hit for ${req.method} ${req.path}`);
+
   // Extract token
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
   if (!token) {
+    console.log(`❌ [SIMPLE-AUTH] No token provided - Auth header: ${authHeader ? 'Present' : 'Missing'}`);
     return res.status(401).json({ error: 'Authentication required' });
   }
 
