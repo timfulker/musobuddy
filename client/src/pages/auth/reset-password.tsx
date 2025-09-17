@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, CheckCircle, AlertTriangle, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -29,6 +29,8 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const [isValidatingSession, setIsValidatingSession] = useState(true);
+  const [isPasswordResetRequired, setIsPasswordResetRequired] = useState(false);
+  const [blockNavigation, setBlockNavigation] = useState(true);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -86,16 +88,28 @@ export default function ResetPasswordPage() {
             throw error;
           }
           
-          console.log('✅ [RESET-PASSWORD] Recovery session established');
+          console.log('✅ [RESET-PASSWORD] Recovery session established - PASSWORD RESET REQUIRED');
           setHasRecoverySession(true);
+          setIsPasswordResetRequired(true);
+          setBlockNavigation(true); // SECURITY: Block all navigation until password reset
+          
+          // Store flag to indicate recovery session is active
+          sessionStorage.setItem('password_reset_required', 'true');
+          sessionStorage.setItem('recovery_session_active', 'true');
           
           // Clean URL to remove tokens from browser address bar
           window.history.replaceState({}, document.title, window.location.pathname);
           
-        } else if (session) {
-          // We have an existing session, check if it's valid for password reset
-          console.log('✅ [RESET-PASSWORD] Existing session found');
+        } else if (session && (sessionStorage.getItem('password_reset_required') === 'true' || sessionStorage.getItem('recovery_session_active') === 'true')) {
+          // We have an existing recovery session
+          console.log('✅ [RESET-PASSWORD] Existing recovery session found - PASSWORD RESET STILL REQUIRED');
           setHasRecoverySession(true);
+          setIsPasswordResetRequired(true);
+          setBlockNavigation(true);
+        } else if (session) {
+          // Regular session but not recovery - redirect to dashboard
+          console.log('ℹ️ [RESET-PASSWORD] Regular session found - redirecting to dashboard');
+          setLocation('/dashboard');
         } else {
           // No valid recovery session
           console.log('❌ [RESET-PASSWORD] No valid recovery session found');
@@ -123,6 +137,41 @@ export default function ResetPasswordPage() {
     checkRecoverySession();
   }, [toast, setLocation]);
 
+  // SECURITY: Block navigation during password reset to prevent bypass
+  const blockNavigationHandler = useCallback((e: BeforeUnloadEvent) => {
+    if (blockNavigation && hasRecoverySession && !isSuccess) {
+      e.preventDefault();
+      e.returnValue = 'SECURITY WARNING: You must reset your password before leaving this page.';
+      return e.returnValue;
+    }
+  }, [blockNavigation, hasRecoverySession, isSuccess]);
+
+  useEffect(() => {
+    // SECURITY: Prevent navigation away from reset page during recovery session
+    if (blockNavigation && hasRecoverySession && !isSuccess) {
+      window.addEventListener('beforeunload', blockNavigationHandler);
+      
+      // Also prevent back/forward navigation
+      const handlePopState = () => {
+        if (!isSuccess) {
+          window.history.pushState(null, '', window.location.pathname);
+          toast({
+            title: "SECURITY ALERT: Password reset required",
+            description: "For your security, you must reset your password before navigating away.",
+            variant: "destructive",
+          });
+        }
+      };
+      window.history.pushState(null, '', window.location.pathname);
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('beforeunload', blockNavigationHandler);
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [blockNavigation, hasRecoverySession, isSuccess, blockNavigationHandler, toast]);
+
   const onSubmit = async (data: ResetPasswordForm) => {
     if (!hasRecoverySession) {
       toast({
@@ -139,7 +188,7 @@ export default function ResetPasswordPage() {
       console.log('🔐 [RESET-PASSWORD] Attempting password update...');
       
       // Use Supabase's updateUser method to change password
-      const { data, error } = await supabase.auth.updateUser({
+      const { data: updateData, error } = await supabase.auth.updateUser({
         password: data.newPassword
       });
 
@@ -148,9 +197,14 @@ export default function ResetPasswordPage() {
         throw error;
       }
 
-      console.log('✅ [RESET-PASSWORD] Password updated successfully');
+      console.log('✅ [RESET-PASSWORD] Password updated successfully - SECURITY FLAGS CLEARED');
       
+      // SECURITY: Clear all recovery session flags
+      sessionStorage.removeItem('password_reset_required');
+      sessionStorage.removeItem('recovery_session_active');
+      setBlockNavigation(false); // Allow navigation after successful reset
       setIsSuccess(true);
+      
       toast({
         title: "Password reset successfully",
         description: "Your password has been updated. You can now login with your new password.",
@@ -160,7 +214,9 @@ export default function ResetPasswordPage() {
       await supabase.auth.signOut();
       
       // Redirect to login after showing success message
-      setTimeout(() => setLocation('/login'), 3000);
+      setTimeout(() => {
+        setLocation('/login');
+      }, 3000);
       
     } catch (error: any) {
       console.error('❌ [RESET-PASSWORD] Password update error:', error);
@@ -271,11 +327,22 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
+          {isPasswordResetRequired && (
+            <div className="flex items-center justify-center mb-4 p-3 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg">
+              <Shield className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
+              <span className="text-sm text-red-800 dark:text-red-200 font-bold">
+                SECURITY ALERT: Password reset required
+              </span>
+            </div>
+          )}
           <CardTitle className="text-2xl font-bold text-center">
             Reset password
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your new password below.
+            {isPasswordResetRequired 
+              ? "⚠️ For your security, you MUST set a new password before accessing your account."
+              : "Enter your new password below."
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

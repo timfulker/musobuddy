@@ -67,6 +67,21 @@ export function useAuth() {
     }
 
     if (session?.user) {
+      // SECURITY: Check if this is a recovery session that requires password reset
+      const isRecoverySession = sessionStorage.getItem('password_reset_required') === 'true' ||
+                              sessionStorage.getItem('recovery_session_active') === 'true';
+      
+      if (isRecoverySession) {
+        console.log('🛡️ [SUPABASE-AUTH] RECOVERY SESSION DETECTED - Blocking dashboard access until password reset');
+        setAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false, // CRITICAL: Block auth until password reset
+          error: 'Password reset required. Please complete your password reset to continue.'
+        });
+        return;
+      }
+
       try {
         // Fetch database user data using Supabase token
         const token = session.access_token;
