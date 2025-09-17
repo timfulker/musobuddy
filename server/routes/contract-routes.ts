@@ -9,6 +9,8 @@ import { validateBody, sanitizeInput, schemas } from '../middleware/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
+import { insertContractSchema } from '../../shared/schema';
+import { z } from 'zod';
 
 export function registerContractRoutes(app: Express) {
   console.log('📋 Setting up contract routes...');
@@ -332,80 +334,83 @@ export function registerContractRoutes(app: Express) {
     }
   });
 
-  // Create new contract
+  // Create new contract - ROBUST SERVER-SIDE VALIDATION
   app.post('/api/contracts',
     authenticate,
     asyncHandler(async (req: AuthenticatedRequest, res: any) => {
     try {
-      const contractNumber = req.body.contractNumber || 
-        `(${new Date(req.body.eventDate).toLocaleDateString('en-GB', { 
+      console.log('🔍 [CONTRACT-VALIDATION] Validating contract data with Zod schema...');
+      
+      // 🛡️ STEP 1: Prepare request body for validation
+      const requestBody = { ...req.body };
+      
+      // Handle both travel_expenses and travelExpenses field names for backwards compatibility
+      if (requestBody.travel_expenses && !requestBody.travelExpenses) {
+        requestBody.travelExpenses = requestBody.travel_expenses;
+      }
+      
+      // Add userId (required field that comes from auth)
+      requestBody.userId = req.user.id;
+      
+      // Generate contract number if not provided
+      if (!requestBody.contractNumber && requestBody.clientName && requestBody.eventDate) {
+        requestBody.contractNumber = `(${new Date(requestBody.eventDate).toLocaleDateString('en-GB', { 
           day: '2-digit', 
           month: '2-digit', 
           year: 'numeric' 
-        })} - ${req.body.clientName})`;
+        })} - ${requestBody.clientName})`;
+      }
       
-      // DEBUG: Log the entire request body to see what we're receiving
-      console.log('🔍 [CONTRACT-CREATE] Full request body:', JSON.stringify(req.body, null, 2));
-      console.log('🔍 [CONTRACT-CREATE] Fee field check:', {
-        fee: req.body.fee,
-        feeType: typeof req.body.fee,
-        feeExists: 'fee' in req.body,
-        clientName: req.body.clientName,
-        eventDate: req.body.eventDate
-      });
-      
-      if (!req.body.clientName || !req.body.eventDate) {
-        console.log('❌ [CONTRACT-CREATE] Missing required fields:', {
-          clientNameMissing: !req.body.clientName,
-          eventDateMissing: !req.body.eventDate
+      // 🛡️ STEP 2: Parse and validate with insertContractSchema
+      let validatedData;
+      try {
+        // Explicitly strip any auto-generated fields that client might have sent
+        const { id, createdAt, updatedAt, cloudStorageUrl, cloudStorageKey, signingUrlCreatedAt, signedAt, ...dataToValidate } = requestBody;
+        
+        console.log('🔍 [CONTRACT-VALIDATION] Stripped auto-generated fields:', { 
+          strippedFields: { id, createdAt, updatedAt, cloudStorageUrl, cloudStorageKey },
+          remainingFields: Object.keys(dataToValidate) 
         });
-        return res.status(400).json({ 
-          error: 'Missing required fields: clientName and eventDate are required' 
+        
+        validatedData = insertContractSchema.parse(dataToValidate);
+        console.log('✅ [CONTRACT-VALIDATION] Schema validation successful');
+        
+      } catch (validationError: any) {
+        console.error('❌ [CONTRACT-VALIDATION] Schema validation failed:', validationError);
+        
+        if (validationError instanceof z.ZodError) {
+          const fieldErrors = validationError.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+            received: err.received
+          }));
+          
+          return res.status(400).json({
+            error: 'Invalid contract data',
+            details: 'Please check the required fields and data formats',
+            fieldErrors
+          });
+        }
+        
+        return res.status(400).json({
+          error: 'Invalid contract data format',
+          details: validationError.message
         });
       }
-
-      // Handle both travel_expenses and travelExpenses field names
-      const travelAmount = req.body.travel_expenses || req.body.travelExpenses || "0.00";
       
-      console.log('📝 Backend Contract Creation Debug:', {
-        travelExpenses: travelAmount,
-        travel_expenses_field: req.body.travel_expenses,
-        travelExpenses_field: req.body.travelExpenses,
-        fee: req.body.fee,
-        fullBody: req.body
-      });
-
-      const contractData = {
-        userId: req.user.id,
-        contractNumber,
-        clientName: req.body.clientName,
-        clientEmail: req.body.clientEmail || null,
-        clientAddress: req.body.clientAddress || null,
-        clientPhone: req.body.clientPhone || null,
-        venue: req.body.venue || null,
-        venueAddress: req.body.venueAddress || null,
-        eventDate: req.body.eventDate,
-        eventTime: req.body.eventTime || "",
-        eventEndTime: req.body.eventEndTime || "",
-        fee: req.body.fee || "0.00", // Required by database until schema migration
-        deposit: req.body.deposit || "0.00",
-        depositDays: req.body.depositDays || 7,
-        travelExpenses: travelAmount,
-        paymentInstructions: req.body.paymentInstructions || null,
-        equipmentRequirements: req.body.equipmentRequirements || null,
-        specialRequirements: req.body.specialRequirements || null,
-        setlist: req.body.setlist || null,
-        riderNotes: req.body.riderNotes || null,
-        template: req.body.template || 'professional',
-        cancellationPolicy: req.body.cancellationPolicy || null,
-        additionalTerms: req.body.additionalTerms || null,
-        enquiryId: req.body.enquiryId || null
-      };
+      // 🛡️ STEP 3: Double-check that no id field exists (absolute safety)
+      if ('id' in validatedData) {
+        delete (validatedData as any).id;
+        console.log('🔒 [CONTRACT-VALIDATION] Removed id field from validated data for safety');
+      }
       
-      const newContract = await storage.createContract(contractData);
-      console.log(`✅ Created contract #${newContract.id} for user ${req.user.id}`);
+      console.log('🔍 [CONTRACT-VALIDATION] Final validated data fields:', Object.keys(validatedData));
       
-      // 🎯 NEW: Sync contract fields back to linked booking if enquiryId exists
+      // 🛡️ STEP 4: Create contract with validated data
+      const newContract = await storage.createContract(validatedData);
+      console.log(`✅ [CONTRACT-CREATE] Created contract #${newContract.id} for user ${req.user.id}`);
+      
+      // 🎯 STEP 5: Sync contract fields back to linked booking if enquiryId exists
       if (newContract.enquiryId && newContract.enquiryId > 0) {
         try {
           const syncFields = {
@@ -422,37 +427,55 @@ export function registerContractRoutes(app: Express) {
           };
           
           await storage.updateBooking(newContract.enquiryId, syncFields, req.user.id);
-          console.log(`🔄 Synced contract fields back to booking ${newContract.enquiryId}`);
+          console.log(`🔄 [CONTRACT-SYNC] Synced contract fields back to booking ${newContract.enquiryId}`);
         } catch (syncError: any) {
-          console.error(`⚠️ Failed to sync contract fields to booking (non-critical):`, syncError.message);
+          console.error(`⚠️ [CONTRACT-SYNC] Failed to sync contract fields to booking (non-critical):`, syncError.message);
           // Continue - contract creation was successful even if sync failed
         }
       }
       
-      // Generate signing page URL
+      // 🎯 STEP 6: Generate signing page URL
       try {
         const signingPageUrl = `/sign/${newContract.id}`;
         const updatedContract = await storage.updateContract(newContract.id, {
           signingPageUrl: signingPageUrl
         }, req.user.id);
+        
+        console.log(`✅ [CONTRACT-CREATE] Successfully created and configured contract #${newContract.id}`);
         res.json(updatedContract);
       } catch (signingError) {
-        console.warn('⚠️ Failed to create signing page:', signingError);
+        console.warn('⚠️ [CONTRACT-CREATE] Failed to create signing page:', signingError);
         res.json(newContract);
       }
-    } catch (error: any) {
-      console.error('❌ Failed to create contract:', error);
       
+    } catch (error: any) {
+      console.error('❌ [CONTRACT-CREATE] Failed to create contract:', error);
+      
+      // Enhanced error handling with better user feedback
       if (error?.code === '23505') {
-        res.status(400).json({ error: 'Duplicate contract number detected' });
+        res.status(400).json({ 
+          error: 'Duplicate contract number detected',
+          details: 'A contract with this number already exists. Please use a different contract number.'
+        });
       } else if (error?.code === '23502') {
-        res.status(400).json({ error: 'Missing required field: ' + (error?.column || 'unknown') });
+        res.status(400).json({ 
+          error: 'Missing required database field: ' + (error?.column || 'unknown'),
+          details: 'This is a server configuration issue. Please contact support.'
+        });
       } else if (error?.code === '22P02') {
-        res.status(400).json({ error: 'Invalid data format in request' });
+        res.status(400).json({ 
+          error: 'Invalid data format in request',
+          details: 'Please check that dates, numbers, and other fields are in the correct format.'
+        });
+      } else if (error?.code === '23503') {
+        res.status(400).json({ 
+          error: 'Invalid reference to related data',
+          details: 'One of the linked records (booking, user) could not be found.'
+        });
       } else {
         res.status(500).json({ 
           error: 'Failed to create contract',
-          details: error?.message || 'Unknown database error'
+          details: process.env.NODE_ENV === 'development' ? error?.message : 'Internal server error'
         });
       }
     }
