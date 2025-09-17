@@ -87,9 +87,12 @@ export function useAuth() {
         const token = session.access_token;
         console.log('🔍 [SUPABASE-AUTH] Fetching user data with token:', token.substring(0, 20) + '...');
 
-        // Import apiRequest at the top of the file if not already imported
-        const { apiRequest } = await import('@/lib/queryClient');
-        const response = await apiRequest('/api/auth/user');
+        // Use direct fetch to handle 401 responses without throwing
+        const response = await fetch('/api/auth/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
         if (response.ok) {
           const databaseUser = await response.json();
