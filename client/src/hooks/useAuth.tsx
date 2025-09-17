@@ -72,14 +72,11 @@ export function useAuth() {
                               sessionStorage.getItem('recovery_session_active') === 'true';
       
       if (isRecoverySession) {
-        console.log('🛡️ [SUPABASE-AUTH] RECOVERY SESSION DETECTED - Blocking dashboard access until password reset');
-        setAuthState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false, // CRITICAL: Block auth until password reset
-          error: 'Password reset required. Please complete your password reset to continue.'
-        });
-        return;
+        console.log('🛡️ [SUPABASE-AUTH] RECOVERY SESSION DETECTED - Clearing flags and allowing auth');
+        // Clear the recovery flags instead of blocking auth
+        sessionStorage.removeItem('password_reset_required');
+        sessionStorage.removeItem('recovery_session_active');
+        console.log('✅ [SUPABASE-AUTH] Recovery flags cleared - proceeding with authentication');
       }
 
       try {
