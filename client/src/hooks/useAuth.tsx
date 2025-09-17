@@ -113,27 +113,39 @@ export function useAuth() {
             error: null
           });
         } else {
-          console.warn('⚠️ [SUPABASE-AUTH] Database user not found');
-          // Clear session when user doesn't exist in database
-          await supabase.auth.signOut();
+          console.warn('⚠️ [SUPABASE-AUTH] Database user not found, will retry');
           
+          // Don't sign out! User is authenticated with Supabase
+          // Just use the Supabase user data temporarily
+          const compatibleUser: CompatibleUser = {
+            uid: session.user.id,
+            email: session.user.email || '',
+            emailVerified: !!session.user.email_confirmed_at,
+            displayName: session.user.user_metadata?.full_name
+          };
+
           setAuthState({
-            user: null,
+            user: compatibleUser,
             isLoading: false,
-            isAuthenticated: false,
-            error: 'Account not found in this environment. Please sign up or switch environments.'
+            isAuthenticated: true, // Keep authenticated!
+            error: 'Limited access - database sync pending'
           });
         }
       } catch (error: any) {
         console.error('❌ [SUPABASE-AUTH] Error fetching user data:', error);
-        // Clear session when database connection fails
-        await supabase.auth.signOut();
         
+        // Don't sign out on network errors!
+        const compatibleUser: CompatibleUser = {
+          uid: session.user.id,
+          email: session.user.email || '',
+          emailVerified: !!session.user.email_confirmed_at
+        };
+
         setAuthState({
-          user: null,
+          user: compatibleUser,
           isLoading: false,
-          isAuthenticated: false,
-          error: 'Unable to verify account. Please try again or contact support.'
+          isAuthenticated: true, // Stay authenticated
+          error: 'Database connection issue - using cached data'
         });
       }
     } else {
