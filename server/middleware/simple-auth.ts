@@ -76,7 +76,7 @@ function parseTokenIss(token: string): string | null {
 /**
  * Project-aware authentication middleware using Supabase's built-in user verification
  */
-export const simpleAuth = async (
+export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
