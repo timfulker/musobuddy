@@ -221,6 +221,45 @@ export function setupAuthRoutes(app: Express) {
         console.log(`✅ [DEBUG] Using fallback user data for endpoint`);
       }
       
+      // Auto-provision missing database record for valid Supabase users
+      if (!user && req.user?.id && req.user?.email) {
+        console.log(`🏗️ [AUTO-PROVISION] Creating missing database record for ${req.user.email}`);
+        
+        // Check if this is a bypass email that should get admin privileges
+        const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
+        const isAdminBypass = allowedBypassEmails.includes(req.user.email);
+        
+        try {
+          const newUserData = {
+            id: req.user.id,
+            email: req.user.email,
+            supabaseUid: req.user.id,
+            firstName: req.user.firstName || '',
+            lastName: req.user.lastName || '',
+            tier: 'free',
+            isAdmin: isAdminBypass,
+            isAssigned: isAdminBypass, 
+            hasPaid: isAdminBypass,
+            isBetaTester: false,
+            createdByAdmin: true,
+            emailVerified: req.user.emailVerified || false
+          };
+          
+          user = await storage.createUser(newUserData);
+          console.log(`✅ [AUTO-PROVISION] Created user ${user.id} with admin: ${isAdminBypass}`);
+          
+        } catch (error: any) {
+          // Handle race condition - another request might have created the user
+          if (error.message?.includes('already exists') || error.code === '23505') {
+            console.log(`🔄 [AUTO-PROVISION] User ${req.user.email} created by another request, refetching...`);
+            user = await storage.getUserById(req.user.id) || await storage.getUserByEmail(req.user.email);
+          } else {
+            console.error(`❌ [AUTO-PROVISION] Failed to create user ${req.user.email}:`, error);
+            throw error;
+          }
+        }
+      }
+      
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
