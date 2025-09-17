@@ -4,7 +4,7 @@
  * Created: December 2024
  */
 
-import { type Request, type Response, type NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { storage } from '../core/storage';
 

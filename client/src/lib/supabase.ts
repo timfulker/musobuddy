@@ -5,13 +5,12 @@ import { createClient } from '@supabase/supabase-js'
  * Automatically switches between dev/prod based on environment variables
  */
 
-// Force production environment to match database UIDs
-// The database contains production environment user data, so frontend must use production Supabase
-const isProduction = true
-const isDevelopment = false
+// Match backend environment - using development for auth rebuild testing
+const isProduction = false
+const isDevelopment = true
 
-// Log environment override reason
-console.log('🔧 SUPABASE CONFIG: Forced to PRODUCTION to match database environment')
+// Log environment alignment
+console.log('🔧 SUPABASE CONFIG: Using DEVELOPMENT to match backend environment')
 console.log('🔧 Current hostname:', window.location.hostname)
 
 // Select appropriate credentials based on environment
