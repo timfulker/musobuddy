@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Mail, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { Link } from 'wouter';
 
 export function EmailVerification() {
-  const { user, resendVerificationEmail, refreshUserData } = useAuth();
+  const { user, resendVerificationEmail, refreshUserData } = useAuthContext();
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);

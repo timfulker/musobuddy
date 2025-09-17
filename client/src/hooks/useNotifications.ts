@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from './useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 interface NotificationCounts {
   newBookings: number;
@@ -23,7 +23,7 @@ export function useNotifications() {
     total: 0
   });
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
 
   // Only poll when authenticated to prevent 401 errors
   const { data: notificationData } = useQuery({

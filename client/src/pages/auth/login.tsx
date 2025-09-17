@@ -11,7 +11,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 
 const loginSchema = z.object({
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { signInWithGoogle, signInWithEmail, isLoading: firebaseLoading, error: firebaseError } = useAuth();
+  const { signInWithGoogle, signInWithEmail, isLoading: firebaseLoading, error: firebaseError } = useAuthContext();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),

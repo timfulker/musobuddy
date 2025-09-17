@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { isPublicRoute, hasAccess } from "@/lib/access-control";
 import WelcomePage from "./welcome-page";
@@ -16,7 +16,7 @@ interface OnboardingStatus {
 }
 
 export default function OnboardingWrapper({ children }: OnboardingWrapperProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthContext();
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const [location, setLocation] = useLocation();
   

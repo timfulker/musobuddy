@@ -19,7 +19,7 @@ import { useLocation, Link, useRoute } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getOptimalTextColor, getMutedTextColor } from "@/lib/luminance";
 import { calculateBookingDisplayTotal, getBookingAmountDisplayText } from "@/utils/booking-calculations";
@@ -54,7 +54,7 @@ interface CalendarEvent {
 }
 
 export default function UnifiedBookings() {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { theme } = useTheme();
   
   // Simple navigation function using window.location

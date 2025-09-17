@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { useResponsive } from '@/hooks/useResponsive';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -334,7 +334,7 @@ export default function BetaChecklist() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isMobile } = useResponsive();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   // Load checked items from localStorage on component mount
   useEffect(() => {

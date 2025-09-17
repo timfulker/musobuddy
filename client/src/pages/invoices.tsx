@@ -15,7 +15,7 @@ import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -59,7 +59,7 @@ export default function Invoices() {
   const [invoiceToSend, setInvoiceToSend] = useState<Invoice | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   
 
 

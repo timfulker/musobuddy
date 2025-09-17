@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
@@ -8,7 +8,7 @@ import NotificationsDropdown from "@/components/notifications-dropdown";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardHeader() {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [searchQuery, setSearchQuery] = useState("");
 
   const currentDate = new Date().toLocaleDateString('en-US', { 

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ const passwordChangeSchema = z.object({
 type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
 
 export default function AccountSettings() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuthContext();
   const { isDesktop } = useResponsive();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);

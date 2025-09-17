@@ -22,7 +22,7 @@ import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
@@ -83,7 +83,7 @@ export default function Contracts() {
   const { toast } = useToast();
   const { theme } = useTheme();
   const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   
 
   

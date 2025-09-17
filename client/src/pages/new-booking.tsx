@@ -14,7 +14,7 @@ import { Link, useLocation } from "wouter";
 import { insertBookingSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
@@ -101,7 +101,7 @@ export default function NewBookingPage({
   const { toast } = useToast();
   
   // Conditional authentication - only use auth in musician mode
-  const authData = clientMode ? { user: null, isLoading: false, error: null } : useAuth();
+  const authData = clientMode ? { user: null, isLoading: false, error: null } : useAuthContext();
   
   const user = authData?.user || null;
   

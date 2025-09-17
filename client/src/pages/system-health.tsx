@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Activity, Database, Mail, FileText, Shield, Lock } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 
 interface ServiceStatus {
@@ -18,7 +18,7 @@ interface ServiceStatus {
 }
 
 export default function SystemHealth() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAuthContext();
   const [, navigate] = useLocation();
   const [services, setServices] = useState<ServiceStatus[]>([
     { name: 'Database', status: 'checking', icon: <Database className="w-5 h-5" /> },

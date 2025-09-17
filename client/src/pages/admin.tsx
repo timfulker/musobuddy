@@ -39,7 +39,7 @@ import {
 import APICostMonitor from "@/components/api-cost-monitor";
 import { ApiUsageManager } from "@/components/api-usage-manager";
 import DatabaseAdmin from "@/components/database-admin";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface AdminOverview {
   totalUsers: number;
@@ -80,7 +80,7 @@ interface BetaInviteCode {
 }
 
 export default function AdminPanel() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuthContext();
   const [, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newUserOpen, setNewUserOpen] = useState(false);

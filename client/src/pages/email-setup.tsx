@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -30,7 +30,7 @@ export default function EmailSetup() {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [, setLocation] = useLocation();
 
   // Get user's current email

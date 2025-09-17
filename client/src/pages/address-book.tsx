@@ -17,7 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, UserPlus, Download, Edit2, Eye } from "lucide-react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 
 export default function AddressBook() {
@@ -35,7 +35,7 @@ export default function AddressBook() {
   const [clientFilter, setClientFilter] = useState<'all' | 'inquired' | 'booked' | 'both' | 'needs_review'>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
 
   

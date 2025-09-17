@@ -18,7 +18,7 @@ import { ArrowLeft, Send, MessageCircle, Calendar, MapPin, User, Clock, Mail, Fi
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/layout";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { formatDate } from "@/lib/utils";
 import BookingActionMenu from "@/components/booking-action-menu";
 
@@ -50,7 +50,7 @@ export default function Conversation() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [replyContent, setReplyContent] = useState("");
   const [travelExpenses, setTravelExpenses] = useState("");
   const [isReplying, setIsReplying] = useState(false);

@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 
 export default function LogoutPage() {
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
   const [, setLocation] = useLocation();
   
   useEffect(() => {

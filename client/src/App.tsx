@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
-import { useAuth } from "@/hooks/useAuth";
 import { hasAccess, isProtectedRoute, isPublicRoute, getPaymentRedirectUrl } from "@/lib/access-control";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SuccessPage from "@/pages/success";

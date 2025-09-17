@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Link, useLocation } from "wouter";
 import { CheckCircle, ArrowRight, Mail, LayoutDashboard, FileText, Receipt, Users, Calendar, Sparkles, Crown } from "lucide-react";
 
 export default function TrialSuccessPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, refreshUserData } = useAuth();
+  const { user, isLoading, refreshUserData } = useAuthContext();
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   
   // Debug logging

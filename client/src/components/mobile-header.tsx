@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { Music, Menu, Settings, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Link } from "wouter";
 import SupportChat from "@/components/support-chat";
 
 export default function MobileHeader() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthContext();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
   const [isOpen, setIsOpen] = useState(false);

@@ -12,7 +12,7 @@ import { MessageNotifications } from "@/components/MessageNotifications";
 import ConflictsWidget from "@/components/conflicts-widget";
 import BookingCTAButtons from "@/components/booking-cta-buttons";
 import MobileNav from "@/components/mobile-nav";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -27,7 +27,7 @@ export default function Dashboard() {
   const { isDesktop } = useResponsive();
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading, refreshUserData } = useAuth();
+  const { user, isAuthenticated, isLoading, refreshUserData } = useAuthContext();
   
   // Prevent infinite loops in preview by detecting preview environment
   const isPreview = window.location.hostname.includes('replit.dev') && 

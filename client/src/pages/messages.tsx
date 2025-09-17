@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Layout } from "@/components/layout";
 import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface MessageNotification {
   id: number;
@@ -55,7 +55,7 @@ export default function Messages() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   // Force white text on reprocess button
   React.useEffect(() => {

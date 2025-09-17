@@ -23,7 +23,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { MessageSquare, Bug, Lightbulb, Settings, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 interface Feedback {
@@ -43,7 +43,7 @@ interface Feedback {
 }
 
 export default function FeedbackPage() {
-  const { user, isLoading: userLoading } = useAuth();
+  const { user, isLoading: userLoading } = useAuthContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   

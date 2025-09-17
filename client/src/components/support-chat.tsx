@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { MessageCircle, Send, X, Minimize2, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { apiRequest } from '@/lib/queryClient';
 import { getComputedThemeTextColor } from '@/lib/colorUtils';
@@ -61,7 +61,7 @@ export default function SupportChat({ isOpen: externalIsOpen, onClose }: Support
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthContext();
   const { theme } = useTheme();
   const [themeTextColor, setThemeTextColor] = useState<'white' | 'black'>('white');
 

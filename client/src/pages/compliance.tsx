@@ -17,7 +17,7 @@ import { Link, useLocation } from "wouter";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 
 const complianceFormSchema = insertComplianceDocumentSchema.omit({
@@ -36,7 +36,7 @@ export default function Compliance() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   
 
   
