@@ -1121,12 +1121,6 @@ app.get('/api/email-queue/status', async (req, res) => {
   app.use(subscriptionGuard);
   console.log('✅ Global subscription guard active for all /api/* routes');
 
-  // TEST: Simple health check to verify server is running updated code
-  app.get('/api/health-check', (req, res) => {
-    console.log('🩺 [HEALTH-CHECK] Server is running updated code - timestamp:', new Date().toISOString());
-    res.json({ status: 'OK', timestamp: new Date().toISOString(), message: 'Server running updated code' });
-  });
-
   // Start server
   // Replit provides PORT env variable, default to 5000
   const port = parseInt(process.env.PORT || '5000', 10);
