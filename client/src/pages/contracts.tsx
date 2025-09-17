@@ -346,7 +346,7 @@ export default function Contracts() {
 
   const createContractMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
-      const { travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
+      const { id, travelExpenses, originalFee, originalTravelExpenses, ...dataWithoutTravelExpenses } = data;
       
       console.log('🐛 Debug contract creation values:', {
         originalFee,
