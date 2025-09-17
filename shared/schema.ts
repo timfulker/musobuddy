@@ -49,7 +49,6 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number", { length: 20 }),
   
   // Auth Integration
-  firebaseUid: text("firebase_uid").unique(),
   supabaseUid: text("supabase_uid").unique(),
   
   // Status fields
