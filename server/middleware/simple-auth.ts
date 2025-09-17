@@ -297,4 +297,5 @@ export const authenticate = async (
   }
 };
 
-// Export alias removed - authenticate function is already exported above
+// Export alias for compatibility
+export const simpleAuth = authenticate;
