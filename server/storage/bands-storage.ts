@@ -3,48 +3,22 @@
  * Handles all band/project-related database operations
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { db } from "../core/database";
+import { bands } from "../../shared/schema";
 import type { Band, InsertBand } from '@shared/schema';
-
-// Use the same environment detection as the rest of the system
-// Production mode when on www.musobuddy.com domain or when REPLIT_ENVIRONMENT is production
-const isProduction = process.env.REPLIT_ENVIRONMENT === 'production' || 
-                     (typeof window !== 'undefined' && window.location?.hostname === 'www.musobuddy.com');
-
-const supabaseUrl = isProduction
-  ? process.env.SUPABASE_URL_PROD
-  : process.env.SUPABASE_URL_DEV;
-
-const supabaseKey = isProduction
-  ? process.env.SUPABASE_SERVICE_KEY_PROD
-  : process.env.SUPABASE_SERVICE_KEY_DEV;
-
-// Create Supabase client with service key (bypasses RLS)
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
+import { eq, desc, asc, and } from "drizzle-orm";
 
 export class BandsStorage {
+  private db = db;
+
   // Get all bands for a user
   async getBandsByUserId(userId: string): Promise<Band[]> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
-
-    const { data, error } = await supabase
-      .from('bands')
-      .select('*')
-      .eq('user_id', userId)
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching bands:', error);
-      throw error;
-    }
+    const result = await db.select().from(bands)
+      .where(eq(bands.userId, userId))
+      .orderBy(asc(bands.displayOrder), asc(bands.createdAt));
 
     // If user has no bands, create a default one
-    if (!data || data.length === 0) {
+    if (!result || result.length === 0) {
       const defaultBand = await this.createBand({
         userId,
         name: 'Solo',
@@ -55,65 +29,39 @@ export class BandsStorage {
       return [defaultBand];
     }
 
-    return data;
+    return result;
   }
 
   // Get a single band by ID with ownership check
   async getBandById(bandId: number, userId: string): Promise<Band | null> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
+    const result = await db.select().from(bands)
+      .where(and(eq(bands.id, bandId), eq(bands.userId, userId)));
 
-    const { data, error } = await supabase
-      .from('bands')
-      .select('*')
-      .eq('id', bandId)
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // Not found
-      }
-      console.error('Error fetching band:', error);
-      throw error;
-    }
-
-    return data;
+    return result[0] || null;
   }
 
   // Create a new band
   async createBand(band: Omit<InsertBand, 'id' | 'createdAt' | 'updatedAt'>): Promise<Band> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
-
     // If this is set as default, unset other defaults for this user
     if (band.isDefault) {
-      await supabase
-        .from('bands')
-        .update({ is_default: false })
-        .eq('user_id', band.userId);
+      await db.update(bands)
+        .set({ isDefault: false })
+        .where(eq(bands.userId, band.userId));
     }
 
-    const { data, error } = await supabase
-      .from('bands')
-      .insert({
-        user_id: band.userId,
-        name: band.name,
-        color: band.color,
-        is_default: band.isDefault || false,
-        display_order: band.displayOrder || 0
-      })
-      .select()
-      .single();
+    const result = await db.insert(bands).values({
+      userId: band.userId,
+      name: band.name,
+      color: band.color,
+      isDefault: band.isDefault || false,
+      displayOrder: band.displayOrder || 0
+    }).returning();
 
-    if (error) {
-      console.error('Error creating band:', error);
-      throw error;
+    if (!result[0]) {
+      throw new Error('Failed to create band');
     }
 
-    return data;
+    return result[0];
   }
 
   // Update a band
@@ -122,107 +70,63 @@ export class BandsStorage {
     userId: string,
     updates: Partial<Omit<Band, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<Band> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
-
     // If setting as default, unset other defaults for this user
     if (updates.isDefault) {
-      await supabase
-        .from('bands')
-        .update({ is_default: false })
-        .eq('user_id', userId);
+      await db.update(bands)
+        .set({ isDefault: false })
+        .where(eq(bands.userId, userId));
     }
 
     const updateData: any = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.color !== undefined) updateData.color = updates.color;
-    if (updates.isDefault !== undefined) updateData.is_default = updates.isDefault;
-    if (updates.displayOrder !== undefined) updateData.display_order = updates.displayOrder;
+    if (updates.isDefault !== undefined) updateData.isDefault = updates.isDefault;
+    if (updates.displayOrder !== undefined) updateData.displayOrder = updates.displayOrder;
 
-    const { data, error } = await supabase
-      .from('bands')
-      .update(updateData)
-      .eq('id', bandId)
-      .eq('user_id', userId)
-      .select()
-      .single();
+    const result = await db.update(bands)
+      .set(updateData)
+      .where(and(eq(bands.id, bandId), eq(bands.userId, userId)))
+      .returning();
 
-    if (error) {
-      console.error('Error updating band:', error);
-      throw error;
+    if (!result[0]) {
+      throw new Error('Failed to update band or band not found');
     }
 
-    return data;
+    return result[0];
   }
 
   // Delete a band
   async deleteBand(bandId: number, userId: string): Promise<void> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
-
-    const { error } = await supabase
-      .from('bands')
-      .delete()
-      .eq('id', bandId)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error deleting band:', error);
-      throw error;
-    }
+    await db.delete(bands)
+      .where(and(eq(bands.id, bandId), eq(bands.userId, userId)));
   }
 
   // Get the default band for a user
   async getDefaultBand(userId: string): Promise<Band | null> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
+    const result = await db.select().from(bands)
+      .where(and(eq(bands.userId, userId), eq(bands.isDefault, true)));
+
+    if (!result[0]) {
+      // No default band, create one
+      return this.createBand({
+        userId,
+        name: 'Solo',
+        color: '#9333ea',
+        isDefault: true,
+        displayOrder: 0
+      });
     }
 
-    const { data, error } = await supabase
-      .from('bands')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_default', true)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No default band, create one
-        return this.createBand({
-          userId,
-          name: 'Solo',
-          color: '#9333ea',
-          isDefault: true,
-          displayOrder: 0
-        });
-      }
-      console.error('Error fetching default band:', error);
-      throw error;
-    }
-
-    return data;
+    return result[0];
   }
 
   // Update band order for drag-and-drop reordering
   async updateBandOrder(userId: string, bandOrders: { id: number; displayOrder: number }[]): Promise<void> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
-    }
-
     // Update each band's display order
     for (const { id, displayOrder } of bandOrders) {
-      const { error } = await supabase
-        .from('bands')
-        .update({ display_order: displayOrder })
-        .eq('id', id)
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error(`Error updating band order for band ${id}:`, error);
-        throw error;
-      }
+      await db.update(bands)
+        .set({ displayOrder })
+        .where(and(eq(bands.id, id), eq(bands.userId, userId)));
     }
   }
 }

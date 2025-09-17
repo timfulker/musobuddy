@@ -1,6 +1,6 @@
 import { type Express } from "express";
 import { storage } from "../core/storage";
-import { authenticate, type AuthenticatedRequest } from '../middleware/simple-auth';
+import { simpleAuth, type AuthenticatedRequest } from '../middleware/simple-auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generalApiRateLimit } from '../middleware/rateLimiting';
 import { requireSubscriptionOrAdmin } from '../core/subscription-middleware';
@@ -20,7 +20,7 @@ export function registerBandsRoutes(app: Express) {
   console.log('🎸 Setting up bands routes...');
 
   // Get all bands for authenticated user
-  app.get('/api/bands', authenticate, asyncHandler(async (req: AuthenticatedRequest, res) => {
+  app.get('/api/bands', simpleAuth, asyncHandler(async (req: AuthenticatedRequest, res) => {
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -33,7 +33,7 @@ export function registerBandsRoutes(app: Express) {
 
   // Create a new band
   app.post('/api/bands',
-    authenticate,
+    simpleAuth,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     asyncHandler(async (req: AuthenticatedRequest, res) => {
@@ -59,7 +59,7 @@ export function registerBandsRoutes(app: Express) {
 
   // Update a band
   app.patch('/api/bands/:bandId',
-    authenticate,
+    simpleAuth,
     requireSubscriptionOrAdmin,
     generalApiRateLimit,
     asyncHandler(async (req: AuthenticatedRequest, res) => {
@@ -93,7 +93,7 @@ export function registerBandsRoutes(app: Express) {
 
   // Delete a band
   app.delete('/api/bands/:bandId',
-    authenticate,
+    simpleAuth,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: AuthenticatedRequest, res) => {
       const userId = req.user?.id;
@@ -126,7 +126,7 @@ export function registerBandsRoutes(app: Express) {
 
   // Assign a band to a booking
   app.patch('/api/bookings/:bookingId/band',
-    authenticate,
+    simpleAuth,
     requireSubscriptionOrAdmin,
     asyncHandler(async (req: AuthenticatedRequest, res) => {
       const userId = req.user?.id;
