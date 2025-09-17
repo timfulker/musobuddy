@@ -991,6 +991,211 @@ export default function UnifiedBookings() {
       });
     },
   });
+
+  // ICS Export functionality
+  const generateICSFile = () => {
+    if (!bookings || bookings.length === 0) {
+      toast({
+        title: "No Bookings to Export",
+        description: "There are no bookings to export at this time",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validBookings = validateBookingArray(bookings) ? bookings : [];
+    
+    // Helper function to format date for ICS (YYYYMMDDTHHMMSSZ)
+    const formatICSDate = (dateStr: string, timeStr?: string) => {
+      const date = new Date(dateStr);
+      
+      if (timeStr && timeStr !== 'Time not specified' && timeStr.trim() !== '') {
+        // Parse time string and set it on the date
+        try {
+          const cleanTime = timeStr.toLowerCase().replace(/[^\d:apm\-]/g, '');
+          let hours = 0, minutes = 0;
+          
+          if (cleanTime.includes(':')) {
+            const [h, m] = cleanTime.split(':');
+            hours = parseInt(h, 10);
+            minutes = parseInt(m.replace(/[^0-9]/g, ''), 10) || 0;
+          } else {
+            hours = parseInt(cleanTime.replace(/[^0-9]/g, ''), 10);
+          }
+          
+          // Handle PM/AM
+          if (cleanTime.includes('pm') && hours < 12) hours += 12;
+          if (cleanTime.includes('am') && hours === 12) hours = 0;
+          
+          date.setHours(hours, minutes, 0, 0);
+        } catch (error) {
+          // If time parsing fails, use default time
+          date.setHours(19, 0, 0, 0); // Default to 7 PM
+        }
+      } else {
+        // Default time if no specific time provided
+        date.setHours(19, 0, 0, 0); // Default to 7 PM
+      }
+      
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    // Helper to calculate end time
+    const formatICSEndDate = (dateStr: string, timeStr?: string, endTimeStr?: string, durationStr?: string) => {
+      const startDate = new Date(dateStr);
+      
+      if (endTimeStr && endTimeStr !== 'Time not specified' && endTimeStr.trim() !== '') {
+        // Use provided end time
+        try {
+          const cleanTime = endTimeStr.toLowerCase().replace(/[^\d:apm\-]/g, '');
+          let hours = 0, minutes = 0;
+          
+          if (cleanTime.includes(':')) {
+            const [h, m] = cleanTime.split(':');
+            hours = parseInt(h, 10);
+            minutes = parseInt(m.replace(/[^0-9]/g, ''), 10) || 0;
+          } else {
+            hours = parseInt(cleanTime.replace(/[^0-9]/g, ''), 10);
+          }
+          
+          if (cleanTime.includes('pm') && hours < 12) hours += 12;
+          if (cleanTime.includes('am') && hours === 12) hours = 0;
+          
+          startDate.setHours(hours, minutes, 0, 0);
+        } catch (error) {
+          startDate.setHours(22, 0, 0, 0); // Default to 10 PM
+        }
+      } else {
+        // Calculate end time from start time and duration or use default
+        let durationHours = 3; // Default 3 hours
+        
+        if (durationStr) {
+          const durationMatch = durationStr.match(/(\d+)/);
+          if (durationMatch) {
+            durationHours = parseInt(durationMatch[1], 10);
+          }
+        }
+        
+        // Set start time first
+        if (timeStr && timeStr !== 'Time not specified' && timeStr.trim() !== '') {
+          try {
+            const cleanTime = timeStr.toLowerCase().replace(/[^\d:apm\-]/g, '');
+            let hours = 0, minutes = 0;
+            
+            if (cleanTime.includes(':')) {
+              const [h, m] = cleanTime.split(':');
+              hours = parseInt(h, 10);
+              minutes = parseInt(m.replace(/[^0-9]/g, ''), 10) || 0;
+            } else {
+              hours = parseInt(cleanTime.replace(/[^0-9]/g, ''), 10);
+            }
+            
+            if (cleanTime.includes('pm') && hours < 12) hours += 12;
+            if (cleanTime.includes('am') && hours === 12) hours = 0;
+            
+            startDate.setHours(hours, minutes, 0, 0);
+          } catch (error) {
+            startDate.setHours(19, 0, 0, 0);
+          }
+        } else {
+          startDate.setHours(19, 0, 0, 0);
+        }
+        
+        // Add duration
+        startDate.setHours(startDate.getHours() + durationHours);
+      }
+      
+      return startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    // Helper to escape special characters in ICS
+    const escapeICS = (text: string) => {
+      if (!text) return '';
+      return text
+        .replace(/\\/g, '\\\\')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '');
+    };
+
+    // Generate ICS content
+    let icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//MusoBuddy//Booking Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH'
+    ];
+
+    validBookings.forEach((booking) => {
+      if (!booking.eventDate) return;
+
+      const startDateTime = formatICSDate(booking.eventDate, booking.eventTime);
+      const endDateTime = formatICSEndDate(booking.eventDate, booking.eventTime, booking.eventEndTime, booking.performanceDuration);
+      
+      // Create event title
+      const eventTitle = escapeICS(`${booking.clientName || 'Unknown Client'} - ${booking.gigType || 'Booking'}`);
+      
+      // Create location string
+      const location = escapeICS(booking.venue || booking.venueAddress || 'Venue TBC');
+      
+      // Create description with booking details
+      const descriptionParts = [
+        `Client: ${booking.clientName || 'N/A'}`,
+        booking.clientEmail ? `Email: ${booking.clientEmail}` : '',
+        booking.clientPhone ? `Phone: ${booking.clientPhone}` : '',
+        booking.gigType ? `Type: ${booking.gigType}` : '',
+        booking.eventType ? `Event: ${booking.eventType}` : '',
+        booking.fee ? `Fee: £${booking.fee}` : '',
+        booking.equipmentRequirements ? `Equipment: ${booking.equipmentRequirements}` : '',
+        booking.specialRequirements ? `Special Requirements: ${booking.specialRequirements}` : '',
+        booking.styles ? `Music Style: ${booking.styles}` : '',
+        booking.mustPlaySongs ? `Must Play: ${booking.mustPlaySongs}` : '',
+        booking.venueContactInfo ? `Venue Contact: ${booking.venueContactInfo}` : '',
+        `Status: ${booking.status || 'new'}`,
+        `Booking ID: ${booking.id}`
+      ].filter(Boolean).join('\\n');
+
+      const description = escapeICS(descriptionParts);
+
+      // Generate unique ID for the event
+      const uid = `booking-${booking.id}@musobuddy.com`;
+
+      icsContent.push(
+        'BEGIN:VEVENT',
+        `DTSTART:${startDateTime}`,
+        `DTEND:${endDateTime}`,
+        `SUMMARY:${eventTitle}`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:${location}`,
+        `UID:${uid}`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`,
+        `STATUS:${booking.status === 'confirmed' ? 'CONFIRMED' : 'TENTATIVE'}`,
+        'END:VEVENT'
+      );
+    });
+
+    icsContent.push('END:VCALENDAR');
+
+    // Create and download the file
+    const icsData = icsContent.join('\r\n');
+    const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `musobuddy-bookings-${new Date().toISOString().split('T')[0]}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Calendar Exported",
+      description: `Successfully exported ${validBookings.length} bookings to ICS file`,
+    });
+  };
   
   const handleBulkDelete = () => {
     if (selectedBookings.length > 0) {
@@ -2730,7 +2935,12 @@ export default function UnifiedBookings() {
                     
                     <div className="flex items-center gap-2">
                       <CalendarImport />
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={generateICSFile}
+                        data-testid="button-export-calendar"
+                      >
                         <Download className="w-4 h-4 mr-2" />
                         Export
                       </Button>
