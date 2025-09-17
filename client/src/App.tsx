@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAccess, isProtectedRoute, isPublicRoute, getPaymentRedirectUrl } from "@/lib/access-control";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -75,7 +75,7 @@ import DuplicateManager from "@/pages/DuplicateManager";
 import { useEffect, lazy } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuth();
+  const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuthContext();
   const [location, setLocation] = useLocation();
 
   // Use useEffect for navigation to prevent render loops
@@ -254,10 +254,12 @@ function App() {
       <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <TooltipProvider>
-              {/* OnboardingWrapper temporarily removed */}
-              <Toaster />
-              <Router />
-              <CookieConsentBanner />
+              <AuthProvider>
+                {/* OnboardingWrapper temporarily removed */}
+                <Toaster />
+                <Router />
+                <CookieConsentBanner />
+              </AuthProvider>
             </TooltipProvider>
           </ThemeProvider>
       </QueryClientProvider>
