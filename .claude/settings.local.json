@@ -26,7 +26,8 @@
       "Bash(git restore:*)",
       "Bash(git reset:*)",
       "Bash(netstat:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(printenv)"
     ],
     "deny": [],
     "ask": [],
