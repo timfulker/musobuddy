@@ -361,12 +361,13 @@ export default function Contracts() {
       
       const contractData = {
         ...dataWithoutTravelExpenses,
-        // Fix date format: backend expects YYYY-MM-DD, not ISO string
-        eventDate: data.eventDate || null,
+        // CRITICAL FIX: Convert eventDate string to Date object
+        eventDate: data.eventDate ? new Date(data.eventDate) : null,
         // Include fee field - required by backend
         fee: data.fee || "0.00",
-        travelExpenses: travelToSave,  // camelCase version
-        travel_expenses: travelToSave,  // snake_case version for compatibility
+        // CRITICAL FIX: Convert travelExpenses number to string
+        travelExpenses: travelToSave.toString(),  // camelCase version as string
+        travel_expenses: travelToSave.toString(),  // snake_case version as string for compatibility
         // Fix enquiryId: make truly optional with null
         enquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : null,
       };
@@ -969,10 +970,12 @@ export default function Contracts() {
                         
                         const contractData = {
                           ...dataWithoutTravelExpenses,
-                          eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+                          // CRITICAL FIX: Convert eventDate string to Date object (not ISO string)
+                          eventDate: data.eventDate ? new Date(data.eventDate) : null,
                           enquiryId: data.enquiryId || null,
-                          fee: feeToSave,
-                          travelExpenses: travelToSave,  // Backend expects camelCase
+                          fee: feeToSave.toString(), // Ensure fee is string
+                          // CRITICAL FIX: Convert travelExpenses number to string
+                          travelExpenses: travelToSave.toString(),  // Backend expects camelCase as string
                         };
                         updateContractMutation.mutate({ id: editingContract.id, contractData });
                       } else {
