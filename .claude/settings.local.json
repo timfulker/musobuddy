@@ -36,7 +36,8 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(npm run build:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(NODE_ENV=production npm run dev)"
     ],
     "deny": [],
     "ask": [],

@@ -1122,8 +1122,8 @@ app.get('/api/email-queue/status', async (req, res) => {
   console.log('✅ Global subscription guard active for all /api/* routes');
 
   // Start server
-  // Replit provides PORT env variable, default to 5000
-  const port = parseInt(process.env.PORT || '5000', 10);
+  // Replit provides PORT env variable, default to 5001 to avoid conflict
+  const port = parseInt(process.env.PORT || '5001', 10);
 
   if (process.env.NODE_ENV !== 'production') {
     // Development with Vite
@@ -1134,20 +1134,14 @@ app.get('/api/email-queue/status', async (req, res) => {
 
     await setupVite(app, server);
     
-    // Check if port is available before listening
-    server.on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is already in use. Attempting to use port ${port + 1}...`);
-        server.listen(port + 1, '0.0.0.0', () => {
-          console.log(`🚀 Development server running on http://0.0.0.0:${port + 1}`);
-        });
-      } else {
-        throw err;
-      }
-    });
-    
+    // Force use of port 5000 for Replit compatibility
     server.listen(port, '0.0.0.0', () => {
       console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
+    });
+    
+    server.on('error', (err: any) => {
+      console.error('❌ Server error:', err);
+      process.exit(1);
     });
   } else {
     // Production
