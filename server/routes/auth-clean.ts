@@ -694,49 +694,7 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Generate Firebase custom token for authenticated user after payment
-  app.post('/api/auth/firebase-token', async (req, res) => {
-    try {
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-      }
-
-      console.log('🔥 Generating Firebase custom token for user:', userId);
-
-      // Get user from database
-      const user = await storage.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      if (!user.firebaseUid) {
-        return res.status(400).json({ error: 'User does not have Firebase UID' });
-      }
-
-      // Generate custom token
-      const customToken = await createCustomToken(user.firebaseUid, {
-        userId: user.id,
-        email: user.email,
-        tier: user.tier
-      });
-
-      console.log('✅ Custom token generated for user:', user.email);
-
-      res.json({
-        success: true,
-        customToken: customToken
-      });
-
-    } catch (error: any) {
-      console.error('❌ Custom token generation error:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate authentication token',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
+  // Firebase custom token endpoint removed - system migrated to Supabase
 
   // NEW: Clean Supabase signup with database creation and beta user detection
   app.post('/api/auth/supabase-signup', async (req, res) => {
