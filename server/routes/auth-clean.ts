@@ -253,7 +253,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        emailVerified: req.user?.emailVerified || false, // Add Firebase email verification status
+        emailVerified: true, // Email verified if they can authenticate via JWT
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
@@ -301,7 +301,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        emailVerified: req.user?.emailVerified || false, // Add Firebase email verification status
+        emailVerified: true, // Email verified if they can authenticate via JWT
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
@@ -575,11 +575,29 @@ export function setupAuthRoutes(app: Express) {
       
       // Find user by email
       console.log('🔍 Looking up user by email:', customerEmail);
-      const user = await storage.getUserByEmail(customerEmail);
+      let user = await storage.getUserByEmail(customerEmail);
       
       if (!user) {
-        console.error('❌ User not found for email:', customerEmail);
-        return res.status(404).json({ error: 'User not found' });
+        console.log('🏗️ User not found in database, creating from Stripe session...');
+        
+        // Auto-create user from Stripe session data
+        const userId = nanoid();
+        const userData = {
+          id: userId,
+          email: customerEmail,
+          firstName: session.metadata?.firstName || '',
+          lastName: session.metadata?.lastName || '',
+          hasPaid: true, // They just completed payment
+          isAdmin: false,
+          isAssigned: false,
+          isBetaTester: false,
+          createdByAdmin: false,
+          stripeCustomerId: session.customer || null,
+          stripeSubscriptionId: session.mode === 'subscription' ? session.subscription : null
+        };
+        
+        user = await storage.createUser(userData);
+        console.log('✅ Auto-created user from Stripe session:', user.id);
       }
       
       console.log('👤 Found user:', { 

@@ -69,48 +69,22 @@ export default function TrialSuccessPage() {
               console.log('✅ Full verification result:', result);
               console.log('💰 Payment status in verify result:', result.user?.hasPaid);
               
-              // Now we need to log the user into Firebase
-              const { auth } = await import('@/lib/firebase');
-              const { signInWithCustomToken } = await import('firebase/auth');
+              // Force refresh of user data to get updated payment status from database
+              await refreshUserData();
+              console.log('🔄 User data refreshed after payment');
               
-              // Get Firebase custom token for this user
-              const tokenResponse = await fetch('/api/auth/firebase-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: result.user.userId })
+              // Set flag for dashboard to know we came from payment
+              sessionStorage.setItem('payment_completed', 'true');
+              
+              // Show success message
+              toast({
+                title: "Welcome to MusoBuddy!",
+                description: "Your account has been created successfully.",
               });
-              
-              if (tokenResponse.ok) {
-                const tokenData = await tokenResponse.json();
-                await signInWithCustomToken(auth, tokenData.customToken);
-                console.log('✅ User signed into Firebase after payment');
-                
-                // Force refresh of user data to get updated payment status from database
-                await refreshUserData();
-                console.log('🔄 User data refreshed after payment');
-                
-                // Set flag for dashboard to know we came from payment
-                sessionStorage.setItem('payment_completed', 'true');
-                
-                // Show success message
-                toast({
-                  title: "Welcome to MusoBuddy!",
-                  description: "Your account has been created successfully.",
-                });
 
-                // Remove session ID from URL but DON'T redirect yet
-                // Let the hasPaid watcher effect handle the redirect
-                window.history.replaceState({}, document.title, '/trial-success');
-              } else {
-                toast({
-                  title: "Welcome to MusoBuddy!",
-                  description: "Your account has been created successfully.",
-                });
-
-                // Remove session ID from URL and redirect to dashboard
-                window.history.replaceState({}, document.title, '/trial-success');
-                setLocation('/dashboard');
-              }
+              // Remove session ID from URL but DON'T redirect yet
+              // Let the hasPaid watcher effect handle the redirect
+              window.history.replaceState({}, document.title, '/trial-success');
             } else {
               console.error('❌ Stripe authentication failed:', response.status);
               const error = await response.json();

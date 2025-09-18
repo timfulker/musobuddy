@@ -85,12 +85,42 @@ export const authenticate = async (
       }
     }
 
+    // If still no user found, this might be a new signup - create the user
     if (!dbUser) {
-      console.log(`❌ [NEW-AUTH] No database user for ${user.email}`);
-      return res.status(404).json({
-        error: 'User account not found',
-        details: 'Please complete account setup'
-      });
+      console.log(`🆕 [NEW-AUTH] No database user for ${user.email}, creating new user from Supabase auth`);
+
+      try {
+        // Extract metadata from Supabase user
+        const metadata = user.user_metadata || {};
+
+        // Create the new user in our database
+        const newUserId = await storage.createUser({
+          email: user.email!,
+          firstName: metadata.firstName || metadata.first_name || '',
+          lastName: metadata.lastName || metadata.last_name || '',
+          supabaseUid: user.id,
+          isAdmin: false,
+          hasPaid: false,
+          trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 day trial
+          onboardingCompleted: false,
+          isActive: true
+        });
+
+        console.log(`✅ [NEW-AUTH] Created new user ${user.email} with ID ${newUserId}`);
+
+        // Fetch the newly created user
+        dbUser = await storage.getUserById(newUserId);
+
+        if (!dbUser) {
+          throw new Error('Failed to fetch newly created user');
+        }
+      } catch (createError) {
+        console.error(`❌ [NEW-AUTH] Failed to create user for ${user.email}:`, createError);
+        return res.status(500).json({
+          error: 'Failed to create user account',
+          details: 'Please contact support'
+        });
+      }
     }
 
     // Check if account is locked

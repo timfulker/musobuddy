@@ -46,26 +46,25 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 # System Architecture
 ## UI/UX Decisions
-- Responsive design for mobile and desktop.
-- Streamlined primary actions and a centralized, tabbed messaging system.
-- Consistent navigation with auto-scrolling to relevant bookings and persistent sorting.
+- Responsive design for mobile and desktop, focusing on primary actions and consistent navigation.
+- Centralized, tabbed messaging system with automated scrolling and persistent sorting.
 - Simplified email branding and enhanced HTML email templates with professional styling.
-- Dual client portal system for contract signing and collaborative planning with dynamic server-side rendering and real-time bidirectional data synchronization.
+- Dual client portal system for contract signing and collaborative planning, featuring dynamic server-side rendering and real-time bidirectional data synchronization.
 - Luminance-aware PDF branding for optimal text contrast.
-- Automated theme saving to database for consistency across PDF generation.
-- Invoice PDFs regenerate automatically on edit to ensure data accuracy.
+- Automated theme saving to the database for consistency.
+- Invoice PDFs automatically regenerate upon edit for data accuracy.
 
 ## Technical Implementations
-- **Frontend**: React 18 (TypeScript, Vite) with Wouter for routing; Tailwind CSS with shadcn/ui and Radix UI for styling; React Query for state management; React Hook Form with Zod validation.
-- **Backend**: Node.js with Express.js (TypeScript, ES modules); Pure Firebase authentication with Firebase Admin SDK; Cloudflare R2 for file storage; Mailgun for transactional emails, parsing, and templates; Isolated Puppeteer engines for dynamic PDF generation; Dual AI models.
+- **Frontend**: React 18 (TypeScript, Vite), Wouter, Tailwind CSS with shadcn/ui and Radix UI, React Query, React Hook Form with Zod validation.
+- **Backend**: Node.js with Express.js (TypeScript, ES modules), Pure Firebase authentication with Firebase Admin SDK.
 
 ## System Design
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses simplified into a single performance fee.
 - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms. PDF branding adjusts dynamically.
+- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms. PDF branding adjusts dynamically based on theme luminance.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
-- **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and async error handling. System isolation for critical components.
+- **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and asynchronous error handling. System isolation for critical components.
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.
 
 # External Dependencies
