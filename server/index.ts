@@ -1122,8 +1122,8 @@ app.get('/api/email-queue/status', async (req, res) => {
   console.log('✅ Global subscription guard active for all /api/* routes');
 
   // Start server
-  // Replit provides PORT env variable, default to 5001 to avoid conflict
-  const port = parseInt(process.env.PORT || '5001', 10);
+  // Replit provides PORT env variable, default to 5000
+  const port = parseInt(process.env.PORT || '5000', 10);
 
   if (process.env.NODE_ENV !== 'production') {
     // Development with Vite
