@@ -224,6 +224,11 @@ export async function registerSettingsRoutes(app: Express) {
           city: "",
           county: "",
           postcode: "",
+          // Home address fields (missing from original defaults)
+          homeAddressLine1: "",
+          homeAddressLine2: "",
+          homeCity: "",
+          homePostcode: "",
           phone: "",
           website: "",
           taxNumber: "",
