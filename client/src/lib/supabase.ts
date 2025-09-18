@@ -5,12 +5,12 @@ import { createClient } from '@supabase/supabase-js'
  * Automatically switches between dev/prod based on environment variables
  */
 
-// Match backend environment - using development for auth rebuild testing
-const isProduction = false
-const isDevelopment = true
+// Match backend environment - auto-detect from NODE_ENV
+const isProduction = import.meta.env.PROD
+const isDevelopment = import.meta.env.DEV
 
 // Log environment alignment
-console.log('🔧 SUPABASE CONFIG: Using DEVELOPMENT to match backend environment')
+console.log(`🔧 SUPABASE CONFIG: Using ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} environment`)
 console.log('🔧 Current hostname:', window.location.hostname)
 
 // Select appropriate credentials based on environment
