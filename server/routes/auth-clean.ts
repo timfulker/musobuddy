@@ -587,6 +587,7 @@ export function setupAuthRoutes(app: Express) {
           email: customerEmail,
           firstName: session.metadata?.firstName || '',
           lastName: session.metadata?.lastName || '',
+          emailVerified: true, // Email verified if they can authenticate and pay
           hasPaid: true, // They just completed payment
           isAdmin: false,
           isAssigned: false,
@@ -790,6 +791,7 @@ export function setupAuthRoutes(app: Express) {
         email: email,
         firstName: firstName,
         lastName: lastName,
+        emailVerified: true, // Email verified via Supabase authentication
         supabaseUid: supabaseUid, // Store Supabase UID
         signupIpAddress: req.ip || req.connection?.remoteAddress || 'unknown',
         deviceFingerprint: deviceFingerprint,

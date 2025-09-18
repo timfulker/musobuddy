@@ -27,6 +27,9 @@ export const users = pgTable("users", {
   isAssigned: boolean("is_assigned").default(false),
   isBetaTester: boolean("is_beta_tester").default(false),
   
+  // Email verification
+  emailVerified: boolean("email_verified").default(false),
+  
   // Access Control
   trialEndsAt: timestamp("trial_ends_at").default(null),
   hasPaid: boolean("has_paid").default(false),
