@@ -18,7 +18,6 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { z } from "zod";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { What3WordsInput } from "@/components/What3WordsInput";
-import IndividualFieldLock from "@/components/individual-field-lock";
 import BookingMap from "@/components/BookingMap";
 import Sidebar from "@/components/sidebar";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -1941,15 +1940,8 @@ export default function NewBookingPage({
                       name="venueContact"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          <FormLabel>
                             Venue On-Day Contact
-                            {isEditMode && editingBooking && (
-                              <IndividualFieldLock
-                                bookingId={editingBooking.id}
-                                fieldName="venueContact"
-                                initialLock={editingBooking.fieldLocks?.venueContact}
-                              />
-                            )}
                           </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Phone number for event day" className="bg-purple-50/30 border-purple-200" />
@@ -1964,15 +1956,8 @@ export default function NewBookingPage({
                       name="soundTechContact"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          <FormLabel>
                             Sound Tech Contact
-                            {isEditMode && editingBooking && (
-                              <IndividualFieldLock
-                                bookingId={editingBooking.id}
-                                fieldName="soundTechContact"
-                                initialLock={editingBooking.fieldLocks?.soundTechContact}
-                              />
-                            )}
                           </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Sound engineer contact" className="bg-purple-50/30 border-purple-200" />
@@ -1987,15 +1972,8 @@ export default function NewBookingPage({
                       name="stageSize"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          <FormLabel>
                             Stage/Performance Area Size
-                            {isEditMode && editingBooking && (
-                              <IndividualFieldLock
-                                bookingId={editingBooking.id}
-                                fieldName="stageSize"
-                                initialLock={editingBooking.fieldLocks?.stageSize}
-                              />
-                            )}
                           </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
@@ -2020,15 +1998,8 @@ export default function NewBookingPage({
                       name="soundCheckTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          <FormLabel>
                             Preferred Sound Check Time
-                            {isEditMode && editingBooking && (
-                              <IndividualFieldLock
-                                bookingId={editingBooking.id}
-                                fieldName="soundCheckTime"
-                                initialLock={editingBooking.fieldLocks?.soundCheckTime}
-                              />
-                            )}
                           </FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="e.g., 2 hours before event" className="bg-purple-50/30 border-purple-200" />
@@ -2044,15 +2015,8 @@ export default function NewBookingPage({
                     name="powerEquipment"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center">
+                        <FormLabel>
                           Power & Equipment Availability
-                          {isEditMode && editingBooking && (
-                            <IndividualFieldLock
-                              bookingId={editingBooking.id}
-                              fieldName="powerEquipment"
-                              initialLock={editingBooking.fieldLocks?.powerEquipment}
-                            />
-                          )}
                         </FormLabel>
                         <FormControl>
                           <Textarea {...field} rows={2} placeholder="Number of sockets, voltage, any noise limiter restrictions..." className="bg-purple-50/30 border-purple-200" />
@@ -2074,15 +2038,8 @@ export default function NewBookingPage({
                       name="styleMood"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          <FormLabel>
                             Style/Mood Preference
-                            {isEditMode && editingBooking && (
-                              <IndividualFieldLock
-                                bookingId={editingBooking.id}
-                                fieldName="styleMood"
-                                initialLock={editingBooking.fieldLocks?.styleMood}
-                              />
-                            )}
                           </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
