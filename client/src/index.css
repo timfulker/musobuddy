@@ -208,6 +208,22 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
 /* Ensure dropdown content appears above hover cards */
 [data-radix-dropdown-menu-content] {
   z-index: 99999999 !important;
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Fix transparent overlays and ensure proper backgrounds */
+[data-radix-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-radix-dropdown-menu-content],
+[data-radix-context-menu-content],
+[data-radix-select-content] {
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
 }
 
 .calendar-integration-dialog h1,
