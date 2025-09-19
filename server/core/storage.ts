@@ -112,22 +112,6 @@ export class Storage {
     return userStorage.getTotalUserCount();
   }
 
-  // ===== SMS VERIFICATION METHODS =====
-  async createSmsVerification(email: string, firstName: string, lastName: string, phoneNumber: string, hashedPassword: string, verificationCode: string, expiresAt: Date) {
-    return userStorage.createSmsVerification(email, firstName, lastName, phoneNumber, hashedPassword, verificationCode, expiresAt);
-  }
-
-  async getSmsVerificationByEmail(email: string) {
-    return userStorage.getSmsVerificationByEmail(email);
-  }
-
-  async deleteSmsVerification(email: string) {
-    return userStorage.deleteSmsVerification(email);
-  }
-
-  async deleteExpiredSmsVerifications() {
-    return userStorage.deleteExpiredSmsVerifications();
-  }
 
   async getTotalBookingCount() {
     return bookingStorage.getTotalBookingCount();

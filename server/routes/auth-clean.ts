@@ -976,15 +976,5 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Periodic cleanup of expired verification codes for security hygiene
-  setInterval(async () => {
-    try {
-      await storage.deleteExpiredSmsVerifications();
-    } catch (error) {
-      console.error('❌ Error cleaning up expired SMS verifications:', error);
-    }
-  }, 10 * 60 * 1000); // Clean up every 10 minutes
-
-  console.log('✅ Clean authentication system configured with SMS and Stripe integration');
-  console.log('🧹 Periodic cleanup enabled for expired verification codes');
+  console.log('✅ Clean authentication system configured with Stripe integration');
 }

@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { users, sessions, smsVerifications } from "../../shared/schema";
+import { users, sessions } from "../../shared/schema";
 import { eq, lt, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { randomBytes } from 'crypto';
@@ -341,38 +341,6 @@ export class UserStorage {
     await db.delete(sessions).where(lt(sessions.expire, new Date()));
   }
 
-  // ===== SMS VERIFICATION METHODS =====
-  
-  async createSmsVerification(email: string, firstName: string, lastName: string, phoneNumber: string, hashedPassword: string, verificationCode: string, expiresAt: Date) {
-    // First, clean up any existing verification for this email
-    await this.deleteSmsVerification(email);
-    
-    const result = await db.insert(smsVerifications).values({
-      email,
-      firstName,
-      lastName,
-      phoneNumber,
-      password: hashedPassword,
-      verificationCode,
-      expiresAt,
-    }).returning();
-    return result[0];
-  }
-
-  async getSmsVerificationByEmail(email: string) {
-    const result = await db.select().from(smsVerifications).where(eq(smsVerifications.email, email));
-    return result[0] || null;
-  }
-
-  async deleteSmsVerification(email: string) {
-    await db.delete(smsVerifications).where(eq(smsVerifications.email, email));
-  }
-
-  async deleteExpiredSmsVerifications() {
-    const now = new Date();
-    const result = await db.delete(smsVerifications).where(lt(smsVerifications.expiresAt, now));
-    console.log(`🧹 Cleaned up expired SMS verifications: ${result.rowCount || 0} removed`);
-  }
 
   async updateLoginActivity(userId: string, loginTime: Date, loginIP: string) {
     try {
