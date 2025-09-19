@@ -55,6 +55,27 @@ export function AuthCallback() {
           if (data.session) {
             console.log('✅ [AUTH-CALLBACK] Session established successfully');
             
+            // CRITICAL FIX: Update database email_verified field
+            try {
+              console.log('📧 [AUTH-CALLBACK] Updating database email_verified field...');
+              const response = await fetch('/api/auth/verify-email', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${data.session.access_token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (response.ok) {
+                console.log('✅ [AUTH-CALLBACK] Database email_verified field updated successfully');
+              } else {
+                console.warn('⚠️ [AUTH-CALLBACK] Failed to update database email_verified field:', await response.text());
+              }
+            } catch (dbError) {
+              console.error('❌ [AUTH-CALLBACK] Error updating database email_verified field:', dbError);
+              // Don't fail the verification process for database update errors
+            }
+            
             // Refresh user data to get latest verification status
             await refreshUserData();
             
@@ -102,6 +123,27 @@ export function AuthCallback() {
               }
             } else if (data.session) {
               console.log('✅ [AUTH-CALLBACK] Fallback exchangeCodeForSession successful');
+              
+              // CRITICAL FIX: Update database email_verified field
+              try {
+                console.log('📧 [AUTH-CALLBACK] Updating database email_verified field...');
+                const response = await fetch('/api/auth/verify-email', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${data.session.access_token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (response.ok) {
+                  console.log('✅ [AUTH-CALLBACK] Database email_verified field updated successfully');
+                } else {
+                  console.warn('⚠️ [AUTH-CALLBACK] Failed to update database email_verified field:', await response.text());
+                }
+              } catch (dbError) {
+                console.error('❌ [AUTH-CALLBACK] Error updating database email_verified field:', dbError);
+                // Don't fail the verification process for database update errors
+              }
               
               // Refresh user data to get latest verification status
               await refreshUserData();

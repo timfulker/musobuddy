@@ -33,15 +33,30 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     
     try {
+      console.log('🔐 [FORGOT-PASSWORD] Attempting to send password reset email to:', data.email);
+      console.log('🔗 [FORGOT-PASSWORD] Redirect URL will be:', `${window.location.origin}/auth/reset-password`);
+      
       // Use Supabase's built-in password reset
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
         redirectTo: `${window.location.origin}/auth/reset-password`
       });
 
+      console.log('📧 [FORGOT-PASSWORD] Supabase resetPasswordForEmail result:', { 
+        error: error ? error.message : 'No error',
+        hasError: !!error 
+      });
+
       if (error) {
+        console.error('❌ [FORGOT-PASSWORD] Supabase error details:', {
+          message: error.message,
+          status: error.status,
+          statusCode: error.status,
+          details: error
+        });
         throw error;
       }
 
+      console.log('✅ [FORGOT-PASSWORD] Password reset email request sent successfully');
       setIsSubmitted(true);
       toast({
         title: "Reset email sent",
@@ -49,7 +64,8 @@ export default function ForgotPasswordPage() {
       });
       
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('❌ [FORGOT-PASSWORD] Password reset error:', error);
+      console.error('❌ [FORGOT-PASSWORD] Full error object:', JSON.stringify(error, null, 2));
       
       let errorMessage = "Failed to send reset email";
       
@@ -64,6 +80,9 @@ export default function ForgotPasswordPage() {
         case 'Too many requests':
         case 'email_rate_limit_exceeded':
           errorMessage = "Too many requests. Please try again later";
+          break;
+        case 'Email not confirmed':
+          errorMessage = "This feature is not available. Please contact support.";
           break;
         default:
           errorMessage = error.message || "Failed to send reset email";

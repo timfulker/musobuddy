@@ -17,6 +17,74 @@ export function setupAuthRoutes(app: Express) {
   console.log('🔍 [DEBUG] Express app object:', !!app);
   console.log('🔍 [DEBUG] App.post method:', typeof app.post);
 
+  // Test endpoint for debugging Supabase forgot password functionality
+  app.post('/api/test-forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      
+      console.log('🧪 [TEST-FORGOT-PASSWORD] Testing Supabase forgot password for:', email);
+      
+      // Import Supabase admin client
+      const { createClient } = await import('@supabase/supabase-js');
+      
+      const supabaseUrl = process.env.NODE_ENV === 'production'
+        ? process.env.SUPABASE_URL_PROD
+        : process.env.SUPABASE_URL_DEV;
+        
+      const supabaseAnonKey = process.env.NODE_ENV === 'production'
+        ? process.env.SUPABASE_ANON_KEY_PROD
+        : process.env.SUPABASE_ANON_KEY_DEV;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        return res.status(500).json({ 
+          error: 'Supabase configuration missing',
+          missingVars: {
+            url: !supabaseUrl,
+            key: !supabaseAnonKey
+          }
+        });
+      }
+      
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      // Test the forgot password functionality
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${req.protocol}://${req.get('host')}/auth/reset-password`
+      });
+      
+      if (error) {
+        console.error('❌ [TEST-FORGOT-PASSWORD] Supabase error:', error);
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+          errorCode: error.status,
+          details: error
+        });
+      }
+      
+      console.log('✅ [TEST-FORGOT-PASSWORD] Password reset email sent successfully');
+      
+      res.json({
+        success: true,
+        message: 'Password reset email sent successfully',
+        email: email,
+        redirectUrl: `${req.protocol}://${req.get('host')}/auth/reset-password`,
+        supabaseProject: supabaseUrl.split('.')[0].split('//')[1]
+      });
+      
+    } catch (error: any) {
+      console.error('❌ [TEST-FORGOT-PASSWORD] Error:', error);
+      res.status(500).json({ 
+        error: 'Failed to test forgot password',
+        details: error.message 
+      });
+    }
+  });
+
   // Test endpoint for Mailgun click tracking fix
   app.post('/api/test-auth-email', async (req, res) => {
     try {
@@ -203,6 +271,40 @@ export function setupAuthRoutes(app: Express) {
     }
   });
   
+  // Update email verification status endpoint
+  app.post('/api/auth/verify-email', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'No user ID found' });
+      }
+
+      console.log('📧 [EMAIL-VERIFY] Updating email verification status for user:', userId);
+
+      // Update the user's email verification status in the database
+      const updateResult = await storage.updateUser(userId, { 
+        emailVerified: true 
+      });
+
+      if (!updateResult) {
+        return res.status(500).json({ error: 'Failed to update email verification status' });
+      }
+
+      console.log('✅ [EMAIL-VERIFY] Email verification status updated successfully');
+
+      res.json({
+        success: true,
+        message: 'Email verification status updated',
+        emailVerified: true
+      });
+
+    } catch (error) {
+      console.error('❌ [EMAIL-VERIFY] Error updating email verification:', error);
+      res.status(500).json({ error: 'Failed to update email verification status' });
+    }
+  });
+
   // Get current user endpoint - uses Supabase authentication
   app.get('/api/auth/user', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
