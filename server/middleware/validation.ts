@@ -67,15 +67,26 @@ export const validateQuery = (schema: z.ZodSchema) => {
 
 // Common validation schemas - CRITICAL FIX: Using shared schemas to prevent drift
 export const schemas = {
-  // Contract creation - FIXED: Use shared schema, venue now optional to match database
+  // Contract creation - FIXED: Accept both string and number for fee/deposit
   createContract: insertContractSchema.extend({
     // Additional validations on top of shared schema
     clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
     eventDate: z.coerce.date(), // Ensure date coercion
+    // CRITICAL FIX: Accept both string and number, always output as string for database
     fee: z.union([z.string(), z.number()]).transform((val) => {
+      if (val === null || val === undefined || val === '') return "0";
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? "0" : num.toString();
+    }),
+    deposit: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
       if (val === null || val === undefined || val === '') return null;
       const num = typeof val === 'string' ? parseFloat(val) : val;
-      return isNaN(num) ? null : num;
+      return isNaN(num) ? null : num.toString();
+    }),
+    travelExpenses: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
     }),
     // CRITICAL FIX: venue is now optional (inherited from shared schema) - NO MORE 400 ERRORS
     // venue validation removed - follows shared schema (optional)

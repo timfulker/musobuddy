@@ -149,8 +149,8 @@ export function registerBandsRoutes(app: Express) {
         }
       }
 
-      // Update the booking with the band
-      await storage.updateBooking(bookingId, userId, { bandId });
+      // Update the booking with the band (fixed parameter order)
+      await storage.updateBooking(bookingId, { bandId }, userId);
       console.log(`✅ Assigned band ${bandId} to booking ${bookingId}`);
       res.json({ success: true });
     })
