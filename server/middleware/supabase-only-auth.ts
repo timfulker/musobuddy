@@ -136,7 +136,7 @@ export const authenticate = async (
     req.user = {
       id: dbUser.id,
       email: dbUser.email,
-      emailVerified: !!user.email_confirmed_at,
+      emailVerified: dbUser.emailVerified || !!user.email_confirmed_at, // Use database first, fallback to Supabase
       firstName: dbUser.firstName || '',
       lastName: dbUser.lastName || '',
       isAdmin: dbUser.isAdmin || false,

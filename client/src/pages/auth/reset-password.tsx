@@ -107,9 +107,15 @@ export default function ResetPasswordPage() {
           setIsPasswordResetRequired(true);
           setBlockNavigation(true);
         } else if (session) {
-          // Regular session but not recovery - redirect to dashboard
-          console.log('ℹ️ [RESET-PASSWORD] Regular session found - redirecting to dashboard');
-          setLocation('/dashboard');
+          // SECURITY FIX: Allow password reset even if user has regular session
+          // This handles cases where user clicks reset link while already logged in
+          console.log('⚠️ [RESET-PASSWORD] Regular session found but allowing password reset');
+          setHasRecoverySession(true);
+          setIsPasswordResetRequired(true);
+          setBlockNavigation(false); // Don't block navigation for voluntary reset
+          
+          // Store flag to indicate password reset in progress
+          sessionStorage.setItem('voluntary_password_reset', 'true');
         } else {
           // No valid recovery session
           console.log('❌ [RESET-PASSWORD] No valid recovery session found');
@@ -202,6 +208,7 @@ export default function ResetPasswordPage() {
       // SECURITY: Clear all recovery session flags
       sessionStorage.removeItem('password_reset_required');
       sessionStorage.removeItem('recovery_session_active');
+      sessionStorage.removeItem('voluntary_password_reset');
       setBlockNavigation(false); // Allow navigation after successful reset
       setIsSuccess(true);
       
