@@ -529,75 +529,227 @@ JSON:`;
 
 // Extract Encore apply-now links from both plain text and HTML tracking URLs
 function extractEncoreApplyLink(messageText: string): string | null {
-  // Pattern 1: Direct encoremusicians.com URLs
+  console.log('🎵 [ENCORE EXTRACTION] Starting comprehensive apply-now link extraction...');
+  console.log('🎵 [ENCORE EXTRACTION] Message length:', messageText?.length || 0);
+  console.log('🎵 [ENCORE EXTRACTION] Contains "Apply now":', messageText.toLowerCase().includes('apply now'));
+  console.log('🎵 [ENCORE EXTRACTION] Contains "encoremusicians":', messageText.toLowerCase().includes('encoremusicians'));
+  
+  // Pattern 1: HTML Button Structures - Target "Apply now" buttons specifically
+  const applyNowButtonPatterns = [
+    // Table-based buttons (common in email templates)
+    /<table[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/table>/gi,
+    
+    // Div-based buttons with "Apply now" text
+    /<div[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/div>/gi,
+    
+    // Anchor tags containing "Apply now" text
+    /<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
+    
+    // Reverse pattern: "Apply now" text followed by link
+    /apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi,
+    
+    // Button elements with "Apply now"
+    /<button[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/button>/gi,
+    
+    // Nested table cells and divs (complex email layouts)
+    /<t[dr][^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/t[dr]>/gi,
+    
+    // Links within spans containing "Apply now"
+    /<span[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/span>/gi
+  ];
+  
+  console.log('🎵 [ENCORE EXTRACTION] Testing', applyNowButtonPatterns.length, 'Apply now button patterns...');
+  
+  for (let i = 0; i < applyNowButtonPatterns.length; i++) {
+    const pattern = applyNowButtonPatterns[i];
+    console.log(`🎵 [ENCORE EXTRACTION] Testing pattern ${i + 1}:`, pattern.toString().substring(0, 100) + '...');
+    
+    let match;
+    pattern.lastIndex = 0; // Reset regex state
+    while ((match = pattern.exec(messageText)) !== null) {
+      const url = match[1];
+      console.log(`✅ [ENCORE EXTRACTION] Pattern ${i + 1} found Apply now button URL:`, url);
+      
+      // Decode tracking URLs
+      const decodedUrl = decodeTrackingUrl(url);
+      console.log(`🎵 [ENCORE EXTRACTION] Final decoded URL:`, decodedUrl);
+      return decodedUrl;
+    }
+  }
+  
+  // Pattern 2: Direct encoremusicians.com URLs (fallback)
+  console.log('🎵 [ENCORE EXTRACTION] Testing direct URL patterns...');
   const directPatterns = [
     /https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.encoremusicians\.com\/[^\s<>"']+/gi
   ];
   
-  for (const pattern of directPatterns) {
+  for (let i = 0; i < directPatterns.length; i++) {
+    const pattern = directPatterns[i];
     const match = messageText.match(pattern);
     if (match) {
+      console.log(`✅ [ENCORE EXTRACTION] Direct pattern ${i + 1} found URL:`, match[0]);
       return match[0];
     }
   }
   
-  // Pattern 2: AWS tracking URLs - extract and decode the actual Encore URL
+  // Pattern 3: Enhanced AWS tracking URLs
+  console.log('🎵 [ENCORE EXTRACTION] Testing enhanced tracking URL patterns...');
   const trackingPatterns = [
+    // Standard AWS tracking patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
-    /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi
+    /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
+    
+    // Alternative encoding patterns
+    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https%3A%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
+    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
+    
+    // Click tracking services
+    /https:\/\/click\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
+    /https:\/\/[^\/\s]*\.clicks\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi
   ];
   
-  for (const pattern of trackingPatterns) {
+  for (let i = 0; i < trackingPatterns.length; i++) {
+    const pattern = trackingPatterns[i];
     const match = messageText.match(pattern);
     if (match) {
       const trackingUrl = match[0];
-      console.log(`🔍 Found AWS tracking URL: ${trackingUrl}`);
+      console.log(`✅ [ENCORE EXTRACTION] Tracking pattern ${i + 1} found URL:`, trackingUrl);
       
-      // Extract the encoded Encore URL from the tracking wrapper
-      const encoreUrlMatch = trackingUrl.match(/https:%2F%2Fencoremusicians\.com[^\/\s]*/);
-      if (encoreUrlMatch) {
-        // Decode the URL-encoded Encore link
-        const encodedUrl = encoreUrlMatch[0];
-        const decodedUrl = decodeURIComponent(encodedUrl);
-        console.log(`🎵 Decoded Encore URL: ${decodedUrl}`);
+      const decodedUrl = decodeTrackingUrl(trackingUrl);
+      console.log(`🎵 [ENCORE EXTRACTION] Decoded tracking URL:`, decodedUrl);
+      return decodedUrl;
+    }
+  }
+  
+  // Pattern 4: Enhanced href attribute extraction
+  console.log('🎵 [ENCORE EXTRACTION] Testing enhanced href patterns...');
+  const hrefPatterns = [
+    // Standard href patterns
+    /href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi,
+    
+    // Href with various quotes and encoding
+    /href=([^>\s]*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^>\s]*)/gi,
+    
+    // Data attributes that might contain URLs
+    /data-url=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi,
+    /data-link=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi,
+    
+    // Action attributes
+    /action=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi
+  ];
+  
+  for (let i = 0; i < hrefPatterns.length; i++) {
+    const pattern = hrefPatterns[i];
+    let hrefMatch;
+    pattern.lastIndex = 0; // Reset regex state
+    while ((hrefMatch = pattern.exec(messageText)) !== null) {
+      const url = hrefMatch[1];
+      console.log(`✅ [ENCORE EXTRACTION] Href pattern ${i + 1} found URL:`, url);
+      
+      const decodedUrl = decodeTrackingUrl(url);
+      if (decodedUrl && decodedUrl.includes('encoremusicians.com')) {
+        console.log(`🎵 [ENCORE EXTRACTION] Valid href URL:`, decodedUrl);
         return decodedUrl;
       }
-      
-      // Fallback: return the tracking URL if decoding fails
-      return trackingUrl;
     }
   }
   
-  // Pattern 3: Look for href attributes in HTML containing Encore URLs
-  const hrefPattern = /href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi;
-  let hrefMatch;
-  while ((hrefMatch = hrefPattern.exec(messageText)) !== null) {
-    const url = hrefMatch[1];
-    if (url.includes('encoremusicians.com')) {
-      return url;
-    }
-    if (url.includes('awstrack.me') && url.includes('encoremusicians')) {
-      // Try to decode tracking URL
-      const encoreUrlMatch = url.match(/https:%2F%2Fencoremusicians\.com[^&]*/);
-      if (encoreUrlMatch) {
-        return decodeURIComponent(encoreUrlMatch[0]);
+  // Pattern 5: Job ID extraction and URL construction (enhanced)
+  console.log('🎵 [ENCORE EXTRACTION] Testing job ID extraction patterns...');
+  const jobIdPatterns = [
+    // Standard job ID patterns
+    /\[([A-Za-z0-9]{4,8})\]/g,
+    /job[:\s#]*([A-Za-z0-9]{4,8})/gi,
+    /id[:\s#]*([A-Za-z0-9]{4,8})/gi,
+    
+    // URL-style job references
+    /\/jobs\/([A-Za-z0-9]{4,8})/gi,
+    /job_id=([A-Za-z0-9]{4,8})/gi,
+    
+    // Email subject patterns
+    /encore\s+musicians?\s*[\[\(]?([A-Za-z0-9]{4,8})[\]\)]?/gi
+  ];
+  
+  for (let i = 0; i < jobIdPatterns.length; i++) {
+    const pattern = jobIdPatterns[i];
+    const jobIdMatch = messageText.match(pattern);
+    if (jobIdMatch) {
+      const jobId = jobIdMatch[1] || jobIdMatch[0].replace(/[^\w]/g, '');
+      if (jobId && jobId.length >= 4 && jobId.length <= 8) {
+        console.log(`✅ [ENCORE EXTRACTION] Job ID pattern ${i + 1} found ID:`, jobId);
+        const constructedUrl = `https://encoremusicians.com/jobs/${jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow`;
+        console.log(`🎵 [ENCORE EXTRACTION] Constructed URL:`, constructedUrl);
+        return constructedUrl;
       }
-      return url;
     }
   }
   
-  // Pattern 4: Extract job ID from email subject and construct proper URL
-  // Look for patterns like [IQ4qx] in subject or message text
-  const jobIdPattern = /\[([A-Za-z0-9]{4,6})\]/;
-  const jobIdMatch = messageText.match(jobIdPattern);
-  if (jobIdMatch) {
-    const jobId = jobIdMatch[1];
-    console.log(`🎵 Found Encore job ID: ${jobId}`);
-    return `https://encoremusicians.com/jobs/${jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow`;
+  console.log('❌ [ENCORE EXTRACTION] No apply-now link found after testing all patterns');
+  
+  // Final debug: Log email structure for analysis
+  if (messageText.toLowerCase().includes('encore') || messageText.toLowerCase().includes('apply')) {
+    console.log('🔍 [ENCORE EXTRACTION DEBUG] Email appears to be Encore-related but no link found');
+    console.log('🔍 [ENCORE EXTRACTION DEBUG] First 500 chars:', messageText.substring(0, 500));
+    console.log('🔍 [ENCORE EXTRACTION DEBUG] Contains HTML tags:', messageText.includes('<'));
+    console.log('🔍 [ENCORE EXTRACTION DEBUG] Contains URLs:', /https?:\/\//.test(messageText));
   }
 
   return null;
+}
+
+// Helper function to decode various tracking URL formats
+function decodeTrackingUrl(url: string): string {
+  console.log('🔗 [URL DECODE] Input URL:', url);
+  
+  // Handle direct Encore URLs
+  if (url.includes('encoremusicians.com') && !url.includes('awstrack.me') && !url.includes('click.')) {
+    console.log('🔗 [URL DECODE] Direct Encore URL, returning as-is');
+    return url;
+  }
+  
+  // Handle AWS tracking URLs
+  if (url.includes('awstrack.me')) {
+    console.log('🔗 [URL DECODE] AWS tracking URL detected');
+    
+    // Multiple encoding patterns to try
+    const decodingPatterns = [
+      /https:%2F%2Fencoremusicians\.com[^&\s]*/g,
+      /https%3A%2F%2Fencoremusicians\.com[^&\s]*/g,
+      /encoremusicians\.com[^&\s]*/g
+    ];
+    
+    for (const pattern of decodingPatterns) {
+      const match = url.match(pattern);
+      if (match) {
+        let decoded = decodeURIComponent(match[0]);
+        if (!decoded.startsWith('http')) {
+          decoded = 'https://' + decoded;
+        }
+        console.log('🔗 [URL DECODE] Successfully decoded:', decoded);
+        return decoded;
+      }
+    }
+    
+    console.log('🔗 [URL DECODE] Failed to decode AWS tracking URL, returning original');
+    return url;
+  }
+  
+  // Handle other click tracking services
+  if (url.includes('click.') || url.includes('.clicks.')) {
+    console.log('🔗 [URL DECODE] Click tracking service detected');
+    
+    // Try to extract Encore URL from click tracker
+    const encoreMatch = url.match(/encoremusicians\.com[^&\s]*/);
+    if (encoreMatch) {
+      const decoded = 'https://' + encoreMatch[0];
+      console.log('🔗 [URL DECODE] Extracted from click tracker:', decoded);
+      return decoded;
+    }
+  }
+  
+  console.log('🔗 [URL DECODE] No specific decoding needed, returning original');
+  return url;
 }
 
 // Helper functions for data cleaning
