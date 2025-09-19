@@ -507,10 +507,11 @@ export default function Invoices() {
       validationIssues.push("Client name cannot be empty");
     }
     
-    if (!data.amount.trim()) {
+    const amountStr = typeof data.amount === 'string' ? data.amount.trim() : String(data.amount || '');
+    if (!amountStr) {
       validationIssues.push("Amount is required");
     } else {
-      const amount = parseFloat(data.amount);
+      const amount = parseFloat(amountStr);
       if (isNaN(amount) || amount <= 0) {
         validationIssues.push("Amount must be a valid number greater than 0");
       }
@@ -553,7 +554,7 @@ export default function Invoices() {
       ccEmail: data.ccEmail?.trim() || null,
       clientAddress: data.clientAddress?.trim() || null,
       venueAddress: data.venueAddress?.trim() || null,
-      amount: data.amount.trim(),
+      amount: typeof data.amount === 'string' ? data.amount.trim() : String(data.amount || ''),
       dueDate: data.dueDate, // Keep as string - server will convert
       performanceDate: data.performanceDate || null,
       performanceFee: data.performanceFee?.trim() || null,
