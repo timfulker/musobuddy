@@ -218,12 +218,38 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   backdrop-filter: blur(4px) !important;
 }
 
+/* Force solid backgrounds for all overlay components */
 [data-radix-dropdown-menu-content],
 [data-radix-context-menu-content],
-[data-radix-select-content] {
-  background: var(--popover) !important;
-  border: 1px solid var(--border) !important;
+[data-radix-select-content],
+[data-radix-popover-content] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+  color: #1f2937 !important;
+}
+
+/* Dark mode overrides for overlays */
+.dark [data-radix-dropdown-menu-content],
+.dark [data-radix-context-menu-content],
+.dark [data-radix-select-content],
+.dark [data-radix-popover-content] {
+  background: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: #e5e5e5 !important;
+}
+
+/* Dialog content fixes */
+[data-radix-dialog-content] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.dark [data-radix-dialog-content] {
+  background: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: #e5e5e5 !important;
 }
 
 .calendar-integration-dialog h1,
