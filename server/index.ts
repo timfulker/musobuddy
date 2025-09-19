@@ -1125,8 +1125,8 @@ app.get('/api/email-queue/status', async (req, res) => {
   // Replit provides PORT env variable, default to 5000
   const port = parseInt(process.env.PORT || '5000', 10);
 
-  if (false && process.env.NODE_ENV !== 'production') {
-    // Development with Vite (temporarily disabled)
+  if (process.env.NODE_ENV !== 'production') {
+    // Development with Vite
     console.log('🛠️ Development mode: using Vite dev server');
     const { setupVite } = await import('./vite');
     const { createServer } = await import('http');
