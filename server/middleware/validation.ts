@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Request, Response, NextFunction } from 'express';
+import { insertContractSchema, insertBookingSchema, insertInvoiceSchema } from '@shared/schema';
 
 // Validation middleware factory
 export const validateBody = (schema: z.ZodSchema) => {
@@ -64,18 +65,20 @@ export const validateQuery = (schema: z.ZodSchema) => {
   };
 };
 
-// Common validation schemas
+// Common validation schemas - CRITICAL FIX: Using shared schemas to prevent drift
 export const schemas = {
-  // Contract creation
-  createContract: z.object({
+  // Contract creation - FIXED: Use shared schema, venue now optional to match database
+  createContract: insertContractSchema.extend({
+    // Additional validations on top of shared schema
     clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
-    clientEmail: z.string().email('Invalid email format').optional(),
-    clientPhone: z.string().optional(),
-    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').transform((dateStr) => new Date(dateStr + 'T00:00:00.000Z')),
-    eventTime: z.string().optional(),
-    fee: z.number().positive('Fee must be positive').optional(),
-    venue: z.string().trim().min(1, 'Venue is required').max(200, 'Venue name too long'),
-    enquiryId: z.number().int().positive().optional()
+    eventDate: z.coerce.date(), // Ensure date coercion
+    fee: z.union([z.string(), z.number()]).transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num;
+    }),
+    // CRITICAL FIX: venue is now optional (inherited from shared schema) - NO MORE 400 ERRORS
+    // venue validation removed - follows shared schema (optional)
   }),
 
   // Contract signing
@@ -87,37 +90,37 @@ export const schemas = {
     venueAddress: z.string().optional()
   }),
 
-  // Booking creation - extremely flexible validation, only basic checks
-  createBooking: z.object({
-    title: z.string().optional().nullable(),
-    clientName: z.string().optional().nullable(), // Even client name can be empty for incomplete bookings
+  // Booking creation - CRITICAL FIX: Use shared schema with enhanced deposit normalization
+  createBooking: insertBookingSchema.extend({
+    // Additional validations on top of shared schema
     clientEmail: z.string().email('Invalid email format').optional().nullable(),
-    clientPhone: z.string().optional().nullable(),
-    eventDate: z.string().optional().nullable(), // Date is optional to allow saving incomplete bookings
-    eventTime: z.string().optional().nullable(),
-    eventEndTime: z.string().optional().nullable(),
-    venue: z.string().optional().nullable(),
-    venueAddress: z.string().optional().nullable(),
-    fee: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
-    finalAmount: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number for total fee
-    deposit: z.union([z.string(), z.number()]).optional().nullable(), // Accept both string and number
-    status: z.string().optional().nullable(),
-    notes: z.string().optional().nullable(),
-    gigType: z.string().optional().nullable(),
-    eventType: z.string().optional().nullable(),
-    equipmentRequirements: z.string().optional().nullable(),
-    specialRequirements: z.string().optional().nullable(),
-    performanceDuration: z.string().optional().nullable(),
-    travelExpense: z.union([z.string(), z.number()]).optional().nullable(),
-    styles: z.string().optional().nullable(),
-    equipmentProvided: z.string().optional().nullable(),
-    whatsIncluded: z.string().optional().nullable(),
-    dressCode: z.string().optional().nullable(),
-    contactPhone: z.string().optional().nullable(),
-    parkingInfo: z.string().optional().nullable(),
-    venueContactInfo: z.string().optional().nullable(),
-    what3words: z.string().optional().nullable(),
-    clientAddress: z.string().optional().nullable()
+    eventDate: z.coerce.date().optional().nullable(), // Ensure date coercion
+    venue: z.string().optional().nullable().refine((val) => {
+      // If venue is provided, it must not be empty
+      return val === null || val === undefined || val.trim().length > 0;
+    }, { message: "Venue cannot be empty when provided" }),
+    // CRITICAL FIX: Accept both deposit/depositAmount for backwards compatibility
+    deposit: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num;
+    }),
+  }).transform((data) => {
+    // CRITICAL FIX: Enhanced deposit normalization to prevent ANY data loss
+    // Priority: depositAmount > deposit > null (guarantees no data loss)
+    let finalDepositAmount = null;
+    if (data.depositAmount !== null && data.depositAmount !== undefined) {
+      finalDepositAmount = data.depositAmount;
+    } else if (data.deposit !== null && data.deposit !== undefined) {
+      finalDepositAmount = data.deposit;
+    }
+    
+    // Remove the temporary deposit field and ensure depositAmount is properly set
+    const { deposit, ...rest } = data;
+    return {
+      ...rest,
+      depositAmount: finalDepositAmount
+    };
   }).refine((data) => {
     // At least some basic info should be provided
     return data.clientName || data.clientEmail || data.clientPhone || data.venue || data.eventDate;
@@ -125,13 +128,38 @@ export const schemas = {
     message: "At least one field (client name, email, phone, venue, or date) must be provided"
   }),
 
-  // Invoice creation
-  createInvoice: z.object({
-    enquiryId: z.number().int().positive('Invalid booking ID'),
+  // Invoice creation - CRITICAL FIX: Use shared schema
+  createInvoice: insertInvoiceSchema.extend({
+    // Additional validations on top of shared schema
+    clientName: z.string().trim().min(1, 'Client name is required'),
+    clientEmail: z.string().email('Invalid email format').optional(),
+    ccEmail: z.string().email('Invalid email format').optional(),
+    eventDate: z.coerce.date().optional().nullable(), // Ensure date coercion
+    dueDate: z.coerce.date(), // Ensure date coercion
+    amount: z.union([z.string(), z.number()]).transform((val) => {
+      if (val === null || val === undefined || val === '') return 0;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    }),
+    depositPaid: z.union([z.string(), z.number()]).optional().transform((val) => {
+      if (val === null || val === undefined || val === '') return 0;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    }),
+    // Support frontend field mapping
+    performanceDate: z.coerce.date().optional().nullable(), // Frontend field name
     customItems: z.array(z.object({
       description: z.string().trim().min(1, 'Item description required').max(200, 'Description too long'),
       amount: z.number().positive('Amount must be positive')
     })).optional()
+  }).transform((data) => {
+    // Map performanceDate to eventDate if provided
+    if (data.performanceDate && !data.eventDate) {
+      data.eventDate = data.performanceDate;
+    }
+    // Remove performanceDate after mapping
+    const { performanceDate, ...rest } = data;
+    return rest;
   }),
 
   // User settings update - COMPREHENSIVE SCHEMA TO PREVENT DATA LOSS

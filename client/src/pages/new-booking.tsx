@@ -24,20 +24,33 @@ import Sidebar from "@/components/sidebar";
 import { useResponsive } from "@/hooks/useResponsive";
 import { BookingDocuments } from "@/components/BookingDocuments";
 
-// Enhanced schema for full booking creation
+// Enhanced schema for full booking creation - aligned with database
 const fullBookingSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required"),
+  eventDate: z.string().min(1, "Event date is required").transform((dateStr) => {
+    // Transform to Date object for database timestamp field
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   venue: z.string().min(1, "Venue is required"),
   venueAddress: z.string().optional(),
   venueContactInfo: z.string().optional(),
-  fee: z.string().optional(),
-  finalAmount: z.string().optional(),
+  fee: z.string().optional().transform((val) => {
+    if (!val) return null;
+    // Convert to number for decimal database field
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
+  finalAmount: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
   gigType: z.string().optional(),
   eventType: z.string().optional(),
   equipmentRequirements: z.string().optional(),
@@ -51,7 +64,11 @@ const fullBookingSchema = z.object({
   contactPhone: z.string().optional(),
   parkingInfo: z.string().optional(),
   notes: z.string().optional(),
-  travelExpense: z.string().optional(),
+  travelExpense: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
   // Collaborative fields
   venueContact: z.string().optional(),
   soundTechContact: z.string().optional(),

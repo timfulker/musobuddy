@@ -1080,6 +1080,7 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   clientAddress: true,
   clientPhone: true,
   clientEmail: true,
+  venue: true, // CRITICAL FIX: Make venue optional to align with frontend and database schema
   venueAddress: true,
   paymentInstructions: true,
   equipmentRequirements: true,

@@ -201,7 +201,7 @@ export class BookingStorage {
     // Apply the same sanitization to create operations
     const sanitizeNumericFields = (data: any) => {
       const numericFields = [
-        'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
+        'fee', 'setupTime', 'soundCheckTime', 'packupTime', 
         'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
         'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
       ];
@@ -256,7 +256,7 @@ export class BookingStorage {
     // Sanitize numeric fields - convert empty strings to null and strip currency symbols
     const sanitizeNumericFields = (data: any) => {
       const numericFields = [
-        'fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 
+        'fee', 'setupTime', 'soundCheckTime', 'packupTime', 
         'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
         'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
       ];

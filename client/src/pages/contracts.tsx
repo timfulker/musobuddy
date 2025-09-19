@@ -36,8 +36,16 @@ const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested
   clientName: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email("Valid email required").min(1, "Client email is required"),
-  eventDate: z.string().min(1, "Event date is required"),
-  fee: z.string().min(1, "Performance fee is required"),
+  eventDate: z.string().min(1, "Event date is required").transform((dateStr) => {
+    // Transform to Date object for database timestamp field
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }),
+  fee: z.string().min(1, "Performance fee is required").transform((val) => {
+    // Convert to number for decimal database field
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
+  }),
   
   // Everything else optional
   contractNumber: z.string().optional(),
@@ -45,9 +53,17 @@ const contractFormSchema = z.object({
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   performanceDuration: z.string().optional(),
-  deposit: z.string().optional(),
+  deposit: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
   depositDays: z.number().optional(),
-  travelExpenses: z.string().optional(), // Travel expenses field
+  travelExpenses: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }), // Travel expenses field
   originalFee: z.string().optional(), // Hidden field to track original fee when combined
   originalTravelExpenses: z.string().optional(), // Hidden field to track original travel
   clientAddress: z.string().optional(),

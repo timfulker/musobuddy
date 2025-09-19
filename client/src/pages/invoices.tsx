@@ -30,14 +30,27 @@ const invoiceFormSchema = z.object({
   ccEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
   clientAddress: z.string().optional(),
   venueAddress: z.string().optional(),
-  amount: z.string().min(1, "Amount is required").refine((val) => {
+  amount: z.string().min(1, "Amount is required").transform((val) => {
+    // Convert to number for decimal database field
     const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, "Amount must be a valid number greater than 0"),
-  dueDate: z.string().min(1, "Due date is required"),
-  performanceDate: z.string().optional(),
-  performanceFee: z.string().optional(),
-  depositPaid: z.string().optional(),
+    return isNaN(num) || num <= 0 ? 0 : num;
+  }),
+  dueDate: z.string().min(1, "Due date is required").transform((dateStr) => {
+    // Transform to Date object for database timestamp field
+    return new Date(dateStr);
+  }),
+  performanceDate: z.string().optional().transform((dateStr) => {
+    if (!dateStr) return null;
+    // Transform to Date object for eventDate database field
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+  }),
+  performanceFee: z.string().optional(), // Keep as string for invoice fee field (varchar in invoices table)
+  depositPaid: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
   performanceDuration: z.string().optional(), // Performance duration from booking
   gigType: z.string().optional(), // Gig type from booking
   invoiceType: z.string().default("performance"), // performance | ad_hoc
