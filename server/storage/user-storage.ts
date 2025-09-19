@@ -253,6 +253,7 @@ export class UserStorage {
     lastName: string;
     phoneNumber: string;
     phoneVerified: boolean;
+    emailVerified: boolean;
     tier: string;
     emailPrefix: string;
     stripeCustomerId: string;
@@ -286,7 +287,10 @@ export class UserStorage {
 
   async setEmailVerified(email: string) {
     const result = await db.update(users)
-      .set({ updatedAt: new Date() })
+      .set({ 
+        emailVerified: true,
+        updatedAt: new Date() 
+      })
       .where(eq(users.email, email))
       .returning();
     return result[0];

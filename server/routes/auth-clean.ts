@@ -286,6 +286,8 @@ export function setupAuthRoutes(app: Express) {
       const updateResult = await storage.updateUser(userId, { 
         emailVerified: true 
       });
+      
+      console.log('🔍 [EMAIL-VERIFY] Update result:', updateResult);
 
       if (!updateResult) {
         return res.status(500).json({ error: 'Failed to update email verification status' });
