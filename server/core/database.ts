@@ -98,18 +98,32 @@ if (parts) {
   console.log(`⚠️ Connection string doesn't match expected format`);
 }
 
-// Create PostgreSQL connection pool with optimized settings for Supabase pooler
+// Create PostgreSQL connection pool with optimized settings
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
-  max: 5, // Smaller pool for pooled connections
-  min: 1, // Keep connections alive  
-  idleTimeoutMillis: 60000, // Longer idle timeout
-  acquireTimeoutMillis: 10000,
-  connectionTimeoutMillis: 5000,
+  max: 10, // Increase connection limit for Neon
+  min: 2, // Keep connections alive  
+  idleTimeoutMillis: 30000, // Shorter idle timeout
+  acquireTimeoutMillis: 5000, // Shorter acquire timeout
+  connectionTimeoutMillis: 3000,
+  statement_timeout: 15000, // Add statement timeout
+  idle_in_transaction_session_timeout: 10000, // Prevent hung transactions
 });
 
 export const db = drizzle(pool, { schema });
+
+// Add pool monitoring for debugging connection issues
+setInterval(() => {
+  const stats = {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
+  if (stats.waitingCount > 0 || stats.totalCount > 8) {
+    console.log('🔍 DB Pool Status:', stats);
+  }
+}, 30000); // Log every 30 seconds if there are issues
 
 export async function testDatabaseConnection(): Promise<boolean> {
   let retries = 3;

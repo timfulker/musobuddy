@@ -6,6 +6,7 @@
 
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
+import { db } from './database';
 
 // Import modular storage classes
 import { UserStorage } from '../storage/user-storage';
