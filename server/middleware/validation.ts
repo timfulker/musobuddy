@@ -71,7 +71,7 @@ export const schemas = {
     clientName: z.string().trim().min(2, 'Client name must be at least 2 characters').max(100, 'Client name too long'),
     clientEmail: z.string().email('Invalid email format').optional(),
     clientPhone: z.string().optional(),
-    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').transform((dateStr) => new Date(dateStr + 'T00:00:00.000Z')),
     eventTime: z.string().optional(),
     fee: z.number().positive('Fee must be positive').optional(),
     venue: z.string().trim().min(1, 'Venue is required').max(200, 'Venue name too long'),
