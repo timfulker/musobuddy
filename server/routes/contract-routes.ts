@@ -372,7 +372,8 @@ export function registerContractRoutes(app: Express) {
           remainingFields: Object.keys(dataToValidate) 
         });
         
-        validatedData = insertContractSchema.parse(dataToValidate);
+        // Use the custom schema that accepts both strings and numbers
+        validatedData = schemas.createContract.parse(dataToValidate);
         console.log('✅ [CONTRACT-VALIDATION] Schema validation successful');
         
       } catch (validationError: any) {
