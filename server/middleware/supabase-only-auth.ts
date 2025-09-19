@@ -93,23 +93,27 @@ export const authenticate = async (
         // Extract metadata from Supabase user
         const metadata = user.user_metadata || {};
 
-        // Create the new user in our database
-        const newUserId = await storage.createUser({
+        // Create the new user in our database - use Supabase UID as the user ID for consistency
+        const userData = {
+          id: user.id, // Use Supabase UID as the primary ID
           email: user.email!,
           firstName: metadata.firstName || metadata.first_name || '',
           lastName: metadata.lastName || metadata.last_name || '',
           supabaseUid: user.id,
+          emailVerified: !!user.email_confirmed_at, // Sync email verification status from Supabase
           isAdmin: false,
           hasPaid: false,
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 day trial
           onboardingCompleted: false,
           isActive: true
-        });
+        };
 
-        console.log(`✅ [NEW-AUTH] Created new user ${user.email} with ID ${newUserId}`);
+        const newUser = await storage.createUser(userData);
 
-        // Fetch the newly created user
-        dbUser = await storage.getUserById(newUserId);
+        console.log(`✅ [NEW-AUTH] Created new user ${user.email} with ID ${newUser.id} (Supabase UID: ${user.id})`);
+
+        // Use the newly created user
+        dbUser = newUser;
 
         if (!dbUser) {
           throw new Error('Failed to fetch newly created user');
@@ -130,6 +134,13 @@ export const authenticate = async (
         error: 'Account temporarily locked',
         lockedUntil: lockExpiry.toISOString()
       });
+    }
+
+    // Sync email verification status from Supabase if needed
+    if (user.email_confirmed_at && !dbUser.emailVerified) {
+      console.log(`📧 [NEW-AUTH] Syncing email verification from Supabase for ${user.email}`);
+      await storage.updateUser(dbUser.id, { emailVerified: true });
+      dbUser.emailVerified = true;
     }
 
     // Attach user to request

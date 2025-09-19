@@ -393,7 +393,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        emailVerified: true, // Email verified if they can authenticate via JWT
+        emailVerified: user.emailVerified || req.user?.emailVerified || false, // Use actual database value or middleware value
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
@@ -441,7 +441,7 @@ export function setupAuthRoutes(app: Express) {
         uid: user.id,
         userId: user.id, // Keep for backwards compatibility
         email: user.email,
-        emailVerified: true, // Email verified if they can authenticate via JWT
+        emailVerified: user.emailVerified || req.user?.emailVerified || false, // Use actual database value or middleware value
         firstName: user.firstName,
         lastName: user.lastName,
         emailPrefix: user.emailPrefix || null,
@@ -924,15 +924,14 @@ export function setupAuthRoutes(app: Express) {
         console.warn('⚠️ Error checking beta status:', error);
       }
 
-      // Create user in database
-      const userId = nanoid();
+      // Create user in database - use Supabase UID as primary ID for consistency
       const userData = {
-        id: userId,
+        id: supabaseUid, // Use Supabase UID as the primary ID
         email: email,
         firstName: firstName,
         lastName: lastName,
-        emailVerified: true, // Email verified via Supabase authentication
-        supabaseUid: supabaseUid, // Store Supabase UID
+        emailVerified: false, // Start with false, will be updated when email is verified
+        supabaseUid: supabaseUid, // Also store in supabaseUid field for compatibility
         signupIpAddress: req.ip || req.connection?.remoteAddress || 'unknown',
         deviceFingerprint: deviceFingerprint,
         isBetaTester: isBetaUser,

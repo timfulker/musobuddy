@@ -55,25 +55,41 @@ export function AuthCallback() {
           if (data.session) {
             console.log('✅ [AUTH-CALLBACK] Session established successfully');
             
-            // CRITICAL FIX: Update database email_verified field
+            // CRITICAL FIX: Sync email verification status from Supabase to our database
             try {
-              console.log('📧 [AUTH-CALLBACK] Updating database email_verified field...');
-              const response = await fetch('/api/auth/verify-email', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${data.session.access_token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
+              console.log('📧 [AUTH-CALLBACK] Syncing email verification status from Supabase...');
 
-              if (response.ok) {
-                console.log('✅ [AUTH-CALLBACK] Database email_verified field updated successfully');
+              // Check if the user's email is confirmed in Supabase
+              const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+              if (supabaseUser?.email_confirmed_at) {
+                console.log('✅ [AUTH-CALLBACK] Email confirmed in Supabase at:', supabaseUser.email_confirmed_at);
+
+                // Update our database to reflect the verified status
+                const response = await fetch('/api/auth/verify-email', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${data.session.access_token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    emailVerified: true,
+                    supabaseConfirmedAt: supabaseUser.email_confirmed_at
+                  })
+                });
+
+                if (response.ok) {
+                  console.log('✅ [AUTH-CALLBACK] Database email_verified field synced successfully');
+                } else {
+                  const errorText = await response.text();
+                  console.warn('⚠️ [AUTH-CALLBACK] Failed to sync email verification status:', errorText);
+                }
               } else {
-                console.warn('⚠️ [AUTH-CALLBACK] Failed to update database email_verified field:', await response.text());
+                console.log('⚠️ [AUTH-CALLBACK] Email not yet confirmed in Supabase');
               }
             } catch (dbError) {
-              console.error('❌ [AUTH-CALLBACK] Error updating database email_verified field:', dbError);
-              // Don't fail the verification process for database update errors
+              console.error('❌ [AUTH-CALLBACK] Error syncing email verification status:', dbError);
+              // Don't fail the verification process for database sync errors
             }
             
             // Refresh user data to get latest verification status
@@ -124,25 +140,41 @@ export function AuthCallback() {
             } else if (data.session) {
               console.log('✅ [AUTH-CALLBACK] Fallback exchangeCodeForSession successful');
               
-              // CRITICAL FIX: Update database email_verified field
+              // CRITICAL FIX: Sync email verification status from Supabase to our database
               try {
-                console.log('📧 [AUTH-CALLBACK] Updating database email_verified field...');
-                const response = await fetch('/api/auth/verify-email', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${data.session.access_token}`,
-                    'Content-Type': 'application/json'
-                  }
-                });
+                console.log('📧 [AUTH-CALLBACK] Syncing email verification status from Supabase (fallback)...');
 
-                if (response.ok) {
-                  console.log('✅ [AUTH-CALLBACK] Database email_verified field updated successfully');
+                // Check if the user's email is confirmed in Supabase
+                const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+                if (supabaseUser?.email_confirmed_at) {
+                  console.log('✅ [AUTH-CALLBACK] Email confirmed in Supabase at:', supabaseUser.email_confirmed_at);
+
+                  // Update our database to reflect the verified status
+                  const response = await fetch('/api/auth/verify-email', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${data.session.access_token}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      emailVerified: true,
+                      supabaseConfirmedAt: supabaseUser.email_confirmed_at
+                    })
+                  });
+
+                  if (response.ok) {
+                    console.log('✅ [AUTH-CALLBACK] Database email_verified field synced successfully');
+                  } else {
+                    const errorText = await response.text();
+                    console.warn('⚠️ [AUTH-CALLBACK] Failed to sync email verification status:', errorText);
+                  }
                 } else {
-                  console.warn('⚠️ [AUTH-CALLBACK] Failed to update database email_verified field:', await response.text());
+                  console.log('⚠️ [AUTH-CALLBACK] Email not yet confirmed in Supabase');
                 }
               } catch (dbError) {
-                console.error('❌ [AUTH-CALLBACK] Error updating database email_verified field:', dbError);
-                // Don't fail the verification process for database update errors
+                console.error('❌ [AUTH-CALLBACK] Error syncing email verification status:', dbError);
+                // Don't fail the verification process for database sync errors
               }
               
               // Refresh user data to get latest verification status
