@@ -291,7 +291,8 @@ export class SupabaseBookingStorage {
       // mileage: booking.mileage, // Column doesn't exist
       // googlePlaceId: booking.google_place_id, // Column doesn't exist
       latitude: booking.map_latitude, // Supabase uses map_latitude
-      longitude: booking.map_longitude // Supabase uses map_longitude
+      longitude: booking.map_longitude, // Supabase uses map_longitude
+      fieldLocks: booking.field_locks || {} // Add fieldLocks mapping
     };
   }
 

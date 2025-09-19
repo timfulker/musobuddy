@@ -333,6 +333,47 @@ export function registerBookingRoutes(app: Express) {
     }
   });
 
+  // Update field locks for a booking
+  app.patch('/api/bookings/:id/field-locks', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const { fieldLocks } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (isNaN(bookingId)) {
+        return res.status(400).json({ error: 'Invalid booking ID' });
+      }
+
+      // Verify ownership
+      const existingBooking = await storage.getBooking(bookingId);
+      if (!existingBooking || existingBooking.userId !== userId) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Merge new field locks with existing ones
+      const updatedFieldLocks = {
+        ...existingBooking.fieldLocks,
+        ...fieldLocks
+      };
+
+      // Update booking with new field locks
+      const updatedBooking = await storage.updateBooking(bookingId, {
+        fieldLocks: updatedFieldLocks
+      }, userId);
+
+      console.log(`✅ Updated field locks for booking #${bookingId}`);
+      res.json({ success: true, fieldLocks: updatedBooking.fieldLocks });
+
+    } catch (error) {
+      console.error('❌ Failed to update field locks:', error);
+      res.status(500).json({ error: 'Failed to update field locks' });
+    }
+  });
+
   // Delete booking
   // Advanced search/filter endpoint - MUST come before :id routes
   app.get('/api/bookings/all', 
