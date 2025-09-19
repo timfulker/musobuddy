@@ -13,6 +13,20 @@ export function EmailVerification() {
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   useEffect(() => {
+    // Check for verification tokens in URL parameters on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || urlParams.get('access_token');
+    const tokenHash = window.location.hash;
+    
+    if (token || tokenHash) {
+      console.log('🔍 Email verification: Found token in URL, Supabase should handle automatically');
+      // Supabase client handles verification tokens automatically via detectSessionInUrl
+      // Just refresh user data after a short delay to pick up the verification
+      setTimeout(() => {
+        refreshUserData();
+      }, 1000);
+    }
+    
     // Auto-refresh user data every 5 seconds to check for verification
     const interval = setInterval(() => {
       if (user && !user.emailVerified) {

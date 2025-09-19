@@ -17,6 +17,42 @@ export function setupAuthRoutes(app: Express) {
   console.log('🔍 [DEBUG] Express app object:', !!app);
   console.log('🔍 [DEBUG] App.post method:', typeof app.post);
 
+  // Test endpoint for Mailgun click tracking fix
+  app.post('/api/test-auth-email', async (req, res) => {
+    try {
+      const { email, testUrl } = req.body;
+      
+      if (!email || !testUrl) {
+        return res.status(400).json({ error: 'Email and testUrl are required' });
+      }
+      
+      console.log('🧪 Testing auth email with click tracking disabled...');
+      
+      const { mailgunAuthService } = await import('../core/mailgun-auth-service');
+      const result = await mailgunAuthService.sendTestVerificationEmail(email, testUrl);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: 'Test auth email sent successfully',
+          messageId: result.messageId,
+          note: 'Check if the URL in the email is rewritten or remains unchanged'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.error
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ Test auth email failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to send test email',
+        details: error.message 
+      });
+    }
+  });
+
 
 
   // TEST ENDPOINT - Verify routing works for auth paths

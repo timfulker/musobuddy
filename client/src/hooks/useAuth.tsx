@@ -195,11 +195,12 @@ export function useAuth() {
       setAuthState(prev => ({ ...prev, error: null }));
       console.log('🔐 [SUPABASE-AUTH] Attempting email signup for:', email);
 
-      // Step 1: Create Supabase user
+      // Step 1: Create Supabase user with proper email redirect
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`,
           data: {
             first_name: firstName,
             last_name: lastName,
@@ -328,7 +329,10 @@ export function useAuth() {
 
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: user.email!
+        email: user.email!,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+        }
       });
 
       if (error) {
