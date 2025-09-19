@@ -200,7 +200,7 @@ export function useAuth() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             first_name: firstName,
             last_name: lastName,
@@ -331,7 +331,7 @@ export function useAuth() {
         type: 'signup',
         email: user.email!,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 

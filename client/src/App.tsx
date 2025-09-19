@@ -41,6 +41,7 @@ import SignupPage from "@/pages/auth/signup";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import ResetPasswordPage from "@/pages/auth/reset-password";
 import { EmailVerification } from "@/pages/auth/email-verification";
+import { AuthCallback } from "@/pages/auth/auth-callback";
 import StartTrial from "@/pages/start-trial";
 import TrialSuccessPage from "@/pages/trial-success";
 // Public versions of legal pages (no navigation)
@@ -175,6 +176,7 @@ function Router() {
       <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
       <Route path="/auth/reset-password" component={ResetPasswordPage} />
       <Route path="/auth/verify-email" component={EmailVerification} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/start-trial" component={StartTrial} />
       <Route path="/terms-and-conditions" component={PublicTermsAndConditions} />
       <Route path="/privacy-policy" component={PublicPrivacyPolicy} />

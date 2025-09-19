@@ -204,6 +204,7 @@ export function isPublicRoute(path: string): boolean {
     '/auth/forgot-password',
     '/auth/reset-password',
     '/auth/verify-email',
+    '/auth/callback',
     '/start-trial',
     '/terms-and-conditions',
     '/privacy-policy',
