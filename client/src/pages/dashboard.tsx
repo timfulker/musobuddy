@@ -21,13 +21,16 @@ import { apiRequest } from "@/lib/queryClient";
 import MobileDashboard from "@/components/mobile-dashboard";
 import { notificationSounds } from "@/utils/notificationSounds";
 import { NotificationSoundManager } from "@/components/NotificationSoundManager";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, X } from "lucide-react";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showEmailBanner, setShowEmailBanner] = useState(true);
   const { isDesktop } = useResponsive();
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading, refreshUserData } = useAuthContext();
+  const { user, isAuthenticated, isLoading, refreshUserData, resendVerificationEmail } = useAuthContext();
   
   // Prevent infinite loops in preview by detecting preview environment
   const isPreview = window.location.hostname.includes('replit.dev') && 

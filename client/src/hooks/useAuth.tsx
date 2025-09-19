@@ -119,6 +119,30 @@ export function useAuth() {
             isAuthenticated: true,
             error: null
           });
+
+          // 🔄 AUTO-REDIRECT: Check if user needs email verification
+          const needsEmailVerification = !compatibleUser.emailVerified && 
+                                         !compatibleUser.isAdmin && 
+                                         !compatibleUser.is_admin &&
+                                         !compatibleUser.isAssigned &&
+                                         !compatibleUser.is_assigned;
+          
+          if (needsEmailVerification) {
+            console.log('📧 [EMAIL-CHECK] User needs email verification, redirecting...');
+            // Don't redirect immediately if we're already on auth pages
+            const currentPath = window.location.pathname;
+            const isOnAuthPage = currentPath.startsWith('/auth/') || 
+                                currentPath === '/login' || 
+                                currentPath === '/signup';
+            
+            if (!isOnAuthPage) {
+              console.log('🔀 [EMAIL-CHECK] Redirecting to email verification page');
+              setTimeout(() => {
+                window.location.href = '/auth/email-verification';
+              }, 100);
+              return;
+            }
+          }
         } else {
           console.warn('⚠️ [SUPABASE-AUTH] Database user not found, will retry');
           
