@@ -337,6 +337,27 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   --theme-font-heading: system-ui, sans-serif;
   --theme-font-body: system-ui, sans-serif;
   
+  /* Shadcn CSS Variables */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  
   /* Dynamic text colors for contrast */
   --theme-primary-text: white; /* Will be set dynamically */
   --theme-secondary-text: white;
@@ -980,7 +1001,7 @@ body {
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
@@ -1163,15 +1184,18 @@ body {
 
 /* Data table styling */
 .data-table {
-  @apply w-full border-collapse border border-border rounded-lg overflow-hidden;
+  @apply w-full border-collapse border rounded-lg overflow-hidden;
+  border-color: hsl(var(--border));
 }
 
 .data-table th {
-  @apply bg-muted text-muted-foreground font-medium text-left px-4 py-3 border-b border-border;
+  @apply bg-muted text-muted-foreground font-medium text-left px-4 py-3 border-b;
+  border-color: hsl(var(--border));
 }
 
 .data-table td {
-  @apply px-4 py-3 border-b border-border;
+  @apply px-4 py-3 border-b;
+  border-color: hsl(var(--border));
 }
 
 .data-table tr:hover {
