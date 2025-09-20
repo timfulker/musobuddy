@@ -142,7 +142,7 @@ This means if today is August 2025:
 - "March 5th" → March 5, 2026 (next occurrence)
 
 Extract and return JSON with this structure:
-{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","eventEndTime":"HH:MM","venue":"string","venueAddress":"string","eventType":"string","fee":number,"travelExpense":number,"deposit":number,"confidence":0.9}
+{"clientName":"string","clientEmail":"string","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","eventEndTime":"HH:MM","venue":"string","venueAddress":"string","eventType":"string","fee":number,"travelExpense":number,"deposit":number,"applyNowLink":"string","confidence":0.9}
 
 TIME EXTRACTION RULES:
 - eventTime: Start time in 24-hour format (HH:MM). Extract from phrases like "7pm" → "19:00", "at 2:30" → "14:30"
@@ -172,7 +172,15 @@ FEE EXTRACTION RULES:
 - deposit: Any deposit amount mentioned
 - If only one total amount is mentioned (e.g., "£250"), put it all in fee and leave travelExpense as null
 - If travel is mentioned separately (e.g., "£200 plus £30 travel"), extract as fee:200, travelExpense:30
-- Extract numbers only, no currency symbols`;
+- Extract numbers only, no currency symbols
+
+ENCORE APPLY NOW LINK EXTRACTION:
+- applyNowLink: Extract the URL from "Apply now" buttons or links in Encore Musicians emails
+- Look for URLs near text like "Apply now", "Apply for this job", "Apply"
+- Common patterns: https://www.encoremusicians.com/jobs/..., https://encoremusicians.com/...
+- Also extract AWS tracking URLs that redirect to Encore (e.g., https://...awstrack.me/...encoremusicians.com...)
+- If you find any encoremusicians.com URL in the email, especially near "Apply" text, include it
+- If no apply link found, set to null`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
@@ -429,11 +437,17 @@ JSON:`;
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
 
-    // FIRST: Extract Encore apply-now link to properly detect Encore bookings
-    const applyNowLink = extractEncoreApplyLink(messageText);
-    if (applyNowLink) {
-      cleanedData.applyNowLink = applyNowLink;
-      console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+    // FIRST: Use AI-extracted link if available, otherwise try regex extraction
+    if (parsed.applyNowLink && typeof parsed.applyNowLink === 'string' && parsed.applyNowLink.length > 0) {
+      cleanedData.applyNowLink = cleanString(parsed.applyNowLink);
+      console.log(`🎵 AI extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+    } else {
+      // Fallback to regex extraction if AI didn't find it
+      const applyNowLink = extractEncoreApplyLink(messageText);
+      if (applyNowLink) {
+        cleanedData.applyNowLink = applyNowLink;
+        console.log(`🎵 Regex extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+      }
     }
 
     // Check if this is an Encore booking (now we have applyNowLink)
@@ -533,29 +547,45 @@ function extractEncoreApplyLink(messageText: string): string | null {
   console.log('🎵 [ENCORE EXTRACTION] Message length:', messageText?.length || 0);
   console.log('🎵 [ENCORE EXTRACTION] Contains "Apply now":', messageText.toLowerCase().includes('apply now'));
   console.log('🎵 [ENCORE EXTRACTION] Contains "encoremusicians":', messageText.toLowerCase().includes('encoremusicians'));
+
+  // Debug: Check for common Encore email patterns
+  if (messageText.toLowerCase().includes('encore')) {
+    // Log a sample of text around "Apply" to see the structure
+    const applyIndex = messageText.toLowerCase().indexOf('apply');
+    if (applyIndex > -1) {
+      const snippet = messageText.substring(Math.max(0, applyIndex - 100), Math.min(messageText.length, applyIndex + 300));
+      console.log('🎵 [ENCORE EXTRACTION] Sample around "Apply":', snippet.replace(/\s+/g, ' ').substring(0, 200));
+    }
+  }
   
   // Pattern 1: HTML Button Structures - Target "Apply now" buttons specifically
   const applyNowButtonPatterns = [
+    // Direct anchor tag with "Apply now" - most common pattern
+    /<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
+
+    // Anchor tag where "Apply now" appears before the link
+    /apply\s*now[\s\S]{0,200}?<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["'][^>]*>/gi,
+
     // Table-based buttons (common in email templates)
     /<table[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/table>/gi,
-    
+
     // Div-based buttons with "Apply now" text
     /<div[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/div>/gi,
-    
-    // Anchor tags containing "Apply now" text
-    /<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
-    
-    // Reverse pattern: "Apply now" text followed by link
-    /apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["']/gi,
-    
+
+    // Simple pattern for Apply now followed by any link
+    /apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["']/gi,
+
     // Button elements with "Apply now"
     /<button[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/button>/gi,
-    
+
     // Nested table cells and divs (complex email layouts)
     /<t[dr][^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/t[dr]>/gi,
-    
+
     // Links within spans containing "Apply now"
-    /<span[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/span>/gi
+    /<span[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/span>/gi,
+
+    // Case insensitive "Apply Now" button text with flexible spacing
+    /<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["'][^>]*>[\s\S]*?(?:Apply|APPLY)\s*(?:Now|NOW|now)[\s\S]*?<\/a>/gi
   ];
   
   console.log('🎵 [ENCORE EXTRACTION] Testing', applyNowButtonPatterns.length, 'Apply now button patterns...');
@@ -581,7 +611,9 @@ function extractEncoreApplyLink(messageText: string): string | null {
   console.log('🎵 [ENCORE EXTRACTION] Testing direct URL patterns...');
   const directPatterns = [
     /https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
-    /https:\/\/[^\/\s]*\.encoremusicians\.com\/[^\s<>"']+/gi
+    /https:\/\/[^\/\s]*\.encoremusicians\.com\/[^\s<>"']+/gi,
+    // Also catch URLs that might be in plain text without https
+    /(?:www\.)?encoremusicians\.com\/jobs\/[^\s<>"']+/gi
   ];
   
   for (let i = 0; i < directPatterns.length; i++) {
