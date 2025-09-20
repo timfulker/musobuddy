@@ -272,6 +272,7 @@ export const bookings = pgTable("bookings", {
   clientAddress: text("client_address"),
   
   // Event Details
+  title: varchar("title"), // Event title for calendar import
   eventDate: timestamp("event_date"),
   eventTime: varchar("event_time"),
   eventEndTime: varchar("event_end_time"),
