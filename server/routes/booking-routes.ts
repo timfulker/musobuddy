@@ -22,6 +22,27 @@ function getMinutesDifference(time1: string, time2: string): number {
 
 export function registerBookingRoutes(app: Express) {
   console.log('📅 Setting up booking routes...');
+
+  // Debug endpoint to check what user the frontend is sending
+  app.get('/api/debug-user', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      console.log('🔍 [DEBUG] Frontend user:', {
+        id: userId,
+        email: req.user?.email,
+        supabaseUid: req.user?.supabaseUid
+      });
+
+      res.json({
+        databaseUserId: userId,
+        email: req.user?.email,
+        supabaseUid: req.user?.supabaseUid,
+        fullUser: req.user
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
   
 
   // Get bookings for authenticated user with display settings applied
