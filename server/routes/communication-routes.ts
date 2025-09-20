@@ -664,7 +664,7 @@ export function setupCommunicationRoutes(app: any) {
           subject: subject,
           messageBody: content,
           deliveryStatus: 'delivered',
-          mailgunId: emailResult.messageId
+          mailgunMessageId: emailResult.messageId
         }).returning();
 
         // Mark all message notifications for this booking as read (user has responded)
@@ -691,7 +691,7 @@ export function setupCommunicationRoutes(app: any) {
 
 
         console.log(`✅ Conversation reply sent and recorded: ${content.substring(0, 50)}... to ${recipientEmail}`);
-        res.json({ success: true, communication, mailgunId: emailResult.messageId });
+        res.json({ success: true, communication, mailgunMessageId: emailResult.messageId });
 
       } catch (mailgunError) {
         console.error('❌ Mailgun error sending conversation reply:', mailgunError);

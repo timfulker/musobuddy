@@ -4,6 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle } from "lucide-react";
+import { useLuminanceAware } from "@/hooks/use-luminance-aware";
+
+// Luminance-aware Badge component
+function LuminanceAwareBadge({ children, variant, className, ...props }: React.ComponentProps<typeof Badge>) {
+  const ref = useLuminanceAware();
+
+  return (
+    <Badge
+      ref={ref as any}
+      variant={variant}
+      className={className}
+      style={{ color: 'var(--optimal-text-color)' }}
+      {...props}
+    >
+      {children}
+    </Badge>
+  );
+}
 
 interface BackendConflict {
   bookingId: number;
@@ -177,12 +195,12 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge
+                        <LuminanceAwareBadge
                           variant={conflict.severity === 'hard' ? 'destructive' : 'default'}
-                          className={`text-xs ${conflict.severity === 'hard' ? '' : 'text-white'}`}
+                          className="text-xs"
                         >
                           {conflict.severity === 'hard' ? 'CRITICAL' : 'WARNING'}
-                        </Badge>
+                        </LuminanceAwareBadge>
                         <span className="text-sm font-medium">
                           Same Day Conflict
                         </span>

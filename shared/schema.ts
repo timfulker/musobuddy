@@ -29,6 +29,10 @@ export const users = pgTable("users", {
   
   // Email verification
   emailVerified: boolean("email_verified").default(false),
+  phoneVerified: boolean("phone_verified").default(false),
+
+  // User tier
+  tier: varchar("tier", { length: 50 }).default("free"),
   
   // Access Control
   trialEndsAt: timestamp("trial_ends_at").default(null),
@@ -53,6 +57,7 @@ export const users = pgTable("users", {
   
   // Auth Integration
   supabaseUid: text("supabase_uid").unique(),
+  firebaseUid: text("firebase_uid").unique(),
   
   // Status fields
   isActive: boolean("is_active").default(true),
@@ -560,6 +565,7 @@ export const clientCommunications = pgTable("client_communications", {
   subject: text("subject"), // Email subject
   messageBody: text("message_body").notNull(), // Email/SMS content or R2 URL for cloud-stored content
   attachments: jsonb("attachments").default('[]'), // Array of attachment info {name, url, type}
+  mailgunMessageId: varchar("mailgun_message_id"), // Mailgun message ID for tracking delivery status
   sentAt: timestamp("sent_at").defaultNow(),
   deliveryStatus: varchar("delivery_status").default("sent"), // sent, delivered, failed, bounced
   openedAt: timestamp("opened_at"), // When email was opened (if tracking available)
