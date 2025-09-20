@@ -31,6 +31,10 @@ export class SupabaseBookingStorage {
     return this.isEnabled;
   }
 
+  getMigrationMode(): string {
+    return this.isEnabled ? 'supabase-primary' : 'drizzle-primary';
+  }
+
 
   async createBooking(bookingData: any) {
     if (!this.isEnabled || !supabase) {
