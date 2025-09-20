@@ -141,26 +141,30 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 ml-64 min-h-screen">
-          <DashboardHeader />
-          
-          <main className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-            <StatsCards />
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-              <div className="xl:col-span-3 space-y-6">
-                <ActionableEnquiries />
-                <CalendarWidget />
-              </div>
-              <div className="space-y-4">
-                <BookingCTAButtons />
-                <ConflictsWidget />
-                <QuickActions />
-                {user && <MessageNotifications userId={user.id} />}
-                <ComplianceAlerts />
-                <ContractNotifications />
-              </div>
+        <div className="flex-1 ml-64 min-h-screen bg-gradient-to-br from-slate-50/30 to-blue-50/20">
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto">
+              <DashboardHeader />
+              
+              <main className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mt-6 space-y-6">
+                <StatsCards />
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                  <div className="xl:col-span-3 space-y-6">
+                    <ActionableEnquiries />
+                    <CalendarWidget />
+                  </div>
+                  <div className="space-y-4">
+                    <BookingCTAButtons />
+                    <ConflictsWidget />
+                    <QuickActions />
+                    {user && <MessageNotifications userId={user.id} />}
+                    <ComplianceAlerts />
+                    <ContractNotifications />
+                  </div>
+                </div>
+              </main>
             </div>
-          </main>
+          </div>
         </div>
       </div>
     );
@@ -196,28 +200,32 @@ export default function Dashboard() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
-        <DashboardHeader />
-        
-        <main className="p-4 md:p-6 space-y-4 md:space-y-6">
-          <StatsCards />
-          
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
-            <div className="xl:col-span-3 space-y-4 md:space-y-6">
-              <ActionableEnquiries />
-              <CalendarWidget />
-            </div>
+      <div className={`min-h-screen bg-gradient-to-br from-slate-50/30 to-blue-50/20 ${isDesktop ? 'ml-64' : ''}`}>
+        <div className="p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            <DashboardHeader />
             
-            <div className="space-y-4">
-              <BookingCTAButtons />
-              <QuickActions />
-              {user && <MessageNotifications userId={user.id} />}
-              <ConflictsWidget />
-              <ComplianceAlerts />
-              <ContractNotifications />
-            </div>
+            <main className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 md:p-6 mt-6 space-y-4 md:space-y-6">
+              <StatsCards />
+              
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
+                <div className="xl:col-span-3 space-y-4 md:space-y-6">
+                  <ActionableEnquiries />
+                  <CalendarWidget />
+                </div>
+                
+                <div className="space-y-4">
+                  <BookingCTAButtons />
+                  <QuickActions />
+                  {user && <MessageNotifications userId={user.id} />}
+                  <ConflictsWidget />
+                  <ComplianceAlerts />
+                  <ContractNotifications />
+                </div>
+              </div>
+            </main>
           </div>
-        </main>
+        </div>
       </div>
 
       <MobileNav />
