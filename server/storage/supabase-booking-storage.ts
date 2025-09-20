@@ -16,6 +16,14 @@ const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null;
 
+console.log('🔧 [SUPABASE-BOOKING] Initialization:', {
+  isDevelopment,
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseKey,
+  clientCreated: !!supabase,
+  url: supabaseUrl?.substring(0, 30) + '...'
+});
+
 export class SupabaseBookingStorage {
   private isEnabled: boolean;
 
