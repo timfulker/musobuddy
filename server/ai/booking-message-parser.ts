@@ -175,12 +175,15 @@ FEE EXTRACTION RULES:
 - Extract numbers only, no currency symbols
 
 ENCORE APPLY NOW LINK EXTRACTION:
-- applyNowLink: Extract the URL from "Apply now" buttons or links in Encore Musicians emails
+- applyNowLink: Extract the COMPLETE URL from "Apply now" buttons or links in Encore Musicians emails
+- CRITICAL: Extract the ENTIRE URL - do not truncate or shorten it. URLs can be very long (200+ characters)
 - Look for URLs near text like "Apply now", "Apply for this job", "Apply"
-- Common patterns: https://www.encoremusicians.com/jobs/..., https://encoremusicians.com/...
-- Also extract AWS tracking URLs that redirect to Encore (e.g., https://...awstrack.me/...encoremusicians.com...)
-- If you find any encoremusicians.com URL in the email, especially near "Apply" text, include it
-- If no apply link found, set to null`;
+- Common patterns: https://www.encoremusicians.com/jobs/ABC123, https://encoremusicians.com/...
+- AWS tracking URLs are often VERY LONG: https://email.r.email.encoremusicians.com/mk/cl/f/sh/...
+- NEVER truncate with "..." - always include the complete URL no matter how long
+- If you find any encoremusicians.com URL in the email, especially near "Apply" text, include THE COMPLETE URL
+- If no apply link found, set to null
+- Example of COMPLETE URL: "https://email.r.email.encoremusicians.com/mk/cl/f/sh/1t6Af4OhShSDFMvxfqf2K0TFU1/AbCdEfGh12345"`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
 EMAIL: ${messageText}
@@ -439,8 +442,29 @@ JSON:`;
 
     // FIRST: Use AI-extracted link if available, otherwise try regex extraction
     if (parsed.applyNowLink && typeof parsed.applyNowLink === 'string' && parsed.applyNowLink.length > 0) {
-      cleanedData.applyNowLink = cleanString(parsed.applyNowLink);
-      console.log(`🎵 AI extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+      const aiExtractedLink = cleanString(parsed.applyNowLink);
+      console.log(`🎵 AI extracted Encore apply-now link: ${aiExtractedLink}`);
+
+      // Check if the AI link looks truncated or incomplete
+      const looksIncomplete = aiExtractedLink.endsWith('...') ||
+                             aiExtractedLink.length < 40 ||
+                             !aiExtractedLink.match(/^https?:\/\/.+\/.+/);
+
+      if (looksIncomplete) {
+        console.log('⚠️ AI-extracted link appears truncated or incomplete, trying regex extraction...');
+        // Try regex extraction for a complete URL
+        const regexLink = extractEncoreApplyLink(messageText);
+        if (regexLink) {
+          cleanedData.applyNowLink = regexLink;
+          console.log(`✅ Regex found complete link: ${regexLink}`);
+        } else {
+          // Use the AI link anyway if regex fails
+          cleanedData.applyNowLink = aiExtractedLink;
+          console.log(`⚠️ Using potentially incomplete AI link as fallback: ${aiExtractedLink}`);
+        }
+      } else {
+        cleanedData.applyNowLink = aiExtractedLink;
+      }
     } else {
       // Fallback to regex extraction if AI didn't find it
       const applyNowLink = extractEncoreApplyLink(messageText);
