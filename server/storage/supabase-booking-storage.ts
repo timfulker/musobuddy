@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Determine which Supabase instance to use based on NODE_ENV and REPLIT_ENVIRONMENT
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+// Determine which Supabase instance to use based on NODE_ENV only
+// We should use DEV database in development environment
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const supabaseUrl = isDevelopment
   ? process.env.SUPABASE_URL_DEV
