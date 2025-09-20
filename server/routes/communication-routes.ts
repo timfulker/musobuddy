@@ -464,10 +464,12 @@ export function setupCommunicationRoutes(app: any) {
       // Get booking details for client name
       console.log('📧 [CONVERSATION-REPLY] Fetching booking details...');
       const booking = await db
-        .select({ 
-          clientName: bookings.clientName, 
-          title: bookings.title,
-          workflowStage: bookings.workflowStage 
+        .select({
+          clientName: bookings.clientName,
+          gigType: bookings.gigType,
+          eventType: bookings.eventType,
+          venue: bookings.venue,
+          workflowStage: bookings.workflowStage
         })
         .from(bookings)
         .where(and(
@@ -476,7 +478,13 @@ export function setupCommunicationRoutes(app: any) {
         ))
         .limit(1);
 
-      console.log('📧 [CONVERSATION-REPLY] Booking query result:', booking.length > 0 ? { clientName: booking[0].clientName, title: booking[0].title, workflowStage: booking[0].workflowStage } : 'No booking found');
+      console.log('📧 [CONVERSATION-REPLY] Booking query result:', booking.length > 0 ? {
+        clientName: booking[0].clientName,
+        gigType: booking[0].gigType,
+        eventType: booking[0].eventType,
+        venue: booking[0].venue,
+        workflowStage: booking[0].workflowStage
+      } : 'No booking found');
 
       if (!booking.length) {
         console.log('❌ [CONVERSATION-REPLY] Booking not found for ID:', bookingId, 'and user:', userId);
@@ -527,7 +535,11 @@ export function setupCommunicationRoutes(app: any) {
 
       // Create unique reply-to address with user ID and booking ID for proper routing
       const replyToAddress = `User${userId}-Booking${bookingId} <user${userId}-booking${bookingId}@mg.musobuddy.com>`;
-      const subject = `Re: ${booking[0].title}`;
+
+      // Create a meaningful subject line from available booking data
+      const bookingTitle = booking[0].gigType || booking[0].eventType || 'Event';
+      const venueText = booking[0].venue ? ` at ${booking[0].venue}` : '';
+      const subject = `Re: ${bookingTitle}${venueText}`;
       
       console.log(`📧 Setting up conversation reply with routing: ${replyToAddress}`);
 

@@ -33,7 +33,12 @@ export const users = pgTable("users", {
 
   // User tier
   tier: varchar("tier", { length: 50 }).default("free"),
-  
+
+  // Fraud detection fields
+  trialStatus: varchar("trial_status", { length: 20 }),
+  signupIpAddress: varchar("signup_ip_address", { length: 45 }),
+  deviceFingerprint: text("device_fingerprint"),
+
   // Access Control
   trialEndsAt: timestamp("trial_ends_at").default(null),
   hasPaid: boolean("has_paid").default(false),

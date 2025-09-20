@@ -36,8 +36,8 @@ import { eq } from 'drizzle-orm';
       if (specificInvoice[0].bookingId) {
         const booking = await db.select({
           id: bookings.id,
-          title: bookings.title,
           gigType: bookings.gigType,
+          eventType: bookings.eventType,
           performanceDuration: bookings.performanceDuration,
           clientName: bookings.clientName,
           venue: bookings.venue
@@ -48,8 +48,8 @@ import { eq } from 'drizzle-orm';
         if (booking.length > 0) {
           console.log('\nLinked booking details:');
           console.log('  id:', booking[0].id);
-          console.log('  title:', booking[0].title);
           console.log('  gigType:', booking[0].gigType);
+          console.log('  eventType:', booking[0].eventType);
           console.log('  performanceDuration:', booking[0].performanceDuration);
         } else {
           console.log('\nNo booking found with ID:', specificInvoice[0].bookingId);
@@ -64,8 +64,8 @@ import { eq } from 'drizzle-orm';
     // Check a booking with ID 7671
     const bookingRecord = await db.select({
       id: bookings.id,
-      title: bookings.title,
       gigType: bookings.gigType,
+      eventType: bookings.eventType,
       performanceDuration: bookings.performanceDuration,
       clientName: bookings.clientName
     })
@@ -74,8 +74,8 @@ import { eq } from 'drizzle-orm';
     
     if (bookingRecord.length > 0) {
       console.log('\nBooking 7671 details:');
-      console.log('  title:', bookingRecord[0].title);
       console.log('  gigType:', bookingRecord[0].gigType);
+      console.log('  eventType:', bookingRecord[0].eventType);
       console.log('  performanceDuration:', bookingRecord[0].performanceDuration);
       console.log('  clientName:', bookingRecord[0].clientName);
     }
