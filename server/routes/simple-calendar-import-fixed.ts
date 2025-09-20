@@ -45,7 +45,7 @@ export function registerFixedSimpleCalendarImportRoutes(app: Express) {
         console.log('📅 [FIXED SIMPLE CALENDAR] Auth user data:', req.user);
 
         // Use both possible user ID formats for robustness
-        const authUserId = req.user?.id;
+        let authUserId = req.user?.id;
         const supabaseUid = req.user?.supabaseUid;
 
         if (!authUserId) {
