@@ -22,7 +22,7 @@ export class BookingStorage {
       return await this.supabaseStorage.getBooking(id);
     }
 
-    // Otherwise use Firebase/Drizzle
+    // Otherwise use Drizzle
     const result = await db.select().from(bookings).where(eq(bookings.id, id));
     const booking = result[0] || null;
 
@@ -76,7 +76,7 @@ export class BookingStorage {
       return await this.supabaseStorage.getBooking(id, userId);
     }
 
-    // Otherwise use Firebase/Drizzle
+    // Otherwise use Drizzle
     const result = await db.select().from(bookings)
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     const booking = result[0] || null;
@@ -130,7 +130,7 @@ export class BookingStorage {
       return await this.supabaseStorage.getBookings(userId);
     }
 
-    // Otherwise use Firebase/Drizzle
+    // Otherwise use Drizzle
     const results = await db.select().from(bookings)
       .where(eq(bookings.userId, userId))
       .orderBy(desc(bookings.createdAt));
@@ -185,8 +185,8 @@ export class BookingStorage {
       return await this.supabaseStorage.createBooking(data);
     }
 
-    // Otherwise use Firebase/Drizzle
-    console.log('📦 Using Firebase for booking creation');
+    // Otherwise use Drizzle
+    console.log('📦 Using Drizzle for booking creation');
 
     // Remove undefined values to prevent database errors, but ensure title is always present
     const cleanData = Object.fromEntries(
@@ -246,7 +246,7 @@ export class BookingStorage {
       return await this.supabaseStorage.updateBooking(id, updates, userId);
     }
 
-    // Otherwise use Firebase/Drizzle
+    // Otherwise use Drizzle
     // Get current booking to access existing documents
     const currentBooking = await this.getBooking(id);
     if (!currentBooking) {
@@ -331,7 +331,7 @@ export class BookingStorage {
       return await this.supabaseStorage.deleteBooking(id, userId);
     }
 
-    // Otherwise use Firebase/Drizzle
+    // Otherwise use Drizzle
     // First, set bookingId to null for any related invoices to avoid foreign key constraint error
     await db.update(invoices)
       .set({ bookingId: null })

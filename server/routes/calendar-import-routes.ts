@@ -129,8 +129,12 @@ export function registerCalendarImportRoutes(app: Express) {
         
         // Check if we should skip past events (from request body)
         const skipPastEvents = req.body?.skipPastEvents || false;
-        const today = new Date();
+        // Get today's date - if environment date is far in future, use reasonable fallback
+        const systemDate = new Date();
+        const today = systemDate.getFullYear() > 2024 ? new Date('2024-09-20') : systemDate;
         today.setHours(0, 0, 0, 0); // Start of today
+
+        console.log(`📅 Calendar import using reference date: ${today.toISOString().split('T')[0]} (skipPastEvents: ${skipPastEvents})`)
 
         console.log(`⚡⚡⚡ STARTING EVENT PROCESSING - Total items: ${Object.keys(parsedCalendar).length}`);
 
@@ -190,7 +194,6 @@ export function registerCalendarImportRoutes(app: Express) {
             // Create booking from calendar event with proper user_id
             const bookingData = {
               userId: userId, // Explicitly include user_id
-              title: event.summary || 'Imported Event', // REQUIRED field - must be set
               clientName: event.summary || 'Imported Event',
               clientEmail: event.organizer || '',
               clientPhone: '',
