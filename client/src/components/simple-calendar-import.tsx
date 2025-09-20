@@ -47,8 +47,9 @@ export function SimpleCalendarImport() {
         body: formData,
       });
 
-      console.log('📅 [SIMPLE CALENDAR IMPORT] Success:', response);
-      setResult(response);
+      const result = await response.json();
+      console.log('📅 [SIMPLE CALENDAR IMPORT] Success:', result);
+      setResult(result);
 
     } catch (err: any) {
       console.error('❌ [SIMPLE CALENDAR IMPORT] Error:', err);
