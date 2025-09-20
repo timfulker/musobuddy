@@ -20,10 +20,10 @@ export class SupabaseBookingStorage {
   private isEnabled: boolean;
 
   constructor() {
-    // TEMPORARY FIX: Disable Supabase storage to use Neon connection instead
-    this.isEnabled = false;
+    // Enable Supabase storage (the working database with proper schema)
+    this.isEnabled = true;
     
-    console.log('🚧 Supabase booking storage DISABLED - using Neon connection');
+    console.log('✅ Supabase booking storage ENABLED');
     console.log(`   Environment: ${process.env.NODE_ENV}`);
   }
 
