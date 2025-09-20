@@ -106,7 +106,7 @@ export function registerSimpleCalendarImportRoutes(app: Express) {
               .from('users')
               .insert([{
                 id: userId,
-                email: 'timfulker@gmail.com',
+                email: req.user?.email || 'unknown@example.com',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               }])
