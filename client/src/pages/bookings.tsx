@@ -26,6 +26,8 @@ import { calculateBookingDisplayTotal, getBookingAmountDisplayText } from "@/uti
 // BookingDetailsDialog removed - using new-booking page for all editing
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
+import { SimpleCalendarImport } from "@/components/simple-calendar-import";
+import { FixedCalendarImport } from "@/components/fixed-calendar-import";
 
 import HoverResponseMenu from "@/components/hover-response-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
@@ -2934,7 +2936,7 @@ export default function UnifiedBookings() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <CalendarImport />
+                      <SimpleCalendarImport />
                       <Button 
                         variant="outline" 
                         size="sm"

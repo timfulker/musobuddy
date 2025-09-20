@@ -20,6 +20,8 @@ import { registerMapsRoutes } from "./maps-routes";
 import { setupWhat3WordsRoutes } from "./what3words-routes";
 import { registerGoogleCalendarRoutes } from "./google-calendar-routes";
 import { registerCalendarImportRoutes } from "./calendar-import-routes";
+import { registerSimpleCalendarImportRoutes } from "./simple-calendar-import";
+import { registerFixedSimpleCalendarImportRoutes } from "./simple-calendar-import-fixed";
 import { registerOnboardingRoutes } from "./onboarding-routes";
 import { setupAuthRoutes } from "./auth-clean";
 import { registerPasswordRoutes } from "./password-routes";
@@ -162,6 +164,12 @@ export async function registerRoutes(app: Express) {
   
   // Register calendar import routes
   registerCalendarImportRoutes(app);
+
+  // Register new simple calendar import routes
+  registerSimpleCalendarImportRoutes(app);
+
+  // Register fixed calendar import routes for debugging
+  registerFixedSimpleCalendarImportRoutes(app);
   
   // Register onboarding routes  
   registerOnboardingRoutes(app);
