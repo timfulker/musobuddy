@@ -7,15 +7,15 @@ import { ENV } from "./environment";
 const isDeployment = ENV.isProduction;
 const isDevelopment = ENV.isDevelopment;
 
-// Construct PostgreSQL connection string from Supabase credentials using Transaction Pooler
-function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string): string {
+// Construct PostgreSQL connection string from Supabase credentials using Direct Connection
+function buildSupabaseDirectConnectionString(supabaseUrl: string, dbPassword: string): string {
   const projectMatch = supabaseUrl.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
   if (!projectMatch) {
     throw new Error('Invalid Supabase URL format');
   }
   const projectId = projectMatch[1];
-  // Use Supabase Transaction Pooler format with correct database password
-  return `postgresql://postgres:${dbPassword}@db.${projectId}.supabase.co:6543/postgres?sslmode=require`;
+  // Use Supabase Direct Connection format (no port, dedicated connection per client)
+  return `postgresql://postgres:${dbPassword}@db.${projectId}.supabase.co/postgres?sslmode=require`;
 }
 
 let connectionString: string;
@@ -33,7 +33,7 @@ if (ENV.isDevelopment) {
     const dbPassword = process.env.SUPABASE_DB_PASSWORD_DEV;
     
     if (supabaseUrl && dbPassword) {
-      connectionString = buildSupabaseConnectionString(supabaseUrl, dbPassword);
+      connectionString = buildSupabaseDirectConnectionString(supabaseUrl, dbPassword);
     } else {
       // Final fallback to DATABASE_URL
       connectionString = process.env.DATABASE_URL;
@@ -51,7 +51,7 @@ if (ENV.isDevelopment) {
     const dbPassword = process.env.SUPABASE_DB_PASSWORD_PROD;
     
     if (supabaseUrl && dbPassword) {
-      connectionString = buildSupabaseConnectionString(supabaseUrl, dbPassword);
+      connectionString = buildSupabaseDirectConnectionString(supabaseUrl, dbPassword);
     } else {
       throw new Error('SUPABASE_URL_PROD and SUPABASE_DB_PASSWORD_PROD are required for production/deployment mode');
     }
