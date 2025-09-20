@@ -584,11 +584,12 @@ function extractEncoreApplyLink(messageText: string): string | null {
   
   // Pattern 1: HTML Button Structures - Target "Apply now" buttons specifically
   const applyNowButtonPatterns = [
-    // Direct anchor tag with "Apply now" - most common pattern
-    /<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
+    // Direct anchor tag with "Apply now" - capture everything until the closing quote
+    /<a[^>]*href=["']([^"']+awstrack\.me[^"']+)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
+    /<a[^>]*href=["']([^"']+encoremusicians\.com[^"']+)["'][^>]*>[\s\S]*?apply\s*now[\s\S]*?<\/a>/gi,
 
     // Anchor tag where "Apply now" appears before the link
-    /apply\s*now[\s\S]{0,200}?<a[^>]*href=["']([^"']*(?:encoremusicians\.com|awstrack\.me)[^"']*?)["'][^>]*>/gi,
+    /apply\s*now[\s\S]{0,200}?<a[^>]*href=["']([^"']+(?:encoremusicians\.com|awstrack\.me)[^"']+)["'][^>]*>/gi,
 
     // Table-based buttons (common in email templates)
     /<table[^>]*>[\s\S]*?apply\s*now[\s\S]*?href=["']([^"']*(?:encoremusicians\.com|awstrack\.me.*encoremusicians)[^"']*?)["'][\s\S]*?<\/table>/gi,
@@ -757,24 +758,41 @@ function extractEncoreApplyLink(messageText: string): string | null {
 // Helper function to decode various tracking URL formats
 function decodeTrackingUrl(url: string): string {
   console.log('🔗 [URL DECODE] Input URL:', url);
-  
+
   // Handle direct Encore URLs
   if (url.includes('encoremusicians.com') && !url.includes('awstrack.me') && !url.includes('click.')) {
     console.log('🔗 [URL DECODE] Direct Encore URL, returning as-is');
     return url;
   }
-  
+
   // Handle AWS tracking URLs
   if (url.includes('awstrack.me')) {
     console.log('🔗 [URL DECODE] AWS tracking URL detected');
-    
-    // Multiple encoding patterns to try
+
+    // First try: Look for the pattern where the actual URL starts with https%3A%2F%2F or https:%2F%2F
+    // and ends with ApplyNow or similar parameter
+    const embeddedUrlPattern = /https[:%](?:3A|%3A)?(?:%2F%2F|%2F%2F)encoremusicians[^\/]*(?:%2F|\/)[^\/\s]*ApplyNow/gi;
+    const embeddedMatch = url.match(embeddedUrlPattern);
+    if (embeddedMatch) {
+      console.log('🔗 [URL DECODE] Found embedded URL pattern:', embeddedMatch[0]);
+      // Decode the URL-encoded string
+      let decoded = decodeURIComponent(embeddedMatch[0]);
+      // Clean up any remaining encoding artifacts
+      decoded = decoded.replace(/^https:\/+/, 'https://');
+      console.log('🔗 [URL DECODE] Successfully decoded embedded URL:', decoded);
+      return decoded;
+    }
+
+    // Second try: Multiple encoding patterns
     const decodingPatterns = [
+      /https:%2F%2Fencoremusicians\.com[^&\s]*ApplyNow/g,
+      /https%3A%2F%2Fencoremusicians\.com[^&\s]*ApplyNow/g,
       /https:%2F%2Fencoremusicians\.com[^&\s]*/g,
       /https%3A%2F%2Fencoremusicians\.com[^&\s]*/g,
+      /encoremusicians\.com%2Fjobs%2F[^&\s]*/g,
       /encoremusicians\.com[^&\s]*/g
     ];
-    
+
     for (const pattern of decodingPatterns) {
       const match = url.match(pattern);
       if (match) {
@@ -786,7 +804,7 @@ function decodeTrackingUrl(url: string): string {
         return decoded;
       }
     }
-    
+
     console.log('🔗 [URL DECODE] Failed to decode AWS tracking URL, returning original');
     return url;
   }
