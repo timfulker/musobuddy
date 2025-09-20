@@ -17,8 +17,8 @@ const upload = multer({
   }
 });
 
-// Get Supabase client
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.REPLIT_ENVIRONMENT !== 'production';
+// Get Supabase client - simple environment detection
+const isDevelopment = process.env.NODE_ENV !== 'production';
 const supabaseUrl = isDevelopment ? process.env.SUPABASE_URL_DEV : process.env.SUPABASE_URL_PROD;
 const supabaseKey = isDevelopment ? process.env.SUPABASE_SERVICE_KEY_DEV : process.env.SUPABASE_SERVICE_KEY_PROD;
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
