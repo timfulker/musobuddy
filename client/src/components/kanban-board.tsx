@@ -294,7 +294,7 @@ export default function ActionableEnquiries() {
         key={enquiry.id}
         className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer relative`}
         style={getBandBorderStyle()}
-        onClick={() => setLocation(`/bookings?view=calendar&highlight=${enquiry.id}`)}
+        onClick={() => setLocation(`/bookings?view=list&highlight=${enquiry.id}`)}
         onDoubleClick={() => setLocation(`/new-booking?edit=${enquiry.id}`)}
       >
         {/* Conflict Indicator */}
@@ -440,14 +440,26 @@ export default function ActionableEnquiries() {
                         Respond
                       </Button>
                       
-                      <Link href={`/bookings?id=${enquiry.id}`}>
-                        <Button 
-                          variant="outline" 
+                      <Link href={`/new-booking?edit=${enquiry.id}`}>
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Eye className="w-3 h-3 mr-1" />
-                          View
+                          Edit
+                        </Button>
+                      </Link>
+
+                      <Link href={`/bookings?view=calendar&highlight=${enquiry.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                          title="View in calendar"
+                        >
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Calendar
                         </Button>
                       </Link>
                       
