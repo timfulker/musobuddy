@@ -177,9 +177,9 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge 
+                        <Badge
                           variant={conflict.severity === 'hard' ? 'destructive' : 'default'}
-                          className="text-xs"
+                          className={`text-xs ${conflict.severity === 'hard' ? '' : 'text-white'}`}
                         >
                           {conflict.severity === 'hard' ? 'CRITICAL' : 'WARNING'}
                         </Badge>
