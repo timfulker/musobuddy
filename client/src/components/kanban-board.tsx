@@ -292,7 +292,7 @@ export default function ActionableEnquiries() {
     return (
       <Card
         key={enquiry.id}
-        className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()} cursor-pointer relative`}
+        className={`bg-white shadow-sm hover:shadow-lg transition-all duration-200 border-l-4 ${getCardStyling()} cursor-pointer relative backdrop-blur-sm`}
         style={getBandBorderStyle()}
         onClick={() => setLocation(`/bookings?view=list&highlight=${enquiry.id}`)}
         onDoubleClick={() => setLocation(`/new-booking?edit=${enquiry.id}`)}

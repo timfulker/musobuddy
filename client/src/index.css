@@ -337,26 +337,30 @@ button[class*="bg-primary"][class*="text-primary-foreground"] *,
   --theme-font-heading: system-ui, sans-serif;
   --theme-font-body: system-ui, sans-serif;
   
-  /* Shadcn CSS Variables */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  /* Enhanced UI Variables - Restored from backup */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --primary: hsl(262, 83%, 72%);
+  --primary-foreground: hsl(210, 20%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+
+  /* Accent & Status Colors */
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(262, 83%, 72%);
+
+  /* Popover and Card */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
   
   /* Dynamic text colors for contrast */
   --theme-primary-text: white; /* Will be set dynamically */
@@ -1106,6 +1110,17 @@ body {
 /* Enhanced Card Component Styling */
 .enhanced-card {
   @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+/* Global Card Enhancements for 3D Look */
+.card, [class*="Card"] {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card:hover, [class*="Card"]:hover {
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .enhanced-card.active {
