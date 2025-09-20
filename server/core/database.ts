@@ -21,11 +21,14 @@ function buildSupabaseConnectionString(supabaseUrl: string, dbPassword: string):
 let connectionString: string;
 
 if (ENV.isDevelopment) {
-  // Development: Use direct database connection string (no hostname construction)
-  // Priority: 1) SUPABASE_DB_URL_DEV (exact string from dashboard), 2) Constructed, 3) DATABASE_URL fallback
+  // Development: Prefer stable DATABASE_URL (Neon) over potentially problematic Supabase connections
+  // Priority: 1) DATABASE_URL (stable), 2) SUPABASE_DB_URL_DEV, 3) Constructed Supabase
+  const databaseUrl = process.env.DATABASE_URL;
   const directDbUrl = process.env.SUPABASE_DB_URL_DEV;
   
-  if (directDbUrl) {
+  if (databaseUrl) {
+    connectionString = databaseUrl;
+  } else if (directDbUrl) {
     connectionString = directDbUrl;
   } else {
     // Fallback: try to construct from Supabase credentials
@@ -35,8 +38,7 @@ if (ENV.isDevelopment) {
     if (supabaseUrl && dbPassword) {
       connectionString = buildSupabaseConnectionString(supabaseUrl, dbPassword);
     } else {
-      // Final fallback to DATABASE_URL
-      connectionString = process.env.DATABASE_URL;
+      throw new Error('No valid database configuration found for development mode');
     }
   }
 } else {
@@ -71,16 +73,21 @@ console.log(`🔍 Environment detection via ENV: isProduction=${ENV.isProduction
 console.log(`🔍 Resolved mode: ${ENV.isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'}`);
 
 // Report connection source for debugging
-const envPrefix = ENV.isDevelopment ? 'DEV' : 'PROD';
-const directDbVar = ENV.isDevelopment ? 'SUPABASE_DB_URL_DEV' : 'SUPABASE_DB_URL_PROD';
-const hasDirectUrl = ENV.isDevelopment ? process.env.SUPABASE_DB_URL_DEV : process.env.SUPABASE_DB_URL_PROD;
-
-if (hasDirectUrl) {
-  console.log(`🔍 Using direct connection: ${directDbVar}`);
-} else if (connectionString === process.env.DATABASE_URL) {
-  console.log(`🔍 Using fallback: DATABASE_URL`);
+if (ENV.isDevelopment) {
+  if (connectionString === process.env.DATABASE_URL) {
+    console.log(`🔍 Using stable database: DATABASE_URL`);
+  } else if (connectionString === process.env.SUPABASE_DB_URL_DEV) {
+    console.log(`🔍 Using direct connection: SUPABASE_DB_URL_DEV`);
+  } else {
+    console.log(`🔍 Using constructed connection: SUPABASE_URL_DEV`);
+  }
 } else {
-  console.log(`🔍 Using constructed connection: SUPABASE_URL_${envPrefix}`);
+  const directDbUrl = process.env.SUPABASE_DB_URL_PROD;
+  if (directDbUrl) {
+    console.log(`🔍 Using direct connection: SUPABASE_DB_URL_PROD`);
+  } else {
+    console.log(`🔍 Using constructed connection: SUPABASE_URL_PROD`);
+  }
 }
 // Debug: Show connection string structure to verify format
 const parts = connectionString.match(/^postgresql:\/\/([^:]+):([^@]+)@([^\/]+)\/([^?]+)(\?.*)?$/);
