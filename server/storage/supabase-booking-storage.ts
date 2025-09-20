@@ -45,6 +45,7 @@ export class SupabaseBookingStorage {
     // Only include essential fields to avoid constraint violations
     const supabaseData = {
       user_id: bookingData.userId,
+      title: bookingData.title || bookingData.clientName || 'Booking Request',
       client_name: bookingData.clientName || null,
       // Convert empty strings to null to avoid constraint violations
       client_email: bookingData.clientEmail && bookingData.clientEmail.trim() !== '' ? bookingData.clientEmail.trim() : null,
@@ -62,7 +63,6 @@ export class SupabaseBookingStorage {
     };
 
     // Only add optional fields if they have valid values
-    // Skip title field - causes schema cache issues
 
     if (bookingData.fee && bookingData.fee !== 0) {
       supabaseData.fee = bookingData.fee;
@@ -202,6 +202,7 @@ export class SupabaseBookingStorage {
     return {
       id: booking.id,
       userId: booking.user_id,
+      title: booking.title,
       clientName: booking.client_name,
       clientEmail: booking.client_email,
       clientPhone: booking.client_phone,

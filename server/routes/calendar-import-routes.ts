@@ -2,7 +2,7 @@ import type { Express } from "express";
 import multer from "multer";
 import ical from "ical";
 import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
-import { storage } from "../core/storage";
+import { SupabaseBookingStorage } from "../storage/supabase-booking-storage";
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -97,6 +97,9 @@ export function registerCalendarImportRoutes(app: Express) {
         console.log('🚨🚨🚨 CALENDAR IMPORT ROUTE HIT! 🚨🚨🚨');
         console.log('✅ Past authentication, user:', req.user?.id);
         const userId = req.user?.id;
+
+        // Use Supabase storage directly to bypass routing issues
+        const supabaseStorage = new SupabaseBookingStorage();
         
         if (!userId) {
           console.log('❌ No user ID found after auth');
@@ -223,7 +226,7 @@ export function registerCalendarImportRoutes(app: Express) {
             // ENHANCED duplicate checking - multi-layer detection to prevent manual re-imports
             // Since Google Calendar sync is removed, users will manually import .ics files repeatedly
             // We need VERY robust duplicate detection to prevent database pollution
-            const existingBookings = await storage.getBookings(userId);
+            const existingBookings = await supabaseStorage.getBookings(userId);
             const isDuplicate = existingBookings.some(booking => {
               // Convert booking.eventDate to string for comparison if it's a Date object
               const bookingDateStr = booking.eventDate instanceof Date 
@@ -271,9 +274,9 @@ export function registerCalendarImportRoutes(app: Express) {
             }
 
             console.log(`✅ No duplicate found, creating booking...`);
-            // Create the booking - method only takes one parameter (the bookingData with userId included)
+            // Create the booking directly with Supabase to bypass routing issues
             try {
-              const createdBooking = await storage.createBooking(bookingData);
+              const createdBooking = await supabaseStorage.createBooking(bookingData);
               imported++;
               console.log(`✅ Successfully imported: ${event.summary} on ${bookingData.eventDate} with ID: ${createdBooking?.id}`);
             } catch (dbError) {
@@ -296,7 +299,7 @@ export function registerCalendarImportRoutes(app: Express) {
         }
 
         // Get total count of bookings after import
-        const totalBookingsAfterImport = await storage.getBookings(userId);
+        const totalBookingsAfterImport = await supabaseStorage.getBookings(userId);
         const totalCount = totalBookingsAfterImport.length;
         
         const message = `Successfully imported ${imported} events. Skipped ${skipped} (${duplicates} duplicates, ${pastEvents} past events, ${noStartDate} no start date, ${notVevent} not events). ${errors} errors (${invalidDate} invalid dates).`;
