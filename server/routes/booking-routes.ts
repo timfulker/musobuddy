@@ -49,13 +49,18 @@ export function registerBookingRoutes(app: Express) {
   app.get('/api/bookings', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
+      console.log('📚 [BOOKINGS] Fetching bookings for user:', userId);
+
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      
+
       // Get user settings to apply display filters
       const settings = await safeDbCall(() => storage.getSettings(userId), null, 'getSettings');
+      console.log('📚 [BOOKINGS] User settings:', settings?.bookingDisplayLimit, settings?.displayFutureBookings);
+
       const allBookings = await safeDbCall(() => storage.getBookings(userId), [], 'getBookings');
+      console.log('📚 [BOOKINGS] Raw bookings from storage:', allBookings.length, 'bookings');
       
       // Apply display settings filter
       let filteredBookings = allBookings;
