@@ -123,12 +123,18 @@ export class BookingStorage {
   }
 
   async getBookingsByUser(userId: string) {
+    console.log('📚 [BOOKING-STORAGE] getBookingsByUser called for:', userId);
+    console.log('📚 [BOOKING-STORAGE] Supabase enabled:', this.supabaseStorage.isSupabaseEnabled());
+    console.log('📚 [BOOKING-STORAGE] Migration mode:', this.supabaseStorage.getMigrationMode());
+
     // Check if we should use Supabase
     if (this.supabaseStorage.isSupabaseEnabled() &&
         this.supabaseStorage.getMigrationMode() === 'supabase-primary') {
       console.log('🚀 Using Supabase for fetching bookings');
       return await this.supabaseStorage.getBookings(userId);
     }
+
+    console.log('📚 [BOOKING-STORAGE] Using Drizzle for fetching bookings');
 
     // Otherwise use Drizzle
     const results = await db.select().from(bookings)

@@ -130,7 +130,10 @@ export class SupabaseBookingStorage {
   }
 
   async getBookings(userId: string) {
+    console.log('🔍 [SUPABASE-BOOKINGS] Fetching bookings for user:', userId);
+
     if (!this.isEnabled || !supabase) {
+      console.log('❌ [SUPABASE-BOOKINGS] Supabase is not enabled');
       throw new Error('Supabase is not enabled');
     }
 
@@ -139,6 +142,8 @@ export class SupabaseBookingStorage {
       .select('*')
       .eq('user_id', userId)
       .order('event_date', { ascending: false });
+
+    console.log('🔍 [SUPABASE-BOOKINGS] Query result:', data?.length || 0, 'bookings found');
 
     if (error) {
       console.error('❌ Failed to fetch bookings from Supabase:', error);
