@@ -41,74 +41,40 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
-    // Map camelCase to snake_case for Supabase
+    // Create minimal, schema-safe data for Supabase
+    // Only include essential fields to avoid constraint violations
     const supabaseData = {
       user_id: bookingData.userId,
-      title: bookingData.title,
-      client_name: bookingData.clientName,
-      client_email: bookingData.clientEmail,
-      client_phone: bookingData.clientPhone,
-      client_address: bookingData.clientAddress,
-      venue: bookingData.venue,
-      venue_address: bookingData.venueAddress,
-      event_date: bookingData.eventDate,
-      event_time: bookingData.eventTime,
-      event_end_time: bookingData.eventEndTime,
-      fee: bookingData.fee,
-      final_amount: bookingData.finalAmount,
-      deposit_amount: bookingData.deposit, // Supabase uses deposit_amount, not deposit
-      status: bookingData.status,
-      notes: bookingData.notes,
-      gig_type: bookingData.gigType,
-      event_type: bookingData.eventType,
-      equipment_requirements: bookingData.equipmentRequirements,
-      special_requirements: bookingData.specialRequirements,
-      performance_duration: bookingData.performanceDuration,
-      styles: bookingData.styles,
-      equipment_provided: bookingData.equipmentProvided,
-      whats_included: bookingData.whatsIncluded,
-      dress_code: bookingData.dressCode,
-      // Note: Supabase doesn't have contact_person column, skip it
-      // contact_person: bookingData.contactPerson,
-      contact_phone: bookingData.contactPhone,
-      parking_info: bookingData.parkingInfo,
-      venue_contact_info: bookingData.venueContactInfo,
-      travel_expense: bookingData.travelExpense,
-      what3words: bookingData.what3words,
-      // Collaborative fields
-      venue_contact: bookingData.venueContact,
-      sound_tech_contact: bookingData.soundTechContact,
-      stage_size: bookingData.stageSize,
-      power_equipment: bookingData.powerEquipment,
-      style_mood: bookingData.styleMood,
-      must_play_songs: bookingData.mustPlaySongs,
-      avoid_songs: bookingData.avoidSongs,
-      set_order: bookingData.setOrder,
-      first_dance_song: bookingData.firstDanceSong,
-      processional_song: bookingData.processionalSong,
-      signing_register_song: bookingData.signingRegisterSong,
-      recessional_song: bookingData.recessionalSong,
-      special_dedications: bookingData.specialDedications,
-      guest_announcements: bookingData.guestAnnouncements,
-      load_in_info: bookingData.loadInInfo,
-      sound_check_time: bookingData.soundCheckTime,
-      weather_contingency: bookingData.weatherContingency,
-      parking_permit_required: bookingData.parkingPermitRequired,
-      meal_provided: bookingData.mealProvided,
-      dietary_requirements: bookingData.dietaryRequirements,
-      shared_notes: bookingData.sharedNotes,
-      reference_tracks: bookingData.referenceTracks,
-      photo_permission: bookingData.photoPermission,
-      encore_allowed: bookingData.encoreAllowed,
-      encore_suggestions: bookingData.encoreSuggestions,
-      // Map location fields to Supabase column names
-      // mileage: bookingData.mileage || null, // Column doesn't exist in Supabase
-      // google_place_id: bookingData.googlePlaceId || null, // Column doesn't exist
-      map_latitude: bookingData.latitude || null, // Supabase uses map_latitude
-      map_longitude: bookingData.longitude || null, // Supabase uses map_longitude
+      title: bookingData.title || null,
+      client_name: bookingData.clientName || null,
+      // Convert empty strings to null to avoid constraint violations
+      client_email: bookingData.clientEmail && bookingData.clientEmail.trim() !== '' ? bookingData.clientEmail.trim() : null,
+      client_phone: bookingData.clientPhone && bookingData.clientPhone.trim() !== '' ? bookingData.clientPhone.trim() : null,
+      venue: bookingData.venue || null,
+      venue_address: bookingData.venueAddress || null,
+      event_date: bookingData.eventDate || null,
+      event_time: bookingData.eventTime || null,
+      event_end_time: bookingData.eventEndTime || null,
+      status: bookingData.status || 'pending',
+      notes: bookingData.notes || null,
+      event_type: bookingData.eventType || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    // Only add optional fields if they have valid values
+    if (bookingData.fee && bookingData.fee !== 0) {
+      supabaseData.fee = bookingData.fee;
+    }
+    if (bookingData.finalAmount && bookingData.finalAmount !== 0) {
+      supabaseData.final_amount = bookingData.finalAmount;
+    }
+    if (bookingData.deposit && bookingData.deposit !== 0) {
+      supabaseData.deposit_amount = bookingData.deposit;
+    }
+    if (bookingData.clientAddress && bookingData.clientAddress.trim() !== '') {
+      supabaseData.client_address = bookingData.clientAddress.trim();
+    }
 
     console.log('📝 Creating booking in Supabase:', {
       client: supabaseData.client_name,
@@ -120,7 +86,7 @@ export class SupabaseBookingStorage {
       .from('bookings')
       .insert([supabaseData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Supabase booking creation failed:', error);
