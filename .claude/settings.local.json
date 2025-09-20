@@ -37,7 +37,9 @@
       "Bash(done)",
       "Bash(npm run build:*)",
       "Read(//tmp/**)",
-      "Bash(NODE_ENV=production npm run dev)"
+      "Bash(NODE_ENV=production npm run dev)",
+      "Bash(npm run db:push:*)",
+      "Bash(timeout 10 npm run db:push)"
     ],
     "deny": [],
     "ask": [],
