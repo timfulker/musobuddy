@@ -215,6 +215,12 @@ export class MiscStorage {
     });
 
     try {
+      // First, check total messages for debugging
+      const totalForUser = await db.select().from(unparseableMessages)
+        .where(eq(unparseableMessages.userId, userId));
+
+      console.log('🔍 [MISC-STORAGE] Total messages for user:', totalForUser.length);
+
       const result = await db.select().from(unparseableMessages)
         .where(and(
           eq(unparseableMessages.userId, userId),
@@ -222,9 +228,15 @@ export class MiscStorage {
         ))
         .orderBy(desc(unparseableMessages.createdAt));
 
-      console.log('🔍 [MISC-STORAGE] Query executed, found', result?.length || 0, 'messages');
+      console.log('🔍 [MISC-STORAGE] After filtering converted, found', result?.length || 0, 'messages');
+
+      if (totalForUser.length > 0) {
+        const statuses = totalForUser.map(m => ({ id: m.id, status: m.status }));
+        console.log('🔍 [MISC-STORAGE] All message statuses:', statuses);
+      }
+
       if (result && result.length > 0) {
-        console.log('🔍 [MISC-STORAGE] Sample message IDs:', result.slice(0, 3).map(m => m.id));
+        console.log('🔍 [MISC-STORAGE] Returned message IDs:', result.slice(0, 3).map(m => m.id));
       }
 
       return result;
