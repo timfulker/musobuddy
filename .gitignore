@@ -16,8 +16,9 @@ webhook-system-backup-*.tar.gz
 *.log
 *.tmp
 
-# Replit agent state files
+# Replit files
 .local/state/replit/agent/
+.cache/replit/
 
 # Documentation (keep core files only)
 phase2-email-correspondence.md
