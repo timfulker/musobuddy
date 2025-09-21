@@ -215,6 +215,8 @@ export class EmailProcessingEngine {
         venueValue: parsedData.venue,
         hasClientName: !!parsedData.clientName,
         clientNameValue: parsedData.clientName,
+        hasApplyNowLink: !!parsedData.applyNowLink,
+        applyNowLinkValue: parsedData.applyNowLink || 'NOT FOUND',
         confidence: parsedData.confidence,
         fullParsedData: parsedData
       });
@@ -238,9 +240,18 @@ export class EmailProcessingEngine {
       
       // Create booking
       const bookingData = this.buildBookingData(parsedData, emailData, user.id);
+      
+      // Log apply link in bookingData
+      console.log(`📎 [${requestId}] BOOKING DATA APPLY LINK:`, {
+        hasApplyLink: !!bookingData.applyNowLink,
+        applyLinkValue: bookingData.applyNowLink || 'NOT SET IN BOOKING DATA'
+      });
+      
       const newBooking = await storage.createBooking(bookingData);
       
-      console.log(`✅ [${requestId}] BOOKING CREATED: #${newBooking.id} for user ${user.id}`);
+      console.log(`✅ [${requestId}] BOOKING CREATED: #${newBooking.id} for user ${user.id}`, {
+        finalApplyLink: newBooking.applyNowLink || 'NOT IN CREATED BOOKING'
+      });
       
       return {
         success: true,
@@ -472,6 +483,15 @@ export class EmailProcessingEngine {
   private buildBookingData(parsedData: any, emailData: EmailData, userId: string): any {
     const { cleanEncoreTitle } = require('./booking-formatter');
     const cleanedSubject = cleanEncoreTitle(emailData.subject);
+    
+    // Log if this is an Encore email
+    if (this.isEncoreEmail(emailData)) {
+      console.log(`🎵 [ENCORE BUILD] Building booking data for Encore email:`, {
+        hasApplyLink: !!parsedData.applyNowLink,
+        applyLinkValue: parsedData.applyNowLink || 'NO LINK FOUND',
+        subject: emailData.subject
+      });
+    }
     
     // Extract client email with proper priority: form content first, then parsed data, then sender
     const clientEmail = this.extractClientEmail(parsedData, emailData);
