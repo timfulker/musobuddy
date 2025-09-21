@@ -109,109 +109,6 @@ interface ParsedBookingData {
 }
 
 
-// Direct Encore data extraction (fallback when AI fails)
-function extractEncoreDataDirectly(messageText: string): Partial<ParsedBookingData> | null {
-  console.log('🎵 Attempting direct Encore data extraction...');
-
-  const result: Partial<ParsedBookingData> = {};
-
-  // Extract date from "Thursday 23 Oct 2025" format
-  const dateMatch = messageText.match(/(\w+day)\s+(\d{1,2})\s+(\w{3})\s+(\d{4})/i);
-  if (dateMatch) {
-    const [, , day, month, year] = dateMatch;
-    const monthMap: {[key: string]: string} = {
-      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
-      'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
-    };
-    const monthNum = monthMap[month.toLowerCase()];
-    if (monthNum) {
-      result.eventDate = `${year}-${monthNum}-${day.padStart(2, '0')}`;
-      console.log('🎵 Extracted date:', result.eventDate);
-    }
-  }
-
-  // Extract fee from "£260 - £450" format
-  const feeMatch = messageText.match(/£(\d+)\s*-\s*£(\d+)/);
-  if (feeMatch) {
-    result.fee = parseInt(feeMatch[1]); // Use lower bound
-    console.log('🎵 Extracted fee:', result.fee);
-  }
-
-  // Extract location from context
-  const locationMatch = messageText.match(/in\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)*)/);
-  if (locationMatch) {
-    result.venueAddress = locationMatch[1];
-    console.log('🎵 Extracted location:', result.venueAddress);
-  }
-
-  // Extract time from "4.00pm for 2 hours" format
-  const timeMatch = messageText.match(/(\d{1,2})\.(\d{2})(am|pm)\s+for\s+(\d+)\s+hours?/i);
-  if (timeMatch) {
-    let [, hours, minutes, ampm, duration] = timeMatch;
-    let hour24 = parseInt(hours);
-    if (ampm.toLowerCase() === 'pm' && hour24 !== 12) hour24 += 12;
-    if (ampm.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
-
-    result.eventTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-
-    const endHour = hour24 + parseInt(duration);
-    result.eventEndTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
-
-    console.log('🎵 Extracted time:', result.eventTime, 'to', result.eventEndTime);
-  }
-
-  return Object.keys(result).length > 0 ? result : null;
-}
-
-// Clean forwarded email headers that confuse AI
-function cleanForwardedEmail(messageText: string): string {
-  if (!messageText) return messageText;
-
-  // Patterns to identify and remove forwarding headers
-  const forwardingPatterns = [
-    // Gmail/Outlook forwarding headers
-    /---------- Forwarded message ---------[\s\S]*?(?=Subject:|$)/gi,
-    /Begin forwarded message:[\s\S]*?(?=Subject:|$)/gi,
-    /----- Original Message -----[\s\S]*?(?=Subject:|$)/gi,
-
-    // Remove forwarding metadata lines (more aggressive)
-    /^From: .+?@.+$/gm,  // Any email address lines
-    /^Sent: .+$/gm,
-    /^Date: .+$/gm,
-    /^To: .+?@.+$/gm,    // Any email address lines
-    /^Cc: .+$/gm,
-    /^Subject: .+$/gm,
-    /^Reply-To: .+$/gm,
-
-    // Remove forwarding timestamps and signatures
-    /^On .+? wrote:$/gm,
-    /^Le .+? a écrit :$/gm, // French
-    /^Am .+? schrieb:$/gm,  // German
-
-    // Remove common forwarding patterns
-    /Forwarded by .+$/gm,
-    /^-- Forwarded by .+$/gm,
-    /^Sent from my .+$/gm,  // Mobile signatures
-
-    // Remove lines that look like email headers
-    /^[A-Za-z-]+: .+@.+$/gm,  // Header: email@domain.com format
-  ];
-
-  let cleaned = messageText;
-
-  for (const pattern of forwardingPatterns) {
-    cleaned = cleaned.replace(pattern, '');
-  }
-
-  // Remove excessive whitespace and normalize
-  cleaned = cleaned
-    .replace(/\n\s*\n\s*\n/g, '\n\n') // Multiple newlines to double
-    .replace(/^\s+/gm, '') // Leading whitespace on lines
-    .trim();
-
-  return cleaned;
-}
-
 export async function parseBookingMessage(
   messageText: string,
   clientContact?: string,
@@ -226,17 +123,6 @@ export async function parseBookingMessage(
     console.log('🤖 GPT-5 mini: Subject:', subject || 'No subject');
     console.log('🤖 GPT-5 mini: Client Contact:', clientContact || 'None');
     console.log('🤖 GPT-5 mini: Client Address:', clientAddress || 'None');
-
-    // Clean forwarded email headers before AI processing
-    const cleanedMessageText = cleanForwardedEmail(messageText);
-    console.log('🧹 Cleaned message length:', cleanedMessageText?.length || 0);
-    console.log('🧹 Cleaned first 200 chars:', cleanedMessageText?.substring(0, 200) || 'No content');
-
-    // DEBUG: Log the full cleaned content for debugging
-    console.log('🚨 [DEBUG] FULL CLEANED EMAIL CONTENT:');
-    console.log('==================================================');
-    console.log(cleanedMessageText);
-    console.log('==================================================');
     
     // Get current date for context
     const today = new Date();
@@ -245,22 +131,9 @@ export async function parseBookingMessage(
     
     const systemPrompt = `You're extracting booking details from musician emails. Today is ${currentDate}.
 
-ENCORE MUSICIANS EMAIL SPECIFIC RULES:
-If this is an Encore Musicians email (contains "encoremusicians.com" or Encore branding):
-- IGNORE any "From:" lines with email addresses - these are forwarding headers
-- The title format is: "[Instrument] needed for [event type] in [location]"
-- Date format: "Thursday 23 Oct 2025" appears as large text
-- Fee format: "£260 - £450" appears prominently
-- Time format: "4.00pm for 2 hours"
-- Location format: "Oxford, Oxfordshire (OX1)"
-- For client name: Use "Encore Musicians" since this is an agency booking
-- For client email: Use "bookings@encoremusicians.com" as default
-
-CRITICAL: Never use forwarding email addresses (like gmail.com) as the client contact.
-
 When you see dates without a year, always assume they mean the NEXT occurrence of that date:
 - "November 24th" → the next November 24th from today
-- "June 16th" → the next June 16th from today
+- "June 16th" → the next June 16th from today  
 - "We're getting married on March 5th" → the next March 5th from today
 
 This means if today is August 2025:
@@ -313,7 +186,7 @@ ENCORE APPLY NOW LINK EXTRACTION:
 - Example of COMPLETE URL: "https://email.r.email.encoremusicians.com/mk/cl/f/sh/1t6Af4OhShSDFMvxfqf2K0TFU1/AbCdEfGh12345"`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
-EMAIL: ${cleanedMessageText}
+EMAIL: ${messageText}
 JSON:`;
 
     console.log('🤖 GPT-5 mini: Current date context provided:', currentDate);
@@ -562,7 +435,7 @@ JSON:`;
       fee: cleanNumber(parsed.fee || parsed.budget || parsed.payment),
       travelExpense: cleanNumber(parsed.travelExpense || parsed.travel || parsed.travelCost),
       deposit: cleanNumber(parsed.deposit),
-      message: messageText, // Keep original message for notes
+      message: messageText,
       specialRequirements: cleanString(parsed.specialRequirements || parsed.requirements || parsed.notes),
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
@@ -593,7 +466,7 @@ JSON:`;
         cleanedData.applyNowLink = aiExtractedLink;
       }
     } else {
-      // Fallback to regex extraction if AI didn't find it (use original message for URL extraction)
+      // Fallback to regex extraction if AI didn't find it
       const applyNowLink = extractEncoreApplyLink(messageText);
       if (applyNowLink) {
         cleanedData.applyNowLink = applyNowLink;
@@ -602,28 +475,9 @@ JSON:`;
     }
 
     // Check if this is an Encore booking (now we have applyNowLink)
-    const isEncoreBooking = cleanedData.applyNowLink ||
+    const isEncoreBooking = cleanedData.applyNowLink || 
                            messageText.toLowerCase().includes('encore musicians') ||
                            messageText.includes('notification@encoremusicians.com');
-
-    // FORCE ENCORE CLIENT INFO if this is an Encore booking
-    if (isEncoreBooking) {
-      console.log('🎵 ENCORE BOOKING DETECTED - Forcing Encore client information');
-      cleanedData.clientName = 'Encore Musicians';
-      cleanedData.clientEmail = 'bookings@encoremusicians.com';
-
-      // Try to extract Encore data directly if AI failed
-      const encoreData = extractEncoreDataDirectly(messageText);
-      if (encoreData) {
-        console.log('🎵 ENCORE DIRECT EXTRACTION succeeded:', encoreData);
-        if (encoreData.eventDate) cleanedData.eventDate = encoreData.eventDate;
-        if (encoreData.fee) cleanedData.fee = encoreData.fee;
-        if (encoreData.venue) cleanedData.venue = encoreData.venue;
-        if (encoreData.venueAddress) cleanedData.venueAddress = encoreData.venueAddress;
-        if (encoreData.eventTime) cleanedData.eventTime = encoreData.eventTime;
-        if (encoreData.eventEndTime) cleanedData.eventEndTime = encoreData.eventEndTime;
-      }
-    }
     
     // For Encore bookings, extract area from title instead of enriching venue
     if (isEncoreBooking && subject) {
