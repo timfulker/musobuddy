@@ -632,84 +632,35 @@ function extractEncoreApplyLink(messageText: string): string | null {
     }
   }
   
-  // Pattern 2: Plain text "Apply now" patterns (for Gmail-forwarded emails)
-  // Gmail often converts HTML to plain text, so look for "Apply now" followed by a URL in plain text
-  console.log('🎵 [ENCORE EXTRACTION] Testing plain text Apply now patterns (Gmail forwarding)...');
-  const plainTextApplyPatterns = [
-    // "Apply now" followed by URL on next line or after colon/arrow
-    /apply\s*now[\s:→\-]*\n?\s*(https?:\/\/[^\s<>"']+(?:encoremusicians\.com|awstrack\.me)[^\s<>"']*)/gi,
-    // URL followed by "Apply now" text
-    /(https?:\/\/[^\s<>"']+(?:encoremusicians\.com|awstrack\.me)[^\s<>"']*)\s*[\n\s]*apply\s*now/gi,
-    // "Apply now" with URL in parentheses or brackets
-    /apply\s*now\s*[\(\[]?\s*(https?:\/\/[^\s\)\]<>"']+(?:encoremusicians\.com|awstrack\.me)[^\s\)\]<>"']*)/gi,
-    // Gmail-style URLs with angle brackets: <https://...>
-    /apply\s*now[^<]*<(https?:\/\/[^>]+(?:encoremusicians\.com|awstrack\.me)[^>]*)>/gi,
-    // Gmail forwarded format: Apply now: URL
-    /apply\s*now\s*:\s*(https?:\/\/[^\s<>"']+(?:encoremusicians\.com|awstrack\.me)[^\s<>"']*)/gi,
-    // Plain text with "Apply" and URL nearby (within 50 chars)
-    /apply[^]{0,50}(https?:\/\/[^\s<>"']+(?:encoremusicians\.com|awstrack\.me)[^\s<>"']*)/gi,
-    // URL with "apply" in the query parameters or path
-    /(https?:\/\/[^\s<>"']*(?:encoremusicians\.com|awstrack\.me)[^\s<>"']*apply[^\s<>"']*)/gi
-  ];
-
-  for (let i = 0; i < plainTextApplyPatterns.length; i++) {
-    const pattern = plainTextApplyPatterns[i];
-    console.log(`🎵 [ENCORE EXTRACTION] Testing plain text pattern ${i + 1}:`, pattern.toString().substring(0, 100) + '...');
-
-    let match;
-    pattern.lastIndex = 0; // Reset regex state
-    while ((match = pattern.exec(messageText)) !== null) {
-      const url = match[1] || match[0];
-      console.log(`✅ [ENCORE EXTRACTION] Plain text pattern ${i + 1} found URL:`, url);
-
-      // Decode tracking URLs if needed
-      const decodedUrl = decodeTrackingUrl(url);
-      console.log(`🎵 [ENCORE EXTRACTION] Final decoded URL:`, decodedUrl);
-      return decodedUrl;
-    }
-  }
-
-  // Pattern 3: Direct encoremusicians.com URLs (fallback)
+  // Pattern 2: Direct encoremusicians.com URLs (fallback)
   console.log('🎵 [ENCORE EXTRACTION] Testing direct URL patterns...');
   const directPatterns = [
     /https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.encoremusicians\.com\/[^\s<>"']+/gi,
-    // Gmail angle bracket URLs: <https://...>
-    /<(https:\/\/(?:www\.)?encoremusicians\.com\/[^>]+)>/gi,
     // Also catch URLs that might be in plain text without https
-    /(?:www\.)?encoremusicians\.com\/jobs\/[^\s<>"']+/gi,
-    // Gmail sometimes adds line breaks in URLs
-    /https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']*[\n\r]+[^\s<>"']*/gi
+    /(?:www\.)?encoremusicians\.com\/jobs\/[^\s<>"']+/gi
   ];
   
   for (let i = 0; i < directPatterns.length; i++) {
     const pattern = directPatterns[i];
     const match = messageText.match(pattern);
     if (match) {
-      // Handle capture groups (like angle bracket URLs)
-      const url = match[1] || match[0];
-      console.log(`✅ [ENCORE EXTRACTION] Direct pattern ${i + 1} found URL:`, url);
-      return url;
+      console.log(`✅ [ENCORE EXTRACTION] Direct pattern ${i + 1} found URL:`, match[0]);
+      return match[0];
     }
   }
   
-  // Pattern 4: Enhanced AWS tracking URLs
+  // Pattern 3: Enhanced AWS tracking URLs
   console.log('🎵 [ENCORE EXTRACTION] Testing enhanced tracking URL patterns...');
   const trackingPatterns = [
     // Standard AWS tracking patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
-
-    // Gmail angle bracket tracking URLs
-    /<(https:\/\/[^\/\s>]*\.awstrack\.me\/[^>]+encoremusicians[^>]+)>/gi,
-
+    
     // Alternative encoding patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https%3A%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
-
-    // Gmail-modified tracking URLs (may have line breaks)
-    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\s<>"']*[\n\r]+[^\s<>"']*encoremusicians[^\s<>"']*/gi,
-
+    
     // Click tracking services
     /https:\/\/click\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.clicks\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi
@@ -719,17 +670,16 @@ function extractEncoreApplyLink(messageText: string): string | null {
     const pattern = trackingPatterns[i];
     const match = messageText.match(pattern);
     if (match) {
-      // Handle capture groups (like angle bracket URLs)
-      const trackingUrl = match[1] || match[0];
+      const trackingUrl = match[0];
       console.log(`✅ [ENCORE EXTRACTION] Tracking pattern ${i + 1} found URL:`, trackingUrl);
-
+      
       const decodedUrl = decodeTrackingUrl(trackingUrl);
       console.log(`🎵 [ENCORE EXTRACTION] Decoded tracking URL:`, decodedUrl);
       return decodedUrl;
     }
   }
   
-  // Pattern 5: Enhanced href attribute extraction
+  // Pattern 4: Enhanced href attribute extraction
   console.log('🎵 [ENCORE EXTRACTION] Testing enhanced href patterns...');
   const hrefPatterns = [
     // Standard href patterns
@@ -762,7 +712,7 @@ function extractEncoreApplyLink(messageText: string): string | null {
     }
   }
   
-  // Pattern 6: Job ID extraction and URL construction (enhanced)
+  // Pattern 5: Job ID extraction and URL construction (enhanced)
   console.log('🎵 [ENCORE EXTRACTION] Testing job ID extraction patterns...');
   const jobIdPatterns = [
     // Standard job ID patterns
