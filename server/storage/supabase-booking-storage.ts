@@ -289,6 +289,7 @@ export class SupabaseBookingStorage {
       dressCode: booking.dress_code,
       // contactPerson: booking.contact_person, // Column doesn't exist in Supabase
       contactPhone: booking.contact_phone,
+      applyNowLink: booking.apply_now_link, // Map Encore apply link
       parkingInfo: booking.parking_info,
       venueContactInfo: booking.venue_contact_info,
       travelExpense: booking.travel_expense,
