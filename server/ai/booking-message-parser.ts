@@ -440,6 +440,20 @@ JSON:`;
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
 
+    // 🔍 DEBUG: Enhanced debugging for Encore message processing
+    console.log('🔍 [ENCORE DEBUG] Starting Apply Now link extraction process...');
+    console.log('🔍 [ENCORE DEBUG] Message length:', messageText.length);
+    console.log('🔍 [ENCORE DEBUG] First 500 chars of message:', messageText.substring(0, 500));
+    console.log('🔍 [ENCORE DEBUG] AI parsed applyNowLink:', parsed.applyNowLink || 'NOT FOUND');
+    console.log('🔍 [ENCORE DEBUG] Message contains "encore musicians":', messageText.toLowerCase().includes('encore musicians'));
+    console.log('🔍 [ENCORE DEBUG] Message contains "apply now":', messageText.toLowerCase().includes('apply now'));
+    console.log('🔍 [ENCORE DEBUG] Message contains "encoremusicians.com":', messageText.toLowerCase().includes('encoremusicians.com'));
+    console.log('🔍 [ENCORE DEBUG] Message subject (if any):', subject || 'No subject provided');
+
+    // Test regex extraction immediately
+    const testRegexLink = extractEncoreApplyLink(messageText);
+    console.log('🔍 [ENCORE DEBUG] Regex extraction test result:', testRegexLink || 'NO MATCH FOUND');
+
     // FIRST: Use AI-extracted link if available, otherwise try regex extraction
     if (parsed.applyNowLink && typeof parsed.applyNowLink === 'string' && parsed.applyNowLink.length > 0) {
       const aiExtractedLink = cleanString(parsed.applyNowLink);
