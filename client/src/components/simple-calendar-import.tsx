@@ -15,7 +15,12 @@ interface ImportResult {
   message: string;
 }
 
-export function SimpleCalendarImport() {
+interface SimpleCalendarImportProps {
+  onImportComplete?: (result: ImportResult) => void;
+  onClose?: () => void;
+}
+
+export function SimpleCalendarImport({ onImportComplete, onClose }: SimpleCalendarImportProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -56,8 +61,18 @@ export function SimpleCalendarImport() {
       // Invalidate bookings cache to show new imports immediately
       if (result.success && result.imported > 0) {
         console.log('🔄 [SIMPLE CALENDAR IMPORT] Invalidating bookings cache');
-        await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
         await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        // Force immediate refetch to update UI
+        await queryClient.refetchQueries({ queryKey: ['/api/bookings'] });
+
+        // Notify parent and auto-close after successful import
+        onImportComplete?.(result);
+
+        // Auto-close modal after a short delay to show success message
+        setTimeout(() => {
+          onClose?.();
+        }, 2000);
       }
 
     } catch (err: any) {

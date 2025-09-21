@@ -204,28 +204,36 @@ export class SupabaseBookingStorage {
     console.log(`🗑️ [STORAGE] Deleting from database: ${projectId}, Booking: ${id}, User: ${userId}`);
 
     // First, handle ALL foreign key dependencies
-    const dependencyTables = [
-      { table: 'unparseable_messages', column: 'converted_to_booking_id' },
-      { table: 'contracts', column: 'enquiry_id' },
-      // Add more as we discover them
-    ];
+    try {
+      // For unparseable_messages: DELETE the messages that were converted to this booking
+      const { error: deleteMessagesError } = await supabase
+        .from('unparseable_messages')
+        .delete()
+        .eq('converted_to_booking_id', id);
 
-    for (const dep of dependencyTables) {
-      try {
-        const { error: clearError } = await supabase
-          .from(dep.table)
-          .update({ [dep.column]: null })
-          .eq(dep.column, id);
-
-        if (clearError) {
-          console.warn(`⚠️ Warning: Could not clear ${dep.table}.${dep.column} references:`, clearError);
-        } else {
-          console.log(`🔗 Cleared ${dep.table}.${dep.column} references for booking ${id}`);
-        }
-      } catch (clearErr) {
-        console.warn(`⚠️ Warning: Error clearing ${dep.table} dependencies:`, clearErr);
-        // Continue anyway - table might not exist in all environments
+      if (deleteMessagesError) {
+        console.warn(`⚠️ Warning: Could not delete unparseable_messages for booking ${id}:`, deleteMessagesError);
+      } else {
+        console.log(`🗑️ Deleted unparseable_messages associated with booking ${id}`);
       }
+    } catch (deleteErr) {
+      console.warn(`⚠️ Warning: Error deleting unparseable_messages:`, deleteErr);
+    }
+
+    // For contracts: just clear the reference (don't delete contracts)
+    try {
+      const { error: clearContractsError } = await supabase
+        .from('contracts')
+        .update({ enquiry_id: null })
+        .eq('enquiry_id', id);
+
+      if (clearContractsError) {
+        console.warn(`⚠️ Warning: Could not clear contracts.enquiry_id references:`, clearContractsError);
+      } else {
+        console.log(`🔗 Cleared contracts.enquiry_id references for booking ${id}`);
+      }
+    } catch (clearErr) {
+      console.warn(`⚠️ Warning: Error clearing contracts dependencies:`, clearErr);
     }
 
     // Now delete the booking

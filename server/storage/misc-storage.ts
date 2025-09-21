@@ -1,6 +1,6 @@
 import { db } from "../core/database";
 import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites, betaInviteCodes } from "../../shared/schema";
-import { eq, and, desc, sql, lte, gte, ne } from "drizzle-orm";
+import { eq, and, desc, sql, lte, gte, ne, isNull } from "drizzle-orm";
 
 export class MiscStorage {
   private db = db;
@@ -250,6 +250,30 @@ export class MiscStorage {
     const result = await db.select().from(unparseableMessages)
       .where(eq(unparseableMessages.id, id));
     return result[0] || null;
+  }
+
+  // TEMPORARY DEBUG METHOD - Get ALL unparseable messages without filtering
+  async getAllUnparseableMessagesDebug(userId: string) {
+    const result = await db.select().from(unparseableMessages)
+      .where(eq(unparseableMessages.userId, userId))
+      .orderBy(desc(unparseableMessages.createdAt));
+    return result;
+  }
+
+  // CLEANUP METHOD - Remove orphaned converted messages (status='converted' but no booking exists)
+  async cleanupOrphanedUnparseableMessages(userId: string) {
+    // Delete messages that are marked as 'converted' but have no booking associated
+    // (either converted_to_booking_id is null, or the booking doesn't exist)
+    const result = await db.delete(unparseableMessages)
+      .where(and(
+        eq(unparseableMessages.userId, userId),
+        eq(unparseableMessages.status, 'converted'),
+        isNull(unparseableMessages.convertedToBookingId)
+      ))
+      .returning({ id: unparseableMessages.id });
+
+    console.log(`🧹 Cleaned up ${result.length} orphaned unparseable messages for user ${userId}`);
+    return result.length;
   }
 
   async updateUnparseableMessage(id: number, updates: {

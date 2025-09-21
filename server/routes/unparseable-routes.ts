@@ -47,6 +47,59 @@ export function registerUnparseableRoutes(app: Express) {
     }
   });
 
+  // CLEANUP ROUTE - Remove orphaned converted messages (where booking was deleted)
+  app.post('/api/unparseable-messages/cleanup-orphaned', authenticate, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const orphanedCount = await storage.cleanupOrphanedUnparseableMessages(userId);
+
+      res.json({
+        message: 'Cleanup completed',
+        deletedCount: orphanedCount
+      });
+
+    } catch (error) {
+      console.error('❌ Error in cleanup route:', error);
+      res.status(500).json({ error: 'Cleanup failed' });
+    }
+  });
+
+  // TEMPORARY DIAGNOSTIC ROUTE - Get ALL unparseable messages with statuses
+  app.get('/api/unparseable-messages/debug-all', authenticate, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const allMessages = await storage.getAllUnparseableMessagesDebug(userId);
+
+      res.json({
+        totalMessages: allMessages.length,
+        messages: allMessages.map(m => ({
+          id: m.id,
+          status: m.status,
+          subject: m.subject?.substring(0, 50) + '...',
+          createdAt: m.createdAt
+        })),
+        statusBreakdown: allMessages.reduce((acc, m) => {
+          acc[m.status] = (acc[m.status] || 0) + 1;
+          return acc;
+        }, {})
+      });
+
+    } catch (error) {
+      console.error('❌ Error in debug route:', error);
+      res.status(500).json({ error: 'Debug failed' });
+    }
+  });
+
   // Mark message as reviewed
   app.patch('/api/unparseable-messages/:id', authenticate, async (req, res) => {
     try {

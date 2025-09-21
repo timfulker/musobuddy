@@ -27,6 +27,7 @@ import { calculateBookingDisplayTotal, getBookingAmountDisplayText } from "@/uti
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
 import { SimpleCalendarImport } from "@/components/simple-calendar-import";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FixedCalendarImport } from "@/components/fixed-calendar-import";
 
 import HoverResponseMenu from "@/components/hover-response-menu";
@@ -164,6 +165,7 @@ export default function UnifiedBookings() {
   // Shared state
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previousStatusFilter, setPreviousStatusFilter] = useState<string>('all');
@@ -2960,9 +2962,28 @@ export default function UnifiedBookings() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <SimpleCalendarImport />
-                      <Button 
-                        variant="outline" 
+                      <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Import Calendar
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Import Calendar</DialogTitle>
+                          </DialogHeader>
+                          <SimpleCalendarImport
+                            onImportComplete={(result) => {
+                              console.log('📅 Calendar import completed:', result);
+                            }}
+                            onClose={() => setImportModalOpen(false)}
+                          />
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={generateICSFile}
                         data-testid="button-export-calendar"
