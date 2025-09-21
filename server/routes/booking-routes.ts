@@ -43,6 +43,32 @@ export function registerBookingRoutes(app: Express) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // Environment check endpoint (no auth required)
+  app.get('/api/env-check', (req, res) => {
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    // Use same logic as storage layer
+    const supabaseUrl = isDevelopment
+      ? process.env.SUPABASE_URL_DEV
+      : process.env.SUPABASE_URL_PROD;
+
+    const projectId = supabaseUrl?.split('.')[0].split('//')[1];
+
+    res.json({
+      NODE_ENV: process.env.NODE_ENV,
+      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+      REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+      isDevelopment,
+      selectedDatabase: projectId,
+      expectedProd: 'dknmckqaraedpimxdsqq',
+      expectedDev: 'soihodadevudjohibmbw',
+      isCorrect: process.env.NODE_ENV === 'production'
+        ? projectId === 'dknmckqaraedpimxdsqq'
+        : projectId === 'soihodadevudjohibmbw',
+      timestamp: new Date().toISOString()
+    });
+  });
   
 
   // Get bookings for authenticated user with display settings applied
@@ -523,7 +549,23 @@ export function registerBookingRoutes(app: Express) {
       
     } catch (error) {
       console.error('❌ Failed to delete booking:', error);
-      res.status(500).json({ error: 'Failed to delete booking' });
+
+      // Add environment debug info to error response
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const supabaseUrl = isDevelopment
+        ? process.env.SUPABASE_URL_DEV
+        : process.env.SUPABASE_URL_PROD;
+      const projectId = supabaseUrl?.split('.')[0].split('//')[1];
+
+      res.status(500).json({
+        error: 'Failed to delete booking',
+        debug: {
+          NODE_ENV: process.env.NODE_ENV,
+          database: projectId,
+          expectedProd: 'dknmckqaraedpimxdsqq',
+          errorMessage: error.message
+        }
+      });
     }
   });
 
