@@ -207,6 +207,12 @@ JSON:`;
     console.log('🤖 GPT-5 mini: System prompt length:', systemPrompt.length);
     console.log('🤖 GPT-5 mini: User prompt:', userPrompt);
 
+    // DEBUG: Log the full cleaned content for debugging
+    console.log('🚨 [DEBUG] FULL CLEANED EMAIL CONTENT:');
+    console.log('==================================================');
+    console.log(processedMessageText);
+    console.log('==================================================');
+
     // Prepare AI request for orchestrator
     const aiRequest: AIRequest = {
       systemPrompt,
@@ -494,11 +500,32 @@ JSON:`;
                            messageText.includes('notification@encoremusicians.com') ||
                            isForwardedEncore;
 
-    // Force correct client info for Encore bookings
+    // FORCE ENCORE CLIENT INFO if this is an Encore booking
     if (isEncoreBooking) {
-      console.log('🎵 ENCORE BOOKING DETECTED - Setting correct client info');
+      console.log('🎵 ENCORE BOOKING DETECTED - Applying comprehensive fixes');
+
+      // Force correct client information
       cleanedData.clientName = 'Encore Musicians';
       cleanedData.clientEmail = 'bookings@encoremusicians.com';
+
+      // Use direct Encore extraction to override AI results
+      const directEncoreData = extractEncoreDataDirectly(processedMessageText, subject);
+      if (directEncoreData) {
+        console.log('🎵 OVERRIDING AI RESULTS with direct Encore extraction:', directEncoreData);
+
+        // Override AI results with direct extraction
+        if (directEncoreData.eventDate) cleanedData.eventDate = directEncoreData.eventDate;
+        if (directEncoreData.fee) cleanedData.fee = directEncoreData.fee;
+        if (directEncoreData.eventTime) cleanedData.eventTime = directEncoreData.eventTime;
+        if (directEncoreData.eventEndTime) cleanedData.eventEndTime = directEncoreData.eventEndTime;
+        if (directEncoreData.venueAddress) cleanedData.venueAddress = directEncoreData.venueAddress;
+        if (directEncoreData.eventType) cleanedData.eventType = directEncoreData.eventType;
+
+        // Clear venue name for Encore bookings to prevent Google Maps API calls
+        cleanedData.venue = '';
+
+        console.log('✅ ENCORE BOOKING DATA CORRECTED via direct extraction');
+      }
     }
     
     // For Encore bookings, extract area from title instead of enriching venue
@@ -584,6 +611,196 @@ JSON:`;
     // Fallback parsing using simple text analysis
     console.log('🔄 Falling back to simple text analysis...');
     return simpleTextParse(messageText, clientContact, clientAddress);
+  }
+}
+
+// Direct Encore data extraction using regex patterns
+function extractEncoreDataDirectly(messageText: string, subject?: string): Partial<ParsedBookingData> | null {
+  console.log('🎵 [DIRECT EXTRACTION] Starting comprehensive Encore data extraction...');
+
+  const data: Partial<ParsedBookingData> = {};
+  let hasValidData = false;
+
+  // 1. Fee extraction - Look for £X - £Y patterns
+  const feePatterns = [
+    /£(\d+)\s*-\s*£(\d+)/,  // £260 - £450
+    /£(\d+)\s*to\s*£(\d+)/,  // £260 to £450
+    /£(\d+)\s*-\s*(\d+)/,    // £260 - 450
+    /fee:\s*£?(\d+)/i,       // Fee: £260
+    /pay:\s*£?(\d+)/i,       // Pay: £260
+    /budget:\s*£?(\d+)/i     // Budget: £260
+  ];
+
+  for (const pattern of feePatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      const fee1 = parseInt(match[1]);
+      const fee2 = match[2] ? parseInt(match[2]) : null;
+
+      // Use the lower fee if range is provided
+      data.fee = fee2 ? Math.min(fee1, fee2) : fee1;
+      console.log(`💰 [DIRECT EXTRACTION] Fee extracted: £${data.fee}`);
+      hasValidData = true;
+      break;
+    }
+  }
+
+  // 2. Date extraction - Look for specific date patterns
+  const datePatterns = [
+    // Day/Month/Year patterns
+    /(\w+)\s*(\d{1,2})\s*(\w+)\s*(\d{4})/,  // Thursday 23 Oct 2025
+    /(\d{1,2})\s*(\w+)\s*(\d{4})/,          // 23 Oct 2025
+    /(\w+)\s*(\d{1,2})(?:st|nd|rd|th)?\s*(\d{4})/,  // October 23rd 2025
+    /(\d{1,2})\/(\d{1,2})\/(\d{4})/,        // 23/10/2025
+    /(\d{4})-(\d{2})-(\d{2})/               // 2025-10-23
+  ];
+
+  const months: Record<string, number> = {
+    'january': 1, 'jan': 1, 'february': 2, 'feb': 2, 'march': 3, 'mar': 3,
+    'april': 4, 'apr': 4, 'may': 5, 'june': 6, 'jun': 6, 'july': 7, 'jul': 7,
+    'august': 8, 'aug': 8, 'september': 9, 'sep': 9, 'sept': 9,
+    'october': 10, 'oct': 10, 'november': 11, 'nov': 11, 'december': 12, 'dec': 12
+  };
+
+  for (const pattern of datePatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      let year: number, month: number, day: number;
+
+      if (pattern.toString().includes('/(\\d{4})-(\\d{2})-(\\d{2})/')) {
+        // ISO format: 2025-10-23
+        year = parseInt(match[1]);
+        month = parseInt(match[2]);
+        day = parseInt(match[3]);
+      } else if (pattern.toString().includes('/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/')) {
+        // DD/MM/YYYY format
+        day = parseInt(match[1]);
+        month = parseInt(match[2]);
+        year = parseInt(match[3]);
+      } else if (months[match[2]?.toLowerCase()]) {
+        // Day Month Year: 23 Oct 2025
+        day = parseInt(match[1]);
+        month = months[match[2].toLowerCase()];
+        year = parseInt(match[3]);
+      } else if (months[match[1]?.toLowerCase()]) {
+        // Month Day Year: October 23rd 2025
+        month = months[match[1].toLowerCase()];
+        day = parseInt(match[2]);
+        year = parseInt(match[3]);
+      }
+
+      if (year && month && day && year >= 2025) {
+        data.eventDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        console.log(`📅 [DIRECT EXTRACTION] Date extracted: ${data.eventDate}`);
+        hasValidData = true;
+        break;
+      }
+    }
+  }
+
+  // 3. Time extraction - Look for specific time patterns
+  const timePatterns = [
+    /(\d{1,2})\.(\d{2})(am|pm)\s*for\s*(\d+)\s*hours?/i,  // 4.00pm for 2 hours
+    /(\d{1,2})\.(\d{2})(am|pm)/i,                         // 4.00pm
+    /(\d{1,2}):(\d{2})(am|pm)/i,                          // 4:00pm
+    /(\d{1,2})(am|pm)/i,                                  // 4pm
+    /from\s*(\d{1,2})(?:\.(\d{2}))?(am|pm)\s*to\s*(\d{1,2})(?:\.(\d{2}))?(am|pm)/i  // from 4pm to 6pm
+  ];
+
+  for (const pattern of timePatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      let startHour = parseInt(match[1]);
+      const startMin = match[2] ? parseInt(match[2]) : 0;
+      const startAmPm = match[3]?.toLowerCase();
+
+      // Convert to 24-hour format
+      if (startAmPm === 'pm' && startHour < 12) startHour += 12;
+      if (startAmPm === 'am' && startHour === 12) startHour = 0;
+
+      data.eventTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+
+      // Check for duration (e.g., "for 2 hours")
+      const durationMatch = messageText.match(/for\s*(\d+)\s*hours?/i);
+      if (durationMatch) {
+        const duration = parseInt(durationMatch[1]);
+        const endHour = startHour + duration;
+        data.eventEndTime = `${String(endHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+      }
+
+      console.log(`⏰ [DIRECT EXTRACTION] Time extracted: ${data.eventTime}${data.eventEndTime ? ` - ${data.eventEndTime}` : ''}`);
+      hasValidData = true;
+      break;
+    }
+  }
+
+  // 4. Location extraction from subject line (Encore format)
+  if (subject) {
+    const locationPatterns = [
+      /in\s+([A-Za-z\s]+)$/,                    // "Saxophonist needed for corporate event in Oxford"
+      /for\s+.+\s+in\s+([A-Za-z\s]+)$/,        // "for corporate event in Oxford"
+      /\b([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*[A-Za-z]+$/  // "Oxford, Oxfordshire"
+    ];
+
+    for (const pattern of locationPatterns) {
+      const match = subject.match(pattern);
+      if (match) {
+        data.venueAddress = match[1].trim();
+        console.log(`📍 [DIRECT EXTRACTION] Location extracted from subject: ${data.venueAddress}`);
+        hasValidData = true;
+        break;
+      }
+    }
+  }
+
+  // Also try location from message body
+  if (!data.venueAddress) {
+    const bodyLocationPatterns = [
+      /([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*[A-Za-z]+(?:shire)?\s*\([A-Z0-9]+\)/,  // Oxford, Oxfordshire (OX1)
+      /location:\s*([^,\n]+)/i,
+      /venue:\s*([^,\n]+)/i,
+      /address:\s*([^,\n]+)/i
+    ];
+
+    for (const pattern of bodyLocationPatterns) {
+      const match = messageText.match(pattern);
+      if (match) {
+        data.venueAddress = match[1].trim();
+        console.log(`📍 [DIRECT EXTRACTION] Location extracted from body: ${data.venueAddress}`);
+        hasValidData = true;
+        break;
+      }
+    }
+  }
+
+  // 5. Event type extraction
+  const eventTypePatterns = [
+    /corporate\s+event/i,
+    /wedding/i,
+    /birthday\s+party/i,
+    /private\s+party/i,
+    /anniversary/i,
+    /celebration/i,
+    /function/i,
+    /gig/i
+  ];
+
+  for (const pattern of eventTypePatterns) {
+    const match = messageText.match(pattern);
+    if (match) {
+      data.eventType = match[0].toLowerCase().replace(/\s+/g, ' ').trim();
+      console.log(`🎭 [DIRECT EXTRACTION] Event type extracted: ${data.eventType}`);
+      hasValidData = true;
+      break;
+    }
+  }
+
+  if (hasValidData) {
+    console.log('✅ [DIRECT EXTRACTION] Successfully extracted Encore data:', data);
+    return data;
+  } else {
+    console.log('❌ [DIRECT EXTRACTION] No valid Encore data found');
+    return null;
   }
 }
 
