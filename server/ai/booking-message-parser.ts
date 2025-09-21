@@ -185,8 +185,22 @@ ENCORE APPLY NOW LINK EXTRACTION:
 - If no apply link found, set to null
 - Example of COMPLETE URL: "https://email.r.email.encoremusicians.com/mk/cl/f/sh/1t6Af4OhShSDFMvxfqf2K0TFU1/AbCdEfGh12345"`;
 
+    // Detect if this is a forwarded Encore email and clean it
+    let processedMessageText = messageText;
+    const isForwardedEncore = messageText.includes('From: Tim Fulker') && messageText.toLowerCase().includes('encore');
+
+    if (isForwardedEncore) {
+      console.log('🎵 DETECTED FORWARDED ENCORE EMAIL - Cleaning headers');
+      // Remove everything before the actual Encore content
+      const encoreContentStart = messageText.search(/£\d+.*-.*£\d+|Saxophonist needed|Corporate event|Wedding|Private party/i);
+      if (encoreContentStart > 0) {
+        processedMessageText = messageText.substring(encoreContentStart);
+        console.log('🎵 Cleaned forwarded email, new length:', processedMessageText.length);
+      }
+    }
+
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
-EMAIL: ${messageText}
+EMAIL: ${processedMessageText}
 JSON:`;
 
     console.log('🤖 GPT-5 mini: Current date context provided:', currentDate);
@@ -475,9 +489,17 @@ JSON:`;
     }
 
     // Check if this is an Encore booking (now we have applyNowLink)
-    const isEncoreBooking = cleanedData.applyNowLink || 
+    const isEncoreBooking = cleanedData.applyNowLink ||
                            messageText.toLowerCase().includes('encore musicians') ||
-                           messageText.includes('notification@encoremusicians.com');
+                           messageText.includes('notification@encoremusicians.com') ||
+                           isForwardedEncore;
+
+    // Force correct client info for Encore bookings
+    if (isEncoreBooking) {
+      console.log('🎵 ENCORE BOOKING DETECTED - Setting correct client info');
+      cleanedData.clientName = 'Encore Musicians';
+      cleanedData.clientEmail = 'bookings@encoremusicians.com';
+    }
     
     // For Encore bookings, extract area from title instead of enriching venue
     if (isEncoreBooking && subject) {
