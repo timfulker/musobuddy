@@ -175,46 +175,60 @@ export function setupCommunicationRoutes(app: any) {
       // Process message notifications (incoming messages with HTML content in R2)
       for (const msg of bookingMessages) {
         try {
+          console.log(`🔍 Processing message ${msg.id} with URL: ${msg.messageUrl}`);
+
           // Download and parse HTML content from R2
           const downloadResult = await downloadFile(msg.messageUrl);
           let content = 'Message content unavailable';
-          
+
           if (!downloadResult.success) {
             console.error(`❌ Failed to download message from R2: ${msg.messageUrl}`, downloadResult.error);
+            console.error(`❌ Download error details:`, downloadResult);
           }
           
           if (downloadResult.success && downloadResult.content) {
-            // Extract text content from HTML and parse to get only the new reply
-            const htmlContent = downloadResult.content;
-            console.log(`🔍 Raw HTML content (first 500 chars): ${htmlContent.substring(0, 500)}`);
-            
-            // Remove HTML tags and decode entities
-            let rawText = htmlContent
-              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-              .replace(/<br\s*\/?>/gi, '\n')
-              .replace(/<\/p>/gi, '\n\n')
-              .replace(/<[^>]*>/g, '')
-              .replace(/&nbsp;/g, ' ')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&quot;/g, '"')
-              .replace(/&#39;/g, "'")
-              .replace(/\s+/g, ' ')
-              .trim();
+            try {
+              // Extract text content from HTML and parse to get only the new reply
+              const htmlContent = downloadResult.content;
+              console.log(`🔍 Raw HTML content (first 500 chars): ${htmlContent.substring(0, 500)}`);
+
+              // Remove HTML tags and decode entities
+              let rawText = htmlContent
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/\s+/g, ' ')
+                .trim();
+              console.log(`✅ HTML processing completed successfully`);
+            } catch (htmlError) {
+              console.error(`❌ Error during HTML processing for message ${msg.id}:`, htmlError);
+              throw htmlError;
+            }
             
             console.log(`🔍 After HTML removal (first 500 chars): ${rawText.substring(0, 500)}`);
-            
-            // Extract the actual reply content using a specific pattern for this email format
-            // Look for content after "Booking ID: XXXX" and before "On [date] ... wrote:"
-            const bookingReplyPattern = /Booking ID: \d+\s*(.*?)(?:On \d{1,2} \w+ \d{4} at \d{1,2}:\d{2}.+?[,<]|On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:)/s;
-            const bookingMatch = rawText.match(bookingReplyPattern);
-            
-            console.log(`🔍 Testing booking reply pattern: ${bookingReplyPattern.toString()}`);
-            console.log(`🔍 Pattern match result: ${bookingMatch ? 'FOUND' : 'NOT FOUND'}`);
-            if (bookingMatch) {
-              console.log(`🔍 Matched content: "${bookingMatch[1]}"`);
+
+            try {
+              // Extract the actual reply content using a specific pattern for this email format
+              // Look for content after "Booking ID: XXXX" and before "On [date] ... wrote:"
+              const bookingReplyPattern = /Booking ID: \d+\s*(.*?)(?:On \d{1,2} \w+ \d{4} at \d{1,2}:\d{2}.+?[,<]|On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:)/s;
+              const bookingMatch = rawText.match(bookingReplyPattern);
+
+              console.log(`🔍 Testing booking reply pattern: ${bookingReplyPattern.toString()}`);
+              console.log(`🔍 Pattern match result: ${bookingMatch ? 'FOUND' : 'NOT FOUND'}`);
+              if (bookingMatch) {
+                console.log(`🔍 Matched content: "${bookingMatch[1]}"`);
+              }
+            } catch (regexError) {
+              console.error(`❌ Error during regex processing for message ${msg.id}:`, regexError);
+              throw regexError;
             }
             
             if (bookingMatch && bookingMatch[1].trim().length > 3) {
