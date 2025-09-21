@@ -544,7 +544,10 @@ JSON:`;
     
     if (isEncoreEmail && !cleanedData.applyNowLink) {
       console.log('🎵 Encore email detected but no clickable apply-now link found (likely forwarded email)');
-      
+      console.log('🎵 DEBUG: Current applyNowLink value:', cleanedData.applyNowLink);
+      console.log('🎵 DEBUG: Message text preview:', messageText.substring(0, 200));
+      console.log('🎵 DEBUG: Subject:', subject);
+
       // Extract job ID if present for manual URL construction - try multiple patterns
       const jobIdPatterns = [
         /\[([a-zA-Z0-9]{4,8})\]$/m,  // End of line: [TI7Iw]
@@ -555,11 +558,14 @@ JSON:`;
 
       let jobId = null;
       for (const pattern of jobIdPatterns) {
+        console.log(`🎵 DEBUG: Testing pattern: ${pattern}`);
         const jobIdMatch = messageText.match(pattern);
         if (jobIdMatch) {
           jobId = jobIdMatch[1];
           console.log(`🎵 Job ID found with pattern: ${pattern} -> ${jobId}`);
           break;
+        } else {
+          console.log(`🎵 DEBUG: Pattern ${pattern} - no match`);
         }
       }
 
@@ -568,7 +574,11 @@ JSON:`;
         // Construct the apply link from job ID
         cleanedData.applyNowLink = `https://encoremusicians.com/jobs/${jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow`;
         console.log(`🎵 Constructed apply link: ${cleanedData.applyNowLink}`);
+      } else {
+        console.log('🎵 DEBUG: No job ID found with any pattern');
       }
+    } else {
+      console.log('🎵 DEBUG: Skipping job ID extraction. isEncoreEmail:', isEncoreEmail, 'hasApplyLink:', !!cleanedData.applyNowLink);
     }
 
     // Add client contact info if provided but not extracted
