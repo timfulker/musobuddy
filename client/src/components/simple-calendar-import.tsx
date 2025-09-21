@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Alert, AlertDescription } from './ui/alert';
 import { CalendarIcon, UploadIcon, CheckCircleIcon, AlertTriangleIcon } from 'lucide-react';
 import { apiRequest } from '../lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ImportResult {
   success: boolean;
@@ -19,6 +20,7 @@ export function SimpleCalendarImport() {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -50,6 +52,13 @@ export function SimpleCalendarImport() {
       const result = await response.json();
       console.log('📅 [SIMPLE CALENDAR IMPORT] Success:', result);
       setResult(result);
+
+      // Invalidate bookings cache to show new imports immediately
+      if (result.success && result.imported > 0) {
+        console.log('🔄 [SIMPLE CALENDAR IMPORT] Invalidating bookings cache');
+        await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      }
 
     } catch (err: any) {
       console.error('❌ [SIMPLE CALENDAR IMPORT] Error:', err);

@@ -177,7 +177,26 @@ export function registerSimpleCalendarImportRoutes(app: Express) {
               bookingData.notes = event.description;
             }
 
-            // Direct Supabase insert - bypass all existing systems
+            // DUPLICATE DETECTION: Check if booking already exists
+            const { data: existingBooking } = await supabase
+              .from('bookings')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('event_date', bookingData.event_date)
+              .eq('client_name', bookingData.client_name)
+              .eq('venue', bookingData.venue || '')
+              .maybeSingle();
+
+            if (existingBooking) {
+              console.log('🔄 [SIMPLE CALENDAR] Duplicate found, skipping:', {
+                client_name: bookingData.client_name,
+                event_date: bookingData.event_date
+              });
+              skipped++;
+              continue;
+            }
+
+            // Insert new booking
             console.log('📅 [SIMPLE CALENDAR] Attempting to insert booking data:', {
               user_id: bookingData.user_id,
               client_name: bookingData.client_name,
