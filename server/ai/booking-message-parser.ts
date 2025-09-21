@@ -131,20 +131,9 @@ export async function parseBookingMessage(
     
     const systemPrompt = `You're extracting booking details from musician emails. Today is ${currentDate}.
 
-CRITICAL FOR FORWARDED EMAILS:
-- If you see "---------- Forwarded message ----------" this is a forwarded email
-- For forwarded emails, IGNORE the forwarder's name (like "Tim Fulker")
-- Look for the ACTUAL client info in the email body, not the forwarding headers
-- If the email mentions "Encore Musicians" or has "Job Alert:" in subject, the client is ALWAYS "Encore Musicians"
-- Forwarded emails may have broken formatting with date parts on separate lines like:
-  > Thursday
-  > 23
-  > Oct 2025
-  This means "Thursday 23rd October 2025"
-
 When you see dates without a year, always assume they mean the NEXT occurrence of that date:
 - "November 24th" → the next November 24th from today
-- "June 16th" → the next June 16th from today
+- "June 16th" → the next June 16th from today  
 - "We're getting married on March 5th" → the next March 5th from today
 
 This means if today is August 2025:
@@ -175,13 +164,6 @@ CRITICAL EMAIL EXTRACTION RULES:
 - Look for email addresses in: contact forms, signatures, "reply to:", "email:", "contact:", etc.
 - If email contains "Email: tim@timfulker.com" use tim@timfulker.com, NOT the FROM address
 
-ENCORE MUSICIANS BOOKINGS:
-- If email contains "Job Alert:", "Encore Musicians", "Apply now" button, or "Above your minimum fee"
-- Set clientName: "Encore Musicians" and clientEmail: "bookings@encoremusicians.com"
-- The fee is often shown as a range like "£260-450" - use the lower number as fee
-- Look for date parts that may be on separate lines in forwarded emails
-- Location is often in format "Oxford, Oxfordshire (OX1)" - extract just the city
-
 Important: Get the client's actual name AND email from the email signature or body content, not from the FROM email field. Always provide eventDate in YYYY-MM-DD format when any date is mentioned.
 
 FEE EXTRACTION RULES:
@@ -203,35 +185,13 @@ ENCORE APPLY NOW LINK EXTRACTION:
 - If no apply link found, set to null
 - Example of COMPLETE URL: "https://email.r.email.encoremusicians.com/mk/cl/f/sh/1t6Af4OhShSDFMvxfqf2K0TFU1/AbCdEfGh12345"`;
 
-    // Detect if this is a forwarded Encore email and clean it
-    let processedMessageText = messageText;
-    const isForwardedEncore = (messageText.includes('From: Tim Fulker') || messageText.includes('Tim Fulker')) &&
-                             (messageText.toLowerCase().includes('encore') ||
-                              messageText.includes('Job Alert:') ||
-                              messageText.includes('Apply now') ||
-                              messageText.includes('Corporate event') ||
-                              subject?.toLowerCase().includes('encore'));
-
-    if (isForwardedEncore) {
-      console.log('🎵 DETECTED FORWARDED ENCORE EMAIL - Headers indicate Encore booking');
-      console.log('🎵 Subject line:', subject);
-      // Don't clean too aggressively - keep the content as is
-      processedMessageText = messageText;
-    }
-
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
-EMAIL: ${processedMessageText}
+EMAIL: ${messageText}
 JSON:`;
 
     console.log('🤖 GPT-5 mini: Current date context provided:', currentDate);
     console.log('🤖 GPT-5 mini: System prompt length:', systemPrompt.length);
     console.log('🤖 GPT-5 mini: User prompt:', userPrompt);
-
-    // DEBUG: Log the full cleaned content for debugging
-    console.log('🚨 [DEBUG] FULL CLEANED EMAIL CONTENT:');
-    console.log('==================================================');
-    console.log(processedMessageText);
-    console.log('==================================================');
 
     // Prepare AI request for orchestrator
     const aiRequest: AIRequest = {
@@ -480,74 +440,52 @@ JSON:`;
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
 
-    // FIRST: Try regex extraction for Encore links (more reliable than AI)
-    const applyNowLink = extractEncoreApplyLink(messageText, subject);
-    if (applyNowLink) {
-      cleanedData.applyNowLink = applyNowLink;
-      console.log(`🎵 Extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
-    } else if (parsed.applyNowLink && typeof parsed.applyNowLink === 'string' && parsed.applyNowLink.length > 0) {
-      // Fallback to AI-extracted link if regex fails
+    // FIRST: Use AI-extracted link if available, otherwise try regex extraction
+    if (parsed.applyNowLink && typeof parsed.applyNowLink === 'string' && parsed.applyNowLink.length > 0) {
       const aiExtractedLink = cleanString(parsed.applyNowLink);
-      console.log(`🎵 Using AI-extracted Encore link: ${aiExtractedLink}`);
-      cleanedData.applyNowLink = aiExtractedLink;
+      console.log(`🎵 AI extracted Encore apply-now link: ${aiExtractedLink}`);
+
+      // Check if the AI link looks truncated or incomplete
+      const looksIncomplete = aiExtractedLink.endsWith('...') ||
+                             aiExtractedLink.length < 40 ||
+                             !aiExtractedLink.match(/^https?:\/\/.+\/.+/);
+
+      if (looksIncomplete) {
+        console.log('⚠️ AI-extracted link appears truncated or incomplete, trying regex extraction...');
+        // Try regex extraction for a complete URL
+        const regexLink = extractEncoreApplyLink(messageText);
+        if (regexLink) {
+          cleanedData.applyNowLink = regexLink;
+          console.log(`✅ Regex found complete link: ${regexLink}`);
+        } else {
+          // Use the AI link anyway if regex fails
+          cleanedData.applyNowLink = aiExtractedLink;
+          console.log(`⚠️ Using potentially incomplete AI link as fallback: ${aiExtractedLink}`);
+        }
+      } else {
+        cleanedData.applyNowLink = aiExtractedLink;
+      }
+    } else {
+      // Fallback to regex extraction if AI didn't find it
+      const applyNowLink = extractEncoreApplyLink(messageText);
+      if (applyNowLink) {
+        cleanedData.applyNowLink = applyNowLink;
+        console.log(`🎵 Regex extracted Encore apply-now link: ${cleanedData.applyNowLink}`);
+      }
     }
 
-    // Check if this is an Encore booking - EXPANDED DETECTION
+    // Check if this is an Encore booking (now we have applyNowLink)
     const isEncoreBooking = cleanedData.applyNowLink ||
                            messageText.toLowerCase().includes('encore musicians') ||
-                           messageText.includes('notification@encoremusicians.com') ||
-                           messageText.includes('Job Alert:') ||
-                           messageText.includes('Apply now') ||
-                           (messageText.includes('Corporate event') && messageText.includes('Oxford')) ||
-                           subject?.toLowerCase().includes('job alert') ||
-                           subject?.toLowerCase().includes('encore') ||
-                           isForwardedEncore;
+                           messageText.includes('notification@encoremusicians.com');
 
     // FORCE ENCORE CLIENT INFO if this is an Encore booking
-    if (isEncoreBooking || isForwardedEncore) {
-      console.log('🎵 ENCORE BOOKING DETECTED - Applying comprehensive fixes');
-      console.log('🎵 Detection reason:', {
-        hasApplyLink: !!cleanedData.applyNowLink,
-        hasEncoreText: messageText.toLowerCase().includes('encore'),
-        hasJobAlert: messageText.includes('Job Alert:') || subject?.includes('Job Alert'),
-        isForwarded: isForwardedEncore,
-        subject: subject
-      });
-
-      // Force correct client information - ALWAYS for Encore
+    if (isEncoreBooking) {
+      console.log('🎵 ENCORE BOOKING DETECTED - Setting client to Encore Musicians');
       cleanedData.clientName = 'Encore Musicians';
       cleanedData.clientEmail = 'bookings@encoremusicians.com';
-
-      // Use direct Encore extraction to override AI results
-      const directEncoreData = extractEncoreDataDirectly(processedMessageText, subject);
-      if (directEncoreData) {
-        console.log('🎵 OVERRIDING AI RESULTS with direct Encore extraction:', directEncoreData);
-
-        // Override AI results with direct extraction - FORCE ALL FIELDS
-        if (directEncoreData.eventDate) cleanedData.eventDate = directEncoreData.eventDate;
-        if (directEncoreData.fee) cleanedData.fee = directEncoreData.fee;
-        if (directEncoreData.eventTime) cleanedData.eventTime = directEncoreData.eventTime;
-        if (directEncoreData.eventEndTime) cleanedData.eventEndTime = directEncoreData.eventEndTime;
-        if (directEncoreData.venueAddress) cleanedData.venueAddress = directEncoreData.venueAddress;
-        if (directEncoreData.eventType) cleanedData.eventType = directEncoreData.eventType;
-      }
-
-      // If we still don't have a date but this is clearly Encore, try to parse from AI result
-      if (!cleanedData.eventDate && parsed.eventDate) {
-        cleanedData.eventDate = parsed.eventDate;
-      }
-
-      // Clear venue name for Encore bookings to prevent Google Maps API calls
-      cleanedData.venue = '';
-
-      console.log('✅ ENCORE BOOKING DATA CORRECTED:', {
-        clientName: cleanedData.clientName,
-        eventDate: cleanedData.eventDate,
-        fee: cleanedData.fee,
-        venueAddress: cleanedData.venueAddress
-      });
     }
-    
+
     // For Encore bookings, extract area from title instead of enriching venue
     if (isEncoreBooking && subject) {
       const { extractEncoreArea } = await import('../core/booking-formatter');
@@ -591,19 +529,32 @@ JSON:`;
                          messageText.includes('notification@encoremusicians.com') ||
                          messageText.includes('encoremusicians.com');
     
-    if (isEncoreEmail && !applyNowLink) {
+    if (isEncoreEmail && !cleanedData.applyNowLink) {
       console.log('🎵 Encore email detected but no clickable apply-now link found (likely forwarded email)');
       
-      // Extract job ID if present for manual URL construction
-      const jobIdMatch = messageText.match(/\[([a-zA-Z0-9]+)\]$/m);
-      if (jobIdMatch) {
-        const jobId = jobIdMatch[1];
+      // Extract job ID if present for manual URL construction - try multiple patterns
+      const jobIdPatterns = [
+        /\[([a-zA-Z0-9]{4,8})\]$/m,  // End of line: [TI7Iw]
+        /\[([a-zA-Z0-9]{4,8})\]/g,   // Anywhere: [TI7Iw]
+        /job[:\s#]*([a-zA-Z0-9]{4,8})/gi,  // Job: TI7Iw
+        /id[:\s#]*([a-zA-Z0-9]{4,8})/gi    // ID: TI7Iw
+      ];
+
+      let jobId = null;
+      for (const pattern of jobIdPatterns) {
+        const jobIdMatch = messageText.match(pattern);
+        if (jobIdMatch) {
+          jobId = jobIdMatch[1];
+          console.log(`🎵 Job ID found with pattern: ${pattern} -> ${jobId}`);
+          break;
+        }
+      }
+
+      if (jobId) {
         console.log(`🎵 Encore job ID extracted: ${jobId}`);
-        // Add a note to the special requirements about the Encore job
-        const encoreNote = `Encore Musicians job [${jobId}] - Apply-now URL not available in forwarded email`;
-        cleanedData.specialRequirements = cleanedData.specialRequirements 
-          ? `${cleanedData.specialRequirements}. ${encoreNote}`
-          : encoreNote;
+        // Construct the apply link from job ID
+        cleanedData.applyNowLink = `https://encoremusicians.com/jobs/${jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow`;
+        console.log(`🎵 Constructed apply link: ${cleanedData.applyNowLink}`);
       }
     }
 
@@ -634,333 +585,12 @@ JSON:`;
   }
 }
 
-// Direct Encore data extraction using regex patterns
-function extractEncoreDataDirectly(messageText: string, subject?: string): Partial<ParsedBookingData> | null {
-  console.log('🎵 [DIRECT EXTRACTION] Starting comprehensive Encore data extraction...');
-
-  const data: Partial<ParsedBookingData> = {};
-  let hasValidData = false;
-
-  // 1. Fee extraction - Look for £X - £Y patterns
-  const feePatterns = [
-    /£(\d+)\s*-\s*£(\d+)/,  // £260 - £450
-    /£(\d+)\s*to\s*£(\d+)/,  // £260 to £450
-    /£(\d+)\s*-\s*(\d+)/,    // £260 - 450
-    /fee:\s*£?(\d+)/i,       // Fee: £260
-    /pay:\s*£?(\d+)/i,       // Pay: £260
-    /budget:\s*£?(\d+)/i     // Budget: £260
-  ];
-
-  for (const pattern of feePatterns) {
-    const match = messageText.match(pattern);
-    if (match) {
-      const fee1 = parseInt(match[1]);
-      const fee2 = match[2] ? parseInt(match[2]) : null;
-
-      // Use the lower fee if range is provided
-      data.fee = fee2 ? Math.min(fee1, fee2) : fee1;
-      console.log(`💰 [DIRECT EXTRACTION] Fee extracted: £${data.fee}`);
-      hasValidData = true;
-      break;
-    }
-  }
-
-  // 2. Date extraction - Look for specific date patterns
-  // First try to extract from subject if available (Encore puts fee in subject)
-  if (subject) {
-    const feeMatch = subject.match(/£(\d+)-(\d+)/);
-    if (feeMatch && !data.fee) {
-      data.fee = parseInt(feeMatch[1]);
-      console.log(`💰 [DIRECT EXTRACTION] Fee extracted from subject: £${data.fee}`);
-      hasValidData = true;
-    }
-  }
-
-  // Try original Encore format first: "Date: Thursday 23 Oct 2025"
-  const originalDatePattern = /Date:\s*\w+\s+(\d{1,2})\s+(\w+)\s+(\d{4})/i;
-  const originalMatch = messageText.match(originalDatePattern);
-
-  if (originalMatch) {
-    const day = parseInt(originalMatch[1]);
-    const monthName = originalMatch[2].toLowerCase();
-    const year = parseInt(originalMatch[3]);
-
-    if (months[monthName] && day && year) {
-      data.eventDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      console.log(`📅 [DIRECT EXTRACTION] Date extracted from original format: ${data.eventDate}`);
-      hasValidData = true;
-    }
-  }
-
-  // If not found, look for broken forwarded format where day number might be on separate line
-  if (!data.eventDate) {
-    // Look for patterns like "> Thursday" followed by "> 23" followed by "> Oct 2025"
-    const brokenDatePattern = />?\s*\w+day\s*[\n>]+\s*(\d{1,2})\s*[\n>]+\s*(\w+)\s+(\d{4})/i;
-    const brokenMatch = messageText.match(brokenDatePattern);
-
-    if (brokenMatch) {
-      const day = parseInt(brokenMatch[1]);
-      const monthName = brokenMatch[2].toLowerCase();
-      const year = parseInt(brokenMatch[3]);
-
-      if (months[monthName] && day && year && day >= 1 && day <= 31) {
-        data.eventDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        console.log(`📅 [DIRECT EXTRACTION] Date reconstructed from broken format: ${data.eventDate}`);
-        hasValidData = true;
-      }
-    }
-  }
-
-  // Look for separated date components (like in forwarded Encore emails)
-  const separatedDatePattern = />?\s*(\w+day)\s*>\s*(\d{1,2})\s*>\s*(\w+)\s*(\d{4})/i;
-  const separatedMatch = messageText.match(separatedDatePattern);
-
-  if (separatedMatch) {
-    const day = parseInt(separatedMatch[2]);
-    const monthName = separatedMatch[3].toLowerCase();
-    const year = parseInt(separatedMatch[4]);
-
-    if (months[monthName] && day && year) {
-      data.eventDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      console.log(`📅 [DIRECT EXTRACTION] Date extracted from separated format: ${data.eventDate}`);
-      hasValidData = true;
-    }
-  }
-
-  // Also try without the > separators
-  if (!data.eventDate) {
-    const simplePattern = /(\w+day)\s+(\d{1,2})\s+(\w+)\s+(\d{4})/i;
-    const simpleMatch = messageText.match(simplePattern);
-
-    if (simpleMatch) {
-      const day = parseInt(simpleMatch[2]);
-      const monthName = simpleMatch[3].toLowerCase();
-      const year = parseInt(simpleMatch[4]);
-
-      if (months[monthName] && day && year) {
-        data.eventDate = `${year}-${String(months[monthName]).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        console.log(`📅 [DIRECT EXTRACTION] Date extracted from simple format: ${data.eventDate}`);
-        hasValidData = true;
-      }
-    }
-  }
-
-  const datePatterns = [
-    // Day/Month/Year patterns
-    /(\w+)\s*(\d{1,2})\s*(\w+)\s*(\d{4})/,  // Thursday 23 Oct 2025
-    /(\d{1,2})\s*(\w+)\s*(\d{4})/,          // 23 Oct 2025
-    /(\w+)\s*(\d{1,2})(?:st|nd|rd|th)?\s*(\d{4})/,  // October 23rd 2025
-    /(\d{1,2})\/(\d{1,2})\/(\d{4})/,        // 23/10/2025
-    /(\d{4})-(\d{2})-(\d{2})/               // 2025-10-23
-  ];
-
-  const months: Record<string, number> = {
-    'january': 1, 'jan': 1, 'february': 2, 'feb': 2, 'march': 3, 'mar': 3,
-    'april': 4, 'apr': 4, 'may': 5, 'june': 6, 'jun': 6, 'july': 7, 'jul': 7,
-    'august': 8, 'aug': 8, 'september': 9, 'sep': 9, 'sept': 9,
-    'october': 10, 'oct': 10, 'november': 11, 'nov': 11, 'december': 12, 'dec': 12
-  };
-
-  for (const pattern of datePatterns) {
-    const match = messageText.match(pattern);
-    if (match) {
-      let year: number, month: number, day: number;
-
-      if (pattern.toString().includes('/(\\d{4})-(\\d{2})-(\\d{2})/')) {
-        // ISO format: 2025-10-23
-        year = parseInt(match[1]);
-        month = parseInt(match[2]);
-        day = parseInt(match[3]);
-      } else if (pattern.toString().includes('/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/')) {
-        // DD/MM/YYYY format
-        day = parseInt(match[1]);
-        month = parseInt(match[2]);
-        year = parseInt(match[3]);
-      } else if (months[match[2]?.toLowerCase()]) {
-        // Day Month Year: 23 Oct 2025
-        day = parseInt(match[1]);
-        month = months[match[2].toLowerCase()];
-        year = parseInt(match[3]);
-      } else if (months[match[1]?.toLowerCase()]) {
-        // Month Day Year: October 23rd 2025
-        month = months[match[1].toLowerCase()];
-        day = parseInt(match[2]);
-        year = parseInt(match[3]);
-      }
-
-      if (year && month && day && year >= 2025) {
-        data.eventDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        console.log(`📅 [DIRECT EXTRACTION] Date extracted: ${data.eventDate}`);
-        hasValidData = true;
-        break;
-      }
-    }
-  }
-
-  // 3. Time extraction - Look for specific time patterns
-  const timePatterns = [
-    /Time:\s*(\d{1,2})\.(\d{2})(am|pm)\s*for\s*(\d+)\s*hours?/i,  // Original: "Time: 4.00pm for 2 hours"
-    /(\d{1,2})\.(\d{2})(am|pm)\s*for\s*(\d+)\s*hours?/i,  // 4.00pm for 2 hours
-    /(\d{1,2})\.(\d{2})(am|pm)/i,                         // 4.00pm
-    /(\d{1,2}):(\d{2})(am|pm)/i,                          // 4:00pm
-    /(\d{1,2})(am|pm)\s*for\s*(\d+)\s*hours?/i,          // 4pm for 2 hours
-    /(\d{1,2})(am|pm)/i,                                  // 4pm
-    /from\s*(\d{1,2})(?:\.(\d{2}))?(am|pm)\s*to\s*(\d{1,2})(?:\.(\d{2}))?(am|pm)/i  // from 4pm to 6pm
-  ];
-
-  for (const pattern of timePatterns) {
-    const match = messageText.match(pattern);
-    if (match) {
-      let startHour = parseInt(match[1]);
-      const startMin = match[2] && match[2] !== undefined && !isNaN(parseInt(match[2])) ? parseInt(match[2]) : 0;
-      let startAmPm = match[3]?.toLowerCase() || match[2]?.toLowerCase(); // Handle both positions
-
-      // For patterns like "4pm for 2 hours", the groups are different
-      if (pattern.toString().includes('(\\d{1,2})(am|pm)\\s*for')) {
-        startAmPm = match[2]?.toLowerCase();
-      }
-
-      // Convert to 24-hour format
-      if (startAmPm === 'pm' && startHour < 12) startHour += 12;
-      if (startAmPm === 'am' && startHour === 12) startHour = 0;
-
-      data.eventTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-
-      // Check for duration (e.g., "for 2 hours") - could be in match[3] or match[4] depending on pattern
-      const durationInMatch = match[3] && !isNaN(parseInt(match[3])) ? parseInt(match[3]) :
-                              match[4] && !isNaN(parseInt(match[4])) ? parseInt(match[4]) : null;
-
-      if (durationInMatch) {
-        const endHour = startHour + durationInMatch;
-        data.eventEndTime = `${String(endHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-      } else {
-        // Fallback to searching for duration separately
-        const durationMatch = messageText.match(/for\s*(\d+)\s*hours?/i);
-        if (durationMatch) {
-          const duration = parseInt(durationMatch[1]);
-          const endHour = startHour + duration;
-          data.eventEndTime = `${String(endHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-        }
-      }
-
-      console.log(`⏰ [DIRECT EXTRACTION] Time extracted: ${data.eventTime}${data.eventEndTime ? ` - ${data.eventEndTime}` : ''}`);
-      hasValidData = true;
-      break;
-    }
-  }
-
-  // 4. Location extraction from subject line (Encore format)
-  if (subject) {
-    const locationPatterns = [
-      /in\s+([A-Za-z\s]+)$/,                    // "Saxophonist needed for corporate event in Oxford"
-      /for\s+.+\s+in\s+([A-Za-z\s]+)$/,        // "for corporate event in Oxford"
-      /\b([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*[A-Za-z]+$/  // "Oxford, Oxfordshire"
-    ];
-
-    for (const pattern of locationPatterns) {
-      const match = subject.match(pattern);
-      if (match) {
-        data.venueAddress = match[1].trim();
-        console.log(`📍 [DIRECT EXTRACTION] Location extracted from subject: ${data.venueAddress}`);
-        hasValidData = true;
-        break;
-      }
-    }
-  }
-
-  // Also try location from message body
-  if (!data.venueAddress) {
-    const bodyLocationPatterns = [
-      /Location:\s*([^,\n]+),\s*[A-Za-z]+(?:shire)?\s*\([A-Z0-9]+\)/i,  // Original: "Location: Oxford, Oxfordshire (OX1)"
-      />\s*([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*[A-Za-z]+(?:shire)?\s*\([A-Z0-9]+\)/,  // Forwarded: "> Oxford, Oxfordshire (OX1)"
-      /([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*[A-Za-z]+(?:shire)?\s*\([A-Z0-9]+\)/,  // Plain: "Oxford, Oxfordshire (OX1)"
-      /location:\s*([^,\n]+)/i,
-      /venue:\s*([^,\n]+)/i,
-      /address:\s*([^,\n]+)/i
-    ];
-
-    for (const pattern of bodyLocationPatterns) {
-      const match = messageText.match(pattern);
-      if (match) {
-        data.venueAddress = match[1].trim();
-        console.log(`📍 [DIRECT EXTRACTION] Location extracted from body: ${data.venueAddress}`);
-        hasValidData = true;
-        break;
-      }
-    }
-  }
-
-  // 5. Event type extraction
-  const eventTypePatterns = [
-    /corporate\s+event/i,
-    /wedding/i,
-    /birthday\s+party/i,
-    /private\s+party/i,
-    /anniversary/i,
-    /celebration/i,
-    /function/i,
-    /gig/i
-  ];
-
-  for (const pattern of eventTypePatterns) {
-    const match = messageText.match(pattern);
-    if (match) {
-      data.eventType = match[0].toLowerCase().replace(/\s+/g, ' ').trim();
-      console.log(`🎭 [DIRECT EXTRACTION] Event type extracted: ${data.eventType}`);
-      hasValidData = true;
-      break;
-    }
-  }
-
-  if (hasValidData) {
-    console.log('✅ [DIRECT EXTRACTION] Successfully extracted Encore data:', data);
-    return data;
-  } else {
-    console.log('❌ [DIRECT EXTRACTION] No valid Encore data found');
-    return null;
-  }
-}
-
 // Extract Encore apply-now links from both plain text and HTML tracking URLs
-function extractEncoreApplyLink(messageText: string, subject?: string): string | null {
+function extractEncoreApplyLink(messageText: string): string | null {
   console.log('🎵 [ENCORE EXTRACTION] Starting comprehensive apply-now link extraction...');
-  console.log('🎵 [ENCORE EXTRACTION] Subject:', subject);
   console.log('🎵 [ENCORE EXTRACTION] Message length:', messageText?.length || 0);
   console.log('🎵 [ENCORE EXTRACTION] Contains "Apply now":', messageText.toLowerCase().includes('apply now'));
   console.log('🎵 [ENCORE EXTRACTION] Contains "encoremusicians":', messageText.toLowerCase().includes('encoremusicians'));
-
-  // PRIORITY 1: Extract job ID from AWS tracking URL in HTML (most reliable for forwarded emails)
-  // Look for the specific pattern in Encore HTML emails
-  const awsTrackingPattern = /awstrack\.me\/L0\/https:%2F%2Fencoremusicians\.com%2Fjobs%2F([A-Za-z0-9]+)%3F/;
-  const awsMatch = messageText.match(awsTrackingPattern);
-  if (awsMatch) {
-    const jobId = awsMatch[1];
-    const constructedUrl = `https://encoremusicians.com/jobs/${jobId}`;
-    console.log(`✅ [ENCORE EXTRACTION] Job ID extracted from AWS tracking URL: ${jobId}`);
-    console.log(`🎵 [ENCORE EXTRACTION] Constructed clean URL: ${constructedUrl}`);
-    return constructedUrl;
-  }
-
-  // PRIORITY 2: Extract job ID from subject line [TI7Iw] format
-  if (subject) {
-    const subjectIdPattern = /\[([A-Za-z0-9]+)\]/;
-    const subjectMatch = subject.match(subjectIdPattern);
-    if (subjectMatch) {
-      const jobId = subjectMatch[1];
-      const constructedUrl = `https://encoremusicians.com/jobs/${jobId}`;
-      console.log(`✅ [ENCORE EXTRACTION] Job ID extracted from subject: ${jobId}`);
-      console.log(`🎵 [ENCORE EXTRACTION] Constructed URL from subject: ${constructedUrl}`);
-      return constructedUrl;
-    }
-  }
-
-  // PRIORITY 3: Look for plain text version (in original emails)
-  const plainTextPattern = /Apply now:\s*(https:\/\/encoremusicians\.com\/jobs\/[A-Za-z0-9]+)/;
-  const plainMatch = messageText.match(plainTextPattern);
-  if (plainMatch) {
-    console.log(`✅ [ENCORE EXTRACTION] URL found in plain text: ${plainMatch[1]}`);
-    return plainMatch[1];
-  }
 
   // Debug: Check for common Encore email patterns
   if (messageText.toLowerCase().includes('encore')) {
