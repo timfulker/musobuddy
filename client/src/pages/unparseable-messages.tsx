@@ -206,9 +206,47 @@ export default function UnparseableMessages() {
             Messages that couldn't be automatically processed and require your review
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {messages.length} message{messages.length !== 1 ? 's' : ''}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-sm">
+            {messages.length} message{messages.length !== 1 ? 's' : ''}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const response = await apiRequest('/api/unparseable-messages/debug-all');
+                const data = await response.json();
+                console.log('🔍 Debug data:', data);
+                alert(`Total messages: ${data.totalMessages}\nStatus breakdown: ${JSON.stringify(data.statusBreakdown, null, 2)}`);
+              } catch (error) {
+                console.error('Debug failed:', error);
+              }
+            }}
+          >
+            Debug All
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              if (confirm('Clean up orphaned messages?')) {
+                try {
+                  const response = await apiRequest('/api/unparseable-messages/cleanup-orphaned', {
+                    method: 'POST'
+                  });
+                  const data = await response.json();
+                  alert(`Cleanup completed. Deleted ${data.deletedCount} orphaned messages.`);
+                  queryClient.invalidateQueries({ queryKey: ['/api/unparseable-messages'] });
+                } catch (error) {
+                  console.error('Cleanup failed:', error);
+                }
+              }
+            }}
+          >
+            Cleanup Orphaned
+          </Button>
+        </div>
       </div>
 
       {messages.length === 0 ? (

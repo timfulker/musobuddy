@@ -58,18 +58,20 @@ export function SimpleCalendarImport({ onImportComplete, onClose }: SimpleCalend
       console.log('📅 [SIMPLE CALENDAR IMPORT] Success:', result);
       setResult(result);
 
-      // Invalidate bookings cache to show new imports immediately
+      // Always notify parent of completion
+      onImportComplete?.(result);
+
+      // Invalidate bookings cache if any imports occurred
       if (result.success && result.imported > 0) {
         console.log('🔄 [SIMPLE CALENDAR IMPORT] Invalidating bookings cache');
         await queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
         await queryClient.invalidateQueries({ queryKey: ['notifications'] });
         // Force immediate refetch to update UI
         await queryClient.refetchQueries({ queryKey: ['/api/bookings'] });
+      }
 
-        // Notify parent and auto-close after successful import
-        onImportComplete?.(result);
-
-        // Auto-close modal after a short delay to show success message
+      // Auto-close modal after showing result (whether imported or skipped)
+      if (result.success) {
         setTimeout(() => {
           onClose?.();
         }, 2000);
