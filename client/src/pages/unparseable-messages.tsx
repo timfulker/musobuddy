@@ -51,7 +51,9 @@ export default function UnparseableMessages() {
     queryKey: ['/api/unparseable-messages'],
     queryFn: async () => {
       const response = await apiRequest('/api/unparseable-messages');
-      return await response.json();
+      const data = await response.json();
+      // Handle both old format (array) and new format (object with messages property)
+      return data.messages || data;
     }
   });
 
