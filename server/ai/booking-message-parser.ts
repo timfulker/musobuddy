@@ -177,6 +177,12 @@ export async function parseBookingMessage(
     const cleanedMessageText = cleanForwardedEmail(messageText);
     console.log('🧹 Cleaned message length:', cleanedMessageText?.length || 0);
     console.log('🧹 Cleaned first 200 chars:', cleanedMessageText?.substring(0, 200) || 'No content');
+
+    // DEBUG: Log the full cleaned content for debugging
+    console.log('🚨 [DEBUG] FULL CLEANED EMAIL CONTENT:');
+    console.log('==================================================');
+    console.log(cleanedMessageText);
+    console.log('==================================================');
     
     // Get current date for context
     const today = new Date();
@@ -542,9 +548,16 @@ JSON:`;
     }
 
     // Check if this is an Encore booking (now we have applyNowLink)
-    const isEncoreBooking = cleanedData.applyNowLink || 
+    const isEncoreBooking = cleanedData.applyNowLink ||
                            messageText.toLowerCase().includes('encore musicians') ||
                            messageText.includes('notification@encoremusicians.com');
+
+    // FORCE ENCORE CLIENT INFO if this is an Encore booking
+    if (isEncoreBooking) {
+      console.log('🎵 ENCORE BOOKING DETECTED - Forcing Encore client information');
+      cleanedData.clientName = 'Encore Musicians';
+      cleanedData.clientEmail = 'bookings@encoremusicians.com';
+    }
     
     // For Encore bookings, extract area from title instead of enriching venue
     if (isEncoreBooking && subject) {
