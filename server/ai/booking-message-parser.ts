@@ -109,6 +109,60 @@ interface ParsedBookingData {
 }
 
 
+// Direct Encore data extraction (fallback when AI fails)
+function extractEncoreDataDirectly(messageText: string): Partial<ParsedBookingData> | null {
+  console.log('🎵 Attempting direct Encore data extraction...');
+
+  const result: Partial<ParsedBookingData> = {};
+
+  // Extract date from "Thursday 23 Oct 2025" format
+  const dateMatch = messageText.match(/(\w+day)\s+(\d{1,2})\s+(\w{3})\s+(\d{4})/i);
+  if (dateMatch) {
+    const [, , day, month, year] = dateMatch;
+    const monthMap: {[key: string]: string} = {
+      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+      'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    };
+    const monthNum = monthMap[month.toLowerCase()];
+    if (monthNum) {
+      result.eventDate = `${year}-${monthNum}-${day.padStart(2, '0')}`;
+      console.log('🎵 Extracted date:', result.eventDate);
+    }
+  }
+
+  // Extract fee from "£260 - £450" format
+  const feeMatch = messageText.match(/£(\d+)\s*-\s*£(\d+)/);
+  if (feeMatch) {
+    result.fee = parseInt(feeMatch[1]); // Use lower bound
+    console.log('🎵 Extracted fee:', result.fee);
+  }
+
+  // Extract location from context
+  const locationMatch = messageText.match(/in\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)*)/);
+  if (locationMatch) {
+    result.venueAddress = locationMatch[1];
+    console.log('🎵 Extracted location:', result.venueAddress);
+  }
+
+  // Extract time from "4.00pm for 2 hours" format
+  const timeMatch = messageText.match(/(\d{1,2})\.(\d{2})(am|pm)\s+for\s+(\d+)\s+hours?/i);
+  if (timeMatch) {
+    let [, hours, minutes, ampm, duration] = timeMatch;
+    let hour24 = parseInt(hours);
+    if (ampm.toLowerCase() === 'pm' && hour24 !== 12) hour24 += 12;
+    if (ampm.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
+
+    result.eventTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+
+    const endHour = hour24 + parseInt(duration);
+    result.eventEndTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+
+    console.log('🎵 Extracted time:', result.eventTime, 'to', result.eventEndTime);
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 // Clean forwarded email headers that confuse AI
 function cleanForwardedEmail(messageText: string): string {
   if (!messageText) return messageText;
@@ -557,6 +611,18 @@ JSON:`;
       console.log('🎵 ENCORE BOOKING DETECTED - Forcing Encore client information');
       cleanedData.clientName = 'Encore Musicians';
       cleanedData.clientEmail = 'bookings@encoremusicians.com';
+
+      // Try to extract Encore data directly if AI failed
+      const encoreData = extractEncoreDataDirectly(messageText);
+      if (encoreData) {
+        console.log('🎵 ENCORE DIRECT EXTRACTION succeeded:', encoreData);
+        if (encoreData.eventDate) cleanedData.eventDate = encoreData.eventDate;
+        if (encoreData.fee) cleanedData.fee = encoreData.fee;
+        if (encoreData.venue) cleanedData.venue = encoreData.venue;
+        if (encoreData.venueAddress) cleanedData.venueAddress = encoreData.venueAddress;
+        if (encoreData.eventTime) cleanedData.eventTime = encoreData.eventTime;
+        if (encoreData.eventEndTime) cleanedData.eventEndTime = encoreData.eventEndTime;
+      }
     }
     
     // For Encore bookings, extract area from title instead of enriching venue
