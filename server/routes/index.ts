@@ -32,6 +32,7 @@ import { setupBookingCollaborationRoutes } from "./booking-collaboration-routes"
 import blockedDatesRoutes from "./blocked-dates-routes";
 import documentRoutes from "./document-routes";
 import { registerSupportChatRoutes } from "./support-chat-routes";
+import environmentCheckRouter from "./environment-check";
 // AI token routes removed - unlimited AI usage for all users
 
 import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
@@ -41,6 +42,10 @@ import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
 export async function registerRoutes(app: Express) {
   console.log('🔄 [CENTRAL-ROUTER] Starting route registration...');
   
+  // Environment check route for debugging
+  app.use(environmentCheckRouter);
+  console.log('✅ [CENTRAL-ROUTER] Environment check route registered at /api/env-check');
+
   // CRITICAL FIX: Register authentication routes FIRST
   console.log('🔐 [CENTRAL-ROUTER] PRIORITY: Registering authentication routes first...');
   try {
