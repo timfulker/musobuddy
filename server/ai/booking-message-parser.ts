@@ -120,18 +120,27 @@ function cleanForwardedEmail(messageText: string): string {
     /Begin forwarded message:[\s\S]*?(?=Subject:|$)/gi,
     /----- Original Message -----[\s\S]*?(?=Subject:|$)/gi,
 
-    // Remove forwarding metadata lines
-    /^From: .+$/gm,
+    // Remove forwarding metadata lines (more aggressive)
+    /^From: .+?@.+$/gm,  // Any email address lines
     /^Sent: .+$/gm,
     /^Date: .+$/gm,
-    /^To: .+$/gm,
+    /^To: .+?@.+$/gm,    // Any email address lines
     /^Cc: .+$/gm,
     /^Subject: .+$/gm,
+    /^Reply-To: .+$/gm,
 
-    // Remove "On [date], [person] wrote:" patterns
+    // Remove forwarding timestamps and signatures
     /^On .+? wrote:$/gm,
     /^Le .+? a écrit :$/gm, // French
     /^Am .+? schrieb:$/gm,  // German
+
+    // Remove common forwarding patterns
+    /Forwarded by .+$/gm,
+    /^-- Forwarded by .+$/gm,
+    /^Sent from my .+$/gm,  // Mobile signatures
+
+    // Remove lines that look like email headers
+    /^[A-Za-z-]+: .+@.+$/gm,  // Header: email@domain.com format
   ];
 
   let cleaned = messageText;
@@ -175,6 +184,19 @@ export async function parseBookingMessage(
     const currentYear = today.getFullYear();
     
     const systemPrompt = `You're extracting booking details from musician emails. Today is ${currentDate}.
+
+ENCORE MUSICIANS EMAIL SPECIFIC RULES:
+If this is an Encore Musicians email (contains "encoremusicians.com" or Encore branding):
+- IGNORE any "From:" lines with email addresses - these are forwarding headers
+- The title format is: "[Instrument] needed for [event type] in [location]"
+- Date format: "Thursday 23 Oct 2025" appears as large text
+- Fee format: "£260 - £450" appears prominently
+- Time format: "4.00pm for 2 hours"
+- Location format: "Oxford, Oxfordshire (OX1)"
+- For client name: Use "Encore Musicians" since this is an agency booking
+- For client email: Use "bookings@encoremusicians.com" as default
+
+CRITICAL: Never use forwarding email addresses (like gmail.com) as the client contact.
 
 When you see dates without a year, always assume they mean the NEXT occurrence of that date:
 - "November 24th" → the next November 24th from today
