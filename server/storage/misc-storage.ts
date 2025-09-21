@@ -207,12 +207,31 @@ export class MiscStorage {
   }
 
   async getUnparseableMessages(userId: string) {
-    return await db.select().from(unparseableMessages)
-      .where(and(
-        eq(unparseableMessages.userId, userId),
-        ne(unparseableMessages.status, 'converted')  // Filter out converted messages
-      ))
-      .orderBy(desc(unparseableMessages.createdAt));
+    console.log('🔍 [MISC-STORAGE] getUnparseableMessages called for user:', userId);
+    console.log('🔍 [MISC-STORAGE] Database connection info:', {
+      NODE_ENV: process.env.NODE_ENV,
+      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+      dbConfigured: !!db
+    });
+
+    try {
+      const result = await db.select().from(unparseableMessages)
+        .where(and(
+          eq(unparseableMessages.userId, userId),
+          ne(unparseableMessages.status, 'converted')  // Filter out converted messages
+        ))
+        .orderBy(desc(unparseableMessages.createdAt));
+
+      console.log('🔍 [MISC-STORAGE] Query executed, found', result?.length || 0, 'messages');
+      if (result && result.length > 0) {
+        console.log('🔍 [MISC-STORAGE] Sample message IDs:', result.slice(0, 3).map(m => m.id));
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ [MISC-STORAGE] Database query failed:', error);
+      throw error;
+    }
   }
 
   async getUnparseableMessage(id: number) {

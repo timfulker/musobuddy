@@ -10,13 +10,14 @@ export function registerUnparseableRoutes(app: Express) {
   app.get('/api/unparseable-messages', authenticate, async (req, res) => {
     try {
       const userId = req.user?.id;
-      
+
       console.log('🔍 [UNPARSEABLE-API] API called for user:', userId);
-      
+
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      // Add database environment debugging
       const messages = await storage.getUnparseableMessages(userId);
       
       console.log('🔍 [UNPARSEABLE-API] Retrieved', messages?.length || 0, 'messages');
@@ -27,8 +28,18 @@ export function registerUnparseableRoutes(app: Express) {
           from: messages[0].fromContact
         });
       }
-      
-      res.json(messages);
+
+      // Add debug info to help identify database source
+      res.json({
+        messages,
+        debug: {
+          count: messages?.length || 0,
+          NODE_ENV: process.env.NODE_ENV,
+          REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+          firstMessageId: messages?.[0]?.id || null,
+          timestamp: new Date().toISOString()
+        }
+      });
 
     } catch (error) {
       console.error('❌ Error fetching unparseable messages:', error);
