@@ -203,21 +203,29 @@ export class SupabaseBookingStorage {
     const projectId = supabaseUrl?.split('.')[0].split('//')[1];
     console.log(`🗑️ [STORAGE] Deleting from database: ${projectId}, Booking: ${id}, User: ${userId}`);
 
-    // First, handle foreign key dependencies
-    try {
-      // Clear any unparseable_messages that reference this booking
-      const { error: clearError } = await supabase
-        .from('unparseable_messages')
-        .update({ converted_to_booking_id: null })
-        .eq('converted_to_booking_id', id);
+    // First, handle ALL foreign key dependencies
+    const dependencyTables = [
+      { table: 'unparseable_messages', column: 'converted_to_booking_id' },
+      { table: 'contracts', column: 'enquiry_id' },
+      // Add more as we discover them
+    ];
 
-      if (clearError) {
-        console.warn('⚠️ Warning: Could not clear unparseable_messages references:', clearError);
-        // Continue anyway - the constraint might not exist in all environments
+    for (const dep of dependencyTables) {
+      try {
+        const { error: clearError } = await supabase
+          .from(dep.table)
+          .update({ [dep.column]: null })
+          .eq(dep.column, id);
+
+        if (clearError) {
+          console.warn(`⚠️ Warning: Could not clear ${dep.table}.${dep.column} references:`, clearError);
+        } else {
+          console.log(`🔗 Cleared ${dep.table}.${dep.column} references for booking ${id}`);
+        }
+      } catch (clearErr) {
+        console.warn(`⚠️ Warning: Error clearing ${dep.table} dependencies:`, clearErr);
+        // Continue anyway - table might not exist in all environments
       }
-    } catch (clearErr) {
-      console.warn('⚠️ Warning: Error clearing dependencies:', clearErr);
-      // Continue anyway
     }
 
     // Now delete the booking
