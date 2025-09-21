@@ -152,7 +152,9 @@ export function useAuth() {
             uid: session.user.id,
             email: session.user.email || '',
             emailVerified: !!session.user.email_confirmed_at,
-            displayName: session.user.user_metadata?.full_name
+            displayName: session.user.user_metadata?.full_name,
+            // Default to true to prevent payment redirect on network errors
+            hasPaid: true
           };
 
           setAuthState({
@@ -169,7 +171,9 @@ export function useAuth() {
         const compatibleUser: CompatibleUser = {
           uid: session.user.id,
           email: session.user.email || '',
-          emailVerified: !!session.user.email_confirmed_at
+          emailVerified: !!session.user.email_confirmed_at,
+          // Default to true to prevent payment redirect on network errors
+          hasPaid: true
         };
 
         setAuthState({
