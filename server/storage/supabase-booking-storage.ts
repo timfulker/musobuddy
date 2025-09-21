@@ -86,10 +86,17 @@ export class SupabaseBookingStorage {
       supabaseData.client_address = bookingData.clientAddress.trim();
     }
 
+    // Add apply_now_link for Encore bookings
+    if (bookingData.applyNowLink && bookingData.applyNowLink.trim() !== '') {
+      supabaseData.apply_now_link = bookingData.applyNowLink.trim();
+      console.log('🎵 Adding apply_now_link to Supabase data:', bookingData.applyNowLink);
+    }
+
     console.log('📝 Creating booking in Supabase:', {
       client: supabaseData.client_name,
       venue: supabaseData.venue,
-      date: supabaseData.event_date
+      date: supabaseData.event_date,
+      applyNowLink: supabaseData.apply_now_link || 'None'
     });
 
     const { data, error } = await supabase
