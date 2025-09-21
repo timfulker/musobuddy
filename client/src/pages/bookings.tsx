@@ -1411,24 +1411,21 @@ export default function UnifiedBookings() {
   const formatReceivedTime = (dateString: string) => {
     if (!dateString) return '';
 
-    // Parse the timestamp - JavaScript Date constructor automatically handles UTC conversion
-    const date = new Date(dateString);
-    const now = new Date();
+    // Ensure we're parsing the timestamp as UTC by ensuring it has a 'Z' suffix
+    // Server stores timestamps as UTC ISO strings, but sometimes without 'Z'
+    let utcDateString = dateString;
+    if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+      utcDateString = dateString + 'Z';
+    }
 
-    // Debug logging to understand the timezone issue
-    console.log('🕐 [TIMEZONE DEBUG] Input dateString:', dateString);
-    console.log('🕐 [TIMEZONE DEBUG] Parsed date (local):', date.toString());
-    console.log('🕐 [TIMEZONE DEBUG] Parsed date (UTC):', date.toUTCString());
-    console.log('🕐 [TIMEZONE DEBUG] Current time (local):', now.toString());
-    console.log('🕐 [TIMEZONE DEBUG] Timezone offset (minutes):', date.getTimezoneOffset());
+    // Parse the UTC timestamp - this will automatically convert to local time
+    const date = new Date(utcDateString);
+    const now = new Date();
 
     // Calculate difference in milliseconds, then convert to minutes/hours
     const diffMs = now.getTime() - date.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-    console.log('🕐 [TIMEZONE DEBUG] Diff in minutes:', diffMinutes);
-    console.log('🕐 [TIMEZONE DEBUG] Diff in hours:', diffHours);
 
     // Use relative time formatting for recent times
     if (diffMinutes < 1) {
