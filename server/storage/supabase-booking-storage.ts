@@ -203,6 +203,24 @@ export class SupabaseBookingStorage {
     const projectId = supabaseUrl?.split('.')[0].split('//')[1];
     console.log(`🗑️ [STORAGE] Deleting from database: ${projectId}, Booking: ${id}, User: ${userId}`);
 
+    // First, handle foreign key dependencies
+    try {
+      // Clear any unparseable_messages that reference this booking
+      const { error: clearError } = await supabase
+        .from('unparseable_messages')
+        .update({ converted_to_booking_id: null })
+        .eq('converted_to_booking_id', id);
+
+      if (clearError) {
+        console.warn('⚠️ Warning: Could not clear unparseable_messages references:', clearError);
+        // Continue anyway - the constraint might not exist in all environments
+      }
+    } catch (clearErr) {
+      console.warn('⚠️ Warning: Error clearing dependencies:', clearErr);
+      // Continue anyway
+    }
+
+    // Now delete the booking
     const { error } = await supabase
       .from('bookings')
       .delete()
