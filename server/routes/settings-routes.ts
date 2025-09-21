@@ -453,8 +453,23 @@ export async function registerSettingsRoutes(app: Express) {
       
       // Handle emailPrefix separately - it's stored in the users table, not settings
       if (processedBody.emailPrefix !== undefined) {
-        console.log(`📧 Updating email prefix to: ${processedBody.emailPrefix}`);
-        await storage.updateUser(userId, { emailPrefix: processedBody.emailPrefix });
+        const newPrefix = processedBody.emailPrefix;
+        console.log(`📧 Checking email prefix availability: ${newPrefix}`);
+
+        // Check if the prefix is already taken by another user
+        if (newPrefix) {
+          const existingUser = await safeDbCall(() => storage.getUserByEmailPrefix(newPrefix), null, 'getUserByEmailPrefix');
+          if (existingUser && existingUser.id !== userId) {
+            console.error(`❌ Email prefix "${newPrefix}" is already taken by user ${existingUser.id}`);
+            return res.status(400).json({
+              error: 'This email prefix is already taken. Please choose a different one.',
+              field: 'emailPrefix'
+            });
+          }
+        }
+
+        console.log(`📧 Updating email prefix to: ${newPrefix}`);
+        await storage.updateUser(userId, { emailPrefix: newPrefix });
         // Remove from processedBody so it doesn't try to save to settings table
         delete processedBody.emailPrefix;
       }

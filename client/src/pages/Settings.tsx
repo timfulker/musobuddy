@@ -3584,11 +3584,37 @@ export default function Settings() {
       setInitialData(data);
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
-    onError: (error) => {
+    onError: async (error: any) => {
       console.error('❌ Error saving settings:', error);
+
+      // Try to parse the error response
+      let errorMessage = "Failed to save settings. Please try again.";
+      let errorField = null;
+
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+            errorField = errorData.field;
+          }
+        } catch (e) {
+          // Failed to parse error response
+        }
+      }
+
+      // Special handling for email prefix errors
+      if (errorField === 'emailPrefix') {
+        // Clear the email prefix field to let user try again
+        form.setError('emailPrefix', {
+          type: 'manual',
+          message: errorMessage
+        });
+      }
+
       toast({
         title: "Error",
-        description: "Failed to save settings. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
