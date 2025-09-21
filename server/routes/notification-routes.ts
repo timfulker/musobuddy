@@ -2,12 +2,29 @@ import type { Express, Request, Response } from "express";
 import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 import { storage } from "../core/storage";
 import { safeDbCall, developmentFallbacks } from '../utils/development-helpers';
+import rateLimit from 'express-rate-limit';
+
+// Rate limiting for notification endpoints to prevent request storms
+const notificationRateLimit = rateLimit({
+  windowMs: 10 * 1000, // 10 seconds
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: {
+    error: 'Too many notification requests, please try again later.',
+    retryAfter: 10
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting in development for easier debugging
+    return process.env.NODE_ENV !== 'production';
+  }
+});
 
 export function registerNotificationRoutes(app: Express) {
   console.log('🔔 Setting up notification routes...');
 
   // Get notification counts for badges
-  app.get('/api/notifications/counts', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/notifications/counts', notificationRateLimit, authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
       if (!userId) {

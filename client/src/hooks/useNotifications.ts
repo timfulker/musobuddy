@@ -29,15 +29,17 @@ export function useNotifications() {
   const { data: notificationData } = useQuery({
     queryKey: ['/api/notifications/counts'],
     enabled: isAuthenticated, // Only run when authenticated
-    refetchInterval: isAuthenticated ? 30000 : false, // Only poll when authenticated
-    refetchIntervalInBackground: true,
-    staleTime: 25000,
+    refetchInterval: isAuthenticated ? 15000 : false, // Only poll when authenticated, reduced interval
+    refetchIntervalInBackground: false, // Disable background polling to prevent storms
+    refetchOnWindowFocus: false, // Disable focus polling to prevent storms
+    staleTime: 10000, // Shorter stale time
     retry: (failureCount, error: any) => {
       // Don't retry on auth errors to prevent infinite loops
-      if (error?.message?.includes('401')) {
+      if (error?.message === 'UNAUTHORIZED' || error?.message?.includes('401') || error?.message?.includes('expired')) {
+        console.log('🚫 [NOTIFICATIONS] Auth error detected, stopping retries:', error?.message);
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 1; // Reduced retry attempts
     }
   });
 

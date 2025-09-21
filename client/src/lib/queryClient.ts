@@ -1,6 +1,9 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { supabase } from '@/lib/supabase';
 
+// Forward declare queryClient to avoid circular dependency
+let queryClient: QueryClient;
+
 // Token cache with 55 minute expiry (Supabase tokens expire after 1 hour)
 let tokenCache: { token: string; expiry: number } | null = null;
 
@@ -65,7 +68,12 @@ async function throwIfResNotOk(res: Response) {
     
     // Handle authentication errors with user-friendly messages
     if (res.status === 401) {
-      throw new Error("Your session has expired. Please log in again to continue.");
+      // Sign out and stop all queries to prevent infinite loops
+      console.log('🚪 [AUTH] 401 detected, signing out and cancelling queries');
+      await supabase.auth.signOut();
+      queryClient.cancelQueries();
+      tokenCache = null;
+      throw new Error("UNAUTHORIZED");
     }
     
     throw new Error(`${res.status}: ${text}`);
@@ -120,7 +128,12 @@ export async function apiRequest(
       });
       
       if (retryRes.status === 401) {
-        throw new Error("Your session has expired. Please log in again to continue.");
+        // Sign out and stop all queries to prevent infinite loops
+        console.log('🚪 [AUTH] 401 after retry, signing out and cancelling queries');
+        await supabase.auth.signOut();
+        queryClient.cancelQueries();
+        tokenCache = null;
+        throw new Error("UNAUTHORIZED");
       }
       
       await throwIfResNotOk(retryRes);
@@ -130,7 +143,12 @@ export async function apiRequest(
 
   // Check for authentication errors and provide user-friendly messages
   if (res.status === 401) {
-    throw new Error("Your session has expired. Please log in again to continue.");
+    // Sign out and stop all queries to prevent infinite loops
+    console.log('🚪 [AUTH] 401 in apiRequest, signing out and cancelling queries');
+    await supabase.auth.signOut();
+    queryClient.cancelQueries();
+    tokenCache = null;
+    throw new Error("UNAUTHORIZED");
   }
 
   await throwIfResNotOk(res);
@@ -167,8 +185,15 @@ export const getQueryFn: <T>(options: {
       }
     }
     
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      if (unauthorizedBehavior === "returnNull") {
+        // Sign out and stop all queries to prevent infinite loops
+        console.log('🚪 [AUTH] 401 in queryFn, signing out and cancelling queries');
+        await supabase.auth.signOut();
+        queryClient.cancelQueries();
+        tokenCache = null;
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);
@@ -176,7 +201,7 @@ export const getQueryFn: <T>(options: {
     return data;
   };
 
-export const queryClient = new QueryClient({
+queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
@@ -190,6 +215,8 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+export { queryClient };
 
 // Make queryClient available globally for debugging
 if (typeof window !== 'undefined') {
