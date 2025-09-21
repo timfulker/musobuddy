@@ -656,11 +656,14 @@ function extractEncoreApplyLink(messageText: string): string | null {
     // Standard AWS tracking patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
-    
+
+    // Gmail angle bracket URLs (Gmail often wraps URLs in < >)
+    /<(https:\/\/[^>]+(?:encoremusicians\.com|awstrack\.me)[^>]*)>/gi,
+
     // Alternative encoding patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https%3A%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
-    
+
     // Click tracking services
     /https:\/\/click\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.clicks\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi
@@ -670,9 +673,10 @@ function extractEncoreApplyLink(messageText: string): string | null {
     const pattern = trackingPatterns[i];
     const match = messageText.match(pattern);
     if (match) {
-      const trackingUrl = match[0];
+      // Handle capture groups (for Gmail angle bracket URLs)
+      const trackingUrl = match[1] || match[0];
       console.log(`✅ [ENCORE EXTRACTION] Tracking pattern ${i + 1} found URL:`, trackingUrl);
-      
+
       const decodedUrl = decodeTrackingUrl(trackingUrl);
       console.log(`🎵 [ENCORE EXTRACTION] Decoded tracking URL:`, decodedUrl);
       return decodedUrl;
