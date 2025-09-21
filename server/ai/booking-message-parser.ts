@@ -697,6 +697,44 @@ function extractEncoreApplyLink(messageText: string): string | null {
     // Also catch URLs that might be in plain text without https
     /(?:www\.)?encoremusicians\.com\/jobs\/[^\s<>"']+/gi
   ];
+
+  // Pattern 2.5: Quoted-printable encoded URLs (for email forwarding)
+  console.log('🎵 [ENCORE EXTRACTION] Testing quoted-printable encoded URL patterns...');
+  const quotedPrintablePatterns = [
+    // Match quoted-printable encoded encoremusicians.com URLs
+    /https:\/\/encoremusicians\.com\/jobs\/[A-Z0-9]+\?utm_source=3D[^=\s]*=?[^=\s]*&utm_medium=3D[^=\s]*=?[^=\s]*&utm_campaign=3D[^=\s]*=?[^=\s]*&utm_content=3D[^=\s]*=?[^=\s]*/gi,
+    // More flexible pattern for any quoted-printable URL with encoremusicians.com
+    /https:\/\/encoremusicians\.com\/[^=\s]*(?:=3D[^=\s]*|=[0-9A-F]{2}|[^=\s])*(?:=20)?/gi,
+    // Pattern to catch job URLs with quoted-printable encoding
+    /encoremusicians\.com\/jobs\/[A-Z0-9]+\?[^=\s]*(?:=3D[^=\s]*)*(?:=20)*/gi
+  ];
+
+  for (let i = 0; i < quotedPrintablePatterns.length; i++) {
+    const pattern = quotedPrintablePatterns[i];
+    console.log(`🎵 [ENCORE EXTRACTION] Testing quoted-printable pattern ${i + 1}:`, pattern.toString().substring(0, 100) + '...');
+
+    const match = messageText.match(pattern);
+    if (match) {
+      let encodedUrl = match[0];
+      console.log(`✅ [ENCORE EXTRACTION] Quoted-printable pattern ${i + 1} found encoded URL:`, encodedUrl);
+
+      // Decode quoted-printable encoding
+      let decodedUrl = encodedUrl
+        .replace(/=3D/g, '=')           // =3D -> =
+        .replace(/=20/g, ' ')          // =20 -> space
+        .replace(/=\r?\n/g, '')        // remove soft line breaks
+        .trim()                        // remove trailing spaces
+        .replace(/\s+/g, '');          // remove any remaining spaces
+
+      // Ensure it starts with https://
+      if (!decodedUrl.startsWith('https://')) {
+        decodedUrl = 'https://' + decodedUrl;
+      }
+
+      console.log(`🎵 [ENCORE EXTRACTION] Decoded URL:`, decodedUrl);
+      return decodedUrl;
+    }
+  }
   
   for (let i = 0; i < directPatterns.length; i++) {
     const pattern = directPatterns[i];
@@ -713,11 +751,15 @@ function extractEncoreApplyLink(messageText: string): string | null {
     // Standard AWS tracking patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
-    
+
     // Alternative encoding patterns
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https%3A%2F%2Fencoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
-    
+
+    // Quoted-printable encoded AWS tracking URLs
+    /https:\/\/[^\/\s]*\.r\.[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https:%2F%2Fencoremusicians\.com\/jobs\/[A-Z0-9]+\?[^=\s]*(?:=3D[^=\s]*)*(?:=20)*/gi,
+    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https[^\/\s]*encoremusicians\.com\/jobs\/[A-Z0-9]+[^=\s]*(?:=3D[^=\s]*)*(?:=20)*/gi,
+
     // Click tracking services
     /https:\/\/click\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi,
     /https:\/\/[^\/\s]*\.clicks\.[^\/\s]*\/[^\/\s]*encoremusicians\.com[^\s<>"']+/gi
@@ -816,20 +858,33 @@ function extractEncoreApplyLink(messageText: string): string | null {
 function decodeTrackingUrl(url: string): string {
   console.log('🔗 [URL DECODE] Input URL:', url);
 
+  // First, decode quoted-printable encoding if present
+  let decodedUrl = url;
+  if (url.includes('=3D') || url.includes('=20')) {
+    console.log('🔗 [URL DECODE] Quoted-printable encoding detected, decoding...');
+    decodedUrl = url
+      .replace(/=3D/g, '=')           // =3D -> =
+      .replace(/=20/g, ' ')          // =20 -> space
+      .replace(/=\r?\n/g, '')        // remove soft line breaks
+      .trim()                        // remove trailing spaces
+      .replace(/\s+/g, '');          // remove any remaining spaces
+    console.log('🔗 [URL DECODE] After quoted-printable decoding:', decodedUrl);
+  }
+
   // Handle direct Encore URLs
-  if (url.includes('encoremusicians.com') && !url.includes('awstrack.me') && !url.includes('click.')) {
+  if (decodedUrl.includes('encoremusicians.com') && !decodedUrl.includes('awstrack.me') && !decodedUrl.includes('click.')) {
     console.log('🔗 [URL DECODE] Direct Encore URL, returning as-is');
-    return url;
+    return decodedUrl;
   }
 
   // Handle AWS tracking URLs
-  if (url.includes('awstrack.me')) {
+  if (decodedUrl.includes('awstrack.me')) {
     console.log('🔗 [URL DECODE] AWS tracking URL detected');
 
     // First try: Look for the pattern where the actual URL starts with https%3A%2F%2F or https:%2F%2F
     // and ends with ApplyNow or similar parameter
     const embeddedUrlPattern = /https[:%](?:3A|%3A)?(?:%2F%2F|%2F%2F)encoremusicians[^\/]*(?:%2F|\/)[^\/\s]*ApplyNow/gi;
-    const embeddedMatch = url.match(embeddedUrlPattern);
+    const embeddedMatch = decodedUrl.match(embeddedUrlPattern);
     if (embeddedMatch) {
       console.log('🔗 [URL DECODE] Found embedded URL pattern:', embeddedMatch[0]);
       // Decode the URL-encoded string
@@ -851,7 +906,7 @@ function decodeTrackingUrl(url: string): string {
     ];
 
     for (const pattern of decodingPatterns) {
-      const match = url.match(pattern);
+      const match = decodedUrl.match(pattern);
       if (match) {
         let decoded = decodeURIComponent(match[0]);
         if (!decoded.startsWith('http')) {
@@ -867,11 +922,11 @@ function decodeTrackingUrl(url: string): string {
   }
   
   // Handle other click tracking services
-  if (url.includes('click.') || url.includes('.clicks.')) {
+  if (decodedUrl.includes('click.') || decodedUrl.includes('.clicks.')) {
     console.log('🔗 [URL DECODE] Click tracking service detected');
-    
+
     // Try to extract Encore URL from click tracker
-    const encoreMatch = url.match(/encoremusicians\.com[^&\s]*/);
+    const encoreMatch = decodedUrl.match(/encoremusicians\.com[^&\s]*/);
     if (encoreMatch) {
       const decoded = 'https://' + encoreMatch[0];
       console.log('🔗 [URL DECODE] Extracted from click tracker:', decoded);
