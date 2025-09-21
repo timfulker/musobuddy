@@ -109,6 +109,46 @@ interface ParsedBookingData {
 }
 
 
+// Clean forwarded email headers that confuse AI
+function cleanForwardedEmail(messageText: string): string {
+  if (!messageText) return messageText;
+
+  // Patterns to identify and remove forwarding headers
+  const forwardingPatterns = [
+    // Gmail/Outlook forwarding headers
+    /---------- Forwarded message ---------[\s\S]*?(?=Subject:|$)/gi,
+    /Begin forwarded message:[\s\S]*?(?=Subject:|$)/gi,
+    /----- Original Message -----[\s\S]*?(?=Subject:|$)/gi,
+
+    // Remove forwarding metadata lines
+    /^From: .+$/gm,
+    /^Sent: .+$/gm,
+    /^Date: .+$/gm,
+    /^To: .+$/gm,
+    /^Cc: .+$/gm,
+    /^Subject: .+$/gm,
+
+    // Remove "On [date], [person] wrote:" patterns
+    /^On .+? wrote:$/gm,
+    /^Le .+? a écrit :$/gm, // French
+    /^Am .+? schrieb:$/gm,  // German
+  ];
+
+  let cleaned = messageText;
+
+  for (const pattern of forwardingPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+
+  // Remove excessive whitespace and normalize
+  cleaned = cleaned
+    .replace(/\n\s*\n\s*\n/g, '\n\n') // Multiple newlines to double
+    .replace(/^\s+/gm, '') // Leading whitespace on lines
+    .trim();
+
+  return cleaned;
+}
+
 export async function parseBookingMessage(
   messageText: string,
   clientContact?: string,
@@ -123,6 +163,11 @@ export async function parseBookingMessage(
     console.log('🤖 GPT-5 mini: Subject:', subject || 'No subject');
     console.log('🤖 GPT-5 mini: Client Contact:', clientContact || 'None');
     console.log('🤖 GPT-5 mini: Client Address:', clientAddress || 'None');
+
+    // Clean forwarded email headers before AI processing
+    const cleanedMessageText = cleanForwardedEmail(messageText);
+    console.log('🧹 Cleaned message length:', cleanedMessageText?.length || 0);
+    console.log('🧹 Cleaned first 200 chars:', cleanedMessageText?.substring(0, 200) || 'No content');
     
     // Get current date for context
     const today = new Date();
@@ -133,7 +178,7 @@ export async function parseBookingMessage(
 
 When you see dates without a year, always assume they mean the NEXT occurrence of that date:
 - "November 24th" → the next November 24th from today
-- "June 16th" → the next June 16th from today  
+- "June 16th" → the next June 16th from today
 - "We're getting married on March 5th" → the next March 5th from today
 
 This means if today is August 2025:
@@ -186,7 +231,7 @@ ENCORE APPLY NOW LINK EXTRACTION:
 - Example of COMPLETE URL: "https://email.r.email.encoremusicians.com/mk/cl/f/sh/1t6Af4OhShSDFMvxfqf2K0TFU1/AbCdEfGh12345"`;
 
     const userPrompt = `FROM: ${clientContact || 'Unknown'}
-EMAIL: ${messageText}
+EMAIL: ${cleanedMessageText}
 JSON:`;
 
     console.log('🤖 GPT-5 mini: Current date context provided:', currentDate);
@@ -435,7 +480,7 @@ JSON:`;
       fee: cleanNumber(parsed.fee || parsed.budget || parsed.payment),
       travelExpense: cleanNumber(parsed.travelExpense || parsed.travel || parsed.travelCost),
       deposit: cleanNumber(parsed.deposit),
-      message: messageText,
+      message: messageText, // Keep original message for notes
       specialRequirements: cleanString(parsed.specialRequirements || parsed.requirements || parsed.notes),
       confidence: Math.min(1.0, Math.max(0.1, parsed.confidence || 0.5))
     };
@@ -466,7 +511,7 @@ JSON:`;
         cleanedData.applyNowLink = aiExtractedLink;
       }
     } else {
-      // Fallback to regex extraction if AI didn't find it
+      // Fallback to regex extraction if AI didn't find it (use original message for URL extraction)
       const applyNowLink = extractEncoreApplyLink(messageText);
       if (applyNowLink) {
         cleanedData.applyNowLink = applyNowLink;
