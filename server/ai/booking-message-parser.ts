@@ -484,6 +484,19 @@ JSON:`;
       console.log('🎵 ENCORE BOOKING DETECTED - Setting client to Encore Musicians');
       cleanedData.clientName = 'Encore Musicians';
       cleanedData.clientEmail = 'bookings@encoremusicians.com';
+
+      // Clear corporate address if AI incorrectly extracted it
+      if (cleanedData.venueAddress && cleanedData.venueAddress.includes('275 New North Road')) {
+        console.log('🎵 Clearing incorrect Encore corporate address');
+        cleanedData.venueAddress = '';
+      }
+
+      // Fix venue field mapping - if venue is empty but venueAddress has the area, move it
+      if (!cleanedData.venue && cleanedData.venueAddress && !cleanedData.venueAddress.includes('275 New North Road')) {
+        console.log(`🎵 Moving area from venueAddress to venue: ${cleanedData.venueAddress}`);
+        cleanedData.venue = cleanedData.venueAddress;
+        cleanedData.venueAddress = '';
+      }
     }
 
     // For Encore bookings, extract area from title instead of enriching venue
@@ -493,10 +506,10 @@ JSON:`;
       
       if (area) {
         console.log(`🎵 Encore booking - using area from title: "${area}"`);
-        // For Encore, we don't know the actual venue, just the area - leave venue blank to avoid triggering Google Maps API
-        cleanedData.venue = '';  // Leave blank to prevent unnecessary Google Maps API calls
-        cleanedData.venueAddress = area;  // Use the area from title
-        console.log(`🎵 Set Encore venue blank, area: ${area}`);
+        // For Encore, put the area in venue field (this is what shows on the booking card)
+        cleanedData.venue = area;  // Area goes in venue field for display
+        cleanedData.venueAddress = '';  // Clear address field
+        console.log(`🎵 Set Encore venue: ${area}, cleared address`);
       }
     } 
     // Only enrich venue data for non-Encore bookings
