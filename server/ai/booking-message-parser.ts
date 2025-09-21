@@ -611,6 +611,14 @@ JSON:`;
       message: `${messageText.substring(0, 100)}...`
     });
 
+    // 🚨 VERY IMPORTANT DEBUG: Check if applyNowLink was extracted
+    if (cleanedData.applyNowLink) {
+      console.log('✅ APPLY NOW LINK FOUND:', cleanedData.applyNowLink);
+    } else {
+      console.log('❌ NO APPLY NOW LINK FOUND - This is why the button is missing!');
+      console.log('🔍 Raw message sample for manual inspection:', messageText.substring(0, 1000));
+    }
+
     return cleanedData;
 
   } catch (error: any) {
