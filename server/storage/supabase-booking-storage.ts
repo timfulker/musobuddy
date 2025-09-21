@@ -139,7 +139,9 @@ export class SupabaseBookingStorage {
   }
 
   async getBookings(userId: string) {
-    console.log('🔍 [SUPABASE-BOOKINGS] Fetching bookings for user:', userId);
+    // ENVIRONMENT DEBUG
+    const projectId = supabaseUrl?.split('.')[0].split('//')[1];
+    console.log(`🔍 [SUPABASE-BOOKINGS] Fetching from database: ${projectId} for user: ${userId}`);
 
     if (!this.isEnabled || !supabase) {
       console.log('❌ [SUPABASE-BOOKINGS] Supabase is not enabled');
@@ -196,6 +198,10 @@ export class SupabaseBookingStorage {
     if (!this.isEnabled || !supabase) {
       throw new Error('Supabase is not enabled');
     }
+
+    // ENVIRONMENT DEBUG
+    const projectId = supabaseUrl?.split('.')[0].split('//')[1];
+    console.log(`🗑️ [STORAGE] Deleting from database: ${projectId}, Booking: ${id}, User: ${userId}`);
 
     const { error } = await supabase
       .from('bookings')

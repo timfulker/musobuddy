@@ -503,6 +503,10 @@ export function registerBookingRoutes(app: Express) {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
+
+      // ENVIRONMENT DEBUG
+      console.log(`🗑️ [DELETE] NODE_ENV: ${process.env.NODE_ENV}, Booking: ${bookingId}, User: ${userId}`);
+
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }

@@ -3,7 +3,7 @@ import { Router } from 'express';
 const router = Router();
 
 // Diagnostic endpoint to check environment settings in production
-router.get('/api/env-check', (req, res) => {
+router.get('/env-check', (req, res) => {
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   const supabaseUrl = isDevelopment
