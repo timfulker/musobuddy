@@ -1410,18 +1410,37 @@ export default function UnifiedBookings() {
 
   const formatReceivedTime = (dateString: string) => {
     if (!dateString) return '';
+
+    // Parse the timestamp - JavaScript Date constructor automatically handles UTC conversion
     const date = new Date(dateString);
     const now = new Date();
-    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffMinutes < 60) {
-      return diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`;
+
+    // Debug logging to understand the timezone issue
+    console.log('🕐 [TIMEZONE DEBUG] Input dateString:', dateString);
+    console.log('🕐 [TIMEZONE DEBUG] Parsed date (local):', date.toString());
+    console.log('🕐 [TIMEZONE DEBUG] Parsed date (UTC):', date.toUTCString());
+    console.log('🕐 [TIMEZONE DEBUG] Current time (local):', now.toString());
+    console.log('🕐 [TIMEZONE DEBUG] Timezone offset (minutes):', date.getTimezoneOffset());
+
+    // Calculate difference in milliseconds, then convert to minutes/hours
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    console.log('🕐 [TIMEZONE DEBUG] Diff in minutes:', diffMinutes);
+    console.log('🕐 [TIMEZONE DEBUG] Diff in hours:', diffHours);
+
+    // Use relative time formatting for recent times
+    if (diffMinutes < 1) {
+      return 'Just now';
+    } else if (diffMinutes < 60) {
+      return `${diffMinutes}m ago`;
     } else if (diffHours < 24) {
       return `${diffHours}h ago`;
     } else {
-      return date.toLocaleDateString("en-GB", { 
-        day: "numeric", 
+      // For older dates, show the local date/time
+      return date.toLocaleDateString("en-GB", {
+        day: "numeric",
         month: "short",
         hour: "2-digit",
         minute: "2-digit"
