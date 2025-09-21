@@ -956,23 +956,87 @@ export default function Settings() {
             <FormField
               control={form.control}
               name="emailPrefix"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Email Prefix</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center">
-                      <Input {...field} value={field.value || ""} placeholder="your-name" className="rounded-r-none" />
-                      <span className="bg-gray-50 dark:bg-gray-800 border border-l-0 border-input px-3 py-2 text-sm text-muted-foreground rounded-r-md">
-                        @enquiries.musobuddy.com
-                      </span>
-                    </div>
-                  </FormControl>
-                  <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
-                    Your personalized email address for client enquiries
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const [isChecking, setIsChecking] = React.useState(false);
+                const [availability, setAvailability] = React.useState<{available?: boolean; error?: string}>({});
+                const checkTimeoutRef = React.useRef<NodeJS.Timeout>();
+
+                // Check availability when user types
+                React.useEffect(() => {
+                  if (!field.value || field.value === initialData?.emailPrefix) {
+                    setAvailability({});
+                    return;
+                  }
+
+                  // Clear previous timeout
+                  if (checkTimeoutRef.current) {
+                    clearTimeout(checkTimeoutRef.current);
+                  }
+
+                  // Set new timeout to check after user stops typing
+                  checkTimeoutRef.current = setTimeout(async () => {
+                    setIsChecking(true);
+                    try {
+                      const response = await apiRequest(`/api/email/check-availability?prefix=${encodeURIComponent(field.value)}`);
+                      const data = await response.json();
+                      setAvailability(data);
+                    } catch (error) {
+                      console.error('Failed to check email availability:', error);
+                    } finally {
+                      setIsChecking(false);
+                    }
+                  }, 500); // Wait 500ms after user stops typing
+
+                  return () => {
+                    if (checkTimeoutRef.current) {
+                      clearTimeout(checkTimeoutRef.current);
+                    }
+                  };
+                }, [field.value]);
+
+                return (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email Prefix</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="flex items-center">
+                          <div className="relative flex-1">
+                            <Input
+                              {...field}
+                              value={field.value || ""}
+                              placeholder="your-name"
+                              className={`rounded-r-none ${
+                                availability.available === false ? 'border-red-500' :
+                                availability.available === true ? 'border-green-500' : ''
+                              }`}
+                            />
+                            {isChecking && (
+                              <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                          <span className="bg-gray-50 dark:bg-gray-800 border border-l-0 border-input px-3 py-2 text-sm text-muted-foreground rounded-r-md">
+                            @enquiries.musobuddy.com
+                          </span>
+                        </div>
+                        {availability.available === false && (
+                          <p className="text-sm text-red-600">
+                            {availability.error || 'This prefix is already taken'}
+                          </p>
+                        )}
+                        {availability.available === true && field.value && field.value !== initialData?.emailPrefix && (
+                          <p className="text-sm text-green-600">
+                            ✓ This email prefix is available
+                          </p>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                      Your personalized email address for client enquiries
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
           </div>
           
