@@ -13,6 +13,7 @@ import { registerFeedbackRoutes } from "./feedback-routes";
 import { registerUnparseableRoutes } from "./unparseable-routes";
 import { registerComplianceRoutes } from "./compliance-routes";
 import { registerHealthRoutes } from "./health-routes";
+import devTestRoutes from "./dev-test-routes";
 import { registerClientPortalRoutes } from "./client-portal-routes";
 import { setupCollaborativeFormRoutes } from "./collaborative-form-routes";
 import { setupRegeneratePortalRoutes } from "./regenerate-portal";
@@ -197,6 +198,12 @@ export async function registerRoutes(app: Express) {
   
   // Register support chat routes
   registerSupportChatRoutes(app);
+
+  // Register development test routes (only in development)
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+    app.use(devTestRoutes);
+    console.log('🧪 [CENTRAL-ROUTER] Development test routes registered');
+  }
   
   // Register AI token management routes
   // AI token routes removed - unlimited AI usage for all users
