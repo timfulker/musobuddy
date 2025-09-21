@@ -1679,13 +1679,13 @@ export default function UnifiedBookings() {
                 {viewMode === 'list' && (
                   <>
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                      <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                        <CardContent className="p-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-blue-100 text-sm">This Week</p>
-                              <p className="text-2xl font-bold">
+                              <p className="text-blue-700/80 text-sm font-medium">This Week</p>
+                              <p className="text-3xl font-bold text-blue-900">
                                 {(bookings || []).filter((b: any) => {
                                   const eventDate = new Date(b.eventDate);
                                   const today = new Date();
@@ -1698,50 +1698,74 @@ export default function UnifiedBookings() {
                                          b.status === "confirmed";
                                 }).length}
                               </p>
+                              <p className="text-sm text-blue-600 mt-1 flex items-center">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                Confirmed bookings
+                              </p>
                             </div>
-                            <Calendar className="w-8 h-8 text-blue-200" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                              <Calendar className="w-6 h-6 text-white" />
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-                        <CardContent className="p-4">
+                      <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-green-100 text-sm">Confirmed</p>
-                              <p className="text-2xl font-bold">
+                              <p className="text-green-700/80 text-sm font-medium">Confirmed</p>
+                              <p className="text-3xl font-bold text-green-900">
                                 {(bookings || []).filter((b: any) => b.status === "confirmed").length}
                               </p>
+                              <p className="text-sm text-green-600 mt-1 flex items-center">
+                                <CheckSquare className="w-4 h-4 mr-1" />
+                                Ready to perform
+                              </p>
                             </div>
-                            <CheckSquare className="w-8 h-8 text-green-200" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
+                              <CheckSquare className="w-6 h-6 text-white" />
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-                        <CardContent className="p-4">
+                      <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-orange-100 text-sm">Pending</p>
-                              <p className="text-2xl font-bold">
+                              <p className="text-orange-700/80 text-sm font-medium">Pending</p>
+                              <p className="text-3xl font-bold text-orange-900">
                                 {(bookings || []).filter((b: any) => b.status === "in_progress" || b.status === "new").length}
                               </p>
+                              <p className="text-sm text-orange-600 mt-1 flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                Awaiting response
+                              </p>
                             </div>
-                            <Clock className="w-8 h-8 text-orange-200" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-md">
+                              <Clock className="w-6 h-6 text-white" />
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-                        <CardContent className="p-4">
+                      <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-purple-100 text-sm">Total Revenue</p>
-                              <p className="text-2xl font-bold">
+                              <p className="text-purple-700/80 text-sm font-medium">Total Revenue</p>
+                              <p className="text-3xl font-bold text-purple-900">
                                 £{(bookings || []).filter((b: any) => b.status !== 'rejected' && b.status !== 'cancelled').reduce((sum: number, b: any) => sum + (parseFloat(b.fee) || 0), 0).toLocaleString()}
                               </p>
+                              <p className="text-sm text-purple-600 mt-1 flex items-center">
+                                <PoundSterling className="w-4 h-4 mr-1" />
+                                From active bookings
+                              </p>
                             </div>
-                            <PoundSterling className="w-8 h-8 text-purple-200" />
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                              <PoundSterling className="w-6 h-6 text-white" />
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -2274,9 +2298,9 @@ export default function UnifiedBookings() {
                                       <Card
                                         key={groupBooking.id}
                                         data-booking-id={groupBooking.id}
-                                        className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status, groupBooking.bandId, settings?.showBandColors)} ${
+                                        className={`relative hover:shadow-lg transition-all duration-300 border-l-4 shadow-sm rounded-lg border border-gray-100 ${getStatusBorderColor(groupBooking.status, groupBooking.bandId, settings?.showBandColors)} ${
                                           selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                                        } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
+                                        } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-100' : ''}`}
                                         style={settings?.showBandColors && groupBooking.bandId ? getBandBorderStyle(groupBooking.bandId) : {}}
                                         onContextMenu={(e) => handleBookingRightClick(e, groupBooking)}
                                       >
@@ -2557,7 +2581,7 @@ export default function UnifiedBookings() {
                         <Card 
                           key={booking.id} 
                           data-booking-id={booking.id}
-                          className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status, booking.bandId, settings?.showBandColors)} ${
+                          className={`relative hover:shadow-lg transition-all duration-300 border-l-4 shadow-sm rounded-lg border border-gray-100 ${getStatusBorderColor(booking.status, booking.bandId, settings?.showBandColors)} ${
                             selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                           }`}
                           style={settings?.showBandColors && booking.bandId ? getBandBorderStyle(booking.bandId) : {}}
