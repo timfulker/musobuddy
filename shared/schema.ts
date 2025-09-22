@@ -651,6 +651,7 @@ export const userSettings = pgTable("user_settings", {
 
   // Email Settings
   emailSignatureText: text("email_signature_text"),
+  personalForwardEmail: varchar("personal_forward_email"), // For Mailgun forwarding to personal email
   
   // Invoice Settings
   invoicePaymentTerms: varchar("invoice_payment_terms").default("7_days_after"),

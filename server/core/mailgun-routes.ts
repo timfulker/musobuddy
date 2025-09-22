@@ -18,7 +18,7 @@ export class MailgunRouteManager {
     }
   }
 
-  async createUserEmailRoute(emailPrefix: string, userId: string): Promise<{ success: boolean; routeId?: string; error?: string }> {
+  async createUserEmailRoute(emailPrefix: string, userId: string, personalEmail?: string): Promise<{ success: boolean; routeId?: string; error?: string }> {
     if (!this.mg) {
       return { success: false, error: 'Mailgun not configured' };
     }
@@ -33,14 +33,24 @@ export class MailgunRouteManager {
       
       console.log(`🔧 Creating route with webhook URL: ${webhookUrl}`);
       
+      // Build actions array - always include webhook, optionally include personal email forward
+      const actions = [`forward("${webhookUrl}")`];
+      
+      // Add personal email forwarding if provided
+      if (personalEmail && personalEmail.trim()) {
+        actions.push(`forward("${personalEmail.trim()}")`);
+        console.log(`📨 Adding personal email forward to: ${personalEmail.trim()}`);
+      }
+      
       const route = await this.mg.routes.create({
         priority: 1,
-        description: `MusoBuddy enquiry emails for user ${userId} (${emailPrefix})`,
+        description: `MusoBuddy enquiry emails for user ${userId} (${emailPrefix})${personalEmail ? ` + forward to ${personalEmail}` : ''}`,
         expression: expression,
-        action: [`forward("${webhookUrl}")`]
+        action: actions
       });
 
       console.log(`✅ Mailgun route created successfully:`, route.id);
+      console.log(`📋 Route actions:`, actions);
       return { success: true, routeId: route.id };
       
     } catch (error: any) {
