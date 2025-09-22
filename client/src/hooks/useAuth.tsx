@@ -302,7 +302,8 @@ export function useAuth() {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             ...(inviteCode ? { inviteCode } : {}),
-            prompt: 'select_account'
+            access_type: 'offline',
+            prompt: 'consent'
           }
         }
       });
