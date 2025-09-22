@@ -333,31 +333,31 @@ export function registerBookingRoutes(app: Express) {
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      
+
       // Debug log the incoming data to track currency symbols
       console.log(`🔍 Update booking ${bookingId} - Raw request body:`, JSON.stringify(req.body, null, 2));
-      
+
       // Verify ownership
       const existingBooking = await storage.getBooking(bookingId);
       if (!existingBooking || existingBooking.userId !== userId) {
         return res.status(404).json({ error: 'Booking not found' });
       }
-      
+
       // PREVENT INVALID STATUS TRANSITIONS: Check if trying to mark future booking as completed
       if (req.body.status === 'completed' && existingBooking.eventDate) {
         const eventDate = new Date(existingBooking.eventDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Start of today
-        
+
         if (eventDate > today) {
           console.warn(`❌ Blocked attempt to mark future booking ${bookingId} (${eventDate.toDateString()}) as completed`);
-          return res.status(400).json({ 
+          return res.status(400).json({
             error: 'Cannot mark future bookings as completed',
             details: `Booking is scheduled for ${eventDate.toDateString()}, which is in the future`
           });
         }
       }
-      
+
       // Debug logging for finalAmount field
       console.log(`🔍 [BOOKING-UPDATE] Booking #${bookingId} update data:`, {
         finalAmount: req.body.finalAmount,
@@ -366,31 +366,49 @@ export function registerBookingRoutes(app: Express) {
         clientName: req.body.clientName,
         hasKeys: Object.keys(req.body).length
       });
-      
+
       const updatedBooking = await storage.updateBooking(bookingId, req.body, userId);
-      
+
+      // Check if update was successful
+      if (!updatedBooking) {
+        console.error(`❌ Update returned null for booking ${bookingId}`);
+        return res.status(500).json({ error: 'Failed to update booking - no data returned' });
+      }
+
       console.log(`🔍 [BOOKING-UPDATE] After database update:`, {
         finalAmount: updatedBooking?.finalAmount,
         fee: updatedBooking?.fee,
         travelExpense: updatedBooking?.travelExpense,
         id: updatedBooking?.id
       });
-      
+
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
       res.json(updatedBooking);
-      
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('❌ Failed to update booking:', error);
-      res.status(500).json({ error: 'Failed to update booking' });
+      console.error('Error stack:', error.stack);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        code: error.code
+      });
+
+      // Send more detailed error information
+      res.status(500).json({
+        error: 'Failed to update booking',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        bookingId: bookingId
+      });
     }
   });
 
   // Delete booking
   // Advanced search/filter endpoint - MUST come before :id routes
-  app.get('/api/bookings/all', 
+  app.get('/api/bookings/all',
     authenticate,
     requireSubscriptionOrAdmin,
-    asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -1477,9 +1495,9 @@ ${businessName}</p>
   );
 
   // Find duplicate bookings
-  app.get('/api/bookings/duplicates', 
+  app.get('/api/bookings/duplicates',
     authenticate,
-    asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
       try {
         const userId = req.user?.id;
         if (!userId) {
@@ -1534,9 +1552,9 @@ ${businessName}</p>
   );
 
   // Remove duplicate bookings
-  app.post('/api/bookings/remove-duplicates', 
+  app.post('/api/bookings/remove-duplicates',
     authenticate,
-    asyncHandler(async (req: SupabaseAuthenticatedRequest, res) => {
+    asyncHandler(async (req: AuthenticatedRequest, res) => {
       try {
         const userId = req.user?.id;
         if (!userId) {
