@@ -110,6 +110,18 @@ export const schemas = {
       // If venue is provided, it must not be empty
       return val === null || val === undefined || val.trim().length > 0;
     }, { message: "Venue cannot be empty when provided" }),
+    // CRITICAL FIX: Add missing fee validation (same pattern as createContract)
+    fee: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    // CRITICAL FIX: Add missing finalAmount validation  
+    finalAmount: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
     // CRITICAL FIX: Accept both deposit/depositAmount for backwards compatibility
     deposit: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
       if (val === null || val === undefined || val === '') return null;
