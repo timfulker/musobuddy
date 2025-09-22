@@ -177,53 +177,65 @@ export function setupCommunicationRoutes(app: any) {
         try {
           console.log(`🔍 Processing message ${msg.id} with URL: ${msg.messageUrl}`);
 
-          // Download and parse HTML content from R2
-          const downloadResult = await downloadFile(msg.messageUrl);
           let content = 'Message content unavailable';
-
-          if (!downloadResult.success) {
-            console.error(`❌ Failed to download message from R2: ${msg.messageUrl}`, downloadResult.error);
-            console.error(`❌ Download error details:`, downloadResult);
-            
-            // Check cloud storage configuration
-            const { isCloudStorageConfigured } = await import('../core/cloud-storage');
-            const isConfigured = isCloudStorageConfigured();
-            console.error(`❌ Cloud storage configured: ${isConfigured}`);
-            console.error(`❌ Environment variables: R2_ACCOUNT_ID=${!!process.env.R2_ACCOUNT_ID}, R2_ACCESS_KEY_ID=${!!process.env.R2_ACCESS_KEY_ID}, R2_SECRET_ACCESS_KEY=${!!process.env.R2_SECRET_ACCESS_KEY}, R2_BUCKET_NAME=${!!process.env.R2_BUCKET_NAME}`);
-          }
           
-          if (downloadResult.success && downloadResult.content) {
-            // For client replies (messages with bookingId), show the FULL content
-            // No parsing or extraction - user decides what to extract
-            const htmlContent = downloadResult.content;
-            console.log(`📧 Processing client reply for booking ${msg.bookingId}`);
+          // Check if messageUrl is a data URL (fallback storage)
+          if (msg.messageUrl.startsWith('data:text/plain;base64,')) {
+            try {
+              const base64Content = msg.messageUrl.split(',')[1];
+              content = Buffer.from(base64Content, 'base64').toString('utf-8');
+              console.log(`✅ Retrieved message content from data URL fallback`);
+            } catch (dataUrlError) {
+              console.error(`❌ Failed to decode data URL:`, dataUrlError);
+            }
+          } else {
+            // Download and parse HTML content from R2
+            const downloadResult = await downloadFile(msg.messageUrl);
 
-            // Simple HTML to text conversion - preserve ALL content
-            let rawText = htmlContent
-              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-              .replace(/<br\s*\/?>/gi, '\n')
-              .replace(/<\/p>/gi, '\n\n')
-              .replace(/<\/div>/gi, '\n')
-              .replace(/<\/tr>/gi, '\n')
-              .replace(/<\/td>/gi, ' ')
-              .replace(/<[^>]*>/g, '')
-              .replace(/&nbsp;/g, ' ')
-              .replace(/&amp;/g, '&')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&quot;/g, '"')
-              .replace(/&#39;/g, "'")
-              .replace(/&\#(\d+);/g, (match, dec) => String.fromCharCode(dec))
-              .replace(/\s+/g, ' ')
-              .replace(/\n\s*\n\s*\n/g, '\n\n')
-              .trim();
+            if (!downloadResult.success) {
+              console.error(`❌ Failed to download message from R2: ${msg.messageUrl}`, downloadResult.error);
+              console.error(`❌ Download error details:`, downloadResult);
+              
+              // Check cloud storage configuration
+              const { isCloudStorageConfigured } = await import('../core/cloud-storage');
+              const isConfigured = isCloudStorageConfigured();
+              console.error(`❌ Cloud storage configured: ${isConfigured}`);
+              console.error(`❌ Environment variables: R2_ACCOUNT_ID=${!!process.env.R2_ACCOUNT_ID}, R2_ACCESS_KEY_ID=${!!process.env.R2_ACCESS_KEY_ID}, R2_SECRET_ACCESS_KEY=${!!process.env.R2_SECRET_ACCESS_KEY}, R2_BUCKET_NAME=${!!process.env.R2_BUCKET_NAME}`);
+            }
             
-            console.log(`✅ Converted HTML to text - showing FULL client reply`);
+            if (downloadResult.success && downloadResult.content) {
+              // For client replies (messages with bookingId), show the FULL content
+              // No parsing or extraction - user decides what to extract
+              const htmlContent = downloadResult.content;
+              console.log(`📧 Processing client reply for booking ${msg.bookingId}`);
 
-            // For client replies, show the COMPLETE message content
-            // No parsing or extraction - the user should see everything the client wrote
-            content = rawText;
+              // Simple HTML to text conversion - preserve ALL content
+              let rawText = htmlContent
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<\/div>/gi, '\n')
+                .replace(/<\/tr>/gi, '\n')
+                .replace(/<\/td>/gi, ' ')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&\#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+                .replace(/\s+/g, ' ')
+                .replace(/\n\s*\n\s*\n/g, '\n\n')
+                .trim();
+              
+              console.log(`✅ Converted HTML to text - showing FULL client reply`);
+
+              // For client replies, show the COMPLETE message content
+              // No parsing or extraction - the user should see everything the client wrote
+              content = rawText;
+            }
           }
           
           messages.push({
