@@ -102,14 +102,16 @@ export const schemas = {
   }),
 
   // Booking creation - CRITICAL FIX: Use shared schema with enhanced deposit normalization
-  createBooking: insertBookingSchema.extend({
+  createBooking: insertBookingSchema.omit({ 
+    userId: true // Server adds this from authenticated user, not from request body
+  }).extend({
     // Additional validations on top of shared schema
     clientEmail: z.string().email('Invalid email format').optional().nullable(),
     eventDate: z.coerce.date().optional().nullable(), // Ensure date coercion
-    venue: z.string().optional().nullable().refine((val) => {
-      // If venue is provided, it must not be empty
-      return val === null || val === undefined || val.trim().length > 0;
-    }, { message: "Venue cannot be empty when provided" }),
+    venue: z.string().optional().nullable().transform((val) => {
+      // Convert empty strings to null for consistency
+      return val === '' ? null : val;
+    }),
     // CRITICAL FIX: Add missing fee validation (same pattern as createContract)
     fee: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
       if (val === null || val === undefined || val === '') return null;
