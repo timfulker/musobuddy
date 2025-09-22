@@ -124,6 +124,12 @@ export const schemas = {
       const num = typeof val === 'string' ? parseFloat(val) : val;
       return isNaN(num) ? null : num.toString();
     }),
+    // CRITICAL FIX: Add missing travelExpense validation (same pattern as createContract)
+    travelExpense: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
     // CRITICAL FIX: Accept both deposit/depositAmount for backwards compatibility
     deposit: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
       if (val === null || val === undefined || val === '') return null;
