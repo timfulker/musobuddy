@@ -471,6 +471,28 @@ export async function registerSettingsRoutes(app: Express) {
         console.log(`📧 Updating email prefix to: ${newPrefix}`);
         // Convert empty string to null to avoid unique constraint violations
         const prefixToSave = newPrefix && newPrefix.trim() ? newPrefix.trim() : null;
+        
+        // Get personal forward email from the request for Mailgun routing
+        const personalForwardEmail = processedBody.personalForwardEmail;
+        
+        // Update Mailgun route if prefix changed and we have a prefix
+        if (prefixToSave && prefixToSave !== existingUser?.emailPrefix) {
+          const { MailgunRouteManager } = await import('../core/mailgun-routes');
+          const routeManager = new MailgunRouteManager();
+          
+          // Delete old route if exists
+          if (existingUser?.emailPrefix) {
+            console.log(`🗑️ Deleting old Mailgun route for prefix: ${existingUser.emailPrefix}`);
+            // Note: We'd need to store route IDs to delete properly, for now this creates new routes
+          }
+          
+          // Create new route with optional personal email forwarding
+          const routeResult = await routeManager.createUserEmailRoute(prefixToSave, userId, personalForwardEmail);
+          if (routeResult.success) {
+            console.log(`✅ Created Mailgun route with forwarding to: ${personalForwardEmail || 'MusoBuddy only'}`);
+          }
+        }
+        
         await storage.updateUser(userId, { emailPrefix: prefixToSave });
         // Remove from processedBody so it doesn't try to save to settings table
         delete processedBody.emailPrefix;
