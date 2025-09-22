@@ -36,7 +36,7 @@ const fullBookingSchema = z.object({
   }),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
-  venue: z.string().min(1, "Venue is required"),
+  venue: z.string().optional(),
   venueAddress: z.string().optional(),
   venueContactInfo: z.string().optional(),
   fee: z.string().optional().transform((val) => {
