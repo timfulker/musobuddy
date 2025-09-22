@@ -456,9 +456,12 @@ export async function registerSettingsRoutes(app: Express) {
         const newPrefix = processedBody.emailPrefix;
         console.log(`📧 Checking email prefix availability: ${newPrefix}`);
 
+        // Get current user to check if prefix changed
+        const currentUser = await safeDbCall(() => storage.getUserById(userId), null, 'getCurrentUser');
+        
         // Check if the prefix is already taken by another user
-        if (newPrefix) {
-          const existingUser = await safeDbCall(() => storage.getUserByEmailPrefix(newPrefix), null, 'getUserByEmailPrefix');
+        if (newPrefix && newPrefix.trim()) {
+          const existingUser = await safeDbCall(() => storage.getUserByEmailPrefix(newPrefix.trim()), null, 'getUserByEmailPrefix');
           if (existingUser && existingUser.id !== userId) {
             console.error(`❌ Email prefix "${newPrefix}" is already taken by user ${existingUser.id}`);
             return res.status(400).json({
@@ -476,13 +479,13 @@ export async function registerSettingsRoutes(app: Express) {
         const personalForwardEmail = processedBody.personalForwardEmail || null;
         
         // Update Mailgun route if prefix changed and we have a prefix
-        if (prefixToSave && prefixToSave !== existingUser?.emailPrefix) {
+        if (prefixToSave && prefixToSave !== currentUser?.emailPrefix) {
           const { MailgunRouteManager } = await import('../core/mailgun-routes');
           const routeManager = new MailgunRouteManager();
           
           // Delete old route if exists
-          if (existingUser?.emailPrefix) {
-            console.log(`🗑️ Deleting old Mailgun route for prefix: ${existingUser.emailPrefix}`);
+          if (currentUser?.emailPrefix) {
+            console.log(`🗑️ Deleting old Mailgun route for prefix: ${currentUser.emailPrefix}`);
             // Note: We'd need to store route IDs to delete properly, for now this creates new routes
           }
           
