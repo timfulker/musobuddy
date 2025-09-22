@@ -184,6 +184,12 @@ export function setupCommunicationRoutes(app: any) {
           if (!downloadResult.success) {
             console.error(`❌ Failed to download message from R2: ${msg.messageUrl}`, downloadResult.error);
             console.error(`❌ Download error details:`, downloadResult);
+            
+            // Check cloud storage configuration
+            const { isCloudStorageConfigured } = await import('../core/cloud-storage');
+            const isConfigured = isCloudStorageConfigured();
+            console.error(`❌ Cloud storage configured: ${isConfigured}`);
+            console.error(`❌ Environment variables: R2_ACCOUNT_ID=${!!process.env.R2_ACCOUNT_ID}, R2_ACCESS_KEY_ID=${!!process.env.R2_ACCESS_KEY_ID}, R2_SECRET_ACCESS_KEY=${!!process.env.R2_SECRET_ACCESS_KEY}, R2_BUCKET_NAME=${!!process.env.R2_BUCKET_NAME}`);
           }
           
           if (downloadResult.success && downloadResult.content) {
