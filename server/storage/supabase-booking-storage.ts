@@ -325,17 +325,25 @@ export class SupabaseBookingStorage {
   }
 
   private mapToCamelCase(booking: any) {
-    // CRITICAL FIX: The data migration incorrectly stored total amounts in the 'fee' column
-    // We need to swap the mapping until the database is corrected
-    // - Database 'fee' column contains the total amount (should be in final_amount)
-    // - Database 'final_amount' column is empty (should contain the total)
-    // - Performance fee should be calculated as: total - travel_expense
+    if (!booking) {
+      console.error('❌ [mapToCamelCase] Received null/undefined booking');
+      return null;
+    }
 
-    const totalAmount = booking.fee || booking.final_amount || null;
-    const travelExpense = booking.travel_expense || 0;
-    const performanceFee = totalAmount && travelExpense ? totalAmount - travelExpense : totalAmount;
+    try {
+      // CRITICAL FIX: The data migration incorrectly stored total amounts in the 'fee' column
+      // We need to swap the mapping until the database is corrected
+      // - Database 'fee' column contains the total amount (should be in final_amount)
+      // - Database 'final_amount' column is empty (should contain the total)
+      // - Performance fee should be calculated as: total - travel_expense
 
-    return {
+      const totalAmount = booking.fee || booking.final_amount || null;
+      const travelExpense = booking.travel_expense || 0;
+      const performanceFee = totalAmount !== null && totalAmount !== undefined
+        ? totalAmount - travelExpense
+        : null;
+
+      return {
       id: booking.id,
       userId: booking.user_id,
       title: booking.title,
@@ -402,6 +410,11 @@ export class SupabaseBookingStorage {
       longitude: booking.map_longitude, // Supabase uses map_longitude
       fieldLocks: booking.field_locks || {} // Add fieldLocks mapping
     };
+    } catch (error) {
+      console.error('❌ [mapToCamelCase] Error mapping booking:', error);
+      console.error('❌ [mapToCamelCase] Booking data:', booking);
+      throw error;
+    }
   }
 
   private camelToSnake(str: string): string {
