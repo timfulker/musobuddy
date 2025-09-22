@@ -469,7 +469,9 @@ export async function registerSettingsRoutes(app: Express) {
         }
 
         console.log(`📧 Updating email prefix to: ${newPrefix}`);
-        await storage.updateUser(userId, { emailPrefix: newPrefix });
+        // Convert empty string to null to avoid unique constraint violations
+        const prefixToSave = newPrefix && newPrefix.trim() ? newPrefix.trim() : null;
+        await storage.updateUser(userId, { emailPrefix: prefixToSave });
         // Remove from processedBody so it doesn't try to save to settings table
         delete processedBody.emailPrefix;
       }
