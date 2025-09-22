@@ -3893,6 +3893,11 @@ export default function Settings() {
         city: settings.city || "",
         county: settings.county || "",
         postcode: settings.postcode || "",
+        // Home address fields - CRITICAL FIX for home address not loading
+        homeAddressLine1: settings.homeAddressLine1 || "",
+        homeAddressLine2: settings.homeAddressLine2 || "",
+        homeCity: settings.homeCity || "",
+        homePostcode: settings.homePostcode || "",
         phone: settings.phone || "",
         website: settings.website || "",
         taxNumber: settings.taxNumber || "",

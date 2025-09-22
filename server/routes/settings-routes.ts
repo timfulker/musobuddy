@@ -262,6 +262,14 @@ export async function registerSettingsRoutes(app: Express) {
         ...settings,
         emailPrefix: user?.emailPrefix || null
       };
+
+      // CRITICAL DEBUG: Log home address fields being returned to frontend
+      console.log('🔍 GET /api/settings - Home address fields being returned to frontend:');
+      console.log('  🏠 homeAddressLine1:', responseSettings.homeAddressLine1);
+      console.log('  🏠 homeAddressLine2:', responseSettings.homeAddressLine2);
+      console.log('  🏠 homeCity:', responseSettings.homeCity);
+      console.log('  🏠 homePostcode:', responseSettings.homePostcode);
+      console.log('  📧 personalForwardEmail:', responseSettings.personalForwardEmail);
       
       
       // Parse JSON strings that may be corrupted from earlier storage
