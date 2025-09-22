@@ -450,6 +450,19 @@ JSON:`;
     console.log('🔍 [ENCORE DEBUG] Message contains "encoremusicians.com":', messageText.toLowerCase().includes('encoremusicians.com'));
     console.log('🔍 [ENCORE DEBUG] Message subject (if any):', subject || 'No subject provided');
 
+    // Enhanced debugging for email forwarding detection
+    const isManualForward = messageText.includes('---------- Forwarded message ----------') || 
+                           messageText.includes('Begin forwarded message') ||
+                           messageText.includes('From:') && messageText.includes('Date:') && messageText.includes('Subject:');
+    const isGmailAutoForward = messageText.includes('gmail.com') && (messageText.includes('=3D') || messageText.includes('=20'));
+    const hasQuotedPrintable = messageText.includes('=3D') || messageText.includes('=20') || messageText.includes('=\r\n');
+    
+    console.log('🔍 [ENCORE DEBUG] Email forwarding analysis:');
+    console.log('🔍 [ENCORE DEBUG] - Appears to be manual forward:', isManualForward);
+    console.log('🔍 [ENCORE DEBUG] - Appears to be Gmail auto-forward:', isGmailAutoForward);
+    console.log('🔍 [ENCORE DEBUG] - Contains quoted-printable encoding:', hasQuotedPrintable);
+    console.log('🔍 [ENCORE DEBUG] - Client contact field:', clientContact || 'Not provided');
+
     // Test regex extraction immediately
     const testRegexLink = extractEncoreApplyLink(messageText);
     console.log('🔍 [ENCORE DEBUG] Regex extraction test result:', testRegexLink || 'NO MATCH FOUND');
@@ -706,15 +719,26 @@ function extractEncoreApplyLink(messageText: string): string | null {
     /(?:www\.)?encoremusicians\.com\/jobs\/[^\s<>"']+/gi
   ];
 
-  // Pattern 2.5: Quoted-printable encoded URLs (for email forwarding)
+  // Pattern 2.5: Enhanced quoted-printable encoded URLs (for Gmail auto-forwarding)
   console.log('🎵 [ENCORE EXTRACTION] Testing quoted-printable encoded URL patterns...');
   const quotedPrintablePatterns = [
-    // Match quoted-printable encoded encoremusicians.com URLs
-    /https:\/\/encoremusicians\.com\/jobs\/[A-Z0-9]+\?utm_source=3D[^=\s]*=?[^=\s]*&utm_medium=3D[^=\s]*=?[^=\s]*&utm_campaign=3D[^=\s]*=?[^=\s]*&utm_content=3D[^=\s]*=?[^=\s]*/gi,
+    // Gmail auto-forward with quoted-printable encoding
+    /https:\/\/encoremusicians\.com\/jobs\/[A-Z0-9]+\?utm_source=3D[^=\s]*(?:=\r?\n)?&utm_medium=3D[^=\s]*(?:=\r?\n)?&utm_campaign=3D[^=\s]*(?:=\r?\n)?&utm_content=3D[^=\s]*(?:=\r?\n)?/gi,
+    
     // More flexible pattern for any quoted-printable URL with encoremusicians.com
-    /https:\/\/encoremusicians\.com\/[^=\s]*(?:=3D[^=\s]*|=[0-9A-F]{2}|[^=\s])*(?:=20)?/gi,
-    // Pattern to catch job URLs with quoted-printable encoding
-    /encoremusicians\.com\/jobs\/[A-Z0-9]+\?[^=\s]*(?:=3D[^=\s]*)*(?:=20)*/gi
+    /https:\/\/encoremusicians\.com\/[^=\s]*(?:=3D[^=\s]*|=[0-9A-F]{2}|[^=\s])*(?:=20|=\r?\n)?/gi,
+    
+    // Pattern to catch job URLs with quoted-printable encoding and line breaks
+    /encoremusicians\.com\/jobs\/[A-Z0-9]+\?[^=\s]*(?:=3D[^=\s]*|=\r?\n)*(?:=20)*/gi,
+    
+    // Gmail-specific pattern with line breaks in URLs
+    /https:\/\/encoremusicians\.com\/jobs\/[A-Z0-9]+\?[\s\S]*?utm_source[\s\S]*?utm_medium[\s\S]*?utm_campaign[\s\S]*?utm_content/gi,
+    
+    // AWS tracking URLs with quoted-printable encoding
+    /https:\/\/[^\/\s]*\.awstrack\.me\/[^\/\s]*\/https%3A%2F%2Fencoremusicians\.com[^=\s]*(?:=3D[^=\s]*|=\r?\n)*(?:=20)*/gi,
+    
+    // Pattern for URLs split across multiple lines with =\r\n line breaks
+    /https:\/\/encoremusicians\.com\/jobs\/[A-Z0-9]+=?\r?\n?[^=\s]*(?:=3D[^=\s]*=?\r?\n?)*(?:=20)*/gi
   ];
 
   for (let i = 0; i < quotedPrintablePatterns.length; i++) {
@@ -726,13 +750,20 @@ function extractEncoreApplyLink(messageText: string): string | null {
       let encodedUrl = match[0];
       console.log(`✅ [ENCORE EXTRACTION] Quoted-printable pattern ${i + 1} found encoded URL:`, encodedUrl);
 
-      // Decode quoted-printable encoding
+      // Enhanced quoted-printable decoding for Gmail auto-forwards
       let decodedUrl = encodedUrl
         .replace(/=3D/g, '=')           // =3D -> =
-        .replace(/=20/g, ' ')          // =20 -> space
-        .replace(/=\r?\n/g, '')        // remove soft line breaks
-        .trim()                        // remove trailing spaces
-        .replace(/\s+/g, '');          // remove any remaining spaces
+        .replace(/=20/g, ' ')          // =20 -> space (though spaces in URLs should be removed)
+        .replace(/=2C/g, ',')          // =2C -> comma
+        .replace(/=2F/g, '/')          // =2F -> forward slash
+        .replace(/=3A/g, ':')          // =3A -> colon
+        .replace(/=3F/g, '?')          // =3F -> question mark
+        .replace(/=26/g, '&')          // =26 -> ampersand
+        .replace(/=\r?\n/g, '')        // remove soft line breaks (quoted-printable line continuation)
+        .replace(/=\n/g, '')           // remove line breaks without carriage return
+        .replace(/\r?\n/g, '')         // remove any remaining line breaks
+        .trim()                        // remove trailing/leading spaces
+        .replace(/\s+/g, '');          // remove any remaining spaces within URL
 
       // Ensure it starts with https://
       if (!decodedUrl.startsWith('https://')) {
@@ -786,7 +817,41 @@ function extractEncoreApplyLink(messageText: string): string | null {
     }
   }
   
-  // Pattern 4: Enhanced href attribute extraction
+  // Pattern 4: Gmail forwarding specific patterns
+  console.log('🎵 [ENCORE EXTRACTION] Testing Gmail forwarding specific patterns...');
+  const gmailForwardPatterns = [
+    // Gmail forward with message header structure  
+    /---------- Forwarded message ----------[\s\S]*?https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
+    
+    // Gmail forward with "Begin forwarded message"
+    /Begin forwarded message[\s\S]*?https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
+    
+    // URLs that appear after common Gmail forward headers
+    /From:.*encoremusicians\.com[\s\S]*?https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
+    
+    // URLs within Gmail's quoted content (> symbols)
+    />.*?https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/gi,
+    
+    // Handle URLs split by email client line wrapping
+    /encoremusicians\.com\/jobs\/[A-Z0-9]+\?\s*utm_source=[\s\S]*?utm_medium=[\s\S]*?utm_campaign=[\s\S]*?utm_content=/gi
+  ];
+
+  for (let i = 0; i < gmailForwardPatterns.length; i++) {
+    const pattern = gmailForwardPatterns[i];
+    console.log(`🎵 [ENCORE EXTRACTION] Testing Gmail forward pattern ${i + 1}:`, pattern.toString().substring(0, 100) + '...');
+    
+    const match = messageText.match(pattern);
+    if (match) {
+      // Extract just the URL part from the match
+      const urlMatch = match[0].match(/https:\/\/(?:www\.)?encoremusicians\.com\/[^\s<>"']+/);
+      if (urlMatch) {
+        console.log(`✅ [ENCORE EXTRACTION] Gmail forward pattern ${i + 1} found URL:`, urlMatch[0]);
+        return urlMatch[0];
+      }
+    }
+  }
+
+  // Pattern 5: Enhanced href attribute extraction
   console.log('🎵 [ENCORE EXTRACTION] Testing enhanced href patterns...');
   const hrefPatterns = [
     // Standard href patterns
