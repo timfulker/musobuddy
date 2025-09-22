@@ -844,23 +844,45 @@ app.get('/api/email-queue/status', async (req, res) => {
 </body>
 </html>`;
       
+      // Extract plain text content for fallback storage
+      const plainTextContent = webhookData['body-plain'] || 
+        (webhookData['body-html'] || webhookData['stripped-html'] || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim() || 'No content available';
+
       // Store message in cloud storage
       const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
       const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
       const messageBuffer = Buffer.from(messageHtml, 'utf8');
-      await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
-        'booking-id': bookingId,
-        'user-id': userId,
-        'reply-type': replyType
-      });
       
-      // Create notification entry
+      let finalMessageUrl = fileName;
+      
+      try {
+        await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+          'booking-id': bookingId,
+          'user-id': userId,
+          'reply-type': replyType
+        });
+        console.log(`✅ Message stored in cloud storage: ${fileName}`);
+      } catch (cloudError) {
+        console.error(`❌ Cloud storage failed, using fallback:`, cloudError);
+        // Use data URL as fallback - store content directly in the URL field
+        const contentBase64 = Buffer.from(plainTextContent, 'utf-8').toString('base64');
+        finalMessageUrl = `data:text/plain;base64,${contentBase64}`;
+      }
+      
+      // Create notification entry with either cloud URL or fallback data URL
       await storage.createMessageNotification({
         userId: userId,
         bookingId: bookingId,
         senderEmail: senderEmail,
         subject: subject,
-        messageUrl: fileName,
+        messageUrl: finalMessageUrl,
         isRead: false,
         createdAt: new Date()
       });

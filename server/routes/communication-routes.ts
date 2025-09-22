@@ -239,14 +239,27 @@ export function setupCommunicationRoutes(app: any) {
           });
         } catch (error) {
           console.error(`❌ Error processing message ${msg.id}:`, error);
-          // Add message with error content instead of failing completely
+          // Add message with helpful error content instead of failing completely
+          const errorContent = `Message content temporarily unavailable. 
+
+This is a client reply that should display the complete message without AI parsing. 
+
+The system is storing messages but having trouble retrieving them from cloud storage. 
+
+Troubleshooting info:
+- Message ID: ${msg.id}
+- Storage URL: ${msg.messageUrl}
+- Error: ${error.message || 'Unknown error'}
+
+The Extract Details button below can be used once this issue is resolved.`;
+
           messages.push({
             id: `msg_${msg.id}`,
             bookingId: msg.bookingId,
             fromEmail: msg.senderEmail,
             toEmail: 'performer',
             subject: msg.subject,
-            content: 'Error loading message content',
+            content: errorContent,
             messageType: 'incoming',
             sentAt: msg.createdAt,
             isRead: msg.isRead
