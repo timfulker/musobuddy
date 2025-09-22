@@ -69,12 +69,12 @@ async function main() {
   console.log('🔄 Running bands feature migration...');
 
   // Run on development
-  if (process.env.SUPABASE_URL_DEV && process.env.SUPABASE_SERVICE_ROLE_KEY_DEV) {
+  if (process.env.SUPABASE_URL_DEV && process.env.SUPABASE_SERVICE_KEY_DEV) {
     try {
       await runMigration(
         'Development',
         process.env.SUPABASE_URL_DEV,
-        process.env.SUPABASE_SERVICE_ROLE_KEY_DEV
+        process.env.SUPABASE_SERVICE_KEY_DEV
       );
     } catch (error) {
       console.error('Development migration failed:', error.message);
@@ -82,12 +82,12 @@ async function main() {
   }
 
   // Run on production
-  if (process.env.SUPABASE_URL_PROD && process.env.SUPABASE_SERVICE_ROLE_KEY_PROD) {
+  if (process.env.SUPABASE_URL_PROD && process.env.SUPABASE_SERVICE_KEY_PROD) {
     try {
       await runMigration(
         'Production',
         process.env.SUPABASE_URL_PROD,
-        process.env.SUPABASE_SERVICE_ROLE_KEY_PROD
+        process.env.SUPABASE_SERVICE_KEY_PROD
       );
     } catch (error) {
       console.error('Production migration failed:', error.message);
