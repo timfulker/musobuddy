@@ -206,7 +206,9 @@ export function setupCommunicationRoutes(app: any) {
             if (downloadResult.success && downloadResult.content) {
               // For client replies (messages with bookingId), show the FULL content
               // No parsing or extraction - user decides what to extract
-              const htmlContent = downloadResult.content;
+              const htmlContent = typeof downloadResult.content === 'string' 
+                ? downloadResult.content 
+                : downloadResult.content.toString('utf-8');
               console.log(`📧 Processing client reply for booking ${msg.bookingId}`);
 
               // Simple HTML to text conversion - preserve ALL content
