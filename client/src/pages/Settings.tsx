@@ -151,6 +151,7 @@ const settingsFormSchema = z.object({
     return clauses ? clauses.filter(c => c.text && c.text.trim() !== '') : [];
   }),
   emailSignatureText: z.string().optional().or(z.literal("")),
+  personalForwardEmail: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   
   // AI Pricing Guide fields
   aiPricingEnabled: z.boolean().default(true),
@@ -221,6 +222,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     taxNumber: data.tax_number || data.taxNumber || "",
     emailFromName: data.email_from_name || data.emailFromName || "",
     emailSignatureText: data.email_signature_text || data.emailSignatureText || "",
+    personalForwardEmail: data.personal_forward_email || data.personalForwardEmail || "",
     nextInvoiceNumber: data.next_invoice_number || data.nextInvoiceNumber || 1,
     invoicePrefix: data.invoice_prefix || data.invoicePrefix || "",
     contractClauses: {
@@ -1086,6 +1088,28 @@ export default function Settings() {
                     rows={4}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="personalForwardEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Personal Email Forwarding</FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    value={field.value || ""} 
+                    placeholder="your-personal@gmail.com"
+                    type="email"
+                  />
+                </FormControl>
+                <FormDescription className="text-xs text-gray-600 dark:text-gray-400">
+                  Get copies of all MusoBuddy emails forwarded to your personal email. Recommended for Encore bookings to preserve original formatting.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -3870,6 +3894,7 @@ export default function Settings() {
         taxNumber: settings.taxNumber || "",
         emailFromName: settings.emailFromName || "",
         emailSignatureText: settings.emailSignatureText || "",
+        personalForwardEmail: settings.personalForwardEmail || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
