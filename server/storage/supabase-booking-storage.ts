@@ -50,15 +50,14 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
-    // Create minimal, schema-safe data for Supabase
-    // Only include essential fields to avoid constraint violations
-    const supabaseData = {
+    // Create comprehensive field mappings for Supabase
+    const supabaseData: any = {
       user_id: bookingData.userId,
       title: bookingData.title || bookingData.clientName || 'Booking Request',
       client_name: bookingData.clientName || null,
-      // Convert empty strings to null to avoid constraint violations
       client_email: bookingData.clientEmail && bookingData.clientEmail.trim() !== '' ? bookingData.clientEmail.trim() : null,
       client_phone: bookingData.clientPhone && bookingData.clientPhone.trim() !== '' ? bookingData.clientPhone.trim() : null,
+      client_address: bookingData.clientAddress && bookingData.clientAddress.trim() !== '' ? bookingData.clientAddress.trim() : null,
       venue: bookingData.venue || null,
       venue_address: bookingData.venueAddress || null,
       event_date: bookingData.eventDate || null,
@@ -66,24 +65,66 @@ export class SupabaseBookingStorage {
       event_end_time: bookingData.eventEndTime || null,
       status: bookingData.status || 'pending',
       notes: bookingData.notes || null,
+      gig_type: bookingData.gigType || null,
       event_type: bookingData.eventType || null,
+      equipment_requirements: bookingData.equipmentRequirements || null,
+      special_requirements: bookingData.specialRequirements || null,
+      performance_duration: bookingData.performanceDuration || null,
+      styles: bookingData.styles || null,
+      equipment_provided: bookingData.equipmentProvided || null,
+      whats_included: bookingData.whatsIncluded || null,
+      dress_code: bookingData.dressCode || null,
+      contact_phone: bookingData.contactPhone || null,
+      parking_info: bookingData.parkingInfo || null,
+      venue_contact_info: bookingData.venueContactInfo || null,
+      travel_expense: bookingData.travelExpense || null,
+      what3words: bookingData.what3words || null,
+      venue_contact: bookingData.venueContact || null,
+      sound_tech_contact: bookingData.soundTechContact || null,
+      stage_size: bookingData.stageSize || null,
+      power_equipment: bookingData.powerEquipment || null,
+      style_mood: bookingData.styleMood || null,
+      must_play_songs: bookingData.mustPlaySongs || null,
+      avoid_songs: bookingData.avoidSongs || null,
+      set_order: bookingData.setOrder || null,
+      first_dance_song: bookingData.firstDanceSong || null,
+      processional_song: bookingData.processionalSong || null,
+      signing_register_song: bookingData.signingRegisterSong || null,
+      recessional_song: bookingData.recessionalSong || null,
+      special_dedications: bookingData.specialDedications || null,
+      guest_announcements: bookingData.guestAnnouncements || null,
+      load_in_info: bookingData.loadInInfo || null,
+      sound_check_time: bookingData.soundCheckTime || null,
+      weather_contingency: bookingData.weatherContingency || null,
+      parking_permit_required: bookingData.parkingPermitRequired || false,
+      meal_provided: bookingData.mealProvided || false,
+      dietary_requirements: bookingData.dietaryRequirements || null,
+      shared_notes: bookingData.sharedNotes || null,
+      reference_tracks: bookingData.referenceTracks || null,
+      photo_permission: bookingData.photoPermission !== undefined ? bookingData.photoPermission : true,
+      encore_allowed: bookingData.encoreAllowed !== undefined ? bookingData.encoreAllowed : true,
+      encore_suggestions: bookingData.encoreSuggestions || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    // Only add optional fields if they have valid values
-
-    if (bookingData.fee && bookingData.fee !== 0) {
+    // Handle special numeric fields
+    if (bookingData.fee !== undefined && bookingData.fee !== null && bookingData.fee !== '') {
       supabaseData.fee = bookingData.fee;
     }
-    if (bookingData.finalAmount && bookingData.finalAmount !== 0) {
+    if (bookingData.finalAmount !== undefined && bookingData.finalAmount !== null && bookingData.finalAmount !== '') {
       supabaseData.final_amount = bookingData.finalAmount;
     }
-    if (bookingData.deposit && bookingData.deposit !== 0) {
+    if (bookingData.deposit !== undefined && bookingData.deposit !== null && bookingData.deposit !== '') {
       supabaseData.deposit_amount = bookingData.deposit;
     }
-    if (bookingData.clientAddress && bookingData.clientAddress.trim() !== '') {
-      supabaseData.client_address = bookingData.clientAddress.trim();
+
+    // Add location fields with special mapping
+    if (bookingData.latitude !== undefined && bookingData.latitude !== null) {
+      supabaseData.map_latitude = bookingData.latitude;
+    }
+    if (bookingData.longitude !== undefined && bookingData.longitude !== null) {
+      supabaseData.map_longitude = bookingData.longitude;
     }
 
     // Add apply_now_link for Encore bookings
@@ -176,14 +217,25 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
-    // Map camelCase updates to snake_case
+    // Map camelCase updates to snake_case with special handling for certain fields
     const supabaseUpdates: any = {};
     Object.keys(updates).forEach(key => {
-      const snakeKey = this.camelToSnake(key);
+      // Special field mappings that don't follow simple camelToSnake rules
+      const fieldMappings: { [key: string]: string } = {
+        'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
+        'latitude': 'map_latitude',   // latitude maps to map_latitude
+        'longitude': 'map_longitude',  // longitude maps to map_longitude
+      };
+
+      // Use special mapping if exists, otherwise use standard camelToSnake
+      const snakeKey = fieldMappings[key] || this.camelToSnake(key);
       supabaseUpdates[snakeKey] = updates[key];
     });
 
     supabaseUpdates.updated_at = new Date().toISOString();
+
+    console.log(`🔄 [SUPABASE-UPDATE] Updating booking ${id} with fields:`, Object.keys(supabaseUpdates));
+    console.log(`🔄 [SUPABASE-UPDATE] Update values:`, JSON.stringify(supabaseUpdates, null, 2));
 
     const { data, error } = await supabase
       .from('bookings')
@@ -195,9 +247,16 @@ export class SupabaseBookingStorage {
 
     if (error) {
       console.error('❌ Failed to update booking in Supabase:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
+    console.log(`✅ [SUPABASE-UPDATE] Successfully updated booking ${id}`);
     return this.mapToCamelCase(data);
   }
 
