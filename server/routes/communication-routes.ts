@@ -187,148 +187,37 @@ export function setupCommunicationRoutes(app: any) {
           }
           
           if (downloadResult.success && downloadResult.content) {
-            try {
-              // Extract text content from HTML and parse to get only the new reply
-              const htmlContent = downloadResult.content;
-              console.log(`🔍 Raw HTML content (first 500 chars): ${htmlContent.substring(0, 500)}`);
+            // For client replies (messages with bookingId), show the FULL content
+            // No parsing or extraction - user decides what to extract
+            const htmlContent = downloadResult.content;
+            console.log(`📧 Processing client reply for booking ${msg.bookingId}`);
 
-              // Remove HTML tags and decode entities
-              let rawText = htmlContent
-                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                .replace(/<br\s*\/?>/gi, '\n')
-                .replace(/<\/p>/gi, '\n\n')
-                .replace(/<[^>]*>/g, '')
-                .replace(/&nbsp;/g, ' ')
-                .replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'")
-                .replace(/\s+/g, ' ')
-                .trim();
-              console.log(`✅ HTML processing completed successfully`);
-            } catch (htmlError) {
-              console.error(`❌ Error during HTML processing for message ${msg.id}:`, htmlError);
-              throw htmlError;
-            }
-            
-            console.log(`🔍 After HTML removal (first 500 chars): ${rawText.substring(0, 500)}`);
-
-            try {
-              // Extract the actual reply content using a specific pattern for this email format
-              // Look for content after "Booking ID: XXXX" and before "On [date] ... wrote:"
-              const bookingReplyPattern = /Booking ID: \d+\s*(.*?)(?:On \d{1,2} \w+ \d{4} at \d{1,2}:\d{2}.+?[,<]|On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:)/s;
-              const bookingMatch = rawText.match(bookingReplyPattern);
-
-              console.log(`🔍 Testing booking reply pattern: ${bookingReplyPattern.toString()}`);
-              console.log(`🔍 Pattern match result: ${bookingMatch ? 'FOUND' : 'NOT FOUND'}`);
-              if (bookingMatch) {
-                console.log(`🔍 Matched content: "${bookingMatch[1]}"`);
-              }
-            } catch (regexError) {
-              console.error(`❌ Error during regex processing for message ${msg.id}:`, regexError);
-              throw regexError;
-            }
-            
-            if (bookingMatch && bookingMatch[1].trim().length > 3) {
-              content = bookingMatch[1].trim();
-              console.log(`✅ Found booking reply content: ${content}`);
-            } else {
-              // Fallback: Try other patterns
-              const replyPatterns = [
-                // Look for content before "On [date/time] ... wrote:"
-                /^(.*?)(?:On \d{1,2}\/\d{1,2}\/\d{4}.+?wrote:|On \d{1,2} \w+ \d{4}.+?wrote:)/s,
-                // Look for content before quoted reply indicators
-                /^(.*?)(?:> .+)/s,
-                // Look for content before original message markers
-                /^(.*?)(?:-----Original Message-----)/s,
-                // Look for content before "From:" headers
-                /^(.*?)(?:From: .+@.+)/s,
-                // Look for content before timestamp patterns
-                /^(.*?)(?:\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2})/s,
-                // Simple pattern: everything before quoted content
-                /^([^>]+?)(?:>.+)/s
-              ];
-              
-              let foundMatch = false;
-              for (const pattern of replyPatterns) {
-                const match = rawText.match(pattern);
-                if (match && match[1].trim().length > 3) {
-                  let extractedContent = match[1].trim();
-                  
-                  // Clean up the extracted content to remove metadata and improve formatting
-                  extractedContent = extractedContent
-                    .replace(/^Client Reply - .+?\s+/i, '') // Remove "Client Reply - Subject" prefix
-                    .replace(/^BOOKING REPLY\s+/i, '') // Remove "BOOKING REPLY" prefix  
-                    .replace(/From: .+?\s+/gi, '') // Remove "From:" lines
-                    .replace(/Subject: .+?\s+/gi, '') // Remove "Subject:" lines
-                    .replace(/Date: .+?\s+/gi, '') // Remove "Date:" lines
-                    .replace(/Booking ID: \d+\s+/gi, '') // Remove "Booking ID:" lines
-                    .replace(/^Re: .+?\s+/gi, '') // Remove "Re:" subject lines at start
-                    .trim();
-                  
-                  // Find the actual message content after greeting
-                  const greetingMatch = extractedContent.match(/(Hi|Hello|Dear)\s+\w+[,\s]*(.*)/si);
-                  if (greetingMatch) {
-                    // Format with greeting on new line and proper spacing
-                    const greeting = greetingMatch[1] + ' ' + extractedContent.match(/(Hi|Hello|Dear)\s+(\w+)/i)?.[2] + ',';
-                    const messageContent = greetingMatch[2].trim();
-                    content = greeting + '\n\n' + messageContent;
-                  } else {
-                    content = extractedContent;
-                  }
-                  
-                  foundMatch = true;
-                  console.log(`✅ Found match with pattern: ${pattern.toString()}`);
-                  console.log(`✅ Extracted and formatted content: ${content}`);
-                  break;
-                }
-              }
-              
-              if (!foundMatch) {
-                console.log(`⚠️ No patterns matched, using manual line extraction`);
-                
-                // If no pattern matched, check if there's meaningful content at the beginning
-                const lines = rawText.split(/\n+/);
-                const meaningfulLines = [];
-                
-                for (const line of lines) {
-                  const cleanLine = line.trim();
-                  // Skip if line looks like headers, footers, or quoted content
-                  if (cleanLine && 
-                      !cleanLine.startsWith('>') && 
-                      !cleanLine.startsWith('From:') &&
-                      !cleanLine.startsWith('Subject:') &&
-                      !cleanLine.startsWith('Date:') &&
-                      !cleanLine.startsWith('On ') &&
-                      !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
-                      cleanLine.length > 3) {
-                    meaningfulLines.push(cleanLine);
-                  }
-                  // Stop if we hit quoted content
-                  if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
-                    break;
-                  }
-                }
-                
-                if (meaningfulLines.length > 0) {
-                  content = meaningfulLines.join('\n\n');
-                  console.log(`✅ Extracted meaningful lines: ${content}`);
-                } else {
-                  content = rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText;
-                  console.log(`⚠️ Using raw text: ${content}`);
-                }
-              }
-            }
-
-            
-            // Add proper formatting
-            content = content
-              .replace(/([.!?])\s+/g, '$1\n\n')  // Add line breaks after sentences
-              .replace(/\s{2,}/g, ' ')  // Remove multiple spaces
-              .replace(/\n{3,}/g, '\n\n')  // Limit to double line breaks
+            // Simple HTML to text conversion - preserve ALL content
+            let rawText = htmlContent
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+              .replace(/<br\s*\/?>/gi, '\n')
+              .replace(/<\/p>/gi, '\n\n')
+              .replace(/<\/div>/gi, '\n')
+              .replace(/<\/tr>/gi, '\n')
+              .replace(/<\/td>/gi, ' ')
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/&\#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+              .replace(/\s+/g, ' ')
+              .replace(/\n\s*\n\s*\n/g, '\n\n')
               .trim();
+            
+            console.log(`✅ Converted HTML to text - showing FULL client reply`);
+
+            // For client replies, show the COMPLETE message content
+            // No parsing or extraction - the user should see everything the client wrote
+            content = rawText;
           }
           
           messages.push({
