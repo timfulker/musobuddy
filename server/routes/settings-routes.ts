@@ -249,6 +249,7 @@ export async function registerSettingsRoutes(app: Express) {
           themeShowTerms: true,
           bookingDisplayLimit: "50",
           emailPrefix: user?.emailPrefix || null,
+          personalForwardEmail: null,
           invoiceClauses: {},
           customInvoiceClauses: []
         };
@@ -374,11 +375,14 @@ export async function registerSettingsRoutes(app: Express) {
     sanitizeInput,
     asyncHandler(async (req: any, res: any) => {
     try {
+      console.log('🚨 PATCH /api/settings endpoint hit');
+      console.log('🚨 Request body keys:', Object.keys(req.body || {}));
+
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      
+
       // PHASE 1 LOGGING: Backend API received data
       console.log('🔍 PHASE 1 - Backend API received data:');
       console.log('  📋 Contract Clauses:', JSON.stringify(req.body.contractClauses, null, 2));
@@ -387,6 +391,12 @@ export async function registerSettingsRoutes(app: Express) {
       
       // Process the request body to combine instrument-based gig types
       const processedBody = { ...req.body };
+
+      // DEBUG: Log what we received
+      console.log('🔍 DEBUG: Request body received:', {
+        hasPersonalForwardEmail: 'personalForwardEmail' in req.body,
+        personalForwardEmailValue: req.body.personalForwardEmail
+      });
       
       // Only generate AI gig types when instruments actually CHANGE (not just when present in request)
       if (processedBody.primaryInstrument !== undefined || processedBody.secondaryInstruments !== undefined) {
@@ -508,31 +518,30 @@ export async function registerSettingsRoutes(app: Express) {
         }
         
         await storage.updateUser(userId, { emailPrefix: prefixToSave });
-        // Remove from processedBody so it doesn't try to save to settings table
+        // Remove emailPrefix from processedBody so it doesn't try to save to settings table
         delete processedBody.emailPrefix;
-        // Also remove personalForwardEmail as it's handled separately
-        delete processedBody.personalForwardEmail;
+        // Keep personalForwardEmail in processedBody so it gets saved to settings table
       }
       
       // Handle personalForwardEmail changes even if emailPrefix wasn't updated
       if (processedBody.personalForwardEmail !== undefined && processedBody.emailPrefix === undefined) {
         console.log(`📧 Personal forward email update detected without prefix change`);
-        
+
         // Get current user and settings to check if personal email changed
         const currentUser = await safeDbCall(() => storage.getUserById(userId), null, 'getCurrentUser');
         const currentSettings = await safeDbCall(() => storage.getSettings(userId), null, 'getCurrentSettings');
-        
+
         const personalForwardEmail = processedBody.personalForwardEmail || null;
         const currentPersonalEmail = currentSettings?.personalForwardEmail || null;
         const personalEmailChanged = personalForwardEmail !== currentPersonalEmail;
-        
+
         // Update Mailgun route if personal email changed and user has an email prefix
         if (personalEmailChanged && currentUser?.emailPrefix) {
           console.log(`🔄 Updating Mailgun route for personal email change only`);
-          
+
           const { MailgunRouteManager } = await import('../core/mailgun-routes');
           const routeManager = new MailgunRouteManager();
-          
+
           // Create new route with updated personal email forwarding
           const routeResult = await routeManager.createUserEmailRoute(currentUser.emailPrefix, userId, personalForwardEmail);
           if (routeResult.success) {
@@ -541,6 +550,7 @@ export async function registerSettingsRoutes(app: Express) {
             console.error(`❌ Failed to update Mailgun route: ${routeResult.error}`);
           }
         }
+        // Don't delete personalForwardEmail - it needs to be saved to settings table
       }
       
       const updatedSettings = await safeDbCall(() => storage.updateSettings(userId, processedBody), null, 'updateSettings');

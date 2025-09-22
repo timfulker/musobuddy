@@ -1120,7 +1120,11 @@ export default function Settings() {
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
             type="button"
-            onClick={() => saveSettings.mutate(form.getValues())}
+            onClick={() => {
+              const formData = form.getValues();
+              console.log('🔍 Saving email settings with personalForwardEmail:', formData.personalForwardEmail);
+              saveSettings.mutate(formData);
+            }}
             disabled={saveSettings.isPending}
             className="bg-primary hover:bg-primary/90"
             data-testid="button-save-email"

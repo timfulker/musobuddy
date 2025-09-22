@@ -130,7 +130,15 @@ export class SettingsStorage {
       processedUpdates.invoice_payment_terms = processedUpdates.invoicePaymentTerms;
       delete processedUpdates.invoicePaymentTerms;
     }
-    
+
+    // personalForwardEmail is handled by Drizzle's column mapping - no manual conversion needed
+
+    // DEBUG: Check personalForwardEmail in processedUpdates
+    console.log('🔍 DEBUG: Storage layer - personalForwardEmail:', {
+      hasField: 'personalForwardEmail' in processedUpdates,
+      value: processedUpdates.personalForwardEmail
+    });
+
     // Contract clauses and invoice clauses are JSONB fields - no need to stringify
 
     // PHASE 1 LOGGING: Final data being sent to database
