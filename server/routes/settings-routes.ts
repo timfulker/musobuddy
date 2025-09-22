@@ -514,6 +514,35 @@ export async function registerSettingsRoutes(app: Express) {
         delete processedBody.personalForwardEmail;
       }
       
+      // Handle personalForwardEmail changes even if emailPrefix wasn't updated
+      if (processedBody.personalForwardEmail !== undefined && processedBody.emailPrefix === undefined) {
+        console.log(`📧 Personal forward email update detected without prefix change`);
+        
+        // Get current user and settings to check if personal email changed
+        const currentUser = await safeDbCall(() => storage.getUserById(userId), null, 'getCurrentUser');
+        const currentSettings = await safeDbCall(() => storage.getSettings(userId), null, 'getCurrentSettings');
+        
+        const personalForwardEmail = processedBody.personalForwardEmail || null;
+        const currentPersonalEmail = currentSettings?.personalForwardEmail || null;
+        const personalEmailChanged = personalForwardEmail !== currentPersonalEmail;
+        
+        // Update Mailgun route if personal email changed and user has an email prefix
+        if (personalEmailChanged && currentUser?.emailPrefix) {
+          console.log(`🔄 Updating Mailgun route for personal email change only`);
+          
+          const { MailgunRouteManager } = await import('../core/mailgun-routes');
+          const routeManager = new MailgunRouteManager();
+          
+          // Create new route with updated personal email forwarding
+          const routeResult = await routeManager.createUserEmailRoute(currentUser.emailPrefix, userId, personalForwardEmail);
+          if (routeResult.success) {
+            console.log(`✅ Updated Mailgun route for ${currentUser.emailPrefix}@enquiries.musobuddy.com with forwarding to: ${personalForwardEmail || 'MusoBuddy only'}`);
+          } else {
+            console.error(`❌ Failed to update Mailgun route: ${routeResult.error}`);
+          }
+        }
+      }
+      
       const updatedSettings = await safeDbCall(() => storage.updateSettings(userId, processedBody), null, 'updateSettings');
       console.log(`✅ Updated settings for user ${userId}`);
       
