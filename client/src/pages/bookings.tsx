@@ -2685,7 +2685,10 @@ export default function UnifiedBookings() {
                                     {booking.fee && (
                                       <span className="flex items-center gap-1 font-medium text-green-600">
                                         <PoundSterling className="w-4 h-4" />
-                                        {booking.fee}
+                                        {(() => {
+                                          const amountDisplay = getBookingAmountDisplayText(booking, settings);
+                                          return amountDisplay.main;
+                                        })()}
                                       </span>
                                     )}
                                     {/* Invoice Status Icon */}
