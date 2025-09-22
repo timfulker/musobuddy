@@ -220,55 +220,50 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
-    try {
-      // SIMPLIFIED: Just map the fields directly without complex swapping
-      // Since the database has totals in 'fee' column, we'll just update that
-      const supabaseUpdates: any = {};
+    // Map camelCase updates to snake_case with special handling for certain fields
+    const supabaseUpdates: any = {};
+    Object.keys(updates).forEach(key => {
+      // Special field mappings that don't follow simple camelToSnake rules
+      // CRITICAL: Due to incorrect data migration, we need to swap fee and final_amount
+      const fieldMappings: { [key: string]: string } = {
+        'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
+        'latitude': 'map_latitude',   // latitude maps to map_latitude
+        'longitude': 'map_longitude',  // longitude maps to map_longitude
+        'finalAmount': 'fee',          // SWAPPED: finalAmount should go to 'fee' column (where totals are stored)
+        'fee': 'final_amount',         // SWAPPED: fee should go to 'final_amount' column (currently unused)
+      };
 
-      Object.keys(updates).forEach(key => {
-        if (key === 'deposit') {
-          supabaseUpdates['deposit_amount'] = updates[key];
-        } else if (key === 'latitude') {
-          supabaseUpdates['map_latitude'] = updates[key];
-        } else if (key === 'longitude') {
-          supabaseUpdates['map_longitude'] = updates[key];
-        } else if (key === 'finalAmount') {
-          // Store the total amount in the 'fee' column (where existing data is)
-          supabaseUpdates['fee'] = updates[key];
-        } else if (key === 'fee') {
-          // Skip the performance fee - it's calculated, not stored
-          // We don't need to store it separately
-        } else {
-          // Standard camelCase to snake_case conversion
-          const snakeKey = this.camelToSnake(key);
-          supabaseUpdates[snakeKey] = updates[key];
-        }
+      // Use special mapping if exists, otherwise use standard camelToSnake
+      const snakeKey = fieldMappings[key] || this.camelToSnake(key);
+      supabaseUpdates[snakeKey] = updates[key];
+    });
+
+    supabaseUpdates.updated_at = new Date().toISOString();
+
+    console.log(`🔄 [SUPABASE-UPDATE] Updating booking ${id} with fields:`, Object.keys(supabaseUpdates));
+    console.log(`🔄 [SUPABASE-UPDATE] Update values:`, JSON.stringify(supabaseUpdates, null, 2));
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update(supabaseUpdates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Failed to update booking in Supabase:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
       });
-
-      supabaseUpdates.updated_at = new Date().toISOString();
-
-      console.log(`🔄 [SUPABASE-UPDATE] Updating booking ${id} with fields:`, Object.keys(supabaseUpdates));
-
-      const { data, error } = await supabase
-        .from('bookings')
-        .update(supabaseUpdates)
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Failed to update booking in Supabase:', error);
-        throw error;
-      }
-
-      console.log(`✅ [SUPABASE-UPDATE] Successfully updated booking ${id}`);
-      return this.mapToCamelCase(data);
-    } catch (error: any) {
-      console.error('❌ [updateBooking] Error:', error);
-      console.error('❌ [updateBooking] Stack:', error.stack);
       throw error;
     }
+
+    console.log(`✅ [SUPABASE-UPDATE] Successfully updated booking ${id}`);
+    return this.mapToCamelCase(data);
   }
 
   async deleteBooking(id: number, userId: string) {
@@ -330,11 +325,16 @@ export class SupabaseBookingStorage {
   }
 
   private mapToCamelCase(booking: any) {
-    if (!booking) {
-      return null;
-    }
+    // CRITICAL FIX: The data migration incorrectly stored total amounts in the 'fee' column
+    // We need to swap the mapping until the database is corrected
+    // - Database 'fee' column contains the total amount (should be in final_amount)
+    // - Database 'final_amount' column is empty (should contain the total)
+    // - Performance fee should be calculated as: total - travel_expense
 
-    // ULTRA SIMPLE: Just map the fields directly without any calculations
+    const totalAmount = booking.fee || booking.final_amount || null;
+    const travelExpense = booking.travel_expense ?? 0;  // Use nullish coalescing to preserve 0 values
+    const performanceFee = totalAmount !== null ? totalAmount - travelExpense : totalAmount;
+
     return {
       id: booking.id,
       userId: booking.user_id,
@@ -348,10 +348,8 @@ export class SupabaseBookingStorage {
       eventDate: booking.event_date,
       eventTime: booking.event_time,
       eventEndTime: booking.event_end_time,
-      // SIMPLIFIED: The 'fee' column contains totals, so map it to finalAmount
-      // Calculate performance fee on demand if needed
-      fee: booking.fee ? (booking.fee - (booking.travel_expense || 0)) : null,
-      finalAmount: booking.fee || booking.final_amount || null, // Total is in 'fee' column
+      fee: performanceFee, // Calculated performance fee (total - travel)
+      finalAmount: totalAmount, // Total amount (currently stored in 'fee' column)
       deposit: booking.deposit_amount, // Supabase uses deposit_amount
       status: booking.status,
       notes: booking.notes,
@@ -369,7 +367,7 @@ export class SupabaseBookingStorage {
       applyNowLink: booking.apply_now_link, // Map Encore apply link
       parkingInfo: booking.parking_info,
       venueContactInfo: booking.venue_contact_info,
-      travelExpense: booking.travel_expense,
+      travelExpense: travelExpense,
       what3words: booking.what3words,
       venueContact: booking.venue_contact,
       soundTechContact: booking.sound_tech_contact,
@@ -404,11 +402,6 @@ export class SupabaseBookingStorage {
       longitude: booking.map_longitude, // Supabase uses map_longitude
       fieldLocks: booking.field_locks || {} // Add fieldLocks mapping
     };
-    } catch (error) {
-      console.error('❌ [mapToCamelCase] Error mapping booking:', error);
-      console.error('❌ [mapToCamelCase] Booking data:', booking);
-      throw error;
-    }
   }
 
   private camelToSnake(str: string): string {
