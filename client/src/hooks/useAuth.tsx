@@ -22,6 +22,7 @@ interface DatabaseUser {
 // Compatibility interface to match Firebase useAuth
 interface CompatibleUser extends Partial<DatabaseUser> {
   uid: string; // Supabase user.id
+  userId: string; // Same as uid for backward compatibility
   email: string;
   emailVerified: boolean; // from Supabase user.email_confirmed_at
   displayName?: string; // Constructed from firstName + lastName
@@ -105,6 +106,7 @@ export function useAuth() {
           // Create compatible user object
           const compatibleUser: CompatibleUser = {
             uid: session.user.id,
+            userId: session.user.id, // Same as uid for backward compatibility
             email: session.user.email || '',
             emailVerified: !!session.user.email_confirmed_at,
             displayName: databaseUser.firstName && databaseUser.lastName
@@ -298,7 +300,10 @@ export function useAuth() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: inviteCode ? { inviteCode } : undefined
+          queryParams: {
+            ...(inviteCode ? { inviteCode } : {}),
+            prompt: 'select_account'
+          }
         }
       });
 
