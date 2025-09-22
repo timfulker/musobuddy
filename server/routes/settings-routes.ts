@@ -456,8 +456,9 @@ export async function registerSettingsRoutes(app: Express) {
         const newPrefix = processedBody.emailPrefix;
         console.log(`📧 Checking email prefix availability: ${newPrefix}`);
 
-        // Get current user to check if prefix changed
+        // Get current user and settings to check if prefix or personal email changed
         const currentUser = await safeDbCall(() => storage.getUserById(userId), null, 'getCurrentUser');
+        const currentSettings = await safeDbCall(() => storage.getSettings(userId), null, 'getCurrentSettings');
         
         // Check if the prefix is already taken by another user
         if (newPrefix && newPrefix.trim()) {
@@ -477,22 +478,32 @@ export async function registerSettingsRoutes(app: Express) {
         
         // Get personal forward email from the request for Mailgun routing (optional field)
         const personalForwardEmail = processedBody.personalForwardEmail || null;
+        const currentPersonalEmail = currentSettings?.personalForwardEmail || null;
         
-        // Update Mailgun route if prefix changed and we have a prefix
-        if (prefixToSave && prefixToSave !== currentUser?.emailPrefix) {
+        // Update Mailgun route if prefix changed OR personal forwarding email changed, and we have a prefix
+        const prefixChanged = prefixToSave !== currentUser?.emailPrefix;
+        const personalEmailChanged = personalForwardEmail !== currentPersonalEmail;
+        const hasPrefix = prefixToSave || currentUser?.emailPrefix;
+        
+        if (hasPrefix && (prefixChanged || personalEmailChanged)) {
+          const activePrefix = prefixToSave || currentUser?.emailPrefix;
+          console.log(`🔄 Updating Mailgun route - Prefix changed: ${prefixChanged}, Personal email changed: ${personalEmailChanged}`);
+          
           const { MailgunRouteManager } = await import('../core/mailgun-routes');
           const routeManager = new MailgunRouteManager();
           
-          // Delete old route if exists
+          // Delete old route if exists (we'll recreate with updated settings)
           if (currentUser?.emailPrefix) {
             console.log(`🗑️ Deleting old Mailgun route for prefix: ${currentUser.emailPrefix}`);
             // Note: We'd need to store route IDs to delete properly, for now this creates new routes
           }
           
-          // Create new route with optional personal email forwarding
-          const routeResult = await routeManager.createUserEmailRoute(prefixToSave, userId, personalForwardEmail);
+          // Create new route with current/updated personal email forwarding
+          const routeResult = await routeManager.createUserEmailRoute(activePrefix, userId, personalForwardEmail);
           if (routeResult.success) {
-            console.log(`✅ Created Mailgun route with forwarding to: ${personalForwardEmail || 'MusoBuddy only'}`);
+            console.log(`✅ Updated Mailgun route for ${activePrefix}@enquiries.musobuddy.com with forwarding to: ${personalForwardEmail || 'MusoBuddy only'}`);
+          } else {
+            console.error(`❌ Failed to update Mailgun route: ${routeResult.error}`);
           }
         }
         
