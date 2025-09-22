@@ -395,7 +395,11 @@ export async function registerSettingsRoutes(app: Express) {
       // DEBUG: Log what we received
       console.log('🔍 DEBUG: Request body received:', {
         hasPersonalForwardEmail: 'personalForwardEmail' in req.body,
-        personalForwardEmailValue: req.body.personalForwardEmail
+        personalForwardEmailValue: req.body.personalForwardEmail,
+        hasHomeAddressLine1: 'homeAddressLine1' in req.body,
+        homeAddressLine1Value: req.body.homeAddressLine1,
+        hasHomeAddressLine2: 'homeAddressLine2' in req.body,
+        homeAddressLine2Value: req.body.homeAddressLine2
       });
       
       // Only generate AI gig types when instruments actually CHANGE (not just when present in request)

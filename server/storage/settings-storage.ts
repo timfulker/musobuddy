@@ -107,23 +107,15 @@ export class SettingsStorage {
       delete processedUpdates.contractClauses;
     }
     
-    // Handle home address field mapping from camelCase frontend to snake_case database
-    if (processedUpdates.homeAddressLine1 !== undefined) {
-      processedUpdates.home_address_line1 = processedUpdates.homeAddressLine1;
-      delete processedUpdates.homeAddressLine1;
-    }
-    if (processedUpdates.homeAddressLine2 !== undefined) {
-      processedUpdates.home_address_line2 = processedUpdates.homeAddressLine2;
-      delete processedUpdates.homeAddressLine2;
-    }
-    if (processedUpdates.homeCity !== undefined) {
-      processedUpdates.home_city = processedUpdates.homeCity;
-      delete processedUpdates.homeCity;
-    }
-    if (processedUpdates.homePostcode !== undefined) {
-      processedUpdates.home_postcode = processedUpdates.homePostcode;
-      delete processedUpdates.homePostcode;
-    }
+    // CRITICAL FIX: Drizzle uses TypeScript property names (camelCase), not database column names (snake_case)
+    // The frontend already sends the correct camelCase field names, so we DON'T need to convert them!
+    // The schema mapping handles the conversion to snake_case automatically
+
+    // Remove the incorrect field mapping - these conversions were causing the issue!
+    // Frontend sends: homeAddressLine1 → Drizzle schema maps to: home_address_line1 (automatic)
+
+    console.log('🔍 CRITICAL FIX - Using camelCase field names for Drizzle (no conversion needed)');
+    console.log('  📥 Frontend field names are already correct for Drizzle TypeScript interface');
     
     // Handle payment terms field mapping from camelCase frontend to snake_case database
     if (processedUpdates.invoicePaymentTerms !== undefined) {
@@ -139,6 +131,26 @@ export class SettingsStorage {
       value: processedUpdates.personalForwardEmail
     });
 
+    // DEBUG: Check home address fields in processedUpdates (using correct camelCase names)
+    console.log('🔍 DEBUG: Storage layer - home address fields (camelCase):', {
+      homeAddressLine1: {
+        hasField: 'homeAddressLine1' in processedUpdates,
+        value: processedUpdates.homeAddressLine1
+      },
+      homeAddressLine2: {
+        hasField: 'homeAddressLine2' in processedUpdates,
+        value: processedUpdates.homeAddressLine2
+      },
+      homeCity: {
+        hasField: 'homeCity' in processedUpdates,
+        value: processedUpdates.homeCity
+      },
+      homePostcode: {
+        hasField: 'homePostcode' in processedUpdates,
+        value: processedUpdates.homePostcode
+      }
+    });
+
     // Contract clauses and invoice clauses are JSONB fields - no need to stringify
 
     // PHASE 1 LOGGING: Final data being sent to database
@@ -148,8 +160,25 @@ export class SettingsStorage {
     console.log('  📄 Invoice Clauses (invoice_clauses):', JSON.stringify(processedUpdates.invoice_clauses, null, 2));
     console.log('  📝 Custom Invoice Clauses (custom_invoice_clauses):', JSON.stringify(processedUpdates.custom_invoice_clauses, null, 2));
 
+    // CRITICAL DEBUG: Log the exact data being sent to the database
+    console.log('🔍 CRITICAL - Exact processedUpdates object being sent to database:');
+    console.log(JSON.stringify(processedUpdates, null, 2));
+
+    // Build the update object that will be passed to Drizzle
+    const updateData = { ...processedUpdates, updatedAt: new Date() };
+    console.log('🔍 CRITICAL - Update data object passed to Drizzle:');
+    console.log(JSON.stringify(updateData, null, 2));
+
+    // CRITICAL DEBUG: Verify the home address fields are present in the update object (using correct camelCase names)
+    console.log('🔍 CRITICAL - Home address field presence check (camelCase for Drizzle):');
+    console.log('  ✓ homeAddressLine1:', 'homeAddressLine1' in updateData, '→', updateData.homeAddressLine1);
+    console.log('  ✓ homeAddressLine2:', 'homeAddressLine2' in updateData, '→', updateData.homeAddressLine2);
+    console.log('  ✓ homeCity:', 'homeCity' in updateData, '→', updateData.homeCity);
+    console.log('  ✓ homePostcode:', 'homePostcode' in updateData, '→', updateData.homePostcode);
+    console.log('  ✓ personalForwardEmail:', 'personalForwardEmail' in updateData, '→', updateData.personalForwardEmail);
+
     const result = await db.update(userSettings)
-      .set({ ...processedUpdates, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(userSettings.userId, userId))
       .returning();
     
@@ -159,6 +188,14 @@ export class SettingsStorage {
     console.log('  📝 Custom Clauses:', JSON.stringify(result[0]?.customClauses, null, 2));
     console.log('  📄 Invoice Clauses:', JSON.stringify(result[0]?.invoiceClauses, null, 2));
     console.log('  📝 Custom Invoice Clauses:', JSON.stringify(result[0]?.customInvoiceClauses, null, 2));
+
+    // CRITICAL DEBUG: Log the exact home address fields returned from database
+    console.log('🔍 CRITICAL - Home address fields returned from database:');
+    console.log('  🏠 homeAddressLine1:', result[0]?.homeAddressLine1);
+    console.log('  🏠 homeAddressLine2:', result[0]?.homeAddressLine2);
+    console.log('  🏠 homeCity:', result[0]?.homeCity);
+    console.log('  🏠 homePostcode:', result[0]?.homePostcode);
+    console.log('  📧 personalForwardEmail:', result[0]?.personalForwardEmail);
     
     return result[0];
   }
