@@ -472,8 +472,8 @@ export async function registerSettingsRoutes(app: Express) {
         // Convert empty string to null to avoid unique constraint violations
         const prefixToSave = newPrefix && newPrefix.trim() ? newPrefix.trim() : null;
         
-        // Get personal forward email from the request for Mailgun routing
-        const personalForwardEmail = processedBody.personalForwardEmail;
+        // Get personal forward email from the request for Mailgun routing (optional field)
+        const personalForwardEmail = processedBody.personalForwardEmail || null;
         
         // Update Mailgun route if prefix changed and we have a prefix
         if (prefixToSave && prefixToSave !== existingUser?.emailPrefix) {
@@ -496,6 +496,8 @@ export async function registerSettingsRoutes(app: Express) {
         await storage.updateUser(userId, { emailPrefix: prefixToSave });
         // Remove from processedBody so it doesn't try to save to settings table
         delete processedBody.emailPrefix;
+        // Also remove personalForwardEmail as it's handled separately
+        delete processedBody.personalForwardEmail;
       }
       
       const updatedSettings = await safeDbCall(() => storage.updateSettings(userId, processedBody), null, 'updateSettings');
