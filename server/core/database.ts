@@ -35,8 +35,7 @@ if (ENV.isDevelopment) {
     if (supabaseUrl && dbPassword) {
       connectionString = buildSupabaseDirectConnectionString(supabaseUrl, dbPassword);
     } else {
-      // Final fallback to DATABASE_URL
-      connectionString = process.env.DATABASE_URL;
+      throw new Error('SUPABASE_URL_DEV and SUPABASE_DB_PASSWORD_DEV are required for development');
     }
   }
 } else {
@@ -77,8 +76,6 @@ const hasDirectUrl = ENV.isDevelopment ? process.env.SUPABASE_DB_URL_DEV : proce
 
 if (hasDirectUrl) {
   console.log(`🔍 Using direct connection: ${directDbVar}`);
-} else if (connectionString === process.env.DATABASE_URL) {
-  console.log(`🔍 Using fallback: DATABASE_URL`);
 } else {
   console.log(`🔍 Using constructed connection: SUPABASE_URL_${envPrefix}`);
 }
@@ -102,7 +99,7 @@ if (parts) {
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
-  max: 10, // Increase connection limit for Neon
+  max: 10, // Increase connection limit for Supabase
   min: 2, // Keep connections alive  
   idleTimeoutMillis: 30000, // Shorter idle timeout
   acquireTimeoutMillis: 5000, // Shorter acquire timeout
