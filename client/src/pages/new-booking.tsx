@@ -1341,8 +1341,8 @@ export default function NewBookingPage({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">
-                            Venue Name *
-                            <span className="ml-2 text-xs text-blue-600 font-normal">(Type venue name then press Tab to search)</span>
+                            Venue Name
+                            <span className="ml-2 text-xs text-blue-600 font-normal">(Optional - Type venue name then press Tab to search)</span>
                           </FormLabel>
                           <FormControl>
                             <AddressAutocomplete
