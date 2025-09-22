@@ -82,7 +82,20 @@ USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND
 CREATE POLICY "compliance_documents_delete_own" ON compliance_documents FOR DELETE 
 USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = compliance_documents.user_id) OR is_admin(auth.uid()));
 
--- 8. Bookings table policies (Priority 2)
+-- 8. Client Communications table policies  
+CREATE POLICY "client_communications_select_own" ON client_communications FOR SELECT 
+USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = client_communications.user_id) OR is_admin(auth.uid()));
+
+CREATE POLICY "client_communications_insert_own" ON client_communications FOR INSERT 
+WITH CHECK (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = client_communications.user_id) OR is_admin(auth.uid()));
+
+CREATE POLICY "client_communications_update_own" ON client_communications FOR UPDATE 
+USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = client_communications.user_id) OR is_admin(auth.uid()));
+
+CREATE POLICY "client_communications_delete_own" ON client_communications FOR DELETE 
+USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = client_communications.user_id) OR is_admin(auth.uid()));
+
+-- 9. Bookings table policies (Priority 2)
 CREATE POLICY "bookings_select_own" ON bookings FOR SELECT 
 USING (EXISTS (SELECT 1 FROM users u WHERE u.supabase_uid = auth.uid()::text AND u.id = bookings.user_id) OR is_admin(auth.uid()));
 
