@@ -331,16 +331,11 @@ export class SupabaseBookingStorage {
 
   private mapToCamelCase(booking: any) {
     if (!booking) {
-      console.error('❌ [mapToCamelCase] Received null/undefined booking');
       return null;
     }
 
-    try {
-      // SIMPLIFIED: Just read the data as it is
-      // The 'fee' column contains the total amount (due to migration issue)
-      // We calculate performance fee on the fly if needed
-
-      return {
+    // ULTRA SIMPLE: Just map the fields directly without any calculations
+    return {
       id: booking.id,
       userId: booking.user_id,
       title: booking.title,
