@@ -14,7 +14,7 @@ export default function SubscriptionUpdatePayment() {
   // Authentication is handled by App.tsx routing - no need for redirect here
 
   const handleStartSubscription = async () => {
-    if (!user?.userId || !user?.email) {
+    if (!user?.uid || !user?.email) {
       toast({
         title: "Error",
         description: "User information not available. Please log in again.",
@@ -35,7 +35,7 @@ export default function SubscriptionUpdatePayment() {
         },
         body: JSON.stringify({
           userEmail: user.email,
-          userId: user.userId,
+          userId: user.uid,
         }),
       });
 
