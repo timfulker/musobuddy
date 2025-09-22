@@ -109,11 +109,14 @@ export class SupabaseBookingStorage {
     };
 
     // Handle special numeric fields
-    if (bookingData.fee !== undefined && bookingData.fee !== null && bookingData.fee !== '') {
-      supabaseData.fee = bookingData.fee;
-    }
+    // CRITICAL: Due to incorrect data migration, we swap fee and final_amount storage
+    // The 'fee' column in database actually stores the total amount
+    // The 'final_amount' column in database is unused/empty
     if (bookingData.finalAmount !== undefined && bookingData.finalAmount !== null && bookingData.finalAmount !== '') {
-      supabaseData.final_amount = bookingData.finalAmount;
+      supabaseData.fee = bookingData.finalAmount; // Store total in 'fee' column (matching existing data)
+    }
+    if (bookingData.fee !== undefined && bookingData.fee !== null && bookingData.fee !== '') {
+      supabaseData.final_amount = bookingData.fee; // Store performance fee in 'final_amount' column (currently unused)
     }
     if (bookingData.deposit !== undefined && bookingData.deposit !== null && bookingData.deposit !== '') {
       supabaseData.deposit_amount = bookingData.deposit;
@@ -221,10 +224,13 @@ export class SupabaseBookingStorage {
     const supabaseUpdates: any = {};
     Object.keys(updates).forEach(key => {
       // Special field mappings that don't follow simple camelToSnake rules
+      // CRITICAL: Due to incorrect data migration, we need to swap fee and final_amount
       const fieldMappings: { [key: string]: string } = {
         'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
         'latitude': 'map_latitude',   // latitude maps to map_latitude
         'longitude': 'map_longitude',  // longitude maps to map_longitude
+        'finalAmount': 'fee',          // SWAPPED: finalAmount should go to 'fee' column (where totals are stored)
+        'fee': 'final_amount',         // SWAPPED: fee should go to 'final_amount' column (currently unused)
       };
 
       // Use special mapping if exists, otherwise use standard camelToSnake
@@ -319,6 +325,16 @@ export class SupabaseBookingStorage {
   }
 
   private mapToCamelCase(booking: any) {
+    // CRITICAL FIX: The data migration incorrectly stored total amounts in the 'fee' column
+    // We need to swap the mapping until the database is corrected
+    // - Database 'fee' column contains the total amount (should be in final_amount)
+    // - Database 'final_amount' column is empty (should contain the total)
+    // - Performance fee should be calculated as: total - travel_expense
+
+    const totalAmount = booking.fee || booking.final_amount || null;
+    const travelExpense = booking.travel_expense || 0;
+    const performanceFee = totalAmount && travelExpense ? totalAmount - travelExpense : totalAmount;
+
     return {
       id: booking.id,
       userId: booking.user_id,
@@ -332,8 +348,8 @@ export class SupabaseBookingStorage {
       eventDate: booking.event_date,
       eventTime: booking.event_time,
       eventEndTime: booking.event_end_time,
-      fee: booking.fee,
-      finalAmount: booking.final_amount,
+      fee: performanceFee, // Calculated performance fee (total - travel)
+      finalAmount: totalAmount, // Total amount (currently stored in 'fee' column)
       deposit: booking.deposit_amount, // Supabase uses deposit_amount
       status: booking.status,
       notes: booking.notes,
