@@ -380,8 +380,14 @@ export default function Conversation() {
       });
       setEditedValues(initialEditedValues);
       
-      // Pre-select all found fields and set default modes
-      const fields = Object.keys(extracted).filter(key => extracted[key] !== null && extracted[key] !== '');
+      // Pre-select all found fields and set default modes (using same logic as UI display)
+      const fields = Object.keys(extracted).filter(key => {
+        const value = extracted[key];
+        // Skip fields with no meaningful value (but allow boolean false)
+        if (value === null || value === undefined || value === '') return false;
+        if (typeof value === 'boolean' && value === false && key !== 'clientConfirmsBooking' && key !== 'requestsContract') return false;
+        return true;
+      });
       setSelectedFields(new Set(fields));
       
       // Set default modes (replace for most fields, append for notes)
