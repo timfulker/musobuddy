@@ -30,11 +30,7 @@ const invoiceFormSchema = z.object({
   ccEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
   clientAddress: z.string().optional(),
   venueAddress: z.string().optional(),
-  amount: z.string().min(1, "Amount is required").transform((val) => {
-    // Convert to number for decimal database field
-    const num = parseFloat(val);
-    return isNaN(num) || num <= 0 ? 0 : num;
-  }),
+  amount: z.coerce.string().min(1, "Amount is required"),
   dueDate: z.string().min(1, "Due date is required").transform((dateStr) => {
     // Transform to Date object for database timestamp field
     return new Date(dateStr);
@@ -497,6 +493,7 @@ export default function Invoices() {
 
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    console.log('🚀 [INVOICE-FORM] onSubmit function called');
     console.log('📤 Submitting invoice with data:', data);
     console.log('📤 BookingId being sent:', data.bookingId);
     
@@ -507,15 +504,7 @@ export default function Invoices() {
       validationIssues.push("Client name cannot be empty");
     }
     
-    const amountStr = typeof data.amount === 'string' ? data.amount.trim() : String(data.amount || '');
-    if (!amountStr) {
-      validationIssues.push("Amount is required");
-    } else {
-      const amount = parseFloat(amountStr);
-      if (isNaN(amount) || amount <= 0) {
-        validationIssues.push("Amount must be a valid number greater than 0");
-      }
-    }
+    // Amount validation is handled by Zod schema, so data.amount is already validated and converted
     
     if (!data.dueDate) {
       validationIssues.push("Due date is required");
@@ -554,7 +543,7 @@ export default function Invoices() {
       ccEmail: data.ccEmail?.trim() || null,
       clientAddress: data.clientAddress?.trim() || null,
       venueAddress: data.venueAddress?.trim() || null,
-      amount: typeof data.amount === 'string' ? data.amount.trim() : String(data.amount || ''),
+      amount: data.amount, // Already validated and converted to string by Zod schema
       dueDate: data.dueDate, // Keep as string - server will convert
       performanceDate: data.performanceDate || null,
       performanceFee: data.performanceFee?.trim() || null,
@@ -1592,7 +1581,10 @@ export default function Invoices() {
                     : "Get started by creating your first invoice."
                   }
                 </p>
-                <Button onClick={() => setIsDialogOpen(true)}>
+                <Button onClick={() => {
+                  console.log('🔍 Create Invoice button clicked - opening dialog');
+                  setIsDialogOpen(true);
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Create Invoice
                 </Button>

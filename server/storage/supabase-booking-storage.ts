@@ -200,7 +200,8 @@ export class SupabaseBookingStorage {
       .from('bookings')
       .select('*')
       .eq('user_id', userId)
-      .order('event_date', { ascending: false });
+      .order('event_date', { ascending: false })
+      .limit(50000); // Remove Supabase's 1000 default limit
 
     console.log('🔍 [SUPABASE-BOOKINGS] Query result:', data?.length || 0, 'bookings found');
 

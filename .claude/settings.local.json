@@ -45,7 +45,9 @@
       "Bash(export PGPASSWORD='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvaWhvZGFkZXZ1ZGpvaGlibWJ3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODExNjM3NiwiZXhwIjoyMDczNjkyMzc2fQ.koxbsDh-9DdQwc3OaDD7zLST2f3RWH_3WFOu-CdkCkM')",
       "Bash(git checkout:*)",
       "Bash(export PGPASSWORD='dbp8vugbuk9PKBbjn')",
-      "Bash(export PGPASSWORD='EQLvUvkTkT2dyk')"
+      "Bash(export PGPASSWORD='EQLvUvkTkT2dyk')",
+      "Bash(lsof:*)",
+      "Bash(xargs -r kill -9)"
     ],
     "deny": [],
     "ask": [],

@@ -132,9 +132,8 @@ export function registerCalendarImportRoutes(app: Express) {
         
         // Check if we should skip past events (from request body)
         const skipPastEvents = req.body?.skipPastEvents || false;
-        // Get today's date - if environment date is far in future, use reasonable fallback
-        const systemDate = new Date();
-        const today = systemDate.getFullYear() > 2024 ? new Date('2024-09-20') : systemDate;
+        // Get today's date - use actual system date
+        const today = new Date();
         today.setHours(0, 0, 0, 0); // Start of today
 
         console.log(`📅 Calendar import using reference date: ${today.toISOString().split('T')[0]} (skipPastEvents: ${skipPastEvents})`)
