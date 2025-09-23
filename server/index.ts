@@ -45,6 +45,20 @@ function isDuplicateEmail(webhookData: any): boolean {
   return false;
 }
 
+/**
+ * Normalizes email prefix by stripping development tags (+dev, +test, dev- prefix)
+ * Allows development testing with tagged emails while maintaining user lookup compatibility
+ * Examples: 
+ *   tim+dev → tim
+ *   sarah+test → sarah  
+ *   dev-tim → tim
+ */
+function normalizeEmailPrefix(emailPrefix: string): string {
+  return emailPrefix
+    .replace(/\+(dev|test|staging).*$/i, '') // Remove +dev, +test, +staging tags
+    .replace(/^(dev|test|staging)-/i, '');    // Remove dev-, test-, staging- prefixes
+}
+
 // CORS middleware for R2-hosted collaborative forms
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -442,7 +456,8 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
         
         // Extract user from recipient email prefix
         const recipientMatch = recipient.match(/([^@]+)@/);
-        const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        const rawEmailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        const emailPrefix = normalizeEmailPrefix(rawEmailPrefix); // Strip dev tags for user lookup
         
         if (emailPrefix) {
           const user = await storage.getUserByEmailPrefix(emailPrefix);
@@ -655,7 +670,8 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
         const { storage } = await import('./core/storage');
         const recipient = emailData.recipient || emailData.To || '';
         const recipientMatch = recipient.match(/([^@]+)@/);
-        const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        const rawEmailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        const emailPrefix = normalizeEmailPrefix(rawEmailPrefix); // Strip dev tags for user lookup
         
         if (emailPrefix) {
           const user = await storage.getUserByEmailPrefix(emailPrefix);
