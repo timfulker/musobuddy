@@ -212,7 +212,7 @@ export default function Invoices() {
                 amount: booking.finalAmount || "",
                 dueDate: dueDate.toISOString().split('T')[0],
                 performanceDate: performanceDate,
-                performanceFee: booking.fee || "",
+                performanceFee: booking.fee ? booking.fee.toString() : "",
                 depositPaid: "",
                 performanceDuration: booking.performanceDuration || "", // Load from booking
                 gigType: booking.gigType || "", // Load from booking
@@ -1081,12 +1081,7 @@ export default function Invoices() {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                    console.log('🚨 [INVOICE-FORM] Form validation errors:', errors);
-                    console.log('🚨 [INVOICE-FORM] performanceFee error details:', errors.performanceFee);
-                    console.log('🚨 [INVOICE-FORM] Form values:', form.getValues());
-                    console.log('🚨 [INVOICE-FORM] performanceFee value type:', typeof form.getValues().performanceFee, 'value:', form.getValues().performanceFee);
-                  })} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
 
                       <FormField
