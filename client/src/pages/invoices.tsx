@@ -1318,8 +1318,12 @@ export default function Invoices() {
                       <Button type="button" variant="outline" onClick={handleDialogClose}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createInvoiceMutation.isPending}>
-                        {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
+                      <Button type="submit" disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}>
+                        {editingInvoice ? (
+                          updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"
+                        ) : (
+                          createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"
+                        )}
                       </Button>
                     </div>
                   </form>
