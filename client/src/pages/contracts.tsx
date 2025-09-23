@@ -389,6 +389,10 @@ export default function Contracts() {
       };
       
       console.log('📋 Contract Data being sent:', {
+        enquiryId: data.enquiryId,
+        parsedEnquiryId: data.enquiryId ? parseInt(data.enquiryId.toString()) : null,
+        eventTime: data.eventTime,
+        eventEndTime: data.eventEndTime,
         fee: data.fee || "0.00",
         travel_expenses: travelToSave,
         originalFee,
@@ -471,25 +475,15 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async ({ id, contractData }: { id: number, contractData: any }) => {
-      // Step 1: Update contract in database
+      console.log('📝 Updating contract in database and regenerating PDF...');
+
+      // Update contract in database - this now also regenerates the PDF automatically
       const updatedContract = await apiRequest(`/api/contracts/${id}`, {
         method: "PATCH",
         body: JSON.stringify(contractData),
       });
 
-      // Step 2: Update in R2 cloud storage (overwrite existing)
-      console.log('☁️ Updating contract in R2 storage...');
-      try {
-        const r2Response = await apiRequest(`/api/contracts/${id}/r2-url`, {
-          method: 'GET',
-        });
-        const r2Data = await r2Response.json();
-        console.log('✅ Contract updated in R2:', r2Data.url);
-        updatedContract.cloudStorageUrl = r2Data.url;
-      } catch (error) {
-        console.warn('⚠️ Contract updated but R2 update failed');
-      }
-
+      console.log('✅ Contract updated with new PDF:', updatedContract.cloudStorageUrl);
       return updatedContract;
     },
     onSuccess: (contract) => {

@@ -42,6 +42,14 @@ export class ContractStorage {
   }
 
   async createContract(contractData: any) {
+    console.log(`📥 [CONTRACT-STORAGE] Incoming contract data:`, {
+      enquiryId: contractData.enquiryId,
+      eventTime: contractData.eventTime,
+      eventEndTime: contractData.eventEndTime,
+      hasEventTime: !!contractData.eventTime,
+      hasEventEndTime: !!contractData.eventEndTime
+    });
+
     try {
       // FIXED: Align with actual schema fields
       const result = await db.insert(contracts).values({
@@ -82,6 +90,16 @@ export class ContractStorage {
         createdAt: new Date(),
         updatedAt: new Date(),
       }).returning();
+
+      console.log(`📊 [CONTRACT-STORAGE] Created contract with:`, {
+        id: result[0]?.id,
+        enquiryId: result[0]?.enquiryId,
+        eventTime: result[0]?.eventTime,
+        eventEndTime: result[0]?.eventEndTime,
+        hasEventTime: !!result[0]?.eventTime,
+        hasEventEndTime: !!result[0]?.eventEndTime
+      });
+
       return result[0];
     } catch (error: any) {
       // Handle potential duplicate contract numbers by adding suffix

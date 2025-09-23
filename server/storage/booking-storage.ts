@@ -309,8 +309,9 @@ export class BookingStorage {
       updatedAt: new Date(),
     };
 
-    console.log(`🔍 [ADMIN] Updating booking #${id} for userId ${userId}`);
-    console.log(`🔍 [ADMIN] Update data:`, JSON.stringify(setData, null, 2));
+    console.log(`🔍 [BOOKING-UPDATE] Updating booking #${id} for userId ${userId}`);
+    console.log(`🔍 [BOOKING-UPDATE] Update data:`, JSON.stringify(setData, null, 2));
+    console.log(`🔍 [BOOKING-UPDATE] EventTime: ${setData.eventTime}, EventEndTime: ${setData.eventEndTime}`);
     
     const result = await db.update(bookings)
       .set(setData)

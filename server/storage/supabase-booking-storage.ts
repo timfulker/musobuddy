@@ -237,6 +237,9 @@ export class SupabaseBookingStorage {
     console.log(`🔄 [SUPABASE-UPDATE] Updating booking ${id} with fields:`, Object.keys(supabaseUpdates));
     console.log(`🔄 [SUPABASE-UPDATE] Update values:`, JSON.stringify(supabaseUpdates, null, 2));
 
+    console.log(`🔍 [SUPABASE-UPDATE-DEBUG] About to update booking ${id} for user ${userId}`);
+    console.log(`🔍 [SUPABASE-UPDATE-DEBUG] Final update object:`, supabaseUpdates);
+
     const { data, error } = await supabase
       .from('bookings')
       .update(supabaseUpdates)
@@ -244,6 +247,9 @@ export class SupabaseBookingStorage {
       .eq('user_id', userId)
       .select()
       .single();
+
+    console.log(`🔍 [SUPABASE-UPDATE-RESULT] Update completed - Data:`, data);
+    console.log(`🔍 [SUPABASE-UPDATE-RESULT] Update completed - Error:`, error);
 
     if (error) {
       console.error('❌ Failed to update booking in Supabase:', error);

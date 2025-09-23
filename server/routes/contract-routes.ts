@@ -340,6 +340,7 @@ export function registerContractRoutes(app: Express) {
     asyncHandler(async (req: AuthenticatedRequest, res: any) => {
     try {
       console.log('🔍 [CONTRACT-VALIDATION] Validating contract data with Zod schema...');
+      console.log('📥 [CONTRACT-VALIDATION] Raw request body enquiryId:', req.body.enquiryId);
       
       // 🛡️ STEP 1: Prepare request body for validation
       const requestBody = { ...req.body };
@@ -406,13 +407,21 @@ export function registerContractRoutes(app: Express) {
       }
       
       console.log('🔍 [CONTRACT-VALIDATION] Final validated data fields:', Object.keys(validatedData));
+      console.log('🔍 [CONTRACT-VALIDATION] Event times in validated data:', {
+        eventTime: validatedData.eventTime,
+        eventEndTime: validatedData.eventEndTime
+      });
       
       // 🛡️ STEP 4: Create contract with validated data
       const newContract = await storage.createContract(validatedData);
       console.log(`✅ [CONTRACT-CREATE] Created contract #${newContract.id} for user ${req.user.id}`);
+      console.log(`📋 [CONTRACT-CREATE] Contract enquiryId: ${newContract.enquiryId}`);
+      console.log(`📋 [CONTRACT-CREATE] Contract eventTime: ${newContract.eventTime}, eventEndTime: ${newContract.eventEndTime}`);
       
       // 🎯 STEP 5: Sync contract fields back to linked booking if enquiryId exists
+      console.log(`🔍 [CONTRACT-SYNC-CHECK] Checking if sync needed: enquiryId=${newContract.enquiryId}, type=${typeof newContract.enquiryId}`);
       if (newContract.enquiryId && newContract.enquiryId > 0) {
+        console.log(`✅ [CONTRACT-SYNC-CHECK] Sync condition met, proceeding with sync`);
         try {
           const syncFields = {
             eventTime: newContract.eventTime,
@@ -422,17 +431,21 @@ export function registerContractRoutes(app: Express) {
             venueAddress: newContract.venueAddress,
             // fee: preserved in booking - no update needed (single source of truth)
             deposit: newContract.deposit,
-            travelExpenses: newContract.travelExpenses,
             equipmentRequirements: newContract.equipmentRequirements,
             specialRequirements: newContract.specialRequirements
           };
-          
-          await storage.updateBooking(newContract.enquiryId, syncFields, req.user.id);
-          console.log(`🔄 [CONTRACT-SYNC] Synced contract fields back to booking ${newContract.enquiryId}`);
+
+          console.log(`🔄 [CONTRACT-SYNC] Attempting to sync to booking ${newContract.enquiryId} with fields:`, syncFields);
+          const updateResult = await storage.updateBooking(newContract.enquiryId, syncFields, req.user.id);
+          console.log(`✅ [CONTRACT-SYNC] Successfully synced contract fields back to booking ${newContract.enquiryId}`);
+          console.log(`📊 [CONTRACT-SYNC] Update result:`, updateResult ? 'Success' : 'No result returned');
         } catch (syncError: any) {
           console.error(`⚠️ [CONTRACT-SYNC] Failed to sync contract fields to booking (non-critical):`, syncError.message);
+          console.error(`⚠️ [CONTRACT-SYNC] Full error:`, syncError);
           // Continue - contract creation was successful even if sync failed
         }
+      } else {
+        console.log(`⚠️ [CONTRACT-SYNC-CHECK] Sync skipped: enquiryId is ${newContract.enquiryId}`)
       }
       
       // 🎯 STEP 6: Generate signing page URL
@@ -1033,12 +1046,75 @@ export function registerContractRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       console.log(`✅ Updated draft contract #${contractId} for user ${userId}`);
-      
-      // 🚫 CONTRACTS ARE IMMUTABLE: No sync from contract updates back to booking
-      // Contracts are legally binding documents and cannot propagate changes back to bookings.
-      console.log(`⚖️ Contract immutability enforced - contract ${contractId} updates will not affect linked bookings`);
-      
-      res.json(updatedContract);
+
+      // 🔄 SYNC CONTRACT CHANGES TO BOOKING: Update booking with contract data
+      // The booking database is the source of truth and can be updated from multiple places
+      if (updatedContract.enquiryId && updatedContract.enquiryId > 0) {
+        try {
+          const syncFields = {
+            eventTime: updateData.eventTime,
+            eventEndTime: updateData.eventEndTime,
+            clientPhone: updateData.clientPhone,
+            venue: updateData.venue,
+            venueAddress: updateData.venueAddress,
+            deposit: updateData.deposit,
+            equipmentRequirements: updateData.equipmentRequirements,
+            specialRequirements: updateData.specialRequirements
+          };
+
+          // Filter out undefined values to avoid overwriting with nulls
+          const filteredSyncFields = Object.fromEntries(
+            Object.entries(syncFields).filter(([_, value]) => value !== undefined)
+          );
+
+          if (Object.keys(filteredSyncFields).length > 0) {
+            console.log(`🔄 [CONTRACT-UPDATE-SYNC] Syncing contract updates to booking ${updatedContract.enquiryId}:`, filteredSyncFields);
+            await storage.updateBooking(updatedContract.enquiryId, filteredSyncFields, userId);
+            console.log(`✅ [CONTRACT-UPDATE-SYNC] Successfully synced contract changes to booking ${updatedContract.enquiryId}`);
+          }
+        } catch (syncError: any) {
+          console.error(`⚠️ [CONTRACT-UPDATE-SYNC] Failed to sync contract changes to booking (non-critical):`, syncError.message);
+          // Continue - contract update is still successful even if booking sync fails
+        }
+      }
+
+      // 📄 REGENERATE PDF: When contract is edited, regenerate the PDF with new data
+      try {
+        console.log(`📄 [CONTRACT-UPDATE] Regenerating PDF for edited contract #${contractId}`);
+
+        // Get user settings for PDF generation
+        const userSettings = await storage.getSettings(userId);
+
+        // Import PDF generation functionality
+        const { uploadContractToCloud } = await import('../core/cloud-storage');
+
+        // Generate new PDF with updated contract data
+        const uploadResult = await uploadContractToCloud(updatedContract, userSettings);
+
+        if (uploadResult.success) {
+          // Update contract with new PDF URL and key
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key
+          }, userId);
+
+          console.log(`✅ [CONTRACT-UPDATE] PDF regenerated successfully: ${uploadResult.url}`);
+
+          // Return the updated contract with new PDF URL
+          const finalContract = await storage.getContract(contractId);
+          res.json(finalContract);
+        } else {
+          console.error(`❌ [CONTRACT-UPDATE] PDF regeneration failed: ${uploadResult.error}`);
+          // Still return the updated contract even if PDF generation fails
+          res.json(updatedContract);
+        }
+
+      } catch (pdfError: any) {
+        console.error(`⚠️ [CONTRACT-UPDATE] PDF regeneration failed (non-critical):`, pdfError.message);
+        // Still return the updated contract even if PDF generation fails
+        res.json(updatedContract);
+      }
+
     } catch (error) {
       console.error('❌ Failed to update contract:', error);
       res.status(500).json({ error: 'Failed to update contract' });
