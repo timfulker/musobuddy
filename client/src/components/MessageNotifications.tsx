@@ -153,7 +153,7 @@ export function MessageNotifications({ userId }: MessageNotificationsProps) {
                     From: {notification.senderEmail}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Booking #{notification.bookingId} • {new Date(notification.createdAt).toLocaleDateString()}
+                    Booking #{notification.bookingId} • {new Date(notification.createdAt).toLocaleDateString('en-GB', { timeZone: 'UTC' })} UTC
                   </p>
                 </div>
                 

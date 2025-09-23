@@ -450,12 +450,12 @@ export default function Messages() {
                               )}
                               {message.eventDate && (
                                 <p>
-                                  Booking: {new Date(message.eventDate).toLocaleDateString()} 
+                                  Booking: {new Date(message.eventDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })} 
                                   {message.venue && ` at ${message.venue}`}
                                 </p>
                               )}
                               <p className="text-xs">
-                                Booking #{message.bookingId} • {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
+                                Booking #{message.bookingId} • {new Date(message.createdAt).toLocaleDateString('en-GB', { timeZone: 'UTC' })} {new Date(message.createdAt).toLocaleTimeString('en-GB', { timeZone: 'UTC' })} UTC
                               </p>
                             </div>
                           </div>
@@ -625,7 +625,7 @@ export default function Messages() {
                                 From: {message.fromContact}
                               </p>
                               <p className="text-xs">
-                                {new Date(message.createdAt).toLocaleDateString()} {new Date(message.createdAt).toLocaleTimeString()}
+                                {new Date(message.createdAt).toLocaleDateString('en-GB', { timeZone: 'UTC' })} {new Date(message.createdAt).toLocaleTimeString('en-GB', { timeZone: 'UTC' })} UTC
                               </p>
                               <p className="line-clamp-2">
                                 {message.rawMessage?.substring(0, 150)}...
@@ -853,7 +853,7 @@ export default function Messages() {
                             </div>
                             <p className="text-sm text-gray-600">{booking.venueAddress || booking.venue || booking.clientAddress || 'No location'}</p>
                             <p className="text-sm text-gray-500">
-                              {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'} • {booking.eventType || 'No event type'}
+                              {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB', { timeZone: 'UTC' }) : 'No date'} • {booking.eventType || 'No event type'}
                             </p>
                             {(booking.what3words || booking.clientAddress) && (
                               <p className="text-sm text-blue-600 font-medium">
@@ -861,7 +861,7 @@ export default function Messages() {
                               </p>
                             )}
                             <p className="text-xs text-gray-400">
-                              Created: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() + ' ' + new Date(booking.createdAt).toLocaleTimeString() : 'Unknown'} 
+                              Created: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-GB', { timeZone: 'UTC' }) + ' ' + new Date(booking.createdAt).toLocaleTimeString('en-GB', { timeZone: 'UTC' }) + ' UTC' : 'Unknown'} 
                               {booking.clientEmail && ` • ${booking.clientEmail}`}
                             </p>
                           </div>

@@ -2266,7 +2266,7 @@ export default function UnifiedBookings() {
                                         ? 'text-red-700' 
                                         : 'text-orange-700'
                                     }`}>
-                                      {isResolved ? '✅ Resolved Conflict Group' : '⚠️ Conflict Group'} - {new Date(booking.eventDate).toLocaleDateString()}
+                                      {isResolved ? '✅ Resolved Conflict Group' : '⚠️ Conflict Group'} - {new Date(booking.eventDate).toLocaleDateString('en-GB', { timeZone: 'UTC' })}
                                     </span>
                                     <span className={`text-sm ${
                                       isResolved 
