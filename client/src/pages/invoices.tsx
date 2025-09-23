@@ -1083,7 +1083,9 @@ export default function Invoices() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
                     console.log('🚨 [INVOICE-FORM] Form validation errors:', errors);
+                    console.log('🚨 [INVOICE-FORM] performanceFee error details:', errors.performanceFee);
                     console.log('🚨 [INVOICE-FORM] Form values:', form.getValues());
+                    console.log('🚨 [INVOICE-FORM] performanceFee value type:', typeof form.getValues().performanceFee, 'value:', form.getValues().performanceFee);
                   })} className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
 
