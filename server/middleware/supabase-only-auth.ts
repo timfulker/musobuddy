@@ -56,9 +56,12 @@ export const authenticate = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log('🔐 AUTHENTICATE MIDDLEWARE - Called for:', req.method, req.originalUrl);
   const token = getToken(req);
+  console.log('🔐 AUTHENTICATE MIDDLEWARE - Token present:', !!token);
 
   if (!token) {
+    console.log('❌ AUTHENTICATE MIDDLEWARE - No token, returning 401');
     return res.status(401).json({ error: 'No authentication token provided' });
   }
 

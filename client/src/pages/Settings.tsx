@@ -217,6 +217,11 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     city: data.city || "",
     county: data.county || "",
     postcode: data.postcode || "",
+    // Home address fields - CRITICAL FIX for home address not loading
+    homeAddressLine1: data.home_address_line1 || data.homeAddressLine1 || "",
+    homeAddressLine2: data.home_address_line2 || data.homeAddressLine2 || "",
+    homeCity: data.home_city || data.homeCity || "",
+    homePostcode: data.home_postcode || data.homePostcode || "",
     phone: data.phone || "",
     website: data.website || "",
     taxNumber: data.tax_number || data.taxNumber || "",
