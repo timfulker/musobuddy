@@ -675,27 +675,46 @@ export function registerBookingRoutes(app: Express) {
                 .replace(/\s+/g, ' ')
                 .trim();
               
-              // Basic content extraction - just get first meaningful paragraph
+              // Enhanced email reply cleaning - remove quoted/forwarded content
               const lines = rawText.split(/\n+/);
               const meaningfulLines = [];
-              
+
               for (const line of lines) {
                 const cleanLine = line.trim();
-                if (cleanLine && 
-                    !cleanLine.startsWith('>') && 
+
+                // Stop processing if we hit quoted content indicators
+                if (cleanLine.startsWith('>') ||
+                    cleanLine.includes('wrote:') ||
+                    cleanLine.includes('From:') ||
+                    cleanLine.includes('Sent:') ||
+                    cleanLine.includes('Subject:') ||
+                    cleanLine.includes('To:') ||
+                    cleanLine.match(/^On .* wrote:/) ||
+                    cleanLine.match(/^-----Original Message-----/) ||
+                    cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}.*wrote/) ||
+                    cleanLine.match(/^On \d/) ||
+                    cleanLine.includes('________________________________') ||
+                    cleanLine.includes('Begin forwarded message') ||
+                    cleanLine.includes('Forwarded message') ||
+                    cleanLine.includes('Original message') ||
+                    cleanLine.includes('wrote the following')) {
+                  break;
+                }
+
+                // Skip header-like lines
+                if (cleanLine &&
                     !cleanLine.startsWith('From:') &&
                     !cleanLine.startsWith('Subject:') &&
                     !cleanLine.startsWith('Date:') &&
-                    !cleanLine.startsWith('On ') &&
+                    !cleanLine.startsWith('To:') &&
+                    !cleanLine.startsWith('Cc:') &&
+                    !cleanLine.startsWith('Sent:') &&
                     !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
                     cleanLine.length > 3) {
                   meaningfulLines.push(cleanLine);
                 }
-                if (cleanLine.startsWith('>') || cleanLine.includes('wrote:')) {
-                  break;
-                }
               }
-              
+
               content = meaningfulLines.length > 0 ? meaningfulLines.join('\n\n') : rawText.substring(0, 500);
             }
             

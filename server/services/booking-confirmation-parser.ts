@@ -13,7 +13,7 @@ export async function parseBookingConfirmation(messageContent: string, existingB
     const systemPrompt = `You are extracting details from a BOOKING CONFIRMATION message (not a new booking inquiry).
 The booking already exists with these details:
 - Client: ${existingBooking.clientName || 'Unknown'}
-- Event: ${existingBooking.eventType || existingBooking.gigType || 'Unknown'}  
+- Event: ${existingBooking.eventType || existingBooking.gigType || 'Unknown'}
 - Date: ${existingBooking.eventDate || 'Unknown'}
 - Venue: ${existingBooking.venue || 'Unknown'}
 

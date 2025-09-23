@@ -204,14 +204,14 @@ export function setupCommunicationRoutes(app: any) {
             }
             
             if (downloadResult.success && downloadResult.content) {
-              // For client replies (messages with bookingId), show the FULL content
-              // No parsing or extraction - user decides what to extract
-              const htmlContent = typeof downloadResult.content === 'string' 
-                ? downloadResult.content 
+              // For client replies (messages with bookingId), show client's actual reply
+              // Remove quoted/forwarded performer content
+              const htmlContent = typeof downloadResult.content === 'string'
+                ? downloadResult.content
                 : downloadResult.content.toString('utf-8');
               console.log(`📧 Processing client reply for booking ${msg.bookingId}`);
 
-              // Simple HTML to text conversion - preserve ALL content
+              // Simple HTML to text conversion
               let rawText = htmlContent
                 .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
                 .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
@@ -231,12 +231,51 @@ export function setupCommunicationRoutes(app: any) {
                 .replace(/\s+/g, ' ')
                 .replace(/\n\s*\n\s*\n/g, '\n\n')
                 .trim();
-              
-              console.log(`✅ Converted HTML to text - showing FULL client reply`);
 
-              // For client replies, show the COMPLETE message content
-              // No parsing or extraction - the user should see everything the client wrote
-              content = rawText;
+              // Enhanced email reply cleaning - remove quoted/forwarded content
+              const lines = rawText.split(/\n+/);
+              const meaningfulLines = [];
+
+              for (const line of lines) {
+                const cleanLine = line.trim();
+
+                // Stop processing if we hit quoted content indicators
+                if (cleanLine.startsWith('>') ||
+                    cleanLine.includes('wrote:') ||
+                    cleanLine.includes('From:') ||
+                    cleanLine.includes('Sent:') ||
+                    cleanLine.includes('Subject:') ||
+                    cleanLine.includes('To:') ||
+                    cleanLine.match(/^On .* wrote:/) ||
+                    cleanLine.match(/^-----Original Message-----/) ||
+                    cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}.*wrote/) ||
+                    cleanLine.match(/^On \d/) ||
+                    cleanLine.includes('________________________________') ||
+                    cleanLine.includes('Begin forwarded message') ||
+                    cleanLine.includes('Forwarded message') ||
+                    cleanLine.includes('Original message') ||
+                    cleanLine.includes('wrote the following')) {
+                  break;
+                }
+
+                // Skip header-like lines but include meaningful content
+                if (cleanLine &&
+                    !cleanLine.startsWith('From:') &&
+                    !cleanLine.startsWith('Subject:') &&
+                    !cleanLine.startsWith('Date:') &&
+                    !cleanLine.startsWith('To:') &&
+                    !cleanLine.startsWith('Cc:') &&
+                    !cleanLine.startsWith('Sent:') &&
+                    !cleanLine.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) &&
+                    cleanLine.length > 3) {
+                  meaningfulLines.push(cleanLine);
+                }
+              }
+
+              console.log(`✅ Extracted client's actual reply (removed quoted content)`);
+
+              // Show only the client's actual reply, not quoted performer content
+              content = meaningfulLines.length > 0 ? meaningfulLines.join('\n\n') : rawText.substring(0, 500);
             }
           }
           
