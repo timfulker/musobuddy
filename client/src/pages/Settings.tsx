@@ -3885,6 +3885,14 @@ export default function Settings() {
         emailSignatureText: settings.emailSignatureText,
         areEqual: settings.businessContactEmail === settings.emailSignatureText
       });
+
+      // CRITICAL DEBUG: Check what home address data is received from API
+      console.log('🏠 FRONTEND - Home address data received from API:', {
+        homeAddressLine1: settings.homeAddressLine1,
+        homeAddressLine2: settings.homeAddressLine2,
+        homeCity: settings.homeCity,
+        homePostcode: settings.homePostcode
+      });
       const formData = {
         businessName: settings.businessName || "",
         businessContactEmail: settings.businessContactEmail || "",
