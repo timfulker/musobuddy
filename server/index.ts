@@ -248,10 +248,12 @@ app.post('/api/debug/encore-email', async (req, res) => {
       bodyField.toLowerCase().includes('new message from')
     );
     
+    // FIXED: Encore job notifications can have BOTH follow-up indicators AND apply-now links
+    // The key is whether it's from Encore service and has follow-up indicators
     const isEncoreFollowup = (
       isFromEncoreService && 
-      !hasJobAlertIndicators &&
       hasFollowupIndicators
+      // REMOVED: !hasJobAlertIndicators - this was incorrectly excluding legitimate bookings
     );
     
     console.log('🧪 Classification result:', { isEncoreFollowup });
@@ -433,10 +435,12 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       bodyField.toLowerCase().includes('new message from')
     );
     
+    // FIXED: Encore job notifications can have BOTH follow-up indicators AND apply-now links
+    // The key is whether it's from Encore service and has follow-up indicators
     const isEncoreFollowup = (
       isFromEncoreService && 
-      !hasJobAlertIndicators &&
       hasFollowupIndicators
+      // REMOVED: !hasJobAlertIndicators - this was incorrectly excluding legitimate bookings
     );
     
     logWebhookActivity('Email classification check', {
