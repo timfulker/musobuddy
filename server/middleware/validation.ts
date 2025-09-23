@@ -250,6 +250,8 @@ export const schemas = {
     clientEmail: z.string().email('Invalid email format').optional().nullable(),
     clientPhone: z.string().optional().nullable(),
     eventDate: z.coerce.date().optional().nullable(),
+    eventTime: z.string().optional().nullable(),
+    eventEndTime: z.string().optional().nullable(),
     venue: z.string().optional().nullable(),
     performanceDuration: z.string().optional().nullable(),
     fee: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
