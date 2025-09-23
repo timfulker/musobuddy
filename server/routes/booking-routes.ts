@@ -382,50 +382,9 @@ export function registerBookingRoutes(app: Express) {
         id: updatedBooking?.id
       });
 
-      // 🎯 NEW: Sync booking field updates to any linked contracts
-      try {
-        console.log(`🔄 [BOOKING-SYNC] Checking for contracts linked to booking ${bookingId}...`);
-        
-        // Find all contracts linked to this booking
-        const linkedContracts = await storage.getContractsByEnquiryId(bookingId);
-        console.log(`🔄 [BOOKING-SYNC] Found ${linkedContracts?.length || 0} linked contracts`);
-        
-        if (linkedContracts && linkedContracts.length > 0) {
-          for (const contract of linkedContracts) {
-            try {
-              console.log(`🔄 [BOOKING-SYNC] Syncing booking ${bookingId} → contract ${contract.id}`);
-              
-              const contractSyncFields = {
-                eventTime: updatedBooking.eventTime,
-                eventEndTime: updatedBooking.eventEndTime,
-                clientPhone: updatedBooking.clientPhone,
-                venue: updatedBooking.venue,
-                venueAddress: updatedBooking.venueAddress,
-                eventDate: updatedBooking.eventDate,
-                // Don't sync fee to preserve contract-specific pricing
-              };
-              
-              // Filter out null/undefined values for cleaner logging
-              const actualSyncFields = Object.fromEntries(
-                Object.entries(contractSyncFields).filter(([key, value]) => value !== null && value !== undefined)
-              );
-              
-              console.log(`🔄 [BOOKING-SYNC] Sync fields to contract ${contract.id}:`, actualSyncFields);
-              
-              await storage.updateContract(contract.id, contractSyncFields, userId);
-              console.log(`✅ [BOOKING-SYNC] Successfully synced booking ${bookingId} → contract ${contract.id}`);
-            } catch (contractSyncError: any) {
-              console.error(`❌ [BOOKING-SYNC] Failed to sync booking ${bookingId} → contract ${contract.id}:`, contractSyncError.message);
-              // Continue with other contracts - don't fail the booking update
-            }
-          }
-        } else {
-          console.log(`⏭️ [BOOKING-SYNC] No contracts linked to booking ${bookingId} - no sync needed`);
-        }
-      } catch (syncError: any) {
-        console.error(`❌ [BOOKING-SYNC] Error finding contracts for booking ${bookingId}:`, syncError.message);
-        // Continue - booking update was successful even if sync failed
-      }
+      // 🚫 CONTRACTS ARE IMMUTABLE: No sync from booking updates to existing contracts
+      // Contracts are legally binding documents and cannot be changed once created.
+      console.log(`⚖️ Contract immutability enforced - booking ${bookingId} updates will not affect existing contracts`);
 
       console.log(`✅ Updated booking #${bookingId} for user ${userId}`);
       res.json(updatedBooking);

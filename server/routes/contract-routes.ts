@@ -1034,42 +1034,9 @@ export function registerContractRoutes(app: Express) {
       }
       console.log(`✅ Updated draft contract #${contractId} for user ${userId}`);
       
-      // 🎯 ENHANCED: Sync contract field updates back to linked booking if enquiryId exists
-      if (updatedContract.enquiryId && updatedContract.enquiryId > 0) {
-        try {
-          console.log(`🔄 [CONTRACT-SYNC] Starting sync for contract ${contractId} → booking ${updatedContract.enquiryId}`);
-          
-          const syncFields = {
-            eventTime: updatedContract.eventTime,
-            eventEndTime: updatedContract.eventEndTime,
-            clientPhone: updatedContract.clientPhone,
-            venue: updatedContract.venue,
-            venueAddress: updatedContract.venueAddress,
-            // Don't sync fee back to booking to preserve original booking fee
-            // fee: updatedContract.fee,
-            deposit: updatedContract.deposit,
-            travelExpenses: updatedContract.travelExpenses,
-            equipmentRequirements: updatedContract.equipmentRequirements,
-            specialRequirements: updatedContract.specialRequirements
-          };
-          
-          // Filter out null/undefined values for cleaner logging
-          const actualSyncFields = Object.fromEntries(
-            Object.entries(syncFields).filter(([key, value]) => value !== null && value !== undefined)
-          );
-          
-          console.log(`🔄 [CONTRACT-SYNC] Sync fields:`, actualSyncFields);
-          
-          await storage.updateBooking(updatedContract.enquiryId, syncFields, userId);
-          console.log(`✅ [CONTRACT-SYNC] Successfully synced contract ${contractId} → booking ${updatedContract.enquiryId}`);
-        } catch (syncError: any) {
-          console.error(`❌ [CONTRACT-SYNC] Failed to sync contract ${contractId} → booking ${updatedContract.enquiryId}:`, syncError.message);
-          console.error(`❌ [CONTRACT-SYNC] Error details:`, syncError);
-          // Continue - contract update was successful even if sync failed
-        }
-      } else {
-        console.log(`⏭️ [CONTRACT-SYNC] No sync needed - contract ${contractId} has no linked booking (enquiryId: ${updatedContract.enquiryId})`);
-      }
+      // 🚫 CONTRACTS ARE IMMUTABLE: No sync from contract updates back to booking
+      // Contracts are legally binding documents and cannot propagate changes back to bookings.
+      console.log(`⚖️ Contract immutability enforced - contract ${contractId} updates will not affect linked bookings`);
       
       res.json(updatedContract);
     } catch (error) {
