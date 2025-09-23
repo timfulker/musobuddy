@@ -476,8 +476,20 @@ export default function Conversation() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      
+
       if (!response.ok) throw new Error('Failed to update booking');
+
+      // Parse the response to check what the server returned
+      const responseText = await response.text();
+      let updatedBooking;
+      try {
+        updatedBooking = JSON.parse(responseText);
+        console.log(`📥 [EXTRACT-DETAILS] Server response:`, updatedBooking);
+        console.log(`📥 [EXTRACT-DETAILS] performanceDuration in response: ${updatedBooking?.performanceDuration || 'NOT IN RESPONSE'}`);
+      } catch (e) {
+        console.error(`❌ [EXTRACT-DETAILS] Failed to parse server response:`, responseText);
+      }
+
       
       // Custom toast message based on what was updated
       let toastTitle = "Booking updated successfully";
