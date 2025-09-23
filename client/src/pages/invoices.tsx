@@ -595,14 +595,13 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number, customMessage?: string }) => {
-      // Get Firebase authentication token
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      // Check Supabase authentication
+      if (!user) {
         throw new Error('You must be logged in to send invoices');
       }
       
-      const idToken = await currentUser.getIdToken();
-      console.log('📧 Send email - Firebase user authenticated:', !!currentUser);
+      // Authentication handled via Supabase session cookies
+      console.log('📧 Send email - Supabase user authenticated:', !!user);
       console.log('📧 Send email - Invoice ID:', invoiceId);
       console.log('📧 Send email - Custom message:', customMessage ? 'Present' : 'None');
       
@@ -610,7 +609,6 @@ export default function Invoices() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
         },
         credentials: 'include', // Important for session handling
         body: JSON.stringify({ invoiceId, customMessage }),
