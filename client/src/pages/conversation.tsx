@@ -424,10 +424,6 @@ export default function Conversation() {
           const mode = fieldModes[field] || 'replace';
           const currentValue = booking[field] || '';
 
-          // Debug logging for performanceDuration
-          if (field === 'performanceDuration') {
-            console.log(`🎯 [EXTRACT-DETAILS] Processing performanceDuration: "${newValue}"`);
-          }
 
           if (mode === 'append' && currentValue) {
             // Append with separator for text fields
@@ -467,9 +463,6 @@ export default function Conversation() {
         updates.workflowStage = 'client_confirmed';
       }
 
-      // Debug log the complete update object before sending
-      console.log(`📤 [EXTRACT-DETAILS] Sending update to server:`, updates);
-      console.log(`📤 [EXTRACT-DETAILS] Update includes performanceDuration: ${updates.performanceDuration || 'NOT INCLUDED'}`);
 
       const response = await apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
@@ -479,16 +472,6 @@ export default function Conversation() {
 
       if (!response.ok) throw new Error('Failed to update booking');
 
-      // Parse the response to check what the server returned
-      const responseText = await response.text();
-      let updatedBooking;
-      try {
-        updatedBooking = JSON.parse(responseText);
-        console.log(`📥 [EXTRACT-DETAILS] Server response:`, updatedBooking);
-        console.log(`📥 [EXTRACT-DETAILS] performanceDuration in response: ${updatedBooking?.performanceDuration || 'NOT IN RESPONSE'}`);
-      } catch (e) {
-        console.error(`❌ [EXTRACT-DETAILS] Failed to parse server response:`, responseText);
-      }
 
       
       // Custom toast message based on what was updated
@@ -507,13 +490,6 @@ export default function Conversation() {
       
       // Refresh booking data
       queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
-
-      // Log to verify the data refresh
-      setTimeout(() => {
-        const updatedData = queryClient.getQueryData(['/api/bookings', bookingId]);
-        console.log(`✅ [EXTRACT-DETAILS] Booking data after update:`, updatedData);
-        console.log(`✅ [EXTRACT-DETAILS] performanceDuration after update:`, (updatedData as any)?.performanceDuration || 'NOT FOUND');
-      }, 1000);
 
       setShowExtractDialog(false);
       setExtractedDetails(null);

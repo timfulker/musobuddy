@@ -3,8 +3,9 @@
 /**
  * MusoBuddy Mailgun Development Setup
  * 
- * This script helps you switch Mailgun routes between production and development
- * for testing email webhooks locally using ngrok.
+ * Creates PARALLEL testing routes that don't interfere with production.
+ * Uses tagged addresses like user+dev@enquiries.musobuddy.com for testing.
+ * Production emails continue working normally.
  */
 
 const formData = require('form-data');
@@ -31,11 +32,14 @@ class MailgunDevSetup {
 
   async listRoutes() {
     try {
-      console.log('📋 Fetching current Mailgun routes...\n');
+      console.log('📋 Current Mailgun routes:\n');
       const routes = await this.mg.routes.list();
       
       routes.items.forEach((route, index) => {
-        console.log(`Route ${index + 1}:`);
+        const isDevRoute = route.description.includes('[DEV-PARALLEL]');
+        const marker = isDevRoute ? '🧪 [DEV]' : '🏭 [PROD]';
+        
+        console.log(`${marker} Route ${index + 1}:`);
         console.log(`  ID: ${route.id}`);
         console.log(`  Description: ${route.description}`);
         console.log(`  Expression: ${route.expression}`);
@@ -51,106 +55,113 @@ class MailgunDevSetup {
     }
   }
 
-  async switchToDev(ngrokUrl) {
+  async createDevRoute(ngrokUrl) {
     if (!ngrokUrl) {
       console.error('❌ Please provide your ngrok URL (e.g., https://abc123.ngrok.io)');
       return;
     }
 
-    console.log(`🔄 Switching routes to development mode...`);
+    console.log('🧪 Creating parallel development route...');
+    console.log('✅ Production emails will continue working normally');
     console.log(`📡 Dev webhook: ${ngrokUrl}/api/webhook/mailgun\n`);
 
     try {
-      const routes = await this.mg.routes.list();
-      const updates = [];
+      // Create a high-priority route that catches +dev tagged emails
+      const devRoute = await this.mg.routes.create({
+        priority: 0, // Highest priority to catch dev emails first
+        description: '[DEV-PARALLEL] Development testing route for +dev tagged emails',
+        expression: 'match_recipient(".*\\+dev@enquiries.musobuddy.com")',
+        action: [
+          `forward("${ngrokUrl}/api/webhook/mailgun")`,
+          'stop()' // Prevents further route processing
+        ]
+      });
 
-      for (const route of routes.items) {
-        // Check if this route contains the production webhook
-        const hasProductionWebhook = route.actions.some(action => 
-          action.includes(this.prodWebhook)
-        );
-
-        if (hasProductionWebhook) {
-          console.log(`🔧 Updating route: ${route.description}`);
-          
-          // Replace production webhook with development webhook
-          const newActions = route.actions.map(action => 
-            action.replace(this.prodWebhook, `${ngrokUrl}/api/webhook/mailgun`)
-          );
-
-          await this.mg.routes.update(route.id, {
-            priority: route.priority,
-            description: `[DEV] ${route.description}`,
-            expression: route.expression,
-            action: newActions
-          });
-
-          updates.push({
-            id: route.id,
-            description: route.description,
-            oldActions: route.actions,
-            newActions: newActions
-          });
-
-          console.log(`✅ Updated route ${route.id}`);
-        }
-      }
-
-      console.log(`\n🎉 Successfully switched ${updates.length} routes to development mode!`);
-      console.log('\n⚠️  Remember to switch back to production when done testing!');
+      console.log('🎉 Parallel development route created successfully!');
+      console.log(`📋 Route ID: ${devRoute.id}`);
+      console.log(`🔧 Expression: match any email ending with +dev@enquiries.musobuddy.com`);
+      console.log(`🛑 Includes stop() to prevent duplicate processing\n`);
       
-      return updates;
+      console.log('🧪 Testing Instructions:');
+      console.log('• Send test emails to: yourname+dev@enquiries.musobuddy.com');
+      console.log('• Production emails (yourname@enquiries.musobuddy.com) continue working');
+      console.log('• Monitor webhooks at: http://127.0.0.1:4040 (ngrok interface)');
+      console.log('• Check dev server logs for processing\n');
+
+      return { success: true, routeId: devRoute.id };
+      
     } catch (error) {
-      console.error('❌ Error switching to dev mode:', error.message);
+      console.error('❌ Failed to create development route:', error.message);
+      return { success: false, error: error.message };
     }
   }
 
-  async switchToProd() {
-    console.log('🔄 Switching routes back to production mode...\n');
+  async removeDevRoute() {
+    console.log('🧹 Removing development testing route...\n');
 
     try {
       const routes = await this.mg.routes.list();
-      const updates = [];
+      const devRoutes = routes.items.filter(route => 
+        route.description.includes('[DEV-PARALLEL]')
+      );
 
-      for (const route of routes.items) {
-        // Check if this is a dev route (has [DEV] prefix or ngrok URL)
-        const isDevRoute = route.description.includes('[DEV]') || 
-                          route.actions.some(action => action.includes('ngrok.io'));
-
-        if (isDevRoute) {
-          console.log(`🔧 Reverting route: ${route.description}`);
-          
-          // Replace any ngrok URLs with production webhook
-          const newActions = route.actions.map(action => {
-            // Replace any ngrok URL with production webhook
-            return action.replace(/https:\/\/[a-z0-9-]+\.ngrok\.io\/api\/webhook\/mailgun/g, this.prodWebhook);
-          });
-
-          // Remove [DEV] prefix from description
-          const newDescription = route.description.replace('[DEV] ', '');
-
-          await this.mg.routes.update(route.id, {
-            priority: route.priority,
-            description: newDescription,
-            expression: route.expression,
-            action: newActions
-          });
-
-          updates.push({
-            id: route.id,
-            description: route.description,
-            newDescription: newDescription
-          });
-
-          console.log(`✅ Reverted route ${route.id}`);
-        }
+      if (devRoutes.length === 0) {
+        console.log('ℹ️  No development routes found to remove');
+        return { success: true, removed: 0 };
       }
 
-      console.log(`\n🎉 Successfully switched ${updates.length} routes back to production!`);
+      let removed = 0;
+      for (const route of devRoutes) {
+        console.log(`🗑️  Removing dev route: ${route.id}`);
+        await this.mg.routes.destroy(route.id);
+        removed++;
+      }
+
+      console.log(`\n✅ Successfully removed ${removed} development route(s)`);
+      console.log('🏭 Production routes remain completely untouched');
       
-      return updates;
+      return { success: true, removed };
+      
     } catch (error) {
-      console.error('❌ Error switching to production mode:', error.message);
+      console.error('❌ Error removing development routes:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async status() {
+    console.log('📊 MusoBuddy Mailgun Status\n');
+    
+    try {
+      const routes = await this.mg.routes.list();
+      const prodRoutes = routes.items.filter(route => 
+        !route.description.includes('[DEV-PARALLEL]')
+      );
+      const devRoutes = routes.items.filter(route => 
+        route.description.includes('[DEV-PARALLEL]')
+      );
+
+      console.log(`🏭 Production routes: ${prodRoutes.length} active`);
+      console.log(`🧪 Development routes: ${devRoutes.length} active\n`);
+
+      if (devRoutes.length > 0) {
+        console.log('🧪 Active Development Setup:');
+        devRoutes.forEach(route => {
+          console.log(`  • Route ID: ${route.id}`);
+          console.log(`  • Expression: ${route.expression}`);
+          const webhook = route.actions.find(action => action.includes('forward'));
+          if (webhook) {
+            const url = webhook.match(/forward\("([^"]+)"\)/)?.[1];
+            console.log(`  • Webhook: ${url}`);
+          }
+        });
+        console.log('\n✅ Send test emails to: yourname+dev@enquiries.musobuddy.com');
+      } else {
+        console.log('ℹ️  No development routes configured');
+        console.log('💡 Run: node mailgun-dev-setup.js create <ngrok-url>');
+      }
+
+    } catch (error) {
+      console.error('❌ Error checking status:', error.message);
     }
   }
 }
@@ -161,37 +172,42 @@ async function main() {
   const command = args[0];
   const setup = new MailgunDevSetup();
 
+  console.log('🎵 MusoBuddy Mailgun Development Setup\n');
+
   switch (command) {
     case 'list':
       await setup.listRoutes();
       break;
       
-    case 'dev':
+    case 'create':
       const ngrokUrl = args[1];
       if (!ngrokUrl) {
-        console.log('Usage: node mailgun-dev-setup.js dev <ngrok-url>');
-        console.log('Example: node mailgun-dev-setup.js dev https://abc123.ngrok.io');
+        console.log('Usage: node mailgun-dev-setup.js create <ngrok-url>');
+        console.log('Example: node mailgun-dev-setup.js create https://abc123.ngrok.io');
         break;
       }
-      await setup.switchToDev(ngrokUrl);
+      await setup.createDevRoute(ngrokUrl);
       break;
       
-    case 'prod':
-      await setup.switchToProd();
+    case 'remove':
+      await setup.removeDevRoute();
+      break;
+
+    case 'status':
+      await setup.status();
       break;
       
     default:
-      console.log('MusoBuddy Mailgun Development Setup');
-      console.log('');
       console.log('Commands:');
-      console.log('  list              - List all current Mailgun routes');
-      console.log('  dev <ngrok-url>   - Switch routes to development (ngrok)');
-      console.log('  prod              - Switch routes back to production');
+      console.log('  list                - List all current Mailgun routes');
+      console.log('  create <ngrok-url>  - Create parallel development route');
+      console.log('  remove              - Remove development routes');
+      console.log('  status              - Show current setup status');
       console.log('');
       console.log('Examples:');
-      console.log('  node mailgun-dev-setup.js list');
-      console.log('  node mailgun-dev-setup.js dev https://abc123.ngrok.io');
-      console.log('  node mailgun-dev-setup.js prod');
+      console.log('  node mailgun-dev-setup.js status');
+      console.log('  node mailgun-dev-setup.js create https://abc123.ngrok.io');
+      console.log('  node mailgun-dev-setup.js remove');
       break;
   }
 }

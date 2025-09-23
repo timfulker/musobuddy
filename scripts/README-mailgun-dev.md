@@ -1,110 +1,109 @@
 # MusoBuddy Mailgun Development Setup
 
-This guide helps you test Mailgun webhooks locally during development without affecting production.
+**Parallel testing setup that keeps production emails working normally.**
 
-## Quick Start Guide
+## How It Works
+
+This creates a **separate development route** that catches emails with `+dev` tags while leaving all production routes completely untouched.
+
+- **Production**: `tim@enquiries.musobuddy.com` → Production server ✅
+- **Development**: `tim+dev@enquiries.musobuddy.com` → Your local server 🧪
+
+## Quick Start
 
 ### 1. Install ngrok
 ```bash
 npm install -g ngrok
-# OR download from https://ngrok.com/download
 ```
 
-### 2. Start your development workflow
-Your MusoBuddy server should be running on port 5000 (already done)
-
-### 3. Expose your local server
+### 2. Start ngrok tunnel
 ```bash
-# In a new terminal window
 ngrok http 5000
 ```
+Copy the HTTPS URL (e.g., `https://abc123.ngrok.io`)
 
-You'll see output like:
-```
-Session Status                online
-Account                       your-account (Plan: Free)
-Version                       3.3.4
-Region                        United States (us)
-Latency                       -
-Web Interface                 http://127.0.0.1:4040
-Forwarding                    https://abc123.ngrok.io -> http://localhost:5000
-```
-
-### 4. Switch Mailgun routes to development
+### 3. Create development route
 ```bash
-# Use the HTTPS forwarding URL from ngrok
 cd scripts
-node mailgun-dev-setup.js dev https://abc123.ngrok.io
+node mailgun-dev-setup.js create https://abc123.ngrok.io
 ```
 
-### 5. Test your webhooks
-- Send test emails to your configured addresses
-- Check your development server logs
-- Use ngrok's web interface at `http://127.0.0.1:4040` to inspect webhook requests
+### 4. Test with tagged emails
+Send emails to: `yourname+dev@enquiries.musobuddy.com`
 
-### 6. Switch back to production when done
+### 5. Monitor your testing
+- Check ngrok interface: `http://127.0.0.1:4040`
+- Watch your server logs for webhook processing
+- Production emails continue working normally
+
+### 6. Clean up when done
 ```bash
-node mailgun-dev-setup.js prod
+node mailgun-dev-setup.js remove
 ```
 
 ## Available Commands
 
 ```bash
-# List all current Mailgun routes
+# Check current setup
+node mailgun-dev-setup.js status
+
+# Create development route
+node mailgun-dev-setup.js create https://abc123.ngrok.io
+
+# List all routes (dev and production)
 node mailgun-dev-setup.js list
 
-# Switch to development (replace with your ngrok URL)
-node mailgun-dev-setup.js dev https://abc123.ngrok.io
-
-# Switch back to production
-node mailgun-dev-setup.js prod
+# Remove development routes only
+node mailgun-dev-setup.js remove
 ```
 
 ## Development Workflow
 
-1. **Start development server** (done automatically)
-2. **Start ngrok tunnel**: `ngrok http 5000`
-3. **Switch routes to dev**: `node mailgun-dev-setup.js dev <ngrok-url>`
-4. **Test your email features**
-5. **Monitor in ngrok interface**: `http://127.0.0.1:4040`
-6. **Switch back to production**: `node mailgun-dev-setup.js prod`
+1. **Start your server** (already running on port 5000)
+2. **Start ngrok**: `ngrok http 5000` 
+3. **Create dev route**: `node mailgun-dev-setup.js create <ngrok-url>`
+4. **Test with tagged emails**: `user+dev@enquiries.musobuddy.com`
+5. **Monitor in ngrok**: `http://127.0.0.1:4040`
+6. **Clean up**: `node mailgun-dev-setup.js remove`
 
-## Debugging Tips
+## Testing Examples
 
-### Check ngrok requests
-- Visit `http://127.0.0.1:4040` to see all incoming webhook requests
-- Replay requests for testing error scenarios
-- Check request/response details
-
-### Monitor your server logs
-Your MusoBuddy server will show webhook processing in the console
-
-### Verify webhook endpoint
-Test your webhook endpoint directly:
-```bash
-curl -X POST https://abc123.ngrok.io/api/webhook/mailgun \
-  -d "test=webhook"
+**Production email (unchanged):**
+```
+To: tim@enquiries.musobuddy.com
+→ Goes to production server
+→ Works exactly as before
 ```
 
-## Security Notes
+**Development email:**
+```
+To: tim+dev@enquiries.musobuddy.com  
+→ Goes to your local server via ngrok
+→ Perfect for testing new features
+```
 
-- **ngrok URLs are public** - anyone with the URL can access your local server
-- **Use only for development** - never use ngrok URLs in production
-- **Close ngrok when not testing** - stop the tunnel when you're done
-- **Temporary routes** - the script marks dev routes with `[DEV]` prefix
+## Safety Features
+
+- ✅ **Production protected** - existing routes never modified
+- ✅ **High priority** - dev route catches tagged emails first  
+- ✅ **Stop processing** - prevents duplicate delivery
+- ✅ **Easy cleanup** - remove dev routes anytime
+- ✅ **Clear labeling** - dev routes marked with `[DEV-PARALLEL]`
 
 ## Troubleshooting
 
-### "MAILGUN_API_KEY not found"
-Make sure your Mailgun API key is set in your environment variables.
+### No emails received in development
+- Check ngrok is running: `ngrok http 5000`
+- Verify route exists: `node mailgun-dev-setup.js status`
+- Check ngrok interface: `http://127.0.0.1:4040`
 
-### "ngrok command not found"
-Install ngrok globally: `npm install -g ngrok`
+### Production emails stopped working
+This shouldn't happen! Production routes are never touched. If issues occur:
+- Check route list: `node mailgun-dev-setup.js list`
+- Verify production routes are still active
+- Contact support if needed
 
-### Routes not updating
-Check your Mailgun API key permissions and that you're using the correct domain.
-
-### Webhooks not received
-- Verify ngrok is running and showing the correct forwarding URL
-- Check the ngrok web interface for incoming requests
-- Ensure your development server is running on port 5000
+### Tagged emails not working
+- Ensure you're using `+dev` (not `-dev` or `_dev`)
+- Check the exact email format: `user+dev@enquiries.musobuddy.com`
+- Verify dev route expression in route list
