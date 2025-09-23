@@ -48,9 +48,8 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 ## UI/UX Decisions
 - Responsive design with tailored feature visibility for mobile and desktop.
 - Centralized, tabbed messaging system with automated scrolling and persistent sorting.
-- Simplified email branding and enhanced HTML email templates.
+- Simplified email branding and enhanced HTML email templates with luminance-aware PDF branding.
 - Dual client portal system with dynamic server-side rendering and real-time bidirectional data synchronization.
-- Luminance-aware PDF branding for optimal text contrast.
 - Automated theme saving and automatic invoice PDF regeneration on edit.
 - Streamlined booking card actions and comprehensive gig sheets.
 - Manual control for venue name auto-fill.
@@ -64,7 +63,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 - **User Management**: Two-tier system (Admin, User).
 - **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee.
 - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
-- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms. PDF branding adjusts dynamically based on theme luminance.
+- **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.
 - **Security**: Robust session validation, rate limiting, enhanced database connection pooling, secure password hashing, input validation/sanitization, and asynchronous error handling. System isolation for critical components.
 - **Email Processing**: Comprehensive queue system for sequential processing, mutex locking, duplicate detection, and retry logic.

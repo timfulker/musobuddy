@@ -20,7 +20,7 @@ import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
@@ -600,15 +600,22 @@ export default function Invoices() {
         throw new Error('You must be logged in to send invoices');
       }
       
-      // Authentication handled via Supabase session cookies
+      // Get Supabase access token for backend authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error('Failed to get authentication token');
+      }
+      
       console.log('📧 Send email - Supabase user authenticated:', !!user);
       console.log('📧 Send email - Invoice ID:', invoiceId);
       console.log('📧 Send email - Custom message:', customMessage ? 'Present' : 'None');
+      console.log('📧 Send email - Using Supabase token for backend auth');
       
       const response = await fetch('/api/invoices/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         credentials: 'include', // Important for session handling
         body: JSON.stringify({ invoiceId, customMessage }),
