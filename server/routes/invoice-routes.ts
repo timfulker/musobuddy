@@ -478,8 +478,8 @@ export function registerInvoiceRoutes(app: Express) {
     console.log('🚨 X-Auth-Token header:', req.headers['x-auth-token'] ? 'Present' : 'Missing');
     console.log('🚨 All headers:', Object.keys(req.headers));
     
-    // Call the original auth middleware
-    authenticateWithFirebase(req, res, next);
+    // Call the Supabase auth middleware
+    authenticate(req, res, next);
   }, async (req: SupabaseAuthenticatedRequest, res) => {
     try {
       const { invoiceId, customMessage } = req.body;
