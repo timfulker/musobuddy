@@ -495,7 +495,14 @@ export default function Conversation() {
       
       // Refresh booking data
       queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
-      
+
+      // Log to verify the data refresh
+      setTimeout(() => {
+        const updatedData = queryClient.getQueryData(['/api/bookings', bookingId]);
+        console.log(`✅ [EXTRACT-DETAILS] Booking data after update:`, updatedData);
+        console.log(`✅ [EXTRACT-DETAILS] performanceDuration after update:`, (updatedData as any)?.performanceDuration || 'NOT FOUND');
+      }, 1000);
+
       setShowExtractDialog(false);
       setExtractedDetails(null);
       setSelectedFields(new Set());
