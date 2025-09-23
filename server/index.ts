@@ -546,12 +546,89 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
                 message: 'Encore follow-up linked to booking conversation'
               });
             } else {
-              logWebhookActivity('No Encore bookings found - treating as unparseable');
+              logWebhookActivity('No Encore bookings found - saving to unparseable messages');
+              
+              // Save to unparseable messages for manual review and linking
+              await storage.createUnparseableMessage({
+                userId: user.id,
+                source: 'email',
+                fromContact: fromField,
+                subject: `[ENCORE FOLLOW-UP] ${subjectField}`,
+                rawMessage: emailData['body-plain'] || emailData['body-html'] || 'No content',
+                parsingErrorDetails: 'Encore follow-up email - no existing Encore bookings found to link to',
+                messageType: 'encore_followup_unlinked',
+                createdAt: new Date()
+              });
+              
+              logWebhookActivity('Encore follow-up saved to unparseable messages', { 
+                userId: user.id, 
+                reason: 'No Encore bookings found' 
+              });
+              
+              return res.status(200).json({ 
+                status: 'ok', 
+                type: 'encore_followup_unparseable', 
+                message: 'Encore follow-up saved to unparseable messages for manual review'
+              });
+            }
+          } else {
+            logWebhookActivity('No user found for email prefix', { emailPrefix });
+            
+            // If user not found, still try to save somewhere for review
+            const fallbackUser = await storage.getUserByEmailPrefix('timfulkermusic'); // Your default user
+            if (fallbackUser) {
+              await storage.createUnparseableMessage({
+                userId: fallbackUser.id,
+                source: 'email',
+                fromContact: fromField,
+                subject: `[ENCORE - NO USER: ${emailPrefix}] ${subjectField}`,
+                rawMessage: emailData['body-plain'] || emailData['body-html'] || 'No content',
+                parsingErrorDetails: `Encore follow-up email sent to ${recipient} but no user found for prefix "${emailPrefix}"`,
+                messageType: 'encore_followup_no_user',
+                createdAt: new Date()
+              });
+              
+              logWebhookActivity('Encore follow-up saved to fallback user unparseable messages', { 
+                fallbackUserId: fallbackUser.id,
+                originalEmailPrefix: emailPrefix
+              });
+              
+              return res.status(200).json({ 
+                status: 'ok', 
+                type: 'encore_followup_fallback', 
+                message: 'Encore follow-up saved for manual review (user not found)'
+              });
             }
           }
         }
       } catch (error: any) {
         logWebhookActivity('Error processing Encore follow-up', { error: error.message });
+        
+        // Failsafe: try to save to unparseable messages even if there's an error
+        try {
+          const fallbackUser = await storage.getUserByEmailPrefix('timfulkermusic');
+          if (fallbackUser) {
+            await storage.createUnparseableMessage({
+              userId: fallbackUser.id,
+              source: 'email',
+              fromContact: fromField,
+              subject: `[ENCORE ERROR] ${subjectField}`,
+              rawMessage: emailData['body-plain'] || emailData['body-html'] || 'No content',
+              parsingErrorDetails: `Error processing Encore follow-up: ${error.message}`,
+              messageType: 'encore_followup_error',
+              createdAt: new Date()
+            });
+            
+            logWebhookActivity('Encore follow-up saved to unparseable after error', { 
+              error: error.message 
+            });
+          }
+        } catch (failsafeError: any) {
+          logWebhookActivity('Complete failure saving Encore email', { 
+            originalError: error.message,
+            failsafeError: failsafeError.message 
+          });
+        }
       }
     }
     
