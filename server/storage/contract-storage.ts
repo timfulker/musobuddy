@@ -31,6 +31,12 @@ export class ContractStorage {
       .orderBy(desc(contracts.createdAt));
   }
 
+  async getContractsByEnquiryId(enquiryId: number) {
+    return await db.select().from(contracts)
+      .where(eq(contracts.enquiryId, enquiryId))
+      .orderBy(desc(contracts.createdAt));
+  }
+
   async getAllContracts() {
     return await db.select().from(contracts).orderBy(desc(contracts.createdAt));
   }
