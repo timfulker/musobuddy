@@ -418,12 +418,17 @@ export default function Conversation() {
           hasClientConfirmation = extractedDetails[field] === true;
           return;
         }
-        
+
         const newValue = editedValues[field] || extractedDetails[field];
         if (newValue !== null && newValue !== '') {
           const mode = fieldModes[field] || 'replace';
           const currentValue = booking[field] || '';
-          
+
+          // Debug logging for performanceDuration
+          if (field === 'performanceDuration') {
+            console.log(`🎯 [EXTRACT-DETAILS] Processing performanceDuration: "${newValue}"`);
+          }
+
           if (mode === 'append' && currentValue) {
             // Append with separator for text fields
             const appendableFields = ['notes', 'specialRequirements', 'equipmentRequirements', 'venueAddress', 'clientAddress'];
@@ -442,7 +447,6 @@ export default function Conversation() {
       if (selectedFields.has('totalFee') && extractedDetails.totalFee) {
         const totalFee = parseFloat(extractedDetails.totalFee);
         
-        console.log(`💰 [EXTRACT-DETAILS] Saving total fee exactly as extracted: £${totalFee}`);
         
         // Save the total fee
         updates.finalAmount = totalFee;
@@ -451,7 +455,6 @@ export default function Conversation() {
         const travelExpenses = booking.travelExpense || 0;
         if (travelExpenses > 0) {
           const performanceFee = totalFee - travelExpenses;
-          console.log(`🧮 [EXTRACT-DETAILS] Calculating performance fee: £${totalFee} - £${travelExpenses} = £${performanceFee}`);
           updates.fee = performanceFee;
         }
         
@@ -463,7 +466,11 @@ export default function Conversation() {
       if (hasClientConfirmation && booking.workflowStage === 'negotiating') {
         updates.workflowStage = 'client_confirmed';
       }
-      
+
+      // Debug log the complete update object before sending
+      console.log(`📤 [EXTRACT-DETAILS] Sending update to server:`, updates);
+      console.log(`📤 [EXTRACT-DETAILS] Update includes performanceDuration: ${updates.performanceDuration || 'NOT INCLUDED'}`);
+
       const response = await apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
