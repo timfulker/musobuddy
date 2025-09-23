@@ -262,9 +262,71 @@ export function registerInvoiceRoutes(app: Express) {
           });
           
           console.log(`✅ Invoice #${invoiceId} PDF regenerated with updated data`);
+          
+          // 🎯 NEW: Sync invoice field updates back to linked booking if enquiryId exists
+          if (finalInvoice.enquiryId && finalInvoice.enquiryId > 0) {
+            try {
+              console.log(`🔄 [INVOICE-SYNC] Starting sync for invoice ${invoiceId} → booking ${finalInvoice.enquiryId}`);
+              
+              const syncFields = {
+                eventDate: finalInvoice.eventDate,
+                clientPhone: finalInvoice.clientPhone,
+                clientAddress: finalInvoice.clientAddress,
+                venueAddress: finalInvoice.venueAddress,
+                performanceDuration: finalInvoice.performanceDuration,
+                // Note: Invoices don't have eventTime/eventEndTime like contracts do
+                // Don't sync fee back to booking to preserve original booking fee
+              };
+              
+              // Filter out null/undefined values for cleaner logging
+              const actualSyncFields = Object.fromEntries(
+                Object.entries(syncFields).filter(([key, value]) => value !== null && value !== undefined)
+              );
+              
+              console.log(`🔄 [INVOICE-SYNC] Sync fields:`, actualSyncFields);
+              
+              await storage.updateBooking(finalInvoice.enquiryId, syncFields, userId);
+              console.log(`✅ [INVOICE-SYNC] Successfully synced invoice ${invoiceId} → booking ${finalInvoice.enquiryId}`);
+            } catch (syncError: any) {
+              console.error(`❌ [INVOICE-SYNC] Failed to sync invoice ${invoiceId} → booking ${finalInvoice.enquiryId}:`, syncError.message);
+              console.error(`❌ [INVOICE-SYNC] Error details:`, syncError);
+              // Continue - invoice update was successful even if sync failed
+            }
+          } else {
+            console.log(`⏭️ [INVOICE-SYNC] No sync needed - invoice ${invoiceId} has no linked booking (enquiryId: ${finalInvoice.enquiryId})`);
+          }
+          
           res.json(finalInvoice);
         } else {
           console.warn('⚠️ PDF regeneration failed, returning invoice with database updates only:', uploadResult.error);
+          
+          // 🎯 NEW: Sync invoice field updates back to linked booking even if PDF failed
+          if (updatedInvoice.enquiryId && updatedInvoice.enquiryId > 0) {
+            try {
+              console.log(`🔄 [INVOICE-SYNC] Starting sync for invoice ${invoiceId} → booking ${updatedInvoice.enquiryId} (PDF failed)`);
+              
+              const syncFields = {
+                eventDate: updatedInvoice.eventDate,
+                clientPhone: updatedInvoice.clientPhone,
+                clientAddress: updatedInvoice.clientAddress,
+                venueAddress: updatedInvoice.venueAddress,
+                performanceDuration: updatedInvoice.performanceDuration,
+              };
+              
+              const actualSyncFields = Object.fromEntries(
+                Object.entries(syncFields).filter(([key, value]) => value !== null && value !== undefined)
+              );
+              
+              console.log(`🔄 [INVOICE-SYNC] Sync fields (PDF failed):`, actualSyncFields);
+              
+              await storage.updateBooking(updatedInvoice.enquiryId, syncFields, userId);
+              console.log(`✅ [INVOICE-SYNC] Successfully synced invoice ${invoiceId} → booking ${updatedInvoice.enquiryId} (despite PDF failure)`);
+            } catch (syncError: any) {
+              console.error(`❌ [INVOICE-SYNC] Failed to sync invoice ${invoiceId} → booking ${updatedInvoice.enquiryId}:`, syncError.message);
+              // Continue - invoice update was successful even if sync failed
+            }
+          }
+          
           res.json(updatedInvoice);
         }
       } catch (pdfError) {

@@ -1034,9 +1034,11 @@ export function registerContractRoutes(app: Express) {
       }
       console.log(`✅ Updated draft contract #${contractId} for user ${userId}`);
       
-      // 🎯 NEW: Sync contract field updates back to linked booking if enquiryId exists
+      // 🎯 ENHANCED: Sync contract field updates back to linked booking if enquiryId exists
       if (updatedContract.enquiryId && updatedContract.enquiryId > 0) {
         try {
+          console.log(`🔄 [CONTRACT-SYNC] Starting sync for contract ${contractId} → booking ${updatedContract.enquiryId}`);
+          
           const syncFields = {
             eventTime: updatedContract.eventTime,
             eventEndTime: updatedContract.eventEndTime,
@@ -1051,12 +1053,22 @@ export function registerContractRoutes(app: Express) {
             specialRequirements: updatedContract.specialRequirements
           };
           
+          // Filter out null/undefined values for cleaner logging
+          const actualSyncFields = Object.fromEntries(
+            Object.entries(syncFields).filter(([key, value]) => value !== null && value !== undefined)
+          );
+          
+          console.log(`🔄 [CONTRACT-SYNC] Sync fields:`, actualSyncFields);
+          
           await storage.updateBooking(updatedContract.enquiryId, syncFields, userId);
-          console.log(`🔄 Synced contract field updates back to booking ${updatedContract.enquiryId}`);
+          console.log(`✅ [CONTRACT-SYNC] Successfully synced contract ${contractId} → booking ${updatedContract.enquiryId}`);
         } catch (syncError: any) {
-          console.error(`⚠️ Failed to sync contract field updates to booking (non-critical):`, syncError.message);
+          console.error(`❌ [CONTRACT-SYNC] Failed to sync contract ${contractId} → booking ${updatedContract.enquiryId}:`, syncError.message);
+          console.error(`❌ [CONTRACT-SYNC] Error details:`, syncError);
           // Continue - contract update was successful even if sync failed
         }
+      } else {
+        console.log(`⏭️ [CONTRACT-SYNC] No sync needed - contract ${contractId} has no linked booking (enquiryId: ${updatedContract.enquiryId})`);
       }
       
       res.json(updatedContract);
