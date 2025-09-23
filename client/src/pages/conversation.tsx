@@ -449,16 +449,16 @@ export default function Conversation() {
       if (selectedFields.has('totalFee') && extractedDetails.totalFee) {
         const totalFee = parseFloat(extractedDetails.totalFee);
         
-        
         // Save the total fee
         updates.finalAmount = totalFee;
         
-        // AFTER extraction: Calculate performance fee = total fee - travel expenses
+        // CRITICAL: Preserve travel expenses to prevent them being wiped out
         const travelExpenses = booking.travelExpense || 0;
-        if (travelExpenses > 0) {
-          const performanceFee = totalFee - travelExpenses;
-          updates.fee = performanceFee;
-        }
+        updates.travelExpense = travelExpenses;  // Explicitly preserve travel expense
+        
+        // Calculate performance fee = total fee - travel expenses  
+        const performanceFee = totalFee - travelExpenses;
+        updates.fee = performanceFee;
         
         // Remove totalFee from selectedFields since we've processed it
         selectedFields.delete('totalFee');
