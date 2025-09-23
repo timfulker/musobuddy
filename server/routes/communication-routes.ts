@@ -488,15 +488,14 @@ The Extract Details button below can be used once this issue is resolved.`;
         console.log(`💰 [CONVERSATION-REPLY] Updating booking ${bookingId} with travel expenses: £${travelExpenses}`);
         try {
           const travelUpdateResult = await db.update(bookings)
-            .set({ 
-              travelExpenses: parseFloat(travelExpenses),  // Maps to travel_expenses column
-              travelExpense: parseFloat(travelExpenses)    // Maps to travel_expense column (the one you see in database)
+            .set({
+              travelExpense: parseFloat(travelExpenses)    // Maps to travel_expense column in database
             })
             .where(and(
               eq(bookings.id, bookingId),
               eq(bookings.userId, userId)
             ))
-            .returning({ updatedTravelExpenses: bookings.travelExpenses });
+            .returning({ updatedTravelExpense: bookings.travelExpense });
           
           console.log(`✅ Updated booking ${bookingId} with travel expenses: £${travelExpenses}`);
           console.log(`💰 Travel expenses update result:`, travelUpdateResult);
