@@ -1081,7 +1081,10 @@ export default function Invoices() {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    console.log('🚨 [INVOICE-FORM] Form validation errors:', errors);
+                    console.log('🚨 [INVOICE-FORM] Form values:', form.getValues());
+                  })} className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
 
                       <FormField
