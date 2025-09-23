@@ -36,13 +36,6 @@ import { getGigTypeNamesForInstrument } from '@shared/instrument-gig-presets';
 export async function registerSettingsRoutes(app: Express) {
   console.log('⚙️ Setting up settings routes...');
   
-  // CRITICAL: Test if any settings routes are being hit
-  app.use('/api/settings', (req, res, next) => {
-    console.log('🚨 ROUTE TEST - Any /api/settings request received:', req.method, req.url);
-    console.log('🚨 ROUTE TEST - Calling next()...');
-    next();
-    console.log('🚨 ROUTE TEST - After next() call');
-  });
   
   // Import Mailgun route manager for lead email setup
   const { mailgunRoutes } = await import('../core/mailgun-routes');
@@ -190,12 +183,9 @@ export async function registerSettingsRoutes(app: Express) {
   
   // Get user settings
   app.get('/api/settings', authenticate, async (req: AuthenticatedRequest, res) => {
-    console.log('🔧 GET /api/settings - Route handler called');
     try {
       const userId = req.user?.id;
-      console.log('🔧 GET /api/settings - User ID:', userId);
       if (!userId) {
-        console.log('❌ GET /api/settings - No user ID, returning 401');
         return res.status(401).json({ error: 'Authentication required' });
       }
       

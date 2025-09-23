@@ -326,7 +326,7 @@ export function registerBookingRoutes(app: Express) {
   }));
 
   // Update booking
-  app.patch('/api/bookings/:id', authenticate, validateBody(schemas.createBooking), async (req: AuthenticatedRequest, res) => {
+  app.patch('/api/bookings/:id', authenticate, validateBody(schemas.updateBooking), async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;

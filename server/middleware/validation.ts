@@ -242,7 +242,54 @@ export const schemas = {
   pagination: z.object({
     page: z.string().regex(/^\d+$/, 'Page must be a number').transform(Number).refine(n => n > 0, 'Page must be positive').optional(),
     limit: z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).refine(n => n > 0 && n <= 100, 'Limit must be 1-100').optional()
-  })
+  }),
+
+  // Booking update - CRITICAL FIX: Make all fields optional for partial updates
+  updateBooking: z.object({
+    clientName: z.string().optional(),
+    clientEmail: z.string().email('Invalid email format').optional().nullable(),
+    clientPhone: z.string().optional().nullable(),
+    eventDate: z.coerce.date().optional().nullable(),
+    venue: z.string().optional().nullable(),
+    performanceDuration: z.string().optional().nullable(),
+    fee: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    finalAmount: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    travelExpense: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    deposit: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    depositAmount: z.union([z.string(), z.number()]).optional().nullable().transform((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? null : num.toString();
+    }),
+    notes: z.string().optional().nullable(),
+    status: z.string().optional(),
+    invoiceSent: z.boolean().optional(),
+    contractSent: z.boolean().optional(),
+    confirmationSent: z.boolean().optional(),
+    reminderSent: z.boolean().optional(),
+    followUpSent: z.boolean().optional(),
+    invoiceNumber: z.string().optional().nullable(),
+    contractNumber: z.string().optional().nullable()
+  }).refine((data) => {
+    // At least one field must be provided for update
+    return Object.values(data).some(value => value !== undefined);
+  }, 'At least one field must be provided for update')
 };
 
 // Input sanitization middleware
