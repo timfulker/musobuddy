@@ -1962,57 +1962,63 @@ export default function UnifiedBookings() {
 
                 {/* Sort Controls Row - Only show in list view */}
                 {viewMode === 'list' && (
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex flex-col gap-2 text-sm">
                     <span className="font-medium text-gray-700">Sort by:</span>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={sortField === 'eventDate' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('eventDate')}
-                        className="h-8"
-                      >
-                        Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'clientName' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('clientName')}
-                        className="h-8"
-                      >
-                        Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'fee' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('fee')}
-                        className="h-8"
-                      >
-                        Fee {sortField === 'fee' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'status' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('status')}
-                        className="h-8"
-                      >
-                        Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'venue' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('venue')}
-                        className="h-8"
-                      >
-                        Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'createdAt' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('createdAt')}
-                        className="h-8"
-                      >
-                        Date Added {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {/* First row of sort buttons */}
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          variant={sortField === 'eventDate' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('eventDate')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                        <Button
+                          variant={sortField === 'clientName' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('clientName')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                        <Button
+                          variant={sortField === 'fee' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('fee')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Fee {sortField === 'fee' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                      </div>
+                      {/* Second row of sort buttons */}
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          variant={sortField === 'status' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('status')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                        <Button
+                          variant={sortField === 'venue' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('venue')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                        <Button
+                          variant={sortField === 'createdAt' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleSort('createdAt')}
+                          className="h-8 flex-shrink-0"
+                        >
+                          Date Added {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -19,7 +19,21 @@ export default function MobileNav() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 z-40 shadow-lg">
+    <div 
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        transform: 'translateZ(0)', // Force hardware acceleration
+        backfaceVisibility: 'hidden', // Prevent flicker
+        willChange: 'transform', // Optimize for animations
+        WebkitTransform: 'translateZ(0)', // iOS Safari fix
+        WebkitBackfaceVisibility: 'hidden' // iOS Safari fix
+      }}
+    >
       <div className="flex justify-around">
         {/* Home */}
         <Link href="/" className={cn(
