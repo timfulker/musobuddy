@@ -3890,7 +3890,7 @@ export default function UnifiedBookings() {
         onOpenChange={setFullScreenCalendarOpen}
       >
         <DialogContent 
-          className={`${isDesktop ? 'max-w-7xl max-h-[95vh]' : 'max-w-full max-h-[90vh] mx-2'} overflow-hidden flex flex-col p-0 luminance-aware w-full`}
+          className={`${isDesktop ? 'max-w-none max-h-[95vh]' : 'max-w-full max-h-[90vh] mx-2'} overflow-x-auto overflow-y-hidden flex flex-col p-0 luminance-aware w-full`}
           style={{ 
             width: isDesktop ? '95vw' : 'calc(100vw - 16px)', 
             height: isDesktop ? '95vh' : '85vh',
