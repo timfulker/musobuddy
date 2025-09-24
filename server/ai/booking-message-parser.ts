@@ -1267,5 +1267,12 @@ function simpleTextParse(messageText: string, clientContact?: string, clientAddr
     }
   }
 
+  // Extract Encore Apply Now link for when AI parsing fails
+  const applyNowLink = extractEncoreApplyLink(messageText);
+  if (applyNowLink) {
+    data.applyNowLink = applyNowLink;
+    console.log(`🎵 [SIMPLE-PARSER] Extracted Encore apply-now link: ${applyNowLink}`);
+  }
+
   return data;
 }
