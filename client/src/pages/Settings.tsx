@@ -4159,10 +4159,11 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background layout-consistent">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {!isDesktop && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+      {isDesktop && <Sidebar isOpen={true} onClose={() => {}} />}
       <MobileNav />
-      
-      <div className="main-content">
+
+      <div className={`${isDesktop ? 'ml-64' : ''}`}>
         {/* Header with Progress */}
         <header className="border-b border-gray-200 dark:border-slate-700 p-6 bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
           <div className="flex items-center justify-between">
@@ -4197,8 +4198,8 @@ export default function Settings() {
 
         {/* Settings Layout with Sidebar */}
         <div className="flex min-h-[calc(100vh-120px)]">
-          {/* Settings Navigation Sidebar */}
-          <div className="w-80 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+          {/* Settings Navigation Sidebar - Hidden on mobile */}
+          <div className="hidden md:block w-80 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
             <nav className="space-y-2">
               {settingsSections.map((section) => {
                 const Icon = section.icon;
@@ -4241,6 +4242,32 @@ export default function Settings() {
           <div className="flex-1 p-6 overflow-y-auto">
             <Form {...form}>
               <div className="space-y-6">
+                {/* Mobile Section Selector */}
+                <div className="md:hidden mb-6">
+                  <Select value={activeSection} onValueChange={setActiveSection}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>
+                        {settingsSections.find(s => s.id === activeSection)?.label || "Select a section"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {settingsSections.map((section) => {
+                        const isCompleted = form?.getValues ? section.checkCompletion(currentFormData) : false;
+                        return (
+                          <SelectItem key={section.id} value={section.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{section.label}</span>
+                              {isCompleted && (
+                                <CheckCircle className="w-4 h-4 text-green-500 ml-2" />
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Render active section */}
                 {renderActiveSection()}
               </div>
