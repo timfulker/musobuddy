@@ -1314,3 +1314,12 @@ export type InsertBetaInvite = z.infer<typeof insertBetaInviteSchema>;
 export type BetaInvite = typeof betaInvites.$inferSelect;
 export type InsertBetaInviteCode = z.infer<typeof insertBetaInviteCodeSchema>;
 export type BetaInviteCode = typeof betaInviteCodes.$inferSelect;
+
+// Export monitoring tables
+export {
+  frontEndErrors,
+  performanceMetrics,
+  userInteractions,
+  networkRequests,
+  frontEndMonitoring
+} from '../server/db/schema/monitoring';

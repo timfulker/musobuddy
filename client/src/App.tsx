@@ -30,6 +30,7 @@ import BetaChecklist from "@/pages/beta-checklist";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import ClientPortal from "@/pages/client-portal";
+import MonitoringDashboard from "@/pages/monitoring";
 
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
@@ -239,7 +240,8 @@ function Router() {
       <Route path="/legal/disclaimer" component={Disclaimer} />
 
       <Route path="/admin" component={Admin} />
-      
+      <Route path="/monitoring" component={MonitoringDashboard} />
+
       {/* Client Portal - handled by backend HTML route, removed from frontend to prevent conflicts */}
       
       {/* Public Invoice - for clients to view and pay invoices */}

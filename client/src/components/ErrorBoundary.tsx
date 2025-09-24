@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import monitor from '@/lib/monitoring';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -29,7 +30,22 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     console.error('🔥 ERROR BOUNDARY - Current URL:', window.location.href);
     console.error('🔥 ERROR BOUNDARY - Current pathname:', window.location.pathname);
     console.error('🔥 ERROR BOUNDARY - Auth status checking...');
-    
+
+    // Report to monitoring system
+    monitor.reportError({
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      errorType: 'react',
+      metadata: {
+        pathname: window.location.pathname,
+        errorName: error.name
+      }
+    });
+
     // Don't redirect automatically - let user handle it
     console.error('🔥 ERROR BOUNDARY - Error in React component tree');
   }
