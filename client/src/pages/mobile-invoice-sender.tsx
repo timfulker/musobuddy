@@ -16,15 +16,34 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
-// Mobile-optimized invoice form schema (simplified for mobile use)
+// Full invoice form schema matching desktop version
 const mobileInvoiceSchema = z.object({
+  contractId: z.number().optional(),
+  bookingId: z.number().optional(),
   clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().email("Please enter a valid email address"),
-  amount: z.string().min(1, "Amount is required"),
-  dueDate: z.string().min(1, "Due date is required"),
-  performanceDate: z.string().optional(),
+  clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
+  ccEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
+  clientAddress: z.string().optional(),
+  venueAddress: z.string().optional(),
+  amount: z.coerce.string().min(1, "Amount is required"),
+  dueDate: z.string().min(1, "Due date is required").transform((dateStr) => {
+    return new Date(dateStr);
+  }),
+  performanceDate: z.string().optional().transform((dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+  }),
+  performanceFee: z.string().optional(),
+  depositPaid: z.string().optional().transform((val) => {
+    if (!val) return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }),
+  performanceDuration: z.string().optional(),
+  gigType: z.string().optional(),
+  invoiceType: z.string().default("performance"),
   description: z.string().optional(),
-  bookingId: z.number().optional(), // Link to existing booking
 });
 
 export default function MobileInvoiceSender() {
@@ -41,13 +60,22 @@ export default function MobileInvoiceSender() {
   const form = useForm<z.infer<typeof mobileInvoiceSchema>>({
     resolver: zodResolver(mobileInvoiceSchema),
     defaultValues: {
+      contractId: undefined,
+      bookingId: undefined,
       clientName: "",
       clientEmail: "",
+      ccEmail: "",
+      clientAddress: "",
+      venueAddress: "",
       amount: "",
       dueDate: "",
       performanceDate: "",
+      performanceFee: "",
+      depositPaid: "",
+      performanceDuration: "",
+      gigType: "",
+      invoiceType: "performance",
       description: "",
-      bookingId: undefined,
     },
   });
 
@@ -421,134 +449,175 @@ export default function MobileInvoiceSender() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                {/* Invoice Type */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Invoice Type</label>
+                  <Select value={form.watch("invoiceType") || "performance"} onValueChange={(value) => form.setValue("invoiceType", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select invoice type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="performance">Performance Invoice</SelectItem>
+                      <SelectItem value="ad_hoc">Ad-hoc Invoice</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Description for ad-hoc invoices */}
+                {form.watch("invoiceType") === "ad_hoc" && (
                   <div className="space-y-2">
-                    <div 
-                      className="flex items-center gap-2 text-base font-bold text-black" 
-                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                    >
-                      <User className="h-4 w-4" />
-                      Client Name
-                    </div>
-                    <Input 
-                      placeholder="Enter client name" 
-                      {...form.register("clientName")}
-                    />
-                    {form.formState.errors.clientName && (
-                      <p className="text-sm text-red-500">{form.formState.errors.clientName.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div 
-                      className="flex items-center gap-2 text-base font-bold text-black" 
-                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                    >
-                      <Mail className="h-4 w-4" />
-                      Client Email
-                    </div>
-                    <Input 
-                      placeholder="client@example.com" 
-                      type="email"
-                      {...form.register("clientEmail")}
-                    />
-                    {form.formState.errors.clientEmail && (
-                      <p className="text-sm text-red-500">{form.formState.errors.clientEmail.message}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div 
-                        className="flex items-center gap-2 text-base font-bold text-black" 
-                        style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                      >
-                        <PoundSterling className="h-4 w-4" />
-                        Amount (£)
-                      </div>
-                      <Input 
-                        placeholder="500" 
-                        type="number"
-                        {...form.register("amount")}
-                      />
-                      {form.formState.errors.amount && (
-                        <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div 
-                        className="flex items-center gap-2 text-base font-bold text-black" 
-                        style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                      >
-                        <Calendar className="h-4 w-4" />
-                        Due Date
-                      </div>
-                      <Input 
-                        type="date"
-                        {...form.register("dueDate")}
-                      />
-                      {form.formState.errors.dueDate && (
-                        <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div 
-                      className="flex items-center gap-2 text-base font-bold text-black" 
-                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      Performance Date (Optional)
-                    </div>
-                    <Input 
-                      type="date"
-                      {...form.register("performanceDate")}
-                    />
-                    {form.formState.errors.performanceDate && (
-                      <p className="text-sm text-red-500">{form.formState.errors.performanceDate.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div 
-                      className="flex items-center gap-2 text-base font-bold text-black" 
-                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
-                    >
-                      <FileText className="h-4 w-4" />
-                      Description (Optional)
-                    </div>
+                    <label className="text-sm font-bold text-black block">Description</label>
                     <Textarea 
-                      placeholder="e.g., Wedding performance at The Grand Hotel"
-                      className="resize-none"
+                      placeholder="e.g., Administrative costs for band members, Equipment rental, Travel expenses..."
                       rows={3}
                       {...form.register("description")}
                     />
-                    {form.formState.errors.description && (
-                      <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
-                    )}
                   </div>
+                )}
 
-                  <Button 
-                    type="submit" 
-                    disabled={creating || createInvoiceMutation.isPending}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {creating || createInvoiceMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating Invoice...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create & Switch to Send
-                      </>
-                    )}
-                  </Button>
-                </form>
+                {/* Client Name */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Client Name *</label>
+                  <Input 
+                    placeholder="Client name" 
+                    {...form.register("clientName")}
+                  />
+                  {form.formState.errors.clientName && (
+                    <p className="text-sm text-red-500">{form.formState.errors.clientName.message}</p>
+                  )}
+                </div>
+
+                {/* Client Email */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Client Email</label>
+                  <Input 
+                    type="email" 
+                    placeholder="client@example.com" 
+                    {...form.register("clientEmail")}
+                  />
+                  {form.formState.errors.clientEmail && (
+                    <p className="text-sm text-red-500">{form.formState.errors.clientEmail.message}</p>
+                  )}
+                </div>
+
+                {/* CC Email */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">CC Email (Optional)</label>
+                  <Input 
+                    type="email" 
+                    placeholder="cc@example.com" 
+                    {...form.register("ccEmail")}
+                  />
+                  {form.formState.errors.ccEmail && (
+                    <p className="text-sm text-red-500">{form.formState.errors.ccEmail.message}</p>
+                  )}
+                </div>
+
+                {/* Client Address */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Client Address</label>
+                  <Input 
+                    placeholder="Client's address" 
+                    {...form.register("clientAddress")}
+                  />
+                  {form.formState.errors.clientAddress && (
+                    <p className="text-sm text-red-500">{form.formState.errors.clientAddress.message}</p>
+                  )}
+                </div>
+
+                {/* Venue Address */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Venue Address</label>
+                  <Input 
+                    placeholder="Performance venue address" 
+                    {...form.register("venueAddress")}
+                  />
+                  {form.formState.errors.venueAddress && (
+                    <p className="text-sm text-red-500">{form.formState.errors.venueAddress.message}</p>
+                  )}
+                </div>
+
+                {/* Amount */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Amount (£) *</label>
+                  <Input 
+                    placeholder="500.00" 
+                    {...form.register("amount")}
+                  />
+                  {form.formState.errors.amount && (
+                    <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
+                  )}
+                </div>
+
+                {/* Due Date */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Due Date *</label>
+                  <Input 
+                    type="date" 
+                    {...form.register("dueDate")}
+                  />
+                  {form.formState.errors.dueDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
+                  )}
+                </div>
+
+                {/* Performance Date */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Performance Date</label>
+                  <Input 
+                    type="date" 
+                    {...form.register("performanceDate")}
+                  />
+                  {form.formState.errors.performanceDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.performanceDate.message}</p>
+                  )}
+                </div>
+
+                {/* Performance Duration */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Performance Duration</label>
+                  <Input 
+                    placeholder="e.g. 2 x 45 min sets" 
+                    {...form.register("performanceDuration")}
+                  />
+                  {form.formState.errors.performanceDuration && (
+                    <p className="text-sm text-red-500">{form.formState.errors.performanceDuration.message}</p>
+                  )}
+                </div>
+
+                {/* Event Type */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-black block">Event Type</label>
+                  <Input 
+                    placeholder="e.g. Wedding, Corporate Event" 
+                    {...form.register("gigType")}
+                  />
+                  {form.formState.errors.gigType && (
+                    <p className="text-sm text-red-500">{form.formState.errors.gigType.message}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={creating || createInvoiceMutation.isPending}
+                  className="w-full"
+                  size="lg"
+                >
+                  {creating || createInvoiceMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating Invoice...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create & Switch to Send
+                    </>
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 
