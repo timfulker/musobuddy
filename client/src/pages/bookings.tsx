@@ -3890,8 +3890,11 @@ export default function UnifiedBookings() {
         onOpenChange={setFullScreenCalendarOpen}
       >
         <DialogContent 
-          className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0 luminance-aware"
-          style={{ width: '95vw', height: '95vh' }}
+          className={`${isDesktop ? 'max-w-7xl max-h-[95vh]' : 'max-w-full max-h-[90vh] mx-2'} overflow-hidden flex flex-col p-0 luminance-aware`}
+          style={{ 
+            width: isDesktop ? '95vw' : 'calc(100vw - 16px)', 
+            height: isDesktop ? '95vh' : '85vh' 
+          }}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft') {
               e.preventDefault();
@@ -3932,18 +3935,20 @@ export default function UnifiedBookings() {
         >
 
           
-          <div className="flex-1 overflow-y-auto p-4 pb-20 relative">
-            {/* Keyboard instructions in top left */}
-            <div className="absolute top-4 left-8 z-10">
-              <div className="text-xs font-medium" style={{
-                color: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary),
-                textShadow: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary) === '#ffffff' 
-                  ? '0 1px 3px rgba(0,0,0,0.4)' 
-                  : '0 1px 2px rgba(255,255,255,0.3)'
-              }}>
-                ← → months • ↑ ↓ years • Enter/Space today • Esc close
+          <div className={`flex-1 overflow-y-auto ${isDesktop ? 'p-4 pb-20' : 'p-2 pb-16'} relative`}>
+            {/* Keyboard instructions - Only show on desktop */}
+            {isDesktop && (
+              <div className="absolute top-4 left-8 z-10">
+                <div className="text-xs font-medium" style={{
+                  color: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary),
+                  textShadow: getOptimalTextColor(settings?.themeAccentColor || theme.colors.primary) === '#ffffff' 
+                    ? '0 1px 3px rgba(0,0,0,0.4)' 
+                    : '0 1px 2px rgba(255,255,255,0.3)'
+                }}>
+                  ← → months • ↑ ↓ years • Enter/Space today • Esc close
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
             <div className="h-full flex flex-col">
@@ -3983,7 +3988,7 @@ export default function UnifiedBookings() {
               </div>
               
               {/* Calendar Grid - 6 Weeks (42 days) with Equal Row Heights */}
-              <div className="grid grid-cols-7 grid-rows-6 gap-2 flex-1 min-h-0">
+              <div className={`grid grid-cols-7 grid-rows-6 ${isDesktop ? 'gap-2' : 'gap-1'} flex-1 min-h-0`}>
                 {(() => {
                   // Generate calendar data for complete 6 weeks (42 days) to show full month context
                   // Monday-to-Sunday week layout for musicians (weekend work is common)
@@ -4020,7 +4025,7 @@ export default function UnifiedBookings() {
                     <div
                       key={index}
                       className={`
-                        p-3 cursor-pointer flex flex-col h-full rounded-xl transition-all duration-300 transform hover:scale-[1.02]
+                        ${isDesktop ? 'p-3' : 'p-1.5'} cursor-pointer flex flex-col h-full rounded-xl transition-all duration-300 transform hover:scale-[1.02]
                         ${day.isCurrentMonth ? 'shadow-lg hover:shadow-xl' : 'opacity-70 hover:opacity-90'}
                         ${day.isToday ? 'shadow-2xl ring-4 ring-opacity-50' : ''}
                         ${isSelectedDate ? 'ring-4 ring-opacity-60 scale-[1.02]' : ''}
@@ -4187,8 +4192,8 @@ export default function UnifiedBookings() {
         </DialogContent>
       </Dialog>
 
-      {/* Portal-based Hover Card */}
-      {hoveredBooking && hoverCardVisible && createPortal(
+      {/* Portal-based Hover Card - Only show on desktop */}
+      {hoveredBooking && hoverCardVisible && isDesktop && createPortal(
         <div 
           className="fixed bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80"
           style={{ 
