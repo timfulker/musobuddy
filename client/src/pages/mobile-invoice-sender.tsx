@@ -455,7 +455,7 @@ export default function MobileInvoiceSender() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-black block">Invoice Type</label>
                   <Select value={form.watch("invoiceType") || "performance"} onValueChange={(value) => form.setValue("invoiceType", value)}>
-                    <SelectTrigger style={{ color: 'black', backgroundColor: 'white' }}>
+                    <SelectTrigger className="[&>span]:!text-black" style={{ color: 'black', backgroundColor: 'white' }}>
                       <SelectValue placeholder="Select invoice type" />
                     </SelectTrigger>
                     <SelectContent style={{ backgroundColor: 'white' }}>
@@ -560,7 +560,7 @@ export default function MobileInvoiceSender() {
 
                 {/* Due Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                  <div className="text-lg font-bold text-black uppercase tracking-wide">DUE DATE *</div>
+                  <div className="text-lg font-bold uppercase tracking-wide" style={{ color: 'black' }}>DUE DATE *</div>
                   <Input
                     type="date"
                     className="text-lg"
@@ -575,7 +575,7 @@ export default function MobileInvoiceSender() {
 
                 {/* Performance Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                  <div className="text-lg font-bold text-black uppercase tracking-wide">PERFORMANCE DATE</div>
+                  <div className="text-lg font-bold uppercase tracking-wide" style={{ color: 'black' }}>PERFORMANCE DATE</div>
                   <Input
                     type="date"
                     className="text-lg"
