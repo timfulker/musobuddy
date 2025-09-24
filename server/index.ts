@@ -131,6 +131,8 @@ async function initializeServer() {
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
+  // BACKUP SYSTEM: Primary + Secondary webhook endpoints for redundancy
+  // Primary webhook endpoint for mg.musobuddy.com replies
   // Lightweight client reply webhook handler for mg.musobuddy.com
   app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
     logReplyWebhookActivity('Received client reply', { keys: Object.keys(req.body || {}) });
@@ -279,6 +281,147 @@ async function initializeServer() {
         status: 'error', 
         message: error.message,
         note: 'Error logged, returning 200 to prevent retries'
+      });
+    }
+  });
+
+  // BACKUP WEBHOOK: Secondary endpoint for redundancy (identical processing)
+  app.post('/api/webhook/mailgun-replies-backup', upload.any(), async (req, res) => {
+    logReplyWebhookActivity('BACKUP: Received client reply', { keys: Object.keys(req.body || {}) });
+    
+    try {
+      const webhookData = req.body;
+      
+      // Check for duplicate email processing
+      if (isDuplicateEmail(webhookData)) {
+        return res.status(200).json({ 
+          status: 'duplicate', 
+          message: 'Email already processed, skipping to prevent duplication' 
+        });
+      }
+      const recipientEmail = webhookData.recipient || webhookData.To || '';
+      
+      const bookingMatch = recipientEmail.match(/booking-?(\d+)@/);
+      const invoiceMatch = recipientEmail.match(/invoice-?(\d+)@/);
+      
+      let bookingId = null;
+      let replyType = 'unknown';
+      
+      if (bookingMatch) {
+        bookingId = bookingMatch[1];
+        replyType = 'booking';
+      } else if (invoiceMatch) {
+        bookingId = invoiceMatch[1];
+        replyType = 'invoice';
+      } else {
+        logReplyWebhookActivity('BACKUP: No booking/invoice ID found in recipient', { recipientEmail });
+        return res.status(200).json({ 
+          status: 'ignored', 
+          reason: 'not_a_reply_email',
+          note: 'Backup webhook - only processes booking/invoice replies'
+        });
+      }
+      
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        logReplyWebhookActivity('BACKUP: Booking not found', { bookingId });
+        return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
+      }
+      
+      const userId = booking.userId;
+      const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
+      const subject = webhookData.subject || webhookData.Subject || 'No Subject';
+      
+      // Create simplified HTML message
+      const messageHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Client Reply - ${subject}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .reply-header { background: #f0f9ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .reply-content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .metadata { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        .reply-type { background: #dc2626; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <div class="reply-header">
+        <div class="metadata">
+            <span class="reply-type">BACKUP ${replyType.toUpperCase()} REPLY</span><br>
+            <strong>From:</strong> ${senderEmail}<br>
+            <strong>Subject:</strong> ${subject}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
+            <strong>Booking ID:</strong> ${bookingId}
+        </div>
+    </div>
+    <div class="reply-content">
+        ${webhookData['body-html'] || webhookData['stripped-html'] || webhookData['body-plain']?.replace(/\n/g, '<br>') || 'No content'}
+    </div>
+</body>
+</html>`;
+      
+      // Extract plain text content for fallback storage
+      const plainTextContent = webhookData['body-plain'] || 
+        (webhookData['body-html'] || webhookData['stripped-html'] || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim() || 'No content available';
+
+      // Store message in cloud storage
+      const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
+      const fileName = `user${userId}/booking${bookingId}/messages/backup_${replyType}_reply_${Date.now()}.html`;
+      const messageBuffer = Buffer.from(messageHtml, 'utf8');
+      
+      let finalMessageUrl = fileName;
+      
+      try {
+        await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+          'booking-id': bookingId,
+          'user-id': userId,
+          'reply-type': `backup_${replyType}`
+        });
+        console.log(`✅ BACKUP: Message stored in cloud storage: ${fileName}`);
+      } catch (cloudError) {
+        console.error(`❌ BACKUP: Cloud storage failed, using fallback:`, cloudError);
+        const contentBase64 = Buffer.from(plainTextContent, 'utf-8').toString('base64');
+        finalMessageUrl = `data:text/plain;base64,${contentBase64}`;
+      }
+      
+      // Create notification entry
+      await storage.createMessageNotification({
+        userId: userId,
+        bookingId: bookingId,
+        senderEmail: `[BACKUP] ${senderEmail}`,
+        subject: `[BACKUP] ${subject}`,
+        messageUrl: finalMessageUrl,
+        isRead: false,
+        createdAt: new Date()
+      });
+      
+      logReplyWebhookActivity(`BACKUP: ${replyType} reply stored successfully`, { fileName, userId, bookingId });
+      res.status(200).json({ 
+        status: 'success', 
+        type: `backup_${replyType}_reply`, 
+        bookingId, 
+        userId,
+        message: 'Reply processed via backup endpoint'
+      });
+      
+    } catch (error: any) {
+      logReplyWebhookActivity('BACKUP: Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
+      
+      res.status(200).json({ 
+        status: 'error', 
+        message: error.message,
+        note: 'Backup endpoint error logged, returning 200 to prevent retries'
       });
     }
   });
