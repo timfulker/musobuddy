@@ -157,6 +157,7 @@ export default function UnifiedBookings() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('bookingViewMode') as ViewMode) || 'list';
   });
+
   
   // Calendar state for calendar view
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -270,6 +271,28 @@ export default function UnifiedBookings() {
   
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
+
+  // Auto-switch view mode based on orientation on mobile devices
+  useEffect(() => {
+    if (!isDesktop) {
+      const handleOrientationChange = () => {
+        const isLandscape = window.innerHeight < window.innerWidth;
+        const newViewMode = isLandscape ? 'calendar' : 'list';
+        setViewMode(newViewMode);
+        localStorage.setItem('bookingViewMode', newViewMode);
+      };
+
+      // Set initial view based on current orientation
+      handleOrientationChange();
+
+      // Listen for orientation changes
+      window.addEventListener('resize', handleOrientationChange);
+      
+      return () => {
+        window.removeEventListener('resize', handleOrientationChange);
+      };
+    }
+  }, [isDesktop]);
 
   // Invoice status helpers
   const getInvoiceForBooking = (bookingId: number) => {
@@ -3951,16 +3974,6 @@ export default function UnifiedBookings() {
               </div>
             )}
 
-            {/* Mobile Portrait Mode - Rotation Prompt */}
-            {!isDesktop && (
-              <div className="calendar-rotation-prompt">
-                <div className="rotation-icon">📱</div>
-                <div>
-                  <div className="font-semibold">Please rotate your device</div>
-                  <div className="text-sm opacity-90">Calendar works best in landscape mode</div>
-                </div>
-              </div>
-            )}
             
             {/* Full-Screen Calendar Grid - Hidden in mobile portrait, optimized for mobile landscape */}
             <div className={`h-full flex flex-col w-full max-w-none mx-auto ${!isDesktop ? 'mobile-calendar-container' : ''}`}>

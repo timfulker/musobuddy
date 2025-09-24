@@ -75,67 +75,11 @@ main {
   z-index: -1;
 }
 
-/* Mobile Calendar Landscape-Only Mode */
+/* Mobile Responsive Calendar Grid */
 @media screen and (max-width: 768px) {
-  /* Portrait mode - COMPLETELY hide calendar and show rotation prompt */
-  @media (orientation: portrait) {
-    .mobile-calendar-container,
-    .mobile-calendar-container *,
-    .calendar-grid-landscape,
-    .calendar-day-cell-landscape,
-    .calendar-header-landscape {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      max-height: 0 !important;
-      overflow: hidden !important;
-    }
-    
-    .calendar-rotation-prompt {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(139, 92, 246, 0.9));
-      color: white;
-      padding: 24px 20px;
-      border-radius: 12px;
-      margin: 16px 0;
-      text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-      backdrop-filter: blur(12px);
-      animation: gentle-pulse 2s ease-in-out infinite;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 200px;
-    }
-    
-    .rotation-icon {
-      font-size: 24px;
-      transform: rotate(90deg);
-      transition: transform 0.3s ease;
-    }
-  }
-  
-  /* Landscape mode - show optimized calendar and hide prompt */
+  /* Landscape mode - optimize calendar display for mobile landscape */
   @media (orientation: landscape) {
-    .calendar-rotation-prompt {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      max-height: 0 !important;
-      overflow: hidden !important;
-    }
-    
     .mobile-calendar-container {
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
       width: 100vw !important;
       max-width: none !important;
       margin: 0 !important;
@@ -143,7 +87,6 @@ main {
     }
     
     .calendar-grid-landscape {
-      display: grid !important;
       width: 100% !important;
       max-width: none !important;
       grid-template-columns: repeat(7, 1fr) !important;
@@ -151,7 +94,6 @@ main {
     }
     
     .calendar-day-cell-landscape {
-      display: flex !important;
       min-width: 0 !important;
       width: 100% !important;
       aspect-ratio: 1.4 !important;
@@ -160,7 +102,6 @@ main {
     }
     
     .calendar-header-landscape {
-      display: block !important;
       font-size: 11px !important;
       padding: 6px 1px !important;
       text-align: center !important;
@@ -169,11 +110,6 @@ main {
   }
 }
 
-/* Gentle pulsing animation for rotation prompt */
-@keyframes gentle-pulse {
-  0%, 100% { opacity: 0.9; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.02); }
-}
 
 .floating-decoration-1 {
   top: 10%;
