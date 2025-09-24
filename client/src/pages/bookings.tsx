@@ -3890,10 +3890,11 @@ export default function UnifiedBookings() {
         onOpenChange={setFullScreenCalendarOpen}
       >
         <DialogContent 
-          className={`${isDesktop ? 'max-w-7xl max-h-[95vh]' : 'max-w-full max-h-[90vh] mx-2'} overflow-hidden flex flex-col p-0 luminance-aware`}
+          className={`${isDesktop ? 'max-w-7xl max-h-[95vh]' : 'max-w-full max-h-[90vh] mx-2'} overflow-hidden flex flex-col p-0 luminance-aware w-full`}
           style={{ 
             width: isDesktop ? '95vw' : 'calc(100vw - 16px)', 
-            height: isDesktop ? '95vh' : '85vh' 
+            height: isDesktop ? '95vh' : '85vh',
+            margin: '0 auto'
           }}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft') {
@@ -3935,7 +3936,7 @@ export default function UnifiedBookings() {
         >
 
           
-          <div className={`flex-1 overflow-y-auto ${isDesktop ? 'p-4 pb-20' : 'p-2 pb-16'} relative`}>
+          <div className={`flex-1 overflow-y-auto ${isDesktop ? 'p-4 pb-20' : 'p-2 pb-16'} relative w-full`}>
             {/* Keyboard instructions - Only show on desktop */}
             {isDesktop && (
               <div className="absolute top-4 left-8 z-10">
@@ -3951,7 +3952,7 @@ export default function UnifiedBookings() {
             )}
             
             {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col w-full max-w-none mx-auto">
               {/* Month Header - Bold Theme Background */}
               <div className="flex items-center justify-center mb-6 flex-col relative">
                 <div className="absolute inset-0 rounded-xl shadow-xl" style={{
@@ -3969,7 +3970,7 @@ export default function UnifiedBookings() {
               </div>
               
               {/* Day Headers - Full Theme Color Backgrounds with Luminance Aware Text */}
-              <div className="grid grid-cols-7 gap-2 mb-3">
+              <div className="grid grid-cols-7 gap-2 mb-3 w-full">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
                   const bgColor = settings?.themeAccentColor || theme.colors.primary;
                   const textColor = getOptimalTextColor(bgColor);
@@ -3988,7 +3989,7 @@ export default function UnifiedBookings() {
               </div>
               
               {/* Calendar Grid - 6 Weeks (42 days) with Equal Row Heights */}
-              <div className={`grid grid-cols-7 grid-rows-6 ${isDesktop ? 'gap-2' : 'gap-1'} flex-1 min-h-0`}>
+              <div className={`grid grid-cols-7 grid-rows-6 ${isDesktop ? 'gap-2' : 'gap-1'} flex-1 min-h-0 w-full`}>
                 {(() => {
                   // Generate calendar data for complete 6 weeks (42 days) to show full month context
                   // Monday-to-Sunday week layout for musicians (weekend work is common)
