@@ -85,13 +85,13 @@ export default function MobileNav() {
           <span className={cn("text-xs leading-tight", isActive("/messages") && "font-medium")}>Messages</span>
         </Link>
 
-        {/* Clients */}
-        <Link href="/address-book" className={cn(
+        {/* Settings */}
+        <Link href="/settings" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-2 min-w-0 flex-1 rounded-lg transition-colors",
-          isActive("/address-book") ? "text-primary bg-primary/10" : "text-gray-500 dark:text-gray-400 hover:text-primary/80"
+          isActive("/settings") ? "text-primary bg-primary/10" : "text-gray-500 dark:text-gray-400 hover:text-primary/80"
         )}>
-          <Users className="w-5 h-5" />
-          <span className={cn("text-xs leading-tight", isActive("/address-book") && "font-medium")}>Clients</span>
+          <Settings className="w-5 h-5" />
+          <span className={cn("text-xs leading-tight", isActive("/settings") && "font-medium")}>Settings</span>
         </Link>
       </div>
     </div>
