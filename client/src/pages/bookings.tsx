@@ -1617,7 +1617,7 @@ export default function UnifiedBookings() {
     return (
       <div className="min-h-screen bg-background layout-consistent">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+        <div className={`${isDesktop ? "h-screen" : "min-h-screen"} flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -1635,7 +1635,7 @@ export default function UnifiedBookings() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {/* Main Content - Viewport Height Container */}
-      <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""} ${!isDesktop ? "pb-20" : ""}`}>
+      <div className={`${isDesktop ? "h-screen" : "min-h-screen"} flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""} ${!isDesktop ? "pb-20" : ""}`}>
         {/* Mobile Header */}
         {!isDesktop && (
           <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
