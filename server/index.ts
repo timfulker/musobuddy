@@ -265,6 +265,7 @@ async function initializeServer() {
       });
       
       logReplyWebhookActivity(`${replyType} reply stored successfully`, { fileName, userId, bookingId });
+      updateEmailHealthMetrics(true); // Track successful email processing
       res.status(200).json({ 
         status: 'success', 
         type: `${replyType}_reply`, 
@@ -275,6 +276,7 @@ async function initializeServer() {
       
     } catch (error: any) {
       logReplyWebhookActivity('Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
+      updateEmailHealthMetrics(false, error); // Track email processing failure
       
       // Return 200 to prevent Mailgun retries
       res.status(200).json({ 
@@ -407,6 +409,7 @@ async function initializeServer() {
       });
       
       logReplyWebhookActivity(`BACKUP: ${replyType} reply stored successfully`, { fileName, userId, bookingId });
+      updateEmailHealthMetrics(true); // Track successful backup email processing
       res.status(200).json({ 
         status: 'success', 
         type: `backup_${replyType}_reply`, 
@@ -417,6 +420,7 @@ async function initializeServer() {
       
     } catch (error: any) {
       logReplyWebhookActivity('BACKUP: Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
+      updateEmailHealthMetrics(false, error); // Track backup email processing failure
       
       res.status(200).json({ 
         status: 'error', 
@@ -425,6 +429,154 @@ async function initializeServer() {
       });
     }
   });
+
+// EMAIL HEALTH MONITORING SYSTEM
+const emailHealthMetrics = {
+  lastProcessedEmail: null as Date | null,
+  totalProcessed: 0,
+  totalErrors: 0,
+  recentErrors: [] as any[],
+  alertThresholds: {
+    noEmailMinutes: 30, // Alert if no emails processed for 30 minutes
+    errorRate: 0.1, // Alert if error rate exceeds 10%
+    consecutiveErrors: 3 // Alert after 3 consecutive errors
+  },
+  consecutiveErrorCount: 0,
+  alerts: [] as any[]
+};
+
+function updateEmailHealthMetrics(success: boolean, error?: any) {
+  if (success) {
+    emailHealthMetrics.lastProcessedEmail = new Date();
+    emailHealthMetrics.totalProcessed++;
+    emailHealthMetrics.consecutiveErrorCount = 0;
+  } else {
+    emailHealthMetrics.totalErrors++;
+    emailHealthMetrics.consecutiveErrorCount++;
+    emailHealthMetrics.recentErrors.push({
+      timestamp: new Date(),
+      error: error?.message || 'Unknown error',
+      stack: error?.stack?.substring(0, 200)
+    });
+    
+    // Keep only last 10 errors
+    if (emailHealthMetrics.recentErrors.length > 10) {
+      emailHealthMetrics.recentErrors.shift();
+    }
+    
+    // Check if we need to create an alert
+    checkEmailHealthAlerts();
+  }
+}
+
+function checkEmailHealthAlerts() {
+  const now = new Date();
+  const { alertThresholds, lastProcessedEmail, totalErrors, totalProcessed, consecutiveErrorCount } = emailHealthMetrics;
+  
+  // Check for no email processing alert
+  if (lastProcessedEmail) {
+    const minutesSinceLastEmail = (now.getTime() - lastProcessedEmail.getTime()) / (1000 * 60);
+    if (minutesSinceLastEmail > alertThresholds.noEmailMinutes) {
+      createAlert('NO_EMAIL_PROCESSING', `No emails processed for ${Math.round(minutesSinceLastEmail)} minutes`);
+    }
+  }
+  
+  // Check error rate alert
+  if (totalProcessed > 0) {
+    const errorRate = totalErrors / (totalProcessed + totalErrors);
+    if (errorRate > alertThresholds.errorRate) {
+      createAlert('HIGH_ERROR_RATE', `Email error rate at ${(errorRate * 100).toFixed(1)}%`);
+    }
+  }
+  
+  // Check consecutive errors alert
+  if (consecutiveErrorCount >= alertThresholds.consecutiveErrors) {
+    createAlert('CONSECUTIVE_ERRORS', `${consecutiveErrorCount} consecutive email processing errors`);
+  }
+}
+
+function createAlert(type: string, message: string) {
+  const alert = {
+    id: Date.now().toString(),
+    type,
+    message,
+    timestamp: new Date(),
+    acknowledged: false
+  };
+  
+  emailHealthMetrics.alerts.push(alert);
+  
+  // Keep only last 20 alerts
+  if (emailHealthMetrics.alerts.length > 20) {
+    emailHealthMetrics.alerts.shift();
+  }
+  
+  console.error(`🚨 EMAIL HEALTH ALERT [${type}]: ${message}`);
+}
+
+// Real-time email health monitoring endpoint
+app.get('/api/email/health', (req, res) => {
+  const now = new Date();
+  const { lastProcessedEmail, totalProcessed, totalErrors, recentErrors, alerts } = emailHealthMetrics;
+  
+  let status = 'healthy';
+  let statusMessage = 'All email processing systems operational';
+  
+  // Check current health status
+  if (lastProcessedEmail) {
+    const minutesSinceLastEmail = (now.getTime() - lastProcessedEmail.getTime()) / (1000 * 60);
+    if (minutesSinceLastEmail > emailHealthMetrics.alertThresholds.noEmailMinutes) {
+      status = 'warning';
+      statusMessage = `No emails processed for ${Math.round(minutesSinceLastEmail)} minutes`;
+    }
+  }
+  
+  if (emailHealthMetrics.consecutiveErrorCount >= emailHealthMetrics.alertThresholds.consecutiveErrors) {
+    status = 'critical';
+    statusMessage = `${emailHealthMetrics.consecutiveErrorCount} consecutive processing errors`;
+  }
+  
+  const healthData = {
+    status,
+    statusMessage,
+    timestamp: now.toISOString(),
+    metrics: {
+      lastProcessedEmail: lastProcessedEmail?.toISOString() || null,
+      totalProcessed,
+      totalErrors,
+      errorRate: totalProcessed > 0 ? (totalErrors / (totalProcessed + totalErrors)) : 0,
+      consecutiveErrors: emailHealthMetrics.consecutiveErrorCount,
+      webhookLogsCount: webhookLogs.length,
+      replyWebhookLogsCount: replyWebhookLogs.length
+    },
+    recentErrors: recentErrors.slice(-5), // Last 5 errors
+    alerts: alerts.filter(alert => !alert.acknowledged).slice(-10), // Last 10 unacknowledged alerts
+    uptime: {
+      minutes: process.uptime() / 60,
+      formatted: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m`
+    }
+  };
+  
+  res.json(healthData);
+});
+
+// Acknowledge health alerts
+app.post('/api/email/health/acknowledge', (req, res) => {
+  const { alertId } = req.body;
+  
+  if (!alertId) {
+    return res.status(400).json({ error: 'alertId required' });
+  }
+  
+  const alert = emailHealthMetrics.alerts.find(a => a.id === alertId);
+  if (alert) {
+    alert.acknowledged = true;
+    console.log(`✅ ALERT ACKNOWLEDGED: ${alert.type} - ${alert.message}`);
+    res.json({ success: true, message: 'Alert acknowledged' });
+  } else {
+    res.status(404).json({ error: 'Alert not found' });
+  }
+});
 
 // Webhook activity log for monitoring
 const webhookLogs: any[] = [];
