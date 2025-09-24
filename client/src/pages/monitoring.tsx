@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Activity, Clock, Users, Zap, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 interface MonitoringData {
   timeRange: string;
@@ -61,11 +63,37 @@ interface MonitoringData {
 }
 
 export default function MonitoringDashboard() {
+  const { user, isAuthenticated } = useAuthContext();
   const [data, setData] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('24h');
   const [selectedError, setSelectedError] = useState<any>(null);
+
+  // Check admin access
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>Please log in to access monitoring dashboard.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!(user?.isAdmin)) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Admin Access Required</AlertTitle>
+          <AlertDescription>Only administrators can access the monitoring dashboard.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchMonitoringData();
@@ -74,14 +102,21 @@ export default function MonitoringDashboard() {
   const fetchMonitoringData = async () => {
     setLoading(true);
     try {
+      // Get the current session from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('No active session - please log in');
+      }
+
       const response = await fetch(`/api/monitoring/dashboard?timeRange=${timeRange}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch monitoring data');
+        throw new Error(`Failed to fetch monitoring data: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -96,9 +131,16 @@ export default function MonitoringDashboard() {
 
   const fetchErrorDetails = async (errorId: number) => {
     try {
+      // Get the current session from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       const response = await fetch(`/api/monitoring/errors/${errorId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
