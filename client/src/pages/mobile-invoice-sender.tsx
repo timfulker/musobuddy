@@ -455,12 +455,12 @@ export default function MobileInvoiceSender() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-black block">Invoice Type</label>
                   <Select value={form.watch("invoiceType") || "performance"} onValueChange={(value) => form.setValue("invoiceType", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select invoice type" />
+                    <SelectTrigger className="text-black dark:text-white">
+                      <SelectValue placeholder="Select invoice type" className="text-black" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="performance">Performance Invoice</SelectItem>
-                      <SelectItem value="ad_hoc">Ad-hoc Invoice</SelectItem>
+                      <SelectItem value="performance" className="text-black dark:text-white">Performance Invoice</SelectItem>
+                      <SelectItem value="ad_hoc" className="text-black dark:text-white">Ad-hoc Invoice</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
