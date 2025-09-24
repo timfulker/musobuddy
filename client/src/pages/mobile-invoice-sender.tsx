@@ -382,12 +382,24 @@ export default function MobileInvoiceSender() {
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     onClick={() => fillFromBooking(booking)}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{booking.clientName}</p>
-                      <p className="text-xs text-gray-500">{booking.eventType} • £{booking.fee}</p>
-                      <p className="text-xs text-gray-400">
-                        {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'Date TBC'}
-                      </p>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <User className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-500 font-medium">Client:</span>
+                        <span className="font-medium text-sm truncate">{booking.clientName}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-500 font-medium">Event:</span>
+                        <span className="text-xs text-gray-600">{booking.eventType} • £{booking.fee}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-500 font-medium">Date:</span>
+                        <span className="text-xs text-gray-600">
+                          {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'Date TBC'}
+                        </span>
+                      </div>
                     </div>
                     <Button size="sm" variant="outline">
                       <Plus className="h-4 w-4" />
