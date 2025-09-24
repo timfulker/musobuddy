@@ -904,6 +904,14 @@ export function setupAuthRoutes(app: Express) {
         if (!isBetaUser && inviteCode) {
           try {
             const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
+            console.log('🔍 Beta code lookup result:', {
+              code: inviteCode,
+              found: !!betaCode,
+              status: betaCode?.status,
+              maxUses: betaCode?.maxUses,
+              currentUses: betaCode?.currentUses,
+              expiresAt: betaCode?.expiresAt
+            });
             if (betaCode && betaCode.status === 'active') {
               // Check if code hasn't expired
               if (!betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt)) {
