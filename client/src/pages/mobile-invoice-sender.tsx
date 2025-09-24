@@ -455,12 +455,12 @@ export default function MobileInvoiceSender() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-black block">Invoice Type</label>
                   <Select value={form.watch("invoiceType") || "performance"} onValueChange={(value) => form.setValue("invoiceType", value)}>
-                    <SelectTrigger className="text-black dark:text-white">
-                      <SelectValue placeholder="Select invoice type" className="text-black" />
+                    <SelectTrigger className="text-black bg-white border-gray-300">
+                      <SelectValue placeholder="Select invoice type" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="performance" className="text-black dark:text-white">Performance Invoice</SelectItem>
-                      <SelectItem value="ad_hoc" className="text-black dark:text-white">Ad-hoc Invoice</SelectItem>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="performance" className="text-black">Performance Invoice</SelectItem>
+                      <SelectItem value="ad_hoc" className="text-black">Ad-hoc Invoice</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -471,6 +471,7 @@ export default function MobileInvoiceSender() {
                     <label className="text-sm font-bold text-black block">Description</label>
                     <Textarea
                       placeholder="Enter invoice description (e.g. Administrative costs, Equipment rental, Travel expenses)"
+                      className="text-black bg-white"
                       rows={3}
                       {...form.register("description")}
                     />
@@ -482,6 +483,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Client Name *</label>
                   <Input
                     placeholder="Enter the client's full name"
+                    className="text-black bg-white"
                     {...form.register("clientName")}
                   />
                   {form.formState.errors.clientName && (
@@ -495,6 +497,7 @@ export default function MobileInvoiceSender() {
                   <Input
                     type="email"
                     placeholder="Enter client's email address"
+                    className="text-black bg-white"
                     {...form.register("clientEmail")}
                   />
                   {form.formState.errors.clientEmail && (
@@ -508,6 +511,7 @@ export default function MobileInvoiceSender() {
                   <Input
                     type="email"
                     placeholder="Additional recipient email (optional)"
+                    className="text-black bg-white"
                     {...form.register("ccEmail")}
                   />
                   {form.formState.errors.ccEmail && (
@@ -520,6 +524,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Client Address</label>
                   <Input
                     placeholder="Enter client's billing address"
+                    className="text-black bg-white"
                     {...form.register("clientAddress")}
                   />
                   {form.formState.errors.clientAddress && (
@@ -532,6 +537,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Venue Address</label>
                   <Input
                     placeholder="Enter the performance venue address"
+                    className="text-black bg-white"
                     {...form.register("venueAddress")}
                   />
                   {form.formState.errors.venueAddress && (
@@ -544,6 +550,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Amount (£) *</label>
                   <Input
                     placeholder="Enter invoice amount (e.g. 500.00)"
+                    className="text-black bg-white"
                     {...form.register("amount")}
                   />
                   {form.formState.errors.amount && (
@@ -556,7 +563,7 @@ export default function MobileInvoiceSender() {
                   <div className="text-lg font-bold text-black uppercase tracking-wide">DUE DATE *</div>
                   <Input
                     type="date"
-                    className="text-lg"
+                    className="text-lg text-black bg-white"
                     {...form.register("dueDate")}
                   />
                   {form.formState.errors.dueDate && (
@@ -570,7 +577,7 @@ export default function MobileInvoiceSender() {
                   <div className="text-lg font-bold text-black uppercase tracking-wide">PERFORMANCE DATE</div>
                   <Input
                     type="date"
-                    className="text-lg"
+                    className="text-lg text-black bg-white"
                     {...form.register("performanceDate")}
                   />
                   {form.formState.errors.performanceDate && (
@@ -584,6 +591,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Performance Duration</label>
                   <Input
                     placeholder="Enter performance duration (e.g. 2 x 45 min sets)"
+                    className="text-black bg-white"
                     {...form.register("performanceDuration")}
                   />
                   {form.formState.errors.performanceDuration && (
@@ -596,6 +604,7 @@ export default function MobileInvoiceSender() {
                   <label className="text-sm font-bold text-black block">Event Type</label>
                   <Input
                     placeholder="Enter event type (e.g. Wedding, Corporate Event)"
+                    className="text-black bg-white"
                     {...form.register("gigType")}
                   />
                   {form.formState.errors.gigType && (
