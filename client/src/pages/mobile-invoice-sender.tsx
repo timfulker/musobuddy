@@ -423,10 +423,13 @@ export default function MobileInvoiceSender() {
             <CardContent>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div 
+                      className="flex items-center gap-2 text-base font-bold text-black" 
+                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                    >
                       <User className="h-4 w-4" />
                       Client Name
-                    </label>
+                    </div>
                     <Input 
                       placeholder="Enter client name" 
                       {...form.register("clientName")}
@@ -437,10 +440,13 @@ export default function MobileInvoiceSender() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div 
+                      className="flex items-center gap-2 text-base font-bold text-black" 
+                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                    >
                       <Mail className="h-4 w-4" />
                       Client Email
-                    </label>
+                    </div>
                     <Input 
                       placeholder="client@example.com" 
                       type="email"
@@ -453,10 +459,13 @@ export default function MobileInvoiceSender() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div 
+                        className="flex items-center gap-2 text-base font-bold text-black" 
+                        style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                      >
                         <PoundSterling className="h-4 w-4" />
                         Amount (£)
-                      </label>
+                      </div>
                       <Input 
                         placeholder="500" 
                         type="number"
@@ -468,10 +477,13 @@ export default function MobileInvoiceSender() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div 
+                        className="flex items-center gap-2 text-base font-bold text-black" 
+                        style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                      >
                         <Calendar className="h-4 w-4" />
                         Due Date
-                      </label>
+                      </div>
                       <Input 
                         type="date"
                         {...form.register("dueDate")}
@@ -483,10 +495,13 @@ export default function MobileInvoiceSender() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div 
+                      className="flex items-center gap-2 text-base font-bold text-black" 
+                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                    >
                       <Calendar className="h-4 w-4" />
                       Performance Date (Optional)
-                    </label>
+                    </div>
                     <Input 
                       type="date"
                       {...form.register("performanceDate")}
@@ -497,10 +512,13 @@ export default function MobileInvoiceSender() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div 
+                      className="flex items-center gap-2 text-base font-bold text-black" 
+                      style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}
+                    >
                       <FileText className="h-4 w-4" />
                       Description (Optional)
-                    </label>
+                    </div>
                     <Textarea 
                       placeholder="e.g., Wedding performance at The Grand Hotel"
                       className="resize-none"
