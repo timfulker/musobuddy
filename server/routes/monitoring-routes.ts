@@ -113,6 +113,21 @@ router.get('/api/monitoring/dashboard', authenticate, async (req: AuthenticatedR
     const hours = hoursMap[timeRange as string] || 24;
     const threshold = new Date(Date.now() - hours * 60 * 60 * 1000);
 
+    // Check if monitoring tables exist by trying a simple query first
+    try {
+      await db.select({ count: count() }).from(frontEndErrors).limit(1);
+      console.log('✅ Monitoring tables exist and are accessible');
+    } catch (tableError) {
+      console.error('❌ Monitoring tables may not exist:', tableError);
+      return res.json({
+        timeRange,
+        errors: { summary: [], recent: [] },
+        performance: { summary: [], webVitals: [] },
+        interactions: [],
+        network: { stats: { totalRequests: 0, avgDuration: 0, failedRequests: 0, slowRequests: 0 }, failingEndpoints: [] }
+      });
+    }
+
     // Get error summary
     const errorSummary = await db
       .select({
@@ -221,7 +236,12 @@ router.get('/api/monitoring/dashboard', authenticate, async (req: AuthenticatedR
     });
   } catch (error) {
     console.error('Error fetching monitoring dashboard:', error);
-    res.status(500).json({ error: 'Failed to fetch monitoring data' });
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    res.status(500).json({
+      error: 'Failed to fetch monitoring data',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
@@ -317,12 +337,43 @@ router.get('/api/monitoring/health', async (req: Request, res: Response) => {
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      recentErrors: recentData[0]?.count || 0
+      recentErrors: recentData[0]?.count || 0,
+      tablesExist: true
     });
   } catch (error) {
+    console.error('Monitoring health check failed:', error);
     res.status(503).json({
       status: 'unhealthy',
-      error: 'Database connection failed'
+      error: 'Database connection failed',
+      details: error instanceof Error ? error.message : String(error),
+      tablesExist: false
+    });
+  }
+});
+
+// Debug endpoint to check table status
+router.get('/api/monitoring/debug', async (req: Request, res: Response) => {
+  try {
+    const tableChecks = await Promise.allSettled([
+      db.select({ count: count() }).from(frontEndErrors).limit(1),
+      db.select({ count: count() }).from(performanceMetrics).limit(1),
+      db.select({ count: count() }).from(userInteractions).limit(1),
+      db.select({ count: count() }).from(networkRequests).limit(1)
+    ]);
+
+    const results = {
+      frontEndErrors: tableChecks[0].status === 'fulfilled',
+      performanceMetrics: tableChecks[1].status === 'fulfilled',
+      userInteractions: tableChecks[2].status === 'fulfilled',
+      networkRequests: tableChecks[3].status === 'fulfilled',
+      errors: tableChecks.map(check => check.status === 'rejected' ? (check as PromiseRejectedResult).reason?.message : null)
+    };
+
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Debug check failed',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
