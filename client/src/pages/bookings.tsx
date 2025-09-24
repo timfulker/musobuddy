@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1633,8 +1634,8 @@ export default function UnifiedBookings() {
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content - Natural Flow Container */}
-      <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""} ${!isDesktop ? "pb-20" : ""}`}>
+      {/* Main Content - Viewport Height Container */}
+      <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""} ${!isDesktop ? "pb-20" : ""}`}>
         {/* Mobile Header */}
         {!isDesktop && (
           <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
@@ -2321,7 +2322,153 @@ export default function UnifiedBookings() {
                                         style={settings?.showBandColors && groupBooking.bandId ? getBandBorderStyle(groupBooking.bandId) : {}}
                                         onContextMenu={(e) => handleBookingRightClick(e, groupBooking)}
                                       >
-                                        <CardContent className="p-6">
+                                        <CardContent className={`${isDesktop ? 'p-6' : 'p-4'}`}>
+                                          {/* Mobile Design: Square Card with Dense Information */}
+                                          {!isDesktop ? (
+                                            <div className="space-y-3">
+                                              {/* Header Row - Date and Status */}
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="bg-primary/10 rounded-lg px-3 py-2 text-center min-w-[60px]">
+                                                    <div className="text-xl font-bold text-primary">
+                                                      {format(new Date(groupBooking.eventDate), 'd')}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground uppercase font-medium">
+                                                      {format(new Date(groupBooking.eventDate), 'MMM')}
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                      <span className={`inline-block w-2 h-2 rounded-full ${
+                                                        groupBooking.status === 'new' ? 'bg-blue-500' :
+                                                        groupBooking.status === 'confirmed' ? 'bg-green-500' :
+                                                        groupBooking.status === 'in_progress' ? 'bg-orange-500' :
+                                                        groupBooking.status === 'completed' ? 'bg-gray-500' :
+                                                        'bg-gray-400'
+                                                      }`} />
+                                                      <span className="text-xs uppercase font-medium text-muted-foreground tracking-wide">
+                                                        {groupBooking.status.replace('_', ' ')}
+                                                      </span>
+                                                      {groupBooking.applyNowLink && (
+                                                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300 px-1 py-0">
+                                                          🎵
+                                                        </Badge>
+                                                      )}
+                                                    </div>
+                                                    <h3 className="font-semibold text-base line-clamp-1 text-foreground">
+                                                      {groupBooking.venue || groupBooking.clientName || 'Event'}
+                                                    </h3>
+                                                  </div>
+                                                </div>
+                                                
+                                                {/* Action Menu */}
+                                                <DropdownMenu>
+                                                  <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                      <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                  </DropdownMenuTrigger>
+                                                  <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem asChild>
+                                                      <Link href={`/bookings?id=${groupBooking.id}`}>
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View/Edit
+                                                      </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/conversation/${groupBooking.id}`);
+                                                      }}
+                                                    >
+                                                      <MessageCircle className="mr-2 h-4 w-4" />
+                                                      Conversation
+                                                    </DropdownMenuItem>
+                                                  </DropdownMenuContent>
+                                                </DropdownMenu>
+                                              </div>
+                                              
+                                              {/* Information Grid */}
+                                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                                <div className="space-y-1">
+                                                  {groupBooking.clientName && groupBooking.venue && (
+                                                    <div className="flex items-center gap-1">
+                                                      <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                      <span className="text-muted-foreground truncate text-xs">{groupBooking.clientName}</span>
+                                                    </div>
+                                                  )}
+                                                  {groupBooking.eventTime && (
+                                                    <div className="flex items-center gap-1">
+                                                      <Clock className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                      <span className="text-xs font-medium">{groupBooking.eventTime}</span>
+                                                    </div>
+                                                  )}
+                                                  {groupBooking.venue && groupBooking.venueAddress && (
+                                                    <div className="flex items-center gap-1">
+                                                      <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                      <span className="text-xs text-muted-foreground truncate">{groupBooking.venueAddress.split(',')[0]}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <div className="space-y-1 text-right">
+                                                  {groupBooking.fee && (
+                                                    <div className="flex items-center justify-end gap-1">
+                                                      <PoundSterling className="w-3 h-3 text-green-600 flex-shrink-0" />
+                                                      <span className="text-xs font-semibold text-green-600">
+                                                        {(() => {
+                                                          const amountDisplay = getBookingAmountDisplayText(groupBooking, settings);
+                                                          return amountDisplay.main;
+                                                        })()}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                  {groupBooking.createdAt && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                      {formatReceivedTime(groupBooking.createdAt)}
+                                                    </div>
+                                                  )}
+                                                  {getInvoiceStatusIcon(groupBooking.id) && (
+                                                    <div className="flex justify-end">
+                                                      {getInvoiceStatusIcon(groupBooking.id)}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              
+                                              {/* Encore Apply Button - if present */}
+                                              {groupBooking.applyNowLink && (
+                                                <div className="pt-2 border-t border-gray-100">
+                                                  <div className="flex items-center justify-between">
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(groupBooking.applyNowLink, '_blank');
+                                                      }}
+                                                      className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100 text-xs px-2 py-1 h-7"
+                                                    >
+                                                      🎵 {groupBooking.status === 'new' ? 'Apply on Encore' : 'Applied'}
+                                                    </Button>
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="text-xs text-gray-600">Applied:</span>
+                                                      <Switch
+                                                        checked={groupBooking.status === 'in_progress' || groupBooking.status === 'confirmed' || groupBooking.status === 'completed'}
+                                                        onCheckedChange={(checked) => {
+                                                          const newStatus = checked ? 'in_progress' : 'new';
+                                                          markAppliedMutation.mutate({ bookingId: groupBooking.id, status: newStatus });
+                                                        }}
+                                                        disabled={markAppliedMutation.isPending}
+                                                        className="data-[state=checked]:bg-green-600 scale-75"
+                                                      />
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          ) : (
+                                          /* Desktop Design: Full Layout */
+                                          <>
                                           <div className="flex items-start justify-between">
                                             <div className="flex items-start gap-4 flex-1">
                                               <Checkbox
@@ -2580,6 +2727,8 @@ export default function UnifiedBookings() {
                                               </DropdownMenu>
                                             </div>
                                           </div>
+                                          </>
+                                          )}
                                         </CardContent>
                                       </Card>
                                     );
@@ -2603,7 +2752,153 @@ export default function UnifiedBookings() {
                           }`}
                           style={settings?.showBandColors && booking.bandId ? getBandBorderStyle(booking.bandId) : {}}
                         >
-                          <CardContent className="p-6">
+                          <CardContent className={`${isDesktop ? 'p-6' : 'p-4'}`}>
+                            {/* Mobile Design: Square Card with Dense Information */}
+                            {!isDesktop ? (
+                              <div className="space-y-3">
+                                {/* Header Row - Date and Status */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-primary/10 rounded-lg px-3 py-2 text-center min-w-[60px]">
+                                      <div className="text-xl font-bold text-primary">
+                                        {format(new Date(booking.eventDate), 'd')}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground uppercase font-medium">
+                                        {format(new Date(booking.eventDate), 'MMM')}
+                                      </div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className={`inline-block w-2 h-2 rounded-full ${
+                                          booking.status === 'new' ? 'bg-blue-500' :
+                                          booking.status === 'confirmed' ? 'bg-green-500' :
+                                          booking.status === 'in_progress' ? 'bg-orange-500' :
+                                          booking.status === 'completed' ? 'bg-gray-500' :
+                                          'bg-gray-400'
+                                        }`} />
+                                        <span className="text-xs uppercase font-medium text-muted-foreground tracking-wide">
+                                          {booking.status.replace('_', ' ')}
+                                        </span>
+                                        {booking.applyNowLink && (
+                                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300 px-1 py-0">
+                                            🎵
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <h3 className="font-semibold text-base line-clamp-1 text-foreground">
+                                        {booking.venue || booking.clientName || booking.eventType || 'Event'}
+                                      </h3>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Action Menu */}
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem asChild>
+                                        <Link href={`/bookings?id=${booking.id}`}>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          View/Edit
+                                        </Link>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigate(`/conversation/${booking.id}`);
+                                        }}
+                                      >
+                                        <MessageCircle className="mr-2 h-4 w-4" />
+                                        Conversation
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                                
+                                {/* Information Grid */}
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div className="space-y-1">
+                                    {booking.clientName && booking.venue && (
+                                      <div className="flex items-center gap-1">
+                                        <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                        <span className="text-muted-foreground truncate text-xs">{booking.clientName}</span>
+                                      </div>
+                                    )}
+                                    {booking.eventTime && (
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                        <span className="text-xs font-medium">{booking.eventTime}</span>
+                                      </div>
+                                    )}
+                                    {booking.venue && booking.venueAddress && (
+                                      <div className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                        <span className="text-xs text-muted-foreground truncate">{booking.venueAddress.split(',')[0]}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="space-y-1 text-right">
+                                    {booking.fee && (
+                                      <div className="flex items-center justify-end gap-1">
+                                        <PoundSterling className="w-3 h-3 text-green-600 flex-shrink-0" />
+                                        <span className="text-xs font-semibold text-green-600">
+                                          {(() => {
+                                            const amountDisplay = getBookingAmountDisplayText(booking, settings);
+                                            return amountDisplay.main;
+                                          })()}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {booking.createdAt && (
+                                      <div className="text-xs text-muted-foreground">
+                                        {formatReceivedTime(booking.createdAt)}
+                                      </div>
+                                    )}
+                                    {getInvoiceStatusIcon(booking.id) && (
+                                      <div className="flex justify-end">
+                                        {getInvoiceStatusIcon(booking.id)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Encore Apply Button - if present */}
+                                {booking.applyNowLink && (
+                                  <div className="pt-2 border-t border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          window.open(booking.applyNowLink, '_blank');
+                                        }}
+                                        className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100 text-xs px-2 py-1 h-7"
+                                      >
+                                        🎵 {booking.status === 'new' ? 'Apply on Encore' : 'Applied'}
+                                      </Button>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-600">Applied:</span>
+                                        <Switch
+                                          checked={booking.status === 'in_progress' || booking.status === 'confirmed' || booking.status === 'completed'}
+                                          onCheckedChange={(checked) => {
+                                            const newStatus = checked ? 'in_progress' : 'new';
+                                            markAppliedMutation.mutate({ bookingId: booking.id, status: newStatus });
+                                          }}
+                                          disabled={markAppliedMutation.isPending}
+                                          className="data-[state=checked]:bg-green-600 scale-75"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                            /* Desktop Design: Full Layout */
+                            <>
                             <div className="flex items-start justify-between">
                               <div className="flex items-start gap-4 flex-1">
                                 <Checkbox
@@ -2884,6 +3179,8 @@ export default function UnifiedBookings() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
+                          </>
+                          )}
                           </CardContent>
                         </Card>
                       );
