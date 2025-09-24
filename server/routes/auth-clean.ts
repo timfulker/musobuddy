@@ -935,7 +935,9 @@ export function setupAuthRoutes(app: Express) {
         signupIpAddress: req.ip || req.connection?.remoteAddress || 'unknown',
         deviceFingerprint: deviceFingerprint,
         isBetaTester: isBetaUser,
-        trialEndsAt: isBetaUser ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14-day trial for non-beta users
+        trialEndsAt: isBetaUser 
+          ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90-day trial for beta users
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30-day trial for regular users
       };
 
       console.log('💾 Creating user with data:', {

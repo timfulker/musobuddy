@@ -103,7 +103,7 @@ export const authenticate = async (
           emailVerified: !!user.email_confirmed_at, // Sync email verification status from Supabase
           isAdmin: false,
           hasPaid: false,
-          trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 day trial
+          trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 day trial
           onboardingCompleted: false,
           isActive: true
         };
