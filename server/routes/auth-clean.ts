@@ -229,6 +229,7 @@ export function setupAuthRoutes(app: Express) {
         tier: user.tier,
         plan: user.plan,
         isAdmin: user.isAdmin,
+        isBetaTester: user.isBetaTester,
         onboardingCompleted: user.onboardingCompleted,
         createdAt: user.createdAt
       }));
