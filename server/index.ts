@@ -123,66 +123,73 @@ app.get('/', (req, res, next) => {
   return next();
 });
 
-// Lightweight client reply webhook handler for mg.musobuddy.com (must be before modular routes)
-app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
-  logReplyWebhookActivity('Received client reply', { keys: Object.keys(req.body || {}) });
-  
-  try {
-    const webhookData = req.body;
+
+// Initialize storage and services in async wrapper
+async function initializeServer() {
+  const { storage } = await import('./core/storage');
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  // Lightweight client reply webhook handler for mg.musobuddy.com
+  app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
+    logReplyWebhookActivity('Received client reply', { keys: Object.keys(req.body || {}) });
     
-    // Check for duplicate email processing
-    if (isDuplicateEmail(webhookData)) {
-      return res.status(200).json({ 
-        status: 'duplicate', 
-        message: 'Email already processed, skipping to prevent duplication' 
-      });
-    }
-    const recipientEmail = webhookData.recipient || webhookData.To || '';
-    
-    // Extract booking ID from email address 
-    // Supports both formats:
-    // - booking-12345@mg.musobuddy.com (direct format)
-    // - user1754488522516-booking7317@mg.musobuddy.com (user-specific format)
-    const bookingMatch = recipientEmail.match(/booking-?(\d+)@/);
-    const invoiceMatch = recipientEmail.match(/invoice-?(\d+)@/);
-    
-    let bookingId = null;
-    let replyType = 'unknown';
-    
-    if (bookingMatch) {
-      bookingId = bookingMatch[1];
-      replyType = 'booking';
-    } else if (invoiceMatch) {
-      bookingId = invoiceMatch[1]; // Invoice replies also link to booking
-      replyType = 'invoice';
-    } else {
-      logReplyWebhookActivity('No booking/invoice ID found in recipient - NOT A REPLY', { recipientEmail });
+    try {
+      const webhookData = req.body;
       
-      // CRITICAL: This webhook should ONLY handle replies with booking/invoice IDs
-      // If no ID is found, this is likely a new inquiry that should go to main webhook
-      // Return 200 to acknowledge but don't process it here
-      return res.status(200).json({ 
-        status: 'ignored', 
-        reason: 'not_a_reply_email',
-        note: 'This webhook only processes booking/invoice replies'
-      });
-    }
-    
-    // Find the booking to get user ID
-    const { storage } = await import('./core/storage');
-    const booking = await storage.getBooking(bookingId);
-    
-    if (!booking) {
-      logReplyWebhookActivity('Booking not found', { bookingId });
-      return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
-    }
-    
-    const userId = booking.userId;
-    const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
-    const subject = webhookData.subject || webhookData.Subject || 'No Subject';
-    
-    // Create simplified HTML message
-    const messageHtml = `
+      // Check for duplicate email processing
+      if (isDuplicateEmail(webhookData)) {
+        return res.status(200).json({ 
+          status: 'duplicate', 
+          message: 'Email already processed, skipping to prevent duplication' 
+        });
+      }
+      const recipientEmail = webhookData.recipient || webhookData.To || '';
+      
+      // Extract booking ID from email address 
+      // Supports both formats:
+      // - booking-12345@mg.musobuddy.com (direct format)
+      // - user1754488522516-booking7317@mg.musobuddy.com (user-specific format)
+      const bookingMatch = recipientEmail.match(/booking-?(\d+)@/);
+      const invoiceMatch = recipientEmail.match(/invoice-?(\d+)@/);
+      
+      let bookingId = null;
+      let replyType = 'unknown';
+      
+      if (bookingMatch) {
+        bookingId = bookingMatch[1];
+        replyType = 'booking';
+      } else if (invoiceMatch) {
+        bookingId = invoiceMatch[1]; // Invoice replies also link to booking
+        replyType = 'invoice';
+      } else {
+        logReplyWebhookActivity('No booking/invoice ID found in recipient - NOT A REPLY', { recipientEmail });
+        
+        // CRITICAL: This webhook should ONLY handle replies with booking/invoice IDs
+        // If no ID is found, this is likely a new inquiry that should go to main webhook
+        // Return 200 to acknowledge but don't process it here
+        return res.status(200).json({ 
+          status: 'ignored', 
+          reason: 'not_a_reply_email',
+          note: 'This webhook only processes booking/invoice replies'
+        });
+      }
+      
+      // Find the booking to get user ID
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        logReplyWebhookActivity('Booking not found', { bookingId });
+        return res.status(200).json({ status: 'ignored', reason: 'booking_not_found' });
+      }
+      
+      const userId = booking.userId;
+      const senderEmail = webhookData.sender || webhookData.From || 'Unknown';
+      const subject = webhookData.subject || webhookData.Subject || 'No Subject';
+      
+      // Create simplified HTML message
+      const messageHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -211,76 +218,69 @@ app.post('/api/webhook/mailgun-replies', upload.any(), async (req, res) => {
     </div>
 </body>
 </html>`;
-    
-    // Extract plain text content for fallback storage
-    const plainTextContent = webhookData['body-plain'] || 
-      (webhookData['body-html'] || webhookData['stripped-html'] || '')
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .trim() || 'No content available';
+      
+      // Extract plain text content for fallback storage
+      const plainTextContent = webhookData['body-plain'] || 
+        (webhookData['body-html'] || webhookData['stripped-html'] || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim() || 'No content available';
 
-    // Store message in cloud storage
-    const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
-    const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
-    const messageBuffer = Buffer.from(messageHtml, 'utf8');
-    
-    let finalMessageUrl = fileName;
-    
-    try {
-      await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
-        'booking-id': bookingId,
-        'user-id': userId,
-        'reply-type': replyType
+      // Store message in cloud storage
+      const { uploadToCloudflareR2 } = await import('./core/cloud-storage');
+      const fileName = `user${userId}/booking${bookingId}/messages/${replyType}_reply_${Date.now()}.html`;
+      const messageBuffer = Buffer.from(messageHtml, 'utf8');
+      
+      let finalMessageUrl = fileName;
+      
+      try {
+        await uploadToCloudflareR2(messageBuffer, fileName, 'text/html', {
+          'booking-id': bookingId,
+          'user-id': userId,
+          'reply-type': replyType
+        });
+        console.log(`✅ Message stored in cloud storage: ${fileName}`);
+      } catch (cloudError) {
+        console.error(`❌ Cloud storage failed, using fallback:`, cloudError);
+        // Use data URL as fallback - store content directly in the URL field
+        const contentBase64 = Buffer.from(plainTextContent, 'utf-8').toString('base64');
+        finalMessageUrl = `data:text/plain;base64,${contentBase64}`;
+      }
+      
+      // Create notification entry with either cloud URL or fallback data URL
+      await storage.createMessageNotification({
+        userId: userId,
+        bookingId: bookingId,
+        senderEmail: senderEmail,
+        subject: subject,
+        messageUrl: finalMessageUrl,
+        isRead: false,
+        createdAt: new Date()
       });
-      console.log(`✅ Message stored in cloud storage: ${fileName}`);
-    } catch (cloudError) {
-      console.error(`❌ Cloud storage failed, using fallback:`, cloudError);
-      // Use data URL as fallback - store content directly in the URL field
-      const contentBase64 = Buffer.from(plainTextContent, 'utf-8').toString('base64');
-      finalMessageUrl = `data:text/plain;base64,${contentBase64}`;
+      
+      logReplyWebhookActivity(`${replyType} reply stored successfully`, { fileName, userId, bookingId });
+      res.status(200).json({ 
+        status: 'success', 
+        type: `${replyType}_reply`, 
+        bookingId, 
+        userId,
+        message: 'Reply processed and stored'
+      });
+      
+    } catch (error: any) {
+      logReplyWebhookActivity('Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
+      
+      // Return 200 to prevent Mailgun retries
+      res.status(200).json({ 
+        status: 'error', 
+        message: error.message,
+        note: 'Error logged, returning 200 to prevent retries'
+      });
     }
-    
-    // Create notification entry with either cloud URL or fallback data URL
-    await storage.createMessageNotification({
-      userId: userId,
-      bookingId: bookingId,
-      senderEmail: senderEmail,
-      subject: subject,
-      messageUrl: finalMessageUrl,
-      isRead: false,
-      createdAt: new Date()
-    });
-    
-    logReplyWebhookActivity(`${replyType} reply stored successfully`, { fileName, userId, bookingId });
-    res.status(200).json({ 
-      status: 'success', 
-      type: `${replyType}_reply`, 
-      bookingId, 
-      userId,
-      message: 'Reply processed and stored'
-    });
-    
-  } catch (error: any) {
-    logReplyWebhookActivity('Error processing reply', { error: error.message, stack: error.stack?.substring(0, 200) });
-    
-    // Return 200 to prevent Mailgun retries
-    res.status(200).json({ 
-      status: 'error', 
-      message: error.message,
-      note: 'Error logged, returning 200 to prevent retries'
-    });
-  }
-});
-
-// Initialize storage and services in async wrapper
-async function initializeServer() {
-  const { storage } = await import('./core/storage');
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
 // Webhook activity log for monitoring
