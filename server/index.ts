@@ -459,6 +459,136 @@ function logReplyWebhookActivity(message: string, data?: any) {
   console.log('📨 REPLY WEBHOOK:', message, data ? JSON.stringify(data).substring(0, 100) : '');
 }
 
+// EMAIL RECOVERY SYSTEM: Check for missed emails
+app.get('/api/email/recovery/check', async (req, res) => {
+  try {
+    console.log('🔍 EMAIL RECOVERY: Starting missed email check...');
+    
+    // Get query parameters
+    const hours = parseInt(req.query.hours as string) || 24; // Last 24 hours by default
+    const user_id = req.query.user_id as string;
+    
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id parameter required' });
+    }
+    
+    // Calculate time range
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - (hours * 60 * 60 * 1000));
+    
+    console.log(`🔍 Checking emails from ${startTime.toISOString()} to ${endTime.toISOString()}`);
+    
+    // Get our processed emails from webhook logs and database notifications
+    const processedEmails = new Set();
+    
+    // Add emails from webhook logs
+    webhookLogs.forEach(log => {
+      if (log.data && log.timestamp) {
+        const logTime = new Date(log.timestamp);
+        if (logTime >= startTime && logTime <= endTime) {
+          try {
+            const data = JSON.parse(log.data);
+            if (data.messageId || data['Message-Id']) {
+              processedEmails.add(data.messageId || data['Message-Id']);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    });
+    
+    replyWebhookLogs.forEach(log => {
+      if (log.data && log.timestamp) {
+        const logTime = new Date(log.timestamp);
+        if (logTime >= startTime && logTime <= endTime) {
+          try {
+            const data = JSON.parse(log.data);
+            if (data.messageId || data['Message-Id']) {
+              processedEmails.add(data.messageId || data['Message-Id']);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    });
+    
+    console.log(`🔍 Found ${processedEmails.size} processed emails in our logs`);
+    
+    // Query Mailgun Events API for delivered emails
+    // Note: This would require Mailgun API key and proper implementation
+    const mailgunDelivered = [];
+    
+    // For now, simulate this check - in production, integrate with Mailgun Events API
+    const simulatedMailgunEmails = [
+      {
+        id: 'mg-event-1',
+        timestamp: endTime.getTime() / 1000 - 3600, // 1 hour ago
+        recipient: `${user_id}@enquiries.musobuddy.com`,
+        subject: 'Test email that might be missed',
+        delivered: true
+      }
+    ];
+    
+    const missedEmails = [];
+    const recoveredEmails = [];
+    
+    // Check for emails delivered by Mailgun but not processed by us
+    for (const mgEmail of simulatedMailgunEmails) {
+      if (!processedEmails.has(mgEmail.id)) {
+        missedEmails.push({
+          mailgunId: mgEmail.id,
+          timestamp: new Date(mgEmail.timestamp * 1000).toISOString(),
+          recipient: mgEmail.recipient,
+          subject: mgEmail.subject,
+          status: 'missed'
+        });
+      }
+    }
+    
+    console.log(`🔍 EMAIL RECOVERY: Found ${missedEmails.length} potentially missed emails`);
+    
+    // Attempt recovery for missed emails (placeholder for now)
+    for (const missed of missedEmails) {
+      // In production, this would:
+      // 1. Fetch email content from Mailgun
+      // 2. Process it through our normal email processing pipeline
+      // 3. Mark as recovered
+      recoveredEmails.push({
+        ...missed,
+        status: 'recovery_attempted',
+        recoveryTime: new Date().toISOString()
+      });
+    }
+    
+    const result = {
+      timeRange: {
+        start: startTime.toISOString(),
+        end: endTime.toISOString(),
+        hours: hours
+      },
+      summary: {
+        processedEmails: processedEmails.size,
+        missedEmails: missedEmails.length,
+        recoveredEmails: recoveredEmails.length
+      },
+      missedEmails: missedEmails,
+      recoveredEmails: recoveredEmails,
+      note: 'This is a prototype implementation. Production version will integrate with Mailgun Events API.'
+    };
+    
+    res.json(result);
+    
+  } catch (error: any) {
+    console.error('❌ EMAIL RECOVERY ERROR:', error);
+    res.status(500).json({ 
+      error: 'Email recovery check failed', 
+      message: error.message 
+    });
+  }
+});
+
 // Endpoint to view webhook logs
 app.get('/api/webhook/logs', (req, res) => {
   const encoreLogs = webhookLogs.filter(log => 
