@@ -421,116 +421,96 @@ export default function MobileInvoiceSender() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="clientName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <User className="h-4 w-4" />
-                          Client Name
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter client name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clientEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <Mail className="h-4 w-4" />
-                          Client Email
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="client@example.com" type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                            <PoundSterling className="h-4 w-4" />
-                            Amount (£)
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="500" type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <User className="h-4 w-4" />
+                      Client Name
+                    </label>
+                    <Input 
+                      placeholder="Enter client name" 
+                      {...form.register("clientName")}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="dueDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                            <Calendar className="h-4 w-4" />
-                            Due Date
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {form.formState.errors.clientName && (
+                      <p className="text-sm text-red-500">{form.formState.errors.clientName.message}</p>
+                    )}
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="performanceDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <Calendar className="h-4 w-4" />
-                          Performance Date (Optional)
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <Mail className="h-4 w-4" />
+                      Client Email
+                    </label>
+                    <Input 
+                      placeholder="client@example.com" 
+                      type="email"
+                      {...form.register("clientEmail")}
+                    />
+                    {form.formState.errors.clientEmail && (
+                      <p className="text-sm text-red-500">{form.formState.errors.clientEmail.message}</p>
                     )}
-                  />
+                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <FileText className="h-4 w-4" />
-                          Description (Optional)
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="e.g., Wedding performance at The Grand Hotel"
-                            className="resize-none"
-                            rows={3}
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <PoundSterling className="h-4 w-4" />
+                        Amount (£)
+                      </label>
+                      <Input 
+                        placeholder="500" 
+                        type="number"
+                        {...form.register("amount")}
+                      />
+                      {form.formState.errors.amount && (
+                        <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <Calendar className="h-4 w-4" />
+                        Due Date
+                      </label>
+                      <Input 
+                        type="date"
+                        {...form.register("dueDate")}
+                      />
+                      {form.formState.errors.dueDate && (
+                        <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <Calendar className="h-4 w-4" />
+                      Performance Date (Optional)
+                    </label>
+                    <Input 
+                      type="date"
+                      {...form.register("performanceDate")}
+                    />
+                    {form.formState.errors.performanceDate && (
+                      <p className="text-sm text-red-500">{form.formState.errors.performanceDate.message}</p>
                     )}
-                  />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <FileText className="h-4 w-4" />
+                      Description (Optional)
+                    </label>
+                    <Textarea 
+                      placeholder="e.g., Wedding performance at The Grand Hotel"
+                      className="resize-none"
+                      rows={3}
+                      {...form.register("description")}
+                    />
+                    {form.formState.errors.description && (
+                      <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+                    )}
+                  </div>
 
                   <Button 
                     type="submit" 
@@ -551,7 +531,6 @@ export default function MobileInvoiceSender() {
                     )}
                   </Button>
                 </form>
-              </Form>
             </CardContent>
           </Card>
 
