@@ -8,6 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Activity, Clock, Users, Zap, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthContext } from '@/contexts/AuthContext';
+import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MonitoringData {
   timeRange: string;
@@ -64,6 +68,9 @@ interface MonitoringData {
 
 export default function MonitoringDashboard() {
   const { user, isAuthenticated } = useAuthContext();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isDesktop } = useResponsive();
+  const isMobile = useIsMobile();
   const [data, setData] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +162,95 @@ export default function MonitoringDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className={`min-h-screen bg-gradient-to-br from-slate-50/30 to-blue-50/20 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-muted-foreground">Loading monitoring data...</div>
+          </div>
+        </div>
+        {isMobile && <MobileNav />}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className={`min-h-screen bg-gradient-to-br from-slate-50/30 to-blue-50/20 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="p-4 md:p-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
+        </div>
+        {isMobile && <MobileNav />}
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <main className="p-4 space-y-6 pb-20">
+          <MonitoringContent
+            data={data}
+            timeRange={timeRange}
+            setTimeRange={setTimeRange}
+            selectedError={selectedError}
+            setSelectedError={setSelectedError}
+            fetchErrorDetails={fetchErrorDetails}
+          />
+        </main>
+        <MobileNav />
+      </div>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main Content */}
+      <div className={`min-h-screen bg-gradient-to-br from-slate-50/30 to-blue-50/20 ${isDesktop ? 'ml-64' : ''}`}>
+        <div className="p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            <main className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 md:p-6 space-y-4 md:space-y-6">
+              <MonitoringContent
+                data={data}
+                timeRange={timeRange}
+                setTimeRange={setTimeRange}
+                selectedError={selectedError}
+                setSelectedError={setSelectedError}
+                fetchErrorDetails={fetchErrorDetails}
+              />
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Extract the monitoring content into a separate component
+function MonitoringContent({ data, timeRange, setTimeRange, selectedError, setSelectedError, fetchErrorDetails }: {
+  data: MonitoringData;
+  timeRange: string;
+  setTimeRange: (range: string) => void;
+  selectedError: any;
+  setSelectedError: (error: any) => void;
+  fetchErrorDetails: (id: number) => Promise<void>;
+}) {
   const getWebVitalStatus = (name: string, value: number): 'good' | 'needs-improvement' | 'poor' => {
     const thresholds: Record<string, { good: number; poor: number }> = {
       LCP: { good: 2500, poor: 4000 },
@@ -179,28 +275,8 @@ export default function MonitoringDashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-muted-foreground">Loading monitoring data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!data) return null;
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Front-End Monitoring</h1>
