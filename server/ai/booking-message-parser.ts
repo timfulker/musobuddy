@@ -526,13 +526,32 @@ JSON:`;
       }
     }
 
-    // For Encore bookings, extract area from title instead of enriching venue
-    if (isEncoreBooking && subject) {
-      const { extractEncoreArea } = await import('../core/booking-formatter');
-      const area = extractEncoreArea(subject);
+    // For Encore bookings, extract area from email content and event type from title
+    if (isEncoreBooking) {
+      const { extractEncoreArea, cleanEncoreTitle } = await import('../core/booking-formatter');
+      
+      // Extract area from email body (Location: Southam, Warwickshire)
+      let area = null;
+      const locationMatch = messageText.match(/Location:\s*([^(\r\n]+?)(?:\s*\([^)]*\))?/i);
+      if (locationMatch) {
+        area = locationMatch[1].trim();
+        console.log(`🎵 Extracted Encore location from email body: ${area}`);
+      } else if (subject) {
+        // Fallback to subject line extraction
+        area = extractEncoreArea(subject);
+        console.log(`🎵 Fallback: Extracted Encore area from subject: ${area}`);
+      }
+      
+      // Extract event type from subject
+      if (subject) {
+        const eventType = cleanEncoreTitle(subject);
+        if (eventType && eventType !== subject) {
+          cleanedData.eventType = eventType;
+          console.log(`🎵 Set Encore event type: ${eventType}`);
+        }
+      }
       
       if (area) {
-        console.log(`🎵 Encore booking - using area from title: "${area}"`);
         // For Encore, put the area in venue field (this is what shows on the booking card)
         cleanedData.venue = area;  // Area goes in venue field for display
         cleanedData.venueAddress = '';  // Clear address field

@@ -36,20 +36,15 @@ export function cleanEncoreTitle(rawTitle: string): string {
   cleaned = cleaned.replace(/^Job Alert:\s*/i, '');
   
   // Clean up the title to extract just the event description
-  // Look for patterns like "Saxophonist needed for birthday party in Hale"
-  const eventMatch = cleaned.match(/(?:Urgent:\s*)?(.+?\s+needed for\s+.+?)(?:\s+in\s+.+?)?(?:\s+\[.+?\])?$/i);
-  if (eventMatch) {
-    let eventDescription = eventMatch[1];
-    
-    // Convert "Saxophonist needed for birthday party" to "Birthday Party"
-    const needForMatch = eventDescription.match(/\w+\s+needed for\s+(.+)/i);
-    if (needForMatch) {
-      // Capitalize first letter of each word
-      return needForMatch[1]
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-    }
+  // Look for patterns like "Saxophonist needed for private event in Southam"
+  const eventMatch = cleaned.match(/(?:Urgent:\s*)?(.+?\s+needed for\s+(.+?))(?:\s+in\s+.+?)?(?:\s+\[.+?\])?$/i);
+  if (eventMatch && eventMatch[2]) {
+    const eventType = eventMatch[2].trim();
+    // Capitalize first letter of each word for event type
+    return eventType
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
   
   // Fallback: just remove common patterns and return cleaned title
