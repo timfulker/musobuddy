@@ -919,6 +919,19 @@ export function setupAuthRoutes(app: Express) {
                   } catch (error) {
                     console.warn('⚠️ Failed to increment beta code usage:', error);
                   }
+                  
+                  // Create beta invite record for this email to ensure beta status persists through email verification
+                  try {
+                    await storage.createBetaInvite({
+                      email: email,
+                      invitedBy: 'beta-code-' + inviteCode,
+                      notes: `Created via beta code: ${inviteCode}`,
+                      cohort: 'beta-code-signup'
+                    });
+                    console.log('📧 Beta invite record created for email:', email);
+                  } catch (error) {
+                    console.warn('⚠️ Failed to create beta invite record:', error);
+                  }
                 } else {
                   console.log('❌ Beta code has reached maximum uses');
                 }
