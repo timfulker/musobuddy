@@ -1,9 +1,9 @@
 import { Request, Response, Router } from 'express';
-import { db } from '../db/index';
-import { frontEndMonitoring, frontEndErrors, performanceMetrics, userInteractions, networkRequests } from '../db/schema';
+import { db } from '../core/database';
+import { frontEndMonitoring, frontEndErrors, performanceMetrics, userInteractions, networkRequests } from '../db/schema/monitoring';
 import { sql } from 'drizzle-orm';
 import { desc, eq, gte, and, count, avg } from 'drizzle-orm';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 
 const router = Router();
 
@@ -98,7 +98,7 @@ router.post('/api/monitoring/collect', async (req: Request, res: Response) => {
 });
 
 // Admin endpoint to view monitoring dashboard (requires auth)
-router.get('/api/monitoring/dashboard', authenticateToken, async (req: Request, res: Response) => {
+router.get('/api/monitoring/dashboard', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { timeRange = '24h' } = req.query;
 
@@ -226,7 +226,7 @@ router.get('/api/monitoring/dashboard', authenticateToken, async (req: Request, 
 });
 
 // Get detailed error information
-router.get('/api/monitoring/errors/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/api/monitoring/errors/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -268,7 +268,7 @@ router.get('/api/monitoring/errors/:id', authenticateToken, async (req: Request,
 });
 
 // Get user session timeline
-router.get('/api/monitoring/sessions/:sessionId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/api/monitoring/sessions/:sessionId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { sessionId } = req.params;
 
