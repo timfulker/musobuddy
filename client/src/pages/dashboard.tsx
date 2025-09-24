@@ -181,7 +181,7 @@ export default function Dashboard() {
         
         <NotificationSoundManager />
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="p-4 space-y-6">
+        <main className="p-4 space-y-6 pb-20">
           <MobileDashboard />
         </main>
         <MobileNav />
