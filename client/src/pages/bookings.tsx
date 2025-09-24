@@ -4057,7 +4057,22 @@ export default function UnifiedBookings() {
                           const booking = validBookings.find((b) => b.id === firstEvent.id);
                           if (booking) {
                             setFullScreenCalendarOpen(false);
-                            navigateToEditBooking(booking);
+                            // On mobile: navigate to list view and highlight booking
+                            // On desktop: navigate to edit page
+                            if (!isDesktop) {
+                              setViewMode('list');
+                              localStorage.setItem('bookingViewMode', 'list');
+                              setHighlightBookingId(booking.id);
+                              // Scroll to the booking after a short delay
+                              setTimeout(() => {
+                                const element = document.getElementById(`booking-${booking.id}`);
+                                if (element) {
+                                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }, 300);
+                            } else {
+                              navigateToEditBooking(booking);
+                            }
                           }
                         } else {
                           // Create new booking for this date
@@ -4109,7 +4124,22 @@ export default function UnifiedBookings() {
                                 e.stopPropagation();
                                 if (booking) {
                                   setFullScreenCalendarOpen(false);
-                                  navigateToEditBooking(booking);
+                                  // On mobile: navigate to list view and highlight booking
+                                  // On desktop: navigate to edit page
+                                  if (!isDesktop) {
+                                    setViewMode('list');
+                                    localStorage.setItem('bookingViewMode', 'list');
+                                    setHighlightBookingId(booking.id);
+                                    // Scroll to the booking after a short delay
+                                    setTimeout(() => {
+                                      const element = document.getElementById(`booking-${booking.id}`);
+                                      if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      }
+                                    }, 300);
+                                  } else {
+                                    navigateToEditBooking(booking);
+                                  }
                                 }
                               }}
                               onMouseEnter={(e) => {
