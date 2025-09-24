@@ -1011,6 +1011,35 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Quick fix: Create beta code endpoint  
+  app.post("/api/auth/create-beta-code-fix", async (req, res) => {
+    try {
+      const { code, maxUses = 100, trialDays = 90 } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Code is required" });
+      }
+      
+      const betaCode = await storage.createBetaInviteCode({
+        code: code.toUpperCase(),
+        maxUses,
+        trialDays,
+        status: 'active',
+        createdBy: 'a-f3aXjxMXJHdSTujnAO5', // Use real admin user ID
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year from now
+      });
+      
+      res.json({
+        success: true,
+        message: `Beta code ${code} created successfully`,
+        betaCode
+      });
+    } catch (error) {
+      console.error("❌ Error creating beta code:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Update user beta status endpoint
   app.post("/api/auth/update-user-beta", async (req, res) => {
     try {
