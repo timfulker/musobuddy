@@ -3629,7 +3629,7 @@ export default function UnifiedBookings() {
         >
 
           
-          <div className="flex-1 overflow-hidden p-4 relative">
+          <div className="flex-1 overflow-hidden p-4 pb-20 relative">
             {/* Keyboard instructions in top left */}
             <div className="absolute top-4 left-8 z-10">
               <div className="text-xs font-medium" style={{
