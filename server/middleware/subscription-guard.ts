@@ -28,7 +28,11 @@ const PUBLIC_ROUTES = new Set([
   '/api/google-maps/autocomplete',
   '/api/what3words/convert',
   '/api/debug/encore-email',
-  '/api/debug/webhook-logs'
+  '/api/debug/webhook-logs',
+  '/api/email/health', // Email monitoring health check
+  '/api/email/recovery/check', // Email recovery check
+  '/api/email/recovery/process', // Email recovery processing
+  '/api/webhook/logs' // Webhook logs monitoring
 ]);
 
 // Routes allowed for pending_payment users (payment management only)
