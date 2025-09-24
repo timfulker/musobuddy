@@ -214,7 +214,8 @@ export default function Dashboard() {
                   <CalendarWidget />
                 </div>
                 
-                <div className="space-y-4">
+                {/* Hide sidebar widgets on tablet, only show on XL+ screens */}
+                <div className="hidden xl:block space-y-4">
                   <BookingCTAButtons />
                   <QuickActions />
                   {user && <MessageNotifications userId={user.id} />}
@@ -222,6 +223,14 @@ export default function Dashboard() {
                   <ComplianceAlerts />
                   <ContractNotifications />
                 </div>
+              </div>
+              
+              {/* Show essential widgets below main content on tablet screens */}
+              <div className="xl:hidden space-y-4">
+                <BookingCTAButtons />
+                {user && <MessageNotifications userId={user.id} />}
+                <ComplianceAlerts />
+                <ContractNotifications />
               </div>
             </main>
           </div>
