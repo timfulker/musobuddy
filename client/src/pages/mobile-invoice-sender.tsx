@@ -252,6 +252,12 @@ export default function MobileInvoiceSender() {
 
   return (
     <div className={`${isMobile ? 'p-4' : 'max-w-2xl mx-auto p-6'} space-y-6`}>
+      <style>{`
+        .date-label-black {
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+      `}</style>
       {/* Header Card */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
         <CardHeader className="pb-3">
@@ -560,10 +566,19 @@ export default function MobileInvoiceSender() {
 
                 {/* Due Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg" style={{ backgroundColor: '#f9fafb' }}>
-                  <div className="text-lg font-bold uppercase tracking-wide">
-                    <span style={{ color: '#000000', display: 'inline-block' }}>DUE DATE *</span>
-                  </div>
+                  <label
+                    htmlFor="dueDate"
+                    className="date-label-black block text-lg font-bold uppercase tracking-wide"
+                    style={{
+                      color: '#000000 !important',
+                      WebkitTextFillColor: '#000000',
+                      opacity: 1
+                    }}
+                  >
+                    DUE DATE *
+                  </label>
                   <Input
+                    id="dueDate"
                     type="date"
                     className="text-lg"
                     style={{ color: 'black', backgroundColor: 'white' }}
@@ -577,10 +592,19 @@ export default function MobileInvoiceSender() {
 
                 {/* Performance Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg" style={{ backgroundColor: '#f9fafb' }}>
-                  <div className="text-lg font-bold uppercase tracking-wide">
-                    <span style={{ color: '#000000', display: 'inline-block' }}>PERFORMANCE DATE</span>
-                  </div>
+                  <label
+                    htmlFor="performanceDate"
+                    className="date-label-black block text-lg font-bold uppercase tracking-wide"
+                    style={{
+                      color: '#000000 !important',
+                      WebkitTextFillColor: '#000000',
+                      opacity: 1
+                    }}
+                  >
+                    PERFORMANCE DATE
+                  </label>
                   <Input
+                    id="performanceDate"
                     type="date"
                     className="text-lg"
                     style={{ color: 'black', backgroundColor: 'white' }}
