@@ -560,7 +560,7 @@ export default function MobileInvoiceSender() {
 
                 {/* Due Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                  <div className="text-lg font-bold uppercase tracking-wide" style={{ color: 'black' }}>DUE DATE *</div>
+                  <div className="text-lg font-bold uppercase tracking-wide !text-black" style={{ color: 'black !important' }}>DUE DATE *</div>
                   <Input
                     type="date"
                     className="text-lg"
@@ -570,12 +570,12 @@ export default function MobileInvoiceSender() {
                   {form.formState.errors.dueDate && (
                     <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
                   )}
-                  <p className="text-xs text-gray-600">When payment is due</p>
+                  <p className="text-xs" style={{ color: '#666' }}>When payment is due</p>
                 </div>
 
                 {/* Performance Date */}
                 <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                  <div className="text-lg font-bold uppercase tracking-wide" style={{ color: 'black' }}>PERFORMANCE DATE</div>
+                  <div className="text-lg font-bold uppercase tracking-wide !text-black" style={{ color: 'black !important' }}>PERFORMANCE DATE</div>
                   <Input
                     type="date"
                     className="text-lg"
@@ -585,7 +585,7 @@ export default function MobileInvoiceSender() {
                   {form.formState.errors.performanceDate && (
                     <p className="text-sm text-red-500">{form.formState.errors.performanceDate.message}</p>
                   )}
-                  <p className="text-xs text-gray-600">When the event takes place</p>
+                  <p className="text-xs" style={{ color: '#666' }}>When the event takes place</p>
                 </div>
 
                 {/* Performance Duration */}
