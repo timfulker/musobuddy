@@ -428,10 +428,10 @@ export default function MobileInvoiceSender() {
                     name="clientName"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
                           <User className="h-4 w-4" />
                           Client Name
-                        </label>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="Enter client name" {...field} />
                         </FormControl>
@@ -445,10 +445,10 @@ export default function MobileInvoiceSender() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
                           <Mail className="h-4 w-4" />
                           Client Email
-                        </label>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="client@example.com" type="email" {...field} />
                         </FormControl>
@@ -463,10 +463,10 @@ export default function MobileInvoiceSender() {
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
                             <PoundSterling className="h-4 w-4" />
                             Amount (£)
-                          </label>
+                          </FormLabel>
                           <FormControl>
                             <Input placeholder="500" type="number" {...field} />
                           </FormControl>
@@ -480,10 +480,10 @@ export default function MobileInvoiceSender() {
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem>
-                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <FormLabel className="flex items-center gap-2 text-sm font-medium">
                             <Calendar className="h-4 w-4" />
                             Due Date
-                          </label>
+                          </FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -498,10 +498,10 @@ export default function MobileInvoiceSender() {
                     name="performanceDate"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
                           <Calendar className="h-4 w-4" />
                           Performance Date (Optional)
-                        </label>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -515,10 +515,10 @@ export default function MobileInvoiceSender() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
                           <FileText className="h-4 w-4" />
                           Description (Optional)
-                        </label>
+                        </FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="e.g., Wedding performance at The Grand Hotel"
