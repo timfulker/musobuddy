@@ -73,6 +73,7 @@ import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
 import DuplicateManager from "@/pages/DuplicateManager";
 
 import { useEffect, lazy } from "react";
+import MobileNav from "@/components/mobile-nav";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuthContext();
@@ -259,6 +260,7 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
+                <MobileNav />
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>

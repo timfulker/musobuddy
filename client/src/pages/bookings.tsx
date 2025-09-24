@@ -4358,8 +4358,6 @@ export default function UnifiedBookings() {
         onClose={closeBandContextMenu}
       />
 
-      {/* Mobile Navigation */}
-      {!isDesktop && <MobileNav />}
     </div>
   );
 }
