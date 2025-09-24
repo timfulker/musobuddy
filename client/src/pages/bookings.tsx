@@ -1633,8 +1633,8 @@ export default function UnifiedBookings() {
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content - Viewport Height Container */}
-      <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+      {/* Main Content - Natural Flow Container */}
+      <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""} ${!isDesktop ? "pb-20" : ""}`}>
         {/* Mobile Header */}
         {!isDesktop && (
           <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
@@ -3629,7 +3629,7 @@ export default function UnifiedBookings() {
         >
 
           
-          <div className="flex-1 overflow-hidden p-4 pb-20 relative">
+          <div className="flex-1 overflow-y-auto p-4 pb-20 relative">
             {/* Keyboard instructions in top left */}
             <div className="absolute top-4 left-8 z-10">
               <div className="text-xs font-medium" style={{
