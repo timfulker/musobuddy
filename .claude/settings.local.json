@@ -47,7 +47,8 @@
       "Bash(export PGPASSWORD='dbp8vugbuk9PKBbjn')",
       "Bash(export PGPASSWORD='EQLvUvkTkT2dyk')",
       "Bash(lsof:*)",
-      "Bash(xargs -r kill -9)"
+      "Bash(xargs -r kill -9)",
+      "Bash(timeout 30 npx drizzle-kit push)"
     ],
     "deny": [],
     "ask": [],

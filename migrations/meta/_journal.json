@@ -15,6 +15,13 @@
       "when": 1758331456660,
       "tag": "0001_noisy_gideon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758740928518,
+      "tag": "0002_puzzling_celestials",
+      "breakpoints": true
     }
   ]
 }

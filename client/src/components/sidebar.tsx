@@ -242,8 +242,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span>Admin Panel</span>
           </Link>
 
-          
-          <Link 
+          <Link
+            href="/monitoring"
+            onClick={() => window.innerWidth < 768 && onClose()}
+            className={cn(
+              getNavLinkClass("/monitoring"),
+              isActive("/monitoring") ? 'bg-primary text-primary-foreground' : ''
+            )}
+            style={{ display: stableIsAdmin ? 'flex' : 'none' }}
+          >
+            <BarChart3 className="w-5 h-5 text-blue-500" />
+            <span>Monitoring</span>
+          </Link>
+
+
+          <Link
             href="/settings" 
             onClick={() => window.innerWidth < 768 && onClose()}
             className={cn(
