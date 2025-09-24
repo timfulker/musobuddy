@@ -1243,8 +1243,16 @@ app.get('/api/email-queue/status', async (req, res) => {
   // Start server
   // Replit provides PORT env variable, default to 5000
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Determine if we're in production based on multiple signals
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      process.env.REPLIT_DEPLOYMENT === 'true' ||
+                      process.env.RAILWAY_ENVIRONMENT === 'production' ||
+                      process.env.VERCEL === '1';
+  
+  console.log(`🔍 Environment check: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}, isProduction=${isProduction}`);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (!isProduction) {
     // Development with Vite
     console.log('🛠️ Development mode: using Vite dev server');
     const { setupVite } = await import('./vite');
@@ -1268,18 +1276,28 @@ app.get('/api/email-queue/status', async (req, res) => {
     const { serveStaticFixed } = await import('./core/serve-static');
     serveStaticFixed(app);
     
-    // Check if port is available before listening
+    // Start production server with better error handling
     const server = app.listen(port, '0.0.0.0', () => {
-      console.log(`🚀 Production server running on port ${port}`);
+      console.log(`🚀 Production server running on http://0.0.0.0:${port}`);
+      console.log(`🔗 Health check available at http://0.0.0.0:${port}/health`);
     });
     
+    // Handle server errors
     server.on('error', (err: any) => {
+      console.error('❌ Production server error:', err);
       if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is already in use in production. This requires manual intervention.`);
-        process.exit(1);
-      } else {
-        throw err;
+        console.error(`❌ Port ${port} is already in use`);
       }
+      process.exit(1);
+    });
+    
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('🛑 SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+      });
     });
   }
 }
