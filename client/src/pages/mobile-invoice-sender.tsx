@@ -64,11 +64,13 @@ export default function MobileInvoiceSender() {
   // Fetch recent bookings for auto-fill
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
-    select: (data: any[]) => 
-      data
-        ?.filter(booking => booking.status === 'confirmed' || booking.status === 'new')
+    select: (data: any[]) => {
+      console.log('Mobile Invoice: Raw booking data:', data?.slice(0, 3));
+      return data
+        ?.filter(booking => booking.clientName && booking.fee) // Only require clientName and fee
         ?.sort((a, b) => new Date(b.eventDate || b.createdAt).getTime() - new Date(a.eventDate || a.createdAt).getTime())
         ?.slice(0, 10) || []
+    }
   });
 
   // Create invoice mutation
@@ -426,10 +428,10 @@ export default function MobileInvoiceSender() {
                     name="clientName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <User className="h-4 w-4" />
                           Client Name
-                        </FormLabel>
+                        </label>
                         <FormControl>
                           <Input placeholder="Enter client name" {...field} />
                         </FormControl>
@@ -443,10 +445,10 @@ export default function MobileInvoiceSender() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <Mail className="h-4 w-4" />
                           Client Email
-                        </FormLabel>
+                        </label>
                         <FormControl>
                           <Input placeholder="client@example.com" type="email" {...field} />
                         </FormControl>
@@ -461,10 +463,10 @@ export default function MobileInvoiceSender() {
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <PoundSterling className="h-4 w-4" />
-                            Amount
-                          </FormLabel>
+                            Amount (£)
+                          </label>
                           <FormControl>
                             <Input placeholder="500" type="number" {...field} />
                           </FormControl>
@@ -478,7 +480,10 @@ export default function MobileInvoiceSender() {
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Due Date</FormLabel>
+                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <Calendar className="h-4 w-4" />
+                            Due Date
+                          </label>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -493,7 +498,10 @@ export default function MobileInvoiceSender() {
                     name="performanceDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Performance Date (Optional)</FormLabel>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Calendar className="h-4 w-4" />
+                          Performance Date (Optional)
+                        </label>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -507,7 +515,10 @@ export default function MobileInvoiceSender() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <FileText className="h-4 w-4" />
+                          Description (Optional)
+                        </label>
                         <FormControl>
                           <Textarea 
                             placeholder="e.g., Wedding performance at The Grand Hotel"
