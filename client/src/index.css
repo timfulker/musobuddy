@@ -83,28 +83,105 @@ main {
       width: 100vw !important;
       max-width: none !important;
       margin: 0 !important;
-      padding: 8px !important;
+      padding: 12px 8px !important;
+      height: calc(100vh - 120px) !important;
+      overflow: hidden !important;
     }
     
     .calendar-grid-landscape {
       width: 100% !important;
       max-width: none !important;
       grid-template-columns: repeat(7, 1fr) !important;
-      gap: 2px !important;
+      gap: 3px !important;
+      height: 100% !important;
     }
     
     .calendar-day-cell-landscape {
       min-width: 0 !important;
       width: 100% !important;
-      aspect-ratio: 1.4 !important;
-      font-size: 11px !important;
-      padding: 2px !important;
+      height: 100% !important;
+      aspect-ratio: 1.6 !important;
+      font-size: 12px !important;
+      padding: 4px 2px !important;
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.8) !important;
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      overflow: hidden !important;
+      position: relative !important;
+    }
+    
+    .calendar-day-cell-landscape:hover {
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-color: rgba(59, 130, 246, 0.3) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      transition: all 0.2s ease !important;
     }
     
     .calendar-header-landscape {
-      font-size: 11px !important;
-      padding: 6px 1px !important;
+      font-size: 13px !important;
+      padding: 8px 2px !important;
       text-align: center !important;
+      font-weight: 700 !important;
+      background: rgba(59, 130, 246, 0.05) !important;
+      border-radius: 4px !important;
+      margin-bottom: 3px !important;
+      color: #374151 !important;
+    }
+    
+    /* Calendar date numbers in landscape */
+    .calendar-day-cell-landscape .date-number {
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      color: #1f2937 !important;
+      margin-bottom: 2px !important;
+    }
+    
+    /* Event items in calendar cells */
+    .calendar-day-cell-landscape .event-item {
+      font-size: 10px !important;
+      padding: 1px 3px !important;
+      border-radius: 3px !important;
+      background: rgba(59, 130, 246, 0.1) !important;
+      color: #1e40af !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      width: 100% !important;
+      margin-bottom: 1px !important;
+    }
+    
+    /* Today indicator */
+    .calendar-day-cell-landscape.today {
+      background: rgba(59, 130, 246, 0.15) !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .calendar-day-cell-landscape.today .date-number {
+      color: #1d4ed8 !important;
+      font-weight: 700 !important;
+    }
+    
+    /* Navigation buttons in landscape */
+    .calendar-nav-landscape .nav-button {
+      padding: 8px 12px !important;
+      font-size: 13px !important;
+      border-radius: 6px !important;
+      margin: 0 2px !important;
+    }
+    
+    /* Calendar view tabs in landscape */
+    .calendar-tabs-landscape {
+      margin-bottom: 12px !important;
+    }
+    
+    .calendar-tabs-landscape .tab-button {
+      padding: 6px 12px !important;
+      font-size: 12px !important;
       font-weight: 600 !important;
     }
   }

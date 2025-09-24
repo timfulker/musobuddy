@@ -3405,10 +3405,10 @@ export default function UnifiedBookings() {
                   
                   {calendarView === 'week' && (
                     <div className="h-full">
-                      <div className="grid grid-cols-7 gap-1 h-full">
+                      <div className={`grid grid-cols-7 gap-1 h-full ${!isDesktop ? 'calendar-grid-landscape' : ''}`}>
                         {/* Week Day Headers */}
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
+                          <div key={day} className={`p-2 text-center text-sm font-medium h-10 flex items-center justify-center ${!isDesktop ? 'calendar-header-landscape' : ''}`} style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                             {day}
                           </div>
                         ))}
@@ -3420,12 +3420,13 @@ export default function UnifiedBookings() {
                             className={`
                               p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
                               ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
-                              ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                              ${day.isToday ? 'bg-blue-50 border-blue-200 today' : ''}
+                              ${!isDesktop ? 'calendar-day-cell-landscape' : ''}
                             `}
                             style={{ height: 'calc(100% - 40px)' }}
                             onClick={() => handleDateClick(day.date)}
                           >
-                            <div className="font-medium text-sm mb-2">
+                            <div className={`font-medium text-sm mb-2 ${!isDesktop ? 'date-number' : ''}`}>
                               {day.day}
                             </div>
                             <div className="space-y-1">
@@ -3443,7 +3444,7 @@ export default function UnifiedBookings() {
                                       <div
                                         className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
                                           highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
-                                        }`}
+                                        } ${!isDesktop ? 'event-item' : ''}`}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (booking) {
@@ -3550,16 +3551,16 @@ export default function UnifiedBookings() {
                   {calendarView === 'month' && (
                     <div className="h-full flex flex-col">
                       {/* Month Day Headers - Fixed Height */}
-                      <div className="grid grid-cols-7 gap-1 flex-shrink-0">
+                      <div className={`grid grid-cols-7 gap-1 flex-shrink-0 ${!isDesktop ? 'calendar-tabs-landscape' : ''}`}>
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className="p-2 text-center text-sm font-medium h-10 flex items-center justify-center" style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
+                          <div key={day} className={`p-2 text-center text-sm font-medium h-10 flex items-center justify-center ${!isDesktop ? 'calendar-header-landscape' : ''}`} style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                             {day}
                           </div>
                         ))}
                       </div>
                       
                       {/* Month Calendar Days - Fixed Grid Height */}
-                      <div className="grid grid-cols-7 gap-1 flex-1" style={{ gridTemplateRows: 'repeat(6, 1fr)' }}>
+                      <div className={`grid grid-cols-7 gap-1 flex-1 ${!isDesktop ? 'calendar-grid-landscape' : ''}`} style={{ gridTemplateRows: 'repeat(6, 1fr)' }}>
                         {(() => {
                           const calendarData = generateCalendarData();
                           // Ensure we always have 42 cells (6 weeks × 7 days) for consistent layout
@@ -3579,12 +3580,13 @@ export default function UnifiedBookings() {
                               className={`
                                 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden flex flex-col
                                 ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
-                                ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                                ${day.isToday ? 'bg-blue-50 border-blue-200 today' : ''}
                                 ${day.day === '' ? 'invisible' : ''}
+                                ${!isDesktop ? 'calendar-day-cell-landscape' : ''}
                               `}
                               onClick={() => day.day !== '' && handleDateClick(day.date)}
                             >
-                              <div className="font-medium text-sm mb-1 flex-shrink-0">
+                              <div className={`font-medium text-sm mb-1 flex-shrink-0 ${!isDesktop ? 'date-number' : ''}`}>
                                 {day.day}
                               </div>
                               <div className="space-y-1 flex-1 overflow-hidden">
@@ -3602,7 +3604,7 @@ export default function UnifiedBookings() {
                                         <div
                                           className={`text-xs p-1 rounded truncate cursor-pointer ${getStatusColor(event.status || 'new')} ${
                                             highlightedBookingId === event.id.toString() ? 'ring-2 ring-yellow-400 ring-offset-1 shadow-lg' : ''
-                                          }`}
+                                          } ${!isDesktop ? 'event-item' : ''}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (booking) {
