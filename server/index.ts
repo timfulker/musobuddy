@@ -1682,7 +1682,8 @@ app.get('/api/email-queue/status', async (req, res) => {
         
         // Check if this is a beta tester, trial signup, or paid subscription
         const isBetaSignup = session.metadata?.signup_type === 'beta_tester' ||
-                           session.metadata?.is_beta_user === 'true';
+                           session.metadata?.is_beta_user === 'true' ||
+                           user.isBetaTester; // Also check existing beta status
         const isTrialSignup = session.metadata?.signup_type === 'trial' || 
                              (session.subscription && session.amount_total === 0 && !isBetaSignup);
         

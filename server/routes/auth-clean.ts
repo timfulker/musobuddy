@@ -352,6 +352,17 @@ export function setupAuthRoutes(app: Express) {
         const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
         const isAdminBypass = allowedBypassEmails.includes(req.user.email);
         
+        // Check if user has beta status from previous signup attempt
+        let isBetaUser = false;
+        try {
+          const betaInvite = await storage.getBetaInviteByEmail(req.user.email);
+          if (betaInvite) {
+            isBetaUser = true;
+          }
+        } catch (error) {
+          console.warn('⚠️ Error checking beta status during auto-provision:', error);
+        }
+        
         try {
           const newUserData = {
             id: req.user.supabaseUid,
@@ -363,7 +374,7 @@ export function setupAuthRoutes(app: Express) {
             isAdmin: isAdminBypass,
             isAssigned: isAdminBypass, 
             hasPaid: isAdminBypass,
-            isBetaTester: false,
+            isBetaTester: isBetaUser || isAdminBypass, // Preserve beta status or set for admin bypass
             createdByAdmin: true,
             emailVerified: req.user.emailVerified || false
           };
@@ -979,5 +990,33 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Update user beta status endpoint
+  app.post("/api/auth/update-user-beta", async (req, res) => {
+    try {
+      const { email, isBetaTester } = req.body;
+      
+      if (!email || typeof isBetaTester !== "boolean") {
+        return res.status(400).json({ error: "Email and isBetaTester boolean are required" });
+      }
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      await storage.updateUser(user.id, { isBetaTester });
+      
+      res.json({
+        success: true,
+        message: `Beta status updated to ${isBetaTester}`,
+        user: { id: user.id, email: user.email, isBetaTester }
+      });
+    } catch (error) {
+      console.error("❌ Error updating beta status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('✅ Clean authentication system configured with Stripe integration');
 }
+
