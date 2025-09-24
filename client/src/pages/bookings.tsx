@@ -3950,9 +3950,20 @@ export default function UnifiedBookings() {
                 </div>
               </div>
             )}
+
+            {/* Mobile Portrait Mode - Rotation Prompt */}
+            {!isDesktop && (
+              <div className="calendar-rotation-prompt">
+                <div className="rotation-icon">📱</div>
+                <div>
+                  <div className="font-semibold">Please rotate your device</div>
+                  <div className="text-sm opacity-90">Calendar works best in landscape mode</div>
+                </div>
+              </div>
+            )}
             
-            {/* Full-Screen Calendar Grid without scrolling or navigation arrows */}
-            <div className="h-full flex flex-col w-full max-w-none mx-auto">
+            {/* Full-Screen Calendar Grid - Hidden in mobile portrait, optimized for mobile landscape */}
+            <div className={`h-full flex flex-col w-full max-w-none mx-auto ${!isDesktop ? 'mobile-calendar-container' : ''}`}>
               {/* Month Header - Bold Theme Background */}
               <div className="flex items-center justify-center mb-6 flex-col relative">
                 <div className="absolute inset-0 rounded-xl shadow-xl" style={{
@@ -3970,12 +3981,12 @@ export default function UnifiedBookings() {
               </div>
               
               {/* Day Headers - Full Theme Color Backgrounds with Luminance Aware Text */}
-              <div className="grid grid-cols-7 gap-2 mb-3 w-full">
+              <div className={`grid grid-cols-7 gap-2 mb-3 w-full ${!isDesktop ? 'calendar-grid-landscape' : ''}`}>
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
                   const bgColor = settings?.themeAccentColor || theme.colors.primary;
                   const textColor = getOptimalTextColor(bgColor);
                   return (
-                    <div key={day} className="text-center font-bold py-4 text-sm rounded-lg shadow-md" style={{
+                    <div key={day} className={`text-center font-bold py-4 text-sm rounded-lg shadow-md ${!isDesktop ? 'calendar-header-landscape' : ''}`} style={{
                       backgroundColor: bgColor,
                       background: `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)`,
                       color: textColor,
@@ -3989,7 +4000,7 @@ export default function UnifiedBookings() {
               </div>
               
               {/* Calendar Grid - 6 Weeks (42 days) with Equal Row Heights */}
-              <div className={`grid grid-cols-7 grid-rows-6 ${isDesktop ? 'gap-2' : 'gap-1'} flex-1 min-h-0 w-full`}>
+              <div className={`grid grid-cols-7 grid-rows-6 ${isDesktop ? 'gap-2' : 'gap-1'} flex-1 min-h-0 w-full ${!isDesktop ? 'calendar-grid-landscape' : ''}`}>
                 {(() => {
                   // Generate calendar data for complete 6 weeks (42 days) to show full month context
                   // Monday-to-Sunday week layout for musicians (weekend work is common)
@@ -4030,6 +4041,7 @@ export default function UnifiedBookings() {
                         ${day.isCurrentMonth ? 'shadow-lg hover:shadow-xl' : 'opacity-70 hover:opacity-90'}
                         ${day.isToday ? 'shadow-2xl ring-4 ring-opacity-50' : ''}
                         ${isSelectedDate ? 'ring-4 ring-opacity-60 scale-[1.02]' : ''}
+                        ${!isDesktop ? 'calendar-day-cell-landscape' : ''}
                       `}
                       style={{
                         background: day.isCurrentMonth 

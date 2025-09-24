@@ -75,6 +75,84 @@ main {
   z-index: -1;
 }
 
+/* Mobile Calendar Landscape-Only Mode */
+@media screen and (max-width: 768px) {
+  /* Portrait mode - hide calendar and show rotation prompt */
+  @media (orientation: portrait) {
+    .mobile-calendar-container {
+      display: none !important;
+    }
+    
+    .calendar-rotation-prompt {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(139, 92, 246, 0.9));
+      color: white;
+      padding: 24px 20px;
+      border-radius: 12px;
+      margin: 16px 0;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(12px);
+      animation: gentle-pulse 2s ease-in-out infinite;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .rotation-icon {
+      font-size: 24px;
+      transform: rotate(90deg);
+      transition: transform 0.3s ease;
+    }
+  }
+  
+  /* Landscape mode - show optimized calendar */
+  @media (orientation: landscape) {
+    .calendar-rotation-prompt {
+      display: none !important;
+    }
+    
+    .mobile-calendar-container {
+      display: block !important;
+      width: 100vw !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 8px !important;
+    }
+    
+    .calendar-grid-landscape {
+      width: 100% !important;
+      max-width: none !important;
+      grid-template-columns: repeat(7, 1fr) !important;
+      gap: 2px !important;
+    }
+    
+    .calendar-day-cell-landscape {
+      min-width: 0 !important;
+      width: 100% !important;
+      aspect-ratio: 1.4 !important;
+      font-size: 11px !important;
+      padding: 2px !important;
+    }
+    
+    .calendar-header-landscape {
+      font-size: 11px !important;
+      padding: 6px 1px !important;
+      text-align: center !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+/* Gentle pulsing animation for rotation prompt */
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
 .floating-decoration-1 {
   top: 10%;
   right: 15%;
