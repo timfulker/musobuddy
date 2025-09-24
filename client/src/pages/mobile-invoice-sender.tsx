@@ -552,10 +552,12 @@ export default function MobileInvoiceSender() {
                 </div>
 
                 {/* Due Date */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-black block">Due Date *</label>
+                <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="text-lg font-bold text-black uppercase tracking-wide">DUE DATE *</div>
                   <Input 
                     type="date" 
+                    placeholder="When payment is due"
+                    className="text-lg"
                     {...form.register("dueDate")}
                   />
                   {form.formState.errors.dueDate && (
@@ -564,10 +566,12 @@ export default function MobileInvoiceSender() {
                 </div>
 
                 {/* Performance Date */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-black block">Performance Date</label>
+                <div className="space-y-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="text-lg font-bold text-black uppercase tracking-wide">PERFORMANCE DATE</div>
                   <Input 
                     type="date" 
+                    placeholder="When the event takes place"
+                    className="text-lg"
                     {...form.register("performanceDate")}
                   />
                   {form.formState.errors.performanceDate && (
