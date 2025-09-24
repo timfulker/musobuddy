@@ -2,17 +2,54 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { Send, Search, Loader2, CheckCircle } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Send, Search, Loader2, CheckCircle, Plus, Calendar, User, Mail, PoundSterling, FileText, ArrowLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+
+// Mobile-optimized invoice form schema (simplified for mobile use)
+const mobileInvoiceSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Please enter a valid email address"),
+  amount: z.string().min(1, "Amount is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  performanceDate: z.string().optional(),
+  description: z.string().optional(),
+  bookingId: z.number().optional(), // Link to existing booking
+});
 
 export default function MobileInvoiceSender() {
   const [invoiceId, setInvoiceId] = useState('');
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('send');
+  const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [location, setLocation] = useLocation();
+
+  // Invoice creation form
+  const form = useForm<z.infer<typeof mobileInvoiceSchema>>({
+    resolver: zodResolver(mobileInvoiceSchema),
+    defaultValues: {
+      clientName: "",
+      clientEmail: "",
+      amount: "",
+      dueDate: "",
+      performanceDate: "",
+      description: "",
+      bookingId: undefined,
+    },
+  });
 
   // Fetch recent invoices
   const { data: invoices, isLoading } = useQuery({
@@ -23,6 +60,87 @@ export default function MobileInvoiceSender() {
         ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         ?.slice(0, 10) || []
   });
+
+  // Fetch recent bookings for auto-fill
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['/api/bookings'],
+    select: (data: any[]) => 
+      data
+        ?.filter(booking => booking.status === 'confirmed' || booking.status === 'new')
+        ?.sort((a, b) => new Date(b.eventDate || b.createdAt).getTime() - new Date(a.eventDate || a.createdAt).getTime())
+        ?.slice(0, 10) || []
+  });
+
+  // Create invoice mutation
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof mobileInvoiceSchema>) => {
+      const response = await apiRequest('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          dueDate: new Date(data.dueDate),
+          performanceDate: data.performanceDate ? new Date(data.performanceDate) : null,
+          performanceFee: data.amount, // Use amount as performance fee
+          invoiceType: 'performance',
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: "Invoice created successfully!",
+        description: `Invoice #${data.invoiceNumber} has been created and can be sent immediately.`
+      });
+      form.reset();
+      setActiveTab('send'); // Switch to send tab after creation
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error creating invoice",
+        description: error.message || "Failed to create invoice",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Auto-fill form from booking
+  const fillFromBooking = (booking: any) => {
+    form.setValue('clientName', booking.clientName || '');
+    form.setValue('clientEmail', booking.clientEmail || '');
+    form.setValue('amount', booking.fee?.toString() || '');
+    if (booking.eventDate) {
+      const eventDate = new Date(booking.eventDate).toISOString().split('T')[0];
+      form.setValue('performanceDate', eventDate);
+      // Set due date to 7 days after performance for mobile simplicity
+      const dueDate = new Date(booking.eventDate);
+      dueDate.setDate(dueDate.getDate() + 7);
+      form.setValue('dueDate', dueDate.toISOString().split('T')[0]);
+    }
+    form.setValue('description', `${booking.eventType || 'Performance'} at ${booking.venue || 'venue'}`);
+    form.setValue('bookingId', booking.id);
+    setActiveTab('create');
+  };
+
+  // Set default due date (7 days from today) when creating new invoice
+  useEffect(() => {
+    if (activeTab === 'create' && !form.getValues('dueDate')) {
+      const defaultDueDate = new Date();
+      defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+      form.setValue('dueDate', defaultDueDate.toISOString().split('T')[0]);
+    }
+  }, [activeTab, form]);
+
+  // Handle form submission
+  const onSubmit = async (data: z.infer<typeof mobileInvoiceSchema>) => {
+    setCreating(true);
+    try {
+      await createInvoiceMutation.mutateAsync(data);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const sendInvoiceDirectly = async (id: string) => {
     setSending(true);
@@ -108,14 +226,30 @@ export default function MobileInvoiceSender() {
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
-            <Send className="h-5 w-5" />
-            Quick Invoice Sender
+            <FileText className="h-5 w-5" />
+            Mobile Invoice Manager
           </CardTitle>
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            Perfect for sending invoices at gigs or on-the-go
+            Create new invoices or send existing ones - perfect for gigs!
           </p>
         </CardHeader>
       </Card>
+
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="send" className="flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            Quick Send
+          </TabsTrigger>
+          <TabsTrigger value="create" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create New
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Quick Send Tab */}
+        <TabsContent value="send" className="space-y-4 mt-6">
 
       {/* Manual Invoice ID Entry */}
       <Card>
@@ -228,6 +362,194 @@ export default function MobileInvoiceSender() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {/* Create New Tab */}
+        <TabsContent value="create" className="space-y-4 mt-6">
+          {/* Auto-fill from Bookings */}
+          {bookings.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Quick Fill from Recent Bookings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {bookings.slice(0, 3).map((booking) => (
+                  <div 
+                    key={booking.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    onClick={() => fillFromBooking(booking)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{booking.clientName}</p>
+                      <p className="text-xs text-gray-500">{booking.eventType} • £{booking.fee}</p>
+                      <p className="text-xs text-gray-400">
+                        {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'Date TBC'}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Invoice Creation Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Create New Invoice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="clientName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Client Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter client name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Client Email
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="client@example.com" type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <PoundSterling className="h-4 w-4" />
+                            Amount
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="500" type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Due Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="performanceDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Performance Date (Optional)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="e.g., Wedding performance at The Grand Hotel"
+                            className="resize-none"
+                            rows={3}
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    disabled={creating || createInvoiceMutation.isPending}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {creating || createInvoiceMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating Invoice...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create & Switch to Send
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Mobile Tip */}
+          <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+            <CardContent className="pt-6">
+              <div className="flex gap-3">
+                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    Quick Creation
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    Fill essential details to create invoices on-the-go. Use bookings above for instant auto-fill!
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
