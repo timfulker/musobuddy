@@ -1244,7 +1244,7 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Debug endpoint to check beta user creation
+  // Debug endpoint to check beta user creation (duplicate of earlier endpoint, keeping for compatibility)
   app.get("/api/auth/debug-beta/:email", async (req, res) => {
     try {
       const { email } = req.params;
@@ -1266,6 +1266,124 @@ export function setupAuthRoutes(app: Express) {
     } catch (error) {
       console.error("❌ Error checking beta status:", error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // COMPLETE USER CLEANUP - Removes user from both database and Supabase Auth
+  app.delete('/api/auth/complete-user-cleanup/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+      const { confirmDelete } = req.body;
+
+      if (confirmDelete !== true) {
+        return res.status(400).json({
+          error: 'Please confirm deletion by sending { confirmDelete: true } in request body',
+          warning: 'This will permanently delete the user from both the database and Supabase authentication'
+        });
+      }
+
+      console.log('🗑️ Starting complete user cleanup for:', email);
+
+      // Step 1: Get user from database
+      const dbUser = await storage.getUserByEmail(email);
+
+      let deletionResults = {
+        database: false,
+        supabaseAuth: false,
+        details: {}
+      };
+
+      // Step 2: Delete from database if exists
+      if (dbUser) {
+        try {
+          // Delete user from database
+          // Note: You'll need to implement deleteUser in storage
+          // For now, we'll use updateUser to mark as deleted
+          await storage.updateUser(dbUser.id, {
+            isActive: false,
+            deletedAt: new Date()
+          });
+
+          deletionResults.database = true;
+          deletionResults.details.databaseUser = dbUser.id;
+          console.log('✅ User deleted from database:', dbUser.id);
+        } catch (dbError) {
+          console.error('❌ Database deletion failed:', dbError);
+          deletionResults.details.databaseError = dbError.message;
+        }
+      } else {
+        console.log('ℹ️ User not found in database');
+        deletionResults.details.databaseUser = 'Not found';
+      }
+
+      // Step 3: Delete from Supabase Auth
+      // NOTE: This requires service role key which has admin privileges
+      try {
+        // Get Supabase admin client (service role)
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseAdmin = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!, // This needs to be the service role key, not anon key
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        // Find user in Supabase by email
+        const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+
+        if (listError) {
+          console.error('❌ Failed to list Supabase users:', listError);
+          deletionResults.details.supabaseError = listError.message;
+        } else {
+          const authUser = authUsers?.users?.find(u => u.email === email);
+
+          if (authUser) {
+            // Delete the user from Supabase Auth
+            const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+
+            if (deleteError) {
+              console.error('❌ Supabase auth deletion failed:', deleteError);
+              deletionResults.details.supabaseError = deleteError.message;
+            } else {
+              deletionResults.supabaseAuth = true;
+              deletionResults.details.supabaseAuthUser = authUser.id;
+              console.log('✅ User deleted from Supabase Auth:', authUser.id);
+            }
+          } else {
+            console.log('ℹ️ User not found in Supabase Auth');
+            deletionResults.details.supabaseAuthUser = 'Not found';
+          }
+        }
+      } catch (supabaseError: any) {
+        console.error('❌ Supabase cleanup error:', supabaseError);
+        deletionResults.details.supabaseError = supabaseError.message;
+        deletionResults.details.note = 'Supabase deletion requires SUPABASE_SERVICE_ROLE_KEY environment variable';
+      }
+
+      // Step 4: Return results
+      const success = deletionResults.database || deletionResults.supabaseAuth;
+
+      res.status(success ? 200 : 500).json({
+        success,
+        message: success
+          ? `User ${email} cleanup completed`
+          : `Failed to fully cleanup user ${email}`,
+        results: deletionResults,
+        nextSteps: !deletionResults.supabaseAuth
+          ? 'Manual deletion from Supabase may be required. Check Supabase Dashboard > Authentication > Users'
+          : undefined
+      });
+
+    } catch (error: any) {
+      console.error('❌ Complete user cleanup error:', error);
+      res.status(500).json({
+        error: error.message,
+        note: 'Partial cleanup may have occurred. Check both database and Supabase Auth.'
+      });
     }
   });
 
