@@ -994,6 +994,15 @@ export function setupAuthRoutes(app: Express) {
       const user = await storage.createUser(userData);
       console.log('✅ User created in database with ID:', user.id);
 
+      // Enhanced debugging to see what's actually returned from the database
+      console.log('🔍 DEBUG - Full user object returned from database:', JSON.stringify(user, null, 2));
+      console.log('🔍 DEBUG - isBetaTester value:', {
+        fromUserData: userData.isBetaTester,
+        fromDatabase: user.isBetaTester,
+        typeOfFromDatabase: typeof user.isBetaTester,
+        finalValue: user.isBetaTester || false
+      });
+
       res.status(201).json({
         user: {
           id: user.id,
@@ -1021,7 +1030,97 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Quick fix: Create beta code endpoint  
+  // TEST ENDPOINT: Validate beta code
+  app.post('/api/auth/test-beta-code', async (req, res) => {
+    try {
+      const { code } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+      }
+
+      console.log('🧪 Testing beta code:', code);
+
+      // Lookup the beta code
+      const betaCode = await storage.getBetaInviteCodeByCode(code);
+
+      if (!betaCode) {
+        return res.json({
+          valid: false,
+          error: 'Code not found',
+          code
+        });
+      }
+
+      // Check if code is active
+      const isActive = betaCode.status === 'active';
+      const isNotExpired = !betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt);
+      const hasUsesLeft = betaCode.currentUses < betaCode.maxUses;
+
+      res.json({
+        valid: isActive && isNotExpired && hasUsesLeft,
+        code,
+        details: {
+          status: betaCode.status,
+          maxUses: betaCode.maxUses,
+          currentUses: betaCode.currentUses,
+          usesRemaining: betaCode.maxUses - betaCode.currentUses,
+          expiresAt: betaCode.expiresAt,
+          isActive,
+          isNotExpired,
+          hasUsesLeft,
+          trialDays: betaCode.trialDays
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error testing beta code:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // TEST ENDPOINT: Check user beta status
+  app.get('/api/auth/debug-beta/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+
+      console.log('🔍 Checking beta status for:', email);
+
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Also check for beta invite record
+      const betaInvite = await storage.getBetaInviteByEmail(email);
+
+      res.json({
+        email,
+        user: {
+          id: user.id,
+          isBetaTester: user.isBetaTester,
+          trialEndsAt: user.trialEndsAt,
+          createdAt: user.createdAt,
+          hasPaid: user.hasPaid,
+          tier: user.tier
+        },
+        betaInvite: betaInvite ? {
+          email: betaInvite.email,
+          invitedBy: betaInvite.invitedBy,
+          notes: betaInvite.notes,
+          cohort: betaInvite.cohort,
+          createdAt: betaInvite.createdAt
+        } : null
+      });
+
+    } catch (error) {
+      console.error('❌ Error checking beta status:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Quick fix: Create beta code endpoint
   app.post("/api/auth/create-beta-code-fix", async (req, res) => {
     try {
       const { code, maxUses = 100, trialDays = 90 } = req.body;

@@ -203,8 +203,17 @@ export class UserStorage {
     createdAt?: Date;
     createdByAdmin?: boolean;
   }) {
+    // Debug logging for beta tester flag
+    console.log('🔍 [USER-STORAGE] createUser called with:', {
+      id: data.id,
+      email: data.email,
+      isBetaTester: data.isBetaTester,
+      isBetaTesterType: typeof data.isBetaTester,
+      isBetaTesterValue: data.isBetaTester === true ? 'TRUE' : data.isBetaTester === false ? 'FALSE' : 'UNDEFINED'
+    });
+
     // Password should already be hashed by caller
-    const result = await db.insert(users).values({
+    const insertData = {
       id: data.id,
       email: data.email,
       password: data.password || '',
@@ -232,7 +241,24 @@ export class UserStorage {
       createdByAdmin: data.createdByAdmin || false,
       createdAt: data.createdAt || new Date(),
       updatedAt: new Date(),
-    }).returning();
+    };
+
+    console.log('🔍 [USER-STORAGE] Insert data prepared:', {
+      isBetaTester: insertData.isBetaTester,
+      isBetaTesterFinal: insertData.isBetaTester === true ? 'TRUE' : 'FALSE'
+    });
+
+    const result = await db.insert(users).values(insertData).returning();
+
+    console.log('🔍 [USER-STORAGE] Database insert result:', {
+      resultLength: result.length,
+      returnedUser: result[0] ? {
+        id: result[0].id,
+        email: result[0].email,
+        isBetaTester: result[0].isBetaTester,
+        isBetaTesterType: typeof result[0].isBetaTester
+      } : null
+    });
 
     // Seed default email templates for new users
     try {
