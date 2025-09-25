@@ -3512,17 +3512,31 @@ export default function UnifiedBookings() {
                                             <div className="flex items-center gap-2">
                                               {/* Apply on Encore Button - only show for Encore bookings */}
                                               {booking.applyNowLink && (
-                                                <Button 
-                                                  size="sm" 
-                                                  variant="outline"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(booking.applyNowLink, '_blank');
-                                                  }}
-                                                  className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                                >
-                                                  {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
-                                                </Button>
+                                                <div className="flex items-center gap-3">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      window.open(booking.applyNowLink, '_blank');
+                                                    }}
+                                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                                  >
+                                                    {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
+                                                  </Button>
+                                                  <div className="flex items-center gap-2 text-sm">
+                                                    <span className="text-gray-600">Applied:</span>
+                                                    <Switch
+                                                      checked={booking.status === 'in_progress' || booking.status === 'confirmed' || booking.status === 'completed'}
+                                                      onCheckedChange={(checked) => {
+                                                        const newStatus = checked ? 'in_progress' : 'new';
+                                                        markAppliedMutation.mutate({ bookingId: booking.id, status: newStatus });
+                                                      }}
+                                                      disabled={markAppliedMutation.isPending}
+                                                      className="data-[state=checked]:bg-green-600 scale-75"
+                                                    />
+                                                  </div>
+                                                </div>
                                               )}
                                             </div>
                                           </div>
@@ -3687,17 +3701,31 @@ export default function UnifiedBookings() {
                                               <div className="flex items-center gap-2">
                                                 {/* Apply on Encore Button - only show for Encore bookings */}
                                                 {booking.applyNowLink && (
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      window.open(booking.applyNowLink, '_blank');
-                                                    }}
-                                                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                                                  >
-                                                    {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
-                                                  </Button>
+                                                  <div className="flex items-center gap-3">
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(booking.applyNowLink, '_blank');
+                                                      }}
+                                                      className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                                                    >
+                                                      {booking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
+                                                    </Button>
+                                                    <div className="flex items-center gap-2 text-sm">
+                                                      <span className="text-gray-600">Applied:</span>
+                                                      <Switch
+                                                        checked={booking.status === 'in_progress' || booking.status === 'confirmed' || booking.status === 'completed'}
+                                                        onCheckedChange={(checked) => {
+                                                          const newStatus = checked ? 'in_progress' : 'new';
+                                                          markAppliedMutation.mutate({ bookingId: booking.id, status: newStatus });
+                                                        }}
+                                                        disabled={markAppliedMutation.isPending}
+                                                        className="data-[state=checked]:bg-green-600 scale-75"
+                                                      />
+                                                    </div>
+                                                  </div>
                                                 )}
                                               </div>
                                             </div>
@@ -4395,17 +4423,31 @@ export default function UnifiedBookings() {
                 
                 {/* Apply on Encore Button */}
                 {hoveredBooking.applyNowLink && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(hoveredBooking.applyNowLink, '_blank');
-                    }}
-                    className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
-                  >
-                    {hoveredBooking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(hoveredBooking.applyNowLink, '_blank');
+                      }}
+                      className="bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100"
+                    >
+                      {hoveredBooking.status === 'new' ? 'Apply on Encore' : 'Applied on Encore'}
+                    </Button>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Applied:</span>
+                      <Switch
+                        checked={hoveredBooking.status === 'in_progress' || hoveredBooking.status === 'confirmed' || hoveredBooking.status === 'completed'}
+                        onCheckedChange={(checked) => {
+                          const newStatus = checked ? 'in_progress' : 'new';
+                          markAppliedMutation.mutate({ bookingId: hoveredBooking.id, status: newStatus });
+                        }}
+                        disabled={markAppliedMutation.isPending}
+                        className="data-[state=checked]:bg-green-600 scale-75"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
