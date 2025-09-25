@@ -328,7 +328,8 @@ export default function UnifiedBookings() {
   };
 
   // Determine if we should fetch ALL bookings (when searching/filtering)
-  const shouldFetchAll = debouncedSearchQuery.length >= 2 || statusFilter !== 'all' || 
+  // Note: We need to fetch all bookings when conflictFilter is true to detect conflicts
+  const shouldFetchAll = debouncedSearchQuery.length >= 2 || statusFilter !== 'all' ||
                          dateFilter !== 'all' || conflictFilter;
 
   // Build query parameters for the all endpoint
@@ -337,9 +338,11 @@ export default function UnifiedBookings() {
     if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
     if (statusFilter !== 'all') params.append('status', statusFilter);
     if (dateFilter !== 'all') params.append('dateFilter', dateFilter);
+    // Note: hasConflict is passed but not implemented on backend yet
+    // Conflict filtering happens on frontend for now
     if (conflictFilter) params.append('hasConflict', 'true');
-    // Don't apply limit when actively searching/filtering
-    if (debouncedSearchQuery || statusFilter !== 'all' || dateFilter !== 'all') {
+    // Don't apply limit when actively searching/filtering or checking conflicts
+    if (debouncedSearchQuery || statusFilter !== 'all' || dateFilter !== 'all' || conflictFilter) {
       params.append('applyLimit', 'false');
     }
     return params.toString();
@@ -824,13 +827,13 @@ export default function UnifiedBookings() {
         }
       }
       
-      // Conflict filtering
+      // Conflict filtering - only show bookings that have conflicts when filter is enabled
       let matchesConflict = true;
       if (conflictFilter) {
         const conflicts = detectConflicts(booking);
         matchesConflict = conflicts.length > 0;
       }
-      
+
       return matchesSearch && matchesStatus && matchesDate && matchesConflict;
     });
 
@@ -1873,11 +1876,11 @@ export default function UnifiedBookings() {
                           }}
                           className="data-[state=checked]:bg-red-500"
                         />
-                        <label 
-                          htmlFor="conflict-filter-list" 
+                        <label
+                          htmlFor="conflict-filter-list"
                           className="text-xs font-medium cursor-pointer whitespace-nowrap"
                         >
-                          Show Conflicts
+                          Conflicts Only
                         </label>
                       </div>
 
@@ -1968,11 +1971,11 @@ export default function UnifiedBookings() {
                       }}
                       className="data-[state=checked]:bg-red-500"
                     />
-                    <label 
-                      htmlFor="conflict-filter" 
+                    <label
+                      htmlFor="conflict-filter"
                       className="text-sm font-medium cursor-pointer"
                     >
-                      Show Conflicts Only
+                      Conflicts Only
                     </label>
                     {conflictFilter && (
                       <Badge variant="destructive" className="text-xs">
