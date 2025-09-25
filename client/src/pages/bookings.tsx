@@ -2564,10 +2564,8 @@ export default function UnifiedBookings() {
                                                   {(groupBooking.venue || groupBooking.venueAddress) && (
                                                     <span className="flex items-center gap-1">
                                                       <MapPin className="w-4 h-4" />
-                                                      {/* Show area for Encore bookings, venue for others */}
-                                                      {groupBooking.applyNowLink && groupBooking.venueAddress 
-                                                        ? groupBooking.venueAddress 
-                                                        : groupBooking.venue}
+                                                      {/* Always prefer venue name, fall back to address if no venue */}
+                                                      {groupBooking.venue || groupBooking.venueAddress}
                                                     </span>
                                                   )}
                                                   {groupBooking.eventTime && (
@@ -2994,10 +2992,8 @@ export default function UnifiedBookings() {
                                     {(booking.venue || booking.venueAddress) && (
                                       <span className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4" />
-                                        {/* Show area for Encore bookings, venue for others */}
-                                        {booking.applyNowLink && booking.venueAddress 
-                                          ? booking.venueAddress 
-                                          : booking.venue}
+                                        {/* Always prefer venue name, fall back to address if no venue */}
+                                        {booking.venue || booking.venueAddress}
                                       </span>
                                     )}
                                     {booking.eventTime && (

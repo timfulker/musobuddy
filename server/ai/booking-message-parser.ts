@@ -154,6 +154,8 @@ TIME EXTRACTION RULES:
 CRITICAL VENUE VS LOCATION RULES:
 - venue: ONLY put actual venue names here (e.g., "City Hall", "The Royal Hotel", "St. Mary's Church", "Riverside Theatre")
 - venueAddress: Put location/address information here (e.g., "Glasgow", "London", "123 Main St", "near Birmingham")
+- NEVER extract office addresses from email footers/signatures (like "275 New North Road" or company addresses)
+- For Encore emails: Extract the location from the job listing (e.g., "Windsor, Berkshire") into venue field, NOT from email footer
 - If someone says "in Glasgow" or "in Birmingham", that's a location - put "Glasgow" or "Birmingham" in venueAddress, leave venue BLANK
 - If someone says "at Glasgow City Hall", put "Glasgow City Hall" in venue and "Glasgow" in venueAddress
 - When in doubt, leave venue BLANK - better to have no venue than wrong venue
