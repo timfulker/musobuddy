@@ -617,8 +617,19 @@ export class MiscStorage {
   }
 
   async getBetaInviteCodeByCode(code: string) {
+    console.log('🔍 [MISC-STORAGE] getBetaInviteCodeByCode called with:', {
+      code,
+      upperCaseCode: code.toUpperCase()
+    });
+
     const result = await db.select().from(betaInviteCodes)
       .where(eq(betaInviteCodes.code, code.toUpperCase()));
+
+    console.log('🔍 [MISC-STORAGE] getBetaInviteCodeByCode result:', {
+      found: result.length > 0,
+      result: result[0] || null
+    });
+
     return result[0] || null;
   }
 

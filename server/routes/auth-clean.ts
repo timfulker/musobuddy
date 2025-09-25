@@ -911,12 +911,21 @@ export function setupAuthRoutes(app: Express) {
         }
 
         // Check if invite code matches a valid dynamic beta code
+        console.log('🔍 DEBUG - Beta code check:', {
+          isBetaUserCurrentValue: isBetaUser,
+          inviteCodeProvided: !!inviteCode,
+          inviteCodeValue: inviteCode,
+          willCheckCode: !isBetaUser && inviteCode
+        });
+
         if (!isBetaUser && inviteCode) {
           try {
+            console.log('🔎 Looking up beta code in database:', inviteCode);
             const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
             console.log('🔍 Beta code lookup result:', {
               code: inviteCode,
               found: !!betaCode,
+              fullBetaCode: betaCode,
               status: betaCode?.status,
               maxUses: betaCode?.maxUses,
               currentUses: betaCode?.currentUses,
@@ -1384,6 +1393,31 @@ export function setupAuthRoutes(app: Express) {
         error: error.message,
         note: 'Partial cleanup may have occurred. Check both database and Supabase Auth.'
       });
+    }
+  });
+
+  // List all beta codes endpoint (for debugging)
+  app.get('/api/auth/list-beta-codes', async (req, res) => {
+    try {
+      const codes = await storage.getAllBetaInviteCodes();
+
+      res.json({
+        count: codes.length,
+        codes: codes.map(code => ({
+          code: code.code,
+          status: code.status,
+          maxUses: code.maxUses,
+          currentUses: code.currentUses,
+          usesRemaining: code.maxUses - code.currentUses,
+          trialDays: code.trialDays,
+          expiresAt: code.expiresAt,
+          createdAt: code.createdAt,
+          lastUsedAt: code.lastUsedAt
+        }))
+      });
+    } catch (error) {
+      console.error('❌ Error listing beta codes:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
