@@ -44,10 +44,45 @@ export default function SignupPage() {
     localStorage.setItem('signup-in-progress', 'true');
 
     try {
-      console.log('🔥 Creating account...', { email, firstName, lastName, inviteCode });
-      
-      // Use the auth hook to create account (pass invite code if provided)
-      const result = await signUpWithEmail(email, password, firstName, lastName, inviteCode);
+      // STEP 1: Validate beta code if provided
+      let isBetaUser = false;
+      if (inviteCode && inviteCode.trim()) {
+        console.log('🔍 Validating beta code before signup:', inviteCode);
+
+        try {
+          const betaResponse = await fetch('/api/auth/test-beta-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: inviteCode.trim() })
+          });
+
+          const betaResult = await betaResponse.json();
+
+          if (!betaResult.valid) {
+            setError(`Invalid beta code: ${betaResult.error || 'Code not recognized'}`);
+            setLoading(false);
+            return;
+          }
+
+          console.log('✅ Beta code validated successfully');
+          isBetaUser = true;
+
+          // Store validated beta code for use after email verification
+          localStorage.setItem('validated-beta-code', inviteCode.trim());
+          console.log('💾 Stored validated beta code in localStorage');
+
+        } catch (betaError) {
+          console.error('❌ Beta code validation failed:', betaError);
+          setError('Unable to validate beta code. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log('🔥 Creating account...', { email, firstName, lastName, isBetaUser });
+
+      // STEP 2: Proceed with signup (no beta code passed - will be applied after verification)
+      const result = await signUpWithEmail(email, password, firstName, lastName);
       
       console.log('🔍 Signup result:', result);
       

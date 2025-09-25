@@ -94,10 +94,47 @@ export function AuthCallback() {
             
             // Refresh user data to get latest verification status
             await refreshUserData();
-            
+
+            // CRITICAL: Apply beta status if user had a validated beta code
+            try {
+              const validatedBetaCode = localStorage.getItem('validated-beta-code');
+              if (validatedBetaCode) {
+                console.log('🎯 [AUTH-CALLBACK] Applying validated beta code after email verification:', validatedBetaCode);
+
+                const betaResponse = await fetch('/api/auth/apply-beta-code', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${data.session.access_token}`
+                  },
+                  body: JSON.stringify({
+                    email: data.session.user.email,
+                    betaCode: validatedBetaCode
+                  })
+                });
+
+                if (betaResponse.ok) {
+                  const betaResult = await betaResponse.json();
+                  console.log('✅ [AUTH-CALLBACK] Beta status applied successfully:', betaResult);
+
+                  // Clean up localStorage
+                  localStorage.removeItem('validated-beta-code');
+
+                  // Refresh user data again to get beta status
+                  await refreshUserData();
+                } else {
+                  const betaError = await betaResponse.json();
+                  console.warn('⚠️ [AUTH-CALLBACK] Failed to apply beta status:', betaError);
+                }
+              }
+            } catch (betaError) {
+              console.error('❌ [AUTH-CALLBACK] Error applying beta status:', betaError);
+              // Don't fail the verification process for beta errors
+            }
+
             setStatus('success');
             setMessage('Email verified successfully! Redirecting to dashboard...');
-            
+
             // Redirect to dashboard after a short delay
             setTimeout(() => {
               setLocation('/dashboard');
