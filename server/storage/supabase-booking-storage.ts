@@ -186,6 +186,29 @@ export class SupabaseBookingStorage {
     return this.mapToCamelCase(data);
   }
 
+  // Method for fetching ALL bookings (use sparingly - for exports, reports)
+  async getAllBookings(userId: string) {
+    if (!this.isEnabled || !supabase) {
+      throw new Error('Supabase is not enabled');
+    }
+
+    console.log('⚠️ [SUPABASE-BOOKINGS] Fetching ALL bookings - this may be slow');
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('user_id', userId)
+      .order('event_date', { ascending: false })
+      .limit(50000);
+
+    if (error) {
+      console.error('❌ Failed to fetch all bookings from Supabase:', error);
+      throw error;
+    }
+
+    return data.map(booking => this.mapToCamelCase(booking));
+  }
+
   async getBookings(userId: string) {
     // ENVIRONMENT DEBUG
     const projectId = supabaseUrl?.split('.')[0].split('//')[1];
@@ -196,12 +219,21 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
+    // Optimized: Add date range filter to use indexes effectively
+    // Fetch bookings from 6 months ago to 2 years in future
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const twoYearsFromNow = new Date();
+    twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+
     const { data, error } = await supabase
       .from('bookings')
       .select('*')
       .eq('user_id', userId)
+      .gte('event_date', sixMonthsAgo.toISOString().split('T')[0])
+      .lte('event_date', twoYearsFromNow.toISOString().split('T')[0])
       .order('event_date', { ascending: false })
-      .limit(50000); // Remove Supabase's 1000 default limit
+      .limit(2000); // Reasonable limit for performance
 
     console.log('🔍 [SUPABASE-BOOKINGS] Query result:', data?.length || 0, 'bookings found');
 

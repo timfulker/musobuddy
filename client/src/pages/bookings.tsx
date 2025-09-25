@@ -562,15 +562,24 @@ export default function UnifiedBookings() {
   // OPTIMIZED: Memoized conflict detection with conflict groups to prevent excessive re-computation
   const { conflictsByBookingId, conflictGroups } = React.useMemo(() => {
     if (!bookings || bookings.length === 0) return { conflictsByBookingId: {}, conflictGroups: [] };
-    
+
     const conflicts: Record<number, any[]> = {};
     const bookingsByDate: Record<string, any[]> = {};
     const groups: any[] = [];
-    
+
+    // Performance optimization: Only check conflicts for upcoming bookings (next 6 months)
+    const today = new Date();
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
     // Group bookings by date for efficient lookup
     const validBookings = validateBookingArray(bookings) ? bookings : [];
     validBookings.forEach((booking) => {
       if (!booking.eventDate || booking.status === 'cancelled' || booking.status === 'rejected') return;
+
+      // Skip conflict detection for old bookings (performance optimization)
+      const bookingDate = new Date(booking.eventDate);
+      if (bookingDate < today || bookingDate > sixMonthsFromNow) return;
       
       const dateKey = new Date(booking.eventDate).toDateString();
       if (!bookingsByDate[dateKey]) {
