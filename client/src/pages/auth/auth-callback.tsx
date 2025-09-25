@@ -95,11 +95,12 @@ export function AuthCallback() {
             // Refresh user data to get latest verification status
             await refreshUserData();
 
-            // CRITICAL: Apply beta status if user had a validated beta code
+            // CRITICAL: Apply beta status if user had a validated beta code from localStorage
             try {
               const validatedBetaCode = localStorage.getItem('validated-beta-code');
               if (validatedBetaCode) {
-                console.log('🎯 [AUTH-CALLBACK] Applying validated beta code after email verification:', validatedBetaCode);
+                console.log('🎯 [AUTH-CALLBACK] Found validated beta code in localStorage:', validatedBetaCode);
+                console.log('🎯 [AUTH-CALLBACK] Applying beta code to verified user:', data.session.user.email);
 
                 const betaResponse = await fetch('/api/auth/apply-beta-code', {
                   method: 'POST',
@@ -124,11 +125,13 @@ export function AuthCallback() {
                   await refreshUserData();
                 } else {
                   const betaError = await betaResponse.json();
-                  console.warn('⚠️ [AUTH-CALLBACK] Failed to apply beta status:', betaError);
+                  console.error('❌ [AUTH-CALLBACK] Failed to apply beta status:', betaError);
                 }
+              } else {
+                console.log('ℹ️ [AUTH-CALLBACK] No validated beta code found in localStorage');
               }
             } catch (betaError) {
-              console.error('❌ [AUTH-CALLBACK] Error applying beta status:', betaError);
+              console.error('❌ [AUTH-CALLBACK] Error checking/applying beta status:', betaError);
               // Don't fail the verification process for beta errors
             }
 

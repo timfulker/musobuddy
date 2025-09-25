@@ -44,8 +44,7 @@ export default function SignupPage() {
     localStorage.setItem('signup-in-progress', 'true');
 
     try {
-      // STEP 1: Validate beta code if provided
-      let isBetaUser = false;
+      // STEP 1: Validate beta code if provided (store in localStorage for after verification)
       if (inviteCode && inviteCode.trim()) {
         console.log('🔍 Validating beta code before signup:', inviteCode);
 
@@ -65,8 +64,6 @@ export default function SignupPage() {
           }
 
           console.log('✅ Beta code validated successfully');
-          isBetaUser = true;
-
           // Store validated beta code for use after email verification
           localStorage.setItem('validated-beta-code', inviteCode.trim());
           console.log('💾 Stored validated beta code in localStorage');
@@ -79,9 +76,9 @@ export default function SignupPage() {
         }
       }
 
-      console.log('🔥 Creating account...', { email, firstName, lastName, isBetaUser });
+      console.log('🔥 Creating account...', { email, firstName, lastName, hasBetaCode: !!inviteCode });
 
-      // STEP 2: Proceed with signup (no beta code passed - will be applied after verification)
+      // STEP 2: Proceed with signup (beta code will be applied after email verification)
       const result = await signUpWithEmail(email, password, firstName, lastName);
       
       console.log('🔍 Signup result:', result);
@@ -193,7 +190,7 @@ export default function SignupPage() {
             <CardTitle>Account Details</CardTitle>
           </CardHeader>
           <CardContent>
-              {/* Beta Invite Code - Available for both email and Google signup */}
+              {/* Beta Invite Code - Validated before signup, applied after email verification */}
               <div className="mb-6">
                 <Label htmlFor="inviteCode">
                   Beta Invite Code <span className="text-gray-500">(optional)</span>
