@@ -121,6 +121,38 @@ class CollaborativeFormGenerator {
         .w-3 { width: 12px; } .w-4 { width: 16px; } .w-5 { width: 20px; } .w-6 { width: 24px; }
         .h-3 { height: 12px; } .h-4 { height: 16px; } .h-5 { height: 20px; } .h-6 { height: 24px; }
         .sticky { position: sticky; }
+        /* Mobile-specific fixes for better scrolling and button accessibility */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 150px !important; /* Extra space for mobile browser UI and keyboards */
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            }
+            .main-container {
+                padding-bottom: 120px !important; /* Ensure content doesn't get cut off */
+                margin-bottom: 20px !important; /* Additional margin for safety */
+            }
+            /* Make save button area sticky on mobile for better accessibility */
+            .save-section-mobile {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                background: white !important;
+                box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1) !important;
+                z-index: 40 !important;
+                padding: 12px !important;
+                border-top: 1px solid #e5e7eb !important;
+            }
+            /* Adjust save button layout for mobile */
+            .save-section-mobile .flex {
+                flex-direction: column !important;
+                gap: 12px !important;
+            }
+            .save-section-mobile button {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+        }
         .top-0 { top: 0; }
         .z-50 { z-index: 50; }
         .backdrop-blur-sm { backdrop-filter: blur(4px); }
@@ -207,7 +239,7 @@ class CollaborativeFormGenerator {
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto px-4 py-8 main-container">
         <!-- Event Overview -->
         <div class="mb-8 bg-gradient-to-r from-[#191970]/10 to-indigo-50 border border-[#191970]/20 rounded-lg p-6">
             <div class="flex items-center text-[#191970] mb-4">
@@ -361,7 +393,7 @@ class CollaborativeFormGenerator {
                 </div>
 
                 <!-- Save Section -->
-                <div class="bg-gradient-to-r from-[#191970]/5 to-indigo-50 rounded-lg p-6 border border-[#191970]/20 mt-8">
+                <div class="bg-gradient-to-r from-[#191970]/5 to-indigo-50 rounded-lg p-6 border border-[#191970]/20 mt-8 save-section-mobile">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <div class="p-3 bg-[#191970]/10 rounded-lg">
@@ -418,6 +450,50 @@ class CollaborativeFormGenerator {
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
             initializeFieldLocks();
+
+            // Mobile-specific viewport adjustments
+            if (window.innerWidth <= 768) {
+                // Ensure save button is always accessible on mobile
+                const saveSection = document.querySelector('.save-section-mobile');
+                if (saveSection) {
+                    // Add extra scroll padding when keyboard might be open
+                    const inputs = document.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => {
+                        input.addEventListener('focus', () => {
+                            // Add temporary padding when input is focused
+                            document.body.style.paddingBottom = '250px';
+                            // Scroll the save button into view if needed
+                            setTimeout(() => {
+                                const rect = saveSection.getBoundingClientRect();
+                                if (rect.bottom > window.innerHeight) {
+                                    saveSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                                }
+                            }, 300);
+                        });
+
+                        input.addEventListener('blur', () => {
+                            // Reset padding when input loses focus
+                            setTimeout(() => {
+                                document.body.style.paddingBottom = '150px';
+                            }, 100);
+                        });
+                    });
+                }
+
+                // Handle viewport resize (keyboard show/hide)
+                let viewportHeight = window.innerHeight;
+                window.addEventListener('resize', () => {
+                    const newHeight = window.innerHeight;
+                    if (newHeight < viewportHeight * 0.75) {
+                        // Keyboard is likely open
+                        document.body.style.paddingBottom = '250px';
+                    } else {
+                        // Keyboard is likely closed
+                        document.body.style.paddingBottom = '150px';
+                    }
+                    viewportHeight = newHeight;
+                });
+            }
             initializeAutoSave();
         });
 
