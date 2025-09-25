@@ -1044,18 +1044,18 @@ export function setupAuthRoutes(app: Express) {
   app.post("/api/auth/update-user-beta", async (req, res) => {
     try {
       const { email, isBetaTester } = req.body;
-      
+
       if (!email || typeof isBetaTester !== "boolean") {
         return res.status(400).json({ error: "Email and isBetaTester boolean are required" });
       }
-      
+
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       await storage.updateUser(user.id, { isBetaTester });
-      
+
       res.json({
         success: true,
         message: `Beta status updated to ${isBetaTester}`,
@@ -1063,6 +1063,31 @@ export function setupAuthRoutes(app: Express) {
       });
     } catch (error) {
       console.error("❌ Error updating beta status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Debug endpoint to check beta user creation
+  app.get("/api/auth/debug-beta/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        email: user.email,
+        isBetaTester: user.isBetaTester,
+        is_beta_tester: user.is_beta_tester,
+        trialEndsAt: user.trialEndsAt,
+        tier: user.tier,
+        supabaseUid: user.supabaseUid,
+        createdAt: user.createdAt
+      });
+    } catch (error) {
+      console.error("❌ Error checking beta status:", error);
       res.status(500).json({ error: error.message });
     }
   });

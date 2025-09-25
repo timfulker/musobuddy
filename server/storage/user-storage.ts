@@ -183,6 +183,8 @@ export class UserStorage {
     lastName?: string;
     phoneNumber?: string;
     phoneVerified?: boolean;
+    emailVerified?: boolean;
+    supabaseUid?: string;
     tier?: string;
     isAdmin?: boolean;
     isBetaTester?: boolean;
@@ -192,6 +194,7 @@ export class UserStorage {
     quickAddToken?: string;
     emailPrefix?: string | null;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
     signupIpAddress?: string;
     deviceFingerprint?: string;
     lastLoginAt?: Date;
@@ -209,6 +212,8 @@ export class UserStorage {
       lastName: data.lastName,
       phoneNumber: data.phoneNumber,
       phoneVerified: data.phoneVerified || false,
+      emailVerified: data.emailVerified || false,
+      supabaseUid: data.supabaseUid,
       tier: data.tier || 'free',
       isAdmin: data.isAdmin || false,
       isBetaTester: data.isBetaTester || false,
@@ -218,6 +223,7 @@ export class UserStorage {
       quickAddToken: data.quickAddToken,
       emailPrefix: data.emailPrefix,
       stripeCustomerId: data.stripeCustomerId,
+      stripeSubscriptionId: data.stripeSubscriptionId,
       signupIpAddress: data.signupIpAddress,
       deviceFingerprint: data.deviceFingerprint,
       lastLoginAt: data.lastLoginAt,
@@ -249,6 +255,7 @@ export class UserStorage {
     phoneNumber: string;
     phoneVerified: boolean;
     emailVerified: boolean;
+    supabaseUid: string;
     tier: string;
     emailPrefix: string;
     stripeCustomerId: string;
@@ -256,6 +263,7 @@ export class UserStorage {
     hasPaid: boolean;
     isAdmin: boolean;
     isBetaTester: boolean;
+    isAssigned: boolean;
     trialEndsAt: Date | null;
     onboardingCompleted: boolean;
   }>) {
