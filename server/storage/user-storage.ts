@@ -223,7 +223,7 @@ export class UserStorage {
       phoneVerified: data.phoneVerified || false,
       emailVerified: data.emailVerified || false,
       supabaseUid: data.supabaseUid,
-      tier: data.tier || 'free',
+      tier: data.tier || null,
       isAdmin: data.isAdmin || false,
       isBetaTester: data.isBetaTester || false,
       isAssigned: data.isAssigned || false,

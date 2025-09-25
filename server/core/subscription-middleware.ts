@@ -40,9 +40,10 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
 
     // ENFORCE: Subscription verification for all other users
     const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
-    const isNonFreeTier = user.tier && user.tier !== 'free';
-    
-    if (!hasValidSubscription && !isNonFreeTier) {
+    const hasPaidAccess = user.hasPaid;
+    const hasValidTrial = user.trialEndsAt && new Date(user.trialEndsAt) > new Date();
+
+    if (!hasValidSubscription && !hasPaidAccess && !hasValidTrial) {
       console.log(`🔒 Access denied for user ${userId} (${user.email}) - subscription verification failed`);
       return res.status(403).json({ 
         error: 'Subscription required',
@@ -96,22 +97,21 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       return next();
     }
 
-    // ENFORCE: Enhanced subscription verification including paid users and beta testers
+    // ENFORCE: Clear subscription verification logic
     const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
-    const isNonFreeTier = user.tier && user.tier !== 'free';
-    const hasPaid = user.hasPaid; // User has completed payment
-    const isBetaTesterWithValidTrial = user.isBetaTester && user.trialEndsAt && new Date(user.trialEndsAt) > new Date(); // Beta tester with valid trial
+    const hasPaidAccess = user.hasPaid;
+    const hasValidTrial = user.trialEndsAt && new Date(user.trialEndsAt) > new Date();
 
-    // Allow access if user has subscription, paid, or is beta tester with valid trial
-    const hasAccess = hasValidSubscription || isNonFreeTier || hasPaid || isBetaTesterWithValidTrial;
+    // Allow access if user has subscription, paid, or valid trial (includes beta testers)
+    const hasAccess = hasValidSubscription || hasPaidAccess || hasValidTrial;
 
     if (!hasAccess) {
       console.log(`🔒 Access denied for user ${userId} (${user.email}) - subscription verification failed`, {
         hasValidSubscription,
-        isNonFreeTier,
-        hasPaid,
-        isBetaTesterWithValidTrial,
-        trialEndsAt: user.trialEndsAt
+        hasPaidAccess,
+        hasValidTrial,
+        trialEndsAt: user.trialEndsAt,
+        isBetaTester: user.isBetaTester
       });
       return res.status(403).json({
         error: 'Subscription required',
@@ -120,7 +120,7 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       });
     }
 
-    console.log(`✅ Authenticated user ${userId} - access granted`, { hasValidSubscription, isNonFreeTier, hasPaid, isBetaTesterWithValidTrial });
+    console.log(`✅ Authenticated user ${userId} - access granted`, { hasValidSubscription, hasPaidAccess, hasValidTrial });
     return next();
 
   } catch (error) {
@@ -138,11 +138,11 @@ export const hasSubscriptionAccess = async (userId: string): Promise<boolean> =>
     // Admin users always have access
     if (user.isAdmin) return true;
     
-    // Check for valid subscription
+    // Check for valid subscription or paid access
     const hasValidSubscription = user.isSubscribed && user.stripeCustomerId;
-    const isNonFreeTier = user.tier && user.tier !== 'free';
-    
-    return hasValidSubscription || isNonFreeTier;
+    const hasPaidAccess = user.hasPaid;
+
+    return hasValidSubscription || hasPaidAccess;
   } catch (error) {
     console.error('Access check error:', error);
     return false;

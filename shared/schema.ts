@@ -31,8 +31,8 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   phoneVerified: boolean("phone_verified").default(false),
 
-  // User tier
-  tier: varchar("tier", { length: 50 }).default("free"),
+  // User tier - removed "free" default to avoid confusion, use trial logic instead
+  tier: varchar("tier", { length: 50 }),
 
   // Fraud detection fields
   trialStatus: varchar("trial_status", { length: 20 }),

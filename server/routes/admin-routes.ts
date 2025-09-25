@@ -402,7 +402,7 @@ app.post('/api/admin/users', authenticate, async (req: AuthenticatedRequest, res
       lastName,
       password: hashedPassword,
       supabaseUid: supabaseUid || null,
-      tier: tier || 'free',
+      tier: tier || null,
       isAdmin: isAdmin || false,
       isBetaTester: isBetaTester || false,
       phoneVerified: phoneVerified || false,

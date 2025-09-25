@@ -151,7 +151,7 @@ export const authenticate = async (
       firstName: dbUser.firstName || '',
       lastName: dbUser.lastName || '',
       isAdmin: dbUser.isAdmin || false,
-      tier: dbUser.tier || 'free',
+      tier: dbUser.tier || null,
       phoneVerified: dbUser.phoneVerified || false,
       supabaseUid: user.id
     };

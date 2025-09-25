@@ -370,7 +370,7 @@ export function setupAuthRoutes(app: Express) {
             supabaseUid: req.user.supabaseUid,
             firstName: req.user.firstName || '',
             lastName: req.user.lastName || '',
-            tier: 'free',
+            tier: null, // No default tier - use trial logic instead
             isAdmin: isAdminBypass,
             isAssigned: isAdminBypass, 
             hasPaid: isAdminBypass,
