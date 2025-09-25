@@ -17,7 +17,7 @@ export function EmailVerification() {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token') || urlParams.get('access_token');
     const tokenHash = window.location.hash;
-    
+
     if (token || tokenHash) {
       console.log('🔍 Email verification: Found token in URL, Supabase should handle automatically');
       // Supabase client handles verification tokens automatically via detectSessionInUrl
@@ -26,7 +26,7 @@ export function EmailVerification() {
         refreshUserData();
       }, 1000);
     }
-    
+
     // Auto-refresh user data every 5 seconds to check for verification
     const interval = setInterval(() => {
       if (user && !user.emailVerified) {
@@ -36,6 +36,52 @@ export function EmailVerification() {
 
     return () => clearInterval(interval);
   }, [user, refreshUserData]);
+
+  // CRITICAL: Apply beta code when email verification is detected
+  useEffect(() => {
+    const applyBetaCodeIfExists = async () => {
+      if (user?.emailVerified) {
+        try {
+          const validatedBetaCode = localStorage.getItem('validated-beta-code');
+          if (validatedBetaCode) {
+            console.log('🎯 [EMAIL-VERIFICATION] Found validated beta code in localStorage:', validatedBetaCode);
+            console.log('🎯 [EMAIL-VERIFICATION] Applying beta code to verified user:', user.email);
+
+            const response = await fetch('/api/auth/apply-beta-code', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email: user.email,
+                betaCode: validatedBetaCode
+              })
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log('✅ [EMAIL-VERIFICATION] Beta status applied successfully:', result);
+
+              // Clean up localStorage
+              localStorage.removeItem('validated-beta-code');
+
+              // Refresh user data to get beta status
+              await refreshUserData();
+            } else {
+              const error = await response.json();
+              console.error('❌ [EMAIL-VERIFICATION] Failed to apply beta status:', error);
+            }
+          } else {
+            console.log('ℹ️ [EMAIL-VERIFICATION] No validated beta code found in localStorage');
+          }
+        } catch (error) {
+          console.error('❌ [EMAIL-VERIFICATION] Error applying beta status:', error);
+        }
+      }
+    };
+
+    applyBetaCodeIfExists();
+  }, [user?.emailVerified, user?.email, refreshUserData]);
 
   const handleResendEmail = async () => {
     try {
