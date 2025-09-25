@@ -118,7 +118,7 @@ export function EmailVerification() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <p className="text-center text-gray-600 dark:text-gray-400">
-              Please <Link href="/auth/login" className="text-blue-600 hover:underline">log in</Link> to verify your email.
+              Please verify your email to log in.
             </p>
           </CardContent>
         </Card>
