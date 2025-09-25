@@ -301,7 +301,7 @@ export class EmailMigrationController {
     console.log(`📊 Runtime: ${runTimeHours} hours`);
     console.log(`📊 OLD System: ${this.stats.oldSystemProcessed} processed, ${this.stats.oldSystemErrors} errors (${oldSuccessRate}% success)`);
     console.log(`📊 NEW System: ${this.stats.newSystemProcessed} processed, ${this.stats.newSystemErrors} errors (${newSuccessRate}% success)`);
-    console.log(`📊 Recommendation: ${this.getRecommendation()}`);
+    console.log(`📊 Recommendation: Available via status endpoint`);
     console.log('📊 =================================');
   }
 
