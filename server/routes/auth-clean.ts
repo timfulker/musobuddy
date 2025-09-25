@@ -1149,6 +1149,74 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // FIX ENDPOINT: Apply beta code to existing user
+  app.post('/api/auth/apply-beta-code', async (req, res) => {
+    try {
+      const { email, betaCode } = req.body;
+
+      if (!email || !betaCode) {
+        return res.status(400).json({ error: 'Email and betaCode are required' });
+      }
+
+      console.log('🔧 Applying beta code to existing user:', { email, betaCode });
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Validate beta code
+      const code = await storage.getBetaInviteCodeByCode(betaCode);
+      if (!code || code.status !== 'active') {
+        return res.status(400).json({ error: 'Invalid or inactive beta code' });
+      }
+
+      // Check code limits
+      if (code.currentUses >= code.maxUses) {
+        return res.status(400).json({ error: 'Beta code has reached maximum uses' });
+      }
+
+      // Update user to beta tester
+      const updateResult = await storage.updateUser(user.id, {
+        isBetaTester: true,
+        trialEndsAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90-day trial
+      });
+
+      // Increment beta code usage
+      await storage.incrementBetaInviteCodeUsage(betaCode);
+
+      // Create beta invite record for tracking
+      await storage.createBetaInvite({
+        email: email,
+        invitedBy: 'beta-code-' + betaCode,
+        notes: `Applied retroactively via beta code: ${betaCode}`,
+        cohort: 'beta-code-retroactive'
+      });
+
+      console.log('✅ Beta status applied successfully:', {
+        userId: user.id,
+        email: user.email,
+        isBetaTester: updateResult.isBetaTester
+      });
+
+      res.json({
+        success: true,
+        message: 'Beta status applied successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          isBetaTester: updateResult.isBetaTester,
+          trialEndsAt: updateResult.trialEndsAt
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error applying beta code:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Update user beta status endpoint
   app.post("/api/auth/update-user-beta", async (req, res) => {
     try {
