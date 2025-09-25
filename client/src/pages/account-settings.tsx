@@ -11,8 +11,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Lock, Eye, EyeOff, Loader2, Menu, User, Shield, CheckCircle } from "lucide-react";
+import { Lock, Eye, EyeOff, Loader2, Menu, User, Shield, CheckCircle, CreditCard, X, AlertTriangle, Clock } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 // Password change form validation schema
 const passwordChangeSchema = z.object({
@@ -36,6 +40,11 @@ export default function AccountSettings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Subscription management state
+  const [showCancelWarning, setShowCancelWarning] = useState(false);
+  const [cancelFeedback, setCancelFeedback] = useState('');
 
   const passwordForm = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
@@ -87,6 +96,43 @@ export default function AccountSettings() {
       throw new Error(error.message || "Unable to update password. Please try again or contact support.");
     }
   };
+
+  // Cancel Subscription Mutation
+  const cancelSubscription = useMutation({
+    mutationFn: async (feedback?: string) => {
+      const response = await apiRequest('/api/subscription/cancel', {
+        method: 'POST',
+        body: JSON.stringify({ feedback }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to cancel subscription');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Subscription Cancelled",
+        description: `Your subscription has been cancelled. You'll keep access until ${new Date(data.accessUntil).toLocaleDateString()}.`,
+      });
+
+      setShowCancelWarning(false);
+      setCancelFeedback('');
+
+      // Refresh user data to update subscription status
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
+      console.error('Cancel subscription error:', error);
+      toast({
+        variant: "destructive",
+        title: "Cancellation Failed",
+        description: error.message || "Failed to cancel subscription. Please try again.",
+      });
+    }
+  });
 
   const onPasswordSubmit = async (data: PasswordChangeForm) => {
     try {
@@ -253,6 +299,64 @@ export default function AccountSettings() {
                         </span>
                       </>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Subscription Management */}
+              <Card data-testid="card-subscription-management">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    Subscription & Billing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Current Plan Status */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Current Plan</h3>
+                    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {user?.isBetaTester ? 'Beta Tester (90-day trial)' : 'Pro Plan (30-day trial)'}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {user?.trialEndsAt
+                              ? `Trial ends ${new Date(user.trialEndsAt).toLocaleDateString()}`
+                              : user?.hasPaid
+                                ? 'Active subscription'
+                                : 'Status unknown'
+                            }
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {user?.hasPaid ? 'Active' : 'Trial'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Subscription Management Buttons */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Manage Subscription</h3>
+                    <div className="flex flex-col space-y-3">
+                      <Button variant="outline" className="w-full justify-center">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Manage Billing & Payment Methods
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                        onClick={() => setShowCancelWarning(true)}
+                        disabled={!user?.stripeSubscriptionId}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel Subscription
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -427,6 +531,74 @@ export default function AccountSettings() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Subscription Dialog */}
+      <Dialog open={showCancelWarning} onOpenChange={setShowCancelWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-orange-600 dark:text-orange-400">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              Cancel Your Subscription?
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-3">
+              <p>You're about to cancel your MusoBuddy subscription.</p>
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">What happens next:</p>
+                <ul className="text-sm text-orange-700 dark:text-orange-300 space-y-1 list-disc list-inside">
+                  <li>You'll keep full access until your billing period ends</li>
+                  <li>No more charges after the current period</li>
+                  <li>Your account stays active (not deleted)</li>
+                  <li>You can reactivate anytime by subscribing again</li>
+                </ul>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Why are you canceling? (optional)
+                </Label>
+                <Select value={cancelFeedback} onValueChange={setCancelFeedback}>
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue placeholder="Help us improve..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="too-expensive">Too expensive</SelectItem>
+                    <SelectItem value="not-using">Not using it enough</SelectItem>
+                    <SelectItem value="missing-features">Missing features I need</SelectItem>
+                    <SelectItem value="found-alternative">Found a better alternative</SelectItem>
+                    <SelectItem value="temporary">Temporary break</SelectItem>
+                    <SelectItem value="other">Other reason</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelWarning(false);
+                setCancelFeedback('');
+              }}
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelSubscription.mutate(cancelFeedback)}
+              disabled={cancelSubscription.isPending}
+            >
+              {cancelSubscription.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Canceling...
+                </>
+              ) : (
+                'Yes, Cancel Subscription'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

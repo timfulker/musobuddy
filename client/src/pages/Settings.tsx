@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Palette, Receipt, FileText, Plus, X, Shield, Sparkles, Upload, Download, AlertTriangle, CheckCircle, Clock, Users, User } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Palette, Receipt, FileText, Plus, X, Shield, Sparkles, Upload, Download, AlertTriangle, CheckCircle, Clock, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -492,10 +492,6 @@ export default function Settings() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
-  // Account & Subscription state
-  const [showCancelWarning, setShowCancelWarning] = useState(false);
-  const [cancelFeedback, setCancelFeedback] = useState('');
-  const [isCanceling, setIsCanceling] = useState(false);
   
   // Handle URL parameters for direct navigation to sections
   const [currentLocation] = useLocation();
@@ -599,14 +595,6 @@ export default function Settings() {
       }
     },
     {
-      id: 'account',
-      label: 'Account & Subscription',
-      icon: User,
-      checkCompletion: () => {
-        return true; // Account settings are always accessible
-      }
-    },
-    {
       id: 'legal',
       label: 'Legal',
       icon: FileText,
@@ -660,8 +648,6 @@ export default function Settings() {
         return renderTemplatesSection();
       case 'compliance':
         return renderComplianceSection();
-      case 'account':
-        return renderAccountSection();
       case 'legal':
         return renderLegalSection();
       case 'data-privacy':
@@ -3067,106 +3053,6 @@ export default function Settings() {
     </Card>
   );
 
-  // Add renderAccountSection function for Account & Subscription management
-  const renderAccountSection = () => (
-    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-      <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-        <CardTitle className="flex items-center space-x-2 text-lg">
-          <User className="w-5 h-5 text-primary" />
-          <span>Account & Subscription</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        {/* Current Plan Status */}
-        <div className="space-y-4">
-          <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Current Plan</h3>
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {user?.isBetaTester ? 'Beta Tester (90-day trial)' : 'Pro Plan (30-day trial)'}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {user?.trialEndsAt
-                    ? `Trial ends ${new Date(user.trialEndsAt).toLocaleDateString()}`
-                    : user?.hasPaid
-                      ? 'Active subscription'
-                      : 'Status unknown'
-                  }
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {user?.hasPaid ? 'Active' : 'Trial'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Subscription Management */}
-        <div className="space-y-4">
-          <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Subscription Management</h3>
-          <div className="flex flex-col space-y-3">
-            <Button variant="outline" className="w-full justify-center">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Manage Billing & Payment Methods
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-center text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-              onClick={() => setShowCancelWarning(true)}
-              disabled={!user?.stripeSubscriptionId}
-            >
-              <X className="w-4 h-4 mr-2" />
-              Cancel Subscription
-            </Button>
-          </div>
-        </div>
-
-        {/* Account Information */}
-        <div className="space-y-4">
-          <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600 pb-2">
-            Account Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</Label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">{user?.email}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Type</Label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">
-                {user?.isAdmin ? 'Admin' : user?.isBetaTester ? 'Beta Tester' : 'Standard'}
-              </p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Member Since</Label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">
-                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-              </p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</Label>
-              <p className="text-sm text-gray-900 dark:text-gray-100 flex items-center">
-                {user?.emailVerified ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                    Verified
-                  </>
-                ) : (
-                  <>
-                    <Clock className="w-4 h-4 text-yellow-500 mr-1" />
-                    Pending
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   // Add missing renderDataPrivacySection function
   const renderDataPrivacySection = () => (
@@ -3682,42 +3568,6 @@ export default function Settings() {
     }
   });
 
-  // Cancel Subscription Mutation
-  const cancelSubscription = useMutation({
-    mutationFn: async (feedback?: string) => {
-      const response = await apiRequest('/api/subscription/cancel', {
-        method: 'POST',
-        body: JSON.stringify({ feedback }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to cancel subscription');
-      }
-
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Subscription Cancelled",
-        description: `Your subscription has been cancelled. You'll keep access until ${new Date(data.accessUntil).toLocaleDateString()}.`,
-      });
-
-      setShowCancelWarning(false);
-      setCancelFeedback('');
-
-      // Refresh user data to update subscription status
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    },
-    onError: (error: any) => {
-      console.error('Cancel subscription error:', error);
-      toast({
-        variant: "destructive",
-        title: "Cancellation Failed",
-        description: error.message || "Failed to cancel subscription. Please try again.",
-      });
-    }
-  });
 
   // GDPR Delete Account Mutation
   const deleteUserAccount = useMutation({
@@ -4461,73 +4311,6 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
 
-      {/* Cancel Subscription Dialog */}
-      <Dialog open={showCancelWarning} onOpenChange={setShowCancelWarning}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center text-orange-600 dark:text-orange-400">
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              Cancel Your Subscription?
-            </DialogTitle>
-            <DialogDescription className="text-left space-y-3">
-              <p>You're about to cancel your MusoBuddy subscription.</p>
-              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">What happens next:</p>
-                <ul className="text-sm text-orange-700 dark:text-orange-300 space-y-1 list-disc list-inside">
-                  <li>You'll keep full access until your billing period ends</li>
-                  <li>No more charges after the current period</li>
-                  <li>Your account stays active (not deleted)</li>
-                  <li>You can reactivate anytime by subscribing again</li>
-                </ul>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Why are you canceling? (optional)
-                </Label>
-                <Select value={cancelFeedback} onValueChange={setCancelFeedback}>
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue placeholder="Help us improve..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="too-expensive">Too expensive</SelectItem>
-                    <SelectItem value="not-using">Not using it enough</SelectItem>
-                    <SelectItem value="missing-features">Missing features I need</SelectItem>
-                    <SelectItem value="found-alternative">Found a better alternative</SelectItem>
-                    <SelectItem value="temporary">Temporary break</SelectItem>
-                    <SelectItem value="other">Other reason</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCancelWarning(false);
-                setCancelFeedback('');
-              }}
-            >
-              Keep Subscription
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => cancelSubscription.mutate(cancelFeedback)}
-              disabled={cancelSubscription.isPending}
-            >
-              {cancelSubscription.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Canceling...
-                </>
-              ) : (
-                'Yes, Cancel Subscription'
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Account Warning Dialog (First Step) */}
       <Dialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
