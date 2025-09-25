@@ -1495,11 +1495,12 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       isEncoreFollowup: isEncoreFollowup
     });
     
-    const { enhancedEmailQueue } = await import('./core/email-queue-enhanced');
-    
+    // MIGRATION: Use migration controller to route between old/new systems
+    const { emailMigrationController } = await import('./core/email-migration-controller');
+
     try {
-      await enhancedEmailQueue.addEmail(emailData);
-      logWebhookActivity(`[${webhookId}] Email added to queue successfully`);
+      await emailMigrationController.processEmail(emailData);
+      logWebhookActivity(`[${webhookId}] Email processed via migration controller`);
       
       // SPECIAL: Final check for Encore emails
       if (fromField.toLowerCase().includes('encore')) {

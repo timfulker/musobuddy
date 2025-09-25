@@ -35,6 +35,7 @@ import documentRoutes from "./document-routes";
 import { registerSupportChatRoutes } from "./support-chat-routes";
 import environmentCheckRouter from "./environment-check";
 import monitoringRoutes from "./monitoring-routes";
+import migrationRoutes from "./migration-routes";
 // AI token routes removed - unlimited AI usage for all users
 
 import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
@@ -203,6 +204,10 @@ export async function registerRoutes(app: Express) {
   // Register front-end monitoring routes
   app.use(monitoringRoutes);
   console.log('📊 [CENTRAL-ROUTER] Front-end monitoring routes registered');
+
+  // Register email migration routes
+  app.use('/api/migration', migrationRoutes);
+  console.log('🔄 [CENTRAL-ROUTER] Email migration routes registered at /api/migration');
 
   // Register development test routes (only in development)
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
