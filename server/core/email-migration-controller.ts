@@ -242,21 +242,29 @@ export class EmailMigrationController {
    * Get automated recommendation based on performance
    */
   private getRecommendation(): string {
-    const status = this.getStatus();
+    // Don't call getStatus() to avoid circular dependency
 
     if (this.stats.totalProcessed < 10) {
       return 'Not enough data - continue monitoring';
     }
 
-    if (status.newSystem.errors > status.oldSystem.errors) {
+    const oldSuccessRate = this.stats.oldSystemProcessed > 0
+      ? Math.round(((this.stats.oldSystemProcessed - this.stats.oldSystemErrors) / this.stats.oldSystemProcessed) * 100)
+      : 100;
+
+    const newSuccessRate = this.stats.newSystemProcessed > 0
+      ? Math.round(((this.stats.newSystemProcessed - this.stats.newSystemErrors) / this.stats.newSystemProcessed) * 100)
+      : 100;
+
+    if (this.stats.newSystemErrors > this.stats.oldSystemErrors) {
       return 'NEW system has more errors - investigate before increasing migration';
     }
 
-    if (status.newSystem.successRate < status.oldSystem.successRate) {
+    if (newSuccessRate < oldSuccessRate) {
       return 'NEW system success rate lower - investigate issues';
     }
 
-    if (status.newSystem.successRate >= status.oldSystem.successRate) {
+    if (newSuccessRate >= oldSuccessRate) {
       if (this.migrationPercentage < 50) {
         return 'NEW system performing well - safe to increase migration to 50%';
       } else if (this.migrationPercentage < 100) {
