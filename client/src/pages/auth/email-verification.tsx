@@ -188,7 +188,7 @@ export function EmailVerification() {
               )}
             </Button>
 
-            <Button 
+            <Button
               onClick={handleResendEmail}
               disabled={isResending}
               variant="outline"
@@ -202,6 +202,14 @@ export function EmailVerification() {
               ) : (
                 'Resend Verification Email'
               )}
+            </Button>
+
+            <Button
+              onClick={() => window.location.href = '/'}
+              variant="ghost"
+              className="w-full text-gray-500 hover:text-gray-700"
+            >
+              Cancel
             </Button>
           </div>
 

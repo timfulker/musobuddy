@@ -78,14 +78,26 @@ export default function StartTrial() {
                   </Alert>
                 )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  size="lg"
-                  disabled={loading || !email}
-                >
-                  {loading ? 'Processing...' : 'Continue to Payment Setup →'}
-                </Button>
+                <div className="space-y-3">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={loading || !email}
+                  >
+                    {loading ? 'Processing...' : 'Continue to Payment Setup →'}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => window.location.href = '/'}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    Cancel
+                  </Button>
+                </div>
 
                 <p className="text-sm text-gray-500 text-center">
                   You'll be redirected to our secure payment partner Stripe to complete setup

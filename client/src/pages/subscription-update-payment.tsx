@@ -109,14 +109,25 @@ export default function SubscriptionUpdatePayment() {
             )}
           </div>
 
-          <Button 
-            onClick={handleStartSubscription}
-            disabled={isLoading}
-            className="w-full"
-            size="lg"
-          >
-            {isLoading ? 'Setting up...' : 'Complete Setup'}
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={handleStartSubscription}
+              disabled={isLoading}
+              className="w-full"
+              size="lg"
+            >
+              {isLoading ? 'Setting up...' : 'Complete Setup'}
+            </Button>
+
+            <Button
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              Cancel
+            </Button>
+          </div>
 
           <p className="text-xs text-center text-muted-foreground">
             You'll be redirected to our secure payment processor to add your payment details.
