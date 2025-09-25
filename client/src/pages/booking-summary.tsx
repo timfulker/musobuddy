@@ -3,21 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  MapPin, 
-  Calendar, 
-  Clock, 
-  User, 
-  Phone, 
-  Mail, 
-  DollarSign, 
-  FileText, 
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  DollarSign,
+  FileText,
   Navigation,
   Printer,
   ArrowLeft
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
+import { useTheme } from "@/hooks/useTheme";
+import { getOptimalTextColor } from "@/lib/luminance";
 
 interface BookingData {
   id: string;
@@ -61,11 +63,18 @@ interface BookingData {
 export default function BookingSummary() {
   const { bookingId } = useParams();
   const [showMap, setShowMap] = useState(false);
+  const { theme } = useTheme();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: [`/api/bookings/${bookingId}`],
     enabled: !!bookingId,
   }) as { data: BookingData | undefined; isLoading: boolean };
+
+  // Fetch user settings for theme color
+  const { data: settings } = useQuery({
+    queryKey: ['/api/settings'],
+    retry: false,
+  });
 
   const handlePrint = () => {
     window.print();
@@ -153,7 +162,14 @@ export default function BookingSummary() {
               <ArrowLeft className="w-4 h-4 mr-1" />
               Close
             </Button>
-            <Button onClick={handlePrint} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={handlePrint}
+              className="transition-all hover:opacity-90"
+              style={{
+                backgroundColor: settings?.themeColor || '#10b981',
+                color: getOptimalTextColor(settings?.themeColor || '#10b981')
+              }}
+            >
               <Printer className="w-4 h-4 mr-1" />
               Print
             </Button>
