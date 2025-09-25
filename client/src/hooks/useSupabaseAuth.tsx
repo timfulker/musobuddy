@@ -174,7 +174,7 @@ export function useSupabaseAuth() {
       setAuthState(prev => ({ ...prev, error: null }));
       console.log('🔐 [SUPABASE-AUTH] Attempting email signup for:', email);
 
-      // Step 1: Create Supabase user
+      // Step 1: Create Supabase user (with beta code in metadata if provided)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -182,7 +182,9 @@ export function useSupabaseAuth() {
           data: {
             first_name: firstName,
             last_name: lastName,
-            full_name: `${firstName} ${lastName}`
+            full_name: `${firstName} ${lastName}`,
+            // CRITICAL: Store beta code in Supabase metadata so it persists through email verification
+            beta_invite_code: inviteCode || null
           }
         }
       });

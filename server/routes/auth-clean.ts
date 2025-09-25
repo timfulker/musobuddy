@@ -868,11 +868,39 @@ export function setupAuthRoutes(app: Express) {
         deviceFingerprint: deviceFingerprint ? 'PROVIDED' : 'NOT PROVIDED'
       });
 
+      // CRITICAL FIX: Also check Supabase user metadata for beta code
+      // This handles cases where user is created after email verification
+      let betaCodeFromMetadata = null;
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseAdmin = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        const { data: { user: supabaseUser }, error } = await supabaseAdmin.auth.admin.getUserById(supabaseUid);
+        if (supabaseUser?.user_metadata?.beta_invite_code) {
+          betaCodeFromMetadata = supabaseUser.user_metadata.beta_invite_code;
+          console.log('🔍 Beta code found in Supabase metadata:', betaCodeFromMetadata);
+        }
+      } catch (metadataError) {
+        console.log('⚠️ Could not fetch Supabase metadata:', metadataError);
+      }
+
+      // Use invite code from request body OR from Supabase metadata
+      const effectiveInviteCode = inviteCode || betaCodeFromMetadata;
+
       // Log if invite code was provided
-      if (inviteCode) {
-        console.log('📨 Invite code provided:', inviteCode);
+      if (effectiveInviteCode) {
+        console.log('📨 Effective invite code to use:', effectiveInviteCode);
       } else {
-        console.log('⚠️ No invite code provided in request');
+        console.log('⚠️ No invite code provided in request or metadata');
       }
 
       // Check if user already exists in database by Supabase UID
@@ -913,17 +941,17 @@ export function setupAuthRoutes(app: Express) {
         // Check if invite code matches a valid dynamic beta code
         console.log('🔍 DEBUG - Beta code check:', {
           isBetaUserCurrentValue: isBetaUser,
-          inviteCodeProvided: !!inviteCode,
-          inviteCodeValue: inviteCode,
-          willCheckCode: !isBetaUser && inviteCode
+          inviteCodeProvided: !!effectiveInviteCode,
+          inviteCodeValue: effectiveInviteCode,
+          willCheckCode: !isBetaUser && effectiveInviteCode
         });
 
-        if (!isBetaUser && inviteCode) {
+        if (!isBetaUser && effectiveInviteCode) {
           try {
-            console.log('🔎 Looking up beta code in database:', inviteCode);
-            const betaCode = await storage.getBetaInviteCodeByCode(inviteCode);
+            console.log('🔎 Looking up beta code in database:', effectiveInviteCode);
+            const betaCode = await storage.getBetaInviteCodeByCode(effectiveInviteCode);
             console.log('🔍 Beta code lookup result:', {
-              code: inviteCode,
+              code: effectiveInviteCode,
               found: !!betaCode,
               fullBetaCode: betaCode,
               status: betaCode?.status,
@@ -937,22 +965,22 @@ export function setupAuthRoutes(app: Express) {
                 // Check if code hasn't reached max uses
                 if (betaCode.currentUses < betaCode.maxUses) {
                   isBetaUser = true;
-                  console.log('✅ Valid dynamic beta invite code provided:', inviteCode);
+                  console.log('✅ Valid dynamic beta invite code provided:', effectiveInviteCode);
 
                   // Increment usage count
                   try {
-                    await storage.incrementBetaInviteCodeUsage(inviteCode);
+                    await storage.incrementBetaInviteCodeUsage(effectiveInviteCode);
                     console.log('📈 Beta code usage incremented');
                   } catch (error) {
                     console.warn('⚠️ Failed to increment beta code usage:', error);
                   }
-                  
+
                   // Create beta invite record for this email to ensure beta status persists through email verification
                   try {
                     await storage.createBetaInvite({
                       email: email,
-                      invitedBy: 'beta-code-' + inviteCode,
-                      notes: `Created via beta code: ${inviteCode}`,
+                      invitedBy: 'beta-code-' + effectiveInviteCode,
+                      notes: `Created via beta code: ${effectiveInviteCode}`,
                       cohort: 'beta-code-signup'
                     });
                     console.log('📧 Beta invite record created for email:', email);
