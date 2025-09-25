@@ -197,7 +197,9 @@ class EmailQueue {
       // ... rest of processing continues below
     }
 
-    const emailPrefix = recipientMatch[1].toLowerCase();
+    const rawEmailPrefix = recipientMatch[1];
+    // Clean email prefix - remove quotes and make lowercase
+    const emailPrefix = rawEmailPrefix.replace(/^["']|["']$/g, '').toLowerCase();
     console.log(`📧 [${requestId}] Email prefix extracted: ${emailPrefix}`);
     console.log(`📧 [${requestId}] Full recipient: ${recipientField}`);
 

@@ -416,7 +416,9 @@ export class EmailProcessingEngine {
         return null;
       }
       
-      const emailPrefix = recipientMatch[1].toLowerCase();
+      const rawEmailPrefix = recipientMatch[1];
+      // Clean email prefix - remove quotes and make lowercase
+      const emailPrefix = rawEmailPrefix.replace(/^["']|["']$/g, '').toLowerCase();
       console.log(`🔍 [${requestId}] Looking for user with prefix: ${emailPrefix}`);
       
       const user = await storage.getUserByEmailPrefix(emailPrefix);

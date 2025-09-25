@@ -272,9 +272,13 @@ class EnhancedEmailQueue {
     }
     
     // Extract user ID from recipient email and look up actual database user ID
-    const recipientField = requestData.To || requestData.recipient || '';
+    const rawRecipientField = requestData.To || requestData.recipient || '';
+    // Clean recipient field - remove quotes and extra whitespace that Hotmail/Outlook might add
+    const recipientField = rawRecipientField.replace(/^["']|["']$/g, '').trim();
     const recipientMatch = recipientField.match(/([^@]+)@/);
-    const emailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : 'unknown';
+    const rawEmailPrefix = recipientMatch ? recipientMatch[1] : 'unknown';
+    // Clean email prefix - remove quotes and make lowercase
+    const emailPrefix = rawEmailPrefix.replace(/^["']|["']$/g, '').toLowerCase();
     
     if (!emailPrefix || emailPrefix === 'unknown') {
       console.error(`📧 [GLOBAL] Cannot determine user from recipient: ${recipientField}`);
@@ -489,7 +493,9 @@ class EnhancedEmailQueue {
     const fromField = requestData.From || requestData.from || requestData.sender || '';
     const subjectField = requestData.Subject || requestData.subject || '';
     const bodyField = requestData['body-plain'] || requestData.text || requestData['stripped-text'] || '';
-    const recipientField = requestData.To || requestData.recipient || '';
+    const rawRecipientField = requestData.To || requestData.recipient || '';
+    // Clean recipient field - remove quotes and extra whitespace that Hotmail/Outlook might add
+    const recipientField = rawRecipientField.replace(/^["']|["']$/g, '').trim();
 
     console.log(`📧 [${requestId}] Email data:`, {
       from: fromField?.substring(0, 50),
@@ -516,7 +522,9 @@ class EnhancedEmailQueue {
       return;
     }
 
-    const emailPrefix = recipientMatch[1].toLowerCase(); // Make case-insensitive
+    const rawEmailPrefix = recipientMatch[1];
+    // Clean email prefix - remove quotes and make lowercase
+    const emailPrefix = rawEmailPrefix.replace(/^["']|["']$/g, '').toLowerCase();
     console.log(`📧 [${requestId}] Email prefix: ${emailPrefix}`);
 
     // Find user by email prefix - MUST match exactly
