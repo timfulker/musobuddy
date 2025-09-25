@@ -219,21 +219,12 @@ export class SupabaseBookingStorage {
       throw new Error('Supabase is not enabled');
     }
 
-    // Optimized: Add date range filter to use indexes effectively
-    // Fetch bookings from 6 months ago to 2 years in future
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const twoYearsFromNow = new Date();
-    twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-
     const { data, error } = await supabase
       .from('bookings')
       .select('*')
       .eq('user_id', userId)
-      .gte('event_date', sixMonthsAgo.toISOString().split('T')[0])
-      .lte('event_date', twoYearsFromNow.toISOString().split('T')[0])
       .order('event_date', { ascending: false })
-      .limit(2000); // Reasonable limit for performance
+      .limit(5000); // Reasonable limit - most musicians won't have more than this
 
     console.log('🔍 [SUPABASE-BOOKINGS] Query result:', data?.length || 0, 'bookings found');
 
