@@ -346,10 +346,8 @@ export default function ActionableEnquiries() {
                       <div className="flex items-center">
                         <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">
-                          {/* Show area for Encore bookings, venue for others */}
-                          {enquiry.applyNowLink && enquiry.venueAddress 
-                            ? enquiry.venueAddress 
-                            : enquiry.venue}
+                          {/* Always prefer venue name, fall back to address if no venue */}
+                          {enquiry.venue || enquiry.venueAddress}
                         </span>
                       </div>
                     )}
