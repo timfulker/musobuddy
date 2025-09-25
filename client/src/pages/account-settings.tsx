@@ -45,6 +45,7 @@ export default function AccountSettings() {
   // Subscription management state
   const [showCancelWarning, setShowCancelWarning] = useState(false);
   const [cancelFeedback, setCancelFeedback] = useState('');
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
   const passwordForm = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
@@ -133,6 +134,37 @@ export default function AccountSettings() {
       });
     }
   });
+
+  // Open Stripe Customer Portal
+  const openBillingPortal = async () => {
+    try {
+      setIsOpeningPortal(true);
+
+      const response = await apiRequest('/api/stripe/create-portal-session', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to open billing portal');
+      }
+
+      const data = await response.json();
+
+      // Open Stripe portal in new tab
+      window.open(data.url, '_blank');
+
+    } catch (error: any) {
+      console.error('Billing portal error:', error);
+      toast({
+        variant: "destructive",
+        title: "Unable to Open Billing Portal",
+        description: error.message || "Failed to open billing management. Please try again.",
+      });
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  };
 
   const onPasswordSubmit = async (data: PasswordChangeForm) => {
     try {
@@ -343,9 +375,23 @@ export default function AccountSettings() {
                   <div className="space-y-4">
                     <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Manage Subscription</h3>
                     <div className="flex flex-col space-y-3">
-                      <Button variant="outline" className="w-full justify-center">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Manage Billing & Payment Methods
+                      <Button
+                        variant="outline"
+                        className="w-full justify-center"
+                        onClick={openBillingPortal}
+                        disabled={!user?.stripeCustomerId || isOpeningPortal}
+                      >
+                        {isOpeningPortal ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Opening...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Manage Billing & Payment Methods
+                          </>
+                        )}
                       </Button>
                       <Button
                         variant="outline"

@@ -1558,6 +1558,65 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Create Stripe Customer Portal session
+  app.post("/api/stripe/create-portal-session", authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id || req.user.userId;
+      const user = await storage.getUserById(userId);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({
+          error: "No Stripe customer found. Please complete checkout first."
+        });
+      }
+
+      console.log('🏛️ Creating Stripe Customer Portal session for user:', user.email, 'Customer ID:', user.stripeCustomerId);
+
+      // Determine if this is a test account to use appropriate Stripe keys
+      const isTestAccount = user.email.includes('+test');
+      const shouldUseTestMode = isTestAccount || process.env.NODE_ENV === 'development';
+      const stripeKey = shouldUseTestMode
+        ? process.env.STRIPE_TEST_SECRET_KEY
+        : process.env.STRIPE_SECRET_KEY;
+
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(stripeKey || '', {
+        apiVersion: '2024-12-18.acacia'
+      });
+
+      // Get the base URL for return URL
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? process.env.FRONTEND_URL || 'https://your-domain.com'
+        : 'http://localhost:5000';
+
+      // Create the portal session
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${baseUrl}/account-settings`,
+      });
+
+      console.log('✅ Stripe Customer Portal session created:', {
+        sessionId: portalSession.id,
+        url: portalSession.url
+      });
+
+      res.json({
+        success: true,
+        url: portalSession.url
+      });
+
+    } catch (error: any) {
+      console.error("❌ Error creating Stripe portal session:", error);
+      res.status(500).json({
+        error: error.message || "Failed to create billing portal session"
+      });
+    }
+  });
+
   console.log('✅ Clean authentication system configured with Stripe integration');
 }
 
