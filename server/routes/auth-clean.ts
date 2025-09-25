@@ -1560,6 +1560,7 @@ export function setupAuthRoutes(app: Express) {
 
   // Create Stripe Customer Portal session
   app.post("/api/stripe/create-portal-session", authenticate, async (req: AuthenticatedRequest, res) => {
+    console.log('🏛️ [STRIPE-PORTAL] Endpoint hit - creating portal session');
     try {
       const userId = req.user.id || req.user.userId;
       const user = await storage.getUserById(userId);
@@ -1611,6 +1612,22 @@ export function setupAuthRoutes(app: Express) {
 
     } catch (error: any) {
       console.error("❌ Error creating Stripe portal session:", error);
+
+      // Check if it's a Customer Portal configuration error
+      if (error.message && error.message.includes('No configuration provided')) {
+        const mode = shouldUseTestMode ? 'test' : 'live';
+        const oppositeMode = shouldUseTestMode ? 'live' : 'test';
+
+        console.log(`⚠️ Customer Portal not configured for ${mode} mode`);
+
+        return res.status(503).json({
+          error: `Billing portal is currently configured for ${oppositeMode} mode only`,
+          details: `The Customer Portal can only be active in one mode at a time. Currently it's set to ${oppositeMode} mode. To use it in ${mode} mode, activate the ${mode} link in your Stripe dashboard.`,
+          helpUrl: `https://dashboard.stripe.com/${mode}/settings/billing/portal`,
+          isConfigurationIssue: true
+        });
+      }
+
       res.status(500).json({
         error: error.message || "Failed to create billing portal session"
       });

@@ -48,14 +48,19 @@ export default function AccountSettings() {
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
   // Debug user data
-  console.log('🔍 [ACCOUNT-SETTINGS] User data:', {
-    email: user?.email,
-    hasPaid: user?.hasPaid,
-    stripeCustomerId: user?.stripeCustomerId,
-    stripeSubscriptionId: user?.stripeSubscriptionId,
-    isBetaTester: user?.isBetaTester,
-    trialEndsAt: user?.trialEndsAt
-  });
+  React.useEffect(() => {
+    if (user) {
+      console.log('🔍 [ACCOUNT-SETTINGS] User data:', {
+        email: user?.email,
+        hasPaid: user?.hasPaid,
+        stripeCustomerId: user?.stripeCustomerId,
+        stripeSubscriptionId: user?.stripeSubscriptionId,
+        isBetaTester: user?.isBetaTester,
+        trialEndsAt: user?.trialEndsAt,
+        isAdmin: user?.isAdmin
+      });
+    }
+  }, [user]);
 
   const passwordForm = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
@@ -156,6 +161,30 @@ export default function AccountSettings() {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Special handling for Customer Portal configuration issues
+        if (errorData.isConfigurationIssue) {
+          const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const environment = isDevelopment ? 'development' : 'production';
+
+          toast({
+            variant: "destructive",
+            title: "Billing Portal Configuration Issue",
+            description: errorData.details || errorData.error,
+            duration: 8000, // Show longer for important configuration messages
+            action: errorData.helpUrl ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(errorData.helpUrl, '_blank')}
+              >
+                Configure in Stripe
+              </Button>
+            ) : undefined
+          });
+          return;
+        }
+
         throw new Error(errorData.error || 'Failed to open billing portal');
       }
 
