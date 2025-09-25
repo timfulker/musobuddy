@@ -281,17 +281,27 @@ export class EmailMigrationController {
    * Log current statistics
    */
   private logStats(): void {
-    const status = this.getStatus();
+    // Calculate values directly to avoid circular dependency with getStatus()
+    const runTime = Date.now() - this.stats.startTime.getTime();
+    const runTimeHours = Math.round(runTime / (1000 * 60 * 60) * 100) / 100;
+
+    const oldSuccessRate = this.stats.oldSystemProcessed > 0
+      ? Math.round(((this.stats.oldSystemProcessed - this.stats.oldSystemErrors) / this.stats.oldSystemProcessed) * 100)
+      : 100;
+
+    const newSuccessRate = this.stats.newSystemProcessed > 0
+      ? Math.round(((this.stats.newSystemProcessed - this.stats.newSystemErrors) / this.stats.newSystemProcessed) * 100)
+      : 100;
 
     console.log('📊 =================================');
     console.log('📊 EMAIL MIGRATION STATISTICS');
     console.log('📊 =================================');
-    console.log(`📊 Migration: ${status.migrationPercentage}%`);
-    console.log(`📊 Total Processed: ${status.totalProcessed} emails`);
-    console.log(`📊 Runtime: ${status.runTimeHours} hours`);
-    console.log(`📊 OLD System: ${status.oldSystem.processed} processed, ${status.oldSystem.errors} errors (${status.oldSystem.successRate}% success)`);
-    console.log(`📊 NEW System: ${status.newSystem.processed} processed, ${status.newSystem.errors} errors (${status.newSystem.successRate}% success)`);
-    console.log(`📊 Recommendation: ${status.recommendation}`);
+    console.log(`📊 Migration: ${this.migrationPercentage}%`);
+    console.log(`📊 Total Processed: ${this.stats.totalProcessed} emails`);
+    console.log(`📊 Runtime: ${runTimeHours} hours`);
+    console.log(`📊 OLD System: ${this.stats.oldSystemProcessed} processed, ${this.stats.oldSystemErrors} errors (${oldSuccessRate}% success)`);
+    console.log(`📊 NEW System: ${this.stats.newSystemProcessed} processed, ${this.stats.newSystemErrors} errors (${newSuccessRate}% success)`);
+    console.log(`📊 Recommendation: ${this.getRecommendation()}`);
     console.log('📊 =================================');
   }
 
