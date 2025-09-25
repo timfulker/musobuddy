@@ -47,6 +47,16 @@ export default function AccountSettings() {
   const [cancelFeedback, setCancelFeedback] = useState('');
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
+  // Debug user data
+  console.log('🔍 [ACCOUNT-SETTINGS] User data:', {
+    email: user?.email,
+    hasPaid: user?.hasPaid,
+    stripeCustomerId: user?.stripeCustomerId,
+    stripeSubscriptionId: user?.stripeSubscriptionId,
+    isBetaTester: user?.isBetaTester,
+    trialEndsAt: user?.trialEndsAt
+  });
+
   const passwordForm = useForm<PasswordChangeForm>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
@@ -375,11 +385,17 @@ export default function AccountSettings() {
                   <div className="space-y-4">
                     <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Manage Subscription</h3>
                     <div className="flex flex-col space-y-3">
+                      {!user?.stripeCustomerId && (
+                        <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded p-2">
+                          ⚠️ Complete checkout first to access billing management
+                        </div>
+                      )}
                       <Button
                         variant="outline"
                         className="w-full justify-center"
                         onClick={openBillingPortal}
                         disabled={!user?.stripeCustomerId || isOpeningPortal}
+                        title={!user?.stripeCustomerId ? 'Complete checkout first to access billing management' : 'Open billing portal'}
                       >
                         {isOpeningPortal ? (
                           <>
