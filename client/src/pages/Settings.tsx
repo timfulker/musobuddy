@@ -2573,30 +2573,7 @@ export default function Settings() {
             </div>
           )}
         </div>
-        
-        {/* Save Button for Performance Section */}
-        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
-          <Button
-            type="button"
-            onClick={() => saveSettings.mutate(form.getValues())}
-            disabled={saveSettings.isPending}
-            className="bg-primary hover:bg-primary/90"
-            data-testid="button-save-performance"
-          >
-            {saveSettings.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Performance Settings
-              </>
-            )}
-          </Button>
-        </div>
-        
+
         {/* Save Button for Booking Widget Section */}
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700 mt-6">
           <Button
