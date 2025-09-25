@@ -567,10 +567,10 @@ export default function UnifiedBookings() {
     const bookingsByDate: Record<string, any[]> = {};
     const groups: any[] = [];
 
-    // Performance optimization: Only check conflicts for upcoming bookings (next 6 months)
+    // Performance optimization: Only check conflicts for upcoming bookings (next year)
     const today = new Date();
-    const sixMonthsFromNow = new Date();
-    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
     // Group bookings by date for efficient lookup
     const validBookings = validateBookingArray(bookings) ? bookings : [];
@@ -579,7 +579,7 @@ export default function UnifiedBookings() {
 
       // Skip conflict detection for old bookings (performance optimization)
       const bookingDate = new Date(booking.eventDate);
-      if (bookingDate < today || bookingDate > sixMonthsFromNow) return;
+      if (bookingDate < today || bookingDate > oneYearFromNow) return;
       
       const dateKey = new Date(booking.eventDate).toDateString();
       if (!bookingsByDate[dateKey]) {
