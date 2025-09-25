@@ -385,6 +385,15 @@ export class SupabaseBookingStorage {
       photoPermission: booking.photo_permission,
       encoreAllowed: booking.encore_allowed,
       encoreSuggestions: booking.encore_suggestions,
+
+      // Contract and workflow fields - CRITICAL for status display
+      contractSent: booking.contract_sent,
+      contractSigned: booking.contract_signed,
+      invoiceSent: booking.invoice_sent,
+      paidInFull: booking.paid_in_full,
+      workflowStage: booking.workflow_stage,
+      lastContactedAt: booking.last_contacted_at,
+
       createdAt: booking.created_at,
       updatedAt: booking.updated_at,
       // mileage: booking.mileage, // Column doesn't exist
