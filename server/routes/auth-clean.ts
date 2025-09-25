@@ -859,10 +859,20 @@ export function setupAuthRoutes(app: Express) {
       }
 
       console.log('🔷 Processing Supabase signup for:', email);
+      console.log('📦 Request body:', {
+        supabaseUid,
+        email,
+        firstName,
+        lastName,
+        inviteCode: inviteCode || 'NOT PROVIDED',
+        deviceFingerprint: deviceFingerprint ? 'PROVIDED' : 'NOT PROVIDED'
+      });
 
       // Log if invite code was provided
       if (inviteCode) {
         console.log('📨 Invite code provided:', inviteCode);
+      } else {
+        console.log('⚠️ No invite code provided in request');
       }
 
       // Check if user already exists in database by Supabase UID
@@ -1088,6 +1098,51 @@ export function setupAuthRoutes(app: Express) {
       });
     } catch (error) {
       console.error("❌ Error checking beta status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Test beta code validation endpoint
+  app.post("/api/auth/test-beta-code", async (req, res) => {
+    try {
+      const { code } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ error: "Code is required" });
+      }
+
+      console.log('🔍 Testing beta code:', code);
+
+      const betaCode = await storage.getBetaInviteCodeByCode(code);
+
+      if (!betaCode) {
+        return res.json({
+          valid: false,
+          reason: "Code not found"
+        });
+      }
+
+      const isValid = betaCode.status === 'active' &&
+                     (!betaCode.expiresAt || new Date() <= new Date(betaCode.expiresAt)) &&
+                     betaCode.currentUses < betaCode.maxUses;
+
+      res.json({
+        valid: isValid,
+        code: betaCode.code,
+        status: betaCode.status,
+        currentUses: betaCode.currentUses,
+        maxUses: betaCode.maxUses,
+        expiresAt: betaCode.expiresAt,
+        trialDays: betaCode.trialDays,
+        reason: !isValid ? (
+          betaCode.status !== 'active' ? 'Code is inactive' :
+          betaCode.currentUses >= betaCode.maxUses ? 'Code has reached max uses' :
+          'Code has expired'
+        ) : 'Code is valid'
+      });
+
+    } catch (error) {
+      console.error("❌ Error testing beta code:", error);
       res.status(500).json({ error: error.message });
     }
   });

@@ -643,6 +643,22 @@ export class MiscStorage {
     return result[0];
   }
 
+  async incrementBetaInviteCodeUsage(code: string) {
+    // Get the current code
+    const currentCode = await this.getBetaInviteCodeByCode(code);
+    if (!currentCode) return null;
+
+    // Increment the usage count
+    const result = await db.update(betaInviteCodes)
+      .set({
+        currentUses: currentCode.currentUses + 1,
+        lastUsedAt: new Date()
+      })
+      .where(eq(betaInviteCodes.code, code.toUpperCase()))
+      .returning();
+    return result[0];
+  }
+
   async updateBetaInviteCode(id: number, updates: {
     status?: string;
     maxUses?: number;

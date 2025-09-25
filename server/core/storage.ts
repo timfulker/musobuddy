@@ -695,6 +695,10 @@ export class Storage {
     return miscStorage.getBetaInviteCodeByCode(code);
   }
 
+  async incrementBetaInviteCodeUsage(code: string) {
+    return miscStorage.incrementBetaInviteCodeUsage(code);
+  }
+
   async getAllBetaInviteCodes() {
     return miscStorage.getAllBetaInviteCodes();
   }
