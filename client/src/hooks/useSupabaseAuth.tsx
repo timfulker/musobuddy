@@ -197,21 +197,34 @@ export function useSupabaseAuth() {
 
       console.log('✅ [SUPABASE-AUTH] Supabase signup successful');
 
-      // Step 2: Create user in database (if Supabase user was created)
-      if (data.user && data.session) {
+      // Step 2: Create user in database
+      // CRITICAL FIX: Always attempt to create database user, even without session
+      // This ensures beta code is processed immediately during signup
+      if (data.user) {
         try {
+          // Use a temporary token if no session (email verification pending)
+          const authToken = data.session?.access_token || 'pending-verification';
+
+          console.log('📝 [SUPABASE-AUTH] Creating database user record...', {
+            hasSession: !!data.session,
+            hasInviteCode: !!inviteCode,
+            inviteCode
+          });
+
           const response = await fetch('/api/auth/supabase-signup', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.session.access_token}`
+              'Authorization': `Bearer ${authToken}`
             },
             body: JSON.stringify({
               supabaseUid: data.user.id,
               email: data.user.email,
               firstName,
               lastName,
-              inviteCode
+              inviteCode,
+              // Flag to indicate this is a pre-verification signup
+              preVerification: !data.session
             })
           });
 

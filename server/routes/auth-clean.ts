@@ -852,7 +852,7 @@ export function setupAuthRoutes(app: Express) {
   // NEW: Clean Supabase signup with database creation and beta user detection
   app.post('/api/auth/supabase-signup', async (req, res) => {
     try {
-      const { supabaseUid, email, firstName, lastName, deviceFingerprint, inviteCode } = req.body;
+      const { supabaseUid, email, firstName, lastName, deviceFingerprint, inviteCode, preVerification } = req.body;
 
       if (!supabaseUid || !email || !firstName || !lastName) {
         return res.status(400).json({ error: 'Missing required fields' });
