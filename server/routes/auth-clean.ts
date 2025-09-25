@@ -1494,6 +1494,70 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Cancel subscription endpoint
+  app.post("/api/subscription/cancel", authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id || req.user.userId;
+      const user = await storage.getUserById(userId);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!user.stripeSubscriptionId) {
+        return res.status(400).json({ error: "No active subscription found" });
+      }
+
+      console.log('🚫 Canceling subscription for user:', user.email, 'Subscription ID:', user.stripeSubscriptionId);
+
+      // Determine if this is a test account to use appropriate Stripe keys
+      const isTestAccount = user.email.includes('+test');
+      const shouldUseTestMode = isTestAccount || process.env.NODE_ENV === 'development';
+      const stripeKey = shouldUseTestMode
+        ? process.env.STRIPE_TEST_SECRET_KEY
+        : process.env.STRIPE_SECRET_KEY;
+
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(stripeKey || '', {
+        apiVersion: '2024-12-18.acacia'
+      });
+
+      // Cancel the subscription at period end (graceful cancellation)
+      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+        metadata: {
+          cancelled_by_user: 'true',
+          cancelled_at: new Date().toISOString()
+        }
+      });
+
+      console.log('✅ Subscription set to cancel at period end:', {
+        subscriptionId: subscription.id,
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancelAtPeriodEnd: subscription.cancel_at_period_end
+      });
+
+      // Update user in database - don't change hasPaid yet, they keep access until period end
+      await storage.updateUser(userId, {
+        // Keep hasPaid = true until subscription actually ends
+        // Stripe webhooks will handle setting hasPaid = false when subscription ends
+      });
+
+      res.json({
+        success: true,
+        message: "Subscription cancelled successfully",
+        accessUntil: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancelledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null
+      });
+
+    } catch (error: any) {
+      console.error("❌ Error canceling subscription:", error);
+      res.status(500).json({
+        error: error.message || "Failed to cancel subscription"
+      });
+    }
+  });
+
   console.log('✅ Clean authentication system configured with Stripe integration');
 }
 
