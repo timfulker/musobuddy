@@ -7,6 +7,7 @@ import { Link } from 'wouter';
 import ConflictIndicator from '@/components/ConflictIndicator';
 import { useQuery } from '@tanstack/react-query';
 import { memo, useMemo } from 'react';
+import { determineCurrentStage, getStageDefinition, getStageColor } from '../../../shared/workflow-stages';
 
 interface MobileBookingCardProps {
   booking: any;
@@ -25,6 +26,16 @@ const MobileBookingCard = memo(function MobileBookingCard({ booking, conflicts =
   const invoiceStatusIcon = useMemo(() => {
     return getInvoiceStatusIcon(booking.id);
   }, [invoices, booking.id]);
+
+  // Determine the current workflow stage based on booking data - memoized for performance
+  const currentWorkflowStage = useMemo(() => {
+    return booking.workflowStage || determineCurrentStage(booking);
+  }, [booking.workflowStage, booking.contractSigned, booking.contractSent, booking.lastContactedAt, booking.invoiceSent, booking.paidInFull, booking.eventDate]);
+
+  // Get stage definition for display
+  const stageDefinition = useMemo(() => {
+    return getStageDefinition(currentWorkflowStage);
+  }, [currentWorkflowStage]);
 
   const getInvoiceStatusIcon = (bookingId: number) => {
     const invoice = invoices.find((inv: any) => inv.bookingId === bookingId);
@@ -54,15 +65,6 @@ const MobileBookingCard = memo(function MobileBookingCard({ booking, conflicts =
     return null;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'confirmed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
-  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -105,8 +107,8 @@ const MobileBookingCard = memo(function MobileBookingCard({ booking, conflicts =
               {booking.eventType || 'Music Performance'}
             </p>
           </div>
-          <Badge className={`ml-2 text-xs ${getStatusColor(booking.status)}`}>
-            {booking.status || 'Pending'}
+          <Badge className={`ml-2 text-xs ${getStageColor(currentWorkflowStage)}`}>
+            {stageDefinition?.icon} {stageDefinition?.label || 'Pending'}
           </Badge>
         </div>
 
