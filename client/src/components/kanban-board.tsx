@@ -123,7 +123,7 @@ export default function ActionableEnquiries() {
       // Add conflict info for this booking
       if (!conflictMap[bookingId]) conflictMap[bookingId] = [];
       conflictMap[bookingId].push({
-        conflictingBookingId: withBookingId,
+        withBookingId: withBookingId,
         clientName,
         time,
         severity,

@@ -61,23 +61,23 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   });
 
   // Fetch conflicting booking details in batch for better performance
-  const conflictingBookingIds = conflicts.map(c => c.conflictingBookingId);
+  const conflictingBookingIds = conflicts.map(c => c.withBookingId);
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: [`/api/bookings/batch`, conflictingBookingIds.sort().join(',')],
     queryFn: async () => {
       if (!conflictingBookingIds.length) return [];
-      
+
       // Use batch endpoint for efficiency - single request instead of 60+ requests
       const response = await apiRequest('/api/bookings/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookingIds: conflictingBookingIds })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
       }
-      
+
       return await response.json();
     },
     enabled: showResolutionModal && conflictingBookingIds.length > 0,

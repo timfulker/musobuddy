@@ -433,7 +433,16 @@ export default function UnifiedBookings() {
     const bookingId = urlParams.get('id');
     const highlightId = urlParams.get('highlight');
     const viewParam = urlParams.get('view');
-    
+    const conflictFilterParam = urlParams.get('conflictFilter');
+
+    // Handle conflict filter parameter
+    if (conflictFilterParam === 'true') {
+      setConflictFilter(true);
+      // Clean up URL parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     if (bookingId && bookings.length > 0) {
       // Find the booking by ID
       const validBookings = validateBookingArray(bookings) ? bookings : [];
