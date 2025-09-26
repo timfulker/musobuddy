@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ interface ConflictsWidgetProps {
 }
 
 export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
+  const [, navigate] = useLocation();
   const { data: conflicts = [], isLoading } = useQuery({
     queryKey: ['/api/conflicts'],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time conflict detection
@@ -57,9 +59,8 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
   const backendConflicts = conflicts as BackendConflict[];
 
   const handleConflictTypeClick = (severity: string) => {
-    if (onFilterByConflictType) {
-      onFilterByConflictType(severity);
-    }
+    // Navigate to bookings page with conflict filter enabled
+    navigate('/bookings?conflictFilter=true');
   };
 
   if (isLoading) {
@@ -136,7 +137,13 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
           <AlertTriangle className="h-5 w-5" />
           Scheduling Conflicts
           {uniqueConflicts.length > 0 && (
-            <Badge variant="destructive">{uniqueConflicts.length}</Badge>
+            <Badge
+              variant="destructive"
+              className="cursor-pointer hover:bg-red-600"
+              onClick={() => navigate('/bookings?conflictFilter=true')}
+            >
+              {uniqueConflicts.length}
+            </Badge>
           )}
         </CardTitle>
       </CardHeader>
@@ -226,7 +233,11 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
             
             {uniqueConflicts.length > 3 && (
               <div className="text-center">
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/bookings?conflictFilter=true')}
+                >
                   View All {uniqueConflicts.length} Conflicts
                 </Button>
               </div>
