@@ -55,23 +55,37 @@ export default function MarkUnavailableDialog({
 
   const createUnavailableDateMutation = useMutation({
     mutationFn: async (data: UnavailableDateForm) => {
+      // Convert date strings to proper Date objects with timezone handling
+      const startDate = new Date(data.startDate + 'T00:00:00');
+      const endDate = new Date(data.endDate + 'T23:59:59');
+
+      const payload = {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        title: data.title,
+        description: data.description || null,
+        color: data.color
+      };
+
+      console.log('📤 Sending to API:', payload);
+
       const response = await apiRequest('/api/blocked-dates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          startDate: new Date(data.startDate),
-          endDate: new Date(data.endDate),
-          title: data.title,
-          description: data.description,
-          color: data.color
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create unavailable date');
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('❌ API Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: error,
+          payload: payload
+        });
+        throw new Error(error.message || `HTTP ${response.status}: Failed to create unavailable date`);
       }
 
       return response.json();
@@ -105,6 +119,43 @@ export default function MarkUnavailableDialog({
       });
       return;
     }
+
+    // Additional client-side validation
+    if (!data.startDate || !data.endDate || !data.title) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Start date, end date, and title are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.title.length > 100) {
+      toast({
+        title: "Title Too Long",
+        description: "Title must be 100 characters or less",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.color && !/^#[0-9A-Fa-f]{6}$/.test(data.color)) {
+      toast({
+        title: "Invalid Color",
+        description: "Color must be a valid hex color",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('📋 Client-side validation passed:', {
+      startDate: data.startDate,
+      endDate: data.endDate,
+      title: data.title,
+      titleLength: data.title.length,
+      description: data.description,
+      color: data.color,
+    });
 
     createUnavailableDateMutation.mutate(data);
   };

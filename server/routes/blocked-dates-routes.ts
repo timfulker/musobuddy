@@ -70,7 +70,15 @@ router.get('/range', authenticate, async (req: AuthenticatedRequest, res) => {
 router.post('/', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
-    
+
+    // Debug log the incoming request
+    console.log('🔍 Received blocked date creation request:', {
+      userId,
+      body: req.body,
+      bodyKeys: Object.keys(req.body),
+      bodyTypes: Object.entries(req.body).map(([key, value]) => [key, typeof value])
+    });
+
     // Validate request body
     const validatedData = insertBlockedDateSchema.parse(req.body);
     
@@ -95,9 +103,14 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res) => {
     res.status(201).json(newBlockedDate);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ 
+      console.error('❌ Zod validation failed:', {
+        errors: error.errors,
+        requestBody: req.body,
+        schemaExpected: 'startDate, endDate, title, description?, isRecurring?, recurrencePattern?, color?'
+      });
+      return res.status(400).json({
         message: 'Invalid blocked date data',
-        errors: error.errors 
+        errors: error.errors
       });
     }
     
