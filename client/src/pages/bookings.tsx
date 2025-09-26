@@ -757,15 +757,8 @@ export default function UnifiedBookings() {
     if (!bookings || !Array.isArray(bookings)) return [];
 
     const validBookings = validateBookingArray(bookings) ? bookings : [];
-    
-    // If we're using the /all endpoint with filters, the server already filtered
-    // So we only need to apply frontend filtering for the default view
-    if (shouldFetchAll) {
-      // Server already filtered, just sort
-      return validBookings;
-    }
-    
-    // Apply frontend filtering only for default view
+
+    // Apply frontend filtering
     let filtered = validBookings.filter((booking) => {
       // Enhanced search - includes more fields
       const searchLower = searchQuery.toLowerCase();
@@ -837,9 +830,8 @@ export default function UnifiedBookings() {
       return matchesSearch && matchesStatus && matchesDate && matchesConflict;
     });
 
-    // Sort the results (whether server-filtered or client-filtered)
-    const toSort = shouldFetchAll ? validBookings : filtered;
-    toSort.sort((a: any, b: any) => {
+    // Sort the results
+    filtered.sort((a: any, b: any) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
       
@@ -860,7 +852,7 @@ export default function UnifiedBookings() {
       return 0;
     });
 
-    return shouldFetchAll ? toSort : filtered;
+    return filtered;
   }, [bookings, searchQuery, debouncedSearchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
 
   const toggleSelectAll = () => {
