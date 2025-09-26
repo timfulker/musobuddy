@@ -1212,6 +1212,9 @@ export const insertBlockedDateSchema = createInsertSchema(blockedDates).omit({
   userId: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  startDate: z.string().or(z.date()).transform((val) => typeof val === 'string' ? new Date(val) : val),
+  endDate: z.string().or(z.date()).transform((val) => typeof val === 'string' ? new Date(val) : val),
 });
 
 export const insertBetaInviteSchema = createInsertSchema(betaInvites).omit({

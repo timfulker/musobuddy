@@ -197,6 +197,7 @@ export async function registerRoutes(app: Express) {
   
   // Register blocked dates routes
   app.use('/api/blocked-dates', blockedDatesRoutes);
+  console.log('📅 [CENTRAL-ROUTER] Blocked dates routes registered at /api/blocked-dates');
   
   // Register support chat routes
   registerSupportChatRoutes(app);
