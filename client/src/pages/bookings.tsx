@@ -34,6 +34,7 @@ import HoverResponseMenu from "@/components/hover-response-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
+import MarkUnavailableDialog from "@/components/MarkUnavailableDialog";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
 import WorkflowStageMeter from "@/components/workflow-stage-meter";
@@ -190,6 +191,9 @@ export default function UnifiedBookings() {
   // Conflict resolution dialog states
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
   const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
+
+  // Mark unavailable dialog states
+  const [markUnavailableDialogOpen, setMarkUnavailableDialogOpen] = useState(false);
   
   
   // Communication history dialog states
@@ -438,6 +442,15 @@ export default function UnifiedBookings() {
     // Handle conflict filter parameter
     if (conflictFilterParam === 'true') {
       setConflictFilter(true);
+      // Clean up URL parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    // Handle action parameter for Mark Unavailable
+    const actionParam = urlParams.get('action');
+    if (actionParam === 'block') {
+      setMarkUnavailableDialogOpen(true);
       // Clean up URL parameter
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
@@ -3844,6 +3857,12 @@ export default function UnifiedBookings() {
           queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
           setConflictResolutionDialogOpen(false);
         }}
+      />
+
+      {/* Mark Unavailable Dialog */}
+      <MarkUnavailableDialog
+        isOpen={markUnavailableDialogOpen}
+        onClose={() => setMarkUnavailableDialogOpen(false)}
       />
 
       {/* Communication History Dialog */}
