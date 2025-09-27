@@ -61,7 +61,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 
 ## System Design
 - **User Management**: Two-tier system (Admin, User).
-- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, gig sheet generation, Encore booking management, streamlined unparseable message handling, and manual detail extraction from conversations. Travel expenses are simplified into a single performance fee.
+- **Booking Management**: Unified system with conflict detection, .ics calendar integration, status tracking, ID-based Google Calendar sync, manual AI re-processing, gig sheet generation, Encore booking management, and streamlined unparseable message handling. Travel expenses are simplified into a single performance fee.
 - **Document Management**: Multi-document upload, categorization, secure cloud storage with expiry date monitoring and alerts.
 - **Contract Generation**: Dynamic PDF generation, single-button digital signatures, user-customizable terms, consistent 24-hour time formatting, robust page break handling, and fee data prioritization from booking forms.
 - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, secure URLs, support for multiple CC recipients, and automatic PDF regeneration on edit.

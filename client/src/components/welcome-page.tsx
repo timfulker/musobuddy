@@ -42,7 +42,7 @@ export default function WelcomePage({ onComplete, user }: WelcomePageProps) {
       'addressLine1',
       'city',
       'postcode',
-      'businessEmail',
+      'businessContactEmail',
       'emailPrefix',
       'bankDetails'
     ];

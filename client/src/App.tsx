@@ -98,7 +98,7 @@ function Router() {
       'addressLine1',
       'city',
       'postcode',
-      'businessEmail',
+      'businessContactEmail',
       'emailPrefix',
       'bankDetails'
     ];
