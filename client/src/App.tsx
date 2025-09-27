@@ -81,6 +81,37 @@ import { useQuery } from "@tanstack/react-query";
 function Router() {
   const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuthContext();
   const [location, setLocation] = useLocation();
+  const [showWelcomePage, setShowWelcomePage] = useState(false);
+
+  // Fetch settings to check completion
+  const { data: settings } = useQuery({
+    queryKey: ['/api/settings'],
+    enabled: !!user && isAuthenticated,
+  });
+
+  // Calculate settings completion
+  const isSettingsComplete = () => {
+    if (!settings) return false;
+
+    const requiredFields = [
+      'primaryInstrument',
+      'addressLine1',
+      'city',
+      'postcode',
+      'businessEmail',
+      'emailPrefix',
+      'bankDetails'
+    ];
+
+    const completedFields = requiredFields.filter(field => {
+      if (field === 'bankDetails') {
+        return settings.bankDetails && Object.keys(settings.bankDetails).length > 0;
+      }
+      return settings[field] && settings[field].trim() !== '';
+    });
+
+    return completedFields.length === requiredFields.length;
+  };
 
   // Use useEffect for navigation to prevent render loops
   useEffect(() => {
