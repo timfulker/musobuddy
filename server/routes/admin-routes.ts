@@ -946,7 +946,8 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
     console.log(`📧 [ADMIN] Sending beta invitation to ${email} with code ${customCode}`);
 
     // Import mailgun client
-    const { mailgun } = await import('../core/mailgun');
+    const { MailgunAuthService } = await import('../core/mailgun-auth-service');
+    const mailgunService = new MailgunAuthService();
 
     const currentYear = new Date().getFullYear();
 
@@ -1145,22 +1146,23 @@ ${message ? `Personal Message:\n${message}\n\n` : ''}Need help? Reply to this em
 © ${currentYear} MusoBuddy. All rights reserved.
 https://www.musobuddy.com`;
 
-    const emailData = {
-      from: 'MusoBuddy Beta <enquiries@musobuddy.com>',
+    const result = await mailgunService.sendAuthEmail({
       to: email,
       subject: subject || `Welcome to MusoBuddy Beta - Code: ${customCode}`,
       html: htmlTemplate,
       text: textTemplate
-    };
+    });
 
-    const result = await mailgun.messages().send(emailData);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
 
-    console.log(`✅ [ADMIN] Beta invitation sent to ${email}, message ID: ${result.id}`);
+    console.log(`✅ [ADMIN] Beta invitation sent to ${email}, message ID: ${result.messageId}`);
 
     res.json({
       success: true,
       message: 'Beta invitation sent successfully',
-      messageId: result.id,
+      messageId: result.messageId,
       recipient: email
     });
 
