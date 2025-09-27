@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, timestamp, jsonb, index, serial, integer, decimal, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, jsonb, json, index, serial, integer, decimal, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -792,6 +792,7 @@ export const feedback = pgTable("feedback", {
   priority: varchar("priority").default("medium"), // 'low', 'medium', 'high', 'critical'
   status: varchar("status").default("open"), // 'open', 'in_progress', 'resolved', 'closed'
   page: varchar("page"), // Page where feedback was submitted
+  attachments: json("attachments").$type<string[]>(), // Array of attachment URLs
   adminNotes: text("admin_notes"), // Admin-only notes
   resolvedAt: timestamp("resolved_at"),
   createdAt: timestamp("created_at").defaultNow(),

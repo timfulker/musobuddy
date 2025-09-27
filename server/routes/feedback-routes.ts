@@ -3,8 +3,58 @@ import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-
 import { feedbackStorage } from '../storage/feedback-storage';
 import { UserStorage } from '../storage/user-storage';
 import type { InsertFeedback } from '../../shared/schema';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { randomUUID } from 'crypto';
 
 const userStorage = new UserStorage();
+
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), 'uploads', 'feedback');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${randomUUID()}`;
+    const fileExt = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${fileExt}`);
+  }
+});
+
+const fileFilter = (req: any, file: any, cb: any) => {
+  const allowedTypes = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 5 // Maximum 5 files per upload
+  }
+});
 
 export function registerFeedbackRoutes(app: Express) {
   console.log('💬 Setting up feedback routes...');
@@ -54,7 +104,7 @@ export function registerFeedbackRoutes(app: Express) {
         return res.status(403).json({ error: 'Beta tester access required' });
       }
 
-      const { type, title, description, priority, page } = req.body;
+      const { type, title, description, priority, page, attachments } = req.body;
       
       // Validate required fields
       if (!type || !title || !description) {
@@ -68,6 +118,7 @@ export function registerFeedbackRoutes(app: Express) {
         description,
         priority: priority || 'medium',
         page: page || null,
+        attachments: attachments || null,
         status: 'open'
       };
 
@@ -215,6 +266,70 @@ export function registerFeedbackRoutes(app: Express) {
       }
     });
   }
+
+  // Upload attachments endpoint
+  app.post('/api/feedback/upload', authenticate, upload.array('attachments', 5), async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log('📎 File upload request started');
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Verify user is beta tester or admin
+      const user = await userStorage.getUser(userId);
+      if (!user?.isBetaTester && !user?.isAdmin) {
+        // Delete uploaded files
+        if (req.files && Array.isArray(req.files)) {
+          req.files.forEach((file: any) => {
+            fs.unlinkSync(file.path);
+          });
+        }
+        return res.status(403).json({ error: 'Beta tester access required' });
+      }
+
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      // Build URLs for uploaded files
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? `https://${req.get('host')}`
+        : `http://localhost:${process.env.PORT || 5001}`;
+
+      const fileUrls = req.files.map((file: any) => {
+        const relativePath = `/uploads/feedback/${file.filename}`;
+        return `${baseUrl}${relativePath}`;
+      });
+
+      console.log('✅ Files uploaded successfully:', fileUrls);
+
+      res.json({
+        message: 'Files uploaded successfully',
+        urls: fileUrls
+      });
+
+    } catch (error) {
+      console.error('❌ Error uploading files:', error);
+
+      // Clean up uploaded files on error
+      if (req.files && Array.isArray(req.files)) {
+        req.files.forEach((file: any) => {
+          try {
+            fs.unlinkSync(file.path);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to upload files',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
   console.log('✅ Feedback routes configured');
 }

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { MessageSquare, Bug, Lightbulb, Settings, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Bug, Lightbulb, Settings, AlertCircle, Plus, Trash2, Upload, X, FileText, Image } from "lucide-react";
 
 interface Feedback {
   id: string;
@@ -35,6 +35,7 @@ interface Feedback {
   priority: string;
   status: string;
   page?: string;
+  attachments?: string[];
   createdAt: string;
   updatedAt: string;
   adminNotes?: string;
@@ -58,6 +59,8 @@ export default function FeedbackPage() {
     priority: "medium",
     page: typeof window !== 'undefined' ? window.location.pathname : '',
   });
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // Fetch feedback
   const { data: feedback, isLoading: feedbackLoading } = useQuery<Feedback[]>({
@@ -82,17 +85,60 @@ export default function FeedbackPage() {
   // Create feedback mutation
   const createFeedbackMutation = useMutation({
     mutationFn: async (feedbackData: any) => {
-      const { getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const token = await auth.currentUser?.getIdToken();
-      
+      // Get auth token
+      const token = await (async () => {
+        // Check if we have Supabase auth
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          return session.access_token;
+        }
+
+        // Fallback to Firebase if needed
+        const { getAuth } = await import('firebase/auth');
+        const auth = getAuth();
+        return await auth.currentUser?.getIdToken();
+      })();
+
+      // First, upload any attachments
+      let attachmentUrls: string[] = [];
+      if (attachments.length > 0) {
+        setUploadingFiles(true);
+        const formData = new FormData();
+        attachments.forEach((file) => {
+          formData.append('attachments', file);
+        });
+
+        const uploadResponse = await fetch('/api/feedback/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          setUploadingFiles(false);
+          const error = await uploadResponse.json();
+          throw new Error(error.message || 'Failed to upload attachments');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        attachmentUrls = uploadResult.urls || [];
+        setUploadingFiles(false);
+      }
+
+      // Then create the feedback with attachment URLs
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(feedbackData),
+        body: JSON.stringify({
+          ...feedbackData,
+          attachments: attachmentUrls
+        }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -116,6 +162,7 @@ export default function FeedbackPage() {
         priority: "medium",
         page: typeof window !== 'undefined' ? window.location.pathname : '',
       });
+      setAttachments([]);
     },
     onError: (error: Error) => {
       toast({
@@ -215,6 +262,54 @@ export default function FeedbackPage() {
     }
     
     createFeedbackMutation.mutate(feedbackForm);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds the 10MB limit`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported file type`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      return <Image className="h-4 w-4" />;
+    }
+    return <FileText className="h-4 w-4" />;
   };
 
   const handleAdminReply = () => {
@@ -397,17 +492,67 @@ export default function FeedbackPage() {
                     placeholder="Page where the issue occurred"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="attachments">Attachments (optional)</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center w-full">
+                      <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
+                          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Images, PDFs, or documents (max 10MB)
+                          </p>
+                        </div>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx,.txt"
+                          onChange={handleFileSelect}
+                        />
+                      </label>
+                    </div>
+
+                    {attachments.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Selected files:</p>
+                        {attachments.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              {getFileIcon(file)}
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAttachment(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setNewFeedbackOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmitFeedback}
-                  disabled={createFeedbackMutation.isPending}
+                  disabled={createFeedbackMutation.isPending || uploadingFiles}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  {createFeedbackMutation.isPending ? "Submitting..." : "Submit Feedback"}
+                  {uploadingFiles ? "Uploading files..." : createFeedbackMutation.isPending ? "Submitting..." : "Submit Feedback"}
                 </Button>
               </div>
             </DialogContent>
@@ -507,6 +652,26 @@ export default function FeedbackPage() {
                       <p className="text-sm text-gray-500">
                         Page: {item.page}
                       </p>
+                    )}
+
+                    {item.attachments && item.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {item.attachments.map((url, idx) => {
+                          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                          return (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              {isImage ? <Image className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                              <span className="text-xs">Attachment {idx + 1}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
                     )}
                     
                     {item.adminNotes && (

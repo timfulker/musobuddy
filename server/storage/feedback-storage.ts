@@ -34,6 +34,7 @@ export class FeedbackStorage {
           priority: feedback.priority,
           status: feedback.status,
           page: feedback.page,
+          attachments: feedback.attachments,
           adminNotes: feedback.adminNotes,
           resolvedAt: feedback.resolvedAt,
           createdAt: feedback.createdAt,
