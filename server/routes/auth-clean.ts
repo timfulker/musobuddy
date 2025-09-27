@@ -348,10 +348,6 @@ export function setupAuthRoutes(app: Express) {
       if (!user && req.user?.id && req.user?.email) {
         console.log(`🏗️ [AUTO-PROVISION] Creating missing database record for ${req.user.email}`);
         
-        // Check if this is a bypass email that should get admin privileges
-        const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-        const isAdminBypass = allowedBypassEmails.includes(req.user.email);
-        
         // Check if user has beta status from previous signup attempt
         let isBetaUser = false;
         try {
@@ -362,7 +358,7 @@ export function setupAuthRoutes(app: Express) {
         } catch (error) {
           console.warn('⚠️ Error checking beta status during auto-provision:', error);
         }
-        
+
         try {
           const newUserData = {
             id: req.user.supabaseUid,
@@ -371,16 +367,16 @@ export function setupAuthRoutes(app: Express) {
             firstName: req.user.firstName || '',
             lastName: req.user.lastName || '',
             tier: null, // No default tier - use trial logic instead
-            isAdmin: isAdminBypass,
-            isAssigned: isAdminBypass, 
-            hasPaid: isAdminBypass,
-            isBetaTester: isBetaUser || isAdminBypass, // Preserve beta status or set for admin bypass
+            isAdmin: false, // No automatic admin privileges
+            isAssigned: false,
+            hasPaid: false,
+            isBetaTester: isBetaUser, // Only preserve beta status from previous signup
             createdByAdmin: true,
             emailVerified: req.user.emailVerified || false
           };
           
           user = await storage.createUser(newUserData);
-          console.log(`✅ [AUTO-PROVISION] Created user ${user.id} with admin: ${isAdminBypass}`);
+          console.log(`✅ [AUTO-PROVISION] Created user ${user.id}`);
           
         } catch (error: any) {
           // Handle race condition - another request might have created the user
@@ -1026,6 +1022,14 @@ export function setupAuthRoutes(app: Express) {
         supabaseUid: userData.supabaseUid,
         isBetaTester: userData.isBetaTester,
         trialEndsAt: userData.trialEndsAt
+      });
+
+      console.log('🔍 DETAILED DEBUG - Beta status determination:', {
+        emailProvided: email,
+        inviteCodeProvided: effectiveInviteCode,
+        betaInviteFound: !!betaInvite,
+        finalIsBetaUser: isBetaUser,
+        userDataIsBetaTester: userData.isBetaTester
       });
 
       const user = await storage.createUser(userData);

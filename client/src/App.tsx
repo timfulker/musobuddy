@@ -116,8 +116,22 @@ function Router() {
   // Use useEffect for navigation to prevent render loops
   useEffect(() => {
     // Note: Removed preview environment skip to ensure access control works in Replit
-    
+
     if (isLoading) return; // Skip navigation logic while loading
+
+    // Check if we should show welcome page for authenticated users with incomplete settings
+    if (isAuthenticated && user && settings !== undefined) {
+      const settingsComplete = isSettingsComplete();
+      const shouldShowWelcome = !settingsComplete &&
+        location !== '/settings' &&
+        location !== '/logout' &&
+        !location.startsWith('/sign-contract/') &&
+        !location.startsWith('/view-contract/') &&
+        !location.startsWith('/invoice/') &&
+        !location.startsWith('/widget/');
+
+      setShowWelcomePage(shouldShowWelcome);
+    }
     
     // PRIORITY: Handle unauthenticated users immediately
     if (!isAuthenticated) {
@@ -188,7 +202,7 @@ function Router() {
     }
 
     // This check is now handled earlier in the useEffect
-  }, [isAuthenticated, isLoading, user, location, refreshUserData]);
+  }, [isAuthenticated, isLoading, user, location, refreshUserData, settings]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -199,6 +213,18 @@ function Router() {
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
+    );
+  }
+
+  // Show welcome page if settings are incomplete
+  if (showWelcomePage && isAuthenticated && user) {
+    return (
+      <WelcomePage
+        user={user}
+        onComplete={() => {
+          setShowWelcomePage(false);
+        }}
+      />
     );
   }
 

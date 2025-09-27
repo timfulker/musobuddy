@@ -1026,16 +1026,22 @@ export function registerBookingRoutes(app: Express) {
 
   // CORS middleware for widget endpoints (allow Cloudflare R2 and other origins)
   const widgetCorsHandler = (req: any, res: any, next: any) => {
+    // Allow all origins for widget endpoints
     const origin = req.headers.origin || '*';
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for widgets
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Max-Age', '86400');
-    
-    // Handle preflight requests
+
+    // Handle preflight requests immediately
     if (req.method === 'OPTIONS') {
-      return res.sendStatus(204);
+      console.log('✅ Handling OPTIONS preflight request for widget endpoint');
+      return res.status(200).end();
     }
+
     next();
   };
 
@@ -1062,12 +1068,14 @@ export function registerBookingRoutes(app: Express) {
   // Handle OPTIONS preflight for widget endpoints
   app.options('/api/widget/verify/:token', widgetCorsHandler);
   app.options('/api/widget/hybrid-submit', widgetCorsHandler);
+  app.options('/api/widget/*', widgetCorsHandler); // Catch-all for any other widget endpoints
 
   // Hybrid widget form submission (combines natural language + structured data)
   app.post('/api/widget/hybrid-submit', widgetCorsHandler, async (req, res) => {
     try {
+      console.log('📬 Widget POST request received from origin:', req.headers.origin);
       const { messageText, clientName, clientContact, eventDate, venue, token } = req.body;
-      
+
       // Debug logging to trace the issue
       console.log('📝 Widget submission received:', {
         messageText: messageText?.substring(0, 100) + '...',

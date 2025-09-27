@@ -240,28 +240,38 @@ export function useAuth() {
       });
 
       if (error) {
-        console.error('❌ [SUPABASE-AUTH] Signup failed:', error.message);
+        console.error('❌ [SUPABASE-AUTH] Signup failed:', error.message, error);
         setAuthState(prev => ({ ...prev, error: error.message }));
         throw error;
       }
 
-      console.log('✅ [SUPABASE-AUTH] Supabase signup successful');
+      console.log('✅ [SUPABASE-AUTH] Supabase signup response:', {
+        user: data.user,
+        session: data.session,
+        needsEmailVerification: !data.session
+      });
 
-      // Step 2: Create user in database (if Supabase user was created)
-      if (data.user && data.session) {
+      // Step 2: Create user in database (always attempt if user was created in Supabase)
+      if (data.user) {
         try {
+          console.log('📝 [SUPABASE-AUTH] Creating database user record...');
+
+          // For email verification flow, we won't have a session yet
+          // Backend should handle this case
           const response = await fetch('/api/auth/supabase-signup', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.session.access_token}`
+              // Only add auth header if we have a session
+              ...(data.session ? { 'Authorization': `Bearer ${data.session.access_token}` } : {})
             },
             body: JSON.stringify({
               supabaseUid: data.user.id,
-              email: data.user.email,
+              email: data.user.email || email, // Use provided email as fallback
               firstName,
               lastName,
-              inviteCode
+              inviteCode,
+              emailVerificationPending: !data.session // Flag to indicate verification is needed
             })
           });
 
@@ -277,6 +287,8 @@ export function useAuth() {
           console.warn('⚠️ [SUPABASE-AUTH] Database creation error:', dbError);
           // Don't throw - user exists in Supabase
         }
+      } else {
+        console.warn('⚠️ [SUPABASE-AUTH] No user returned from Supabase signup');
       }
 
       return {
