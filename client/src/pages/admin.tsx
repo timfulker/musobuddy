@@ -120,7 +120,7 @@ export default function AdminPanel() {
     isBetaTester: false,
     personalMessage: ''
   });
-  
+
   // Beta codes state
   const [betaCodeDialogOpen, setBetaCodeDialogOpen] = useState(false);
   const [betaCodeForm, setBetaCodeForm] = useState({
@@ -129,6 +129,16 @@ export default function AdminPanel() {
     trialDays: 365,
     description: '',
     expiresAt: ''
+  });
+
+  // Beta email state
+  const [betaEmailDialogOpen, setBetaEmailDialogOpen] = useState(false);
+  const [betaEmailForm, setBetaEmailForm] = useState({
+    email: '',
+    firstName: '',
+    customCode: '',
+    subject: '',
+    message: ''
   });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
@@ -413,6 +423,49 @@ export default function AdminPanel() {
     createBetaCodeMutation.mutate(codeData);
   };
 
+  // Send beta email mutation
+  const sendBetaEmailMutation = useMutation({
+    mutationFn: (emailData: any) => apiRequest('/api/admin/send-beta-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(emailData),
+    }),
+    onSuccess: (data) => {
+      setBetaEmailDialogOpen(false);
+      setBetaEmailForm({
+        email: '',
+        firstName: '',
+        customCode: '',
+        subject: '',
+        message: ''
+      });
+      toast({
+        title: "Beta email sent!",
+        description: `Invitation successfully sent to ${data.recipient}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error sending email",
+        description: error.message || "Failed to send beta invitation",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendBetaEmail = () => {
+    if (!betaEmailForm.email || !betaEmailForm.firstName || !betaEmailForm.customCode) {
+      toast({
+        title: "Required fields missing",
+        description: "Please fill in email, first name, and custom code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    sendBetaEmailMutation.mutate(betaEmailForm);
+  };
+
   const generateRandomCode = () => {
     const prefix = 'BETA';
     const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -574,12 +627,16 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-8 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-9 h-auto">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="beta-codes" className="text-xs sm:text-sm flex items-center gap-1">
                 <Ticket className="h-3 w-3" />
                 Beta Codes
+              </TabsTrigger>
+              <TabsTrigger value="beta-emails" className="text-xs sm:text-sm flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                Beta Emails
               </TabsTrigger>
               <TabsTrigger value="api-costs" className="text-xs sm:text-sm flex items-center gap-1">
                 <DollarSign className="h-3 w-3" />
@@ -1456,6 +1513,135 @@ export default function AdminPanel() {
                       )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="beta-emails" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                      <CardTitle className="text-foreground">Send Beta Invitations</CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Send professionally styled beta invitation emails with custom codes
+                      </CardDescription>
+                    </div>
+                    <Dialog open={betaEmailDialogOpen} onOpenChange={setBetaEmailDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Send Beta Email
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>Send Beta Invitation Email</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="email">Email Address *</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={betaEmailForm.email}
+                                onChange={(e) => setBetaEmailForm(prev => ({ ...prev, email: e.target.value }))}
+                                placeholder="beta.tester@example.com"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="firstName">First Name *</Label>
+                              <Input
+                                id="firstName"
+                                value={betaEmailForm.firstName}
+                                onChange={(e) => setBetaEmailForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                placeholder="John"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="customCode">Beta Code *</Label>
+                            <Input
+                              id="customCode"
+                              value={betaEmailForm.customCode}
+                              onChange={(e) => setBetaEmailForm(prev => ({ ...prev, customCode: e.target.value.toUpperCase() }))}
+                              placeholder="BETA-XXXX-2025"
+                              className="font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="subject">Email Subject (Optional)</Label>
+                            <Input
+                              id="subject"
+                              value={betaEmailForm.subject}
+                              onChange={(e) => setBetaEmailForm(prev => ({ ...prev, subject: e.target.value }))}
+                              placeholder="Welcome to MusoBuddy Beta - Code: {customCode}"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="message">Personal Message (Optional)</Label>
+                            <textarea
+                              id="message"
+                              value={betaEmailForm.message}
+                              onChange={(e) => setBetaEmailForm(prev => ({ ...prev, message: e.target.value }))}
+                              placeholder="Add a personal message that will appear in the email..."
+                              className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px] resize-y"
+                            />
+                          </div>
+
+                          <div className="flex justify-end gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setBetaEmailDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleSendBetaEmail}
+                              disabled={sendBetaEmailMutation.isPending}
+                            >
+                              {sendBetaEmailMutation.isPending ? "Sending..." : "Send Email"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Email Template Features
+                      </h3>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <li>• Professional HTML styling with dark mode support</li>
+                        <li>• Mobile-responsive design</li>
+                        <li>• Includes beta testing guidelines</li>
+                        <li>• Personalized with recipient's name and custom code</li>
+                        <li>• Clear call-to-action buttons</li>
+                        <li>• Optional personal message section</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                        ⚠️ Before Sending
+                      </h3>
+                      <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                        <li>• Make sure the beta code exists and is active</li>
+                        <li>• Verify the recipient's email address</li>
+                        <li>• Check that Mailgun is properly configured</li>
+                        <li>• Consider testing with your own email first</li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

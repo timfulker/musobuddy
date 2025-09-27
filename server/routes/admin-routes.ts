@@ -927,4 +927,250 @@ app.delete('/api/admin/beta-codes/:id', authenticate, async (req: AuthenticatedR
   }
 });
 
+// Send beta invitation email
+app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Check admin permissions
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  try {
+    const { email, firstName, customCode, subject, message } = req.body;
+
+    if (!email || !firstName || !customCode) {
+      return res.status(400).json({
+        error: 'Email, firstName, and customCode are required'
+      });
+    }
+
+    console.log(`📧 [ADMIN] Sending beta invitation to ${email} with code ${customCode}`);
+
+    // Import mailgun client
+    const { mailgun } = await import('../core/mailgun');
+
+    const currentYear = new Date().getFullYear();
+
+    // HTML email template
+    const htmlTemplate = `<!doctype html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <!--[if mso]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+          <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+    <title>MusoBuddy Beta – 90 Days Free</title>
+    <style>
+      /* Reset */
+      html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
+      * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
+      table, td { mso-table-lspace:0pt !important; mso-table-rspace:0pt !important; }
+      img { -ms-interpolation-mode:bicubic; border:0; outline:none; text-decoration:none; display:block; }
+      a { text-decoration:none; }
+      /* Base */
+      :root { color-scheme: light dark; supported-color-schemes: light dark; }
+      body { background:#0b0b10; }
+      .wrapper { width:100%; background:#0b0b10; }
+      .container { width:100%; max-width:640px; margin:0 auto; background:#ffffff; }
+      .px { padding-left:32px; padding-right:32px; }
+      .py { padding-top:28px; padding-bottom:28px; }
+      .lead { font-size:18px; line-height:1.6; color:#111827; }
+      .muted { color:#6b7280; font-size:14px; line-height:1.6; }
+      .h1 { font-size:28px; line-height:1.25; margin:0 0 8px; color:#111827; font-weight:800; }
+      .h2 { font-size:18px; font-weight:700; margin:0 0 8px; color:#111827; }
+      .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#f3f4f6; color:#111827; padding:6px 10px; border-radius:6px; display:inline-block; }
+      .btn { display:inline-block; font-weight:700; padding:14px 22px; border-radius:10px; background:#6C5CE7; color:#ffffff !important; }
+      .btn:hover { opacity:.9; }
+      .section { padding:24px 32px; }
+      .hr { border:0; height:1px; background:#e5e7eb; margin:24px 0; }
+      .center { text-align:center; }
+      .footer-link { color:#6b7280 !important; text-decoration:underline; }
+      .list li { margin-bottom:8px; }
+
+      /* Dark mode */
+      @media (prefers-color-scheme: dark) {
+        .container { background:#0f1115 !important; }
+        .h1, .h2, .lead { color:#e5e7eb !important; }
+        .muted { color:#9ca3af !important; }
+        .code { background:#1f2430 !important; color:#e5e7eb !important; }
+        .hr { background:#1f2430 !important; }
+      }
+
+      /* Mobile tweaks */
+      @media (max-width:480px){
+        .px { padding-left:20px !important; padding-right:20px !important; }
+        .section { padding:20px !important; }
+        .h1 { font-size:24px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; background:#0b0b10;">
+    <div role="article" aria-roledescription="email" lang="en" class="wrapper">
+      <!-- Preheader (hidden in most clients) -->
+      <div style="display:none; max-height:0; overflow:hidden; opacity:0; visibility:hidden; mso-hide:all;">
+        Welcome to the MusoBuddy beta! Your custom code gives you 90 days free access.
+      </div>
+
+      <!-- Outer container -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%">
+        <tr>
+          <td align="center" class="px" style="padding-top:32px; padding-bottom:32px;">
+
+            <!-- Card -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="container" style="border-radius:16px; overflow:hidden; box-shadow:0 6px 24px rgba(17,24,39,0.12);">
+              <!-- Header / Logo -->
+              <tr>
+                <td style="background:#111827;" class="py px">
+                  <table role="presentation" width="100%">
+                    <tr>
+                      <td align="left">
+                        <!-- Replace with your hosted logo URL if desired -->
+                        <div style="font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#ffffff; font-weight:800; font-size:18px; letter-spacing:.2px;">MusoBuddy</div>
+                      </td>
+                      <td align="right">
+                        <span style="font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#9ca3af; font-size:12px;">Beta Program</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td class="section" style="font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="h1">Welcome to the MusoBuddy Beta 🎉</p>
+                  <p class="lead">Hi <strong>${firstName}</strong>, thanks for jumping in to help us shape MusoBuddy. Your feedback will directly influence what we build next.</p>
+
+                  <p class="h2">Your 90‑day access code</p>
+                  <p class="lead">Use this code at signup to unlock your free trial:</p>
+                  <p><span class="code">${customCode}</span></p>
+
+                  <!-- CTA Button (bulletproof for Outlook) -->
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="center" align="left" style="margin:16px 0 8px;">
+                    <tr>
+                      <td align="center">
+                        <!--[if mso]>
+                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.musobuddy.com/signup" style="height:44px;v-text-anchor:middle;width:280px;" arcsize="10%" stroke="f" fillcolor="#6C5CE7">
+                          <w:anchorlock/>
+                          <center style="color:#ffffff;font-family:Segoe UI, Arial, sans-serif;font-size:16px;font-weight:700;">Sign up & Redeem</center>
+                        </v:roundrect>
+                        <![endif]-->
+                        <!--[if !mso]><!-- -->
+                        <a class="btn" href="https://www.musobuddy.com/signup" target="_blank" style="font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">Sign up &amp; Redeem</a>
+                        <!--<![endif]-->
+                      </td>
+                    </tr>
+                  </table>
+
+                  <hr class="hr">
+
+                  <p class="h2">How to give effective feedback</p>
+                  <ul class="lead list" style="padding-left:20px;">
+                    <li><strong>Be specific:</strong> what you tried, what you expected, what happened.</li>
+                    <li><strong>Add screenshots:</strong> capture error messages or odd behaviour.</li>
+                    <li><strong>Include browser console logs:</strong> open the console (<em>Mac</em>: <code>⌥⌘J</code>, <em>Windows</em>: <code>Ctrl</code>+<code>Shift</code>+<code>J</code>), reproduce the issue, copy any red errors.</li>
+                    <li><strong>Tell us your setup:</strong> device, OS, browser + version, and steps to reproduce.</li>
+                    <li><strong>Suggestions welcome:</strong> features or tweaks that would save you time at gigs.</li>
+                  </ul>
+
+                  <hr class="hr">
+
+                  <p class="h2">Need help?</p>
+                  <p class="lead">Reply to this email or use the in‑app support button. We'll get back to you quickly.</p>
+
+                  ${message ? `<hr class="hr"><p class="h2">Personal Message</p><p class="lead">${message}</p>` : ''}
+
+                  <p class="muted" style="margin-top:16px;">You're receiving this because you opted into the MusoBuddy beta. If this wasn't you, please ignore this message or let us know.</p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td class="py px" style="font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:#f8fafc;">
+                  <table role="presentation" width="100%">
+                    <tr>
+                      <td class="muted" style="font-size:12px;">
+                        © ${currentYear} MusoBuddy. All rights reserved.
+                        <br>
+                        <a href="https://www.musobuddy.com" class="footer-link">musobuddy.com</a>
+                        • <a href="https://www.musobuddy.com/signup" class="footer-link">Sign up</a>
+                      </td>
+                      <td align="right" class="muted" style="font-size:12px;">
+                        Bournemouth, UK
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+            <!-- /Card -->
+
+          </td>
+        </tr>
+      </table>
+
+    </div>
+  </body>
+</html>`;
+
+    // Plain text fallback
+    const textTemplate = `Welcome to the MusoBuddy Beta!
+
+Hi ${firstName},
+
+Thanks for jumping in to help us shape MusoBuddy. Your feedback will directly influence what we build next.
+
+Your 90-day access code: ${customCode}
+
+Sign up at: https://www.musobuddy.com/signup
+
+How to give effective feedback:
+- Be specific: what you tried, what you expected, what happened
+- Add screenshots: capture error messages or odd behaviour
+- Include browser console logs
+- Tell us your setup: device, OS, browser + version, and steps to reproduce
+- Suggestions welcome: features or tweaks that would save you time at gigs
+
+${message ? `Personal Message:\n${message}\n\n` : ''}Need help? Reply to this email or use the in-app support button.
+
+© ${currentYear} MusoBuddy. All rights reserved.
+https://www.musobuddy.com`;
+
+    const emailData = {
+      from: 'MusoBuddy Beta <enquiries@musobuddy.com>',
+      to: email,
+      subject: subject || `Welcome to MusoBuddy Beta - Code: ${customCode}`,
+      html: htmlTemplate,
+      text: textTemplate
+    };
+
+    const result = await mailgun.messages().send(emailData);
+
+    console.log(`✅ [ADMIN] Beta invitation sent to ${email}, message ID: ${result.id}`);
+
+    res.json({
+      success: true,
+      message: 'Beta invitation sent successfully',
+      messageId: result.id,
+      recipient: email
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to send beta invitation:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send email'
+    });
+  }
+});
+
 }
