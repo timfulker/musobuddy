@@ -73,8 +73,10 @@ import LogoutPage from "@/pages/logout";
 import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
 import DuplicateManager from "@/pages/DuplicateManager";
 
-import { useEffect, lazy } from "react";
+import { useEffect, lazy, useState } from "react";
 import MobileNav from "@/components/mobile-nav";
+import WelcomePage from "@/components/welcome-page";
+import { useQuery } from "@tanstack/react-query";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error, refreshUserData } = useAuthContext();

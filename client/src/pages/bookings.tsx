@@ -35,6 +35,7 @@ import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import MarkUnavailableDialog from "@/components/MarkUnavailableDialog";
+import { BlockedDatesManager } from "@/components/blocked-dates-manager";
 import { ComplianceIndicator } from "@/components/compliance-indicator";
 import { CommunicationHistory } from "@/components/communication-history";
 import WorkflowStageMeter from "@/components/workflow-stage-meter";
@@ -194,8 +195,10 @@ export default function UnifiedBookings() {
 
   // Mark unavailable dialog states
   const [markUnavailableDialogOpen, setMarkUnavailableDialogOpen] = useState(false);
-  
-  
+
+  // Blocked dates manager dialog state
+  const [blockedDatesManagerOpen, setBlockedDatesManagerOpen] = useState(false);
+
   // Communication history dialog states
   const [communicationHistoryDialogOpen, setCommunicationHistoryDialogOpen] = useState(false);
   const [selectedBookingForCommunications, setSelectedBookingForCommunications] = useState<any>(null);
@@ -1534,6 +1537,7 @@ export default function UnifiedBookings() {
       const date = new Date(currentDateCopy);
       const isToday = date.toDateString() === new Date().toDateString();
       const events = getEventsForDate(date);
+      const blockedDate = isDateBlocked(date);
 
       days.push({
         date,
@@ -1541,7 +1545,8 @@ export default function UnifiedBookings() {
         isCurrentMonth: date.getMonth() === currentDate.getMonth(),
         isToday,
         hasEvents: events.length > 0,
-        events
+        events,
+        blockedDate
       });
 
       currentDateCopy.setDate(currentDateCopy.getDate() + 1);
@@ -1556,7 +1561,7 @@ export default function UnifiedBookings() {
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const startDate = new Date(firstDay);
-    
+
     // Start from Monday of the first week
     const firstDayOfWeek = firstDay.getDay();
     const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
@@ -1572,6 +1577,7 @@ export default function UnifiedBookings() {
       const isToday = date.toDateString() === new Date().toDateString();
       const events = getEventsForDate(date);
       const hasEvents = events.length > 0;
+      const blockedDate = isDateBlocked(date);
 
       days.push({
         date,
@@ -1579,7 +1585,8 @@ export default function UnifiedBookings() {
         isCurrentMonth,
         isToday,
         hasEvents,
-        events
+        events,
+        blockedDate
       });
 
       currentDateCopy.setDate(currentDateCopy.getDate() + 1);
@@ -3234,7 +3241,7 @@ export default function UnifiedBookings() {
               </div>
             ) : (
               /* Calendar View - Fixed Window */
-              <Card className="h-full">
+              <Card className="h-full flex flex-col">
                 <CardHeader className="flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col items-center gap-4">
@@ -3319,6 +3326,16 @@ export default function UnifiedBookings() {
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBlockedDatesManagerOpen(true)}
+                        className="border-red-200 hover:bg-red-50"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Manage Unavailable
+                      </Button>
+
                       <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -3351,7 +3368,7 @@ export default function UnifiedBookings() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="h-full flex-1">
+                <CardContent className="flex-1 overflow-hidden p-4">
                   {/* Dynamic Calendar Content Based on View */}
                   {calendarView === 'day' && (
                     <div className="h-full">
@@ -3431,17 +3448,34 @@ export default function UnifiedBookings() {
                           <div
                             key={index}
                             className={`
-                              p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
+                              p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden relative
                               ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
                               ${day.isToday ? 'bg-blue-50 border-blue-200 today' : ''}
+                              ${day.blockedDate ? 'bg-red-50 border-red-200' : ''}
                               ${!isDesktop ? 'calendar-day-cell-landscape' : ''}
                             `}
-                            style={{ height: 'calc(100% - 40px)' }}
+                            style={{
+                              height: 'calc(100% - 40px)',
+                              ...(day.blockedDate ? { borderLeftWidth: '4px', borderLeftColor: day.blockedDate.color } : {})
+                            }}
                             onClick={() => handleDateClick(day.date)}
+                            title={day.blockedDate ? `Unavailable: ${day.blockedDate.title}` : ''}
                           >
                             <div className={`font-medium text-sm mb-2 ${!isDesktop ? 'date-number' : ''}`}>
                               {day.day}
                             </div>
+                            {/* Blocked date indicator */}
+                            {day.blockedDate && (
+                              <div className="absolute top-1 right-1">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-[10px] px-1 py-0"
+                                  style={{ backgroundColor: day.blockedDate.color }}
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                </Badge>
+                              </div>
+                            )}
                             <div className="space-y-1">
                               {day.events.slice(0, 4).map((event, eventIndex) => {
                                 const validBookings = validateBookingArray(bookings) ? bookings : [];
@@ -3578,16 +3612,16 @@ export default function UnifiedBookings() {
                   {calendarView === 'month' && (
                     <div className="h-full flex flex-col">
                       {/* Month Day Headers - Fixed Height */}
-                      <div className={`grid grid-cols-7 gap-1 flex-shrink-0 ${!isDesktop ? 'calendar-tabs-landscape' : ''}`}>
+                      <div className={`grid grid-cols-7 gap-1 mb-1 ${!isDesktop ? 'calendar-tabs-landscape' : ''}`}>
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                          <div key={day} className={`p-2 text-center text-sm font-medium h-10 flex items-center justify-center ${!isDesktop ? 'calendar-header-landscape' : ''}`} style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
+                          <div key={day} className={`p-2 text-center text-sm font-medium ${!isDesktop ? 'calendar-header-landscape' : ''}`} style={{color: theme.mode === 'dark' ? '#e5e5e5' : '#1a1a1a'}}>
                             {day}
                           </div>
                         ))}
                       </div>
-                      
+
                       {/* Month Calendar Days - Fixed Grid Height */}
-                      <div className={`grid grid-cols-7 gap-1 flex-1 ${!isDesktop ? 'calendar-grid-landscape' : ''}`} style={{ gridTemplateRows: 'repeat(6, 1fr)' }}>
+                      <div className={`grid grid-cols-7 gap-1 flex-1 overflow-hidden ${!isDesktop ? 'calendar-grid-landscape' : ''}`} style={{ gridAutoRows: 'minmax(0, 1fr)' }}>
                         {(() => {
                           const calendarData = generateCalendarData();
                           // Ensure we always have 42 cells (6 weeks × 7 days) for consistent layout
@@ -3605,17 +3639,32 @@ export default function UnifiedBookings() {
                             <div
                               key={index}
                               className={`
-                                p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden flex flex-col
+                                p-1 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden flex flex-col relative min-h-0
                                 ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
                                 ${day.isToday ? 'bg-blue-50 border-blue-200 today' : ''}
+                                ${day.blockedDate ? 'bg-red-50 border-red-200' : ''}
                                 ${day.day === '' ? 'invisible' : ''}
                                 ${!isDesktop ? 'calendar-day-cell-landscape' : ''}
                               `}
+                              style={day.blockedDate ? { borderLeftWidth: '4px', borderLeftColor: day.blockedDate.color } : {}}
                               onClick={() => day.day !== '' && handleDateClick(day.date)}
+                              title={day.blockedDate ? `Unavailable: ${day.blockedDate.title}` : ''}
                             >
                               <div className={`font-medium text-sm mb-1 flex-shrink-0 ${!isDesktop ? 'date-number' : ''}`}>
                                 {day.day}
                               </div>
+                              {/* Blocked date indicator */}
+                              {day.blockedDate && (
+                                <div className="absolute top-1 right-1">
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-[10px] px-1 py-0"
+                                    style={{ backgroundColor: day.blockedDate.color }}
+                                  >
+                                    <XCircle className="h-3 w-3" />
+                                  </Badge>
+                                </div>
+                              )}
                               <div className="space-y-1 flex-1 overflow-hidden">
                                 {day.events.slice(0, 2).map((event, eventIndex) => {
                                   const validBookings = validateBookingArray(bookings) ? bookings : [];
@@ -3863,6 +3912,12 @@ export default function UnifiedBookings() {
       <MarkUnavailableDialog
         isOpen={markUnavailableDialogOpen}
         onClose={() => setMarkUnavailableDialogOpen(false)}
+      />
+
+      {/* Blocked Dates Manager Dialog */}
+      <BlockedDatesManager
+        open={blockedDatesManagerOpen}
+        onOpenChange={setBlockedDatesManagerOpen}
       />
 
       {/* Communication History Dialog */}

@@ -407,5 +407,9 @@ export function BlockedDatesManager({ trigger, open, onOpenChange }: BlockedDate
   }
 
   // For controlled usage without trigger
-  return isOpen ? content : null;
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {content}
+    </Dialog>
+  );
 }
