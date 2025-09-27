@@ -120,9 +120,16 @@ function Router() {
     if (isLoading) return; // Skip navigation logic while loading
 
     // Check if we should show welcome page for authenticated users with incomplete settings
+    // BUT NOT during initial signup flow (when user hasn't completed payment)
+    // AND only if they haven't dismissed it this session
     if (isAuthenticated && user && settings !== undefined) {
       const settingsComplete = isSettingsComplete();
+      const isNewSignup = !user.hasPaid; // Users who haven't paid are still in signup flow
+      const welcomeDismissedThisSession = sessionStorage.getItem('welcome-dismissed') === 'true';
+
       const shouldShowWelcome = !settingsComplete &&
+        !isNewSignup && // Don't show welcome during signup flow
+        !welcomeDismissedThisSession && // Don't show if dismissed this session
         location !== '/settings' &&
         location !== '/logout' &&
         !location.startsWith('/sign-contract/') &&
@@ -222,6 +229,8 @@ function Router() {
       <WelcomePage
         user={user}
         onComplete={() => {
+          // Mark welcome as dismissed for this session
+          sessionStorage.setItem('welcome-dismissed', 'true');
           setShowWelcomePage(false);
         }}
       />

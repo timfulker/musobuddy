@@ -338,6 +338,10 @@ export function useAuth() {
   const logout = async () => {
     try {
       console.log('🔐 [SUPABASE-AUTH] Signing out');
+
+      // Clear session flags so welcome page shows again on next login
+      sessionStorage.removeItem('welcome-dismissed');
+
       const { error } = await supabase.auth.signOut();
 
       if (error) {

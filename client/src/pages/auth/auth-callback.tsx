@@ -136,11 +136,56 @@ export function AuthCallback() {
             }
 
             setStatus('success');
-            setMessage('Email verified successfully! Redirecting to dashboard...');
+            setMessage('Email verified successfully! Setting up your trial...');
 
-            // Redirect to dashboard after a short delay
-            setTimeout(() => {
-              setLocation('/dashboard');
+            // Check if user needs to complete payment setup
+            setTimeout(async () => {
+              try {
+                // Refresh user data to get latest status
+                await refreshUserData();
+
+                // Check if user has completed payment setup
+                const response = await fetch('/api/auth/me', {
+                  headers: {
+                    'Authorization': `Bearer ${data.session.access_token}`
+                  }
+                });
+
+                if (response.ok) {
+                  const userData = await response.json();
+
+                  if (userData.hasPaid) {
+                    // User has already paid, go to dashboard
+                    setLocation('/dashboard');
+                  } else {
+                    // User needs to set up payment/trial, redirect to payment
+                    const checkoutResponse = await fetch('/api/create-checkout-session', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userEmail: userData.email,
+                        userId: userData.id,
+                        isBeta: userData.isBetaTester || false
+                      })
+                    });
+
+                    const checkoutData = await checkoutResponse.json();
+                    if (checkoutData.url) {
+                      window.location.href = checkoutData.url;
+                    } else {
+                      // Fallback to dashboard if checkout fails
+                      setLocation('/dashboard');
+                    }
+                  }
+                } else {
+                  // Fallback to dashboard if user data fetch fails
+                  setLocation('/dashboard');
+                }
+              } catch (error) {
+                console.error('Error checking payment status:', error);
+                // Fallback to dashboard
+                setLocation('/dashboard');
+              }
             }, 2000);
           } else {
             throw new Error('No session received after token exchange');
@@ -221,11 +266,56 @@ export function AuthCallback() {
               await refreshUserData();
               
               setStatus('success');
-              setMessage('Email verified successfully! Redirecting to dashboard...');
-              
-              // Redirect to dashboard after a short delay
-              setTimeout(() => {
-                setLocation('/dashboard');
+              setMessage('Email verified successfully! Setting up your trial...');
+
+              // Check if user needs to complete payment setup
+              setTimeout(async () => {
+                try {
+                  // Refresh user data to get latest status
+                  await refreshUserData();
+
+                  // Check if user has completed payment setup
+                  const response = await fetch('/api/auth/me', {
+                    headers: {
+                      'Authorization': `Bearer ${data.session.access_token}`
+                    }
+                  });
+
+                  if (response.ok) {
+                    const userData = await response.json();
+
+                    if (userData.hasPaid) {
+                      // User has already paid, go to dashboard
+                      setLocation('/dashboard');
+                    } else {
+                      // User needs to set up payment/trial, redirect to payment
+                      const checkoutResponse = await fetch('/api/create-checkout-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userEmail: userData.email,
+                          userId: userData.id,
+                          isBeta: userData.isBetaTester || false
+                        })
+                      });
+
+                      const checkoutData = await checkoutResponse.json();
+                      if (checkoutData.url) {
+                        window.location.href = checkoutData.url;
+                      } else {
+                        // Fallback to dashboard if checkout fails
+                        setLocation('/dashboard');
+                      }
+                    }
+                  } else {
+                    // Fallback to dashboard if user data fetch fails
+                    setLocation('/dashboard');
+                  }
+                } catch (error) {
+                  console.error('Error checking payment status:', error);
+                  // Fallback to dashboard
+                  setLocation('/dashboard');
+                }
               }, 2000);
             } else {
               console.log('⚠️ [AUTH-CALLBACK] exchangeCodeForSession returned no session');
