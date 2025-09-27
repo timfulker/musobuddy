@@ -36,7 +36,7 @@ export default function WelcomePage({ onComplete, user }: WelcomePageProps) {
   // Calculate settings completion percentage
   const calculateCompletionPercentage = () => {
     if (!settings) return 0;
-    
+
     const requiredFields = [
       'primaryInstrument',
       'addressLine1',
@@ -46,14 +46,23 @@ export default function WelcomePage({ onComplete, user }: WelcomePageProps) {
       'emailPrefix',
       'bankDetails'
     ];
-    
+
     const completedFields = requiredFields.filter(field => {
       if (field === 'bankDetails') {
         return settings.bankDetails && Object.keys(settings.bankDetails).length > 0;
       }
       return settings[field] && settings[field].trim() !== '';
     });
-    
+
+    // Debug logging to see which fields are missing
+    console.log('🔍 Welcome page settings check:', {
+      settings,
+      requiredFields,
+      completedFields: completedFields.map(field => ({ field, value: settings[field] })),
+      missingFields: requiredFields.filter(field => !completedFields.includes(field)),
+      completion: `${completedFields.length}/${requiredFields.length}`
+    });
+
     return Math.round((completedFields.length / requiredFields.length) * 100);
   };
 
