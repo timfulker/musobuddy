@@ -357,10 +357,13 @@ export default function UnifiedBookings() {
 
   // Fetch data - use different endpoint based on whether we're searching/filtering
   const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery({
-    queryKey: shouldFetchAll 
+    queryKey: shouldFetchAll
       ? ["/api/bookings/all", debouncedSearchQuery, statusFilter, dateFilter, conflictFilter]
       : ["/api/bookings"],
     retry: 2,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchOnWindowFocus: true, // Refresh when window gains focus
+    staleTime: 25000, // Consider data stale after 25 seconds
     queryFn: async () => {
       const endpoint = shouldFetchAll 
         ? `/api/bookings/all?${buildQueryParams()}`
