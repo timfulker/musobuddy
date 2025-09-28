@@ -1071,6 +1071,21 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
                     </tr>
                   </table>
 
+                  <div style="margin: 32px 0;">&nbsp;</div>
+
+                  <hr class="hr">
+
+                  <p class="h2" style="color:#dc2626;">🔴 First Priority: Email Setup</p>
+                  <p class="lead"><strong>Please complete this immediately after signing up:</strong></p>
+                  <ol class="lead list" style="padding-left:20px;">
+                    <li>Go to <strong>Settings → Email Integration</strong></li>
+                    <li>Connect your email account (Gmail, Outlook, or IMAP)</li>
+                    <li>Complete the setup wizard</li>
+                  </ol>
+                  <p class="lead" style="background:#fef2f2; padding:12px; border-radius:6px; border-left:4px solid #dc2626;">
+                    <strong>Why this matters:</strong> We'll be sending you dummy booking requests to test the system. Without email integration, you won't receive these test bookings and we can't properly evaluate the app's core functionality.
+                  </p>
+
                   <hr class="hr">
 
                   <p class="h2">How to give effective feedback</p>
@@ -1085,7 +1100,7 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
                   <hr class="hr">
 
                   <p class="h2">Need help?</p>
-                  <p class="lead">Reply to this email or use the in‑app support button. We'll get back to you quickly.</p>
+                  <p class="lead">Email us at <a href="mailto:support@musobuddy.com" style="color:#6C5CE7; font-weight:600;">support@musobuddy.com</a> or use the in‑app support button. We'll get back to you quickly.</p>
 
                   ${message ? `<hr class="hr"><p class="h2">Personal Message</p><p class="lead">${message}</p>` : ''}
 
@@ -1134,6 +1149,14 @@ Your 90-day access code: ${customCode}
 
 Sign up at: https://www.musobuddy.com/signup
 
+🔴 FIRST PRIORITY: EMAIL SETUP
+Please complete this immediately after signing up:
+1. Go to Settings → Email Integration
+2. Connect your email account (Gmail, Outlook, or IMAP)
+3. Complete the setup wizard
+
+Why this matters: We'll be sending you dummy booking requests to test the system. Without email integration, you won't receive these test bookings and we can't properly evaluate the app's core functionality.
+
 How to give effective feedback:
 - Be specific: what you tried, what you expected, what happened
 - Add screenshots: capture error messages or odd behaviour
@@ -1141,7 +1164,7 @@ How to give effective feedback:
 - Tell us your setup: device, OS, browser + version, and steps to reproduce
 - Suggestions welcome: features or tweaks that would save you time at gigs
 
-${message ? `Personal Message:\n${message}\n\n` : ''}Need help? Reply to this email or use the in-app support button.
+${message ? `Personal Message:\n${message}\n\n` : ''}Need help? Email us at support@musobuddy.com or use the in-app support button.
 
 © ${currentYear} MusoBuddy. All rights reserved.
 https://www.musobuddy.com`;
