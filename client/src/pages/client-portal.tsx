@@ -99,36 +99,70 @@ export default function ClientPortal() {
 
   const themeColor = '#191970'; // MusoBuddy midnight blue
 
-  // Hide mobile navigation by adding classes to body
+  // Fix mobile viewport and hide navigation
   useEffect(() => {
-    document.body.classList.add('client-portal-page');
-    document.body.style.overflow = 'auto';
-    document.body.style.height = 'auto';
-    document.documentElement.style.overflow = 'auto';
-    document.documentElement.style.height = 'auto';
+    // Add marker class
+    document.body.classList.add('client-portal-active');
+    
+    // Fix iOS viewport issues completely
+    const metaViewport = document.querySelector('meta[name=viewport]');
+    if (metaViewport) {
+      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes');
+    }
+    
+    // Reset all viewport restrictions
+    document.documentElement.style.cssText = 'overflow: visible !important; height: auto !important; position: static !important;';
+    document.body.style.cssText = 'overflow: visible !important; height: auto !important; min-height: 100vh !important; position: relative !important; padding-bottom: 100px !important;';
     
     // Clean up on unmount
     return () => {
-      document.body.classList.remove('client-portal-page');
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.height = '';
+      document.body.classList.remove('client-portal-active');
+      document.documentElement.style.cssText = '';
+      document.body.style.cssText = '';
+      if (metaViewport) {
+        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1');
+      }
     };
   }, []);
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
-      {/* Global CSS to forcefully hide mobile nav on this page */}
+      {/* Global CSS to forcefully hide mobile nav and fix viewport */}
       <style>
         {`
-          body.client-portal-page [data-mobile-nav],
-          body.client-portal-page .mobile-nav,
-          body.client-portal-page .fixed.bottom-0 {
+          /* Hide ALL mobile navigation elements */
+          body.client-portal-active [data-mobile-nav],
+          body.no-mobile-nav [data-mobile-nav],
+          .client-portal-active [data-mobile-nav],
+          [data-mobile-nav] {
             display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            left: -9999px !important;
           }
-          body.client-portal-page {
-            padding-bottom: 0 !important;
+          
+          /* Ensure full viewport access on mobile */
+          body.client-portal-active {
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            padding-bottom: 100px !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          
+          html:has(.client-portal-active) {
+            overflow: visible !important;
+            height: auto !important;
+          }
+          
+          /* Fix iOS rubber-band scrolling */
+          @supports (-webkit-touch-callout: none) {
+            body.client-portal-active {
+              position: relative !important;
+              min-height: -webkit-fill-available !important;
+            }
           }
         `}
       </style>
@@ -650,7 +684,16 @@ export default function ClientPortal() {
       </div>
       
       {/* Mobile fixed save button - always visible at bottom on mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-indigo-200 p-4 shadow-xl" style={{ zIndex: 50 }}>
+      <div className="md:hidden fixed bg-white border-t border-indigo-200 p-4 shadow-xl" 
+           style={{ 
+             position: 'fixed',
+             bottom: '0',
+             left: '0',
+             right: '0',
+             zIndex: 9999,
+             WebkitTransform: 'translateZ(0)',
+             transform: 'translateZ(0)'
+           }}>
         <Button
           onClick={handleSave}
           disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}

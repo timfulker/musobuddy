@@ -346,8 +346,30 @@ function App() {
     };
   }, [currentPath]);
 
-  // Don't show MobileNav on client portal pages
-  const shouldShowMobileNav = !currentPath.includes('client-portal');
+  // ABSOLUTELY don't show MobileNav on client portal or any public pages
+  const isClientPortal = currentPath.includes('client-portal') || 
+                         currentPath.includes('/sign-contract/') ||
+                         currentPath.includes('/view-contract/') ||
+                         currentPath.includes('/invoice/');
+  const shouldShowMobileNav = !isClientPortal;
+
+  // Add/remove body class based on path
+  useEffect(() => {
+    if (isClientPortal) {
+      document.body.classList.add('no-mobile-nav');
+      document.body.style.paddingBottom = '0';
+      // Fix iOS viewport issues
+      document.body.style.position = 'relative';
+      document.body.style.height = 'auto';
+      document.body.style.minHeight = '100vh';
+    } else {
+      document.body.classList.remove('no-mobile-nav');
+      document.body.style.paddingBottom = '';
+      document.body.style.position = '';
+      document.body.style.height = '';
+      document.body.style.minHeight = '';
+    }
+  }, [isClientPortal]);
 
   return (
     <ErrorBoundary>
@@ -358,8 +380,8 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                {/* Only render MobileNav if not on client portal */}
-                {shouldShowMobileNav && <MobileNav />}
+                {/* CRITICAL: Only render MobileNav if explicitly allowed */}
+                {shouldShowMobileNav && !isClientPortal && <MobileNav />}
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>
