@@ -74,7 +74,6 @@ import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
 import DuplicateManager from "@/pages/DuplicateManager";
 
 import { useEffect, lazy, useState } from "react";
-import MobileNav from "@/components/mobile-nav";
 import WelcomePage from "@/components/welcome-page";
 import { useQuery } from "@tanstack/react-query";
 
@@ -346,14 +345,13 @@ function App() {
     };
   }, [currentPath]);
 
-  // ABSOLUTELY don't show MobileNav on client portal or any public pages
+  // Check if client portal for body class purposes
   const isClientPortal = currentPath.includes('client-portal') || 
                          currentPath.includes('/sign-contract/') ||
                          currentPath.includes('/view-contract/') ||
                          currentPath.includes('/invoice/') ||
                          currentPath.includes('/widget/') ||
                          window.location.pathname.includes('client-portal');
-  const shouldShowMobileNav = !isClientPortal;
 
   // Add/remove body class based on path
   useEffect(() => {
@@ -382,8 +380,7 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                {/* CRITICAL: Only render MobileNav if explicitly allowed */}
-                {shouldShowMobileNav && !isClientPortal && <MobileNav />}
+                {/* Mobile navigation removed */}
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>
