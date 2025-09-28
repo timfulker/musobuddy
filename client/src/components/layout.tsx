@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
-import MobileNav from "@/components/mobile-nav";
 import MobileHeader from "@/components/mobile-header";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
@@ -39,7 +38,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      <MobileNav />
+      {/* MobileNav is controlled by App.tsx, not Layout */}
     </div>
   );
 }
