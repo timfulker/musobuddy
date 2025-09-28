@@ -147,7 +147,7 @@ export default function ClientPortal() {
     const metaViewport = document.querySelector('meta[name=viewport]');
     const originalContent = metaViewport?.getAttribute('content');
     
-    // Set viewport to allow scrolling
+    // Set viewport to allow normal mobile scrolling
     if (metaViewport) {
       metaViewport.setAttribute('content', 
         'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
@@ -174,6 +174,18 @@ export default function ClientPortal() {
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
+      {/* Hide mobile navigation completely */}
+      <style>{`
+        [data-mobile-nav] {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          position: absolute !important;
+          left: -99999px !important;
+        }
+      `}</style>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
