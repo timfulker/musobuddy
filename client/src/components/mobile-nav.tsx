@@ -18,6 +18,11 @@ export default function MobileNav() {
     return null;
   }
 
+  // Don't render on client portal pages - these are for external clients, not authenticated users
+  if (location.startsWith('/client-portal')) {
+    return null;
+  }
+
   return (
     <div 
       className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg"
