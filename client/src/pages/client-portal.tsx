@@ -99,8 +99,39 @@ export default function ClientPortal() {
 
   const themeColor = '#191970'; // MusoBuddy midnight blue
 
+  // Hide mobile navigation by adding classes to body
+  useEffect(() => {
+    document.body.classList.add('client-portal-page');
+    document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    
+    // Clean up on unmount
+    return () => {
+      document.body.classList.remove('client-portal-page');
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
+      {/* Global CSS to forcefully hide mobile nav on this page */}
+      <style>
+        {`
+          body.client-portal-page [data-mobile-nav],
+          body.client-portal-page .mobile-nav,
+          body.client-portal-page .fixed.bottom-0 {
+            display: none !important;
+          }
+          body.client-portal-page {
+            padding-bottom: 0 !important;
+          }
+        `}
+      </style>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -562,13 +593,14 @@ export default function ClientPortal() {
 
             <Separator className="my-6" />
 
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 md:p-4 border border-indigo-200 sticky md:static bottom-4 md:bottom-auto z-10 md:z-auto">
+            {/* Desktop save button */}
+            <div className="hidden md:block bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
               <div className="flex items-center justify-end">
                 <Button
                   onClick={handleSave}
                   disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}
-                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg md:shadow-md text-white font-medium w-full md:w-auto py-3 md:py-2 text-base md:text-sm"
-                  data-testid="button-update-portal"
+                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md text-white font-medium"
+                  data-testid="button-update-portal-desktop"
                 >
                   <Save className="h-4 w-4 mr-2 text-white" />
                   <span className="text-white">{updatePortalMutation.isPending ? 'Saving...' : 'Update Portal'}</span>
@@ -614,7 +646,23 @@ export default function ClientPortal() {
         </div>
         
         {/* Mobile bottom spacing - ensures all content is accessible above mobile browser UI */}
-        <div className="h-24 md:h-8"></div>
+        <div className="h-32 md:h-8"></div>
+      </div>
+      
+      {/* Mobile fixed save button - always visible at bottom on mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-indigo-200 p-4 shadow-xl" style={{ zIndex: 50 }}>
+        <Button
+          onClick={handleSave}
+          disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}
+          className="w-full flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg text-white font-medium py-4 text-base rounded-lg"
+          data-testid="button-update-portal-mobile"
+        >
+          <Save className="h-5 w-5 mr-2 text-white" />
+          <span className="text-white font-semibold">{updatePortalMutation.isPending ? 'Saving...' : 'Update Portal'}</span>
+        </Button>
+        {Object.keys(formData).length > 0 && (
+          <p className="text-center text-xs text-amber-600 mt-2">You have unsaved changes</p>
+        )}
       </div>
     </div>
   );
