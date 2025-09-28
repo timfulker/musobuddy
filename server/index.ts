@@ -1193,7 +1193,7 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       bodyField.toLowerCase().includes('payment') ||
       bodyField.toLowerCase().includes('cancelled') ||
       bodyField.toLowerCase().includes('rescheduled') ||
-      
+
       // Conversation patterns (like Joseph's message)
       bodyField.toLowerCase().includes('sorry to chase') ||
       bodyField.toLowerCase().includes('sent over the booking') ||
@@ -1204,23 +1204,107 @@ app.post('/api/webhook/mailgun', upload.any(), async (req, res) => {
       bodyField.toLowerCase().includes('reply to this email to respond') ||
       bodyField.toLowerCase().includes('new message from')
     );
-    
+
+    // Detection for important Encore service messages that aren't bookings
+    const isEncoreServiceMessage = (
+      // Messages from the two key Encore addresses
+      (fromField.toLowerCase().includes('message@encoremusicians.com') ||
+       fromField.toLowerCase().includes('bookings@encoremusicians.com')) &&
+      // These are NOT new job alerts
+      !hasJobAlertIndicators
+    );
+
+    // Detection for job expiry/ending notifications
+    const isJobExpiredNotification = (
+      subjectField.toLowerCase().includes('job expired') ||
+      subjectField.toLowerCase().includes('job ended') ||
+      subjectField.toLowerCase().includes('gig expired') ||
+      subjectField.toLowerCase().includes('opportunity expired') ||
+      bodyField.toLowerCase().includes('this job has expired') ||
+      bodyField.toLowerCase().includes('this job has ended') ||
+      bodyField.toLowerCase().includes('this opportunity is no longer available') ||
+      bodyField.toLowerCase().includes('listing has expired')
+    );
+
+    // Combine: Any non-booking message from Encore that should go to unparsable
+    const isEncoreNonBookingMessage = isEncoreServiceMessage || isJobExpiredNotification;
+
     // FIXED: Encore job notifications can have BOTH follow-up indicators AND apply-now links
     // The key is whether it's from Encore service and has follow-up indicators
     const isEncoreFollowup = (
-      isFromEncoreService && 
-      hasFollowupIndicators
+      isFromEncoreService &&
+      hasFollowupIndicators &&
+      !isEncoreNonBookingMessage  // Don't treat service messages as follow-ups
       // REMOVED: !hasJobAlertIndicators - this was incorrectly excluding legitimate bookings
     );
-    
+
     logWebhookActivity('Email classification check', {
       recipient: recipient.substring(0, 50),
       isFromEncoreService,
       hasJobAlertIndicators,
       hasFollowupIndicators,
+      isEncoreServiceMessage,
+      isJobExpiredNotification,
+      isEncoreNonBookingMessage,
       isEncoreFollowup
     });
-    
+
+    // Handle Encore non-booking messages (includes job expired, service messages, etc.)
+    if (isEncoreNonBookingMessage) {
+      const messageTypeLabel = isJobExpiredNotification ? 'JOB EXPIRED' : 'ENCORE SERVICE MESSAGE';
+      logWebhookActivity(`${messageTypeLabel} DETECTED - saving to unparsable messages`);
+
+      try {
+        const { storage } = await import('./core/storage');
+
+        // Extract user from recipient email prefix
+        const recipientMatch = recipient.match(/([^@]+)@/);
+        const rawEmailPrefix = recipientMatch ? recipientMatch[1].toLowerCase() : '';
+        const emailPrefix = normalizeEmailPrefix(rawEmailPrefix);
+
+        if (emailPrefix) {
+          const user = await storage.getUserByEmailPrefix(emailPrefix);
+
+          if (user) {
+            // Determine the message type and label
+            const messageType = isJobExpiredNotification ? 'job_expired_notification' : 'encore_service_message';
+            const subjectPrefix = isJobExpiredNotification ? '[JOB EXPIRED]' : '[ENCORE MESSAGE]';
+            const errorDetails = isJobExpiredNotification
+              ? 'Job expiry notification - not a booking request'
+              : `Service message from ${fromField} - not a booking request`;
+
+            await storage.createUnparseableMessage({
+              userId: user.id,
+              source: 'email',
+              fromContact: fromField,
+              subject: `${subjectPrefix} ${subjectField}`,
+              rawMessage: emailData['body-plain'] || emailData['body-html'] || 'No content',
+              parsingErrorDetails: errorDetails,
+              messageType: messageType,
+              createdAt: new Date()
+            });
+
+            logWebhookActivity(`${messageTypeLabel} saved to unparsable messages`, {
+              userId: user.id,
+              subject: subjectField,
+              from: fromField
+            });
+
+            return res.status(200).json({
+              status: 'ok',
+              type: messageType,
+              message: `${messageTypeLabel} saved to unparsable messages`
+            });
+          }
+        }
+
+        // If no user found, still log it
+        logWebhookActivity(`${messageTypeLabel} - no user found`, { emailPrefix });
+      } catch (error: any) {
+        logWebhookActivity(`Error saving ${messageTypeLabel}`, { error: error.message });
+      }
+    }
+
     // Handle Encore follow-up emails by converting to conversation
     if (isEncoreFollowup) {
       logWebhookActivity('ENCORE FOLLOW-UP DETECTED - searching for related booking');
