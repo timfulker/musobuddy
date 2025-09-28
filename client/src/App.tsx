@@ -74,6 +74,7 @@ import SubscriptionUpdatePayment from "@/pages/subscription-update-payment";
 import DuplicateManager from "@/pages/DuplicateManager";
 
 import { useEffect, lazy, useState } from "react";
+import MobileNav from "@/components/mobile-nav";
 import WelcomePage from "@/components/welcome-page";
 import { useQuery } from "@tanstack/react-query";
 
@@ -345,7 +346,7 @@ function App() {
     };
   }, [currentPath]);
 
-  // Check if client portal for body class purposes
+  // Check if client portal (unauthenticated client pages)
   const isClientPortal = currentPath.includes('client-portal') || 
                          currentPath.includes('/sign-contract/') ||
                          currentPath.includes('/view-contract/') ||
@@ -380,7 +381,8 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                {/* Mobile navigation removed */}
+                {/* Mobile navigation - only for authenticated users, not client portal */}
+                {!isClientPortal && <MobileNav />}
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>

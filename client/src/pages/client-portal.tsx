@@ -174,6 +174,20 @@ export default function ClientPortal() {
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
+      {/* Absolutely hide any mobile navigation on client portal */}
+      <style>{`
+        nav[role="navigation"],
+        [data-mobile-nav],
+        .mobile-nav,
+        .mobile-navigation {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          overflow: hidden !important;
+          position: absolute !important;
+          left: -999999px !important;
+        }
+      `}</style>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
