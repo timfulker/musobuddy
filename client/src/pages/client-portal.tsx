@@ -101,71 +101,79 @@ export default function ClientPortal() {
 
   // Fix mobile viewport and hide navigation
   useEffect(() => {
-    // Add marker class
-    document.body.classList.add('client-portal-active');
+    // Force hide mobile nav immediately
+    const style = document.createElement('style');
+    style.innerHTML = `
+      /* Emergency override - hide all mobile navigation */
+      [data-mobile-nav],
+      .fixed.bottom-0,
+      nav.fixed.bottom-0 {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+      
+      /* Fix viewport for scrolling */
+      html, body {
+        overflow: auto !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        position: relative !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      
+      /* Remove any bottom padding that might be added for nav */
+      body {
+        padding-bottom: 0 !important;
+      }
+      
+      /* Ensure main content is scrollable */
+      #root {
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+    `;
+    style.id = 'client-portal-emergency-styles';
+    document.head.appendChild(style);
     
-    // Fix iOS viewport issues completely
+    // Add body class
+    document.body.classList.add('client-portal-active', 'no-mobile-nav');
+    
+    // Store original viewport meta content
     const metaViewport = document.querySelector('meta[name=viewport]');
+    const originalContent = metaViewport?.getAttribute('content');
+    
+    // Set viewport to allow scrolling
     if (metaViewport) {
-      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes');
+      metaViewport.setAttribute('content', 
+        'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
+      );
     }
     
-    // Reset all viewport restrictions
-    document.documentElement.style.cssText = 'overflow: visible !important; height: auto !important; position: static !important;';
-    document.body.style.cssText = 'overflow: visible !important; height: auto !important; min-height: 100vh !important; position: relative !important; padding-bottom: 100px !important;';
-    
-    // Clean up on unmount
+    // Cleanup function
     return () => {
-      document.body.classList.remove('client-portal-active');
-      document.documentElement.style.cssText = '';
-      document.body.style.cssText = '';
-      if (metaViewport) {
-        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1');
+      // Remove emergency styles
+      const emergencyStyles = document.getElementById('client-portal-emergency-styles');
+      if (emergencyStyles) {
+        emergencyStyles.remove();
+      }
+      
+      // Remove body classes
+      document.body.classList.remove('client-portal-active', 'no-mobile-nav');
+      
+      // Restore viewport
+      if (metaViewport && originalContent) {
+        metaViewport.setAttribute('content', originalContent);
       }
     };
   }, []);
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
-      {/* Global CSS to forcefully hide mobile nav and fix viewport */}
-      <style>
-        {`
-          /* Hide ALL mobile navigation elements */
-          body.client-portal-active [data-mobile-nav],
-          body.no-mobile-nav [data-mobile-nav],
-          .client-portal-active [data-mobile-nav],
-          [data-mobile-nav] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            position: absolute !important;
-            left: -9999px !important;
-          }
-          
-          /* Ensure full viewport access on mobile */
-          body.client-portal-active {
-            overflow: visible !important;
-            height: auto !important;
-            min-height: 100vh !important;
-            padding-bottom: 100px !important;
-            -webkit-overflow-scrolling: touch !important;
-          }
-          
-          html:has(.client-portal-active) {
-            overflow: visible !important;
-            height: auto !important;
-          }
-          
-          /* Fix iOS rubber-band scrolling */
-          @supports (-webkit-touch-callout: none) {
-            body.client-portal-active {
-              position: relative !important;
-              min-height: -webkit-fill-available !important;
-            }
-          }
-        `}
-      </style>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -683,28 +691,19 @@ export default function ClientPortal() {
         <div className="h-32 md:h-8"></div>
       </div>
       
-      {/* Mobile fixed save button - always visible at bottom on mobile */}
-      <div className="md:hidden fixed bg-white border-t border-indigo-200 p-4 shadow-xl" 
-           style={{ 
-             position: 'fixed',
-             bottom: '0',
-             left: '0',
-             right: '0',
-             zIndex: 9999,
-             WebkitTransform: 'translateZ(0)',
-             transform: 'translateZ(0)'
-           }}>
+      {/* Mobile sticky save button - always accessible */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-[1000] shadow-xl">
         <Button
           onClick={handleSave}
           disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}
-          className="w-full flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg text-white font-medium py-4 text-base rounded-lg"
+          className="w-full flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg text-white font-medium py-3 text-base rounded-lg"
           data-testid="button-update-portal-mobile"
         >
           <Save className="h-5 w-5 mr-2 text-white" />
-          <span className="text-white font-semibold">{updatePortalMutation.isPending ? 'Saving...' : 'Update Portal'}</span>
+          <span className="text-white font-semibold">{updatePortalMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
         </Button>
         {Object.keys(formData).length > 0 && (
-          <p className="text-center text-xs text-amber-600 mt-2">You have unsaved changes</p>
+          <p className="text-center text-xs text-gray-500 mt-2">Your changes will be saved</p>
         )}
       </div>
     </div>

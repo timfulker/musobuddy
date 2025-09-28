@@ -350,7 +350,9 @@ function App() {
   const isClientPortal = currentPath.includes('client-portal') || 
                          currentPath.includes('/sign-contract/') ||
                          currentPath.includes('/view-contract/') ||
-                         currentPath.includes('/invoice/');
+                         currentPath.includes('/invoice/') ||
+                         currentPath.includes('/widget/') ||
+                         window.location.pathname.includes('client-portal');
   const shouldShowMobileNav = !isClientPortal;
 
   // Add/remove body class based on path

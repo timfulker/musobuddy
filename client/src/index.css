@@ -5,19 +5,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CRITICAL: Force hide mobile navigation on client portal pages */
-body.no-mobile-nav [data-mobile-nav],
+/* Hide mobile nav on client pages */
 body.client-portal-active [data-mobile-nav],
-.no-mobile-nav [data-mobile-nav] {
+body.no-mobile-nav [data-mobile-nav] {
   display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  left: -99999px !important;
-  top: -99999px !important;
-  width: 0 !important;
   height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Gradient Background Support */
