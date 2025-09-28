@@ -425,7 +425,19 @@ export default function Conversation() {
           return;
         }
 
-        const newValue = editedValues[field] || extractedDetails[field];
+        // CRITICAL FIX: Only update fields that actually have extracted values
+        // This prevents fees from being zeroed when they're not mentioned in the message
+        const extractedValue = extractedDetails[field];
+        const editedValue = editedValues[field];
+
+        // Skip if no extracted value and no edited value - preserves existing booking data
+        if ((extractedValue === null || extractedValue === undefined || extractedValue === '') &&
+            (editedValue === null || editedValue === undefined || editedValue === '')) {
+          console.log(`⚠️ Skipping field '${field}' - no extracted or edited value`);
+          return;
+        }
+
+        const newValue = editedValue || extractedValue;
         if (newValue !== null && newValue !== '') {
           const mode = fieldModes[field] || 'replace';
           const currentValue = booking[field] || '';
@@ -442,6 +454,7 @@ export default function Conversation() {
           } else {
             updates[field] = newValue;
           }
+          console.log(`✅ Updating field '${field}' with value:`, newValue);
         }
       });
       
