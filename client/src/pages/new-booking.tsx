@@ -812,22 +812,29 @@ export default function NewBookingPage({
   // Handle form validation errors
   const onInvalidSubmit = (errors: any) => {
     console.log('❌ Form validation errors:', errors);
-    
+
+    // Don't show validation errors if we're on client portal
+    if (window.location.pathname.includes('client-portal') ||
+        window.location.search.includes('token=')) {
+      console.log('Suppressing validation error on client portal');
+      return;
+    }
+
     // Find the first error and show a helpful message
     const errorFields = Object.keys(errors);
     if (errorFields.length > 0) {
       const firstError = errors[errorFields[0]];
       const fieldName = errorFields[0];
-      
+
       // Create user-friendly field names
       const friendlyNames: { [key: string]: string } = {
         clientName: "Client Name",
-        eventDate: "Event Date", 
+        eventDate: "Event Date",
         venue: "Venue Name"
       };
-      
+
       const friendlyFieldName = friendlyNames[fieldName] || fieldName;
-      
+
       toast({
         title: "Required Field Missing",
         description: `Please fill in the ${friendlyFieldName} field to continue.`,

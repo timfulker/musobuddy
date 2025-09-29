@@ -40,7 +40,7 @@ export default function ClientPortal() {
 
   // Update client portal data
   const updatePortalMutation = useMutation({
-    mutationFn: (updates: any) => 
+    mutationFn: (updates: any) =>
       apiRequest(`/api/client-portal/${contractId}/update`, {
         method: 'POST',
         body: JSON.stringify({ ...updates, token })
@@ -57,48 +57,10 @@ export default function ClientPortal() {
 
   const handleSave = async () => {
     try {
-      // Don't require any specific fields - all fields are optional
-      if (Object.keys(formData).length === 0) {
-        return; // Nothing to save
-      }
-
       await updatePortalMutation.mutateAsync(formData);
       setFormData({});
-
-      // Show success message (you could use a toast here instead)
-      const successAlert = document.createElement('div');
-      successAlert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center';
-      successAlert.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Changes saved successfully!';
-      document.body.appendChild(successAlert);
-      setTimeout(() => successAlert.remove(), 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save changes:', error);
-
-      // Store locally as backup
-      localStorage.setItem(`clientPortal_${contractId}`, JSON.stringify(formData));
-
-      // Show user-friendly error message
-      const errorMsg = error?.message || 'Failed to save changes';
-
-      // Don't show "Required Field" errors for client portal - all fields are optional
-      if (errorMsg.includes('Required Field') || errorMsg.includes('Client Name')) {
-        // Still save locally and show success
-        setFormData({});
-        const successAlert = document.createElement('div');
-        successAlert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center';
-        successAlert.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Your preferences have been saved!';
-        document.body.appendChild(successAlert);
-        setTimeout(() => successAlert.remove(), 3000);
-        return;
-      }
-
-      // For other errors, show a friendly message
-      const errorAlert = document.createElement('div');
-      errorAlert.className = 'fixed top-4 right-4 bg-amber-500 text-white px-6 py-3 rounded-lg shadow-lg z-[9999]';
-      errorAlert.innerHTML = 'Your changes have been noted and will be shared with the performer.';
-      document.body.appendChild(errorAlert);
-      setTimeout(() => errorAlert.remove(), 3000);
-      setFormData({});
     }
   };
 
