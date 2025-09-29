@@ -770,6 +770,7 @@ export default function NewBookingPage({
       console.log('🔍 PREPARED BOOKING DATA:', bookingData);
       console.log('🔍 BookingData keys:', Object.keys(bookingData));
       console.log('🔍 BookingData dressCode:', { dressCode: bookingData.dressCode });
+      console.log('🔍 ALL BOOKING DATA FIELDS:', JSON.stringify(bookingData, null, 2));
       
       if (clientMode && collaborationToken) {
         // Use collaboration endpoint for clients
