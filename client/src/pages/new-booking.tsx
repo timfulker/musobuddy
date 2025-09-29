@@ -29,7 +29,11 @@ const fullBookingSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required"),
+  eventDate: z.string().min(1, "Event date is required").transform((dateStr) => {
+    // Transform to Date object for database timestamp field
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? new Date() : date;
+  }),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   venue: z.string().optional(),
@@ -394,7 +398,6 @@ export default function NewBookingPage({
       venueAddress: "",
       venueContactInfo: "",
       fee: "",
-      finalAmount: "",
       gigType: "",
       eventType: "",
       equipmentRequirements: "",
@@ -436,7 +439,6 @@ export default function NewBookingPage({
       encoreAllowed: true,
       encoreSuggestions: "",
       what3words: "",
-      bandId: undefined,
     },
   });
 
@@ -473,34 +475,11 @@ export default function NewBookingPage({
   useEffect(() => {
     if (editingBooking && isEditMode) {
       console.log('📝 Populating form with booking data:', editingBooking);
-      console.log('🔍 Booking fields check:', {
-        dressCode: editingBooking.dressCode,
-        clientAddress: editingBooking.clientAddress,
-        gigType: editingBooking.gigType,
-        venue: editingBooking.venue,
-        allKeys: Object.keys(editingBooking)
-      });
       
       const formatDate = (date: any) => {
         if (!date) return '';
         try {
-          // If it's already in YYYY-MM-DD format, return as-is
-          if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            return date;
-          }
-          // If it's a longer date string, extract just the date part
-          if (typeof date === 'string' && date.includes('T')) {
-            return date.split('T')[0];
-          }
-          // For other formats, try parsing but avoid timezone issues
-          const parsed = new Date(date);
-          if (isNaN(parsed.getTime())) return '';
-          
-          // Use local date methods to avoid timezone shifts
-          const year = parsed.getFullYear();
-          const month = String(parsed.getMonth() + 1).padStart(2, '0');
-          const day = String(parsed.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
+          return new Date(date).toISOString().split('T')[0];
         } catch {
           return '';
         }
@@ -637,14 +616,13 @@ export default function NewBookingPage({
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
-      console.log('🚀 CREATE BOOKING MUTATION TRIGGERED:', data);
       const bookingData = {
         title: `${data.gigType || 'Event'} - ${data.clientName}`,
         clientName: data.clientName,
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: data.eventDate,
+        eventDate: new Date(data.eventDate),
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
@@ -701,9 +679,6 @@ export default function NewBookingPage({
   // Update booking mutation for edit mode
   const updateBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
-      console.log('🚀 UPDATE BOOKING MUTATION TRIGGERED:', data);
-      console.log('🔍 Form data keys:', Object.keys(data));
-      console.log('🔍 DressCode specifically:', { dressCode: data.dressCode, type: typeof data.dressCode });
       if (!editBookingId) throw new Error('No booking ID');
       
       const bookingData = {
@@ -711,7 +686,7 @@ export default function NewBookingPage({
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: data.eventDate,
+        eventDate: new Date(data.eventDate),
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
@@ -767,12 +742,6 @@ export default function NewBookingPage({
         duration: mileageData.duration || null,
       };
       
-      console.log('🔍 PREPARED BOOKING DATA:', bookingData);
-      console.log('🔍 BookingData keys:', Object.keys(bookingData));
-      console.log('🔍 BookingData dressCode:', { dressCode: bookingData.dressCode });
-      console.log('🔍 ALL BOOKING DATA FIELDS:', JSON.stringify(bookingData, null, 2));
-      console.log('🔍 CLIENT MODE:', { clientMode, collaborationToken });
-      
       if (clientMode && collaborationToken) {
         // Use collaboration endpoint for clients
         const response = await fetch(`/api/booking-collaboration/${editBookingId}/update?token=${collaborationToken}`, {
@@ -788,7 +757,6 @@ export default function NewBookingPage({
         return await response.json();
       } else {
         // Use regular endpoint for musicians
-        console.log('🔍 ABOUT TO SEND PATCH REQUEST with data:', JSON.stringify(bookingData, null, 2));
         const response = await apiRequest(`/api/bookings/${editBookingId}`, {
           method: 'PATCH',
           body: JSON.stringify(bookingData),
@@ -831,9 +799,7 @@ export default function NewBookingPage({
   });
 
   const onSubmit = (data: FullBookingFormData) => {
-    console.log('🚀 Form submission triggered:', { isEditMode, mileageData, formData: data });
-    console.log('🔍 Form validation state:', form.formState.errors);
-    console.log('🔍 Form is valid:', form.formState.isValid);
+    console.log('🚀 Form submission triggered:', { isEditMode, mileageData });
     if (isEditMode) {
       console.log('📝 Updating booking with data:', { ...data, mileageData });
       updateBookingMutation.mutate(data);
@@ -845,31 +811,23 @@ export default function NewBookingPage({
 
   // Handle form validation errors
   const onInvalidSubmit = (errors: any) => {
-    console.log('❌ FORM SUBMISSION FAILED - Validation errors:', errors);
-    console.log('❌ Form state:', form.formState);
-
-    // Don't show validation errors if we're on client portal
-    if (window.location.pathname.includes('client-portal') ||
-        window.location.search.includes('token=')) {
-      console.log('Suppressing validation error on client portal');
-      return;
-    }
-
+    console.log('❌ Form validation errors:', errors);
+    
     // Find the first error and show a helpful message
     const errorFields = Object.keys(errors);
     if (errorFields.length > 0) {
       const firstError = errors[errorFields[0]];
       const fieldName = errorFields[0];
-
+      
       // Create user-friendly field names
       const friendlyNames: { [key: string]: string } = {
         clientName: "Client Name",
-        eventDate: "Event Date",
+        eventDate: "Event Date", 
         venue: "Venue Name"
       };
-
+      
       const friendlyFieldName = friendlyNames[fieldName] || fieldName;
-
+      
       toast({
         title: "Required Field Missing",
         description: `Please fill in the ${friendlyFieldName} field to continue.`,
@@ -1084,15 +1042,7 @@ export default function NewBookingPage({
         )}
 
         <Form {...form}>
-          <form 
-            onSubmit={(e) => {
-              console.log('🔥 FORM onSubmit event triggered!');
-              console.log('🔍 Event target:', e.target);
-              e.preventDefault();
-              form.handleSubmit(onSubmit, onInvalidSubmit)(e);
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
             {/* Client Mode Header */}
             {clientMode && (
               <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
@@ -2317,11 +2267,6 @@ export default function NewBookingPage({
                     </Link>
                     <Button 
                       type="submit" 
-                      onClick={() => {
-                        console.log('🔴 SUBMIT BUTTON CLICKED!');
-                        console.log('🔍 Current form state:', form.getValues());
-                        console.log('🔍 Form errors:', form.formState.errors);
-                      }}
                       className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
                     >

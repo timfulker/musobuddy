@@ -375,13 +375,6 @@ export function registerBookingRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to update booking - no data returned' });
       }
 
-      console.log(`🔍 [BOOKING-UPDATE] Updated booking data being returned:`, {
-        id: updatedBooking.id,
-        dressCode: updatedBooking.dressCode,
-        clientAddress: updatedBooking.clientAddress,
-        keys: Object.keys(updatedBooking)
-      });
-
       console.log(`🔍 [BOOKING-UPDATE] After database update:`, {
         finalAmount: updatedBooking?.finalAmount,
         fee: updatedBooking?.fee,
@@ -611,16 +604,6 @@ export function registerBookingRoutes(app: Express) {
       if (!booking || booking.userId !== userId) {
         return res.status(404).json({ error: 'Booking not found' });
       }
-      
-      console.log(`🔍 [BOOKING-FETCH] Returning booking ${bookingId} data:`, {
-        id: booking.id,
-        dressCode: booking.dressCode,
-        clientAddress: booking.clientAddress,
-        hasAllFields: {
-          dressCode: booking.hasOwnProperty('dressCode'),
-          clientAddress: booking.hasOwnProperty('clientAddress')
-        }
-      });
       
       res.json(booking);
       
