@@ -475,7 +475,23 @@ export default function NewBookingPage({
       const formatDate = (date: any) => {
         if (!date) return '';
         try {
-          return new Date(date).toISOString().split('T')[0];
+          // If it's already in YYYY-MM-DD format, return as-is
+          if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date;
+          }
+          // If it's a longer date string, extract just the date part
+          if (typeof date === 'string' && date.includes('T')) {
+            return date.split('T')[0];
+          }
+          // For other formats, try parsing but avoid timezone issues
+          const parsed = new Date(date);
+          if (isNaN(parsed.getTime())) return '';
+          
+          // Use local date methods to avoid timezone shifts
+          const year = parsed.getFullYear();
+          const month = String(parsed.getMonth() + 1).padStart(2, '0');
+          const day = String(parsed.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
         } catch {
           return '';
         }
