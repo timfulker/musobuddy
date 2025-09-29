@@ -29,11 +29,7 @@ const fullBookingSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required").transform((dateStr) => {
-    // Transform to Date object for database timestamp field
-    const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? new Date() : date;
-  }),
+  eventDate: z.string().min(1, "Event date is required"),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   venue: z.string().optional(),
@@ -479,7 +475,16 @@ export default function NewBookingPage({
       const formatDate = (date: any) => {
         if (!date) return '';
         try {
-          return new Date(date).toISOString().split('T')[0];
+          // If it's already a string in YYYY-MM-DD format, return as-is
+          if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date;
+          }
+          // Convert timestamp to date string without timezone conversion
+          const dateObj = new Date(date);
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
         } catch {
           return '';
         }
@@ -622,7 +627,7 @@ export default function NewBookingPage({
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: new Date(data.eventDate),
+        eventDate: data.eventDate,
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
@@ -686,7 +691,7 @@ export default function NewBookingPage({
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: new Date(data.eventDate),
+        eventDate: data.eventDate,
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
