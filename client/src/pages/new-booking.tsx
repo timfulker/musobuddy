@@ -2291,6 +2291,11 @@ export default function NewBookingPage({
                     </Link>
                     <Button 
                       type="submit" 
+                      onClick={() => {
+                        console.log('🔴 SUBMIT BUTTON CLICKED!');
+                        console.log('🔍 Current form state:', form.getValues());
+                        console.log('🔍 Form errors:', form.formState.errors);
+                      }}
                       className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
                     >
