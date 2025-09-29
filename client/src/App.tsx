@@ -310,8 +310,9 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/monitoring" component={MonitoringDashboard} />
 
-      {/* Client Portal - handled by backend HTML route, removed from frontend to prevent conflicts */}
-      
+      {/* Client Portal - accessible by clients with contract token */}
+      <Route path="/client-portal/:contractId" component={ClientPortal} />
+
       {/* Public Invoice - for clients to view and pay invoices */}
       <Route path="/invoice/:token" component={PublicInvoice} />
       
@@ -321,6 +322,33 @@ function Router() {
 }
 
 function App() {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    // Listen for navigation changes
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    // Listen for both popstate (browser back/forward) and custom navigation
+    window.addEventListener('popstate', handleLocationChange);
+
+    // Also check on interval in case React Router doesn't trigger popstate
+    const interval = setInterval(() => {
+      if (window.location.pathname !== currentPath) {
+        setCurrentPath(window.location.pathname);
+      }
+    }, 100);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      clearInterval(interval);
+    };
+  }, [currentPath]);
+
+  // Don't show MobileNav on client portal pages
+  const shouldShowMobileNav = !currentPath.includes('client-portal');
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -330,7 +358,8 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                <MobileNav />
+                {/* Only render MobileNav if not on client portal */}
+                {shouldShowMobileNav && <MobileNav />}
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>
