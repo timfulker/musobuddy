@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, Music, Calendar, MapPin, Users, Clock, Camera, Upload, Save, Sparkles, Heart, Volume2, Mic2, Settings, X } from 'lucide-react';
+import { AlertCircle, Music, Calendar, MapPin, Users, Clock, Camera, Upload, Save, Sparkles, Heart, Volume2, Mic2, Settings, X, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 
