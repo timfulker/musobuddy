@@ -473,6 +473,13 @@ export default function NewBookingPage({
   useEffect(() => {
     if (editingBooking && isEditMode) {
       console.log('📝 Populating form with booking data:', editingBooking);
+      console.log('🔍 Booking fields check:', {
+        dressCode: editingBooking.dressCode,
+        clientAddress: editingBooking.clientAddress,
+        gigType: editingBooking.gigType,
+        venue: editingBooking.venue,
+        allKeys: Object.keys(editingBooking)
+      });
       
       const formatDate = (date: any) => {
         if (!date) return '';
@@ -695,6 +702,8 @@ export default function NewBookingPage({
   const updateBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
       console.log('🚀 UPDATE BOOKING MUTATION TRIGGERED:', data);
+      console.log('🔍 Form data keys:', Object.keys(data));
+      console.log('🔍 DressCode specifically:', { dressCode: data.dressCode, type: typeof data.dressCode });
       if (!editBookingId) throw new Error('No booking ID');
       
       const bookingData = {
@@ -758,6 +767,10 @@ export default function NewBookingPage({
         duration: mileageData.duration || null,
       };
       
+      console.log('🔍 PREPARED BOOKING DATA:', bookingData);
+      console.log('🔍 BookingData keys:', Object.keys(bookingData));
+      console.log('🔍 BookingData dressCode:', { dressCode: bookingData.dressCode });
+      
       if (clientMode && collaborationToken) {
         // Use collaboration endpoint for clients
         const response = await fetch(`/api/booking-collaboration/${editBookingId}/update?token=${collaborationToken}`, {
@@ -773,6 +786,7 @@ export default function NewBookingPage({
         return await response.json();
       } else {
         // Use regular endpoint for musicians
+        console.log('🔍 ABOUT TO SEND PATCH REQUEST with data:', JSON.stringify(bookingData, null, 2));
         const response = await apiRequest(`/api/bookings/${editBookingId}`, {
           method: 'PATCH',
           body: JSON.stringify(bookingData),
