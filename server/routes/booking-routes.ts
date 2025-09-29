@@ -327,8 +327,8 @@ export function registerBookingRoutes(app: Express) {
 
   // Update booking
   app.patch('/api/bookings/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+    const bookingId = parseInt(req.params.id);
     try {
-      const bookingId = parseInt(req.params.id);
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });

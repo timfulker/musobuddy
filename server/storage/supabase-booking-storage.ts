@@ -244,6 +244,13 @@ export class SupabaseBookingStorage {
     // Map camelCase updates to snake_case with special handling for certain fields
     const supabaseUpdates: any = {};
     Object.keys(updates).forEach(key => {
+      // Skip fields that don't exist in Supabase schema
+      const nonExistentFields = ['contactPerson']; // contactPerson column doesn't exist in Supabase
+      if (nonExistentFields.includes(key)) {
+        console.log(`⚠️ [SUPABASE] Skipping non-existent field '${key}' - column not in database schema`);
+        return;
+      }
+
       // CRITICAL FIX: Don't overwrite existing data with empty values
       // Skip numeric fields that are empty to preserve existing database values
       const numericFields = [
