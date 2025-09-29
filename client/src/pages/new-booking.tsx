@@ -174,28 +174,57 @@ export default function NewBookingPage({
   
   // Fetch specific booking if in edit mode
   // For client mode, use collaboration endpoint; for musician mode, use regular endpoint
-  const { data: editingBooking, isLoading: isLoadingBooking } = useQuery({
-    queryKey: clientMode 
+  const { data: editingBooking, isLoading: isLoadingBooking, error: bookingError, refetch: refetchBooking } = useQuery({
+    queryKey: clientMode
       ? [`/api/booking-collaboration/${editBookingId}/details`, collaborationToken]
       : [`/api/bookings/${editBookingId}`],
     queryFn: async () => {
+      console.log('🔄 Fetching booking details:', {
+        clientMode,
+        editBookingId,
+        hasToken: !!collaborationToken,
+        userAgent: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop'
+      });
+
       if (clientMode && collaborationToken) {
-        // Use collaboration endpoint for clients
-        const response = await fetch(`/api/booking-collaboration/${editBookingId}/details?token=${collaborationToken}`);
-        if (!response.ok) {
-          throw new Error('Failed to load booking details');
+        // Use collaboration endpoint for clients with longer timeout for mobile
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for mobile
+
+        try {
+          const response = await fetch(`/api/booking-collaboration/${editBookingId}/details?token=${collaborationToken}`, {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Failed to load booking details`);
+          }
+          const data = await response.json();
+          console.log('✅ Fetched booking data (client mode):', data);
+          return data;
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          console.error('❌ Client mode fetch failed:', error);
+          throw error;
         }
-        return response.json();
       } else if (!clientMode) {
-        // Use regular endpoint for musicians  
+        // Use regular endpoint for musicians
         const response = await apiRequest(`/api/bookings/${editBookingId}`);
-        return response.json();
+        const data = await response.json();
+        console.log('✅ Fetched booking data (musician mode):', data);
+        return data;
       }
       return null;
     },
     enabled: isEditMode && !!editBookingId,
     refetchOnWindowFocus: true, // Refresh when user returns to tab
     staleTime: 30000, // Consider data fresh for 30 seconds to prevent constant refetching
+    retry: (failureCount, error) => {
+      console.log(`🔄 Query retry attempt ${failureCount}:`, error);
+      return failureCount < 3; // Retry up to 3 times
+    },
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
   
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
@@ -469,6 +498,14 @@ export default function NewBookingPage({
 
   // Populate form with existing booking data when editing
   useEffect(() => {
+    console.log('🔍 Form population check:', {
+      hasEditingBooking: !!editingBooking,
+      isEditMode,
+      clientMode,
+      editBookingId,
+      bookingData: editingBooking
+    });
+
     if (editingBooking && isEditMode) {
       console.log('📝 Populating form with booking data:', editingBooking);
       
@@ -748,18 +785,41 @@ export default function NewBookingPage({
       };
       
       if (clientMode && collaborationToken) {
-        // Use collaboration endpoint for clients
-        const response = await fetch(`/api/booking-collaboration/${editBookingId}/update?token=${collaborationToken}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(bookingData),
+        console.log('🚀 Updating booking via collaboration (mobile-optimized):', {
+          editBookingId,
+          isMobile: navigator.userAgent.includes('Mobile'),
+          dataSize: JSON.stringify(bookingData).length
         });
-        if (!response.ok) {
-          throw new Error('Failed to update booking via collaboration');
+
+        // Use collaboration endpoint for clients with mobile optimization
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout for mobile updates
+
+        try {
+          const response = await fetch(`/api/booking-collaboration/${editBookingId}/update?token=${collaborationToken}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookingData),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to update booking via collaboration'}`);
+          }
+
+          const result = await response.json();
+          console.log('✅ Collaboration update successful:', result);
+          return result;
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          console.error('❌ Collaboration update failed:', error);
+          throw error;
         }
-        return await response.json();
       } else {
         // Use regular endpoint for musicians
         const response = await apiRequest(`/api/bookings/${editBookingId}`, {
@@ -795,10 +855,29 @@ export default function NewBookingPage({
     },
     onError: (error: any) => {
       console.error('❌ Booking update failed:', error);
+
+      let errorMessage = "Failed to update booking";
+
+      if (clientMode) {
+        // Mobile-specific error messages for collaboration
+        if (error.name === 'AbortError') {
+          errorMessage = "Update timed out. Please check your connection and try again.";
+        } else if (error.message?.includes('network')) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        } else if (error.message?.includes('403')) {
+          errorMessage = "Your collaboration link may have expired. Please contact your musician for a new link.";
+        } else {
+          errorMessage = error.message || "Failed to save your changes. Please try again.";
+        }
+      } else {
+        errorMessage = error.message || "Failed to update booking";
+      }
+
       toast({
         title: "Error",
-        description: error.message || "Failed to update booking",
+        description: errorMessage,
         variant: "destructive",
+        duration: clientMode ? 6000 : 5000, // Longer duration for mobile users
       });
     },
   });
@@ -842,7 +921,48 @@ export default function NewBookingPage({
   };
 
   const { isDesktop } = useResponsive();
-  
+
+  // Show loading state while fetching booking data in edit mode
+  if (isEditMode && isLoadingBooking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-primary/5 p-4">
+        <div className="text-center max-w-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-slate-600 mb-2">Loading booking details...</p>
+          {clientMode && (
+            <p className="text-sm text-slate-500">
+              This may take a moment on mobile connections
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with retry option for collaboration portal
+  if (isEditMode && bookingError && clientMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-primary/5 p-4">
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Connection Error</h1>
+          <p className="text-slate-600 mb-4">
+            {bookingError.message?.includes('timeout') ?
+              'The request timed out. Please check your internet connection.' :
+              'Failed to load your event details. Please try again.'
+            }
+          </p>
+          <Button onClick={() => refetchBooking()} className="mb-2">
+            Try Again
+          </Button>
+          <p className="text-xs text-slate-500">
+            If this persists, please contact your musician for assistance.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary/5 flex">
       {/* Desktop Sidebar - Only visible for musicians, NOT for clients */}
@@ -864,12 +984,14 @@ export default function NewBookingPage({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col gap-2">
-                    <Link href="/bookings">
-                      <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Bookings
-                      </Button>
-                    </Link>
+                    {!clientMode && (
+                      <Link href="/bookings">
+                        <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-primary-foreground hover:text-primary-foreground font-medium">
+                          <ArrowLeft className="w-4 h-4 mr-2" />
+                          Back to Bookings
+                        </Button>
+                      </Link>
+                    )}
                     {/* Back to conflict button - only show if booking has conflicts */}
                     {isEditMode && editingBooking && editingBookingConflicts && editingBookingConflicts.length > 0 && (
                       <Button 
@@ -2265,24 +2387,102 @@ export default function NewBookingPage({
                     Ready to create your booking?
                   </div>
                   <div className="flex gap-4">
-                    <Link href="/bookings">
-                      <Button variant="outline" className="bg-white/50 hover:bg-white/80 border-gray-300">
-                        Cancel
+                    {clientMode ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-white/50 hover:bg-white/80 border-gray-300"
+                        onClick={() => {
+                          // In client mode, reset form to original values
+                          if (editingBooking && isEditMode) {
+                            form.reset({
+                              clientName: editingBooking.clientName || '',
+                              clientEmail: editingBooking.clientEmail || '',
+                              clientPhone: editingBooking.clientPhone || '',
+                              clientAddress: editingBooking.clientAddress || '',
+                              eventDate: editingBooking.eventDate || '',
+                              eventTime: editingBooking.eventTime || '',
+                              eventEndTime: editingBooking.eventEndTime || '',
+                              venue: editingBooking.venue || '',
+                              venueAddress: editingBooking.venueAddress || '',
+                              venueContactInfo: editingBooking.venueContactInfo || '',
+                              fee: editingBooking.fee !== null && editingBooking.fee !== undefined ? editingBooking.fee.toString() : '',
+                              finalAmount: editingBooking.finalAmount !== null && editingBooking.finalAmount !== undefined ? editingBooking.finalAmount.toString() : '',
+                              gigType: editingBooking.gigType || '',
+                              eventType: editingBooking.eventType || '',
+                              equipmentRequirements: editingBooking.equipmentRequirements || '',
+                              specialRequirements: editingBooking.specialRequirements || '',
+                              performanceDuration: editingBooking.performanceDuration || '',
+                              styles: editingBooking.styles || '',
+                              equipmentProvided: editingBooking.equipmentProvided || '',
+                              whatsIncluded: editingBooking.whatsIncluded || '',
+                              dressCode: editingBooking.dressCode || '',
+                              contactPerson: editingBooking.contactPerson || '',
+                              contactPhone: editingBooking.contactPhone || '',
+                              parkingInfo: editingBooking.parkingInfo || '',
+                              notes: editingBooking.notes || '',
+                              travelExpense: editingBooking.travelExpense !== null && editingBooking.travelExpense !== undefined ? editingBooking.travelExpense.toString() : '',
+                              venueContact: editingBooking.venueContact || '',
+                              soundTechContact: editingBooking.soundTechContact || '',
+                              stageSize: editingBooking.stageSize || '',
+                              powerEquipment: editingBooking.powerEquipment || '',
+                              styleMood: editingBooking.styleMood || '',
+                              mustPlaySongs: editingBooking.mustPlaySongs || '',
+                              avoidSongs: editingBooking.avoidSongs || '',
+                              setOrder: editingBooking.setOrder || '',
+                              firstDanceSong: editingBooking.firstDanceSong || '',
+                              processionalSong: editingBooking.processionalSong || '',
+                              signingRegisterSong: editingBooking.signingRegisterSong || '',
+                              recessionalSong: editingBooking.recessionalSong || '',
+                              specialDedications: editingBooking.specialDedications || '',
+                              guestAnnouncements: editingBooking.guestAnnouncements || '',
+                              loadInInfo: editingBooking.loadInInfo || '',
+                              soundCheckTime: editingBooking.soundCheckTime || '',
+                              weatherContingency: editingBooking.weatherContingency || '',
+                              parkingPermitRequired: editingBooking.parkingPermitRequired || false,
+                              mealProvided: editingBooking.mealProvided || false,
+                              dietaryRequirements: editingBooking.dietaryRequirements || '',
+                              sharedNotes: editingBooking.sharedNotes || '',
+                              referenceTracks: editingBooking.referenceTracks || '',
+                              photoPermission: editingBooking.photoPermission !== undefined ? editingBooking.photoPermission : true,
+                              encoreAllowed: editingBooking.encoreAllowed !== undefined ? editingBooking.encoreAllowed : true,
+                              encoreSuggestions: editingBooking.encoreSuggestions || '',
+                              what3words: editingBooking.what3words || '',
+                            });
+                            toast({
+                              title: "Form Reset",
+                              description: "All changes have been undone.",
+                            });
+                          }
+                        }}
+                      >
+                        Reset Changes
                       </Button>
-                    </Link>
-                    <Button 
-                      type="submit" 
-                      className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                    ) : (
+                      <Link href="/bookings">
+                        <Button variant="outline" className="bg-white/50 hover:bg-white/80 border-gray-300">
+                          Cancel
+                        </Button>
+                      </Link>
+                    )}
+                    <Button
+                      type="submit"
+                      className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 min-h-[44px]"
                       disabled={createBookingMutation.isPending || updateBookingMutation.isPending}
                     >
                       <Save className="w-4 h-4 mr-2" />
                       {(createBookingMutation.isPending || updateBookingMutation.isPending) ? (
                         <>
                           <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"></div>
-                          {isEditMode ? "Updating..." : "Creating..."}
+                          {isEditMode ?
+                            (clientMode ? "Saving your changes..." : "Updating...") :
+                            "Creating..."
+                          }
                         </>
                       ) : (
-                        isEditMode ? "Update Booking" : "Create Booking"
+                        isEditMode ?
+                          (clientMode ? "Save Event Details" : "Update Booking") :
+                          "Create Booking"
                       )}
                     </Button>
                   </div>
