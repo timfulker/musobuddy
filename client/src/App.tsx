@@ -346,8 +346,8 @@ function App() {
     };
   }, [currentPath]);
 
-  // Don't show MobileNav on client portal pages
-  const shouldShowMobileNav = !currentPath.includes('client-portal');
+  // Don't show MobileNav on client portal pages or collaboration pages
+  const shouldShowMobileNav = !currentPath.includes('client-portal') && !currentPath.includes('/collaborate');
 
   return (
     <ErrorBoundary>
@@ -358,7 +358,7 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                {/* Only render MobileNav if not on client portal */}
+                {/* Only render MobileNav if not on client portal or collaboration pages */}
                 {shouldShowMobileNav && <MobileNav />}
                 <CookieConsentBanner />
               </AuthProvider>
