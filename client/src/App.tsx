@@ -346,32 +346,8 @@ function App() {
     };
   }, [currentPath]);
 
-  // Check if client portal (unauthenticated client pages)
-  const isClientPortal = currentPath.includes('client-portal') ||
-                         currentPath.includes('/sign-contract/') ||
-                         currentPath.includes('/view-contract/') ||
-                         currentPath.includes('/invoice/') ||
-                         currentPath.includes('/widget/') ||
-                         window.location.pathname.includes('client-portal') ||
-                         window.location.search.includes('token='); // Client portal uses token param
-
-  // Add/remove body class based on path
-  useEffect(() => {
-    if (isClientPortal) {
-      document.body.classList.add('no-mobile-nav');
-      document.body.style.paddingBottom = '0';
-      // Fix iOS viewport issues
-      document.body.style.position = 'relative';
-      document.body.style.height = 'auto';
-      document.body.style.minHeight = '100vh';
-    } else {
-      document.body.classList.remove('no-mobile-nav');
-      document.body.style.paddingBottom = '';
-      document.body.style.position = '';
-      document.body.style.height = '';
-      document.body.style.minHeight = '';
-    }
-  }, [isClientPortal]);
+  // Don't show MobileNav on client portal pages
+  const shouldShowMobileNav = !currentPath.includes('client-portal');
 
   return (
     <ErrorBoundary>
@@ -382,8 +358,8 @@ function App() {
                 {/* OnboardingWrapper temporarily removed */}
                 <Toaster />
                 <Router />
-                {/* Mobile navigation - only for authenticated users, not client portal */}
-                {!isClientPortal && <MobileNav />}
+                {/* Only render MobileNav if not on client portal */}
+                {shouldShowMobileNav && <MobileNav />}
                 <CookieConsentBanner />
               </AuthProvider>
             </TooltipProvider>

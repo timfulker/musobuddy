@@ -9,45 +9,61 @@ export default function MobileNav() {
   const { isDesktop } = useResponsive();
   const { counts } = useNotifications();
 
-  // IMMEDIATE BAILOUT - Check URL before any other logic
-  const isClientPortalPage = () => {
-    if (typeof window === 'undefined') return false;
+  // Add CSS class to body to help with hiding mobile nav on client portal
+  if (typeof window !== 'undefined') {
+    const isClientPortal = location.includes('client-portal') ||
+                          window.location.pathname.includes('client-portal') ||
+                          window.location.href.includes('client-portal');
 
-    // Check both wouter location and actual browser URL
-    const currentPath = window.location.pathname;
-    const routerPath = location;
-    const searchParams = window.location.search;
-
-    const clientPaths = [
-      '/client-portal',
-      '/sign-contract',
-      '/view-contract',
-      '/invoice/',
-      '/widget/'
-    ];
-
-    // Also check for token parameter which is used by client portal
-    const hasClientToken = searchParams.includes('token=');
-
-    return clientPaths.some(path =>
-      currentPath.includes(path) || routerPath.includes(path)
-    ) || hasClientToken;
-  };
-
-  // Don't render at all if on client portal or desktop
-  if (isDesktop || isClientPortalPage()) {
-    return null;
+    if (isClientPortal) {
+      document.body.classList.add('client-portal-page');
+    } else {
+      document.body.classList.remove('client-portal-page');
+    }
   }
 
   const isActive = (path: string) => {
     return location === path;
   };
 
+  // Don't render on desktop
+  if (isDesktop) {
+    return null;
+  }
+
+  // Don't render on client portal pages - these are for external clients, not authenticated users
+  if (location.includes('client-portal') ||
+      window.location.pathname.includes('client-portal') ||
+      window.location.href.includes('client-portal')) {
+    console.log('🚫 MobileNav: Hiding navigation for client portal page');
+    return null;
+  }
+
   return (
-    <div
-      data-mobile-nav
-      id="mobile-nav-main"
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg z-50 mobile-nav-component"
+    <>
+      {/* CSS to force hide mobile nav on client portal pages */}
+      <style>
+        {`
+          body.client-portal-page [data-mobile-nav] {
+            display: none !important;
+          }
+        `}
+      </style>
+      <div
+        data-mobile-nav
+        className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg"
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+          transform: 'translateZ(0)', // Force hardware acceleration
+        backfaceVisibility: 'hidden', // Prevent flicker
+        willChange: 'transform', // Optimize for animations
+        WebkitTransform: 'translateZ(0)', // iOS Safari fix
+        WebkitBackfaceVisibility: 'hidden' // iOS Safari fix
+      }}
     >
       <div className="flex justify-around">
         {/* Home */}
@@ -110,5 +126,6 @@ export default function MobileNav() {
         </Link>
       </div>
     </div>
+    </>
   );
 }
