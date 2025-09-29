@@ -56,38 +56,11 @@ export default function ClientPortal() {
   };
 
   const handleSave = async () => {
-    if (Object.keys(formData).length === 0) {
-      return; // Nothing to save
-    }
-
     try {
-      // Store locally since backend endpoint doesn't exist yet
-      const storageKey = `clientPortal_${contractId}_${token}`;
-      const existingData = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      const updatedData = { ...existingData, ...formData, lastUpdated: new Date().toISOString() };
-      localStorage.setItem(storageKey, JSON.stringify(updatedData));
-
-      console.log('Client portal data saved locally:', updatedData);
-
-      // Clear form
+      await updatePortalMutation.mutateAsync(formData);
       setFormData({});
-
-      // Show success message
-      const successAlert = document.createElement('div');
-      successAlert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center';
-      successAlert.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Your preferences have been saved! The performer will be notified.';
-      document.body.appendChild(successAlert);
-      setTimeout(() => successAlert.remove(), 4000);
-
     } catch (error) {
-      console.error('Error saving:', error);
-      // Still show success since we want the user to think it worked
-      setFormData({});
-      const successAlert = document.createElement('div');
-      successAlert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center';
-      successAlert.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg> Your preferences have been saved! The performer will be notified.';
-      document.body.appendChild(successAlert);
-      setTimeout(() => successAlert.remove(), 4000);
+      console.error('Failed to save changes:', error);
     }
   };
 
