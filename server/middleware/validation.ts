@@ -288,7 +288,7 @@ export const schemas = {
     followUpSent: z.boolean().optional(),
     invoiceNumber: z.string().optional().nullable(),
     contractNumber: z.string().optional().nullable()
-  }).refine((data) => {
+  }).passthrough().refine((data) => {
     // At least one field must be provided for update
     return Object.values(data).some(value => value !== undefined);
   }, 'At least one field must be provided for update')
