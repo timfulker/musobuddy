@@ -805,6 +805,28 @@ export default function NewBookingPage({
 
   const onSubmit = (data: FullBookingFormData) => {
     console.log('🚀 Form submission triggered:', { isEditMode, mileageData });
+
+    // Debug: Check specific fields that are failing
+    console.log('🔍 Debug specific fields:', {
+      clientAddress: data.clientAddress,
+      venueContact: data.venueContact,
+      parkingInfo: data.parkingInfo,
+      dressCode: data.dressCode,
+      performanceDuration: data.performanceDuration,
+      clientName: data.clientName
+    });
+
+    // Also check current form values directly
+    const currentValues = form.getValues();
+    console.log('📋 Current form values for problem fields:', {
+      clientAddress: currentValues.clientAddress,
+      venueContact: currentValues.venueContact,
+      parkingInfo: currentValues.parkingInfo,
+      dressCode: currentValues.dressCode,
+      performanceDuration: currentValues.performanceDuration,
+      clientName: currentValues.clientName
+    });
+
     if (isEditMode) {
       console.log('📝 Updating booking with data:', { ...data, mileageData });
       updateBookingMutation.mutate(data);
