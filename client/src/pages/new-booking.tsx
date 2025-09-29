@@ -29,11 +29,7 @@ const fullBookingSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required").transform((dateStr) => {
-    // Transform to Date object for database timestamp field
-    const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? new Date() : date;
-  }),
+  eventDate: z.string().min(1, "Event date is required"),
   eventTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   venue: z.string().optional(),
@@ -622,7 +618,7 @@ export default function NewBookingPage({
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: new Date(data.eventDate),
+        eventDate: data.eventDate,
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
@@ -686,7 +682,7 @@ export default function NewBookingPage({
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
         clientAddress: data.clientAddress || null,
-        eventDate: new Date(data.eventDate),
+        eventDate: data.eventDate,
         eventTime: data.eventTime || null,
         eventEndTime: data.eventEndTime || null,
         venue: data.venue,
