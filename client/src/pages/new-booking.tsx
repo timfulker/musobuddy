@@ -628,6 +628,7 @@ export default function NewBookingPage({
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
+      console.log('🚀 CREATE BOOKING MUTATION TRIGGERED:', data);
       const bookingData = {
         title: `${data.gigType || 'Event'} - ${data.clientName}`,
         clientName: data.clientName,
@@ -691,6 +692,7 @@ export default function NewBookingPage({
   // Update booking mutation for edit mode
   const updateBookingMutation = useMutation({
     mutationFn: async (data: FullBookingFormData) => {
+      console.log('🚀 UPDATE BOOKING MUTATION TRIGGERED:', data);
       if (!editBookingId) throw new Error('No booking ID');
       
       const bookingData = {
@@ -811,7 +813,9 @@ export default function NewBookingPage({
   });
 
   const onSubmit = (data: FullBookingFormData) => {
-    console.log('🚀 Form submission triggered:', { isEditMode, mileageData });
+    console.log('🚀 Form submission triggered:', { isEditMode, mileageData, formData: data });
+    console.log('🔍 Form validation state:', form.formState.errors);
+    console.log('🔍 Form is valid:', form.formState.isValid);
     if (isEditMode) {
       console.log('📝 Updating booking with data:', { ...data, mileageData });
       updateBookingMutation.mutate(data);
@@ -823,7 +827,8 @@ export default function NewBookingPage({
 
   // Handle form validation errors
   const onInvalidSubmit = (errors: any) => {
-    console.log('❌ Form validation errors:', errors);
+    console.log('❌ FORM SUBMISSION FAILED - Validation errors:', errors);
+    console.log('❌ Form state:', form.formState);
 
     // Don't show validation errors if we're on client portal
     if (window.location.pathname.includes('client-portal') ||
