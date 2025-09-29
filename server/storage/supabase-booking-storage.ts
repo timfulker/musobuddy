@@ -270,6 +270,7 @@ export class SupabaseBookingStorage {
         'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
         'latitude': 'map_latitude',   // latitude maps to map_latitude
         'longitude': 'map_longitude',  // longitude maps to map_longitude
+        'totalFee': 'fee',            // totalFee maps to fee in Supabase
       };
 
       // Use special mapping if exists, otherwise use standard camelToSnake

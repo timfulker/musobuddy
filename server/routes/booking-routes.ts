@@ -653,9 +653,9 @@ export function registerBookingRoutes(app: Express) {
         
         // Get ALL message notifications for this booking
         const bookingMessages = await storage.getAllMessageNotificationsForBooking(userId, bookingId);
-        
+
         // Communications will be handled separately if needed
-        
+
 
         const allMessages: any[] = [];
         
@@ -737,6 +737,7 @@ export function registerBookingRoutes(app: Express) {
         }
         
         // Process outbound messages
+        const communications: any[] = []; // Fix undefined variable
         for (const comm of communications) {
           let content = comm.messageContent || 'Message content unavailable';
           
