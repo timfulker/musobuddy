@@ -394,6 +394,7 @@ export default function NewBookingPage({
       venueAddress: "",
       venueContactInfo: "",
       fee: "",
+      finalAmount: "",
       gigType: "",
       eventType: "",
       equipmentRequirements: "",
@@ -435,6 +436,7 @@ export default function NewBookingPage({
       encoreAllowed: true,
       encoreSuggestions: "",
       what3words: "",
+      bandId: undefined,
     },
   });
 
@@ -1066,7 +1068,15 @@ export default function NewBookingPage({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
+          <form 
+            onSubmit={(e) => {
+              console.log('🔥 FORM onSubmit event triggered!');
+              console.log('🔍 Event target:', e.target);
+              e.preventDefault();
+              form.handleSubmit(onSubmit, onInvalidSubmit)(e);
+            }}
+            className="space-y-6"
+          >
             {/* Client Mode Header */}
             {clientMode && (
               <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
