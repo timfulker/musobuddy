@@ -9,28 +9,18 @@ interface User {
   trialEndsAt?: string | null;
 }
 
-// Admin bypass emails - these users always have full access
-const ADMIN_BYPASS_EMAILS = [
-  'timfulker@gmail.com', 
-  'timfulkermusic@gmail.com', 
-  'jake.stanley@musobuddy.com'
-];
-
 /**
- * Check if a user has access to the platform - HARD RULE: hasPaid must be true
+ * Check if a user has access to the platform using proper database-driven access control
  */
 export function hasAccess(user: User | null | undefined): boolean {
   if (!user) return false;
 
   // Admin users always have access
   if (user.isAdmin) return true;
-  
-  // Check admin bypass emails (ring-fenced accounts)
-  if (user.email && ADMIN_BYPASS_EMAILS.includes(user.email)) return true;
-  
+
   // Assigned users always have access (but NOT test accounts)
   if (user.isAssigned && !user.email?.includes('+test')) return true;
-  
+
   // HARD RULE: No dashboard access without payment setup (has_paid = true)
   // This includes trial users - they must complete payment setup to access dashboard
   return user.hasPaid === true;

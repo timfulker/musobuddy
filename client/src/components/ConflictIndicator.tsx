@@ -1,8 +1,25 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { useLuminanceAware } from "@/hooks/use-luminance-aware";
+
+// Luminance-aware Button component for the resolve button
+function LuminanceAwareButton({ children, className, ...props }: React.ComponentProps<typeof Button>) {
+  const ref = useLuminanceAware();
+
+  return (
+    <Button
+      ref={ref as any}
+      className={className}
+      style={{ color: 'var(--optimal-text-color)' }}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
 import {
   Dialog,
   DialogContent,
@@ -89,27 +106,57 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
         groupSize: allConflictedBookingIds.length
       });
 
-      // Use batch endpoint for efficiency - single request for entire conflict group
-      const response = await apiRequest('/api/bookings/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingIds: allConflictedBookingIds })
-      });
+      try {
+        // First try batch endpoint for efficiency - single request for entire conflict group
+        const response = await apiRequest('/api/bookings/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingIds: allConflictedBookingIds })
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [ConflictIndicator] Batch fetch failed:', response.status, errorText);
-        throw new Error(`Failed to fetch bookings: ${response.status}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ [ConflictIndicator] Batch fetch failed:', response.status, errorText);
+          throw new Error(`Batch fetch failed: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ [ConflictIndicator] Fetched entire conflict group via batch:', {
+          requestedIds: allConflictedBookingIds,
+          fetchedCount: result.length,
+          fetchedBookings: result.map((b: any) => ({ id: b.id, clientName: b.clientName }))
+        });
+
+        return result;
+      } catch (batchError) {
+        console.warn('⚠️ [ConflictIndicator] Batch fetch failed, falling back to individual fetches:', batchError);
+
+        // Fallback: fetch each booking individually
+        const individualFetches = allConflictedBookingIds.map(async (id) => {
+          try {
+            const response = await apiRequest(`/api/bookings/${id}`);
+            if (!response.ok) {
+              console.error(`❌ [ConflictIndicator] Failed to fetch booking ${id}:`, response.status);
+              return null;
+            }
+            return await response.json();
+          } catch (error) {
+            console.error(`❌ [ConflictIndicator] Error fetching booking ${id}:`, error);
+            return null;
+          }
+        });
+
+        const individualResults = await Promise.all(individualFetches);
+        const validBookings = individualResults.filter(Boolean);
+
+        console.log('✅ [ConflictIndicator] Fetched conflict group via individual calls:', {
+          requestedIds: allConflictedBookingIds,
+          fetchedCount: validBookings.length,
+          fetchedBookings: validBookings.map((b: any) => ({ id: b.id, clientName: b.clientName }))
+        });
+
+        return validBookings;
       }
-
-      const result = await response.json();
-      console.log('✅ [ConflictIndicator] Fetched entire conflict group:', {
-        requestedIds: allConflictedBookingIds,
-        fetchedCount: result.length,
-        fetchedBookings: result.map((b: any) => ({ id: b.id, clientName: b.clientName }))
-      });
-
-      return result;
     },
     enabled: showResolutionModal && allConflictedBookingIds.length > 0,
     staleTime: 300000, // Cache for 5 minutes - conflicts don't change that often
@@ -175,12 +222,12 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   return (
     <>
       {/* Conflict Indicator Button */}
-      <Button
+      <LuminanceAwareButton
         size="sm"
         className={`absolute top-20 right-2 h-8 px-3 border-0 shadow-md z-20 ${
-          severity === 'hard' ? 'bg-red-500 hover:bg-red-600 text-white' : 
-          severity === 'soft' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 
-          'bg-yellow-500 hover:bg-yellow-600 text-black'
+          severity === 'hard' ? 'bg-red-500 hover:bg-red-600' :
+          severity === 'soft' ? 'bg-orange-500 hover:bg-orange-600' :
+          'bg-yellow-500 hover:bg-yellow-600'
         }`}
         title={getTooltipText()}
         onClick={handleResolveClick}
@@ -188,7 +235,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
         onMouseUp={(e) => e.stopPropagation()}
       >
         <span className="text-xs font-medium">Resolve</span>
-      </Button>
+      </LuminanceAwareButton>
       
       {/* Simple Modal for showing conflicts */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

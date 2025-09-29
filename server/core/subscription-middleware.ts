@@ -29,9 +29,8 @@ export const requireSubscription = async (req: Request, res: Response, next: Nex
       });
     }
 
-    // STRICT: Only allow specific exempt accounts to bypass subscription checks
-    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-    const isExemptUser = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
+    // Use proper database-driven access control
+    const isExemptUser = user.createdByAdmin;
     
     if (isExemptUser) {
       console.log(`✅ Exempt user ${userId} (${user.email}) - subscription check bypassed`);
@@ -84,9 +83,8 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
       return next();
     }
 
-    // STRICT: Only allow specific exempt accounts to bypass subscription checks
-    const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-    const isExemptUser = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
+    // Use proper database-driven access control
+    const isExemptUser = user.createdByAdmin;
 
     if (isExemptUser) {
       console.log(`✅ Exempt user ${userId} (${user.email}) - subscription check bypassed`);

@@ -4,11 +4,8 @@ import { nanoid } from 'nanoid';
 import { authenticate, type AuthenticatedRequest } from '../middleware/supabase-only-auth';
 // Removed - using centralized auth middleware
 
-// Check if user is exempt from subscription requirements
-function isExemptUser(email: string): boolean {
-  const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-  return allowedBypassEmails.includes(email);
-}
+// Legacy function - no longer needed with proper admin/beta system
+// All access control now handled via database user.isAdmin, user.isBetaTester, etc.
 
 // SMS verification now uses secure database storage instead of vulnerable in-memory Map
 
@@ -814,9 +811,8 @@ export function setupAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // STRICT: Only these 3 specific accounts bypass subscription checks  
-      const allowedBypassEmails = ['timfulker@gmail.com', 'timfulkermusic@gmail.com', 'jake.stanley@musobuddy.com'];
-      const isAdminCreated = allowedBypassEmails.includes(user.email) || user.createdByAdmin;
+      // Use proper database-driven access control
+      const isAdminCreated = user.createdByAdmin;
       
       // Check access using simplified logic - NO TRIAL ACCESS
       const hasValidSubscription = (user.isAdmin || user.is_admin) || (user.isAssigned || user.is_assigned) || (user.hasPaid || user.has_paid);
