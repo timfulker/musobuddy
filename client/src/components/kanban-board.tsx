@@ -115,12 +115,12 @@ export default function ActionableEnquiries() {
   // Create a mapping of conflicts by booking ID for quick lookup
   const conflictsByBookingId = React.useMemo(() => {
     if (!conflicts || conflicts.length === 0) return {};
-    
+
     const conflictMap: { [bookingId: number]: any[] } = {};
     conflicts.forEach((conflict: any) => {
       const { bookingId, withBookingId, clientName, time, severity, message } = conflict;
-      
-      // Add conflict info for this booking
+
+      // Add conflict info for this booking (primary direction)
       if (!conflictMap[bookingId]) conflictMap[bookingId] = [];
       conflictMap[bookingId].push({
         withBookingId: withBookingId,
@@ -129,7 +129,28 @@ export default function ActionableEnquiries() {
         severity,
         message
       });
+
+      // IMPORTANT: Also add the reverse direction so both bookings show the conflict
+      // This ensures that if booking A conflicts with booking B, BOTH A and B will show resolve buttons
+      if (!conflictMap[withBookingId]) conflictMap[withBookingId] = [];
+      conflictMap[withBookingId].push({
+        withBookingId: bookingId, // Note: reverse the relationship
+        clientName, // This will show the name of the conflicting client from this booking's perspective
+        time,
+        severity,
+        message
+      });
     });
+
+    console.log('🔍 [Dashboard] Built conflict map:', {
+      totalConflicts: conflicts.length,
+      bookingsWithConflicts: Object.keys(conflictMap).length,
+      conflictMap: Object.entries(conflictMap).reduce((acc, [bookingId, conflicts]) => ({
+        ...acc,
+        [bookingId]: conflicts.length
+      }), {})
+    });
+
     return conflictMap;
   }, [conflicts]);
 

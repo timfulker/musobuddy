@@ -60,27 +60,58 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
     gcTime: 300000, // Keep in cache for 5 minutes
   });
 
-  // Fetch conflicting booking details in batch for better performance
-  const conflictingBookingIds = conflicts.map(c => c.withBookingId);
-  const { data: conflictingBookings = [] } = useQuery({
-    queryKey: [`/api/bookings/batch`, conflictingBookingIds.sort().join(',')],
-    queryFn: async () => {
-      if (!conflictingBookingIds.length) return [];
+  // Get ALL bookings in the conflict group (including the current booking)
+  // This ensures we show all conflicted bookings in the resolution modal, not just direct conflicts
+  const allConflictedBookingIds = React.useMemo(() => {
+    const allIds = new Set([bookingId]); // Start with current booking
+    const directConflictIds = conflicts.map(c => c.withBookingId);
+    directConflictIds.forEach(id => allIds.add(id));
 
-      // Use batch endpoint for efficiency - single request instead of 60+ requests
+    console.log('🔍 [ConflictIndicator] Calculated all conflicted booking IDs:', {
+      bookingId,
+      directConflicts: directConflictIds,
+      totalBookingsInGroup: Array.from(allIds).length,
+      allBookingIds: Array.from(allIds)
+    });
+
+    return Array.from(allIds);
+  }, [bookingId, conflicts]);
+
+  // Fetch ALL bookings in the conflict group in batch for better performance
+  const { data: allConflictedBookings = [], isLoading: isLoadingConflictingBookings, error: conflictingBookingsError } = useQuery({
+    queryKey: [`/api/bookings/batch/conflict-group`, allConflictedBookingIds.sort().join(',')],
+    queryFn: async () => {
+      if (!allConflictedBookingIds.length) return [];
+
+      console.log('🔍 [ConflictIndicator] Fetching ALL bookings in conflict group:', {
+        bookingId,
+        allConflictedBookingIds,
+        groupSize: allConflictedBookingIds.length
+      });
+
+      // Use batch endpoint for efficiency - single request for entire conflict group
       const response = await apiRequest('/api/bookings/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingIds: conflictingBookingIds })
+        body: JSON.stringify({ bookingIds: allConflictedBookingIds })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch bookings');
+        const errorText = await response.text();
+        console.error('❌ [ConflictIndicator] Batch fetch failed:', response.status, errorText);
+        throw new Error(`Failed to fetch bookings: ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ [ConflictIndicator] Fetched entire conflict group:', {
+        requestedIds: allConflictedBookingIds,
+        fetchedCount: result.length,
+        fetchedBookings: result.map((b: any) => ({ id: b.id, clientName: b.clientName }))
+      });
+
+      return result;
     },
-    enabled: showResolutionModal && conflictingBookingIds.length > 0,
+    enabled: showResolutionModal && allConflictedBookingIds.length > 0,
     staleTime: 300000, // Cache for 5 minutes - conflicts don't change that often
     gcTime: 600000, // Keep in cache for 10 minutes
   });
@@ -229,7 +260,19 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       <ConflictResolutionDialog
         isOpen={showResolutionModal}
         onClose={() => setShowResolutionModal(false)}
-        conflictingBookings={[currentBooking, ...conflictingBookings].filter(Boolean)}
+        conflictingBookings={(() => {
+          // Use the complete conflict group instead of separate current + conflicting bookings
+          const completeConflictGroup = allConflictedBookings.filter(Boolean);
+          console.log('🔍 [ConflictIndicator] Passing COMPLETE conflict group to ConflictResolutionDialog:', {
+            bookingId,
+            totalBookingsInGroup: completeConflictGroup.length,
+            allBookingsInGroup: completeConflictGroup.map((b: any) => ({ id: b.id, clientName: b.clientName })),
+            isLoadingConflictingBookings,
+            conflictingBookingsError: conflictingBookingsError?.message,
+            originalConflictsCount: conflicts.length
+          });
+          return completeConflictGroup;
+        })()}
         onEditBooking={handleEditBooking}
       />
     </>
