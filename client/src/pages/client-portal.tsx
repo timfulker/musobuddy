@@ -562,16 +562,15 @@ export default function ClientPortal() {
 
             <Separator className="my-6" />
 
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 md:p-4 border border-indigo-200 sticky md:static bottom-4 md:bottom-auto z-10 md:z-auto">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
               <div className="flex items-center justify-end">
                 <Button
                   onClick={handleSave}
                   disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}
-                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg md:shadow-md text-white font-medium w-full md:w-auto py-3 md:py-2 text-base md:text-sm"
-                  data-testid="button-update-portal"
+                  className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md text-white font-medium"
                 >
                   <Save className="h-4 w-4 mr-2 text-white" />
-                  <span className="text-white">{updatePortalMutation.isPending ? 'Saving...' : 'Update Portal'}</span>
+                  <span className="text-white">{updatePortalMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
                 </Button>
               </div>
             </div>
@@ -612,9 +611,6 @@ export default function ClientPortal() {
             </div>
           </div>
         </div>
-        
-        {/* Mobile bottom spacing - ensures all content is accessible above mobile browser UI */}
-        <div className="h-24 md:h-8"></div>
       </div>
     </div>
   );

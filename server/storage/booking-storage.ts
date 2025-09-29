@@ -269,17 +269,13 @@ export class BookingStorage {
       
       const sanitized = { ...data };
       numericFields.forEach(field => {
-        // Only process fields that are actually present in the update data AND have meaningful values
+        // Only process fields that are actually present in the update data
         if (!(field in data)) {
           return; // Skip fields not being updated
         }
-
-        // CRITICAL FIX: Don't overwrite existing data with empty values
-        // Only sanitize fields that actually have content
-        if (sanitized[field] === '' || sanitized[field] === undefined || sanitized[field] === null) {
-          console.log(`⚠️ Skipping sanitization of ${field} - empty value would overwrite existing data`);
-          delete sanitized[field]; // Remove empty field from update to preserve existing value
-          return;
+        
+        if (sanitized[field] === '' || sanitized[field] === undefined) {
+          sanitized[field] = null;
         } else if (sanitized[field] !== null) {
           const originalValue = sanitized[field];
           // Strip all currency symbols, commas, and extra whitespace

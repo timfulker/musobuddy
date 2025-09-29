@@ -244,20 +244,6 @@ export class SupabaseBookingStorage {
     // Map camelCase updates to snake_case with special handling for certain fields
     const supabaseUpdates: any = {};
     Object.keys(updates).forEach(key => {
-      // CRITICAL FIX: Don't overwrite existing data with empty values
-      // Skip numeric fields that are empty to preserve existing database values
-      const numericFields = [
-        'fee', 'setupTime', 'soundCheckTime', 'packupTime',
-        'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
-        'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
-      ];
-
-      if (numericFields.includes(key) &&
-          (updates[key] === '' || updates[key] === undefined || updates[key] === null)) {
-        console.log(`⚠️ [SUPABASE] Skipping empty field '${key}' to preserve existing data`);
-        return; // Skip empty numeric fields entirely
-      }
-
       // Special field mappings that don't follow simple camelToSnake rules
       const fieldMappings: { [key: string]: string } = {
         'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
