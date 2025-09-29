@@ -347,12 +347,13 @@ function App() {
   }, [currentPath]);
 
   // Check if client portal (unauthenticated client pages)
-  const isClientPortal = currentPath.includes('client-portal') || 
+  const isClientPortal = currentPath.includes('client-portal') ||
                          currentPath.includes('/sign-contract/') ||
                          currentPath.includes('/view-contract/') ||
                          currentPath.includes('/invoice/') ||
                          currentPath.includes('/widget/') ||
-                         window.location.pathname.includes('client-portal');
+                         window.location.pathname.includes('client-portal') ||
+                         window.location.search.includes('token='); // Client portal uses token param
 
   // Add/remove body class based on path
   useEffect(() => {

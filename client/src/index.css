@@ -7,10 +7,24 @@
 
 /* Hide mobile nav on client pages */
 body.client-portal-active [data-mobile-nav],
-body.no-mobile-nav [data-mobile-nav] {
+body.no-mobile-nav [data-mobile-nav],
+body.client-portal-active #mobile-nav-main,
+body.no-mobile-nav #mobile-nav-main,
+body.client-portal-active .mobile-nav-component,
+body.no-mobile-nav .mobile-nav-component,
+body.client-portal-active .fixed.bottom-0:not(.client-portal-allowed),
+body.no-mobile-nav .fixed.bottom-0:not(.client-portal-allowed),
+body.client-portal-active nav,
+body.no-mobile-nav nav {
   display: none !important;
   height: 0 !important;
   overflow: hidden !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -99999px !important;
+  top: -99999px !important;
 }
 
 /* Gradient Background Support */

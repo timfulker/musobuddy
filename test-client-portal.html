@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Client Portal Mobile View</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        iframe {
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .device-frame {
+            margin: 20px 0;
+        }
+        h2 {
+            margin: 20px 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Client Portal Mobile View Test</h1>
+    <p>Testing if the navigation menu is hidden on the client portal page in mobile view.</p>
+
+    <div class="device-frame">
+        <h2>Mobile View (iPhone 12 Pro - 390x844)</h2>
+        <iframe
+            src="/client-portal/test-contract?token=test-token"
+            width="390"
+            height="844"
+            title="Mobile View">
+        </iframe>
+    </div>
+
+    <div class="device-frame">
+        <h2>Instructions for Testing:</h2>
+        <ol>
+            <li>Open the developer tools (F12)</li>
+            <li>Toggle device emulation (Ctrl+Shift+M or click the mobile icon)</li>
+            <li>Select a mobile device (e.g., iPhone 12 Pro)</li>
+            <li>Navigate to a client portal URL with a token parameter</li>
+            <li>Check that NO navigation menu appears at the bottom of the screen</li>
+            <li>Verify that the save button (if visible) stays at the bottom and is accessible</li>
+        </ol>
+    </div>
+</body>
+</html>

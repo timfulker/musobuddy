@@ -104,18 +104,27 @@ export default function ClientPortal() {
     // Force hide mobile nav immediately
     const style = document.createElement('style');
     style.innerHTML = `
-      /* Emergency override - hide all mobile navigation */
+      /* Emergency override - hide ALL navigation elements */
       [data-mobile-nav],
       .fixed.bottom-0,
-      nav.fixed.bottom-0 {
+      nav.fixed.bottom-0,
+      nav,
+      [role="navigation"],
+      .mobile-nav,
+      .mobile-navigation,
+      div[class*="mobile-nav"],
+      div[class*="MobileNav"] {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
         height: 0 !important;
         overflow: hidden !important;
+        position: fixed !important;
+        left: -99999px !important;
+        top: -99999px !important;
       }
-      
+
       /* Fix viewport for scrolling */
       html, body {
         overflow: auto !important;
@@ -124,47 +133,118 @@ export default function ClientPortal() {
         position: relative !important;
         -webkit-overflow-scrolling: touch !important;
       }
-      
+
       /* Remove any bottom padding that might be added for nav */
       body {
         padding-bottom: 0 !important;
       }
-      
+
       /* Ensure main content is scrollable */
       #root {
         min-height: 100vh !important;
         height: auto !important;
         overflow: visible !important;
       }
+
+      /* Override any z-index that might bring nav to front */
+      .z-50, .z-40, .z-30, .z-20, .z-10 {
+        z-index: auto !important;
+      }
     `;
     style.id = 'client-portal-emergency-styles';
     document.head.appendChild(style);
-    
+
     // Add body class
     document.body.classList.add('client-portal-active', 'no-mobile-nav');
-    
+
+    // Force remove any mobile nav elements that might exist
+    const hideElements = () => {
+      const selectors = [
+        '[data-mobile-nav]',
+        '.mobile-nav',
+        'nav',
+        '[role="navigation"]',
+        '.fixed.bottom-0',
+        'div[class*="bottom-0"]',
+        'div[class*="fixed"]'
+      ];
+
+      selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          // Skip our allowed elements
+          if (el && !el.classList.contains('client-portal-allowed') && !el.classList.contains('client-portal-nav-allowed')) {
+            // Check if this looks like a navigation element
+            const hasNavIcons = el.querySelector('svg') || el.querySelector('[class*="icon"]');
+            const isAtBottom = (el as HTMLElement).style.bottom === '0' ||
+                              el.classList.contains('bottom-0') ||
+                              (el as HTMLElement).offsetTop > window.innerHeight - 200;
+
+            if (hasNavIcons || isAtBottom) {
+              (el as HTMLElement).style.display = 'none';
+              (el as HTMLElement).style.visibility = 'hidden';
+              (el as HTMLElement).style.position = 'fixed';
+              (el as HTMLElement).style.left = '-99999px';
+              (el as HTMLElement).style.pointerEvents = 'none';
+              el.setAttribute('data-hidden-by-client-portal', 'true');
+            }
+          }
+        });
+      });
+    };
+
+    // Use MutationObserver to catch dynamically added elements
+    const observer = new MutationObserver(() => {
+      hideElements();
+    });
+
+    // Start observing for added nodes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Run immediately and after delays to catch elements at different render times
+    hideElements();
+    const intervals = [0, 50, 100, 200, 500, 1000, 2000];
+    intervals.forEach(delay => {
+      setTimeout(hideElements, delay);
+    });
+
     // Store original viewport meta content
     const metaViewport = document.querySelector('meta[name=viewport]');
     const originalContent = metaViewport?.getAttribute('content');
-    
+
     // Set viewport to allow normal mobile scrolling
     if (metaViewport) {
-      metaViewport.setAttribute('content', 
+      metaViewport.setAttribute('content',
         'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
       );
     }
-    
+
     // Cleanup function
     return () => {
+      // Stop observing
+      observer.disconnect();
+
       // Remove emergency styles
       const emergencyStyles = document.getElementById('client-portal-emergency-styles');
       if (emergencyStyles) {
         emergencyStyles.remove();
       }
-      
+
       // Remove body classes
       document.body.classList.remove('client-portal-active', 'no-mobile-nav');
-      
+
+      // Restore hidden elements
+      document.querySelectorAll('[data-hidden-by-client-portal="true"]').forEach(el => {
+        el.removeAttribute('data-hidden-by-client-portal');
+        (el as HTMLElement).style.display = '';
+        (el as HTMLElement).style.visibility = '';
+        (el as HTMLElement).style.position = '';
+        (el as HTMLElement).style.left = '';
+        (el as HTMLElement).style.pointerEvents = '';
+      });
+
       // Restore viewport
       if (metaViewport && originalContent) {
         metaViewport.setAttribute('content', originalContent);
@@ -176,16 +256,36 @@ export default function ClientPortal() {
     <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50" style={{ minHeight: '100vh', overflow: 'visible' }}>
       {/* Absolutely hide any mobile navigation on client portal */}
       <style>{`
-        nav[role="navigation"],
+        /* Nuclear option - hide ALL potential navigation */
+        nav,
+        [role="navigation"],
         [data-mobile-nav],
         .mobile-nav,
-        .mobile-navigation {
+        .mobile-navigation,
+        .fixed.bottom-0:not(.client-portal-allowed),
+        div[class*="mobile"]:not(.client-portal-allowed),
+        div[class*="nav"]:not(.client-portal-allowed) {
           display: none !important;
           visibility: hidden !important;
           height: 0 !important;
+          width: 0 !important;
           overflow: hidden !important;
           position: absolute !important;
           left: -999999px !important;
+          top: -999999px !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          z-index: -99999 !important;
+        }
+
+        /* Ensure our save button is visible */
+        .client-portal-allowed {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          position: fixed !important;
+          z-index: 1000 !important;
         }
       `}</style>
       {/* Header */}
@@ -706,7 +806,7 @@ export default function ClientPortal() {
       </div>
       
       {/* Mobile sticky save button - always accessible */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-[1000] shadow-xl">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-[1000] shadow-xl client-portal-allowed">
         <Button
           onClick={handleSave}
           disabled={updatePortalMutation.isPending || Object.keys(formData).length === 0}

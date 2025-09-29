@@ -12,11 +12,12 @@ export default function MobileNav() {
   // IMMEDIATE BAILOUT - Check URL before any other logic
   const isClientPortalPage = () => {
     if (typeof window === 'undefined') return false;
-    
+
     // Check both wouter location and actual browser URL
     const currentPath = window.location.pathname;
     const routerPath = location;
-    
+    const searchParams = window.location.search;
+
     const clientPaths = [
       '/client-portal',
       '/sign-contract',
@@ -24,10 +25,13 @@ export default function MobileNav() {
       '/invoice/',
       '/widget/'
     ];
-    
-    return clientPaths.some(path => 
+
+    // Also check for token parameter which is used by client portal
+    const hasClientToken = searchParams.includes('token=');
+
+    return clientPaths.some(path =>
       currentPath.includes(path) || routerPath.includes(path)
-    );
+    ) || hasClientToken;
   };
 
   // Don't render at all if on client portal or desktop
@@ -42,7 +46,8 @@ export default function MobileNav() {
   return (
     <div
       data-mobile-nav
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg z-50"
+      id="mobile-nav-main"
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-1 py-2 shadow-lg z-50 mobile-nav-component"
     >
       <div className="flex justify-around">
         {/* Home */}
