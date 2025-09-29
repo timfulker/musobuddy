@@ -256,7 +256,7 @@ export class SupabaseBookingStorage {
       const numericFields = [
         'fee', 'setupTime', 'soundCheckTime', 'packupTime',
         'travelTime', 'mileage', 'distanceInMiles', 'distanceInKm',
-        'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount'
+        'quotedAmount', 'travelExpense', 'depositAmount', 'finalAmount', 'totalFee'
       ];
 
       if (numericFields.includes(key) &&
@@ -270,7 +270,7 @@ export class SupabaseBookingStorage {
         'deposit': 'deposit_amount',  // deposit maps to deposit_amount in Supabase
         'latitude': 'map_latitude',   // latitude maps to map_latitude
         'longitude': 'map_longitude',  // longitude maps to map_longitude
-        'totalFee': 'fee',            // totalFee maps to fee in Supabase
+        'totalFee': 'final_amount',   // totalFee maps to final_amount in Supabase
       };
 
       // Use special mapping if exists, otherwise use standard camelToSnake
