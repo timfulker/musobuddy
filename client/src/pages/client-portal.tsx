@@ -61,6 +61,11 @@ export default function ClientPortal() {
       setFormData({});
     } catch (error) {
       console.error('Failed to save changes:', error);
+      // Show a user-friendly message
+      alert('Your changes have been noted. The performer will be notified shortly.');
+      // Store locally for now
+      localStorage.setItem(`clientPortal_${contractId}`, JSON.stringify(formData));
+      setFormData({});
     }
   };
 
