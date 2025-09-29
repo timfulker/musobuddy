@@ -2267,11 +2267,26 @@ export default function NewBookingPage({
                     Ready to create your booking?
                   </div>
                   <div className="flex gap-4">
-                    <Link href="/bookings">
-                      <Button variant="outline" className="bg-white/50 hover:bg-white/80 border-gray-300">
-                        Cancel
+                    {clientMode ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-white/50 hover:bg-white/80 border-gray-300"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // For client mode, just refresh the page to clear form
+                          window.location.reload();
+                        }}
+                      >
+                        Clear Form
                       </Button>
-                    </Link>
+                    ) : (
+                      <Link href="/bookings">
+                        <Button variant="outline" className="bg-white/50 hover:bg-white/80 border-gray-300">
+                          Cancel
+                        </Button>
+                      </Link>
+                    )}
                     <Button 
                       type="submit" 
                       className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
