@@ -833,7 +833,7 @@ export function registerBookingRoutes(app: Express) {
         eventTime: parsedData.eventTime,
         eventEndTime: parsedData.eventEndTime,
         eventType: parsedData.eventType,
-        totalFee: parsedData.fee, // Map 'fee' to 'totalFee'
+        totalFee: parsedData.totalFee || parsedData.fee, // Map 'totalFee' or 'fee' to 'totalFee'
         deposit: parsedData.deposit,
         notes: parsedData.specialRequirements,
         performanceDuration: parsedData.performanceDuration,

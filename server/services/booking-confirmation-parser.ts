@@ -17,7 +17,11 @@ The booking already exists with these details:
 - Date: ${existingBooking.eventDate || 'Unknown'}
 - Venue: ${existingBooking.venue || 'Unknown'}
 
-Extract ONLY confirmation-specific information from the client's message:
+IMPORTANT: This message could be either:
+1. A CLIENT confirming/accepting a booking offer
+2. A MUSICIAN confirming booking details to a client
+
+Extract confirmation-specific information from the message:
 
 Return JSON with these fields (only include if found in message):
 {
@@ -39,8 +43,10 @@ PACKAGE SELECTION AND PRICING RULES:
    - Find package prices mentioned (e.g., "3-hour piano: £450", "DJ option: £210")
    - Calculate total by adding selected package prices
    - Set calculatedFromPackage: true when calculating from packages
-3. If client mentions total directly (e.g., "£660 total"), use that as feeAccepted
-4. If you see "The total fee for this package is £660", extract 660 as feeAccepted
+3. If ANY message mentions total directly (e.g., "£660 total"), use that as feeAccepted
+4. IMPORTANT: If you see "The total fee for this package is £660", ALWAYS extract 660 as feeAccepted
+5. IMPORTANT: If you see "The total fee is £660", ALWAYS extract 660 as feeAccepted
+6. IMPORTANT: Extract prices from musician confirmation messages the same way as client messages
 
 TIME EXTRACTION RULES:
 - eventTime: Extract start time and convert to 24-hour format (e.g., "7pm" → "19:00", "1:00 pm" → "13:00")
@@ -49,12 +55,16 @@ TIME EXTRACTION RULES:
 - If only one time mentioned, put it in eventTime and leave eventEndTime null
 
 Examples:
+CLIENT MESSAGES:
 - "We would like to go with the 3-hour piano and the DJ option please" with previous message containing "3-hour piano: £450" and "DJ add-on: £210" → {"clientConfirmsBooking": true, "packageSelection": "3-hour piano and DJ option", "feeAccepted": 660, "calculatedFromPackage": true, "confidence": 0.9}
-- "The total fee for this package is £660" → {"feeAccepted": 660, "confidence": 0.95}
 - "We would like to go with the 2-hour saxophone at £310" → {"clientConfirmsBooking": true, "serviceSelection": "2-hour saxophone", "feeAccepted": 310, "confidence": 0.9}
 - "Please send the contract" → {"requestsContract": true, "confidence": 0.8}
-- "Can we change to 3 hours instead?" → {"serviceSelection": "3 hours", "confidence": 0.8}
-- "We would like you to start playing at about 1:00 pm and go through to 4:00 pm" → {"eventTime": "13:00", "eventEndTime": "16:00", "confidence": 0.9}`;
+- "We would like you to start playing at about 1:00 pm and go through to 4:00 pm" → {"eventTime": "13:00", "eventEndTime": "16:00", "confidence": 0.9}
+
+MUSICIAN MESSAGES (confirming to client):
+- "Thank you for confirming your booking for the 3-hour piano and DJ package on October 27th, 2026, at Clearwell Castle. I'm delighted to be part of your special day and will be ready to start at 1:00 pm, continuing until 4:00 pm for your wedding breakfast transition. The total fee for this package is £660, which includes all travel expenses and equipment setup." → {"packageSelection": "3-hour piano and DJ package", "eventTime": "13:00", "eventEndTime": "16:00", "feeAccepted": 660, "confidence": 0.95}
+- "The total fee for this package is £660" → {"feeAccepted": 660, "confidence": 0.95}
+- "I will send the booking agreement via a secure link shortly" → {"requestsContract": true, "confidence": 0.8}`;
 
     const userPrompt = `MESSAGE: ${messageContent}
 
@@ -169,9 +179,19 @@ function basicConfirmationParse(messageContent: string): any {
     packageSelection = lowerMessage.includes('piano') ? '2-hour piano' : '2-hour saxophone';
   }
 
-  // Extract fee amounts
-  const feeMatch = messageContent.match(/£(\d+)/);
-  const fee = calculatedFee || (feeMatch ? parseInt(feeMatch[1]) : null);
+  // Extract fee amounts - look for common patterns
+  let fee = calculatedFee;
+
+  // Pattern 1: "The total fee for this package is £660"
+  const totalFeePattern = /(?:total\s+)?fee\s+(?:for\s+this\s+package\s+)?is\s+£(\d+)/i;
+  const totalFeeMatch = messageContent.match(totalFeePattern);
+  if (totalFeeMatch) {
+    fee = parseInt(totalFeeMatch[1]);
+  } else {
+    // Pattern 2: Any £ amount in the message
+    const feeMatch = messageContent.match(/£(\d+)/);
+    fee = fee || (feeMatch ? parseInt(feeMatch[1]) : null);
+  }
 
   // Extract times
   let eventTime = null;
@@ -205,9 +225,11 @@ function basicConfirmationParse(messageContent: string): any {
   const requestsContract = lowerMessage.includes('agreement') || lowerMessage.includes('contract') || lowerMessage.includes('paperwork');
 
   const messageText = messageContent.toLowerCase();
-  const isTotalFeeContext = messageText.includes('total') || messageText.includes('including') ||
-                            messageText.includes('overall') || messageText.includes('all in') ||
-                            messageText.includes('inc travel') || calculatedFee !== null;
+  const isTotalFeeContext = messageText.includes('total fee') || messageText.includes('total') ||
+                            messageText.includes('including') || messageText.includes('overall') ||
+                            messageText.includes('all in') || messageText.includes('inc travel') ||
+                            messageText.includes('package is £') || calculatedFee !== null ||
+                            totalFeeMatch !== null;
 
   const result: any = {
     clientConfirmsBooking: clientConfirms,
