@@ -39,14 +39,20 @@ Return JSON with these fields (only include if found in message):
 
 PACKAGE SELECTION AND PRICING RULES:
 1. If client selects a package by name (e.g., "3-hour piano and DJ option"), extract as packageSelection
-2. Look in PREVIOUS MESSAGE for pricing information:
-   - Find package prices mentioned (e.g., "3-hour piano: £450", "DJ option: £210")
-   - Calculate total by adding selected package prices
-   - Set calculatedFromPackage: true when calculating from packages
-3. If ANY message mentions total directly (e.g., "£660 total"), use that as feeAccepted
-4. IMPORTANT: If you see "The total fee for this package is £660", ALWAYS extract 660 as feeAccepted
-5. IMPORTANT: If you see "The total fee is £660", ALWAYS extract 660 as feeAccepted
-6. IMPORTANT: Extract prices from musician confirmation messages the same way as client messages
+2. CRITICAL: When client says "we would like to go with the 3-hour piano and the DJ option":
+   - Look in PREVIOUS MESSAGE section for ALL prices
+   - Find "3-hour piano" price (e.g., "3-hour piano: £450")
+   - Find "DJ" price (e.g., "DJ option: £210" or "DJ add-on: £210")
+   - Calculate total: £450 + £210 = £660
+   - Set feeAccepted: 660 and calculatedFromPackage: true
+3. Common package combinations to calculate:
+   - "3-hour piano and DJ option" = Find 3-hour piano price + DJ price
+   - "2-hour piano with DJ" = Find 2-hour piano price + DJ price
+   - "piano and sax duo" = Find duo price or add individual prices
+4. If ANY message mentions total directly (e.g., "£660 total"), use that as feeAccepted
+5. IMPORTANT: If you see "The total fee for this package is £660", ALWAYS extract 660 as feeAccepted
+6. IMPORTANT: If you see "The total fee is £660", ALWAYS extract 660 as feeAccepted
+7. IMPORTANT: Extract prices from musician confirmation messages the same way as client messages
 
 TIME EXTRACTION RULES:
 - eventTime: Extract start time and convert to 24-hour format (e.g., "7pm" → "19:00", "1:00 pm" → "13:00")
@@ -56,7 +62,8 @@ TIME EXTRACTION RULES:
 
 Examples:
 CLIENT MESSAGES:
-- "We would like to go with the 3-hour piano and the DJ option please" with previous message containing "3-hour piano: £450" and "DJ add-on: £210" → {"clientConfirmsBooking": true, "packageSelection": "3-hour piano and DJ option", "feeAccepted": 660, "calculatedFromPackage": true, "confidence": 0.9}
+- Input: "PREVIOUS MESSAGE:\nHere are the packages:\n- 2-hour piano: £350\n- 3-hour piano: £450\n- DJ add-on: £210\n\nCURRENT MESSAGE:\nWe would like to go with the 3-hour piano and the DJ option please"
+  → {"clientConfirmsBooking": true, "packageSelection": "3-hour piano and DJ option", "feeAccepted": 660, "calculatedFromPackage": true, "confidence": 0.9}
 - "We would like to go with the 2-hour saxophone at £310" → {"clientConfirmsBooking": true, "serviceSelection": "2-hour saxophone", "feeAccepted": 310, "confidence": 0.9}
 - "Please send the contract" → {"requestsContract": true, "confidence": 0.8}
 - "We would like you to start playing at about 1:00 pm and go through to 4:00 pm" → {"eventTime": "13:00", "eventEndTime": "16:00", "confidence": 0.9}
@@ -165,14 +172,39 @@ function basicConfirmationParse(messageContent: string): any {
   let calculatedFee = null;
 
   // Check for common package patterns
-  if (lowerMessage.includes('3-hour piano and') && lowerMessage.includes('dj')) {
+  if (lowerMessage.includes('3-hour piano') && lowerMessage.includes('dj')) {
     packageSelection = '3-hour piano and DJ option';
-    // If previous message had prices, try to extract them
+    // If previous message had prices, try to extract and calculate them
     if (messageContent.includes('PREVIOUS MESSAGE:')) {
-      const priceMatches = messageContent.matchAll(/£(\d+)/g);
-      const prices = Array.from(priceMatches).map(m => parseInt(m[1]));
-      if (prices.length > 1) {
-        calculatedFee = prices.reduce((sum, p) => sum + p, 0);
+      // Look for specific package prices
+      const threehourPianoMatch = messageContent.match(/3-hour piano[:\s]+£(\d+)/i);
+      const djMatch = messageContent.match(/dj\s*(?:option|add-on)?[:\s]+£(\d+)/i);
+
+      if (threehourPianoMatch && djMatch) {
+        const pianoPrice = parseInt(threehourPianoMatch[1]);
+        const djPrice = parseInt(djMatch[1]);
+        calculatedFee = pianoPrice + djPrice;
+      } else {
+        // Fallback: sum all prices found in previous message
+        const previousSection = messageContent.split('CURRENT MESSAGE:')[0];
+        const priceMatches = previousSection.matchAll(/£(\d+)/g);
+        const prices = Array.from(priceMatches).map(m => parseInt(m[1]));
+        if (prices.length >= 2) {
+          // Assuming the relevant prices are listed
+          calculatedFee = prices.filter(p => p > 100).reduce((sum, p) => sum + p, 0);
+        }
+      }
+    }
+  } else if (lowerMessage.includes('2-hour piano') && lowerMessage.includes('dj')) {
+    packageSelection = '2-hour piano and DJ option';
+    if (messageContent.includes('PREVIOUS MESSAGE:')) {
+      const twohourPianoMatch = messageContent.match(/2-hour piano[:\s]+£(\d+)/i);
+      const djMatch = messageContent.match(/dj\s*(?:option|add-on)?[:\s]+£(\d+)/i);
+
+      if (twohourPianoMatch && djMatch) {
+        const pianoPrice = parseInt(twohourPianoMatch[1]);
+        const djPrice = parseInt(djMatch[1]);
+        calculatedFee = pianoPrice + djPrice;
       }
     }
   } else if (lowerMessage.includes('2-hour') && (lowerMessage.includes('piano') || lowerMessage.includes('sax'))) {
