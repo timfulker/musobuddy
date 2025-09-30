@@ -115,6 +115,22 @@ JSON:`;
     if (orchestrationResult.success) {
       const parsed = JSON.parse(orchestrationResult.response.content);
       console.log('✅ [CONFIRMATION-PARSER] Successfully parsed confirmation:', parsed);
+      console.log('🔍 [CONFIRMATION-PARSER] Raw AI response:', orchestrationResult.response.content);
+      console.log('🔍 [CONFIRMATION-PARSER] Input message length:', messageContent.length);
+      console.log('🔍 [CONFIRMATION-PARSER] Input preview:', messageContent.substring(0, 500));
+
+      // Debug package calculation specifically
+      if (parsed.packageSelection) {
+        console.log('🎯 [CONFIRMATION-PARSER] Package selection found:', parsed.packageSelection);
+        console.log('🎯 [CONFIRMATION-PARSER] Fee accepted:', parsed.feeAccepted);
+        console.log('🎯 [CONFIRMATION-PARSER] Calculated from package:', parsed.calculatedFromPackage);
+
+        // Check if input contains price information
+        const hasPrices = /£\d+/.test(messageContent);
+        const priceMatches = messageContent.match(/£(\d+)/g);
+        console.log('🎯 [CONFIRMATION-PARSER] Input has prices:', hasPrices);
+        console.log('🎯 [CONFIRMATION-PARSER] Found prices:', priceMatches);
+      }
       
       // Convert to format expected by extraction UI
       // Based on message content, determine if this is performance fee or total fee
@@ -161,6 +177,9 @@ JSON:`;
  * Simple fallback confirmation parser without AI
  */
 function basicConfirmationParse(messageContent: string): any {
+  console.log('🔄 [FALLBACK-PARSER] Starting basic confirmation parse');
+  console.log('🔄 [FALLBACK-PARSER] Message preview:', messageContent.substring(0, 300));
+
   const lowerMessage = messageContent.toLowerCase();
 
   // Check for confirmation keywords
@@ -184,6 +203,7 @@ function basicConfirmationParse(messageContent: string): any {
         const pianoPrice = parseInt(threehourPianoMatch[1]);
         const djPrice = parseInt(djMatch[1]);
         calculatedFee = pianoPrice + djPrice;
+        console.log('🔄 [FALLBACK-PARSER] Found 3-hour piano:', pianoPrice, 'DJ:', djPrice, 'Total:', calculatedFee);
       } else {
         // Fallback: sum all prices found in previous message
         const previousSection = messageContent.split('CURRENT MESSAGE:')[0];
