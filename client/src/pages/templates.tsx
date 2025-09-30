@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
 import { apiRequest } from '@/lib/queryClient';
-import { auth } from '@/lib/firebase';
+// Firebase auth removed - now using Supabase via apiRequest
 
 interface EmailTemplate {
   id: number;
@@ -127,19 +127,10 @@ export default function Templates() {
     }
   }, [bookingData]);
   
-  // Use Firebase authentication
-  const getAuthToken = async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('You must be logged in to access templates');
-    }
-    return await currentUser.getIdToken();
-  };
+  // Auth now handled automatically by apiRequest - no manual token needed
 
   const fetchBookingData = async () => {
     try {
-      const token = await getAuthToken();
-      
       const response = await apiRequest(`/api/bookings/${bookingId}`, { method: 'GET' });
       const booking = await response.json();
       setBookingData(booking);
@@ -151,8 +142,6 @@ export default function Templates() {
 
   const fetchUserSettings = async () => {
     try {
-      const token = await getAuthToken();
-      
       const response = await apiRequest('/api/settings', { method: 'GET' });
       const settings = await response.json();
       setUserSettings(settings);
@@ -195,8 +184,6 @@ export default function Templates() {
 
   const seedDefaultTemplates = async () => {
     try {
-      const token = await getAuthToken();
-      
       const response = await apiRequest('/api/templates/seed-defaults', { method: 'POST' });
       const result = await response.json();
       console.log('✅ Seeded default templates:', result);
@@ -213,8 +200,6 @@ export default function Templates() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const token = await getAuthToken();
-      
       const response = await apiRequest('/api/templates', { method: 'GET' });
       const data = await response.json();
       const templatesArray = Array.isArray(data) ? data : [];

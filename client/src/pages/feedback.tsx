@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,18 +67,7 @@ export default function FeedbackPage() {
   const { data: feedback, isLoading: feedbackLoading } = useQuery<Feedback[]>({
     queryKey: ['/api/feedback'],
     queryFn: async () => {
-      const { getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const token = await auth.currentUser?.getIdToken();
-      
-      const response = await fetch('/api/feedback', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch feedback');
-      }
+      const response = await apiRequest('/api/feedback');
       return response.json();
     },
   });
@@ -85,20 +75,6 @@ export default function FeedbackPage() {
   // Create feedback mutation
   const createFeedbackMutation = useMutation({
     mutationFn: async (feedbackData: any) => {
-      // Get auth token
-      const token = await (async () => {
-        // Check if we have Supabase auth
-        const { supabase } = await import('@/lib/supabase');
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          return session.access_token;
-        }
-
-        // Fallback to Firebase if needed
-        const { getAuth } = await import('firebase/auth');
-        const auth = getAuth();
-        return await auth.currentUser?.getIdToken();
-      })();
 
       // First, upload any attachments
       let attachmentUrls: string[] = [];
@@ -109,11 +85,8 @@ export default function FeedbackPage() {
           formData.append('attachments', file);
         });
 
-        const uploadResponse = await fetch('/api/feedback/upload', {
+        const uploadResponse = await apiRequest('/api/feedback/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
           body: formData,
         });
 
@@ -129,16 +102,12 @@ export default function FeedbackPage() {
       }
 
       // Then create the feedback with attachment URLs
-      const response = await fetch('/api/feedback', {
+      const response = await apiRequest('/api/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        body: {
           ...feedbackData,
           attachments: attachmentUrls
-        }),
+        },
       });
       if (!response.ok) {
         const error = await response.json();
@@ -176,17 +145,9 @@ export default function FeedbackPage() {
   // Update feedback status (admin only)
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes?: string }) => {
-      const { getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const token = await auth.currentUser?.getIdToken();
-      
-      const response = await fetch(`/api/feedback/${id}/status`, {
+      const response = await apiRequest(`/api/feedback/${id}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status, adminNotes }),
+        body: { status, adminNotes },
       });
       if (!response.ok) {
         const error = await response.json();
@@ -216,15 +177,8 @@ export default function FeedbackPage() {
   // Delete feedback mutation (admin only)
   const deleteFeedbackMutation = useMutation({
     mutationFn: async (feedbackId: string) => {
-      const { getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const token = await auth.currentUser?.getIdToken();
-      
-      const response = await fetch(`/api/feedback/${feedbackId}`, {
+      const response = await apiRequest(`/api/feedback/${feedbackId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
       if (!response.ok) {
         const error = await response.json();
