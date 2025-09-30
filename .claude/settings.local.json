@@ -48,7 +48,8 @@
       "Bash(export PGPASSWORD='EQLvUvkTkT2dyk')",
       "Bash(lsof:*)",
       "Bash(xargs -r kill -9)",
-      "Bash(timeout 30 npx drizzle-kit push)"
+      "Bash(timeout 30 npx drizzle-kit push)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": [],
