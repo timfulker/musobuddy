@@ -31,6 +31,7 @@ import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import ClientPortal from "@/pages/client-portal";
 import MonitoringDashboard from "@/pages/monitoring";
+import PromoMetronomePage from "@/pages/promo-metronome";
 
 import EmailSetup from "@/pages/email-setup";
 import UnparseableMessages from "@/pages/unparseable-messages";
@@ -309,6 +310,7 @@ function Router() {
 
       <Route path="/admin" component={Admin} />
       <Route path="/monitoring" component={MonitoringDashboard} />
+      <Route path="/promo-metronome" component={PromoMetronomePage} />
 
       {/* Client Portal - accessible by clients with contract token */}
       <Route path="/client-portal/:contractId" component={ClientPortal} />
