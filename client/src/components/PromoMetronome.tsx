@@ -5,6 +5,7 @@ interface PromoMetronomeProps {
   speed?: number; // Animation speed in seconds (default: 1.2)
   backgroundColor?: string; // Background color (default: transparent)
   showBackground?: boolean; // Whether to show the circular background
+  showText?: boolean; // Whether to show "MusoBuddy" text (default: true)
   className?: string;
 }
 
@@ -13,6 +14,7 @@ export function PromoMetronome({
   speed = 1.2,
   backgroundColor = 'transparent',
   showBackground = true,
+  showText = true,
   className = ''
 }: PromoMetronomeProps) {
 
@@ -52,11 +54,13 @@ export function PromoMetronome({
       className={className}
       style={{
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         width: size,
-        height: size,
-        backgroundColor: backgroundColor
+        height: showText ? size + (size * 0.2) : size, // Extra height for text if shown
+        backgroundColor: backgroundColor,
+        gap: showText ? size * 0.05 : 0 // Gap between metronome and text if shown
       }}
     >
       {/* Metronome Container */}
@@ -163,6 +167,22 @@ export function PromoMetronome({
         </div>
       </div>
 
+      {/* MusoBuddy Text */}
+      {showText && (
+        <div
+          style={{
+            fontSize: size * 0.12, // 12% of metronome size
+            fontWeight: 700,
+            color: colors.primary,
+            letterSpacing: -1,
+            textAlign: 'center',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          }}
+        >
+          MusoBuddy
+        </div>
+      )}
+
       {/* Inject the animation styles */}
       <style dangerouslySetInnerHTML={{ __html: tickAnimation }} />
     </div>
@@ -176,6 +196,7 @@ export function PromoVideoMetronome() {
       size={400}
       speed={1.0}
       showBackground={true}
+      showText={true}
       className="promo-metronome"
     />
   );

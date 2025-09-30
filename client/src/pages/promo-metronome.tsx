@@ -11,6 +11,7 @@ export default function PromoMetronomePage() {
   const [size, setSize] = useState(400);
   const [speed, setSpeed] = useState(1.0);
   const [showBackground, setShowBackground] = useState(true);
+  const [showText, setShowText] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -50,6 +51,7 @@ export default function PromoMetronomePage() {
           speed={speed}
           backgroundColor="transparent"
           showBackground={showBackground}
+          showText={showText}
         />
         <div style={{
           position: 'absolute',
@@ -95,6 +97,7 @@ export default function PromoMetronomePage() {
               speed={speed}
               backgroundColor="transparent"
               showBackground={showBackground}
+              showText={showText}
             />
 
             <div style={{ marginTop: '2rem', textAlign: 'center' }}>
@@ -187,6 +190,14 @@ export default function PromoMetronomePage() {
                     onCheckedChange={setShowBackground}
                   />
                   <Label>Show blue circle background</Label>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Switch
+                    checked={showText}
+                    onCheckedChange={setShowText}
+                  />
+                  <Label>Show "MusoBuddy" text</Label>
                 </div>
 
                 <div>
