@@ -70,9 +70,20 @@ export default function LandingPage() {
                 preload="metadata"
                 playsInline
                 controlsList="nodownload"
+                onError={(e) => {
+                  console.error('Video failed to load:', e);
+                  const video = e.currentTarget;
+                  console.error('Video error details:', {
+                    src: video.currentSrc,
+                    error: video.error,
+                    networkState: video.networkState,
+                    readyState: video.readyState
+                  });
+                }}
               >
+                <source src="/videos/Final.mov" type="video/quicktime" />
                 <source src="/videos/Final.mov" type="video/mp4" />
-                Your browser does not support the video tag.
+                Your browser does not support the video tag or this video format.
               </video>
             </div>
           </div>
