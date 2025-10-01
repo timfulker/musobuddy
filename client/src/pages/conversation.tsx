@@ -310,6 +310,11 @@ export default function Conversation() {
       if (aiResponse.travelExpenseSaved !== undefined) {
         if (aiResponse.travelExpenseSaved) {
           console.log(`✅ [FRONTEND] Travel expense £${aiResponse.travelExpenseAmount} saved to database`);
+
+          // CRITICAL FIX: Invalidate booking cache to ensure fresh data for extraction
+          // This prevents stale cache from causing travel_expense to be zeroed during extraction
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings', bookingId] });
+          console.log('🔄 [FRONTEND] Booking cache invalidated to refresh travel expense data');
         } else if (aiResponse.travelExpenseAmount > 0) {
           console.log(`⚠️ [FRONTEND] Travel expense £${aiResponse.travelExpenseAmount} was provided but not saved`);
         }
@@ -461,18 +466,37 @@ export default function Conversation() {
       // ULTRA SIMPLE: Just save the total fee exactly as extracted
       if (selectedFields.has('totalFee') && extractedDetails.totalFee) {
         const totalFee = parseFloat(extractedDetails.totalFee);
-        
+
+        console.log('🔍 [EXTRACTION DEBUG] Processing totalFee extraction:', {
+          totalFee,
+          bookingTravelExpense: booking.travelExpense,
+          bookingTravelExpenseType: typeof booking.travelExpense,
+          willPreserve: booking.travelExpense || 0
+        });
+
         // Save the total fee
         updates.finalAmount = totalFee;
-        
-        // CRITICAL: Preserve travel expenses to prevent them being wiped out
-        const travelExpenses = booking.travelExpense || 0;
-        updates.travelExpense = travelExpenses;  // Explicitly preserve travel expense
-        
-        // Calculate performance fee = total fee - travel expenses  
-        const performanceFee = totalFee - travelExpenses;
-        updates.fee = performanceFee;
-        
+
+        // CRITICAL: Preserve travel expenses - explicitly fetch current value
+        // DO NOT set to 0 if booking.travelExpense is undefined - skip the field instead
+        if (booking.travelExpense !== undefined && booking.travelExpense !== null) {
+          const travelExpenses = Number(booking.travelExpense);
+          updates.travelExpense = travelExpenses;  // Explicitly preserve travel expense
+
+          // Calculate performance fee = total fee - travel expenses
+          const performanceFee = totalFee - travelExpenses;
+          updates.fee = performanceFee;
+
+          console.log('✅ [EXTRACTION] Preserving travel expense:', travelExpenses, 'Performance fee:', performanceFee);
+        } else {
+          // If travel expense is not in booking data, DON'T include it in updates
+          // This prevents zeroing out a value that might exist in DB but not in cache
+          console.warn('⚠️ [EXTRACTION] Travel expense not found in booking cache - will not update this field to avoid data loss');
+
+          // Just calculate performance fee as totalFee (assume no travel expense)
+          updates.fee = totalFee;
+        }
+
         // Remove totalFee from selectedFields since we've processed it
         selectedFields.delete('totalFee');
       }
