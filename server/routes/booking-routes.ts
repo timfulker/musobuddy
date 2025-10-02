@@ -155,7 +155,17 @@ export function registerBookingRoutes(app: Express) {
       }
       
       console.log(`✅ Retrieved ${filteredBookings.length} bookings for user ${userId}`);
-      res.json(filteredBookings);
+
+      // Fix timezone bug: format eventDate as YYYY-MM-DD string to prevent timezone shifts
+      const formattedBookings = filteredBookings.map(booking => ({
+        ...booking,
+        eventDate: booking.eventDate ? (() => {
+          const date = new Date(booking.eventDate);
+          return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+        })() : booking.eventDate
+      }));
+
+      res.json(formattedBookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
       // Return development fallback
@@ -607,8 +617,17 @@ export function registerBookingRoutes(app: Express) {
       if (!booking || booking.userId !== userId) {
         return res.status(404).json({ error: 'Booking not found' });
       }
-      
-      res.json(booking);
+
+      // Fix timezone bug: format eventDate as YYYY-MM-DD string to prevent timezone shifts
+      const formattedBooking = {
+        ...booking,
+        eventDate: booking.eventDate ? (() => {
+          const date = new Date(booking.eventDate);
+          return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+        })() : booking.eventDate
+      };
+
+      res.json(formattedBooking);
       
     } catch (error) {
       console.error('❌ Failed to fetch booking:', error);
