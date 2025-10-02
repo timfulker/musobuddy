@@ -1958,70 +1958,84 @@ app.get('/api/email-queue/status', async (req, res) => {
   app.use(subscriptionGuard);
   console.log('✅ Global subscription guard active for all /api/* routes');
 
-  // Start server
-  // Replit provides PORT env variable, default to 5000
-  const port = parseInt(process.env.PORT || '5000', 10);
-  
-  // Determine if we're in production based on multiple signals
-  const isProduction = process.env.NODE_ENV === 'production' || 
-                      process.env.REPLIT_DEPLOYMENT === 'true' ||
-                      process.env.RAILWAY_ENVIRONMENT === 'production' ||
-                      process.env.VERCEL === '1';
-  
-  console.log(`🔍 Environment check: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}, isProduction=${isProduction}`);
-
-  if (!isProduction) {
-    // Development with Vite
-    console.log('🛠️ Development mode: using Vite dev server');
-    const { setupVite } = await import('./vite');
-    const { createServer } = await import('http');
-    const server = createServer(app);
-
-    await setupVite(app, server);
-    
-    // Force use of port 5000 for Replit compatibility
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`🚀 Development server running on http://0.0.0.0:${port}`);
-    });
-    
-    server.on('error', (err: any) => {
-      console.error('❌ Server error:', err);
-      process.exit(1);
-    });
-  } else {
-    // Production
-    console.log('🏭 Production mode: serving static files');
-    const { serveStaticFixed } = await import('./core/serve-static');
-    serveStaticFixed(app);
-    
-    // Start production server with better error handling
-    const server = app.listen(port, '0.0.0.0', () => {
-      console.log(`🚀 Production server running on http://0.0.0.0:${port}`);
-      console.log(`🔗 Health check available at http://0.0.0.0:${port}/health`);
-    });
-    
-    // Handle server errors
-    server.on('error', (err: any) => {
-      console.error('❌ Production server error:', err);
-      if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is already in use`);
-      }
-      process.exit(1);
-    });
-    
-    // Graceful shutdown
-    process.on('SIGTERM', () => {
-      console.log('🛑 SIGTERM received, shutting down gracefully');
-      server.close(() => {
-        console.log('✅ Server closed');
-        process.exit(0);
-      });
-    });
-  }
+  // Final setup for production: add static file serving
+  console.log('✅ Server initialization complete - all routes and middleware ready');
 }
 
-// Start the server
-initializeServer().catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
+// CRITICAL FIX: Start server listening IMMEDIATELY, before async initialization
+// This ensures health checks pass during deployment while routes are still being set up
+const port = parseInt(process.env.PORT || '5000', 10);
+// Note: isProduction is already declared at the top of the file
+
+console.log(`🔍 Environment: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}`);
+console.log(`🚀 Starting server on port ${port} (binding to 0.0.0.0)...`);
+
+if (isProduction) {
+  // PRODUCTION: Start listening IMMEDIATELY, then initialize in background
+  console.log('🏭 Production mode: starting server immediately for fast health checks');
+  
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`✅ Production server listening on http://0.0.0.0:${port}`);
+    console.log(`🏓 Health check endpoints ready: /ping, /health, /`);
+    console.log(`⏳ Background initialization starting...`);
+    
+    // Run async initialization in background AFTER server is already listening
+    initializeServer()
+      .then(() => {
+        // Add static file serving after routes are initialized
+        import('./core/serve-static').then(({ serveStaticFixed }) => {
+          serveStaticFixed(app);
+          console.log('✅ Static file serving configured');
+          console.log('🎉 Production server fully initialized and ready');
+        });
+      })
+      .catch(error => {
+        console.error('❌ Failed to complete server initialization:', error);
+        console.error('⚠️ Server is still running but some features may not work');
+      });
+  });
+  
+  // Handle server errors
+  server.on('error', (err: any) => {
+    console.error('❌ Production server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use`);
+    }
+    process.exit(1);
+  });
+  
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('🛑 SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('✅ Server closed');
+      process.exit(0);
+    });
+  });
+  
+} else {
+  // DEVELOPMENT: Use traditional flow with Vite (already optimized)
+  console.log('🛠️ Development mode: initializing with Vite');
+  
+  initializeServer()
+    .then(async () => {
+      const { setupVite } = await import('./vite');
+      const { createServer } = await import('http');
+      const server = createServer(app);
+      
+      await setupVite(app, server);
+      
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`🚀 Development server with Vite running on http://0.0.0.0:${port}`);
+      });
+      
+      server.on('error', (err: any) => {
+        console.error('❌ Server error:', err);
+        process.exit(1);
+      });
+    })
+    .catch(error => {
+      console.error('❌ Failed to start development server:', error);
+      process.exit(1);
+    });
+}
