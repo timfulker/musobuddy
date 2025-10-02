@@ -721,6 +721,46 @@ export class Storage {
     return miscStorage.deleteBetaInviteCode(id);
   }
 
+  // ===== BETA EMAIL TEMPLATE METHODS =====
+  async createBetaEmailTemplate(data: {
+    name: string;
+    description?: string;
+    subject: string;
+    htmlBody: string;
+    textBody: string;
+    isActive?: boolean;
+    createdBy: string;
+  }) {
+    return miscStorage.createBetaEmailTemplate(data);
+  }
+
+  async getActiveBetaEmailTemplate() {
+    return miscStorage.getActiveBetaEmailTemplate();
+  }
+
+  async getBetaEmailTemplateById(id: number) {
+    return miscStorage.getBetaEmailTemplateById(id);
+  }
+
+  async getAllBetaEmailTemplates() {
+    return miscStorage.getAllBetaEmailTemplates();
+  }
+
+  async updateBetaEmailTemplate(id: number, updates: {
+    name?: string;
+    description?: string;
+    subject?: string;
+    htmlBody?: string;
+    textBody?: string;
+    isActive?: boolean;
+  }) {
+    return miscStorage.updateBetaEmailTemplate(id, updates);
+  }
+
+  async deleteBetaEmailTemplate(id: number) {
+    return miscStorage.deleteBetaEmailTemplate(id);
+  }
+
   // ===== DOCUMENT METHODS =====
   async getBookingDocuments(bookingId: number, userId: string) {
     return bookingStorage.getBookingDocuments(bookingId, userId);

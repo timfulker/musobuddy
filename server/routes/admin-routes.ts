@@ -935,7 +935,7 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
   }
 
   try {
-    const { email, firstName, customCode, subject, message } = req.body;
+    const { email, firstName, customCode, subject, message, templateId } = req.body;
 
     if (!email || !firstName || !customCode) {
       return res.status(400).json({
@@ -951,8 +951,46 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
 
     const currentYear = new Date().getFullYear();
 
-    // HTML email template
-    const htmlTemplate = `<!doctype html>
+    // Get email template (either specified or active)
+    let emailTemplate;
+    if (templateId) {
+      emailTemplate = await storage.getBetaEmailTemplateById(parseInt(templateId));
+    } else {
+      emailTemplate = await storage.getActiveBetaEmailTemplate();
+    }
+
+    // If no template found, use the hardcoded fallback
+    let htmlTemplate: string;
+    let textTemplate: string;
+    let emailSubject: string;
+
+    if (emailTemplate) {
+      // Replace template variables in HTML
+      htmlTemplate = emailTemplate.htmlBody
+        .replace(/\{\{firstName\}\}/g, firstName)
+        .replace(/\{\{customCode\}\}/g, customCode)
+        .replace(/\{\{currentYear\}\}/g, currentYear.toString())
+        .replace(/\{\{message\}\}/g, message || '');
+
+      // Replace template variables in text
+      textTemplate = emailTemplate.textBody
+        .replace(/\{\{firstName\}\}/g, firstName)
+        .replace(/\{\{customCode\}\}/g, customCode)
+        .replace(/\{\{currentYear\}\}/g, currentYear.toString())
+        .replace(/\{\{message\}\}/g, message || '');
+
+      // Replace template variables in subject
+      emailSubject = emailTemplate.subject
+        .replace(/\{\{firstName\}\}/g, firstName)
+        .replace(/\{\{customCode\}\}/g, customCode);
+
+      console.log(`📧 [ADMIN] Using stored template: ${emailTemplate.name}`);
+    } else {
+      console.log(`📧 [ADMIN] No template found, using hardcoded fallback`);
+      emailSubject = subject || `Welcome to MusoBuddy Beta - Code: ${customCode}`;
+
+      // HTML email template
+      htmlTemplate = `<!doctype html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
   <head>
     <meta charset="utf-8">
@@ -1138,8 +1176,8 @@ app.post('/api/admin/send-beta-email', authenticate, async (req: AuthenticatedRe
   </body>
 </html>`;
 
-    // Plain text fallback
-    const textTemplate = `Welcome to the MusoBuddy Beta!
+      // Plain text fallback
+      textTemplate = `Welcome to the MusoBuddy Beta!
 
 Hi ${firstName},
 
@@ -1168,10 +1206,11 @@ ${message ? `Personal Message:\n${message}\n\n` : ''}Need help? Email us at supp
 
 © ${currentYear} MusoBuddy. All rights reserved.
 https://www.musobuddy.com`;
+    }
 
     const result = await mailgunService.sendAuthEmail({
       to: email,
-      subject: subject || `Welcome to MusoBuddy Beta - Code: ${customCode}`,
+      subject: emailSubject,
       html: htmlTemplate,
       text: textTemplate
     });
@@ -1194,6 +1233,188 @@ https://www.musobuddy.com`;
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to send email'
+    });
+  }
+});
+
+// ===== BETA EMAIL TEMPLATE MANAGEMENT =====
+
+// Get all beta email templates
+app.get('/api/admin/beta-email-templates', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    console.log('📧 [ADMIN] Fetching all beta email templates');
+
+    const templates = await storage.getAllBetaEmailTemplates();
+
+    res.json({
+      success: true,
+      templates
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to fetch beta email templates:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get active beta email template
+app.get('/api/admin/beta-email-templates/active', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const template = await storage.getActiveBetaEmailTemplate();
+
+    res.json({
+      success: true,
+      template
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to fetch active beta email template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Create a new beta email template
+app.post('/api/admin/beta-email-templates', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { name, description, subject, htmlBody, textBody, isActive } = req.body;
+
+    if (!name || !subject || !htmlBody || !textBody) {
+      return res.status(400).json({
+        error: 'name, subject, htmlBody, and textBody are required'
+      });
+    }
+
+    console.log(`📧 [ADMIN] Creating beta email template: ${name}`);
+
+    const newTemplate = await storage.createBetaEmailTemplate({
+      name,
+      description,
+      subject,
+      htmlBody,
+      textBody,
+      isActive: isActive || false,
+      createdBy: req.user.id
+    });
+
+    console.log(`✅ [ADMIN] Beta email template created:`, {
+      id: newTemplate.id,
+      name: newTemplate.name,
+      isActive: newTemplate.isActive
+    });
+
+    res.json({
+      success: true,
+      template: newTemplate
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to create beta email template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update a beta email template
+app.put('/api/admin/beta-email-templates/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    const { name, description, subject, htmlBody, textBody, isActive } = req.body;
+
+    console.log(`📝 [ADMIN] Updating beta email template ID: ${id}`);
+
+    const updates: any = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (subject !== undefined) updates.subject = subject;
+    if (htmlBody !== undefined) updates.htmlBody = htmlBody;
+    if (textBody !== undefined) updates.textBody = textBody;
+    if (isActive !== undefined) updates.isActive = isActive;
+
+    const updatedTemplate = await storage.updateBetaEmailTemplate(parseInt(id), updates);
+
+    if (!updatedTemplate) {
+      return res.status(404).json({
+        error: 'Beta email template not found'
+      });
+    }
+
+    console.log(`✅ [ADMIN] Beta email template updated:`, updatedTemplate.name);
+
+    res.json({
+      success: true,
+      template: updatedTemplate
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to update beta email template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Delete a beta email template
+app.delete('/api/admin/beta-email-templates/:id', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check admin permissions
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+
+    console.log(`🗑️ [ADMIN] Deleting beta email template ID: ${id}`);
+
+    const deletedTemplate = await storage.deleteBetaEmailTemplate(parseInt(id));
+
+    if (!deletedTemplate) {
+      return res.status(404).json({
+        error: 'Beta email template not found'
+      });
+    }
+
+    console.log(`✅ [ADMIN] Beta email template deleted:`, deletedTemplate.name);
+
+    res.json({
+      success: true,
+      message: 'Beta email template deleted',
+      deletedTemplate
+    });
+
+  } catch (error: any) {
+    console.error('❌ [ADMIN] Failed to delete beta email template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });

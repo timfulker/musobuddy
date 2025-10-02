@@ -858,6 +858,20 @@ export const betaInviteCodes = pgTable("beta_invite_codes", {
   lastUsedBy: varchar("last_used_by").references(() => users.id), // Last user ID who used it
 });
 
+// Beta email templates table - customizable email templates for beta invitations
+export const betaEmailTemplates = pgTable("beta_email_templates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(), // Template name for admin reference
+  description: text("description"), // What this template is for
+  subject: varchar("subject").notNull(), // Email subject line
+  htmlBody: text("html_body").notNull(), // HTML email content
+  textBody: text("text_body").notNull(), // Plain text fallback
+  isActive: boolean("is_active").default(true), // Only one can be active at a time
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Contract Learning System Tables
 
 // Store imported contract files
@@ -1231,6 +1245,12 @@ export const insertBetaInviteCodeSchema = createInsertSchema(betaInviteCodes).om
   lastUsedBy: true,
 });
 
+export const insertBetaEmailTemplateSchema = createInsertSchema(betaEmailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertImportedContractSchema = createInsertSchema(importedContracts);
 export const insertContractExtractionPatternSchema = createInsertSchema(contractExtractionPatterns);
 export const insertContractExtractionSchema = createInsertSchema(contractExtractions);
@@ -1318,6 +1338,8 @@ export type InsertBetaInvite = z.infer<typeof insertBetaInviteSchema>;
 export type BetaInvite = typeof betaInvites.$inferSelect;
 export type InsertBetaInviteCode = z.infer<typeof insertBetaInviteCodeSchema>;
 export type BetaInviteCode = typeof betaInviteCodes.$inferSelect;
+export type InsertBetaEmailTemplate = z.infer<typeof insertBetaEmailTemplateSchema>;
+export type BetaEmailTemplate = typeof betaEmailTemplates.$inferSelect;
 
 // Export monitoring tables
 export {

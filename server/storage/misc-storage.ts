@@ -1,5 +1,5 @@
 import { db } from "../core/database";
-import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites, betaInviteCodes } from "../../shared/schema";
+import { complianceDocuments, clients, conflictResolutions, unparseableMessages, messageNotifications, googleCalendarIntegration, eventSyncMapping, bookings, betaInvites, betaInviteCodes, betaEmailTemplates } from "../../shared/schema";
 import { eq, and, desc, sql, lte, gte, ne, isNull } from "drizzle-orm";
 
 export class MiscStorage {
@@ -687,6 +687,85 @@ export class MiscStorage {
   async deleteBetaInviteCode(id: number) {
     const result = await db.delete(betaInviteCodes)
       .where(eq(betaInviteCodes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // ===== BETA EMAIL TEMPLATE METHODS =====
+
+  async createBetaEmailTemplate(data: {
+    name: string;
+    description?: string;
+    subject: string;
+    htmlBody: string;
+    textBody: string;
+    isActive?: boolean;
+    createdBy: string;
+  }) {
+    // If this template is being set as active, deactivate all others first
+    if (data.isActive) {
+      await db.update(betaEmailTemplates)
+        .set({ isActive: false });
+    }
+
+    const result = await db.insert(betaEmailTemplates).values({
+      name: data.name,
+      description: data.description || null,
+      subject: data.subject,
+      htmlBody: data.htmlBody,
+      textBody: data.textBody,
+      isActive: data.isActive ?? false,
+      createdBy: data.createdBy,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+
+  async getActiveBetaEmailTemplate() {
+    const result = await db.select().from(betaEmailTemplates)
+      .where(eq(betaEmailTemplates.isActive, true));
+    return result[0] || null;
+  }
+
+  async getBetaEmailTemplateById(id: number) {
+    const result = await db.select().from(betaEmailTemplates)
+      .where(eq(betaEmailTemplates.id, id));
+    return result[0] || null;
+  }
+
+  async getAllBetaEmailTemplates() {
+    return await db.select().from(betaEmailTemplates)
+      .orderBy(desc(betaEmailTemplates.updatedAt));
+  }
+
+  async updateBetaEmailTemplate(id: number, updates: {
+    name?: string;
+    description?: string;
+    subject?: string;
+    htmlBody?: string;
+    textBody?: string;
+    isActive?: boolean;
+  }) {
+    // If setting this template as active, deactivate all others first
+    if (updates.isActive === true) {
+      await db.update(betaEmailTemplates)
+        .set({ isActive: false });
+    }
+
+    const result = await db.update(betaEmailTemplates)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(betaEmailTemplates.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBetaEmailTemplate(id: number) {
+    const result = await db.delete(betaEmailTemplates)
+      .where(eq(betaEmailTemplates.id, id))
       .returning();
     return result[0];
   }
