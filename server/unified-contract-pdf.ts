@@ -536,11 +536,17 @@ function generateUnifiedContractHTML(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy Professional Services';
   const eventDate = contract.eventDate ? new Date(contract.eventDate) : null;
-  const eventDateStr = eventDate ? eventDate.toLocaleDateString('en-GB', {
+  // Fix timezone issue: use UTC methods to prevent date from shifting to previous day
+  const eventDateStr = eventDate ? new Date(Date.UTC(
+    eventDate.getUTCFullYear(),
+    eventDate.getUTCMonth(),
+    eventDate.getUTCDate()
+  )).toLocaleDateString('en-GB', {
     weekday: 'long',
-    year: 'numeric', 
+    year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   }) : 'Date TBC';
 
   const isSigned = contract.status === 'signed' || signatureDetails;

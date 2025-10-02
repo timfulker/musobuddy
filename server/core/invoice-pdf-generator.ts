@@ -888,9 +888,12 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                                         </div>`
                                     }
                                 </td>
-                                ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ? 
-                                    `<td class="amount">£${invoice.amount}</td>` : 
-                                    `<td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+                                ${(invoice.invoiceType === 'ad_hoc' || invoice['invoice_type'] === 'ad_hoc') ?
+                                    `<td class="amount">£${invoice.amount}</td>` :
+                                    `<td>${invoice.eventDate ? (() => {
+                                        const date = new Date(invoice.eventDate);
+                                        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toLocaleDateString('en-GB', { timeZone: 'UTC' });
+                                    })() : 'TBD'}</td>
                                      <td class="amount">£${invoice.amount}</td>`
                                 }
                             </tr>
