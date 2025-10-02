@@ -138,6 +138,31 @@ app.get('/', (req, res, next) => {
   return next();
 });
 
+// Track server initialization state
+let serverInitialized = false;
+
+// Middleware to return 503 for non-health endpoints during initialization
+// This prevents 404 errors and properly communicates that the server is warming up
+app.use((req, res, next) => {
+  // Allow health check endpoints to always pass through
+  if (req.path === '/ping' || req.path === '/health' || req.path === '/') {
+    return next();
+  }
+  
+  // If server is not initialized yet, return 503 Service Unavailable
+  if (!serverInitialized) {
+    console.log(`⏳ Request to ${req.path} during initialization - returning 503`);
+    return res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Server is starting up, please try again in a moment',
+      retryAfter: 5
+    });
+  }
+  
+  // Server is initialized, proceed normally
+  next();
+});
+
 
 // Initialize storage and services in async wrapper
 async function initializeServer() {
@@ -1962,8 +1987,9 @@ app.get('/api/email-queue/status', async (req, res) => {
   console.log('✅ Server initialization complete - all routes and middleware ready');
 }
 
-// CRITICAL FIX: Start server listening IMMEDIATELY, before async initialization
-// This ensures health checks pass during deployment while routes are still being set up
+// CRITICAL FIX: Start server listening IMMEDIATELY for fast health check response
+// Health endpoints (/ping, /health, /) are registered above and respond immediately
+// Other routes are registered asynchronously after the server starts listening
 const port = parseInt(process.env.PORT || '5000', 10);
 // Note: isProduction is already declared at the top of the file
 
@@ -1971,27 +1997,36 @@ console.log(`🔍 Environment: NODE_ENV=${process.env.NODE_ENV}, REPLIT_DEPLOYME
 console.log(`🚀 Starting server on port ${port} (binding to 0.0.0.0)...`);
 
 if (isProduction) {
-  // PRODUCTION: Start listening IMMEDIATELY, then initialize in background
+  // PRODUCTION: Start listening IMMEDIATELY so health checks pass during deployment
   console.log('🏭 Production mode: starting server immediately for fast health checks');
   
   const server = app.listen(port, '0.0.0.0', () => {
     console.log(`✅ Production server listening on http://0.0.0.0:${port}`);
     console.log(`🏓 Health check endpoints ready: /ping, /health, /`);
-    console.log(`⏳ Background initialization starting...`);
+    console.log(`⏳ Registering application routes in background...`);
     
-    // Run async initialization in background AFTER server is already listening
+    // Run async initialization AFTER server is listening to register remaining routes
+    // Health checks will pass immediately while routes are being registered
     initializeServer()
       .then(() => {
         // Add static file serving after routes are initialized
-        import('./core/serve-static').then(({ serveStaticFixed }) => {
+        return import('./core/serve-static').then(({ serveStaticFixed }) => {
           serveStaticFixed(app);
           console.log('✅ Static file serving configured');
-          console.log('🎉 Production server fully initialized and ready');
         });
       })
+      .then(() => {
+        // Mark server as fully initialized
+        serverInitialized = true;
+        console.log('🎉 Production server fully initialized - all routes ready');
+      })
       .catch(error => {
-        console.error('❌ Failed to complete server initialization:', error);
-        console.error('⚠️ Server is still running but some features may not work');
+        console.error('❌ CRITICAL: Failed to initialize application routes:', error);
+        console.error('❌ Shutting down server due to initialization failure');
+        // Exit the process on initialization failure to prevent running a broken server
+        server.close(() => {
+          process.exit(1);
+        });
       });
   });
   
@@ -2014,7 +2049,7 @@ if (isProduction) {
   });
   
 } else {
-  // DEVELOPMENT: Use traditional flow with Vite (already optimized)
+  // DEVELOPMENT: Use traditional flow with Vite
   console.log('🛠️ Development mode: initializing with Vite');
   
   initializeServer()
@@ -2026,6 +2061,7 @@ if (isProduction) {
       await setupVite(app, server);
       
       server.listen(port, '0.0.0.0', () => {
+        serverInitialized = true;
         console.log(`🚀 Development server with Vite running on http://0.0.0.0:${port}`);
       });
       
