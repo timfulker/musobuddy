@@ -62,6 +62,12 @@ export class SettingsStorage {
     console.log('  📝 Custom Clauses:', JSON.stringify(updates.custom_clauses, null, 2));
     console.log('  📄 Invoice Clauses:', JSON.stringify(updates.invoice_clauses, null, 2));
     console.log('  📝 Custom Invoice Clauses:', JSON.stringify(updates.custom_invoice_clauses, null, 2));
+    console.log('🔍 [INVOICE-SETTINGS] Initial updates object:', {
+      invoicePrefix: updates.invoicePrefix,
+      nextInvoiceNumber: updates.nextInvoiceNumber,
+      invoice_prefix: updates.invoice_prefix,
+      next_invoice_number: updates.next_invoice_number
+    });
     
     const existing = await this.getSettings(userId);
     
@@ -122,6 +128,12 @@ export class SettingsStorage {
       processedUpdates.invoice_payment_terms = processedUpdates.invoicePaymentTerms;
       delete processedUpdates.invoicePaymentTerms;
     }
+
+    // Invoice fields - Drizzle expects camelCase (invoicePrefix, nextInvoiceNumber)
+    console.log('🔍 [INVOICE-SETTINGS] Invoice fields (keeping camelCase for Drizzle):', {
+      invoicePrefix: processedUpdates.invoicePrefix,
+      nextInvoiceNumber: processedUpdates.nextInvoiceNumber
+    });
 
     // personalForwardEmail is handled by Drizzle's column mapping - no manual conversion needed
 

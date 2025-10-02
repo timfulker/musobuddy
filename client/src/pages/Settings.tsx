@@ -3318,13 +3318,18 @@ export default function Settings() {
 
   const saveContractInvoice = useMutation({
     mutationFn: async (data: SettingsFormData) => {
+      console.log('🔍 [SAVE-CONTRACT-INVOICE] Form data received:', {
+        nextInvoiceNumber: data.nextInvoiceNumber,
+        invoicePrefix: data.invoicePrefix
+      });
+
       const currentSettings = settings || {};
-      
+
       const mergedContractClauses = {
         ...currentSettings.contractClauses,
         ...data.contractClauses
       };
-      
+
       const mergedInvoiceClauses = {
         ...currentSettings.invoiceClauses,
         ...data.invoiceClauses
@@ -3335,12 +3340,19 @@ export default function Settings() {
         customClauses: data.customClauses || [],
         invoiceClauses: mergedInvoiceClauses,
         customInvoiceClauses: data.customInvoiceClauses || [],
+        nextInvoiceNumber: data.nextInvoiceNumber,
+        invoicePrefix: data.invoicePrefix,
         // Map to snake_case for backend compatibility
         contract_clauses: mergedContractClauses,
         custom_clauses: data.customClauses || [],
         invoice_clauses: mergedInvoiceClauses,
         custom_invoice_clauses: data.customInvoiceClauses || []
       };
+
+      console.log('🔍 [SAVE-CONTRACT-INVOICE] Sending to backend:', {
+        nextInvoiceNumber: contractData.nextInvoiceNumber,
+        invoicePrefix: contractData.invoicePrefix
+      });
 
       return await apiRequest('/api/settings', {
         method: 'PATCH',
@@ -3900,6 +3912,7 @@ export default function Settings() {
         emailSignatureText: settings.emailSignatureText || "",
         personalForwardEmail: settings.personalForwardEmail || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
+        invoicePrefix: settings.invoicePrefix || settings.invoice_prefix || "",
         defaultTerms: settings.defaultTerms || "",
         bankDetails: (() => {
           const bankData = settings.bankDetails;
@@ -4089,6 +4102,8 @@ export default function Settings() {
   const onSubmit = (data: SettingsFormData) => {
     try {
       console.log('Form submitted with data:', data);
+      console.log('🔍 [INVOICE-SETTINGS-FRONTEND] nextInvoiceNumber:', data.nextInvoiceNumber);
+      console.log('🔍 [INVOICE-SETTINGS-FRONTEND] invoicePrefix:', data.invoicePrefix);
       console.log('Has changes:', hasChanges);
       console.log('Save settings pending:', saveSettings.isPending);
       saveSettings.mutate(data);
