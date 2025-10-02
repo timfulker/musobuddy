@@ -49,7 +49,8 @@
       "Bash(lsof:*)",
       "Bash(xargs -r kill -9)",
       "Bash(timeout 30 npx drizzle-kit push)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(PGPASSWORD:*)"
     ],
     "deny": [],
     "ask": [],

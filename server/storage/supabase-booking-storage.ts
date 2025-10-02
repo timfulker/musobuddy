@@ -183,7 +183,20 @@ export class SupabaseBookingStorage {
       throw error;
     }
 
-    return this.mapToCamelCase(data);
+    // Debug: Check raw data from Supabase
+    console.log(`🎭 [SUPABASE-RAW] Booking ${id} raw data:`, {
+      performance_duration: data.performance_duration,
+      performanceDuration: data.performanceDuration
+    });
+
+    const mapped = this.mapToCamelCase(data);
+
+    // Debug: Check after mapping
+    console.log(`🎭 [SUPABASE-MAPPED] Booking ${id} after mapping:`, {
+      performanceDuration: mapped.performanceDuration
+    });
+
+    return mapped;
   }
 
   // Method for fetching ALL bookings (use sparingly - for exports, reports)

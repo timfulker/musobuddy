@@ -166,6 +166,14 @@ export function registerBookingRoutes(app: Express) {
           return formatted;
         })() : booking.eventDate;
 
+        // Debug: Check if performanceDuration exists
+        if (booking.id) {
+          console.log(`🎭 [PERFORMANCE-DURATION] Booking ${booking.id}:`, {
+            performanceDuration: booking.performanceDuration,
+            performance_duration: (booking as any).performance_duration
+          });
+        }
+
         return {
           ...booking,
           eventDate: formattedDate
@@ -625,6 +633,12 @@ export function registerBookingRoutes(app: Express) {
         return res.status(404).json({ error: 'Booking not found' });
       }
 
+      // Debug: Check performanceDuration
+      console.log(`🎭 [INDIVIDUAL-BOOKING] Booking ${bookingId}:`, {
+        performanceDuration: booking.performanceDuration,
+        performance_duration: (booking as any).performance_duration
+      });
+
       // Fix timezone bug: format eventDate as YYYY-MM-DD string to prevent timezone shifts
       const formattedBooking = {
         ...booking,
@@ -633,6 +647,10 @@ export function registerBookingRoutes(app: Express) {
           return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
         })() : booking.eventDate
       };
+
+      console.log(`🎭 [FORMATTED-BOOKING] Booking ${bookingId} formatted:`, {
+        performanceDuration: formattedBooking.performanceDuration
+      });
 
       res.json(formattedBooking);
       
