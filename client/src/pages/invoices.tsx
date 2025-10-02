@@ -297,7 +297,9 @@ export default function Invoices() {
           form.setValue("venueAddress", selectedContract.venue || "");
         }
         if (!form.getValues("performanceDate") && selectedContract.eventDate) {
-          form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
+          // Fix timezone bug: use UTC methods to preserve the date as stored in database
+          const date = new Date(selectedContract.eventDate);
+          form.setValue("performanceDate", `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`);
         }
         if (!form.getValues("amount") && selectedContract.fee) {
           // Calculate total fee including travel expenses

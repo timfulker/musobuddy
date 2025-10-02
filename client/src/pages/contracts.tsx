@@ -233,7 +233,11 @@ export default function Contracts() {
               form.setValue('clientAddress', booking.clientAddress || '');
               form.setValue('venue', booking.venue || '');
               form.setValue('venueAddress', booking.venueAddress || '');
-              form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
+              // Fix timezone bug: use UTC methods to preserve the date as stored in database
+              form.setValue('eventDate', booking.eventDate ? (() => {
+                const date = new Date(booking.eventDate);
+                return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+              })() : '');
               // Set time fields directly - now using same format as booking form
               form.setValue('eventTime', booking.eventTime || '');
               form.setValue('eventEndTime', booking.eventEndTime || '');
@@ -311,7 +315,11 @@ export default function Contracts() {
             form.setValue('clientEmail', enquiry.clientEmail || '');
             form.setValue('clientPhone', enquiry.clientPhone || '');
             form.setValue('venue', enquiry.venue || '');
-            form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
+            // Fix timezone bug: use UTC methods to preserve the date as stored in database
+            form.setValue('eventDate', enquiry.eventDate ? (() => {
+              const date = new Date(enquiry.eventDate);
+              return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+            })() : '');
             form.setValue('eventTime', enquiry.eventTime || '');
             form.setValue('eventEndTime', enquiry.eventEndTime || '');
             form.setValue('fee', enquiry.fee || '');
@@ -646,7 +654,11 @@ export default function Contracts() {
     form.setValue('clientEmail', contract.clientEmail || '');
     form.setValue('clientPhone', contract.clientPhone || '');
     form.setValue('clientAddress', contract.clientAddress || '');
-    form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
+    // Fix timezone bug: use UTC methods to preserve the date as stored in database
+    form.setValue('eventDate', contract.eventDate ? (() => {
+      const date = new Date(contract.eventDate);
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+    })() : '');
     form.setValue('eventTime', contract.eventTime?.split(' - ')[0] || '');
     form.setValue('eventEndTime', contract.eventTime?.split(' - ')[1] || '');
     form.setValue('performanceDuration', contract.performanceDuration || '');
