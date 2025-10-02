@@ -1737,6 +1737,7 @@ export default function AdminPanel() {
                         </div>
                       </DialogContent>
                     </Dialog>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
