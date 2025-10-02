@@ -133,12 +133,17 @@ export default function AdminPanel() {
 
   // Beta email state
   const [betaEmailDialogOpen, setBetaEmailDialogOpen] = useState(false);
+  const [emailTemplateDialogOpen, setEmailTemplateDialogOpen] = useState(false);
   const [betaEmailForm, setBetaEmailForm] = useState({
     email: '',
     firstName: '',
     customCode: '',
     subject: '',
     message: ''
+  });
+  const [emailTemplateForm, setEmailTemplateForm] = useState({
+    subject: '',
+    textBody: ''
   });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
@@ -168,6 +173,15 @@ export default function AdminPanel() {
     betaCodes: BetaInviteCode[];
   }>({
     queryKey: ["/api/admin/beta-codes"],
+    retry: 3,
+    staleTime: 30000,
+  });
+
+  const { data: activeTemplate } = useQuery<{
+    success: boolean;
+    template: any;
+  }>({
+    queryKey: ["/api/admin/beta-email-templates/active"],
     retry: 3,
     staleTime: 30000,
   });
@@ -464,6 +478,46 @@ export default function AdminPanel() {
     }
 
     sendBetaEmailMutation.mutate(betaEmailForm);
+  };
+
+  // Update email template mutation
+  const updateEmailTemplateMutation = useMutation({
+    mutationFn: (data: any) => apiRequest(`/api/admin/beta-email-templates/${data.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data.updates),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/beta-email-templates/active"] });
+      setEmailTemplateDialogOpen(false);
+      toast({
+        title: "Email template updated",
+        description: "The beta email template has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating template",
+        description: error.message || "Failed to update email template",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveEmailTemplate = () => {
+    if (!activeTemplate?.template) {
+      toast({
+        title: "No template found",
+        description: "Please create a template first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateEmailTemplateMutation.mutate({
+      id: activeTemplate.template.id,
+      updates: emailTemplateForm
+    });
   };
 
   const generateRandomCode = () => {
@@ -1527,13 +1581,85 @@ export default function AdminPanel() {
                         Send professionally styled beta invitation emails with custom codes
                       </CardDescription>
                     </div>
-                    <Dialog open={betaEmailDialogOpen} onOpenChange={setBetaEmailDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          Send Beta Email
-                        </Button>
-                      </DialogTrigger>
+                    <div className="flex gap-2">
+                      <Dialog open={emailTemplateDialogOpen} onOpenChange={(open) => {
+                        setEmailTemplateDialogOpen(open);
+                        if (open && activeTemplate?.template) {
+                          setEmailTemplateForm({
+                            subject: activeTemplate.template.subject || '',
+                            textBody: activeTemplate.template.textBody || ''
+                          });
+                        }
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="flex items-center gap-2"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Edit Email Template
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Edit Beta Email Template</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                <strong>Available variables:</strong> {{firstName}}, {{customCode}}, {{currentYear}}, {{message}}
+                              </p>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="template-subject">Email Subject</Label>
+                              <Input
+                                id="template-subject"
+                                value={emailTemplateForm.subject}
+                                onChange={(e) => setEmailTemplateForm(prev => ({ ...prev, subject: e.target.value }))}
+                                placeholder="Welcome to MusoBuddy Beta - Code: {{customCode}}"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="template-text">Plain Text Content</Label>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                This is the text version of your email (HTML editing coming soon)
+                              </p>
+                              <textarea
+                                id="template-text"
+                                value={emailTemplateForm.textBody}
+                                onChange={(e) => setEmailTemplateForm(prev => ({ ...prev, textBody: e.target.value }))}
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[400px] resize-y"
+                                placeholder="Welcome to the MusoBuddy Beta!..."
+                              />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEmailTemplateDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={handleSaveEmailTemplate}
+                                disabled={updateEmailTemplateMutation.isPending}
+                              >
+                                {updateEmailTemplateMutation.isPending ? "Saving..." : "Save Template"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog open={betaEmailDialogOpen} onOpenChange={setBetaEmailDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            Send Beta Email
+                          </Button>
+                        </DialogTrigger>
                       <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
                           <DialogTitle>Send Beta Invitation Email</DialogTitle>
