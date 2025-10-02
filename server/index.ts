@@ -94,32 +94,47 @@ app.use(session({
   }
 }));
 
-// Health check endpoints for deployment
+// CRITICAL: Simple ping endpoint for deployment health checks
+// This endpoint responds immediately without any async operations or database calls
+// This ensures the health check passes during deployment
+app.get('/ping', (req, res) => {
+  console.log('🏓 PING health check received');
+  res.status(200).send('pong');
+});
+
+// Health check endpoint for deployment with logging
 app.get('/health', (req, res) => {
+  console.log('❤️ HEALTH check received');
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Root endpoint - simplified to respond quickly for all health checks
 app.get('/', (req, res, next) => {
-  // Only return JSON for explicit health checks and monitoring tools
-  // Allow all browser requests (including Replit preview) to go to Vite
   const userAgent = req.headers['user-agent'] || '';
   const accept = req.headers['accept'] || '';
   
-  // Check for monitoring/health check tools
-  if (userAgent.includes('GoogleHC') || 
+  console.log('🏠 ROOT endpoint hit - User-Agent:', userAgent.substring(0, 50), 'Accept:', accept.substring(0, 30));
+  
+  // For any health check tool or non-browser request, respond immediately with JSON
+  // This ensures fast response for deployment health checks
+  if (!accept.includes('text/html') || 
+      userAgent.includes('GoogleHC') || 
       userAgent.includes('Pingdom') ||
       userAgent.includes('StatusCake') ||
       userAgent.includes('UptimeRobot') ||
-      (userAgent.includes('curl') && !accept.includes('text/html')) ||
-      (userAgent.includes('python') && accept.includes('application/json'))) {
+      userAgent.includes('curl') ||
+      userAgent.includes('python') ||
+      userAgent.includes('wget')) {
+    console.log('✅ Responding to health check/monitoring tool');
     return res.status(200).json({ 
-      status: 'MusoBuddy API', 
-      mode: process.env.NODE_ENV,
+      status: 'MusoBuddy API Online', 
+      mode: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString() 
     });
   }
   
-  // Let Vite handle all browser requests (including Replit preview iframe)
+  // Let Vite handle browser requests
+  console.log('🌐 Passing to Vite for browser request');
   return next();
 });
 
