@@ -233,11 +233,8 @@ export default function Contracts() {
               form.setValue('clientAddress', booking.clientAddress || '');
               form.setValue('venue', booking.venue || '');
               form.setValue('venueAddress', booking.venueAddress || '');
-              // Fix timezone bug: use UTC methods to preserve the date as stored in database
-              form.setValue('eventDate', booking.eventDate ? (() => {
-                const date = new Date(booking.eventDate);
-                return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-              })() : '');
+              // Server now sends properly formatted date string (YYYY-MM-DD), use it directly
+              form.setValue('eventDate', booking.eventDate || '');
               // Set time fields directly - now using same format as booking form
               form.setValue('eventTime', booking.eventTime || '');
               form.setValue('eventEndTime', booking.eventEndTime || '');
@@ -315,11 +312,8 @@ export default function Contracts() {
             form.setValue('clientEmail', enquiry.clientEmail || '');
             form.setValue('clientPhone', enquiry.clientPhone || '');
             form.setValue('venue', enquiry.venue || '');
-            // Fix timezone bug: use UTC methods to preserve the date as stored in database
-            form.setValue('eventDate', enquiry.eventDate ? (() => {
-              const date = new Date(enquiry.eventDate);
-              return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-            })() : '');
+            // Server now sends properly formatted date string (YYYY-MM-DD), use it directly
+            form.setValue('eventDate', enquiry.eventDate || '');
             form.setValue('eventTime', enquiry.eventTime || '');
             form.setValue('eventEndTime', enquiry.eventEndTime || '');
             form.setValue('fee', enquiry.fee || '');
@@ -654,11 +648,8 @@ export default function Contracts() {
     form.setValue('clientEmail', contract.clientEmail || '');
     form.setValue('clientPhone', contract.clientPhone || '');
     form.setValue('clientAddress', contract.clientAddress || '');
-    // Fix timezone bug: use UTC methods to preserve the date as stored in database
-    form.setValue('eventDate', contract.eventDate ? (() => {
-      const date = new Date(contract.eventDate);
-      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-    })() : '');
+    // Server now sends properly formatted date string (YYYY-MM-DD), use it directly
+    form.setValue('eventDate', contract.eventDate || '');
     form.setValue('eventTime', contract.eventTime?.split(' - ')[0] || '');
     form.setValue('eventEndTime', contract.eventTime?.split(' - ')[1] || '');
     form.setValue('performanceDuration', contract.performanceDuration || '');

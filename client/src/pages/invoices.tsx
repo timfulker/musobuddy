@@ -297,9 +297,8 @@ export default function Invoices() {
           form.setValue("venueAddress", selectedContract.venue || "");
         }
         if (!form.getValues("performanceDate") && selectedContract.eventDate) {
-          // Fix timezone bug: use UTC methods to preserve the date as stored in database
-          const date = new Date(selectedContract.eventDate);
-          form.setValue("performanceDate", `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`);
+          // Server now sends properly formatted date string (YYYY-MM-DD), use it directly
+          form.setValue("performanceDate", selectedContract.eventDate);
         }
         if (!form.getValues("amount") && selectedContract.fee) {
           // Calculate total fee including travel expenses

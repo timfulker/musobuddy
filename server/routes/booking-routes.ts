@@ -157,13 +157,20 @@ export function registerBookingRoutes(app: Express) {
       console.log(`✅ Retrieved ${filteredBookings.length} bookings for user ${userId}`);
 
       // Fix timezone bug: format eventDate as YYYY-MM-DD string to prevent timezone shifts
-      const formattedBookings = filteredBookings.map(booking => ({
-        ...booking,
-        eventDate: booking.eventDate ? (() => {
+      const formattedBookings = filteredBookings.map(booking => {
+        const originalDate = booking.eventDate;
+        const formattedDate = booking.eventDate ? (() => {
           const date = new Date(booking.eventDate);
-          return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-        })() : booking.eventDate
-      }));
+          const formatted = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+          console.log(`🗓️ [DATE-FORMAT] Booking ${booking.id}: ${originalDate} -> ${formatted}`);
+          return formatted;
+        })() : booking.eventDate;
+
+        return {
+          ...booking,
+          eventDate: formattedDate
+        };
+      });
 
       res.json(formattedBookings);
     } catch (error) {
