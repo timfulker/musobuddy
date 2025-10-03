@@ -364,6 +364,7 @@ export const bookings = pgTable("bookings", {
   // Payment Terms (Single Source of Truth for Contract & Invoice)
   paymentTerms: varchar("payment_terms"), // e.g., "28_days_before", "7_days_after", etc.
   dueDate: timestamp("due_date"), // Calculated from performance date + payment terms
+  paymentTermsCustomized: boolean("payment_terms_customized").default(false), // True if user manually changed from default
 
   // Document Storage
   uploadedDocuments: jsonb("uploaded_documents").default('[]'),

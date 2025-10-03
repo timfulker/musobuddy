@@ -70,6 +70,7 @@ const fullBookingSchema = z.object({
     if (!dateStr) return null;
     return new Date(dateStr);
   }),
+  paymentTermsCustomized: z.boolean().optional(),
   // Collaborative fields
   venueContact: z.string().optional(),
   soundTechContact: z.string().optional(),
@@ -461,6 +462,7 @@ export default function NewBookingPage({
       // Payment Terms
       paymentTerms: "",
       dueDate: "",
+      paymentTermsCustomized: false,
       // Collaborative fields - provide default empty values to prevent uncontrolled->controlled warnings
       venueContact: "",
       soundTechContact: "",
@@ -659,6 +661,15 @@ export default function NewBookingPage({
       form.setValue("dueDate", calculatedDueDate.toISOString().split('T')[0]);
     }
   }, [eventDate, paymentTerms, form]);
+
+  // Initialize payment terms from settings for NEW bookings (not when editing)
+  useEffect(() => {
+    if (!isEditMode && userSettings?.invoicePaymentTerms && !form.getValues("paymentTerms")) {
+      // Copy default payment terms from settings to new booking
+      form.setValue("paymentTerms", userSettings.invoicePaymentTerms);
+      form.setValue("paymentTermsCustomized", false); // Not customized, using default
+    }
+  }, [isEditMode, userSettings, form]);
 
   // Helper function to add new gig types to user settings
   const addNewGigTypeToSettings = async (gigType: string) => {
@@ -1866,7 +1877,15 @@ export default function NewBookingPage({
                         <Select
                           value={field.value || userSettings?.invoicePaymentTerms || "7_days_after"}
                           onValueChange={(value) => {
+                            const defaultTerms = userSettings?.invoicePaymentTerms || "7_days_after";
+
+                            // Copy value to booking (not NULL - we always store the value)
                             field.onChange(value);
+
+                            // Mark as customized if user changed it from the default
+                            const isCustomized = value !== defaultTerms;
+                            form.setValue("paymentTermsCustomized", isCustomized);
+
                             // Auto-calculate due date when payment terms change
                             const eventDate = form.getValues("eventDate");
                             if (eventDate && value) {
@@ -1895,7 +1914,10 @@ export default function NewBookingPage({
                           </SelectContent>
                         </Select>
                         <FormDescription className="text-xs text-gray-500">
-                          Default from settings: {userSettings?.invoicePaymentTerms || "7_days_after"}
+                          {field.value && form.getValues("paymentTermsCustomized")
+                            ? "⚠️ Custom terms (different from settings default)"
+                            : `Copied from settings: ${userSettings?.invoicePaymentTerms || "7_days_after"}`
+                          }
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
