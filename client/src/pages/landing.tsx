@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Check, Music, Play, Trophy } from "lucide-react";
+import { Check, Play, Trophy } from "lucide-react";
+import { MetronomeLogo } from "@/components/MetronomeLogo";
 
 export default function LandingPage() {
   return (
@@ -16,10 +17,7 @@ export default function LandingPage() {
       <header className="border-b border-gray-200 sticky top-0 z-50" style={{backgroundColor: 'var(--theme-surface)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <Music className="h-8 w-8 text-gray-800" />
-              <h1 className="text-2xl font-semibold text-gray-900">MusoBuddy</h1>
-            </div>
+            <MetronomeLogo size="small" />
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How it works</a>
               <a href="#features" className="text-gray-700 hover:text-gray-900 font-medium">For Musicians</a>
@@ -543,8 +541,7 @@ export default function LandingPage() {
           {/* Copyright */}
           <div className="border-t border-gray-800 pt-8 text-center">
             <div className="flex items-center justify-center mb-4">
-              <Music className="h-6 w-6 text-white mr-2" />
-              <span className="text-lg font-semibold text-white">MusoBuddy</span>
+              <MetronomeLogo size="small" className="[&_.text-\\[\\#191970\\]]:text-white" />
             </div>
             <p className="text-gray-300">&copy; 2025 MusoBuddy. Professional gig management for UK musicians.</p>
           </div>
