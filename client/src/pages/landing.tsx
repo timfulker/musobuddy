@@ -82,8 +82,8 @@ export default function LandingPage() {
                   });
                 }}
               >
-                <source src="/videos/Final.mov" type="video/quicktime" />
-                <source src="/videos/Final.mov" type="video/mp4" />
+                <source src="/videos/main-promo.mov" type="video/quicktime" />
+                <source src="/videos/main-promo.mov" type="video/mp4" />
                 Your browser does not support the video tag or this video format.
               </video>
             </div>
