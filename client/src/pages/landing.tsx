@@ -41,29 +41,32 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8" style={{backgroundColor: 'var(--theme-background)'}}>
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-12">
-            <p className="text-lg md:text-xl text-primary font-medium mb-4 uppercase tracking-wide">
-              Freelance Musicians
+      <section className="py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-blue-50/30 to-white">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="mb-16">
+            <p className="text-sm md:text-base text-primary font-semibold mb-6 uppercase tracking-wider">
+              For Freelance Musicians
             </p>
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
-              Book Gigs, Create Contracts, Send Invoices - All In One Platform
+            <h2 className="text-6xl md:text-7xl font-extrabold text-gray-900 mb-8 leading-tight tracking-tight">
+              Book Gigs, Create Contracts, Send Invoices
             </h2>
-            <p className="text-2xl text-gray-700 max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed font-light">
               Professional gig management made ridiculously simple for UK musicians. Less admin, more music.
             </p>
-            
-            <Link href="/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 px-8 py-4 text-lg font-medium mb-8" style={{backgroundColor: 'var(--theme-primary)', color: 'white'}}>
-                Start Free Trial
-              </Button>
-            </Link>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+              <Link href="/signup">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 px-10 py-6 text-xl font-semibold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105" style={{backgroundColor: 'var(--theme-primary)', color: 'white'}}>
+                  Start Free Trial →
+                </Button>
+              </Link>
+              <p className="text-sm text-gray-500">No credit card required • 30-day free trial</p>
+            </div>
 
             {/* Video Section */}
-            <div className="max-w-3xl mx-auto mt-12">
+            <div className="max-w-4xl mx-auto mt-16">
               <video
-                className="w-full rounded-lg shadow-lg border border-gray-200"
+                className="w-full rounded-2xl shadow-2xl border-2 border-gray-100"
                 controls
                 preload="metadata"
                 playsInline
@@ -89,61 +92,61 @@ export default function LandingPage() {
       </section>
 
       {/* Social Proof */}
-      <section className="py-16 bg-gray-50 border-t border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xl text-gray-700 mb-6">
-            Join the growing list of UK musicians already saving 10+ hours weekly on admin tasks and earning more through professional workflows.
+      <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-2xl md:text-3xl text-gray-800 mb-6 font-medium leading-relaxed">
+            Join UK musicians saving <span className="text-primary font-bold">10+ hours weekly</span> on admin tasks
           </p>
-          <p className="text-lg text-gray-600">
-            Recommended by music industry professionals for serious freelancers
+          <p className="text-lg text-gray-600 font-light">
+            Trusted by music industry professionals for serious freelancers
           </p>
         </div>
       </section>
 
       {/* Feature Section 1: Professional Contract Generation */}
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section id="features" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div>
-              <h3 className="text-4xl font-bold text-gray-900 mb-8">
+              <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
                 From gig details to signed contract — in seconds
               </h3>
-              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
-                Professional PDF contracts generate instantly from your booking details and get signed digitally within hours, not days. 
+              <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
+                Professional PDF contracts generate instantly from your booking details and get signed digitally within hours, not days.
                 Your clients receive beautiful, branded documents that make you look like the serious professional you are.
               </p>
 
-              <div className="bg-gray-50 border-l-4 border-primary p-6 mb-8">
-                <p className="text-gray-700 italic">
-                  <strong>Real example:</strong> Wedding band books Saturday ceremony Friday morning — contract sent, 
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
+                <p className="text-gray-700 italic text-lg">
+                  <strong className="text-primary">Real example:</strong> Wedding band books Saturday ceremony Friday morning — contract sent,
                   signed, and filed before lunch.
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Instant PDF generation → Professional impression in seconds</span>
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Instant PDF generation → Professional impression in seconds</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Digital signatures → Faster bookings, fewer delays</span>
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Digital signatures → Faster bookings, fewer delays</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Cloud hosting → Clients access contracts 24/7 anywhere</span>
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Cloud hosting → Clients access contracts 24/7 anywhere</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Custom branding → Your logo makes every document yours</span>
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Custom branding → Your logo makes every document yours</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
-                  <span className="text-gray-700">Automatic filing → Never lose important contracts again</span>
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Automatic filing → Never lose important contracts again</span>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 p-8 rounded">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-8 rounded-2xl shadow-lg">
               <video 
                 className="w-full h-64 bg-black rounded border border-gray-200" 
                 controls 
@@ -319,29 +322,29 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-4xl font-bold text-gray-900 mb-8">
+      <section id="pricing" className="py-28 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight">
             Simple pricing that makes sense
           </h3>
-          
-          <div className="bg-white border border-gray-200 p-12 mb-8">
-            <div className="text-5xl font-bold text-gray-900 mb-4">£9.99</div>
-            <div className="text-xl text-gray-700 mb-8">per month</div>
-            <div className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Save 10+ hours weekly on admin tasks while earning more through professional contracts and faster payments. 
-              That's less than what you charge for 30 minutes of performance time.
+          <p className="text-xl text-gray-600 mb-16 font-light">Less than 30 minutes of performance time per month</p>
+
+          <div className="bg-white border-2 border-gray-200 p-16 mb-10 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow">
+            <div className="text-7xl font-extrabold text-gray-900 mb-2">£9.99</div>
+            <div className="text-2xl text-gray-600 mb-10 font-light">per month</div>
+            <div className="text-xl text-gray-700 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Save 10+ hours weekly on admin tasks while earning more through professional contracts and faster payments.
             </div>
             <Link href="/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-4 text-lg font-medium mb-6">
-                Try it free for 30 days
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-12 py-7 text-xl font-semibold mb-6 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
+                Try it free for 30 days →
               </Button>
             </Link>
-            <p className="text-gray-600">Cancel anytime with one click - no contracts, no hassles, no questions asked</p>
+            <p className="text-gray-500 text-lg">Cancel anytime with one click • No contracts • No hassles</p>
           </div>
-          
-          <p className="text-lg text-gray-700">
-            One missed gig due to poor admin costs more than an entire year of MusoBuddy.
+
+          <p className="text-xl text-gray-700 font-medium">
+            💡 One missed gig due to poor admin costs more than an entire year of MusoBuddy
           </p>
         </div>
       </section>
