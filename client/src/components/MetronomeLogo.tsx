@@ -35,23 +35,33 @@ export function MetronomeLogo({ size = 'medium', showText = true, className = ''
     <>
       <style>{`
         @keyframes metronome-tick {
-          0% { transform: translateX(-50%) rotate(-18deg); }
-          100% { transform: translateX(-50%) rotate(18deg); }
+          0% { transform: rotate(-20deg); }
+          100% { transform: rotate(20deg); }
         }
       `}</style>
       <div className={`inline-flex items-center ${sizes.container} ${className}`}>
         <div className={`${sizes.icon} bg-gradient-to-br from-[#191970] to-[#1e3a8a] flex items-center justify-center relative shadow-lg`}>
-          <div
-            className={`${sizes.body} bg-white relative`}
-            style={{ clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)' }}
-          >
-            <div
-              className={`absolute ${sizes.arm} bg-white left-1/2 -translate-x-1/2 rounded-sm origin-bottom`}
+          <svg viewBox="0 0 100 100" className="w-full h-full p-3">
+            {/* Metronome body - white trapezoid */}
+            <polygon
+              points="35,20 65,20 80,85 20,85"
+              fill="white"
+            />
+            {/* Metronome arm - animated */}
+            <line
+              x1="50"
+              y1="30"
+              x2="50"
+              y2="70"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
               style={{
+                transformOrigin: '50px 70px',
                 animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
               }}
             />
-          </div>
+          </svg>
         </div>
         {showText && (
           <div className={`${sizes.text} font-bold text-[#191970] tracking-tight`}>
