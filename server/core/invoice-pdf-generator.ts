@@ -23,7 +23,7 @@ function getPaymentDueText(paymentTerms: string | undefined): string {
     "14_days_before": "Payment Due: Payment required 14 days prior to performance",
     "7_days_before": "Payment Due: Payment required 7 days prior to performance",
     "on_performance": "Payment Due: Payment required on the day of performance",
-    "on_receipt": "Payment Due: Payment required upon receipt of invoice",
+    "on_receipt": "Payment Due: Payment due on receipt of invoice",
     "7_days_after": "Payment Due: Payment required within 7 days of performance",
     "14_days_after": "Payment Due: Payment required within 14 days of performance",
     "28_days_after": "Payment Due: Payment required within 28 days of performance",
