@@ -3346,12 +3346,15 @@ export default function Settings() {
         contract_clauses: mergedContractClauses,
         custom_clauses: data.customClauses || [],
         invoice_clauses: mergedInvoiceClauses,
-        custom_invoice_clauses: data.customInvoiceClauses || []
+        custom_invoice_clauses: data.customInvoiceClauses || [],
+        // CRITICAL FIX: Map payment terms to the correct database column
+        invoice_payment_terms: data.contractClauses?.paymentTerms
       };
 
       console.log('🔍 [SAVE-CONTRACT-INVOICE] Sending to backend:', {
         nextInvoiceNumber: contractData.nextInvoiceNumber,
-        invoicePrefix: contractData.invoicePrefix
+        invoicePrefix: contractData.invoicePrefix,
+        paymentTerms: contractData.invoice_payment_terms
       });
 
       return await apiRequest('/api/settings', {
