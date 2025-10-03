@@ -5,66 +5,83 @@ interface MetronomeLogoProps {
 }
 
 export function MetronomeLogo({ size = 'medium', showText = true, className = '' }: MetronomeLogoProps) {
-  const sizeClasses = {
+  const sizeStyles = {
     small: {
-      container: 'gap-2',
-      icon: 'w-10 h-10 rounded-lg',
-      body: 'w-3.5 h-5.5',
-      arm: 'top-1 w-0.5 h-3.5',
-      text: 'text-lg'
+      icon: { width: '40px', height: '40px', borderRadius: '8px' },
+      body: { width: '14px', height: '22px' },
+      arm: { top: '4px', width: '1.5px', height: '14px' },
+      text: { fontSize: '18px' },
+      gap: '10px'
     },
     medium: {
-      container: 'gap-4',
-      icon: 'w-16 h-16 rounded-xl',
-      body: 'w-5 h-8',
-      arm: 'top-1.5 w-0.5 h-5',
-      text: 'text-2xl'
+      icon: { width: '60px', height: '60px', borderRadius: '12px' },
+      body: { width: '20px', height: '32px' },
+      arm: { top: '6px', width: '2px', height: '20px' },
+      text: { fontSize: '24px' },
+      gap: '15px'
     },
     large: {
-      container: 'gap-5',
-      icon: 'w-20 h-20 rounded-2xl',
-      body: 'w-7 h-11',
-      arm: 'top-2 w-1 h-7',
-      text: 'text-4xl'
+      icon: { width: '100px', height: '100px', borderRadius: '25px' },
+      body: { width: '35px', height: '55px' },
+      arm: { top: '10px', width: '4px', height: '35px' },
+      text: { fontSize: '48px' },
+      gap: '25px'
     }
   };
 
-  const sizes = sizeClasses[size];
+  const styles = sizeStyles[size];
 
   return (
     <>
       <style>{`
-        @keyframes metronome-tick {
-          0% { transform: rotate(-20deg); }
-          100% { transform: rotate(20deg); }
+        @keyframes tick {
+          0% { transform: translateX(-50%) rotate(-18deg); }
+          100% { transform: translateX(-50%) rotate(18deg); }
         }
       `}</style>
-      <div className={`inline-flex items-center ${sizes.container} ${className}`}>
-        <div className={`${sizes.icon} bg-gradient-to-br from-[#191970] to-[#1e3a8a] flex items-center justify-center relative shadow-lg`}>
-          <svg viewBox="0 0 100 100" className="w-full h-full p-3">
-            {/* Metronome body - white trapezoid */}
-            <polygon
-              points="35,20 65,20 80,85 20,85"
-              fill="white"
-            />
-            {/* Metronome arm - animated */}
-            <line
-              x1="50"
-              y1="30"
-              x2="50"
-              y2="70"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
+      <div className={`inline-flex items-center ${className}`} style={{ gap: styles.gap }}>
+        <div
+          style={{
+            ...styles.icon,
+            background: 'linear-gradient(135deg, #191970 0%, #1e3a8a 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            boxShadow: '0 8px 25px rgba(25, 25, 112, 0.3)'
+          }}
+        >
+          <div
+            style={{
+              ...styles.body,
+              background: 'white',
+              clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)',
+              position: 'relative'
+            }}
+          >
+            <div
               style={{
-                transformOrigin: '50px 70px',
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+                position: 'absolute',
+                ...styles.arm,
+                background: '#191970',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                transformOrigin: 'bottom',
+                animation: 'tick 1.2s ease-in-out infinite alternate',
+                borderRadius: '1px'
               }}
             />
-          </svg>
+          </div>
         </div>
         {showText && (
-          <div className={`${sizes.text} font-bold text-[#191970] tracking-tight`}>
+          <div
+            style={{
+              ...styles.text,
+              fontWeight: 700,
+              color: '#191970',
+              letterSpacing: '-1px'
+            }}
+          >
             MusoBuddy
           </div>
         )}
