@@ -110,7 +110,7 @@ export default function MobileInvoiceSender() {
         body: JSON.stringify({
           ...data,
           dueDate: new Date(data.dueDate),
-          performanceDate: data.performanceDate ? new Date(data.performanceDate) : null,
+          eventDate: data.performanceDate ? new Date(data.performanceDate) : null, // Map performanceDate to eventDate
           performanceFee: data.amount, // Use amount as performance fee
           invoiceType: 'performance',
         }),
