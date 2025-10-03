@@ -104,16 +104,19 @@ export default function MobileInvoiceSender() {
   // Create invoice mutation
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof mobileInvoiceSchema>) => {
+      const invoicePayload = {
+        ...data,
+        dueDate: new Date(data.dueDate),
+        eventDate: data.performanceDate ? new Date(data.performanceDate) : null, // Map performanceDate to eventDate
+        performanceFee: data.amount, // Use amount as performance fee
+        invoiceType: 'performance',
+      };
+      console.log('📤 Creating invoice with payload:', invoicePayload);
+      console.log('📤 eventDate value:', invoicePayload.eventDate);
       const response = await apiRequest('/api/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          dueDate: new Date(data.dueDate),
-          eventDate: data.performanceDate ? new Date(data.performanceDate) : null, // Map performanceDate to eventDate
-          performanceFee: data.amount, // Use amount as performance fee
-          invoiceType: 'performance',
-        }),
+        body: JSON.stringify(invoicePayload),
       });
       return response.json();
     },

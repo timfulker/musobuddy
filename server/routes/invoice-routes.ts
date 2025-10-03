@@ -168,6 +168,12 @@ export function registerInvoiceRoutes(app: Express) {
         });
       }
 
+      console.log('📥 Invoice creation request body:', {
+        eventDate: req.body.eventDate,
+        performanceDate: req.body.performanceDate,
+        allKeys: Object.keys(req.body)
+      });
+
       const invoiceData = {
         userId: userId,
         invoiceNumber,
@@ -189,6 +195,8 @@ export function registerInvoiceRoutes(app: Express) {
         invoiceType: req.body.invoiceType || 'performance',
         description: req.body.description || null
       };
+
+      console.log('📥 Processed eventDate:', invoiceData.eventDate);
       
       const newInvoice = await storage.createInvoice(invoiceData);
       
