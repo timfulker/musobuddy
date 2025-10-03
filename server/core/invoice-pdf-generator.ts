@@ -12,16 +12,45 @@ import type { Invoice, UserSettings, Booking } from '@shared/schema';
 import { storage } from './storage';
 import { aiPDFOptimizer } from './ai-pdf-optimizer';
 
+// Helper function to generate payment due text based on payment terms
+function getPaymentDueText(paymentTerms: string | undefined): string {
+  if (!paymentTerms) {
+    return "Payment Due: Payment required within 7 days of performance";
+  }
+
+  const paymentTermsMap: { [key: string]: string } = {
+    "28_days_before": "Payment Due: Payment required 28 days prior to performance",
+    "14_days_before": "Payment Due: Payment required 14 days prior to performance",
+    "7_days_before": "Payment Due: Payment required 7 days prior to performance",
+    "on_performance": "Payment Due: Payment required on the day of performance",
+    "on_receipt": "Payment Due: Payment required upon receipt of invoice",
+    "7_days_after": "Payment Due: Payment required within 7 days of performance",
+    "14_days_after": "Payment Due: Payment required within 14 days of performance",
+    "28_days_after": "Payment Due: Payment required within 28 days of performance",
+    "3_days": "Payment Due: Payment required within 3 days of performance",
+    "7_days": "Payment Due: Payment required within 7 days of performance",
+    "14_days": "Payment Due: Payment required within 14 days of performance",
+    "30_days": "Payment Due: Payment required within 30 days of performance",
+    "cash_as_agreed": "Payment Due: Cash payment as agreed"
+  };
+
+  return paymentTermsMap[paymentTerms] || "Payment Due: Payment required within 7 days of performance";
+}
+
 // Helper function to generate configurable invoice terms
 function generateInvoiceTerms(userSettings: UserSettings | null, businessContactEmail: string): string {
   console.log('🔍 GENERATING INVOICE TERMS - UserSettings:', JSON.stringify({
     hasInvoiceClauses: !!userSettings?.invoiceClauses,
     invoiceClauses: userSettings?.invoiceClauses,
     hasCustomInvoiceClauses: !!(userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)),
-    customInvoiceClauses: userSettings?.customInvoiceClauses
+    customInvoiceClauses: userSettings?.customInvoiceClauses,
+    paymentTerms: userSettings?.contractClauses?.paymentTerms
   }, null, 2));
 
   const termsList: string[] = [];
+
+  // Generate dynamic payment due text based on user's payment terms setting
+  const paymentDueText = getPaymentDueText(userSettings?.contractClauses?.paymentTerms);
 
   // Standard invoice clauses mapping - expanded set
   const clauseMap = {
@@ -31,8 +60,8 @@ function generateInvoiceTerms(userSettings: UserSettings | null, businessContact
     publicLiability: "Public Liability Insurance: Covered for all services",
     latePayment: "Late Payment: Additional charges apply for overdue invoices",
     disputeProcess: "Disputes: Contact within 30 days of invoice date",
-    // New expanded invoice clauses
-    paymentDue: "Payment Due: Payment required within 14 days of invoice date",
+    // New expanded invoice clauses - paymentDue now uses dynamic text
+    paymentDue: paymentDueText,
     latePaymentCharge: "Late Payment: Additional 5% charge per week or statutory interest under the Late Payment of Commercial Debts Act",
     depositPolicy: "Deposit Policy: Any deposit already paid is non-refundable and deducted from the final balance",
     cancellation: "Cancellation: Client cancellations within 7 days of the event incur full invoice amount",
@@ -250,13 +279,16 @@ export async function generateInvoicePDF(
       const customClauses: string[] = [];
       
       if (userSettings?.invoiceClauses) {
+        // Generate dynamic payment due text based on user's payment terms
+        const dynamicPaymentDueText = getPaymentDueText(userSettings?.contractClauses?.paymentTerms);
+
         const clauseMap = {
           paymentTerms: "Payment is due as specified above",
           vatStatus: "VAT Status: Not VAT registered - no VAT charged",
           publicLiability: "Public Liability Insurance: Covered for all services",
           latePayment: "Late Payment: Additional charges apply for overdue invoices",
           disputeProcess: "Disputes: Contact within 30 days of invoice date",
-          paymentDue: "Payment Due: Payment required within 14 days of invoice date",
+          paymentDue: dynamicPaymentDueText, // Now uses dynamic text based on payment terms
           latePaymentCharge: "Late Payment: Additional 5% charge per week or statutory interest under the Late Payment of Commercial Debts Act",
           depositPolicy: "Deposit Policy: Any deposit already paid is non-refundable and deducted from the final balance",
           cancellation: "Cancellation: Client cancellations within 7 days of the event incur full invoice amount",
@@ -267,7 +299,7 @@ export async function generateInvoicePDF(
           taxCompliance: "Tax Compliance: This invoice is issued in accordance with HMRC guidelines",
           queries: "Queries: Any disputes or questions about this invoice must be raised within 7 days of issue"
         };
-        
+
         for (const [key, value] of Object.entries(clauseMap)) {
           if (userSettings.invoiceClauses[key as keyof typeof clauseMap]) {
             selectedClauses.push(value);
