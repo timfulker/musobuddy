@@ -233,85 +233,131 @@ export default function LandingPage() {
 
       {/* Feature Section 3: Booking Management */}
       <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
-              End double-booking disasters forever
-            </h3>
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
-              Smart calendar instantly spots conflicts before they happen and keeps your gig schedule perfectly organized.
-              No more embarrassing calls explaining why you can't make a confirmed booking.
-            </p>
-
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
-              <p className="text-gray-700 italic text-lg">
-                <strong className="text-primary">Real example:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-12 items-center">
+            {/* Text on the left */}
+            <div>
+              <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
+                End double-booking disasters forever
+              </h3>
+              <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
+                Smart calendar instantly spots conflicts before they happen and keeps your gig schedule perfectly organized.
+                No more embarrassing calls explaining why you can't make a confirmed booking.
               </p>
+
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
+                <p className="text-gray-700 italic text-lg">
+                  <strong className="text-primary">Real example:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Conflict detection → Sleep peacefully knowing schedule is safe</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Visual calendar → See your month at a glance</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Status tracking → Know exactly where each booking stands</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Gig type selection → 30 common types ready to choose</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">History tracking → Remember every detail from past events</span>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-5 text-left max-w-2xl mx-auto">
-              <div className="flex items-start">
-                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                <span className="text-lg text-gray-700">Conflict detection → Sleep peacefully knowing schedule is safe</span>
-              </div>
-              <div className="flex items-start">
-                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                <span className="text-lg text-gray-700">Visual calendar → See your month at a glance</span>
-              </div>
-              <div className="flex items-start">
-                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                <span className="text-lg text-gray-700">Status tracking → Know exactly where each booking stands</span>
-              </div>
-              <div className="flex items-start">
-                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                <span className="text-lg text-gray-700">Gig type selection → 30 common types ready to choose</span>
-              </div>
-              <div className="flex items-start">
-                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                <span className="text-lg text-gray-700">History tracking → Remember every detail from past events</span>
-              </div>
+            {/* Video on the right */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
+              <video
+                className="w-full aspect-video bg-black rounded border border-gray-200"
+                controls
+                preload="metadata"
+                playsInline
+                controlsList="nodownload"
+                onError={(e) => console.error('Video error:', e)}
+                onLoadStart={() => console.log('Video loading started')}
+                onCanPlay={() => console.log('Video can play')}
+              >
+                <source src="/videos/booking-demo.mov" type="video/quicktime" />
+                <source src="/videos/booking-demo.mov" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
       </section>
 
       {/* Feature Section: QR Booking System */}
-      <section className="py-20 bg-white border-t border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="py-24 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
+            {/* Video on the left */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
+              <video
+                className="w-full aspect-video bg-black rounded border border-gray-200"
+                controls
+                preload="metadata"
+                playsInline
+                controlsList="nodownload"
+                onError={(e) => console.error('Video error:', e)}
+                onLoadStart={() => console.log('Video loading started')}
+                onCanPlay={() => console.log('Video can play')}
+              >
+                <source src="/videos/qr-demo.mov" type="video/quicktime" />
+                <source src="/videos/qr-demo.mov" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            {/* Text on the right */}
             <div>
-              <h3 className="text-4xl font-bold text-gray-900 mb-8">
+              <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
                 Get booked instantly — just by scanning a QR code
               </h3>
-              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-600 mb-6 leading-relaxed font-light">
                 MusoBuddy gives every musician a unique QR code linked to a simple booking form. Stick it on your socials, business card, WhatsApp message — anywhere.
               </p>
-              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
                 As soon as a client fills out the form, the enquiry is parsed and turned into a real booking inside your dashboard — with zero manual input.
               </p>
 
-              <div className="bg-gray-50 border-l-4 border-primary p-6 mb-8">
-                <p className="text-gray-700 italic">
-                  <strong>Real example:</strong> A pub owner scans your QR from a flyer → sends inquiry at 2:43 PM → contract generated and sent by 2:46 PM.
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
+                <p className="text-gray-700 italic text-lg">
+                  <strong className="text-primary">Real example:</strong> A pub owner scans your QR from a flyer → sends inquiry at 2:43 PM → contract generated and sent by 2:46 PM.
                 </p>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-gray-700">• Static HTML booking form — opens instantly, works everywhere</p>
-                <p className="text-gray-700">• Embedded into QR → Perfect for posters, cards, set lists, or WhatsApp</p>
-                <p className="text-gray-700">• Enquiries instantly parsed into real bookings</p>
-                <p className="text-gray-700">• Customise your widget with pre-filled options (e.g. gig types)</p>
-                <p className="text-gray-700">• Boost response rate with a no-fuss enquiry process</p>
+              <div className="space-y-5">
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Static HTML booking form — opens instantly, works everywhere</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Embedded into QR → Perfect for posters, cards, set lists, or WhatsApp</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Enquiries instantly parsed into real bookings</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Customise your widget with pre-filled options (e.g. gig types)</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Boost response rate with a no-fuss enquiry process</span>
+                </div>
               </div>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 p-8 rounded text-center">
-              {/* Placeholder for visual */}
-              <img 
-                src="/images/qr-demo-placeholder.png" 
-                alt="QR code demo" 
-                className="mx-auto w-64 h-64 mb-4 border rounded" 
-              />
-              <p className="text-gray-500 text-sm italic">Example QR booking code in action</p>
             </div>
           </div>
         </div>
