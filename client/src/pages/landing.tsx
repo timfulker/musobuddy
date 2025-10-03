@@ -172,20 +172,9 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
             {/* Video on the left */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
-              <video
-                className="w-full aspect-video bg-black rounded border border-gray-200"
-                controls
-                preload="metadata"
-                playsInline
-                controlsList="nodownload"
-                onError={(e) => console.error('Video error:', e)}
-                onLoadStart={() => console.log('Video loading started')}
-                onCanPlay={() => console.log('Video can play')}
-              >
-                <source src="/videos/invoice-demo.mov" type="video/quicktime" />
-                <source src="/videos/invoice-demo.mov" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              <div className="w-full aspect-video bg-gray-800 rounded border border-gray-200 flex items-center justify-center text-gray-400">
+                <p className="text-center">Invoice Demo Video<br/>Coming Soon</p>
+              </div>
             </div>
 
             {/* Text on the right */}
@@ -277,20 +266,9 @@ export default function LandingPage() {
 
             {/* Video on the right */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
-              <video
-                className="w-full aspect-video bg-black rounded border border-gray-200"
-                controls
-                preload="metadata"
-                playsInline
-                controlsList="nodownload"
-                onError={(e) => console.error('Video error:', e)}
-                onLoadStart={() => console.log('Video loading started')}
-                onCanPlay={() => console.log('Video can play')}
-              >
-                <source src="/videos/booking-demo.mov" type="video/quicktime" />
-                <source src="/videos/booking-demo.mov" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              <div className="w-full aspect-video bg-gray-800 rounded border border-gray-200 flex items-center justify-center text-gray-400">
+                <p className="text-center">Booking Demo Video<br/>Coming Soon</p>
+              </div>
             </div>
           </div>
         </div>
@@ -302,20 +280,9 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
             {/* Video on the left */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
-              <video
-                className="w-full aspect-video bg-black rounded border border-gray-200"
-                controls
-                preload="metadata"
-                playsInline
-                controlsList="nodownload"
-                onError={(e) => console.error('Video error:', e)}
-                onLoadStart={() => console.log('Video loading started')}
-                onCanPlay={() => console.log('Video can play')}
-              >
-                <source src="/videos/qr-demo.mov" type="video/quicktime" />
-                <source src="/videos/qr-demo.mov" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              <div className="w-full aspect-video bg-gray-800 rounded border border-gray-200 flex items-center justify-center text-gray-400">
+                <p className="text-center">QR Booking Demo Video<br/>Coming Soon</p>
+              </div>
             </div>
 
             {/* Text on the right */}
