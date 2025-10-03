@@ -200,10 +200,6 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
-                  <span className="text-lg text-gray-700">Payment tracking → Always know who owes what amount</span>
-                </div>
-                <div className="flex items-start">
-                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
                   <span className="text-lg text-gray-700">Cloud accessibility → Clients can view and pay anywhere</span>
                 </div>
                 <div className="flex items-start">
