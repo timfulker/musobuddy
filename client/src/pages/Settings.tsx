@@ -3347,14 +3347,14 @@ export default function Settings() {
         custom_clauses: data.customClauses || [],
         invoice_clauses: mergedInvoiceClauses,
         custom_invoice_clauses: data.customInvoiceClauses || [],
-        // CRITICAL FIX: Map payment terms to the correct database column
-        invoice_payment_terms: data.contractClauses?.paymentTerms
+        // CRITICAL FIX: Map payment terms to the correct database column (use camelCase for backend)
+        invoicePaymentTerms: data.contractClauses?.paymentTerms
       };
 
       console.log('🔍 [SAVE-CONTRACT-INVOICE] Sending to backend:', {
         nextInvoiceNumber: contractData.nextInvoiceNumber,
         invoicePrefix: contractData.invoicePrefix,
-        paymentTerms: contractData.invoice_payment_terms
+        paymentTerms: contractData.invoicePaymentTerms
       });
 
       return await apiRequest('/api/settings', {
@@ -3663,12 +3663,12 @@ export default function Settings() {
       processedData.invoice_clauses = mergedInvoiceClauses;
       processedData.custom_invoice_clauses = data.customInvoiceClauses || [];
 
-      // CRITICAL FIX: Map payment terms to the correct database column
-      processedData.invoice_payment_terms = data.contractClauses?.paymentTerms;
+      // CRITICAL FIX: Map payment terms to the correct database column (use camelCase for backend)
+      processedData.invoicePaymentTerms = data.contractClauses?.paymentTerms;
 
       console.log('💾 [PAYMENT TERMS SAVE] Saving payment terms:', {
         fromForm: data.contractClauses?.paymentTerms,
-        toDatabase: processedData.invoice_payment_terms
+        toDatabase: processedData.invoicePaymentTerms
       });
 
       return await apiRequest('/api/settings', {
