@@ -121,7 +121,7 @@ export default function Invoices() {
       case "14_days_after": return 14; // 14 days after performance
       case "28_days_after": return 28; // 28 days after performance
       // Legacy terms (for backward compatibility)
-      case "on_receipt": return 7; // Fallback to 7 days after performance
+      case "on_receipt": return 7; // 7 days from invoice creation date (handled specially in useEffect)
       case "3_days": return 3;
       case "7_days": return 7;
       case "14_days": return 14;
@@ -134,11 +134,19 @@ export default function Invoices() {
   // Auto-set due date using user's payment terms setting from contract clauses
   useEffect(() => {
     if (userSettings?.contractClauses?.paymentTerms) {
-      // Get current performance date from form or use current date as fallback
-      const performanceDate = form.getValues("performanceDate");
-      const baseDate = performanceDate ? new Date(performanceDate) : new Date();
-      
-      const daysToAdd = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
+      const paymentTerms = userSettings.contractClauses.paymentTerms;
+
+      // For "on_receipt", calculate from today's date (invoice creation date)
+      // For all other terms, calculate from performance date
+      let baseDate: Date;
+      if (paymentTerms === "on_receipt") {
+        baseDate = new Date(); // Use today's date
+      } else {
+        const performanceDate = form.getValues("performanceDate");
+        baseDate = performanceDate ? new Date(performanceDate) : new Date();
+      }
+
+      const daysToAdd = getPaymentTermsDays(paymentTerms);
       const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
@@ -149,9 +157,19 @@ export default function Invoices() {
   const performanceDate = form.watch("performanceDate");
   useEffect(() => {
     if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
-      const performanceDateObj = new Date(performanceDate);
-      const daysToAdd = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
-      const dueDate = new Date(performanceDateObj);
+      const paymentTerms = userSettings.contractClauses.paymentTerms;
+
+      // For "on_receipt", calculate from today's date (invoice creation date)
+      // For all other terms, calculate from performance date
+      let baseDate: Date;
+      if (paymentTerms === "on_receipt") {
+        baseDate = new Date(); // Use today's date
+      } else {
+        baseDate = new Date(performanceDate);
+      }
+
+      const daysToAdd = getPaymentTermsDays(paymentTerms);
+      const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
