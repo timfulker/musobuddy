@@ -123,11 +123,13 @@ export class SettingsStorage {
     console.log('🔍 CRITICAL FIX - Using camelCase field names for Drizzle (no conversion needed)');
     console.log('  📥 Frontend field names are already correct for Drizzle TypeScript interface');
     
-    // Handle payment terms field mapping from camelCase frontend to snake_case database
-    if (processedUpdates.invoicePaymentTerms !== undefined) {
-      processedUpdates.invoice_payment_terms = processedUpdates.invoicePaymentTerms;
-      delete processedUpdates.invoicePaymentTerms;
-    }
+    // Payment terms - Drizzle handles camelCase → snake_case automatically
+    // Just keep the camelCase version, Drizzle will map it
+    // (invoicePaymentTerms → invoice_payment_terms happens in Drizzle)
+    console.log('🔍 [PAYMENT-TERMS] Payment terms field (camelCase for Drizzle):', {
+      invoicePaymentTerms: processedUpdates.invoicePaymentTerms,
+      willMapTo: 'invoice_payment_terms (automatic)'
+    });
 
     // Invoice fields - Drizzle expects camelCase (invoicePrefix, nextInvoiceNumber)
     console.log('🔍 [INVOICE-SETTINGS] Invoice fields (keeping camelCase for Drizzle):', {
