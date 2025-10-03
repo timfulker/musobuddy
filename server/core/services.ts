@@ -339,25 +339,28 @@ export class EmailService {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #e5e7eb;
+            gap: 20px;
           }
-          
+
           .detail-row:last-child {
             border-bottom: none;
             font-weight: 600;
             font-size: 17px;
             color: #111827;
           }
-          
+
           .detail-label {
             font-weight: 500;
             color: #6b7280;
+            flex-shrink: 0;
           }
-          
+
           .detail-value {
             font-weight: 600;
             color: #111827;
+            text-align: right;
           }
           
           .amount-highlight {
@@ -373,7 +376,7 @@ export class EmailService {
           .download-btn {
             display: inline-block;
             background: linear-gradient(135deg, ${themeColor} 0%, ${themeColor}cc 100%);
-            color: ${textColor};
+            color: #ffffff !important;
             padding: 16px 32px;
             text-decoration: none;
             border-radius: 8px;
