@@ -218,9 +218,12 @@ export default function Invoices() {
                 dueDate = new Date(performanceDateObj);
                 dueDate.setDate(dueDate.getDate() + dueDays);
               } else {
-                // Fallback to current date + 7 days if no performance date
+                // Fallback: use payment terms from settings, or 7 days if not configured
+                const dueDays = userSettings?.contractClauses?.paymentTerms
+                  ? getPaymentTermsDays(userSettings.contractClauses.paymentTerms)
+                  : 7;
                 dueDate = new Date();
-                dueDate.setDate(dueDate.getDate() + 7);
+                dueDate.setDate(dueDate.getDate() + dueDays);
               }
               
               const parsedBookingId = parseInt(bookingId);
@@ -272,9 +275,12 @@ export default function Invoices() {
             dueDate = new Date(performanceDateObj);
             dueDate.setDate(dueDate.getDate() + dueDays);
           } else {
-            // Fallback to current date + 7 days if no performance date
+            // Fallback: use payment terms from settings, or 7 days if not configured
+            const dueDays = userSettings?.contractClauses?.paymentTerms
+              ? getPaymentTermsDays(userSettings.contractClauses.paymentTerms)
+              : 7;
             dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 7);
+            dueDate.setDate(dueDate.getDate() + dueDays);
           }
           
           form.reset({
