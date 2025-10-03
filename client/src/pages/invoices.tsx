@@ -137,19 +137,25 @@ export default function Invoices() {
       const paymentTerms = userSettings.contractClauses.paymentTerms;
 
       // For "on_receipt", calculate from today's date (invoice creation date)
-      // For all other terms, calculate from performance date
-      let baseDate: Date;
       if (paymentTerms === "on_receipt") {
-        baseDate = new Date(); // Use today's date
-      } else {
-        const performanceDate = form.getValues("performanceDate");
-        baseDate = performanceDate ? new Date(performanceDate) : new Date();
+        const baseDate = new Date(); // Use today's date
+        const daysToAdd = getPaymentTermsDays(paymentTerms);
+        const dueDate = new Date(baseDate);
+        dueDate.setDate(dueDate.getDate() + daysToAdd);
+        form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
       }
-
-      const daysToAdd = getPaymentTermsDays(paymentTerms);
-      const dueDate = new Date(baseDate);
-      dueDate.setDate(dueDate.getDate() + daysToAdd);
-      form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+      // For all other terms, only calculate if performance date exists
+      else {
+        const performanceDate = form.getValues("performanceDate");
+        if (performanceDate) {
+          const baseDate = new Date(performanceDate);
+          const daysToAdd = getPaymentTermsDays(paymentTerms);
+          const dueDate = new Date(baseDate);
+          dueDate.setDate(dueDate.getDate() + daysToAdd);
+          form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+        }
+        // If no performance date, don't set due date yet - wait for user to enter it
+      }
     }
   }, [userSettings, form]);
 
