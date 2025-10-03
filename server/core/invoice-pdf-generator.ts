@@ -38,19 +38,26 @@ function getPaymentDueText(paymentTerms: string | undefined): string {
 }
 
 // Helper function to generate configurable invoice terms
-function generateInvoiceTerms(userSettings: UserSettings | null, businessContactEmail: string): string {
-  console.log('🔍 GENERATING INVOICE TERMS - UserSettings:', JSON.stringify({
-    hasInvoiceClauses: !!userSettings?.invoiceClauses,
-    invoiceClauses: userSettings?.invoiceClauses,
-    hasCustomInvoiceClauses: !!(userSettings?.customInvoiceClauses && Array.isArray(userSettings.customInvoiceClauses)),
-    customInvoiceClauses: userSettings?.customInvoiceClauses,
-    paymentTerms: userSettings?.contractClauses?.paymentTerms
+function generateInvoiceTerms(
+  userSettings: UserSettings | null,
+  businessContactEmail: string,
+  booking: Booking | null = null
+): string {
+  // Use payment terms from booking (Single Source of Truth) or fallback to settings
+  const paymentTermsToUse = booking?.paymentTerms || userSettings?.contractClauses?.paymentTerms || userSettings?.invoicePaymentTerms;
+
+  console.log('🔍 GENERATING INVOICE TERMS:', JSON.stringify({
+    hasBooking: !!booking,
+    bookingPaymentTerms: booking?.paymentTerms,
+    settingsPaymentTerms: userSettings?.contractClauses?.paymentTerms,
+    paymentTermsUsed: paymentTermsToUse,
+    hasInvoiceClauses: !!userSettings?.invoiceClauses
   }, null, 2));
 
   const termsList: string[] = [];
 
-  // Generate dynamic payment due text based on user's payment terms setting
-  const paymentDueText = getPaymentDueText(userSettings?.contractClauses?.paymentTerms);
+  // Generate dynamic payment due text based on booking's payment terms (or settings fallback)
+  const paymentDueText = getPaymentDueText(paymentTermsToUse);
 
   // Standard invoice clauses mapping - expanded set
   const clauseMap = {
@@ -1010,7 +1017,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
                 <div class="terms-section">
                     <div class="terms-title">Terms & Conditions</div>
                     <div class="terms-content">
-                        ${generateInvoiceTerms(userSettings, businessContactEmail)}
+                        ${generateInvoiceTerms(userSettings, businessContactEmail, booking)}
                     </div>
                 </div>
             </div>
