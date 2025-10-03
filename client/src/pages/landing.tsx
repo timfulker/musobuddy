@@ -166,57 +166,109 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Feature Sections 2 & 3 */}
-      <section className="py-20 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16">
-            {/* Feature Section 2: Booking Management */}
-            <div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-6">
-                End double-booking disasters forever
-              </h3>
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                Smart calendar instantly spots conflicts before they happen and keeps your gig schedule perfectly organized. 
-                No more embarrassing calls explaining why you can't make a confirmed booking.
-              </p>
-              
-              <div className="bg-white border-l-4 border-primary p-6 mb-6">
-                <p className="text-gray-700 italic">
-                  <strong>Real example:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <p className="text-gray-700">• Conflict detection → Sleep peacefully knowing schedule is safe</p>
-                <p className="text-gray-700">• Visual calendar → See your month at a glance</p>
-                <p className="text-gray-700">• Status tracking → Know exactly where each booking stands</p>
-                <p className="text-gray-700">• Gig type selection → 30 common types ready to choose</p>
-                <p className="text-gray-700">• History tracking → Remember every detail from past events</p>
-              </div>
+      {/* Feature Section 2: Professional Invoice System */}
+      <section className="py-24 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 items-center">
+            {/* Video on the left */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
+              <video
+                className="w-full aspect-video bg-black rounded border border-gray-200"
+                controls
+                preload="metadata"
+                playsInline
+                controlsList="nodownload"
+                onError={(e) => console.error('Video error:', e)}
+                onLoadStart={() => console.log('Video loading started')}
+                onCanPlay={() => console.log('Video can play')}
+              >
+                <source src="/videos/invoice-demo.mov" type="video/quicktime" />
+                <source src="/videos/invoice-demo.mov" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
 
-            {/* Feature Section 3: Professional Invoice System */}
+            {/* Text on the right */}
             <div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-6">
+              <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
                 Get paid faster with zero chasing
               </h3>
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                Beautiful invoices generate automatically after each gig and track payments so you know exactly who 
+              <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
+                Beautiful invoices generate automatically after each gig and track payments so you know exactly who
                 owes what. Professional presentation means clients pay promptly and respect your business.
               </p>
-              
-              <div className="bg-white border-l-4 border-primary p-6 mb-6">
-                <p className="text-gray-700 italic">
-                  <strong>Real example:</strong> Wedding gig finishes Sunday, invoice arrives Monday morning, payment clears Wednesday - all without you lifting a finger.
+
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
+                <p className="text-gray-700 italic text-lg">
+                  <strong className="text-primary">Real example:</strong> Wedding gig finishes Sunday, invoice arrives Monday morning, payment clears Wednesday - all without you lifting a finger.
                 </p>
               </div>
-              
-              <div className="space-y-3">
-                <p className="text-gray-700">• Automatic generation → Invoice ready before you pack equipment</p>
-                <p className="text-gray-700">• Payment tracking → Always know who owes what amount</p>
-                <p className="text-gray-700">• Cloud accessibility → Clients can view and pay anywhere</p>
-                <p className="text-gray-700">• Professional design → Commands respect and prompt payment</p>
-                <p className="text-gray-700">• Payment history → Complete financial record for tax time</p>
+
+              <div className="space-y-5">
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Automatic generation → Invoice ready before you pack equipment</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Payment tracking → Always know who owes what amount</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Cloud accessibility → Clients can view and pay anywhere</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Professional design → Commands respect and prompt payment</span>
+                </div>
+                <div className="flex items-start">
+                  <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                  <span className="text-lg text-gray-700">Payment history → Complete financial record for tax time</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Section 3: Booking Management */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
+              End double-booking disasters forever
+            </h3>
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed font-light">
+              Smart calendar instantly spots conflicts before they happen and keeps your gig schedule perfectly organized.
+              No more embarrassing calls explaining why you can't make a confirmed booking.
+            </p>
+
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-primary p-8 mb-10 rounded-r-lg shadow-sm">
+              <p className="text-gray-700 italic text-lg">
+                <strong className="text-primary">Real example:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
+              </p>
+            </div>
+
+            <div className="space-y-5 text-left max-w-2xl mx-auto">
+              <div className="flex items-start">
+                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                <span className="text-lg text-gray-700">Conflict detection → Sleep peacefully knowing schedule is safe</span>
+              </div>
+              <div className="flex items-start">
+                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                <span className="text-lg text-gray-700">Visual calendar → See your month at a glance</span>
+              </div>
+              <div className="flex items-start">
+                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                <span className="text-lg text-gray-700">Status tracking → Know exactly where each booking stands</span>
+              </div>
+              <div className="flex items-start">
+                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                <span className="text-lg text-gray-700">Gig type selection → 30 common types ready to choose</span>
+              </div>
+              <div className="flex items-start">
+                <Check className="h-6 w-6 text-primary mr-4 mt-1 flex-shrink-0" />
+                <span className="text-lg text-gray-700">History tracking → Remember every detail from past events</span>
               </div>
             </div>
           </div>
