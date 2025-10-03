@@ -3659,7 +3659,15 @@ export default function Settings() {
       processedData.custom_clauses = data.customClauses || [];
       processedData.invoice_clauses = mergedInvoiceClauses;
       processedData.custom_invoice_clauses = data.customInvoiceClauses || [];
-      
+
+      // CRITICAL FIX: Map payment terms to the correct database column
+      processedData.invoice_payment_terms = data.contractClauses?.paymentTerms;
+
+      console.log('💾 [PAYMENT TERMS SAVE] Saving payment terms:', {
+        fromForm: data.contractClauses?.paymentTerms,
+        toDatabase: processedData.invoice_payment_terms
+      });
+
       return await apiRequest('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify(processedData),
