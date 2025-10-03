@@ -50,7 +50,9 @@
       "Bash(xargs -r kill -9)",
       "Bash(timeout 30 npx drizzle-kit push)",
       "Bash(python3:*)",
-      "Bash(PGPASSWORD:*)"
+      "Bash(PGPASSWORD:*)",
+      "WebFetch(domain:auditmylisting.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": [],
