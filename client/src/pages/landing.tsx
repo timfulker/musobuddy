@@ -148,7 +148,7 @@ export default function LandingPage() {
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-8 rounded-2xl shadow-lg">
               <video
-                className="w-full h-64 bg-black rounded border border-gray-200"
+                className="w-full aspect-video bg-black rounded border border-gray-200"
                 controls
                 preload="metadata"
                 playsInline
