@@ -555,7 +555,7 @@ export default function Invoices() {
       venueAddress: safeTrim(data.venueAddress),
       amount: data.amount, // Already validated and converted to string by Zod schema
       dueDate: data.dueDate, // Keep as string - server will convert
-      performanceDate: data.performanceDate || null,
+      eventDate: data.performanceDate || null, // Map performanceDate to eventDate for backend
       performanceFee: safeTrim(data.performanceFee),
       depositPaid: safeTrim(data.depositPaid),
       performanceDuration: safeTrim(data.performanceDuration), // Include performance duration
