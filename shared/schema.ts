@@ -360,7 +360,11 @@ export const bookings = pgTable("bookings", {
   
   // Additional Financial Fields
   quotedAmount: decimal("quoted_amount", { precision: 10, scale: 2 }),
-  
+
+  // Payment Terms (Single Source of Truth for Contract & Invoice)
+  paymentTerms: varchar("payment_terms"), // e.g., "28_days_before", "7_days_after", etc.
+  dueDate: timestamp("due_date"), // Calculated from performance date + payment terms
+
   // Document Storage
   uploadedDocuments: jsonb("uploaded_documents").default('[]'),
   

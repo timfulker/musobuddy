@@ -64,6 +64,12 @@ const fullBookingSchema = z.object({
     const num = parseFloat(val);
     return isNaN(num) ? null : num;
   }),
+  // Payment Terms - Single Source of Truth
+  paymentTerms: z.string().optional(),
+  dueDate: z.string().optional().transform((dateStr) => {
+    if (!dateStr) return null;
+    return new Date(dateStr);
+  }),
   // Collaborative fields
   venueContact: z.string().optional(),
   soundTechContact: z.string().optional(),
@@ -95,6 +101,21 @@ const fullBookingSchema = z.object({
 });
 
 type FullBookingFormData = z.infer<typeof fullBookingSchema>;
+
+// Helper function to convert payment terms to days offset
+function getPaymentTermsDays(paymentTerms: string): number {
+  switch (paymentTerms) {
+    case "28_days_before": return -28;
+    case "14_days_before": return -14;
+    case "7_days_before": return -7;
+    case "on_performance": return 0;
+    case "7_days_after": return 7;
+    case "14_days_after": return 14;
+    case "28_days_after": return 28;
+    case "on_receipt": return 7; // 7 days from invoice creation
+    default: return 7;
+  }
+}
 
 interface NewBookingProps {
   clientMode?: boolean;
@@ -437,6 +458,9 @@ export default function NewBookingPage({
       parkingInfo: "",
       notes: "",
       travelExpense: "",
+      // Payment Terms
+      paymentTerms: "",
+      dueDate: "",
       // Collaborative fields - provide default empty values to prevent uncontrolled->controlled warnings
       venueContact: "",
       soundTechContact: "",
@@ -621,6 +645,20 @@ export default function NewBookingPage({
       setFormInitialized(true);
     }
   }, [editingBooking, isEditMode, form]);
+
+  // Auto-calculate due date when event date or payment terms change
+  const eventDate = form.watch("eventDate");
+  const paymentTerms = form.watch("paymentTerms");
+
+  useEffect(() => {
+    if (eventDate && paymentTerms) {
+      const performanceDate = new Date(eventDate);
+      const daysOffset = getPaymentTermsDays(paymentTerms);
+      const calculatedDueDate = new Date(performanceDate);
+      calculatedDueDate.setDate(calculatedDueDate.getDate() + daysOffset);
+      form.setValue("dueDate", calculatedDueDate.toISOString().split('T')[0]);
+    }
+  }, [eventDate, paymentTerms, form]);
 
   // Helper function to add new gig types to user settings
   const addNewGigTypeToSettings = async (gigType: string) => {
@@ -1815,6 +1853,76 @@ export default function NewBookingPage({
                       Calculated: Total fee minus travel expenses
                     </p>
                   </div>
+                </div>
+
+                {/* Payment Terms Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-200">
+                  <FormField
+                    control={form.control}
+                    name="paymentTerms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Payment Terms</FormLabel>
+                        <Select
+                          value={field.value || userSettings?.invoicePaymentTerms || "7_days_after"}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Auto-calculate due date when payment terms change
+                            const eventDate = form.getValues("eventDate");
+                            if (eventDate && value) {
+                              const performanceDate = new Date(eventDate);
+                              const daysOffset = getPaymentTermsDays(value);
+                              const dueDate = new Date(performanceDate);
+                              dueDate.setDate(dueDate.getDate() + daysOffset);
+                              form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+                            }
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white/70 border-yellow-200 focus:border-yellow-400">
+                              <SelectValue placeholder="Select payment terms" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="28_days_before">28 days before performance</SelectItem>
+                            <SelectItem value="14_days_before">14 days before performance</SelectItem>
+                            <SelectItem value="7_days_before">7 days before performance</SelectItem>
+                            <SelectItem value="on_performance">Due on performance date</SelectItem>
+                            <SelectItem value="on_receipt">7 days from invoice date</SelectItem>
+                            <SelectItem value="7_days_after">7 days after performance</SelectItem>
+                            <SelectItem value="14_days_after">14 days after performance</SelectItem>
+                            <SelectItem value="28_days_after">28 days after performance</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs text-gray-500">
+                          Default from settings: {userSettings?.invoicePaymentTerms || "7_days_after"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Payment Due Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value || ''}
+                            className="bg-white/70 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-400/20"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs text-gray-500">
+                          Auto-calculated from payment terms, or set manually
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
