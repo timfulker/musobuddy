@@ -191,6 +191,12 @@ export class SettingsStorage {
     console.log('  ✓ homePostcode:', 'homePostcode' in updateData, '→', updateData.homePostcode);
     console.log('  ✓ personalForwardEmail:', 'personalForwardEmail' in updateData, '→', updateData.personalForwardEmail);
 
+    // CRITICAL DEBUG: Log payment terms fields right before update
+    console.log('🚨 [CRITICAL] About to update database with:');
+    console.log('  invoicePaymentTerms:', updateData.invoicePaymentTerms);
+    console.log('  contractClauses:', JSON.stringify(updateData.contractClauses, null, 2));
+    console.log('  contract_clauses:', JSON.stringify(updateData.contract_clauses, null, 2));
+
     const result = await db.update(userSettings)
       .set(updateData)
       .where(eq(userSettings.userId, userId))
@@ -202,6 +208,11 @@ export class SettingsStorage {
     console.log('  📝 Custom Clauses:', JSON.stringify(result[0]?.customClauses, null, 2));
     console.log('  📄 Invoice Clauses:', JSON.stringify(result[0]?.invoiceClauses, null, 2));
     console.log('  📝 Custom Invoice Clauses:', JSON.stringify(result[0]?.customInvoiceClauses, null, 2));
+
+    // CRITICAL DEBUG: Log payment terms from database result
+    console.log('🚨 [CRITICAL] Database returned:');
+    console.log('  invoicePaymentTerms:', result[0]?.invoicePaymentTerms);
+    console.log('  contractClauses.paymentTerms:', result[0]?.contractClauses?.paymentTerms);
 
     // CRITICAL DEBUG: Log the exact home address fields returned from database
     console.log('🔍 CRITICAL - Home address fields returned from database:');
