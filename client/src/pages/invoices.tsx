@@ -133,8 +133,16 @@ export default function Invoices() {
 
   // Auto-set due date using user's payment terms setting from contract clauses
   useEffect(() => {
+    console.log('📅 [DUE DATE CALC] useEffect triggered:', {
+      hasUserSettings: !!userSettings,
+      hasContractClauses: !!userSettings?.contractClauses,
+      paymentTerms: userSettings?.contractClauses?.paymentTerms,
+      fullUserSettings: userSettings
+    });
+
     if (userSettings?.contractClauses?.paymentTerms) {
       const paymentTerms = userSettings.contractClauses.paymentTerms;
+      console.log('📅 [DUE DATE CALC] Payment terms found:', paymentTerms);
 
       // For "on_receipt", calculate from today's date (invoice creation date)
       if (paymentTerms === "on_receipt") {
@@ -142,26 +150,38 @@ export default function Invoices() {
         const daysToAdd = getPaymentTermsDays(paymentTerms);
         const dueDate = new Date(baseDate);
         dueDate.setDate(dueDate.getDate() + daysToAdd);
+        console.log('📅 [DUE DATE CALC] On receipt - setting due date to:', dueDate.toISOString().split('T')[0]);
         form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
       }
       // For all other terms, only calculate if performance date exists
       else {
         const performanceDate = form.getValues("performanceDate");
+        console.log('📅 [DUE DATE CALC] Performance-based terms - performance date:', performanceDate);
         if (performanceDate) {
           const baseDate = new Date(performanceDate);
           const daysToAdd = getPaymentTermsDays(paymentTerms);
           const dueDate = new Date(baseDate);
           dueDate.setDate(dueDate.getDate() + daysToAdd);
+          console.log('📅 [DUE DATE CALC] Setting due date to:', dueDate.toISOString().split('T')[0], 'days offset:', daysToAdd);
           form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+        } else {
+          console.log('📅 [DUE DATE CALC] No performance date yet - waiting for user input');
         }
-        // If no performance date, don't set due date yet - wait for user to enter it
       }
+    } else {
+      console.log('📅 [DUE DATE CALC] No payment terms in settings - skipping auto-calculation');
     }
   }, [userSettings, form]);
 
   // Update due date when performance date changes
   const performanceDate = form.watch("performanceDate");
   useEffect(() => {
+    console.log('📅 [DUE DATE UPDATE] Performance date changed:', {
+      performanceDate,
+      hasPaymentTerms: !!userSettings?.contractClauses?.paymentTerms,
+      paymentTerms: userSettings?.contractClauses?.paymentTerms
+    });
+
     if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
       const paymentTerms = userSettings.contractClauses.paymentTerms;
 
@@ -170,13 +190,16 @@ export default function Invoices() {
       let baseDate: Date;
       if (paymentTerms === "on_receipt") {
         baseDate = new Date(); // Use today's date
+        console.log('📅 [DUE DATE UPDATE] Using today as base (on_receipt)');
       } else {
         baseDate = new Date(performanceDate);
+        console.log('📅 [DUE DATE UPDATE] Using performance date as base:', performanceDate);
       }
 
       const daysToAdd = getPaymentTermsDays(paymentTerms);
       const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + daysToAdd);
+      console.log('📅 [DUE DATE UPDATE] Calculated due date:', dueDate.toISOString().split('T')[0], 'offset days:', daysToAdd);
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
   }, [performanceDate, userSettings, form]);
