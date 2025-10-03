@@ -46,7 +46,7 @@ export function MetronomeLogo({ size = 'medium', showText = true, className = ''
             style={{ clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)' }}
           >
             <div
-              className={`absolute ${sizes.arm} bg-[#191970] left-1/2 -translate-x-1/2 rounded-sm origin-bottom`}
+              className={`absolute ${sizes.arm} bg-white left-1/2 -translate-x-1/2 rounded-sm origin-bottom`}
               style={{
                 animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
               }}
