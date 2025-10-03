@@ -143,9 +143,10 @@ export function generateContractSigningPage(
       }
     }
     
-    // Add payment terms clause if set
-    if (userSettings?.contractClauses?.paymentTerms) {
-      const paymentTermsText = getPaymentTermsText(userSettings.contractClauses.paymentTerms);
+    // Add payment terms from booking (Single Source of Truth) or fallback to settings
+    const paymentTermsToUse = booking.paymentTerms || userSettings?.contractClauses?.paymentTerms || userSettings?.invoicePaymentTerms;
+    if (paymentTermsToUse) {
+      const paymentTermsText = getPaymentTermsText(paymentTermsToUse);
       selectedClauses.push(paymentTermsText);
     }
     

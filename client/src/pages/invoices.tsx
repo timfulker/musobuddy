@@ -229,24 +229,31 @@ export default function Invoices() {
           .then(booking => {
             if (booking) {
               // Calculate performance date from event date
-              const performanceDate = booking.eventDate 
+              const performanceDate = booking.eventDate
                 ? new Date(booking.eventDate).toISOString().split('T')[0]
                 : "";
-                
-              // Calculate due date using user's payment terms setting relative to performance date
-              let dueDate: Date;
-              if (performanceDate && userSettings?.contractClauses?.paymentTerms) {
+
+              // Use due date from booking (Single Source of Truth)
+              // If booking doesn't have due date, calculate from payment terms
+              let dueDateStr: string;
+              if (booking.dueDate) {
+                // Booking has due date - use it directly
+                dueDateStr = new Date(booking.dueDate).toISOString().split('T')[0];
+              } else if (performanceDate && booking.paymentTerms) {
+                // Calculate from booking's payment terms
                 const performanceDateObj = new Date(performanceDate);
-                const dueDays = getPaymentTermsDays(userSettings.contractClauses.paymentTerms);
-                dueDate = new Date(performanceDateObj);
+                const dueDays = getPaymentTermsDays(booking.paymentTerms);
+                const dueDate = new Date(performanceDateObj);
                 dueDate.setDate(dueDate.getDate() + dueDays);
+                dueDateStr = dueDate.toISOString().split('T')[0];
               } else {
-                // Fallback: use payment terms from settings, or 7 days if not configured
+                // Fallback to settings (for old bookings without payment terms)
                 const dueDays = userSettings?.contractClauses?.paymentTerms
                   ? getPaymentTermsDays(userSettings.contractClauses.paymentTerms)
                   : 7;
-                dueDate = new Date();
+                const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + dueDays);
+                dueDateStr = dueDate.toISOString().split('T')[0];
               }
               
               const parsedBookingId = parseInt(bookingId);
@@ -260,7 +267,7 @@ export default function Invoices() {
                 clientAddress: booking.clientAddress || "",
                 venueAddress: booking.venueAddress || booking.venue || "",
                 amount: booking.finalAmount || "",
-                dueDate: dueDate.toISOString().split('T')[0],
+                dueDate: dueDateStr,
                 performanceDate: performanceDate,
                 performanceFee: booking.fee ? booking.fee.toString() : "",
                 depositPaid: "",
@@ -1322,15 +1329,28 @@ export default function Invoices() {
                       <FormField
                         control={form.control}
                         name="dueDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Due Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const hasBooking = !!form.getValues("bookingId");
+                          return (
+                            <FormItem>
+                              <FormLabel>Due Date</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  disabled={hasBooking}
+                                  className={hasBooking ? "bg-gray-100 cursor-not-allowed" : ""}
+                                />
+                              </FormControl>
+                              {hasBooking && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Due date is set from the booking. To change, edit the booking.
+                                </p>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                       <FormField
                         control={form.control}

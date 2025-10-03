@@ -210,9 +210,10 @@ function generateTermsSection(userSettings: UserSettings | null, contract?: any)
     }
   }
 
-  // Add payment terms if set
-  if (userSettings?.contractClauses?.paymentTerms) {
-    selectedClauses.push(getPaymentTermsText(userSettings.contractClauses.paymentTerms));
+  // Add payment terms from booking (Single Source of Truth) or fallback to settings
+  const paymentTermsToUse = booking.paymentTerms || userSettings?.contractClauses?.paymentTerms || userSettings?.invoicePaymentTerms;
+  if (paymentTermsToUse) {
+    selectedClauses.push(getPaymentTermsText(paymentTermsToUse));
   }
 
   // Collect custom clauses
