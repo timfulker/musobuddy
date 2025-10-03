@@ -105,8 +105,8 @@ export default function LandingPage() {
 
       {/* Feature Section 1: Professional Contract Generation */}
       <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-12 items-center">
             <div>
               <h3 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-10 leading-tight">
                 From gig details to signed contract — in seconds
@@ -146,7 +146,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-8 rounded-2xl shadow-lg">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-6 rounded-2xl shadow-lg">
               <video
                 className="w-full aspect-video bg-black rounded border border-gray-200"
                 controls
