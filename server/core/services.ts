@@ -341,7 +341,6 @@ export class EmailService {
             align-items: center;
             padding: 14px 0;
             border-bottom: 1px solid #e5e7eb;
-            gap: 20px;
           }
 
           .detail-row:last-child {
@@ -355,12 +354,15 @@ export class EmailService {
             font-weight: 500;
             color: #6b7280;
             flex-shrink: 0;
+            min-width: 45%;
+            padding-right: 20px;
           }
 
           .detail-value {
             font-weight: 600;
             color: #111827;
             text-align: right;
+            flex: 1;
           }
           
           .amount-highlight {
