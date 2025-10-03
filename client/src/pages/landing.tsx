@@ -51,7 +51,7 @@ export default function LandingPage() {
               Book Gigs, Create Contracts, Send Invoices
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed font-light">
-              Professional gig management made ridiculously simple for UK musicians. Less admin, more music.
+              Professional gig management made ridiculously simple for UK musicians. <span className="font-bold">Less admin, more music.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
