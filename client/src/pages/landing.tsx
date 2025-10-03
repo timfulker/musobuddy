@@ -60,7 +60,7 @@ export default function LandingPage() {
                   Start Free Trial →
                 </Button>
               </Link>
-              <p className="text-sm text-gray-500">No credit card required • 30-day free trial</p>
+              <p className="text-sm text-gray-500">30-day free trial</p>
             </div>
 
             {/* Video Section */}
