@@ -147,9 +147,9 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 p-8 rounded-2xl shadow-lg">
-              <video 
-                className="w-full h-64 bg-black rounded border border-gray-200" 
-                controls 
+              <video
+                className="w-full h-64 bg-black rounded border border-gray-200"
+                controls
                 preload="metadata"
                 playsInline
                 controlsList="nodownload"
@@ -157,7 +157,8 @@ export default function LandingPage() {
                 onLoadStart={() => console.log('Video loading started')}
                 onCanPlay={() => console.log('Video can play')}
               >
-                <source src="/videos/musobuddy-demo.mp4" type="video/mp4" />
+                <source src="/videos/contract-demo.mov" type="video/quicktime" />
+                <source src="/videos/contract-demo.mov" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
