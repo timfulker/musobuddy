@@ -51,4 +51,4 @@ minimal-*.js
 lunch-*.mjs
 enhanced-*.js
 final-*.js
-direct-*.ts
+direct-*.ts.env
