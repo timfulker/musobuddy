@@ -653,23 +653,34 @@ export default function NewBookingPage({
   const paymentTerms = form.watch("paymentTerms");
 
   useEffect(() => {
-    if (eventDate && paymentTerms) {
-      const performanceDate = new Date(eventDate);
+    if (paymentTerms) {
+      // For "on_receipt", use today's date; for all other terms, use event date
+      let baseDate: Date;
+      if (paymentTerms === "on_receipt") {
+        baseDate = new Date(); // Invoice creation date
+      } else if (eventDate) {
+        baseDate = new Date(eventDate); // Performance date
+      } else {
+        return; // Can't calculate without a base date
+      }
+
       const daysOffset = getPaymentTermsDays(paymentTerms);
-      const calculatedDueDate = new Date(performanceDate);
+      const calculatedDueDate = new Date(baseDate);
       calculatedDueDate.setDate(calculatedDueDate.getDate() + daysOffset);
-      form.setValue("dueDate", calculatedDueDate.toISOString().split('T')[0]);
+      const dueDateStr = calculatedDueDate.toISOString().split('T')[0];
+      form.setValue("dueDate", dueDateStr);
     }
   }, [eventDate, paymentTerms, form]);
 
-  // Initialize payment terms from settings for NEW bookings (not when editing)
+  // Initialize payment terms from settings for NEW bookings OR existing bookings without payment terms
   useEffect(() => {
-    if (!isEditMode && userSettings?.invoicePaymentTerms && !form.getValues("paymentTerms")) {
-      // Copy default payment terms from settings to new booking
+    const currentPaymentTerms = form.getValues("paymentTerms");
+    // If payment terms is empty/undefined, initialize from settings
+    if (userSettings?.invoicePaymentTerms && !currentPaymentTerms) {
       form.setValue("paymentTerms", userSettings.invoicePaymentTerms);
-      form.setValue("paymentTermsCustomized", false); // Not customized, using default
+      form.setValue("paymentTermsCustomized", false); // Not customized when using default
     }
-  }, [isEditMode, userSettings, form]);
+  }, [userSettings, form, isEditMode]);
 
   // Helper function to add new gig types to user settings
   const addNewGigTypeToSettings = async (gigType: string) => {
@@ -1385,7 +1396,31 @@ export default function NewBookingPage({
                         <FormItem>
                           <FormLabel className="text-sm font-medium text-gray-700">Event Date *</FormLabel>
                           <FormControl>
-                            <Input {...field} type="date" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
+                            <Input
+                              {...field}
+                              type="date"
+                              className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20"
+                              onChange={(e) => {
+                                field.onChange(e);
+                                // Auto-calculate due date when event date changes
+                                const paymentTerms = form.getValues("paymentTerms");
+                                if (paymentTerms) {
+                                  // For "on_receipt", use today's date; for all other terms, use event date
+                                  let baseDate: Date;
+                                  if (paymentTerms === "on_receipt") {
+                                    baseDate = new Date();
+                                  } else if (e.target.value) {
+                                    baseDate = new Date(e.target.value);
+                                  } else {
+                                    return;
+                                  }
+                                  const daysOffset = getPaymentTermsDays(paymentTerms);
+                                  const dueDate = new Date(baseDate);
+                                  dueDate.setDate(dueDate.getDate() + daysOffset);
+                                  form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+                                }
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1887,11 +1922,19 @@ export default function NewBookingPage({
                             form.setValue("paymentTermsCustomized", isCustomized);
 
                             // Auto-calculate due date when payment terms change
-                            const eventDate = form.getValues("eventDate");
-                            if (eventDate && value) {
-                              const performanceDate = new Date(eventDate);
+                            if (value) {
+                              const eventDate = form.getValues("eventDate");
+                              // For "on_receipt", use today's date; for all other terms, use event date
+                              let baseDate: Date;
+                              if (value === "on_receipt") {
+                                baseDate = new Date();
+                              } else if (eventDate) {
+                                baseDate = new Date(eventDate);
+                              } else {
+                                return; // Can't calculate without event date for non-receipt terms
+                              }
                               const daysOffset = getPaymentTermsDays(value);
-                              const dueDate = new Date(performanceDate);
+                              const dueDate = new Date(baseDate);
                               dueDate.setDate(dueDate.getDate() + daysOffset);
                               form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
                             }
