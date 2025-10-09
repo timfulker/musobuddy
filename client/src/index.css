@@ -1,0 +1,1590 @@
+/* Theme System CSS */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Work+Sans:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Gradient Background Support */
+body {
+  background: var(--theme-background) !important;
+  background-attachment: fixed;
+}
+
+/* Apply gradient backgrounds to main containers */
+.min-h-screen {
+  background: var(--theme-background) !important;
+  background-attachment: fixed;
+}
+
+/* Apply gradient to main content areas */
+main {
+  background: transparent;
+}
+
+/* Welcome Page Inspired Utility Classes */
+.backdrop-blur-soft {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Enhanced cards with welcome page styling */
+.welcome-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 0;
+}
+
+/* Gradient text effect like welcome page */
+.gradient-text-primary {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 100%;
+}
+
+.gradient-text-blue-purple {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced button effects */
+.button-welcome {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  transition: all 0.3s ease;
+  transform: scale(1);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+}
+
+.button-welcome:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.4);
+}
+
+/* Decorative floating elements */
+.floating-decoration {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+/* Mobile Responsive Calendar Grid */
+@media screen and (max-width: 768px) {
+  /* Landscape mode - optimize calendar display for mobile landscape */
+  @media (orientation: landscape) {
+    .mobile-calendar-container {
+      width: 100vw !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 12px 8px !important;
+      height: calc(100vh - 120px) !important;
+      overflow: hidden !important;
+    }
+    
+    .calendar-grid-landscape {
+      width: 100% !important;
+      max-width: none !important;
+      grid-template-columns: repeat(7, 1fr) !important;
+      gap: 3px !important;
+      height: 100% !important;
+    }
+    
+    .calendar-day-cell-landscape {
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      aspect-ratio: 1.6 !important;
+      font-size: 12px !important;
+      padding: 4px 2px !important;
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.8) !important;
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      overflow: hidden !important;
+      position: relative !important;
+    }
+    
+    .calendar-day-cell-landscape:hover {
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-color: rgba(59, 130, 246, 0.3) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .calendar-header-landscape {
+      font-size: 13px !important;
+      padding: 8px 2px !important;
+      text-align: center !important;
+      font-weight: 700 !important;
+      background: rgba(59, 130, 246, 0.05) !important;
+      border-radius: 4px !important;
+      margin-bottom: 3px !important;
+      color: #374151 !important;
+    }
+    
+    /* Calendar date numbers in landscape */
+    .calendar-day-cell-landscape .date-number {
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      color: #1f2937 !important;
+      margin-bottom: 2px !important;
+    }
+    
+    /* Event items in calendar cells */
+    .calendar-day-cell-landscape .event-item {
+      font-size: 10px !important;
+      padding: 1px 3px !important;
+      border-radius: 3px !important;
+      background: rgba(59, 130, 246, 0.1) !important;
+      color: #1e40af !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      width: 100% !important;
+      margin-bottom: 1px !important;
+    }
+    
+    /* Today indicator */
+    .calendar-day-cell-landscape.today {
+      background: rgba(59, 130, 246, 0.15) !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .calendar-day-cell-landscape.today .date-number {
+      color: #1d4ed8 !important;
+      font-weight: 700 !important;
+    }
+    
+    /* Navigation buttons in landscape */
+    .calendar-nav-landscape .nav-button {
+      padding: 8px 12px !important;
+      font-size: 13px !important;
+      border-radius: 6px !important;
+      margin: 0 2px !important;
+    }
+    
+    /* Calendar view tabs in landscape */
+    .calendar-tabs-landscape {
+      margin-bottom: 12px !important;
+    }
+    
+    .calendar-tabs-landscape .tab-button {
+      padding: 6px 12px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+
+.floating-decoration-1 {
+  top: 10%;
+  right: 15%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-accent));
+  transform: translate(30%, -30%);
+  animation: float-slow 20s ease-in-out infinite;
+}
+
+.floating-decoration-2 {
+  bottom: 20%;
+  left: 10%;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, var(--theme-accent), var(--theme-secondary));
+  transform: translate(-20%, 20%);
+  animation: float-medium 15s ease-in-out infinite reverse;
+}
+
+.floating-decoration-3 {
+  top: 60%;
+  right: 5%;
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4));
+  animation: float-fast 12s ease-in-out infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(30%, -30%) rotate(0deg) scale(1); }
+  33% { transform: translate(35%, -25%) rotate(120deg) scale(1.1); }
+  66% { transform: translate(25%, -35%) rotate(240deg) scale(0.9); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translate(-20%, 20%) rotate(0deg) scale(1); }
+  50% { transform: translate(-25%, 15%) rotate(180deg) scale(1.05); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+  25% { transform: translate(10%, -10%) rotate(90deg) scale(1.1); }
+  50% { transform: translate(-5%, 5%) rotate(180deg) scale(0.95); }
+  75% { transform: translate(5%, -5%) rotate(270deg) scale(1.05); }
+}
+
+/* Enhanced feature cards with gradients */
+.feature-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Card and surface backgrounds */
+.bg-background {
+  background: var(--theme-surface) !important;
+}
+
+.bg-card, .card {
+  background: var(--theme-surface) !important;
+}
+
+/* Ensure sidebar doesn't interfere with gradient */
+.sidebar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Clean, simple contrast system with dynamic luminance-based text color */
+/* MAXIMUM SPECIFICITY - Target sidebar navigation links specifically */
+nav a.bg-primary.text-primary-foreground,
+.sidebar nav a.bg-primary.text-primary-foreground,
+nav a[class*="bg-primary"][class*="text-primary-foreground"],
+.sidebar nav a[class*="bg-primary"][class*="text-primary-foreground"] {
+  color: var(--theme-primary-text) !important;
+}
+
+nav a.bg-primary.text-primary-foreground *,
+.sidebar nav a.bg-primary.text-primary-foreground *,
+nav a[class*="bg-primary"][class*="text-primary-foreground"] *,
+.sidebar nav a[class*="bg-primary"][class*="text-primary-foreground"] * {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Target buttons with both bg-primary and text-primary-foreground classes specifically */
+button.bg-primary.text-primary-foreground,
+button[class*="bg-primary"][class*="text-primary-foreground"],
+.bg-primary.text-primary-foreground {
+  color: var(--theme-primary-text) !important;
+}
+
+button.bg-primary.text-primary-foreground *,
+button[class*="bg-primary"][class*="text-primary-foreground"] *,
+.bg-primary.text-primary-foreground * {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Force dynamic text color ONLY on full bg-primary class, not opacity variants */
+.bg-primary {
+  color: var(--theme-primary-text) !important;
+}
+
+.bg-primary * {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Ensure text-primary-foreground always uses the correct contrast */
+[class*="text-primary-foreground"] {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Google Calendar Dialog ONLY - Targeted Fix */
+.calendar-integration-dialog {
+  background: white !important;
+  color: #1f2937 !important;
+}
+
+/* Hover Card Portal and Dropdown Z-Index Management */
+[data-radix-popper-content-wrapper] {
+  z-index: 99999999 !important;
+}
+
+/* Ensure dropdown content appears above hover cards */
+[data-radix-dropdown-menu-content] {
+  z-index: 99999999 !important;
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Fix transparent overlays and ensure proper backgrounds */
+[data-radix-dialog-overlay] {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Force solid backgrounds for all overlay components */
+[data-radix-dropdown-menu-content],
+[data-radix-context-menu-content],
+[data-radix-select-content],
+[data-radix-popover-content] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+  color: #1f2937 !important;
+}
+
+/* Dark mode overrides for overlays */
+.dark [data-radix-dropdown-menu-content],
+.dark [data-radix-context-menu-content],
+.dark [data-radix-select-content],
+.dark [data-radix-popover-content] {
+  background: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: #e5e5e5 !important;
+}
+
+/* Dialog content fixes */
+[data-radix-dialog-content] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.dark [data-radix-dialog-content] {
+  background: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: #e5e5e5 !important;
+}
+
+.calendar-integration-dialog h1,
+.calendar-integration-dialog h2,
+.calendar-integration-dialog h3,
+.calendar-integration-dialog h4,
+.calendar-integration-dialog p:not(button *),
+.calendar-integration-dialog span:not(button *):not([class*="bg-"]),
+.calendar-integration-dialog label:not(button *),
+.calendar-integration-dialog li:not(button *),
+.calendar-integration-dialog ul:not(button *),
+.calendar-integration-dialog strong:not(button *) {
+  color: #1f2937 !important;
+}
+
+.calendar-integration-dialog .text-muted-foreground,
+.calendar-integration-dialog .text-gray-600,
+.calendar-integration-dialog .text-gray-700 {
+  color: #6b7280 !important;
+}
+
+/* Portal-based hover card z-index fix */
+[data-radix-hover-card-content] {
+  z-index: 999999 !important;
+}
+
+/* Ensure dialog stays below hover cards */
+[data-radix-dialog-content] {
+  z-index: 50 !important;
+}
+
+.calendar-integration-dialog .card {
+  background: white !important;
+  color: #1f2937 !important;
+}
+
+.calendar-integration-dialog .card h1,
+.calendar-integration-dialog .card h2,
+.calendar-integration-dialog .card h3,
+.calendar-integration-dialog .card h4,
+.calendar-integration-dialog .card p:not(button *),
+.calendar-integration-dialog .card span:not(button *):not([class*="bg-"]),
+.calendar-integration-dialog .card label:not(button *),
+.calendar-integration-dialog .card li:not(button *) {
+  color: #1f2937 !important;
+}
+
+/* Calendar integration dialog specific titles and descriptions */
+.calendar-integration-dialog [data-radix-dialog-title] {
+  color: #1f2937 !important;
+}
+
+.calendar-integration-dialog [data-radix-dialog-description] {
+  color: #6b7280 !important;
+}
+
+/* Fix outline buttons in calendar dialog to use theme color text */
+/* Target buttons that have border and light background (outline variant) */
+.calendar-integration-dialog button.border,
+.calendar-integration-dialog button.bg-background,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive) {
+  color: var(--theme-primary) !important;
+  background-color: transparent !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.calendar-integration-dialog button.border *,
+.calendar-integration-dialog button.bg-background *,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive) * {
+  color: var(--theme-primary) !important;
+}
+
+/* Theme CSS Variables */
+:root {
+  --radius: 0.5rem;
+  
+  /* Default Purple Theme */
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  
+  /* Enhanced UI Variables - Restored from backup */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --primary: hsl(262, 83%, 72%);
+  --primary-foreground: hsl(210, 20%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+
+  /* Accent & Status Colors */
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(262, 83%, 72%);
+
+  /* Popover and Card */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Dynamic text colors for contrast */
+  --theme-primary-text: white; /* Will be set dynamically */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+/* Theme-specific styles */
+.theme-purple {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-primary-text: white; /* Luminance: 0.198 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+.theme-ocean-blue {
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-accent: #38bdf8;
+  --theme-background: #f0f9ff;
+  --theme-surface: #ffffff;
+  --theme-text: #0c4a6e;
+  --theme-text-secondary: #075985;
+  --theme-primary-text: white; /* Luminance: 0.329 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+.theme-forest-green {
+  --theme-primary: #16a34a;
+  --theme-secondary: #15803d;
+  --theme-accent: #22c55e;
+  --theme-background: #f0fdf4;
+  --theme-surface: #ffffff;
+  --theme-text: #14532d;
+  --theme-text-secondary: #166534;
+  --theme-primary-text: white; /* Luminance: 0.269 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+.theme-clean-pro-audio {
+  --theme-primary: #e53935;
+  --theme-secondary: #2c2c2c;
+  --theme-accent: #ffeb3b;
+  --theme-background: #e5e5e5;
+  --theme-surface: #fdfdfd;
+  --theme-text: #2c2c2c;
+  --theme-text-secondary: #555555;
+  --theme-font-heading: "IBM Plex Sans", sans-serif;
+  --theme-font-body: "IBM Plex Sans", sans-serif;
+  --theme-primary-text: white; /* Luminance: 0.198 */
+  --theme-secondary-text: white;
+  --theme-accent-text: black; /* Yellow has high luminance */
+}
+
+.theme-midnight-blue {
+  --theme-primary: #191970;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #4a5568;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white; /* Luminance: 0.021 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+/* Midnight Blue Theme Dark Mode */
+.theme-midnight-blue.dark {
+  --theme-primary: #191970;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #0a0a1a;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+.theme-custom-dark {
+  --theme-primary: #161537;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #4a5568;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white; /* Luminance: 0.0098 */
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+/* Purple Theme Dark Mode */
+.theme-purple.dark {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #0f0f23;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+/* Ocean Blue Theme Dark Mode */
+.theme-ocean-blue.dark {
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-accent: #38bdf8;
+  --theme-background: #0a1625;
+  --theme-surface: #1a2332;
+  --theme-text: #e5f1ff;
+  --theme-text-secondary: #a5c0d8;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Forest Green Theme Dark Mode */
+.theme-forest-green.dark {
+  --theme-primary: #34d399;
+  --theme-secondary: #10b981;
+  --theme-accent: #22c55e;
+  --theme-background: #0a1f0a;
+  --theme-surface: #1a2e1a;
+  --theme-text: #e5ffe5;
+  --theme-text-secondary: #a5d8a5;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: black;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Clean Pro Audio Theme Dark Mode */
+.theme-clean-pro-audio.dark {
+  --theme-primary: #f87171;
+  --theme-secondary: #2c2c2c;
+  --theme-accent: #ffeb3b;
+  --theme-background: #1a1a1a;
+  --theme-surface: #2a2a2a;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: "IBM Plex Sans", sans-serif;
+  --theme-font-body: "IBM Plex Sans", sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: black;
+}
+
+/* Custom Theme Dark Mode */
+.theme-custom.dark {
+  --theme-primary: #8b5cf6; /* Will be overridden by JavaScript */
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #0f0f23;
+  --theme-surface: #1a1a2e;
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+  --theme-primary-text: white;
+  --theme-secondary-text: white;
+  --theme-accent-text: white;
+}
+
+
+/* Apply theme to body and typography */
+body {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+  font-family: var(--theme-font-body) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+}
+
+/* Force theme application for all layouts */
+.layout-consistent,
+.main-content,
+.min-h-screen {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Override Tailwind background classes */
+.bg-background {
+  background-color: var(--theme-background) !important;
+}
+
+.bg-white {
+  background-color: var(--theme-surface) !important;
+}
+
+.text-foreground {
+  color: var(--theme-text) !important;
+}
+
+/* COMPREHENSIVE THEME CONTRAST SYSTEM */
+/* Apply ONLY to elements with full primary background, not opacity variants */
+.bg-primary,
+[style*="background-color: var(--theme-primary)"],
+[style*="background: var(--theme-primary)"],
+[data-state="selected"],
+[data-state="active"], 
+[aria-selected="true"],
+[data-selected="true"],
+[data-active="true"],
+.selected,
+.active {
+  background-color: var(--theme-primary) !important;
+  color: var(--theme-primary-text) !important;
+}
+
+/* Force color on all child elements */
+.bg-primary *,
+[style*="background-color: var(--theme-primary)"] *,
+[style*="background: var(--theme-primary)"] *,
+[data-state="selected"] *,
+[data-state="active"] *,
+[aria-selected="true"] *,
+[data-selected="true"] *,
+[data-active="true"] *,
+.selected *,
+.active * {
+  color: var(--theme-primary-text) !important;
+}
+
+.text-primary {
+  color: var(--theme-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+button.bg-secondary,
+a.bg-secondary,
+nav .bg-secondary,
+.sidebar .bg-secondary,
+[role="button"].bg-secondary {
+  background-color: var(--theme-secondary) !important;
+  color: var(--theme-secondary-text) !important;
+}
+
+button.bg-secondary *,
+a.bg-secondary *,
+nav .bg-secondary *,
+.sidebar .bg-secondary *,
+[role="button"].bg-secondary * {
+  color: var(--theme-secondary-text) !important;
+}
+
+.text-secondary {
+  color: var(--theme-secondary) !important;
+}
+
+/* Ensure text contrast on colored backgrounds */
+.text-primary-foreground {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Moved this rule to after the luminance-aware rules for higher specificity */
+
+.text-secondary-foreground {
+  color: var(--theme-secondary-text) !important;
+}
+
+.text-accent-foreground {
+  color: var(--theme-accent-text) !important;
+}
+
+/* Theme-specific button and menu overrides */
+.theme-ocean-blue .bg-primary,
+.theme-ocean-blue button[class*="bg-primary"] {
+  background-color: #0ea5e9 !important;
+}
+
+.theme-ocean-blue .text-primary {
+  color: #0ea5e9 !important;
+}
+
+.theme-forest-green .bg-primary,
+.theme-forest-green button[class*="bg-primary"] {
+  background-color: #34d399 !important;
+}
+
+.theme-forest-green .text-primary {
+  color: #34d399 !important;
+}
+
+.theme-clean-pro-audio .bg-primary,
+.theme-clean-pro-audio button[class*="bg-primary"] {
+  background-color: #f87171 !important;
+}
+
+.theme-clean-pro-audio .text-primary {
+  color: #f87171 !important;
+}
+
+/* Comprehensive theme overrides for all UI elements */
+[class*="theme-"] .bg-violet-600,
+[class*="theme-"] .bg-purple-600,
+[class*="theme-"] .bg-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .text-violet-600,
+[class*="theme-"] .text-purple-600,
+[class*="theme-"] .text-primary {
+  color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .border-violet-600,
+[class*="theme-"] .border-purple-600,
+[class*="theme-"] .border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+/* Force override any hardcoded purple colors */
+[class*="theme-"] button,
+[class*="theme-"] .sidebar,
+[class*="theme-"] nav a,
+[class*="theme-"] .menu-item {
+  color: inherit !important;
+}
+
+[class*="theme-"] button[class*="primary"],
+[class*="theme-"] .primary-button {
+  background-color: var(--theme-primary) !important;
+}
+
+/* Force override specific purple hover classes */
+[class*="theme-"] .hover\:bg-purple-600:hover,
+[class*="theme-"] .hover\:bg-violet-600:hover,
+[class*="theme-"] .hover\:bg-primary:hover {
+  background-color: var(--theme-primary) !important;
+}
+
+/* Ocean blue theme overrides */
+html.theme-ocean-blue,
+html.theme-ocean-blue body,
+.theme-ocean-blue,
+.theme-ocean-blue .bg-background,
+.theme-ocean-blue .min-h-screen {
+  background-color: #e0f2fe !important;
+  color: #0f172a !important;
+}
+
+/* Forest green theme overrides */
+html.theme-forest-green,
+html.theme-forest-green body,
+.theme-forest-green,
+.theme-forest-green .bg-background,
+.theme-forest-green .min-h-screen {
+  background-color: #f0fdf4 !important;
+  color: #14532d !important;
+}
+
+.theme-clean-pro-audio {
+  --theme-primary: #f87171 !important;
+  --theme-secondary: #9ca3af !important;
+  --theme-accent: #ffeb3b !important;
+  --theme-background: #e5e5e5 !important;
+  --theme-surface: #fdfdfd !important;
+  --theme-text: #2c2c2c !important;
+  --theme-text-secondary: #555555 !important;
+  --theme-font-heading: "IBM Plex Sans", sans-serif !important;
+  --theme-font-body: "IBM Plex Sans", sans-serif !important;
+}
+
+/* Clean Pro Audio theme overrides */
+html.theme-clean-pro-audio,
+html.theme-clean-pro-audio body,
+.theme-clean-pro-audio,
+.theme-clean-pro-audio .bg-background,
+.theme-clean-pro-audio .min-h-screen {
+  background-color: #e5e5e5 !important;
+  color: #2c2c2c !important;
+  font-family: "IBM Plex Sans", sans-serif !important;
+}
+
+.theme-clean-pro-audio .bg-white,
+.theme-clean-pro-audio .bg-card,
+.theme-clean-pro-audio .bg-popover {
+  background-color: #fdfdfd !important;
+}
+
+.theme-heading {
+  font-family: var(--theme-font-heading);
+}
+
+.theme-body {
+  font-family: var(--theme-font-body);
+}
+
+/* Balanced viewport scaling for consistent dev/production rendering */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reset all margins and padding to prevent scaling differences */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Increased viewport sizing for better deployed version readability */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: 16px;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Enhanced responsive scaling */
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1199px) {
+  html {
+    font-size: 16.5px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+/* Enhanced sizing utilities */
+.sidebar-consistent {
+  font-size: 0.95rem !important;
+  line-height: 1.35rem !important;
+}
+
+.layout-consistent {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Responsive layout utilities */
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 16rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+:root {
+  /* Primary Purple Colors from backup */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --primary: hsl(262, 83%, 72%);
+  --primary-foreground: hsl(210, 20%, 98%);
+  
+  /* Secondary Colors */
+  --secondary: hsl(220, 14.3%, 95.9%);
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  
+  /* Accent & Status Colors */
+  --accent: hsl(220, 14.3%, 95.9%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(210, 20%, 98%);
+  --ring: hsl(262, 83%, 72%);
+  --radius: 0.5rem;
+  
+  /* Popover and Card */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Chart Colors */
+  --chart-1: hsl(262, 83%, 72%);
+  --chart-2: hsl(252, 83%, 82%);
+  --chart-3: hsl(272, 83%, 62%);
+  --chart-4: hsl(242, 83%, 82%);
+  --chart-5: hsl(282, 83%, 62%);
+  
+  /* Sidebar-Specific Colors */
+  --sidebar-background: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary: hsl(262, 83%, 72%);
+  --sidebar-primary-foreground: hsl(210, 20%, 98%);
+  --sidebar-accent: hsl(262, 83%, 72%);
+  --sidebar-accent-foreground: hsl(210, 20%, 98%);
+  --sidebar-border: hsl(220, 13%, 91%);
+  --sidebar-ring: hsl(262, 83%, 72%);
+  
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
+  --muted: #1a1a1a;
+  --muted-foreground: #a0a0a0;
+  --popover: #1a1a1a;
+  --popover-foreground: #e5e5e5;
+  --card: #1a1a1a;
+  --card-foreground: #e5e5e5;
+  --border: #333333;
+  --input: #333333;
+  --primary: #ffd700;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #e5e5e5;
+  --accent: #ffd700;
+  --accent-foreground: #000000;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --ring: #ffd700;
+  --radius: 0.375rem;
+  --chart-1: #ffd700;
+  --chart-2: #ffd700;
+  --chart-3: #ffffff;
+  --chart-4: #a0a0a0;
+  --chart-5: #333333;
+  --sidebar-background: #0a0a0a;
+  --sidebar-foreground: #e5e5e5;
+  --sidebar-primary: #ffd700;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #ffd700;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #333333;
+  --sidebar-ring: #ffd700;
+  
+  /* Theme text colors for dark mode */
+  --theme-text: #e5e5e5;
+  --theme-text-secondary: #a0a0a0;
+}
+
+/* Purple Theme Dark Mode */
+.purple-theme.dark {
+  --background: hsl(224, 71.4%, 4.1%);
+  --foreground: hsl(210, 20%, 98%);
+  --primary: hsl(263, 70%, 65%);
+  --primary-foreground: hsl(210, 20%, 98%);
+  --secondary: hsl(215, 27.9%, 16.9%);
+  --secondary-foreground: hsl(210, 20%, 98%);
+  --muted: hsl(215, 27.9%, 16.9%);
+  --muted-foreground: hsl(215, 20.2%, 65.1%);
+  --border: hsl(215, 27.9%, 16.9%);
+  --input: hsl(215, 27.9%, 16.9%);
+  --accent: hsl(215, 27.9%, 16.9%);
+  --accent-foreground: hsl(210, 20%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(210, 20%, 98%);
+  --ring: hsl(263, 70%, 65%);
+  --radius: 0.5rem;
+  --popover: hsl(224, 71.4%, 4.1%);
+  --popover-foreground: hsl(210, 20%, 98%);
+  --card: hsl(224, 71.4%, 4.1%);
+  --card-foreground: hsl(210, 20%, 98%);
+  --chart-1: hsl(263, 70%, 65%);
+  --chart-2: hsl(253, 70%, 75%);
+  --chart-3: hsl(273, 70%, 55%);
+  --chart-4: hsl(243, 70%, 75%);
+  --chart-5: hsl(283, 70%, 55%);
+  --sidebar-background: hsl(224, 71.4%, 4.1%);
+  --sidebar-foreground: hsl(210, 20%, 98%);
+  --sidebar-primary: hsl(263, 70%, 65%);
+  --sidebar-primary-foreground: hsl(210, 20%, 98%);
+  --sidebar-accent: hsl(263, 70%, 65%);
+  --sidebar-accent-foreground: hsl(210, 20%, 98%);
+  --sidebar-border: hsl(215, 27.9%, 16.9%);
+  --sidebar-ring: hsl(263, 70%, 65%);
+  
+  /* Theme text colors for purple dark mode */
+  --theme-text: hsl(210, 20%, 98%);
+  --theme-text-secondary: hsl(215, 20.2%, 65.1%);
+}
+
+/* Calendar text visibility fix */
+.calendar-header-text {
+  color: var(--theme-text) !important;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* EMERGENCY FIX FOR ADMIN PANEL WHITE TEXT ISSUE */
+/* Target only the main admin panel content, exclude sidebar */
+.admin-panel main .text-foreground,
+.admin-panel main h1,
+.admin-panel main div,
+.admin-panel main span,
+.admin-panel main p {
+  color: #1e293b !important;
+}
+
+/* Force dark text on ALL text elements in admin panel main content */
+.admin-panel main * {
+  color: #1e293b !important;
+}
+
+/* Specific overrides for common patterns */
+.admin-panel main .text-muted-foreground {
+  color: #64748b !important;
+}
+
+/* FORCE ADMIN PANEL TABS TO HAVE CORRECT STYLING */
+.admin-panel [role="tablist"] button[data-state="inactive"] {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+.admin-panel [role="tablist"] button[data-state="active"] {
+  background-color: var(--theme-primary) !important;
+  color: var(--theme-primary-text) !important;
+}
+
+
+@layer utilities {
+  /* Purple theme scrollbars */
+  .purple-theme::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .purple-theme::-webkit-scrollbar-track {
+    background: hsl(220, 14.3%, 95.9%);
+    border-radius: 4px;
+  }
+  
+  .purple-theme::-webkit-scrollbar-thumb {
+    background: hsl(262, 83%, 72%);
+    border-radius: 4px;
+  }
+  
+  .purple-theme::-webkit-scrollbar-thumb:hover {
+    background: hsl(262, 83%, 65%);
+  }
+  
+  /* Firefox scrollbar styling for purple theme */
+  .purple-theme {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(262, 83%, 72%) hsl(220, 14.3%, 95.9%);
+  }
+  
+  /* Theme-aware scrollbars for all themes */
+  .theme-ocean-blue::-webkit-scrollbar-thumb {
+    background: #0ea5e9;
+  }
+  
+  .theme-forest-green::-webkit-scrollbar-thumb {
+    background: #16a34a;
+  }
+  
+  .theme-clean-pro-audio::-webkit-scrollbar-thumb {
+    background: #e53935;
+  }
+  
+  .theme-midnight-blue::-webkit-scrollbar-thumb {
+    background: #191970;
+  }
+  
+  /* Firefox scrollbar for all themes */
+  .theme-ocean-blue {
+    scrollbar-color: #0ea5e9 hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-forest-green {
+    scrollbar-color: #16a34a hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-clean-pro-audio {
+    scrollbar-color: #e53935 #e5e5e5;
+  }
+  
+  .theme-midnight-blue {
+    scrollbar-color: #191970 hsl(220, 14.3%, 95.9%);
+  }
+}
+
+/* Enhanced Card Component Styling */
+.enhanced-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+/* Global Card Enhancements for 3D Look */
+.card, [class*="Card"] {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card:hover, [class*="Card"]:hover {
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.enhanced-card.active {
+  @apply border-primary ring-2 ring-primary ring-opacity-20;
+}
+
+/* Card component variants */
+.card-gradient {
+  background: linear-gradient(135deg, var(--theme-surface) 0%, rgba(var(--theme-primary), 0.05) 100%);
+}
+
+.card-bordered {
+  border-left: 4px solid var(--theme-primary);
+}
+
+/* Enhanced button styling */
+.btn-primary-enhanced {
+  @apply bg-primary text-white hover:bg-primary hover:bg-opacity-90 active:bg-primary active:bg-opacity-80 transition-colors duration-200 font-medium;
+}
+
+.btn-secondary-enhanced {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary hover:bg-opacity-80 transition-colors duration-200;
+}
+
+/* Enhanced form styling */
+.form-enhanced .form-group {
+  @apply space-y-2;
+}
+
+.form-enhanced .form-label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.form-enhanced .form-control {
+  @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+}
+
+/* Status indicator utilities */
+.status-success {
+  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.status-warning {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+}
+
+.status-error {
+  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.status-info {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+
+/* Layout utilities */
+.main-container {
+  @apply min-h-screen bg-background;
+}
+
+.content-wrapper {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-spacing {
+  @apply py-8 lg:py-12;
+}
+
+/* Navigation active states */
+.nav-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.nav-inactive {
+  @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+}
+
+/* Data table styling */
+.data-table {
+  @apply w-full border-collapse border rounded-lg overflow-hidden;
+  border-color: hsl(var(--border));
+}
+
+.data-table th {
+  @apply bg-muted text-muted-foreground font-medium text-left px-4 py-3 border-b;
+  border-color: hsl(var(--border));
+}
+
+.data-table td {
+  @apply px-4 py-3 border-b;
+  border-color: hsl(var(--border));
+}
+
+.data-table tr:hover {
+  @apply bg-muted bg-opacity-50;
+}
+
+/* GLOBAL LUMINANCE-AWARE STYLING SYSTEM */
+/* Automatically adjusts text contrast based on background luminance */
+
+/* CSS Custom Properties for luminance-aware theming */
+:root {
+  --luminance-threshold: 0.5;
+  --light-text-primary: #000000;
+  --light-text-muted: #4b5563;
+  --dark-text-primary: #ffffff;
+  --dark-text-muted: #a1a1aa;
+}
+
+/* Global luminance-aware utility classes */
+.luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+.luminance-aware-muted {
+  color: var(--optimal-muted-color, var(--light-text-muted)) !important;
+}
+
+/* Dialog system luminance awareness */
+[data-radix-dialog-content] {
+  background: var(--background, white) !important;
+  color: var(--optimal-text-color, #000000) !important;
+}
+
+[data-radix-dialog-content] *,
+[data-radix-dialog-content] h1,
+[data-radix-dialog-content] h2,
+[data-radix-dialog-content] h3,
+[data-radix-dialog-content] h4,
+[data-radix-dialog-content] p,
+[data-radix-dialog-content] span,
+[data-radix-dialog-content] div,
+[data-radix-dialog-content] label {
+  color: inherit !important;
+}
+
+[data-radix-dialog-content] .text-gray-600,
+[data-radix-dialog-content] .text-gray-700,
+[data-radix-dialog-content] .text-muted-foreground {
+  color: var(--optimal-muted-color, #4b5563) !important;
+}
+
+/* Card system luminance awareness */
+.card-luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+.card-luminance-aware .text-muted-foreground {
+  color: var(--optimal-muted-color, var(--light-text-muted)) !important;
+}
+
+/* Button system luminance awareness */
+.btn-luminance-aware {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+/* Auto-apply luminance awareness to theme-colored backgrounds - BUT NOT BUTTONS, CHAT MESSAGES, THEME BUTTONS, OR SETTINGS NAV */
+[style*="background-color"]:not(button):not([role="button"]):not([type="button"]):not([type="submit"]):not([data-testid*="text-message-content"]):not([data-theme-button]):not([data-settings-nav-button]),
+[class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-inherit"]):not(button):not([role="button"]):not([type="button"]):not([type="submit"]):not([data-testid*="text-message-content"]):not([data-theme-button]):not([data-settings-nav-button]) {
+  color: var(--optimal-text-color, var(--light-text-primary)) !important;
+}
+
+/* Support chat messages should use theme-aware text color */
+[data-testid*="text-message-content"][style*="background-color: var(--theme-primary)"] {
+  color: var(--theme-primary-text) !important;
+}
+
+/* Force calendar text to be luminance-aware - target all possible calendar text elements */
+.rdp-caption_label,
+.rdp-head_cell,
+[class*="caption_label"],
+[class*="head_cell"],
+.rdp-caption,
+.rdp-head,
+.rdp-head th,
+.rdp-caption_start,
+.rdp-caption_end,
+.rdp-nav_button_previous,
+.rdp-nav_button_next {
+  color: var(--theme-text) !important;
+}
+
+/* More comprehensive calendar text targeting */
+[data-testid*="calendar"] *:not([class*="bg-"]):not(button):not([role="button"]),
+.rdp * {
+  color: var(--theme-text) !important;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+.loading-spinner {
+  @apply animate-spin w-4 h-4 border-2 border-primary border-r-transparent rounded-full;
+}
+
+/* Toast notification styling */
+.toast-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.toast-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.toast-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.toast-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-2 space-x-0;
+  }
+}
+
+@media (min-width: 641px) {
+  .desktop-hidden {
+    @apply hidden;
+  }
+  
+  .desktop-row {
+    @apply flex-row space-y-0 space-x-4;
+  }
+}
+
+/* Print styles */
+@media print {
+  .print-hidden {
+    @apply hidden;
+  }
+  
+  .print-break {
+    page-break-after: always;
+  }
+  
+  .print-no-break {
+    page-break-inside: avoid;
+  }
+}
+
+/* All theme-specific contrast rules moved to theme-contrast.css for universal luminance-based handling */
+
+/* 
+   REPLACED WITH DYNAMIC SYSTEM: All color contrast rules have been moved to theme-contrast.css
+   This provides automatic text color selection based on luminance for any theme color.
+*/
+
+/* All button color rules moved to theme-contrast.css for dynamic luminance-based contrast */
+
+/* All outline button rules moved to theme-contrast.css for dynamic luminance-based contrast */
+
+/* Metronome animation for logo */
+@keyframes metronome-tick {
+  0% { transform: rotate(-18deg); }
+  100% { transform: rotate(18deg); }
+}
+
+/* FINAL OVERRIDE: Ensure buttons with primary background always have white text */
+/* This comes last to override any previous rules including luminance-aware system */
+button.bg-primary,
+[role="button"].bg-primary,
+a.bg-primary,
+.bg-primary[type="button"],
+.bg-primary[type="submit"],
+button[class*="bg-primary"],
+[role="button"][class*="bg-primary"] {
+  color: white !important;
+}
+
+button.bg-primary *,
+[role="button"].bg-primary *,
+a.bg-primary *,
+.bg-primary[type="button"] *,
+.bg-primary[type="submit"] *,
+button[class*="bg-primary"] *,
+[role="button"][class*="bg-primary"] * {
+  color: white !important;
+}
+
+/* CALENDAR DIALOG OUTLINE BUTTONS - Final override using actual button classes */
+.calendar-integration-dialog button.border.border-input.bg-background,
+.calendar-integration-dialog button.border.bg-background {
+  color: var(--theme-primary) !important;
+  background-color: transparent !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.calendar-integration-dialog button.border.border-input.bg-background *,
+.calendar-integration-dialog button.border.bg-background * {
+  color: var(--theme-primary) !important;
+}
+
+/* FIXED STYLING: Manual sync buttons always white background with dark text */
+.calendar-integration-dialog button.border,
+.calendar-integration-dialog button[class*="border"],
+.calendar-integration-dialog button[class*="bg-background"] {
+  background: white !important;
+  color: #1f2937 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.calendar-integration-dialog button.border:hover,
+.calendar-integration-dialog button[class*="border"]:hover,
+.calendar-integration-dialog button[class*="bg-background"]:hover {
+  background: #f9fafb !important;
+  color: #1f2937 !important;
+  border-color: #9ca3af !important;
+}
+
+.calendar-integration-dialog button.border *,
+.calendar-integration-dialog button[class*="border"] *,
+.calendar-integration-dialog button[class*="bg-background"] * {
+  color: #1f2937 !important;
+}
+
+/* MAXIMUM SPECIFICITY: Force dark text on manual sync buttons regardless of any other rules */
+html body .calendar-integration-dialog button.border,
+html body .calendar-integration-dialog button[class*="border"],
+html body .calendar-integration-dialog button[class*="bg-background"] {
+  color: #1f2937 !important;
+}
+
+html body .calendar-integration-dialog button.border *,
+html body .calendar-integration-dialog button[class*="border"] *,
+html body .calendar-integration-dialog button[class*="bg-background"] *,
+html body .calendar-integration-dialog button.border svg,
+html body .calendar-integration-dialog button[class*="border"] svg,
+html body .calendar-integration-dialog button[class*="bg-background"] svg {
+  color: #1f2937 !important;
+}
+
+/* NUCLEAR OPTION: Override absolutely everything for these specific buttons */
+.calendar-integration-dialog div:nth-child(2) div:nth-child(2) div button,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary) {
+  background: white !important;
+  color: #1f2937 !important;
+  border: 1px solid #d1d5db !important;
+  --theme-primary: #1f2937 !important;
+  --theme-primary-text: #1f2937 !important;
+}
+
+.calendar-integration-dialog div:nth-child(2) div:nth-child(2) div button *,
+.calendar-integration-dialog button:not(.bg-primary):not(.bg-destructive):not(.bg-secondary) * {
+  color: #1f2937 !important;
+}
