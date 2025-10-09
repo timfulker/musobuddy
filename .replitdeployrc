@@ -1,5 +1,5 @@
 run = "npm start"
-build = "npm run build"
+build = "npm install && npm run build"
 
 [deployment.env]
 NODE_ENV = "production"
