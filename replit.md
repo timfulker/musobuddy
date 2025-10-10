@@ -4,6 +4,7 @@ MusoBuddy is a platform designed to centralize and automate administrative tasks
 # User Preferences
 - Preferred communication style: Simple, everyday language.
 - Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
+- Development workflow: User handles small coding implementations directly via shell/editor for speed and control. Replit Agent handles holistic changes, larger features, and architectural work. User requests checkpoint creation after manual edits to trigger automatic checkpoint protection.
 - Contract signing: User wants only ONE simple sign contract button, no redundant "click to sign box" above it - simplified single-stage signing process.
 - Email notifications: Both client AND performer receive confirmation emails when contracts are signed.
 - SMS notifications: Premium feature only due to Twilio costs - Core plan users get email notifications, Premium users can enable SMS notifications for critical alerts (new bookings, overdue payments).
