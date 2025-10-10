@@ -221,36 +221,82 @@ class SendGridProvider implements IEmailProvider {
 }
 
 /**
- * Email Service with Provider Abstraction
- * Automatically selects provider based on EMAIL_PROVIDER env variable
+ * Email Service with Dual-Provider Routing
+ * Routes emails based on recipient domain to optimize deliverability
+ *
+ * Routing Rules:
+ * - Yahoo/AOL domains → Mailgun (better deliverability)
+ * - All other domains → SendGrid (default provider)
  */
 export class EmailService {
-  private provider: IEmailProvider;
+  private sendgridProvider: IEmailProvider;
+  private mailgunProvider: IEmailProvider;
+  private defaultProvider: 'mailgun' | 'sendgrid';
 
   constructor() {
-    const providerName = (process.env.EMAIL_PROVIDER || 'mailgun').toLowerCase();
+    // Initialize BOTH providers for dual-routing
+    this.sendgridProvider = new SendGridProvider();
+    this.mailgunProvider = new MailgunProvider();
 
-    console.log(`🔧 Email provider: ${providerName}`);
+    // Set default provider from env var (fallback to sendgrid)
+    this.defaultProvider = (process.env.EMAIL_PROVIDER || 'sendgrid').toLowerCase() as 'mailgun' | 'sendgrid';
 
-    if (providerName === 'sendgrid') {
-      this.provider = new SendGridProvider();
-    } else {
-      this.provider = new MailgunProvider();
+    console.log(`🔧 Dual-provider routing enabled`);
+    console.log(`📧 Default provider: ${this.defaultProvider}`);
+    console.log(`📧 SendGrid configured: ${this.sendgridProvider.isConfigured()}`);
+    console.log(`📧 Mailgun configured: ${this.mailgunProvider.isConfigured()}`);
+
+    // Warn if providers not configured
+    if (!this.sendgridProvider.isConfigured()) {
+      console.warn('⚠️ SendGrid not configured - emails to non-Yahoo/AOL may fail');
     }
-
-    if (!this.provider.isConfigured()) {
-      console.error(`❌ ${this.provider.name} provider not configured`);
-      console.error(`❌ Set EMAIL_PROVIDER=mailgun or EMAIL_PROVIDER=sendgrid`);
-    } else {
-      console.log(`✅ Email service using ${this.provider.name}`);
+    if (!this.mailgunProvider.isConfigured()) {
+      console.warn('⚠️ Mailgun not configured - emails to Yahoo/AOL may fail');
     }
   }
 
   /**
+   * Select email provider based on recipient domain
+   * Routes Yahoo/AOL to Mailgun, everything else to default provider
+   */
+  private selectProvider(emailData: EmailData): IEmailProvider {
+    // Extract recipient email (handle both string and array)
+    const recipientEmail = (Array.isArray(emailData.to) ? emailData.to[0] : emailData.to).toLowerCase();
+
+    // Check if recipient is Yahoo or AOL
+    const isYahoo = recipientEmail.includes('@yahoo.') || recipientEmail.includes('@ymail.');
+    const isAOL = recipientEmail.includes('@aol.');
+
+    if (isYahoo || isAOL) {
+      console.log(`🔀 [ROUTING] Yahoo/AOL detected → Mailgun for: ${recipientEmail}`);
+      return this.mailgunProvider;
+    }
+
+    // Route to default provider for all other domains
+    const provider = this.defaultProvider === 'sendgrid' ? this.sendgridProvider : this.mailgunProvider;
+    console.log(`🔀 [ROUTING] Default provider (${this.defaultProvider}) for: ${recipientEmail}`);
+    return provider;
+  }
+
+  /**
    * Send a single email
+   * Automatically routes to appropriate provider based on recipient domain
    */
   async sendEmail(emailData: EmailData): Promise<EmailResult> {
-    return await this.provider.sendEmail(emailData);
+    const provider = this.selectProvider(emailData);
+
+    // Check if selected provider is configured
+    if (!provider.isConfigured()) {
+      const recipientEmail = Array.isArray(emailData.to) ? emailData.to[0] : emailData.to;
+      console.error(`❌ Selected provider (${provider.name}) not configured for: ${recipientEmail}`);
+      return {
+        success: false,
+        error: `Email provider ${provider.name} not configured`,
+        provider: provider.name
+      };
+    }
+
+    return await provider.sendEmail(emailData);
   }
 
   /**
@@ -274,17 +320,28 @@ export class EmailService {
   }
 
   /**
-   * Get current provider name
+   * Get default provider name
    */
   getProviderName(): 'mailgun' | 'sendgrid' {
-    return this.provider.name;
+    return this.defaultProvider;
   }
 
   /**
-   * Check if provider is configured
+   * Check if at least one provider is configured
    */
   isConfigured(): boolean {
-    return this.provider.isConfigured();
+    return this.sendgridProvider.isConfigured() || this.mailgunProvider.isConfigured();
+  }
+
+  /**
+   * Get status of both providers (for monitoring)
+   */
+  getProvidersStatus(): { sendgrid: boolean; mailgun: boolean; defaultProvider: string } {
+    return {
+      sendgrid: this.sendgridProvider.isConfigured(),
+      mailgun: this.mailgunProvider.isConfigured(),
+      defaultProvider: this.defaultProvider
+    };
   }
 
   /**
