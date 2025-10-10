@@ -314,7 +314,7 @@ export class EmailService {
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     const failed = results.length - successful;
 
-    console.log(`📊 Bulk email results: ${successful} sent, ${failed} failed (${this.provider.name})`);
+    console.log(`📊 Bulk email results: ${successful} sent, ${failed} failed (dual-provider routing)`);
 
     return { successful, failed, results };
   }
