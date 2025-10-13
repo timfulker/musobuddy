@@ -1,0 +1,17 @@
+# v2 git bundle
+27e5503b5c4d661b52aa50a64626a13234852954 refs/heads/backup-broken-state-20250706-2246
+16fe0a6bc01e270737f987d1ede13f1f6fd8e8ef refs/heads/backup/client-collab-working-20250903-201627
+c06a3f0d377308cef344a9e9d7e8a3d699227f80 refs/heads/main
+0f2c0dd5600a586a7ca64ba6cd4775ce344b8342 refs/heads/replit-agent
+f3c8f8d75d95490bb5ea959b8d7f31cde37bfc3b refs/heads/restore-july1
+c79ac9f2466ef19ee04cbdb5b4468d6e02670d55 refs/heads/restore-working-july3rd
+ec5c8649ca28bdbf53153e76564ba886a22acd98 refs/heads/supabase-auth-migration
+3ac225a97ff04197ab272104f721649d546eefc3 refs/notes/commits
+9b0ce6a036a4c43f93f35955e259e4f4bacd0b75 refs/remotes/origin/HEAD
+9b0ce6a036a4c43f93f35955e259e4f4bacd0b75 refs/remotes/origin/main
+0f2c0dd5600a586a7ca64ba6cd4775ce344b8342 refs/replit/agent-ledger
+66999ba24b66835f9ab655c96239d6fd2f2ba85e refs/stash
+b6869788c196a7065bec5c17cea32485fa864c1f refs/tags/rollback-auth-fix-20250917-195956
+08d7cf4f6946ff70d7f9e4ab8878510e067b2e34 refs/tags/v1.0-client-collab-working
+ec5c8649ca28bdbf53153e76564ba886a22acd98 HEAD
+

@@ -1,0 +1,35 @@
+run = "npm start"
+build = "npm install && npm run build"
+
+[deployment.env]
+NODE_ENV = "production"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/google-chrome-stable"
+
+[[deployment.nix]]
+pkgs = [
+  "google-chrome",
+  "fontconfig",
+  "freetype",
+  "libxss",
+  "glib",
+  "nss",
+  "nspr",
+  "atk",
+  "at-spi2-atk",
+  "cups",
+  "dbus",
+  "gtk3",
+  "pango",
+  "cairo",
+  "gdk-pixbuf",
+  "xorg.libX11",
+  "xorg.libXcomposite",
+  "xorg.libXdamage",
+  "xorg.libXext",
+  "xorg.libXfixes",
+  "xorg.libXrandr",
+  "xorg.libxcb",
+  "expat",
+  "alsa-lib"
+]
