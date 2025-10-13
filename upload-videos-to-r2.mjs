@@ -28,6 +28,11 @@ const videos = [
     localPath: 'client/public/videos/contract-demo.mov',
     r2Key: 'videos/contract-demo.mov',
     name: 'contract-demo.mov'
+  },
+  {
+    localPath: 'Invoice Tutorial.m4v',
+    r2Key: 'videos/invoice-demo.m4v',
+    name: 'invoice-demo.m4v'
   }
 ];
 
@@ -38,11 +43,15 @@ async function uploadVideo(videoInfo) {
     const videoBuffer = await readFile(join(__dirname, videoInfo.localPath));
     console.log(`   Size: ${(videoBuffer.length / 1024 / 1024).toFixed(2)} MB`);
 
+    // Determine content type based on file extension
+    const ext = videoInfo.name.split('.').pop().toLowerCase();
+    const contentType = ext === 'm4v' ? 'video/x-m4v' : 'video/quicktime';
+
     const uploadCommand = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: videoInfo.r2Key,
       Body: videoBuffer,
-      ContentType: 'video/quicktime',
+      ContentType: contentType,
       CacheControl: 'public, max-age=31536000', // Cache for 1 year
     });
 
